@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -87,10 +86,25 @@ public class ProgrammingExerciseImportRepositoryService {
         copyExerciseContentToRepository(solutionRepo, RepositoryType.SOLUTION.getName(), basePath);
         copyExerciseContentToRepository(testRepo, RepositoryType.TESTS.getName(), basePath);
         for (Repository auxRepo : auxiliaryRepositories) {
-            String[] parts = auxRepo.getLocalPath().toString().split("-");
-            var auxRepoName = String.join("-", Arrays.copyOfRange(parts, 1, parts.length));
-            copyExerciseContentToRepository(auxRepo, auxRepoName, basePath);
+            copyExerciseContentToRepository(auxRepo, auxiliaryRepositoryNameOf(auxRepo), basePath);
         }
+    }
+
+    /**
+     * Returns the name an auxiliary repository is known by in the uploaded zip file.
+     * <p>
+     * A checkout folder is named {@code <projectkey>-<repository name>}, so the name is what follows the first dash of the
+     * folder. Only the folder name is looked at: deriving it from the whole path made the import depend on where Artemis
+     * keeps its checkouts, because a dash anywhere above the folder - as in {@code /home/ci-runner/...} - ended up in the
+     * derived name, and no directory of the zip could match a name containing a path separator.
+     *
+     * @param auxiliaryRepository the checked out auxiliary repository
+     * @return the repository name to look for in the extracted zip file
+     */
+    private static String auxiliaryRepositoryNameOf(Repository auxiliaryRepository) {
+        String folderName = auxiliaryRepository.getLocalPath().getFileName().toString();
+        int firstDash = folderName.indexOf('-');
+        return firstDash >= 0 ? folderName.substring(firstDash + 1) : folderName;
     }
 
     /**

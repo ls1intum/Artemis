@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -72,10 +72,10 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         var testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
-        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
-        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new MailRecipientDTO("admin@greenmail.test", "en", "iris-dashboard-recipient", "Administrator", null, null, null);
     }

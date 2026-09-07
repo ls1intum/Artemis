@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -86,7 +87,9 @@ import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
@@ -110,15 +113,12 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
-import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
@@ -219,10 +219,10 @@ public class ProgrammingExerciseIntegrationTestService {
     private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
-    private ProgrammingUtilTestService programmingUtilTestService;
+    private LocalVCLocalCITestService localVCLocalCITestService;
 
     @Autowired
-    private LocalVCLocalCITestService localVCLocalCITestService;
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
@@ -241,10 +241,6 @@ public class ProgrammingExerciseIntegrationTestService {
     private ProgrammingExerciseStudentParticipation participation2;
 
     private File downloadedFile;
-
-    private LocalRepository studentRepository1;
-
-    private LocalRepository studentRepository2;
 
     private MockDelegate mockDelegate;
 
@@ -277,22 +273,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
-
-        studentRepository1 = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-        studentRepository2 = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
-
-        studentRepository1.configureRepos(localVCBasePath, "studentLocalRepo1", "studentOriginRepo1", true);
-        studentRepository2.configureRepos(localVCBasePath, "studentLocalRepo2", "studentOriginRepo2", true);
-
-        // TODO use createProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
-        // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
-
-        // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = studentRepository1.workingCopyGitRepoFile.toPath().resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test.json");
-        TestFileUtil.writeEmptyJsonFileToPath(testjsonFilePath);
-        // create two empty commits
-        GitService.commit(studentRepository1.workingCopyGitRepo).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
-        studentRepository1.workingCopyGitRepo.push().call();
 
         this.plagiarismChecksTestReposDir = tempFileUtilService.createTempDirectory("jplag-repos").toFile();
     }
@@ -417,13 +397,13 @@ public class ProgrammingExerciseIntegrationTestService {
         // Create .project and pom.xml in the student's repo to be modified during export
         String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
         String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
-        Path projectFilePath = repo1.workingCopyGitRepoFile.toPath().resolve(".project");
-        Path pomPath = repo1.workingCopyGitRepoFile.toPath().resolve("pom.xml");
+        Path projectFilePath = repo1.workingCopyPath().resolve(".project");
+        Path pomPath = repo1.workingCopyPath().resolve("pom.xml");
         FileUtils.writeStringToFile(projectFilePath.toFile(), projectFileContents, StandardCharsets.UTF_8);
         FileUtils.writeStringToFile(pomPath.toFile(), pomContents, StandardCharsets.UTF_8);
-        repo1.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(repo1.workingCopyGitRepo).setMessage("seed project and pom").call();
-        repo1.workingCopyGitRepo.push().setRemote("origin").call();
+        repo1.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repo1.workingCopy()).setMessage("seed project and pom").call();
+        repo1.workingCopy().push().setRemote("origin").call();
 
         // Give LocalVC time to sync after push
         Thread.sleep(100);
@@ -446,7 +426,7 @@ public class ProgrammingExerciseIntegrationTestService {
         String modifiedEclipseProjectFile = Files.readString(repoRoot.resolve(".project"));
         assertThat(modifiedEclipseProjectFile).contains(userPrefix + "student1");
         String modifiedPom = Files.readString(repoRoot.resolve("pom.xml"));
-        assertThat(modifiedPom).contains((userPrefix + "student1").toLowerCase());
+        assertThat(modifiedPom).contains((userPrefix + "student1").toLowerCase(Locale.ROOT));
         Files.deleteIfExists(projectFilePath);
         Files.deleteIfExists(pomPath);
     }
@@ -463,43 +443,29 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository1.workingCopyGitRepoFile.toPath(), null);
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository2.workingCopyGitRepoFile.toPath(), null);
-
-        // Create the eclipse .project file which will be modified.
-        Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = Path.of(projectFilePath.toString()).toFile();
-        if (!projectFile.exists()) {
-            Files.createFile(projectFilePath);
-        }
-
-        // Create the maven .pom file
-        Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = Path.of(pomPath.toString()).toFile();
-        if (!pomFile.exists()) {
-            Files.createFile(pomPath);
-        }
-
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
         assertThat(participation).isPresent();
 
+        // Empty project files: neither can be parsed as XML, so appending the participant identifier fails and is only logged. The export reads the participation's
+        // repository from the server, so the files have to be written into that repository rather than into a copy of it.
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(participation.get().getRepositoryUri()), Map.of(".project", "", "pom.xml", ""),
+                "Add unparseable project files");
+
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
-        // all options false by default, only test if export works at all
+        // addParticipantName is on, so the export tries to rename the project and runs into the unparseable files
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Make sure both repositories are present
-        String modifiedEclipseProjectFile = Files.readString(projectFile.toPath(), StandardCharsets.UTF_8);
-        assertThat(modifiedEclipseProjectFile).contains("");
-
-        String modifiedPom = Files.readString(pomFile.toPath(), StandardCharsets.UTF_8);
-        assertThat(modifiedPom).contains("");
-
-        Files.deleteIfExists(projectFilePath);
-        Files.deleteIfExists(pomPath);
+        // The export still succeeds, and the files it could not rename are exported unchanged instead of being corrupted or dropped.
+        List<Path> entries = unzipExportedFile();
+        Optional<Path> extractedRepo = entries.stream().filter(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo).as("the student repository is part of the export").isPresent();
+        Path repoRoot = extractedRepo.orElseThrow().getParent();
+        assertThat(Files.readString(repoRoot.resolve(".project"))).as("the unparseable .project is exported unchanged").isEmpty();
+        assertThat(Files.readString(repoRoot.resolve("pom.xml"))).as("the unparseable pom.xml is exported unchanged").isEmpty();
     }
 
     void testExportSubmissionsByParticipationIds() throws Exception {
@@ -521,7 +487,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
         List<Path> entries = unzipExportedFile();
 
-        // Make sure both repositories are present (by login suffix)
+        // Make sure both repositories are present (by login suffix). The manual export keeps the history of the student
+        // repositories, so each participation still arrives as a directory with its own .git.
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
                 .anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student2", ".git").toString()));
     }
@@ -542,8 +509,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseStudentParticipationRepository.save(participation1);
 
         // Add a student commit to anonymize
-        localVCLocalCITestService.commitFile(studentRepo.workingCopyGitRepoFile.toPath(), studentRepo.workingCopyGitRepo, "Test.java");
-        studentRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        localVCLocalCITestService.commitFile(studentRepo.workingCopyPath(), studentRepo.workingCopy(), "Test.java");
+        studentRepo.workingCopy().push().setRemote("origin").call();
 
         // Rest call with options (combine + anonymize enabled in getOptions())
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
@@ -623,7 +590,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
         request.delete(path, HttpStatus.OK, params);
@@ -637,7 +604,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), true);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -652,7 +619,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -667,7 +634,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
@@ -684,7 +651,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -701,7 +668,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
@@ -823,12 +790,12 @@ public class ProgrammingExerciseIntegrationTestService {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
         }
         // Create tests path in tests repo so generator can write test.json (same approach as ProgrammingExerciseLocalVCExportsIntegrationTest)
-        Path testsDir = testsRepo.workingCopyGitRepoFile.toPath().resolve(testsPath);
+        Path testsDir = testsRepo.workingCopyPath().resolve(testsPath);
         Files.createDirectories(testsDir);
         Files.createFile(testsDir.resolve(".placeholder"));
-        testsRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        GitService.commit(testsRepo.workingCopyGitRepo).setMessage("Init tests dir").call();
-        testsRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        testsRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(testsRepo.workingCopy()).setMessage("Init tests dir").call();
+        testsRepo.workingCopy().push().setRemote("origin").call();
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
@@ -1375,10 +1342,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + id, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
+    void importProgrammingExercise_scaChanged_badRequest() throws Exception {
+        // Static code analysis changes what the build plans have to run, so it may only change when they are recreated.
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
-        params.add("updateTemplate", String.valueOf(updateTemplate));
+        params.add("recreateBuildPlans", "false");
         var programmingExerciseSca = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
 
         setupMocksForConsistencyChecksOnImport(programmingExercise);
@@ -1809,7 +1776,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Create and wire template repository - JPlag needs this as base code
         var templateSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "exercise");
-        var templateRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
+        var templateRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateSlug));
         var templateUri = localVCLocalCITestService.buildLocalVCUri(null, projectKey, templateSlug);
         var templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(templateUri);
@@ -1843,8 +1810,8 @@ public class ProgrammingExerciseIntegrationTestService {
         // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
         for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
-                // Use getOrCreateWorkingCopyForParticipation which clones existing repos instead of re-initializing them
-                var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, participation, localVCBasePath);
+                // Clone the participation's repository rather than re-creating it, so any commits it already has are preserved
+                var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
             }
@@ -2008,7 +1975,7 @@ public class ProgrammingExerciseIntegrationTestService {
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
 
         // Two participations exist before reset
@@ -2023,7 +1990,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
-        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
         String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
@@ -2290,7 +2256,7 @@ public class ProgrammingExerciseIntegrationTestService {
         String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
         // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
-        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
+        var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely
@@ -2333,7 +2299,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var studentLogin = testPrefix + "student1";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
         // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
-        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
+        var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files, commit, and push via util
@@ -2364,10 +2330,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
-
-        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-            mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-        }
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()),
                 programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()),
@@ -2398,7 +2360,7 @@ public class ProgrammingExerciseIntegrationTestService {
         auxRepo.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + auxRepoName + ".git");
         auxRepo = auxiliaryRepositoryRepository.save(auxRepo);
 
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, auxRepoName);
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, auxRepoName);
 
         var url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxRepo.getId();
         request.get(url, HttpStatus.OK, String.class);

@@ -1,5 +1,6 @@
 <div class="btn-group">
     <div
+        data-testid="picker-option"
         class="btn"
         [ngClass]="{
             'btn-primary selected': includedInOverallScore() === IncludedInOverallScore.INCLUDED_COMPLETELY,
@@ -9,6 +10,7 @@
         jhiTranslate="artemisApp.exercise.yes"
     ></div>
     <div
+        data-testid="picker-option"
         class="btn btn-default"
         [ngClass]="{
             'btn-primary selected': includedInOverallScore() === IncludedInOverallScore.INCLUDED_AS_BONUS,
@@ -19,6 +21,7 @@
     ></div>
     @if (allowNotIncluded()) {
         <div
+            data-testid="picker-option"
             class="btn btn-default"
             [ngClass]="{
                 'btn-primary selected': includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED,

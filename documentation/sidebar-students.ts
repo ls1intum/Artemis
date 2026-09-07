@@ -43,6 +43,7 @@ const sidebars: SidebarsConfig = {
                 'assessment-grades/assessment',
                 'assessment-grades/grading',
                 'assessment-grades/plagiarism-check',
+                'assessment-grades/deimos',
             ],
         },
         {

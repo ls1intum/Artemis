@@ -42,6 +42,10 @@ let nextAutoCompleteId = 0;
     templateUrl: './tum-ui-autocomplete.component.html',
     styleUrl: './tum-ui-autocomplete.component.scss',
     imports: [TumUiChipComponent, TumUiTranslatePipe],
+    host: {
+        // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
+        class: 'tum-ui-autocomplete',
+    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiAutoCompleteComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

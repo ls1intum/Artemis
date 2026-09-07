@@ -1,0 +1,526 @@
+---
+id: feature-usage-catalogue
+title: Feature Usage Catalogue
+sidebar_label: Feature Usage Catalogue
+---
+
+# Feature Usage Catalogue
+
+The features whose usage Artemis tracks, as declared by `@FeatureUsage` on each REST controller.
+
+**This file is generated.** Do not edit it by hand. It is checked in so that the taxonomy as a whole can be
+reviewed in one place and so that a change to it shows up in a pull request diff.
+`FeatureUsageAnnotationTest` fails when it drifts from the annotations; regenerate it with:
+
+```bash
+./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
+```
+
+A feature is usually one controller. Where several controllers are one thing to a user they share a label,
+which is why the controllers are listed. See
+[Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
+
+Currently 28 modules, 88 areas and 182 features.
+
+## account
+
+### account
+
+* **access-tokens** (`TokenResource`)
+* **passkeys** (`PasskeyResource`)
+* **self-service** (`AccountLegacyResource`, `AccountResource`)
+
+### organizations
+
+* **organizations** (`OrganizationResource`)
+
+### users
+
+* **user-administration** (`AdminUserResource`)
+* **user-directory** (`UserResource`)
+
+## admin
+
+### build-system
+
+* **build-queue-administration** (`AdminBuildJobQueueResource`)
+
+### configuration
+
+* **feature-toggles** (`AdminFeatureToggleResource`)
+
+### courses
+
+* **course-administration** (`AdminCourseResource`)
+* **course-requests** (`AdminCourseRequestResource`)
+
+### data-privacy
+
+* **data-cleanup** (`AdminCleanupResource`)
+* **data-exports** (`AdminDataExportResource`)
+
+### dependencies
+
+* **software-bill-of-materials** (`AdminSbomResource`)
+
+### legal
+
+* **imprint** (`AdminImprintResource`)
+* **privacy-statement** (`AdminPrivacyStatementResource`)
+
+### monitoring
+
+* **audit-log** (`AdminAuditResource`)
+* **feature-usage** (`AdminFeatureUsageResource`)
+* **metrics** (`AdminMetricsResource`)
+* **scheduled-jobs** (`AdminScheduleResource`)
+* **server-logs** (`AdminLogResource`)
+* **usage-statistics** (`AdminStatisticsResource`)
+* **websocket-broker** (`AdminWebsocketResource`)
+
+### organizations
+
+* **organization-administration** (`AdminOrganizationResource`)
+
+## assessment
+
+### complaints
+
+* **complaint-responses** (`ComplaintResponseResource`)
+* **complaints** (`ComplaintResource`)
+
+### feedback
+
+* **student-ratings** (`RatingResource`)
+
+### grading
+
+* **bonus** (`BonusResource`)
+* **grading-scale** (`GradeStepResource`, `GradingScaleResource`)
+* **long-feedback** (`LongFeedbackTextResource`)
+* **participant-scores** (`ParticipantScoreResource`)
+* **results** (`ResultResource`)
+
+### tutor-training
+
+* **example-submissions** (`ExampleSubmissionResource`)
+* **tutor-effort** (`TutorEffortResource`)
+* **tutor-participation** (`TutorParticipationResource`)
+
+## athena
+
+### feedback-suggestions
+
+* **feedback-suggestions** (`AthenaResource`)
+* **internal-callbacks** (`AthenaInternalResource`)
+
+## atlas
+
+### ai
+
+* **atlas-agent** (`AtlasAgentResource`)
+* **competency-orchestration** (`CompetencyOrchestrationResource`)
+
+### competencies
+
+* **competencies** (`CompetencyResource`, `CourseCompetencyResource`)
+* **prerequisites** (`PrerequisiteResource`)
+* **standardized-competencies** (`AdminStandardizedCompetencyResource`, `StandardizedCompetencyResource`)
+
+### learner-profile
+
+* **learner-profile** (`CourseLearnerProfileResource`, `LearnerProfileResource`)
+
+### learning-paths
+
+* **learning-paths** (`LearningPathResource`)
+
+### research
+
+* **science-events** (`ScienceResource`)
+* **science-settings** (`ScienceSettingsResource`)
+
+## calendar
+
+### calendar
+
+* **calendar-events** (`CalendarResource`, `LegacyCalendarResource`)
+
+## communication
+
+### content
+
+* **faq** (`FaqResource`)
+* **link-previews** (`LinkPreviewResource`)
+
+### conversations
+
+* **channels** (`ChannelResource`)
+* **conversations** (`ConversationResource`)
+* **group-chats** (`GroupChatResource`)
+* **one-to-one-chats** (`OneToOneChatResource`)
+
+### mobile-apps
+
+* **app-site-association** (`AndroidAppSiteAssociationResource`, `AppleAppSiteAssociationResource`)
+
+### posts
+
+* **answers** (`AnswerMessageResource`)
+* **forwarding** (`ForwardedMessageResource`)
+* **messages** (`ConversationMessageResource`)
+* **reactions** (`ReactionResource`)
+* **saved-posts** (`SavedPostResource`)
+
+## core
+
+### authentication
+
+* **jwt-tokens** (`PublicUserJwtResource`)
+
+### data-privacy
+
+* **data-exports** (`DataExportResource`)
+
+### files
+
+* **file-access** (`FileResource`)
+
+### public
+
+* **account** (`PublicAccountResource`)
+* **imprint** (`PublicImprintResource`)
+* **privacy-statement** (`PublicPrivacyStatementResource`)
+
+### sharing
+
+* **sharing-platform** (`SharingSupportResource`)
+
+### statistics
+
+* **statistics** (`StatisticsResource`)
+
+## course
+
+### analytics
+
+* **course-statistics** (`CourseStatsResource`)
+
+### management
+
+* **archive** (`CourseArchiveResource`)
+* **course-management** (`CourseManagementResource`, `CourseUpdateResource`)
+* **course-requests** (`CourseRequestResource`)
+* **material-import** (`CourseMaterialImportResource`)
+
+### student-view
+
+* **course-overview** (`CourseOverviewResource`)
+* **enrollment** (`CourseAccessResource`)
+
+## deimos
+
+### malicious-code-analysis
+
+* **batch-runs** (`DeimosResource`)
+
+## exam
+
+### authoring
+
+* **exam-management** (`AdminExamResource`, `ExamResource`)
+* **exercise-groups** (`ExerciseGroupResource`)
+* **registration** (`ExamUserResource`)
+
+### conduction
+
+* **student-exam** (`StudentExamResource`)
+
+### rooms
+
+* **room-management** (`AdminExamRoomManagementResource`, `ExamRoomManagementResource`)
+* **seat-distribution** (`ExamRoomDistributionResource`)
+
+## exercise
+
+### analytics
+
+* **score-charts** (`ExerciseScoresChartResource`)
+
+### management
+
+* **consistency-check** (`ConsistencyCheckResource`)
+* **exercise-management** (`AdminExerciseResource`, `ExerciseResource`)
+* **problem-statement** (`ProblemStatementRenderingResource`)
+* **review** (`ExerciseReviewResource`)
+* **variant-groups** (`ExerciseVariantGroupResource`)
+* **versions** (`ExerciseVersionResource`)
+
+### participation
+
+* **participations** (`ParticipationDeletionResource`, `ParticipationResource`, `ParticipationRetrievalResource`, `ParticipationUpdateResource`)
+* **teams** (`TeamResource`)
+
+### submission
+
+* **submissions** (`SubmissionResource`)
+
+## fileupload
+
+### assessment
+
+* **manual-assessment** (`FileUploadAssessmentResource`)
+
+### authoring
+
+* **exercise-management** (`FileUploadExerciseResource`)
+
+### participation
+
+* **submissions** (`FileUploadSubmissionResource`)
+
+## globalsearch
+
+### search
+
+* **global-search** (`GlobalSearchResource`)
+
+## hyperion
+
+### authoring-assistance
+
+* **assessment-criteria-generation** (`HyperionAssessmentCriteriaGenerationResource`)
+* **code-generation** (`HyperionCodeGenerationResource`)
+* **faq-rewrite** (`HyperionFaqResource`)
+* **problem-statement** (`HyperionProblemStatementResource`)
+* **quiz-generation** (`HyperionQuizQuestionGenerationResource`)
+
+## iris
+
+### chat
+
+* **availability** (`IrisResource`)
+* **chat-sessions** (`IrisChatSessionResource`)
+* **messages** (`IrisMessageResource`)
+* **tutor-suggestions** (`IrisTutorSuggestionSessionResource`)
+
+### configuration
+
+* **settings** (`IrisSettingsResource`)
+
+### internal
+
+* **pyris-status-updates** (`PyrisInternalStatusUpdateResource`)
+
+### memory
+
+* **memory** (`IrisMemoryResource`)
+
+### monitoring
+
+* **dashboard** (`IrisAdminDashboardResource`)
+
+### search
+
+* **lecture-search** (`IrisGlobalSearchResource`)
+
+## lecture
+
+### ai
+
+* **transcription** (`LectureTranscriptionResource`)
+
+### authoring
+
+* **attachments** (`AttachmentResource`)
+* **lectures** (`LectureResource`)
+
+### units
+
+* **attachment-video-units** (`AttachmentVideoUnitResource`)
+* **exercise-units** (`ExerciseUnitResource`)
+* **online-units** (`OnlineUnitResource`)
+* **text-units** (`TextUnitResource`)
+* **unit-management** (`LectureUnitResource`)
+
+## localci
+
+### build-system
+
+* **after-due-date-builds** (`AutomaticAfterDueDateResource`)
+* **build-logs** (`BuildLogResource`)
+* **build-phase-templates** (`BuildPhasesTemplateResource`)
+* **build-plans** (`BuildPlanResource`, `PublicBuildPlanResource`)
+* **build-queue** (`BuildJobQueueResource`)
+
+## localvc
+
+### access
+
+* **build-agent-address** (`PublicBuildAgentAddressResource`)
+* **ssh-fingerprints** (`SshFingerprintsProviderResource`)
+
+## lti
+
+### lti
+
+* **launch** (`LtiResource`, `PublicLtiResource`)
+* **oauth2-keys** (`PublicOAuth2JWKSResource`)
+* **platform-configuration** (`AdminLtiConfigurationResource`)
+
+## modeling
+
+### assessment
+
+* **manual-assessment** (`ModelingAssessmentResource`)
+
+### authoring
+
+* **exercise-management** (`ModelingExerciseResource`)
+
+### diagrams
+
+* **apollon-conversion** (`ApollonConversionResource`)
+* **apollon-diagrams** (`ApollonDiagramResource`)
+
+### participation
+
+* **submissions** (`ModelingSubmissionResource`)
+
+## notification
+
+### course-notifications
+
+* **notifications** (`CourseNotificationResource`)
+* **read-status** (`UserCourseNotificationStatusResource`)
+
+### delivery
+
+* **push-devices** (`PushNotificationResource`)
+
+### settings
+
+* **course-settings** (`UserCourseNotificationSettingResource`)
+* **global-settings** (`GlobalNotificationSettingResource`)
+
+### system-notifications
+
+* **administration** (`AdminSystemNotificationResource`)
+* **system-notifications** (`PublicSystemNotificationResource`, `SystemNotificationResource`)
+
+## plagiarism
+
+### cases
+
+* **answer-posts** (`PlagiarismAnswerPostResource`)
+* **plagiarism-cases** (`PlagiarismCaseResource`)
+* **posts** (`PlagiarismPostResource`)
+
+### detection
+
+* **plagiarism-checks** (`PlagiarismResource`)
+
+## programming
+
+### access
+
+* **ssh-keys** (`SshPublicKeysResource`)
+* **vcs-access-tokens** (`RepositoryVcsAccessTokenResource`, `VcsAccessTokenOverviewResource`)
+
+### assessment
+
+* **manual-assessment** (`ProgrammingAssessmentResource`)
+
+### authoring
+
+* **exercise-management** (`ProgrammingExerciseCreationResource`, `ProgrammingExerciseDeletionResource`, `ProgrammingExercisePartialUpdateResource`, `ProgrammingExerciseRetrievalResource`, `ProgrammingExerciseUpdateResource`)
+* **import-export** (`ProgrammingExerciseExportImportResource`)
+* **sharing** (`ExerciseSharingResource`)
+* **tasks** (`ProgrammingExerciseTaskResource`)
+* **uml-rendering** (`PlantUmlResource`)
+
+### configuration
+
+* **auxiliary-repositories** (`AuxiliaryRepositoryResource`)
+* **grading** (`ProgrammingExerciseGradingResource`)
+* **re-evaluate-results** (`ProgrammingExerciseGradingResource`)
+* **static-code-analysis** (`StaticCodeAnalysisResource`)
+* **submission-policy** (`SubmissionPolicyResource`)
+* **test-cases** (`ProgrammingExerciseTestCaseResource`)
+
+### integrity
+
+* **plagiarism** (`ProgrammingExercisePlagiarismResource`)
+
+### participation
+
+* **ide-settings** (`IdeSettingsResource`)
+* **online-editor** (`RepositoryProgrammingExerciseParticipationResource`)
+* **online-ide** (`TheiaConfigurationResource`)
+* **participations** (`ProgrammingExerciseParticipationResource`)
+
+### repositories
+
+* **export** (`ProgrammingExerciseRepositoryExportResource`)
+* **test-repository** (`TestRepositoryResource`)
+
+### submission
+
+* **build-results** (`PublicProgrammingExerciseResultResource`)
+* **submissions** (`ProgrammingSubmissionResource`)
+
+## quiz
+
+### authoring
+
+* **exercise-management** (`QuizExerciseCreationUpdateResource`, `QuizExerciseDeletionResource`, `QuizExerciseResource`, `QuizExerciseRetrievalResource`)
+
+### conduction
+
+* **batches** (`QuizExerciseBatchResource`)
+* **participation** (`QuizParticipationResource`)
+* **submissions** (`QuizSubmissionResource`)
+
+### evaluation
+
+* **evaluation** (`QuizExerciseEvaluationResource`)
+
+### practice
+
+* **training** (`QuizTrainingResource`)
+
+## text
+
+### assessment
+
+* **assessment-analytics** (`AdminTextAssessmentEventResource`, `TextAssessmentEventResource`)
+* **manual-assessment** (`TextAssessmentResource`)
+
+### authoring
+
+* **exercise-management** (`TextExerciseCreationUpdateResource`, `TextExerciseResource`)
+* **import-export** (`TextExerciseExportImportResource`)
+
+### integrity
+
+* **plagiarism** (`TextExercisePlagiarismResource`)
+
+### participation
+
+* **submissions** (`TextSubmissionResource`)
+
+## tutorialgroup
+
+### management
+
+* **configuration** (`TutorialGroupsConfigurationResource`)
+* **free-periods** (`TutorialGroupFreePeriodResource`)
+* **sessions** (`TutorialGroupSessionResource`)
+* **tutorial-groups** (`TutorialGroupResource`)
+
+## videosource
+
+### video
+
+* **tum-live** (`TumLiveResource`)
+

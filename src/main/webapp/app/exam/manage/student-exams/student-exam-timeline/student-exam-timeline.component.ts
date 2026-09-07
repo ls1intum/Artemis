@@ -23,6 +23,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { Slider } from 'primeng/slider';
 import { FormsModule } from '@angular/forms';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
@@ -39,6 +40,7 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
         TextExamSubmissionComponent,
         ModelingExamSubmissionComponent,
         ProgrammingExerciseExamDiffComponent,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {

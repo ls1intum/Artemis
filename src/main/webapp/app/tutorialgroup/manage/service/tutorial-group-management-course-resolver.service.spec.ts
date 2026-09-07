@@ -82,7 +82,7 @@ describe('TutorialGroupManagementResolve', () => {
     it.each([
         { tutorialGroupsConfiguration: undefined, timeZone: 'Europe/Berlin' },
         { tutorialGroupsConfiguration: { id: 1 }, timeZone: undefined },
-    ])('should warn tutors and navigate to course management if the tutorial group configuration is incomplete', ({ tutorialGroupsConfiguration, timeZone }) => {
+    ])('should warn tutors and navigate to the course overview if the tutorial group configuration is incomplete', ({ tutorialGroupsConfiguration, timeZone }) => {
         const course: Course = new Course();
         course.id = 1;
         course.isAtLeastTutor = true;
@@ -97,7 +97,7 @@ describe('TutorialGroupManagementResolve', () => {
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
 
         expect(alertService.warning).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses']);
         expect(router.navigate).not.toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
         expect(next).not.toHaveBeenCalled();
     });
@@ -140,7 +140,7 @@ describe('TutorialGroupManagementResolve', () => {
         expect(resolvedCourse?.tutorialGroupsConfiguration?.id).toBe(5);
     });
 
-    it('should show an error and navigate to course management if the user is not at least tutor in the course', () => {
+    it('should show an error and navigate to the course overview if the user is not at least tutor in the course', () => {
         const course: Course = new Course();
         course.id = 1;
         course.isAtLeastTutor = false;
@@ -154,12 +154,12 @@ describe('TutorialGroupManagementResolve', () => {
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses']);
         expect(router.navigate).not.toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
         expect(next).not.toHaveBeenCalled();
     });
 
-    it('should show an error and navigate to course management if the course request is forbidden', () => {
+    it('should show an error and navigate to the course overview if the course request is forbidden', () => {
         vi.spyOn(service, 'find').mockReturnValue(throwError(() => new HttpErrorResponse({ status: HttpStatusCode.Forbidden })));
         vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
         vi.spyOn(router, 'navigate');
@@ -169,11 +169,11 @@ describe('TutorialGroupManagementResolve', () => {
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses']);
         expect(next).not.toHaveBeenCalled();
     });
 
-    it('should show an error and navigate to course management if the configuration request is forbidden', () => {
+    it('should show an error and navigate to the course overview if the configuration request is forbidden', () => {
         const course: Course = new Course();
         course.id = 1;
         course.isAtLeastTutor = true;
@@ -187,7 +187,7 @@ describe('TutorialGroupManagementResolve', () => {
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses']);
         expect(next).not.toHaveBeenCalled();
     });
 

@@ -1,5 +1,6 @@
 /* stylelint-disable */
 @use 'sass:meta';
+@use 'apollon';
 @use 'generate-css-vars';
 
 @import 'default-variables';
@@ -36,6 +37,11 @@ html {
             background-color: $white;
         }
     }
+}
+
+.artemis-apollon-theme {
+    @include generate-css-vars.generate-prefixed('default-variables', 'apollon-');
+    @include apollon.component-overrides;
 }
 
 @import '../global';

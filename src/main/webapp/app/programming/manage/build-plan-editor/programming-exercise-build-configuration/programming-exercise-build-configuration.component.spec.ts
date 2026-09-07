@@ -332,6 +332,46 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(warning).toBeNull();
     });
 
+    it('should reload the docker flags when a different exercise arrives, so navigating between exercises does not carry the previous flags over', () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            defaultContainerCpuCount: 1,
+            defaultContainerMemoryLimitInMB: 1024,
+            defaultContainerMemorySwapLimitInMB: 2048,
+        } as unknown as ProfileInfo);
+        const exerciseA = new ProgrammingExercise(course, undefined);
+        exerciseA.buildConfig = new ProgrammingExerciseBuildConfig();
+        // memorySwap 0 is a stored value, not an absence: it must survive the load instead of falling back to the default
+        exerciseA.buildConfig.dockerFlags = '{"env":{"FOO":"a"},"network":"bridge","cpuCount":4,"memory":2048,"memorySwap":0}';
+        fixture.componentRef.setInput('programmingExercise', exerciseA);
+        fixture.detectChanges();
+
+        expect(comp.cpuCount()).toBe(4);
+        expect(comp.memory()).toBe(2048);
+        expect(comp.memorySwap()).toBe(0);
+        expect(comp.network()).toBe('bridge');
+        expect(comp.envVars()).toEqual([['FOO', 'a']]);
+
+        // The editor page is reused when navigating from exercise A to exercise B, so the same component instance receives
+        // B through its input without ngOnInit running again. B sets only a memory limit.
+        const exerciseB = new ProgrammingExercise(course, undefined);
+        exerciseB.buildConfig = new ProgrammingExerciseBuildConfig();
+        exerciseB.buildConfig.dockerFlags = '{"env":{},"memory":512}';
+        fixture.componentRef.setInput('programmingExercise', exerciseB);
+        fixture.detectChanges();
+
+        // every control now shows B: its own memory, and the profile default wherever B is silent, never A's leftover
+        expect(comp.memory()).toBe(512);
+        expect(comp.cpuCount()).toBe(1);
+        expect(comp.memorySwap()).toBe(2048);
+        expect(comp.network()).toBeUndefined();
+        expect(comp.envVars()).toEqual([]);
+
+        // an edit on B serializes B's state, not A's, and leaves A untouched
+        comp.onNetworkChange('custom');
+        expect(exerciseB.buildConfig.dockerFlags).toBe('{"env":{},"network":"custom","cpuCount":1,"memory":512,"memorySwap":2048}');
+        expect(exerciseA.buildConfig.dockerFlags).toBe('{"env":{"FOO":"a"},"network":"bridge","cpuCount":4,"memory":2048,"memorySwap":0}');
+    });
+
     it('should set supported languages', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
         comp.setIsLanguageSupported();

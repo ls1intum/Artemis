@@ -9,7 +9,6 @@ import { User } from 'app/account/user/user.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -308,6 +307,8 @@ describe('Course Management Service', () => {
         req.flush(null);
     });
 
+    // `findOneForDashboard` is deprecated for the web client but the endpoint stays for the iOS, Android and
+    // VS Code clients, so these three tests are the only remaining coverage of it and have to keep calling it.
     it('should find one course for dashboard', () => {
         returnedFromService = { ...courseForDashboard };
         courseStorageService
@@ -317,6 +318,7 @@ describe('Course Management Service', () => {
                 expect(updatedCourse).toEqual(course);
             });
         courseManagementService
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note above this test
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
@@ -324,6 +326,7 @@ describe('Course Management Service', () => {
     });
 
     it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note on the test above
         courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
@@ -336,6 +339,7 @@ describe('Course Management Service', () => {
         const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
         const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
         courseManagementService
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note two tests above
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe(() => {
@@ -427,16 +431,6 @@ describe('Course Management Service', () => {
         requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
     });
 
-    it('should get all courses together with user stats', () => {
-        const params = { testParam: 'testParamValue' };
-        returnedFromService = [{ ...course }];
-        courseManagementService
-            .getWithUserStats(params)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/with-user-stats?testParam=testParamValue`, returnedFromService, course, true);
-    });
-
     it('should get all courses for overview', () => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
@@ -447,26 +441,6 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
         expectAccessRightsToBeCalled(1, 1, 1);
-    });
-
-    it('should get all exercise details', () => {
-        returnedFromService = [{ ...course }] as Course[];
-        courseManagementService
-            .getExercisesForManagementOverview(true)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/exercises-for-management-overview?onlyActive=true`, returnedFromService, course);
-    });
-
-    it('should get all stats for overview', () => {
-        const stats = [new CourseManagementOverviewStatisticsDto()];
-        returnedFromService = [...stats];
-        courseManagementService
-            .getStatsForManagementOverview(true)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(stats));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/stats-for-management-overview?onlyActive=true` });
-        req.flush(returnedFromService);
     });
 
     it('should find all categories of course', () => {
@@ -646,6 +620,18 @@ describe('Course Management Service', () => {
         expect(courseStorageService.getCourse(7)?.title).toBe('Course');
     });
 
+    it('should hydrate the course-level Athena flags from the lean course-overview response', () => {
+        // Student-facing feedback-request controls gate on these flags, so the lean projection must carry them
+        // even though it stays lean for everything else Athena-related.
+        let responseCourse: Course | null | undefined;
+        courseManagementService.findCourseForOverview(7).subscribe((response) => (responseCourse = response.body));
+        httpMock
+            .expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' })
+            .flush({ id: 7, title: 'Course', athenaGradingFeedbackEnabled: true, athenaFormativeFeedbackEnabled: true, courseNotificationCount: 0 });
+
+        expect(responseCourse).toMatchObject({ athenaGradingFeedbackEnabled: true, athenaFormativeFeedbackEnabled: true });
+    });
+
     it('should drop a stored course when the lean-course response is empty', () => {
         const notificationSpy = vi.spyOn(courseNotificationService, 'updateNotificationCountMap');
         // Seeded so the removal is observable: an empty response must not leave the previous course readable
@@ -799,18 +785,6 @@ describe('CourseManagementService - authentication state changes', () => {
     it('should ignore in-flight getAllCoursesWithQuizExercises responses after logout', () => {
         const subscription = scoped.getAllCoursesWithQuizExercises().subscribe();
         const inFlight = scopedHttpMock.expectOne(`api/course/courses/courses-with-quiz`);
-
-        authState.next(undefined);
-
-        inFlight.flush([{ id: 1 } as Course]);
-
-        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
-        subscription.unsubscribe();
-    });
-
-    it('should ignore in-flight getWithUserStats responses after logout', () => {
-        const subscription = scoped.getWithUserStats().subscribe();
-        const inFlight = scopedHttpMock.expectOne((req) => req.url === `api/course/courses/with-user-stats`);
 
         authState.next(undefined);
 

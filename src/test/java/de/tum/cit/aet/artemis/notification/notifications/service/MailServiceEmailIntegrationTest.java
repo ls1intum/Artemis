@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.notification.notifications.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,6 +30,8 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentWithVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleSummaryDTO;
 import de.tum.cit.aet.artemis.admin.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
@@ -82,10 +86,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
-        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
-        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new User();
         recipient.setEmail("user@greenmail.test");
@@ -268,7 +272,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void emailChangedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("new-address@tum.de");
@@ -281,7 +285,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
 
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("new-address@tum.de");
@@ -293,7 +297,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // The address reaches the template from user input, so it has to be escaped. The template uses th:text for
         // exactly this reason; th:utext would turn a crafted address into live markup in the recipient's client.
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "<script>alert(1)</script>@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "<script>alert(1)</script>@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).doesNotContain("<script>alert(1)</script>");
@@ -531,6 +535,67 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String body = getDeliveredEmailBody();
         assertThat(body).contains("7.8.0");
         assertThat(body).contains("admin/dependencies");
+    }
+
+    // -- Weekly feature usage digest --
+
+    @Test
+    void featureUsageDigestEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("programming");
+        assertThat(body).contains("1500");
+        // the previous window was smaller, so the change has to read as a rise
+        assertThat(body).contains("+50%");
+        // a module nobody touched is named rather than shown as a row of zeros
+        assertThat(body).contains("lecture");
+        // the whole point of the mail is to get someone onto the page
+        assertThat(body).contains("admin/feature-usage");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
+
+        String body = getDeliveredEmailBody();
+        // proves the German message keys exist too; a missing key would render as ??key??
+        assertThat(body).doesNotContain("??");
+        assertThat(body).contains("Nutzung pro Modul");
+        assertThat(body).contains("admin/feature-usage");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldSayWhenNothingWasRecorded() throws Exception {
+        var empty = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 0, 0, 0, 0, 0, 0, null, List.of(), List.of());
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), empty);
+
+        String body = getDeliveredEmailBody();
+        // an empty deployment must not receive a table of zeros presented as a finding
+        assertThat(body).contains("No usage at all was recorded");
+        assertThat(body).doesNotContain("Usage per module");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldOmitTheChangeWhenThereIsNoPreviousData() throws Exception {
+        var module = new FeatureUsageModuleSummaryDTO("programming", 1500, 0, 3, 40, 60, 20);
+        var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1500, 0, 60, 40, 20, 2, null, List.of(module), List.of());
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), digest);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("n/a");
+        assertThat(body).doesNotContain("%</span>");
+    }
+
+    private static FeatureUsageDigestDTO featureUsageDigest() {
+        var programming = new FeatureUsageModuleSummaryDTO("programming", 1500, 1000, 3, 40, 60, 20);
+        var exam = new FeatureUsageModuleSummaryDTO("exam", 200, 400, 0, 10, 12, 2);
+        return new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1700, 1400, 72, 50, 22, 2, Instant.parse("2026-01-01T00:00:00Z"),
+                List.of(programming, exam), List.of("lecture", "quiz"));
     }
 
     private Map<String, Object> createLoginEmailContext(String authMethod, String loginDate, String loginTime, String requestOrigin, String resetLink) {

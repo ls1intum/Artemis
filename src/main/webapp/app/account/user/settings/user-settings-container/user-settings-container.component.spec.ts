@@ -11,12 +11,15 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/account/user/settings/user-settings-container/user-settings-container.component';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let component: UserSettingsContainerComponent;
 
     let translateService: TranslateService;
+    let featureToggleService: FeatureToggleService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -30,12 +33,14 @@ describe('UserSettingsContainerComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(UserSettingsContainerComponent);
         component = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.use('en');
+        featureToggleService = TestBed.inject(FeatureToggleService);
     });
 
     afterEach(() => {
@@ -63,17 +68,70 @@ describe('UserSettingsContainerComponent', () => {
         it('should hide the science tab when the atlas module is inactive (issue #13173)', () => {
             vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => feature !== MODULE_FEATURE_ATLAS);
             component.ngOnInit();
-            expect(component.isScienceEnabled()).toBe(false);
+            expect(component.isAtlasEnabled()).toBe(false);
             expect(queryScienceLink()).toBeFalsy();
         });
 
         it('should show the science tab when the atlas module is active', () => {
             vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_ATLAS);
             component.ngOnInit();
-            expect(component.isScienceEnabled()).toBe(true);
+            expect(component.isAtlasEnabled()).toBe(true);
             const scienceLink = queryScienceLink();
             expect(scienceLink).toBeTruthy();
             expect(scienceLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.scienceSettings');
+        });
+    });
+
+    describe('learner profile tab visibility', () => {
+        const queryLearnerProfileLink = (): HTMLElement | null => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('a[routerLink="profile"]');
+        };
+
+        /** Marks exactly the given module features active, so a test states the whole module configuration it means. */
+        const setActiveModules = (features: string[]) => {
+            vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => features.includes(feature));
+        };
+
+        it('should hide the learner profile tab when no module backs any of its sections', () => {
+            setActiveModules([]);
+            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, false);
+            component.ngOnInit();
+            expect(component.isLearnerProfileEnabled()).toBe(false);
+            expect(queryLearnerProfileLink()).toBeFalsy();
+        });
+
+        it('should show the learner profile tab when the atlas module is active', () => {
+            setActiveModules([MODULE_FEATURE_ATLAS]);
+            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, false);
+            component.ngOnInit();
+            expect(component.isLearnerProfileEnabled()).toBe(true);
+            const learnerProfileLink = queryLearnerProfileLink();
+            expect(learnerProfileLink).toBeTruthy();
+            expect(learnerProfileLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.learnerProfile');
+        });
+
+        it('should show the learner profile tab for the insights section once Memiris is switched on', () => {
+            setActiveModules([MODULE_FEATURE_IRIS]);
+            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, false);
+            component.ngOnInit();
+            expect(component.isLearnerProfileEnabled()).toBe(false);
+            expect(queryLearnerProfileLink()).toBeFalsy();
+
+            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, true);
+
+            expect(component.isLearnerProfileEnabled()).toBe(true);
+            expect(queryLearnerProfileLink()).toBeTruthy();
+        });
+
+        it('should hide the learner profile tab when Memiris is on but the iris module serving it is not', () => {
+            // IrisMemoryResource is @Conditional(IrisEnabled) as well as @FeatureToggle(Memiris), and the toggle is
+            // seeded independently of the module, so the toggle alone must not show a tab that would answer 404
+            setActiveModules([]);
+            featureToggleService.setFeatureToggleState(FeatureToggle.Memiris, true);
+            component.ngOnInit();
+            expect(component.isLearnerProfileEnabled()).toBe(false);
+            expect(queryLearnerProfileLink()).toBeFalsy();
         });
     });
 

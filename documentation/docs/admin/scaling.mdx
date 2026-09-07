@@ -109,7 +109,7 @@ At the same total cost, several small core nodes usually beat one large one:
   it finds the other nodes through the
   [service registry](/admin/production-setup/multiple-artemis-instances#discovery-service), which the
   setup pages also call the discovery service; with
-  [Redis](/developer/guidelines/distributed-data#redis-needs-no-service-registry) no registry is needed at
+  [Redis](/admin/production-setup/distributed-data#redis-does-not-need-a-service-registry) no registry is needed at
   all. Either way, nothing has to be reconfigured on the nodes that are already running.
 - **Load really does spread.** In both measured cluster runs the traffic reached all three core nodes.
   One of them was busier than the other two, but the other two were carrying a substantial share of the
@@ -255,7 +255,7 @@ component one machine and knowing what would actually increase its load.
 | --- | --- | --- | --- |
 | Database | The dataset, not the user count | Under half of one machine | [Database Tips](/admin/database-tips) |
 | Repository storage | Total repository volume | ~11% of one machine | [File system](/admin/production-setup/multiple-artemis-instances#file-system) |
-| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis; Hazelcast was not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/developer/guidelines/distributed-data) |
+| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis; Hazelcast was not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/admin/production-setup/distributed-data) |
 | Load balancer / reverse proxy | Request and git traffic | 8-11% of one machine | [nginx configuration](/admin/production-setup/multiple-artemis-instances#nginx-configuration), [configuration templates](/admin/production-setup/additional-tips#nginx-configuration-templates) |
 | Service registry (Hazelcast only) | Number of nodes | Negligible | [Discovery service](/admin/production-setup/multiple-artemis-instances#discovery-service) |
 | Global search | How much content is indexed, and the embedding strategy chosen | Not part of the exam benchmark | [Global Search & Weaviate](/admin/global-search-weaviate) |
@@ -324,6 +324,8 @@ Results from other institutions are very welcome.
   build agents, coordination, WebSockets, the shared file system and nginx
 - [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) covers the
   built-in version control and build system
+- [LocalCI Build Runners](/admin/production-setup/build-runners) explains how a build agent executes a
+  build, and how to choose between the Docker and Kubernetes runners
 - [Jenkins and LocalVC Setup](/admin/jenkins-localvc) covers the external CI alternative and its build
   agents
 - [Additional Production Setup Tips](/admin/production-setup/additional-tips) collects systemd units,
@@ -342,7 +344,7 @@ Results from other institutions are very welcome.
 
 - [Benchmarking Tool](/admin/benchmarking-tool) holds the tool, the scenarios and the full measured
   results behind this page
-- [Distributed Data](/developer/guidelines/distributed-data) explains how cross-node state works and how
+- [Distributed Data](/admin/production-setup/distributed-data) explains how cross-node state works and how
   to choose between Hazelcast and Redis
 - [Performance](/developer/guidelines/performance) documents the server-side practices that keep the
   database load low in the first place

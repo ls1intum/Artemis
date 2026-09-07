@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("chat/availability")
 @RestController
 @RequestMapping("api/iris/")
 public class IrisResource {
