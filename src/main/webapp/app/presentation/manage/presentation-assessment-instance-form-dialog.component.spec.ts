@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 
 import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
@@ -7,11 +7,12 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
+import { PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
-    let saved: ReturnType<typeof vi.fn>;
+    let saved: Mock<(value: PresentationAssessmentInstance) => void>;
 
     const presentationDate = dayjs('2026-07-31T13:26:00+02:00');
 
@@ -79,7 +80,8 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component.save();
 
         const savedInstance = saved.mock.calls[0][0];
-        expect(savedInstance.presentationDate.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
+        expect(savedInstance.presentationDate).toBeDefined();
+        expect(savedInstance.presentationDate!.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
     });
 
     it('should include a trimmed remark when saving an instance', () => {

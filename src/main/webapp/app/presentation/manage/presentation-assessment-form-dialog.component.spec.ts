@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PresentationAssessmentFormDialogComponent } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
+import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentFormDialogComponent>;
     let component: PresentationAssessmentFormDialogComponent;
-    let saved: ReturnType<typeof vi.fn>;
-    let cancelled: ReturnType<typeof vi.fn>;
-    let deleteRequested: ReturnType<typeof vi.fn>;
+    let saved: Mock<(value: PresentationAssessmentFormDialogResult) => void>;
+    let cancelled: Mock<(value: void) => void>;
+    let deleteRequested: Mock<(value: PresentationAssessment) => void>;
 
     const courseId = 1;
     const presentationAssessment: PresentationAssessment = {
