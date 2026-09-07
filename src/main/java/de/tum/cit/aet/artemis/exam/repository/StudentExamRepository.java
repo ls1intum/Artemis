@@ -67,9 +67,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.exerciseGroup", "exercises.exerciseGroup.exam", "studentParticipations" })
     Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
 
-    // The exam's course and its athenaConfig are fetched because the summary this feeds decides from
-    // course.athenaFormativeFeedbackEnabled whether to offer the AI feedback request (see Course#isAthenaFormativeFeedbackEnabled,
-    // which reports false for an uninitialized proxy).
     @Query("""
             SELECT se
             FROM StudentExam se
@@ -77,9 +74,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 LEFT JOIN FETCH e.submissionPolicy
                 LEFT JOIN FETCH se.examSessions
                 LEFT JOIN FETCH se.studentParticipations
-                LEFT JOIN FETCH se.exam ex
-                LEFT JOIN FETCH ex.course exCourse
-                LEFT JOIN FETCH exCourse.athenaConfig
             WHERE se.id = :studentExamId
             """)
     Optional<StudentExam> findWithExercisesSubmissionPolicySessionsAndStudentParticipationsById(@Param("studentExamId") long studentExamId);

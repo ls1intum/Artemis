@@ -236,6 +236,29 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
     }
 
     /**
+     * The grade DTO path shares the {@code exam-result-summary} component with the student {@code /summary} path, so its
+     * nested course must carry {@code athenaFormativeFeedbackEnabled} as well, otherwise the AI feedback button stays
+     * hidden on the instructor detail and test run summary screens. The flag is read off the course entity through
+     * {@code Course#isAthenaFormativeFeedbackEnabled}, which reports false for an athenaConfig that was not loaded.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void instructorGetStudentExamWireCarriesAthenaFormativeFeedbackEnabled() throws Exception {
+        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
+
+        JsonNode gradeWire = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId(), HttpStatus.OK, JsonNode.class);
+
+        JsonNode courseNode = gradeWire.get("studentExam").get("exam").get("course");
+        assertThat(courseNode).as("grade DTO wire must carry the nested course").isNotNull();
+        assertThat(courseNode.path("athenaFormativeFeedbackEnabled").asBoolean()).as("athenaFormativeFeedbackEnabled must be on the grade DTO wire").isTrue();
+    }
+
+    /**
      * FINDING 2 (student side): the masked student-facing summary wire must keep carrying {@code hasComplaint} exactly as
      * the pre-DTO entity wire did (never stripped by {@code Result#filterSensitiveInformation}), including the explicit
      * {@code false} case rather than silently omitting the field.
