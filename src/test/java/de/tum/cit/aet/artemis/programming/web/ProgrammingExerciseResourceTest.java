@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateD
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -147,9 +148,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
-
-    @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
@@ -422,6 +420,24 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         newExercise.setProblemStatement("a".repeat(100_001));
 
         request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforePersistence() throws Exception {
+        addInstructorToCourse();
+        long exerciseCountBeforeRequest = programmingExerciseRepository.count();
+
+        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), dueDate, course);
+        newExercise.setAssessmentDueDate(dueDate.plusMinutes(10));
+        newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        newExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeRequest);
     }
 
     @Test

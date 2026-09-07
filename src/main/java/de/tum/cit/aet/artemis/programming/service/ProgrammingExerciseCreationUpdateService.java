@@ -209,6 +209,14 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
+        programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(programmingExercise);
+        if (programmingExercise.isCourseExercise()) {
+            prepareAndValidateTimelineForUpdate(programmingExercise, null);
+        }
+        else {
+            programmingExercise.validateDates();
+        }
+
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
@@ -237,8 +245,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         // Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
-
-        programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(savedProgrammingExercise);
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
