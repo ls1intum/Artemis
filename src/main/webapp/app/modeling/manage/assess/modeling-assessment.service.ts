@@ -6,6 +6,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
@@ -90,7 +91,7 @@ export class ModelingAssessmentService {
     }
 
     private static convertItemFromServer(result: Result): Result {
-        return Object.assign({}, result);
+        return deepClone(result);
     }
 
     /**

@@ -32,6 +32,8 @@ import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('ExerciseHeaderComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderComponent>;
@@ -52,6 +54,7 @@ describe('ExerciseHeaderComponent', () => {
                         participations.find((participation) => !!participation.testRun === testRun),
                 }),
                 MockProvider(AccountService, { userIdentity: signal({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User) }),
+                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
             ],
         });
 
@@ -112,17 +115,12 @@ describe('ExerciseHeaderComponent', () => {
     });
 
     describe('programming exercise AI feedback button', () => {
-        function configureProgrammingExercise(
-            allowOnlineEditor: boolean | undefined,
-            submitted: boolean,
-            hasResult: boolean,
-            feedbackSuggestionModule = 'module_programming_llm',
-        ): void {
+        function configureProgrammingExercise(allowOnlineEditor: boolean | undefined, submitted: boolean, hasResult: boolean): void {
             const exercise = new ProgrammingExercise(undefined, undefined);
             exercise.id = 1;
             exercise.type = ExerciseType.PROGRAMMING;
-            exercise.allowFeedbackRequests = true;
-            exercise.feedbackSuggestionModule = feedbackSuggestionModule;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             exercise.allowOnlineEditor = allowOnlineEditor;
 
             const participation = new StudentParticipation();
@@ -141,7 +139,7 @@ describe('ExerciseHeaderComponent', () => {
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
         });
 
         it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
@@ -149,14 +147,15 @@ describe('ExerciseHeaderComponent', () => {
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
         it('should pass the active participation to the feedback button', () => {
             const exercise = new ProgrammingExercise(undefined, undefined);
             exercise.id = 1;
             exercise.type = ExerciseType.PROGRAMMING;
-            exercise.allowFeedbackRequests = true;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             exercise.allowOnlineEditor = false;
 
             const gradedParticipation = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
@@ -171,22 +170,23 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
 
             let feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+            expect(feedbackButton.componentInstance.participationId()).toBe(gradedParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
 
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
             feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId).toBe(practiceParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+            expect(feedbackButton.componentInstance.participationId()).toBe(practiceParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
         it('should hide the feedback button when the exercise has not been started', () => {
             const exercise = new ProgrammingExercise(undefined, undefined);
             exercise.id = 1;
             exercise.type = ExerciseType.PROGRAMMING;
-            exercise.allowFeedbackRequests = true;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             exercise.allowOnlineEditor = false;
 
             fixture.componentRef.setInput('exercise', exercise);
@@ -201,12 +201,6 @@ describe('ExerciseHeaderComponent', () => {
             configureProgrammingExercise(allowOnlineEditor, true, false);
 
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
-        });
-
-        it('should not require a feedback suggestion module in the header action wrapper', () => {
-            configureProgrammingExercise(false, true, false, undefined);
-
-            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
     });
 

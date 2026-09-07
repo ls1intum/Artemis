@@ -71,6 +71,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
     ['HIGH']: 0,
@@ -458,12 +459,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.activeCodeGenerationRepository = repositoryType;
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({
-            ...status,
-            state: 'running',
-            attempts: undefined,
-            message: undefined,
-        }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'running', attempts: undefined, message: undefined }));
 
         const request = this.createCodeGenerationRequest(repositoryType, false, this.currentCodeGenerationUsesInitialIterationLimit);
         const exerciseId = this.exercise.id;
@@ -753,7 +749,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.hasCustomCodeGenerationSelection = true;
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, enabled }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { enabled }));
     }
 
     /**
@@ -830,12 +826,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             const completionState = this.getCodeGenerationExecutionState(event);
             this.flushCodeGenerationRepositoryPull(repositoryType);
             this.codeEditorContainer()?.actions()?.executeRefresh();
-            this.updateCodeGenerationStatus(repositoryType, (status) => ({
-                ...status,
-                state: completionState,
-                attempts: event.attempts,
-                message: event.message,
-            }));
+            this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: completionState, attempts: event.attempts, message: event.message }));
             this.showCodeGenerationCompletionAlert(repositoryType, completionState);
             this.finishCurrentCodeGeneration(true);
             return;
@@ -878,11 +869,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         alertTranslationKey: 'artemisApp.programmingExercise.codeGeneration.error' | 'artemisApp.programmingExercise.codeGeneration.timeout',
         showAlert = true,
     ) {
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({
-            ...status,
-            state: 'error',
-            message,
-        }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'error', message }));
         this.markQueuedCodeGenerationRepositoriesSkipped(repositoryType);
         this.queuedCodeGenerationRepositories = [];
         this.activeCodeGenerationRepository = undefined;
@@ -914,15 +901,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.codeGenerationStatuses.update((statuses) =>
-            statuses.map((status) =>
-                queuedRepositories.has(status.repositoryType)
-                    ? {
-                          ...status,
-                          state: 'skipped',
-                          message: skippedMessage,
-                      }
-                    : status,
-            ),
+            statuses.map((status) => (queuedRepositories.has(status.repositoryType) ? cloneWith(status, { state: 'skipped', message: skippedMessage }) : status)),
         );
     }
 
@@ -940,10 +919,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             iteration,
             timestamp: Date.now(),
         };
-        this.updateCodeGenerationStatus(repositoryType, (status) => ({
-            ...status,
-            fileActivities: [activity, ...status.fileActivities],
-        }));
+        this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { fileActivities: [activity, ...status.fileActivities] }));
     }
 
     getCodeGenerationIterationActivityGroups(fileActivities: CodeGenerationFileActivity[]): CodeGenerationIterationActivityGroup[] {
@@ -1178,12 +1154,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private syncCodeGenerationSelectionWithSelectedRepository() {
         const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
-        this.codeGenerationStatuses.update((statuses) =>
-            statuses.map((status) => ({
-                ...status,
-                enabled: repositoryType === status.repositoryType,
-            })),
-        );
+        this.codeGenerationStatuses.update((statuses) => statuses.map((status) => cloneWith(status, { enabled: repositoryType === status.repositoryType })));
     }
 
     /**
@@ -1214,21 +1185,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private restorePersistedCodeGenerationStatuses(repositoryType: SupportedCodeGenerationRepositoryType, persistedState?: PersistedCodeGenerationState) {
         if (persistedState) {
             this.codeGenerationStatuses.set(
-                persistedState.statuses.map((status) =>
-                    status.repositoryType === repositoryType
-                        ? {
-                              ...status,
-                              enabled: true,
-                              state: 'running',
-                          }
-                        : status,
-                ),
+                persistedState.statuses.map((status) => (status.repositoryType === repositoryType ? cloneWith(status, { enabled: true, state: 'running' }) : status)),
             );
             this.queuedCodeGenerationRepositories = [...persistedState.queuedRepositories];
             this.currentCodeGenerationUsesInitialIterationLimit = persistedState.initialAutoGeneration;
         } else {
             this.initializeCodeGenerationRunStatuses([repositoryType]);
-            this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, state: 'running' }));
+            this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'running' }));
             this.queuedCodeGenerationRepositories = [];
             this.currentCodeGenerationUsesInitialIterationLimit = false;
         }
@@ -1283,13 +1246,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             const activeRepository = this.sanitizePersistedCodeGenerationRepositoryType(persistedState.activeRepository);
             const queuedRepositories = this.sanitizePersistedCodeGenerationQueuedRepositories(persistedState.queuedRepositories, activeRepository);
 
-            return {
-                ...persistedState,
-                statuses,
-                queuedRepositories,
-                activeRepository,
-                initialAutoGeneration: !!persistedState.initialAutoGeneration,
-            };
+            return cloneWith(persistedState, { statuses, queuedRepositories, activeRepository, initialAutoGeneration: !!persistedState.initialAutoGeneration });
         } catch {
             this.sessionStorageService.remove(key);
             return;

@@ -13,7 +13,6 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
@@ -25,6 +24,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -89,7 +89,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         // Use cloneDeep to avoid tests modifying the shared question object
-        component.shortAnswerQuestion = cloneDeep(question);
+        component.shortAnswerQuestion = deepClone(question);
         fixture.componentRef.setInput('questionIndex', 0);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         fixture.detectChanges();
@@ -122,7 +122,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts()).toEqual(expectedTextParts);
 
         // test a long method with multiple indentations and concatenated words
-        const newQuestion2 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion2 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion2.text =
             'Enter your long question if needed\n\n' +
             'Select a part of the[-spot 6]and click on Add Spot to automatically [-spot 9]an input field and the corresponding[-spot 16]\n\n' +
@@ -185,7 +185,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts()).toEqual(expectedTextParts);
 
         // tests simple indentation
-        const newQuestion3 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion3 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion3.text =
             '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
         fixture.componentRef.setInput('question', newQuestion3);
@@ -195,7 +195,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts()).toEqual(expectedTextParts);
 
         // classic java main method test
-        const newQuestion4 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion4 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion4.text =
             '[-spot 1] class [-spot 2] {\n' +
             '    public static void main([-spot 3][] args){\n' +
@@ -215,7 +215,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts()).toEqual(expectedTextParts);
 
         // test multiple line parameter for method header
-        const newQuestion5 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion5 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion5.text =
             'private[-spot 1] methodCallWithMultipleLineParameter (\n' +
             '    int number,\n' +
@@ -239,7 +239,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts()).toEqual(expectedTextParts);
 
         // test nested arrays
-        const newQuestion6 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion6 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion6.text =
             'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
         fixture.componentRef.setInput('question', newQuestion6);
@@ -257,7 +257,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts()).toEqual(expectedTextParts);
 
         // test textual enumeration
-        const newQuestion7 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion7 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion7.text =
             'If we want a enumeration, we can also [-spot 1] this:\n' +
             '- first major point\n' +
@@ -593,7 +593,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const backup = new ShortAnswerQuestion();
         component.backupQuestion = backup;
         component.backupQuestion.spots = [spot1, spot2];
-        const modifiedSpot = cloneDeep(spot1);
+        const modifiedSpot = deepClone(spot1);
         modifiedSpot.spotNr = 10; // initial spotNr was 0
         component.shortAnswerQuestion.spots = [modifiedSpot, spot2];
 

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -74,6 +75,9 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    Set<QuizExercise> findWithEagerQuestionsByIdIn(Collection<Long> quizExerciseIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
     Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);

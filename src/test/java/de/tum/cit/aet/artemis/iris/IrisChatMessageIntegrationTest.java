@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -100,6 +102,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
+
+    @Autowired
     private IrisSessionRepository irisSessionRepository;
 
     @Autowired
@@ -138,7 +143,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
         memirisFeatureEnabledBeforeTest = featureToggleService.isFeatureEnabled(Feature.Memiris);
-        student1MemirisEnabledBeforeTest = userUtilService.getUserByLogin(TEST_PREFIX + "student1").isMemirisEnabled();
+        student1MemirisEnabledBeforeTest = userAiPreferenceService.isMemirisEnabled(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
     }
 
     @AfterEach
@@ -150,7 +155,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             featureToggleService.disableFeature(Feature.Memiris);
         }
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userTestRepository.updateMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
     }
 
     // =========================================================================
@@ -202,8 +207,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessage_disablesMemirisInPyrisDtoWhenFeatureDisabled() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setMemirisEnabled(true);
-        userTestRepository.saveAndFlush(user);
+        userUtilService.setMemirisEnabled(user, true);
         featureToggleService.disableFeature(Feature.Memiris);
 
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
@@ -216,7 +220,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
-        assertThat(userTestRepository.findByIdElseThrow(user.getId()).isMemirisEnabled()).isTrue();
+        // the toggle suppresses Memiris for this request without touching what the account itself chose
+        assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
     }
 
     @ParameterizedTest
@@ -661,22 +666,22 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         private ProgrammingExerciseStudentParticipation provisionProgrammingRepositories(ProgrammingExercise exercise) throws GitAPIException, IOException, URISyntaxException {
             String projectKey = exercise.getProjectKey();
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
             programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
             programmingExerciseRepository.save(exercise);
             ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
 
-            String templateSlug = projectKey.toLowerCase() + "-exercise";
+            String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
             templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateSlug + ".git");
             templateProgrammingExerciseParticipationRepository.save(templateParticipation);
 
-            String solutionSlug = projectKey.toLowerCase() + "-solution";
+            String solutionSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
             SolutionProgrammingExerciseParticipation solutionParticipation = reloaded.getSolutionParticipation();
             solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionSlug + ".git");
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-            String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+            String assignmentSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(reloaded,
                     TEST_PREFIX + "student1");
             participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
@@ -684,10 +689,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentSlug);
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
             localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
 
             return studentParticipation;
@@ -697,32 +702,32 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 throws GitAPIException, IOException, URISyntaxException {
             String projectKey = exercise.getProjectKey();
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
             programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
             programmingExerciseRepository.save(exercise);
             ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
 
-            String templateSlug = projectKey.toLowerCase() + "-exercise";
+            String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
             templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateSlug + ".git");
             templateProgrammingExerciseParticipationRepository.save(templateParticipation);
 
-            String solutionSlug = projectKey.toLowerCase() + "-solution";
+            String solutionSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
             SolutionProgrammingExerciseParticipation solutionParticipation = reloaded.getSolutionParticipation();
             solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionSlug + ".git");
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-            String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "team1";
+            String assignmentSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "team1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(reloaded, team);
             participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
             studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentSlug);
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
             localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
 
             return studentParticipation;

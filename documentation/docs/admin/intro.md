@@ -17,3 +17,5 @@ This documentation covers:
 - Monitoring, scaling, and integrating external services
 
 Begin with the **[Security Configuration](./production-setup/security.mdx)** section to ensure your deployment follows secure setup practices.
+
+If you are planning a deployment rather than operating one, start with **[Scaling Artemis](./scaling.mdx)**. It covers how many servers an installation needs and how much CPU and memory each one needs, and it explains which component to add capacity to when the platform is slow.

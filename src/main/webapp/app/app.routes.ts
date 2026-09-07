@@ -133,25 +133,6 @@ const routes: Routes = [
             usesModuleBackground: true,
         },
     },
-    // ===== TEAM ====
-    {
-        path: 'course-management/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
-        // Preload-only authorities (no canActivate): least-privileged authority the team routes require.
-        data: {
-            usesModuleBackground: true,
-            authorities: IS_AT_LEAST_STUDENT,
-        },
-    },
-    {
-        path: 'courses/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
-        // Preload-only authorities (no canActivate): least-privileged authority the team routes require.
-        data: {
-            usesModuleBackground: true,
-            authorities: IS_AT_LEAST_STUDENT,
-        },
-    },
     // ===== ACCOUNT ====
     {
         path: 'account',
@@ -215,6 +196,12 @@ const routes: Routes = [
     },
     // ===== COURSE MANAGEMENT =====
     {
+        // Legacy compatibility for bookmarks to the removed management overview. Keep this redirect at the root and relative as an absolute redirect inside the lazy course-management routes drops the named navbar outlet and query parameters.
+        path: 'course-management',
+        pathMatch: 'full',
+        redirectTo: 'courses',
+    },
+    {
         path: 'course-management',
         loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementRoutes),
         // No canActivate here, so `authorities` is read only by RoleAwarePreloadingStrategy: it lets eligible
@@ -244,15 +231,6 @@ const routes: Routes = [
             authorities: IS_AT_LEAST_STUDENT,
         },
     },
-    // ===== GRADING SYSTEM =====
-    {
-        path: 'courses/:courseId/grading',
-        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
-        data: {
-            usesModuleBackground: true,
-        },
-    },
-
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',

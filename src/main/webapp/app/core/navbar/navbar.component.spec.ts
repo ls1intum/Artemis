@@ -46,9 +46,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
-import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import dayjs from 'dayjs/esm';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -84,16 +81,15 @@ describe('NavbarComponent', () => {
     let component: NavbarComponent;
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
-    let examParticipationService: ExamParticipationService;
     let currentCourseContextService: CurrentCourseContextService;
 
     const router = new MockRouter();
     router.setUrl('');
 
-    const courseManagementCrumb = {
-        label: 'global.menu.course',
+    const courseOverviewCrumb = {
+        label: 'overview.title',
         translate: true,
-        uri: '/course-management/',
+        uri: '/courses',
     } as MockBreadcrumb;
 
     const testCourseCrumb = {
@@ -160,7 +156,6 @@ describe('NavbarComponent', () => {
         component = fixture.componentInstance;
         router.navigate.mockClear();
         router.navigateByUrl.mockClear();
-        examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
         currentCourseContextService = TestBed.inject(CurrentCourseContextService);
         currentCourseContextService.clearCourse();
@@ -241,6 +236,20 @@ describe('NavbarComponent', () => {
             isAtLeastInstructor: true,
         } as Course;
 
+        it('should hide the perspective switch on the course overview', () => {
+            currentCourseContextService.setCourse(tutorCourse);
+            router.setUrl('/courses');
+
+            expect(component.showPerspectiveSwitch()).toBe(false);
+        });
+
+        it('should show the perspective switch within an individual course', () => {
+            currentCourseContextService.setCourse(tutorCourse);
+            router.setUrl('/courses/123/exercises');
+
+            expect(component.showPerspectiveSwitch()).toBe(true);
+        });
+
         beforeEach(() => {
             currentCourseContextService.setCourse(instructorCourse);
         });
@@ -274,7 +283,7 @@ describe('NavbarComponent', () => {
                 router.setUrl(url);
 
                 expect(component.studentViewLink()).toEqual(['/courses']);
-                expect(component.managementViewLink()).toEqual(['/course-management']);
+                expect(component.managementViewLink()).toEqual(['/courses']);
             },
         );
 
@@ -302,7 +311,7 @@ describe('NavbarComponent', () => {
         });
 
         it.each([
-            { course: studentCourse, url: '/courses/123/exercises', expected: ['/course-management'] },
+            { course: studentCourse, url: '/courses/123/exercises', expected: ['/courses'] },
             { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
@@ -318,7 +327,7 @@ describe('NavbarComponent', () => {
             router.setUrl('/courses');
 
             expect(component.studentViewLink()).toEqual(['/courses']);
-            expect(component.managementViewLink()).toEqual(['/course-management']);
+            expect(component.managementViewLink()).toEqual(['/courses']);
         });
     });
 
@@ -356,164 +365,27 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs()).toHaveLength(3);
+        expect(component.breadcrumbs()).toHaveLength(0);
+        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
     });
 
-    it('should build breadcrumbs for course management', () => {
-        const testUrl = '/course-management';
-        router.setUrl(testUrl);
+    it('should not build breadcrumbs when creating a course', () => {
+        router.setUrl('/course-management/new');
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs()).toHaveLength(1);
-        expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+        expect(component.breadcrumbs()).toHaveLength(0);
+        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
     });
 
-    it('should ignore query parameters', () => {
-        const testUrl = '/course-management?query=param';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(component.breadcrumbs()).toHaveLength(1);
-        expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
-    });
-
-    it('should build breadcrumbs for system notification management', () => {
-        const testUrl = '/admin/system-notification-management/1/edit';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(component.breadcrumbs()).toHaveLength(4);
-
-        expect(component.breadcrumbs()[0]).toEqual({
-            label: 'global.menu.admin.main',
-            translate: true,
-            uri: '/admin/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[1]).toEqual({
-            label: 'global.menu.admin.sidebar.notifications',
-            translate: true,
-            uri: '/admin/system-notification-management/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[2]).toEqual({
-            label: '1',
-            translate: false,
-            uri: '/admin/system-notification-management/1/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[3]).toEqual({
-            label: 'global.generic.edit',
-            translate: true,
-            uri: '/admin/system-notification-management/1/edit/',
-        } as MockBreadcrumb);
-    });
-
-    it('should build breadcrumbs for user management', () => {
+    it('should not build breadcrumbs for administration routes', () => {
         const testUrl = '/admin/user-management/test_user';
         router.setUrl(testUrl);
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs()).toHaveLength(3);
-
-        expect(component.breadcrumbs()[0]).toEqual({
-            label: 'global.menu.admin.main',
-            translate: true,
-            uri: '/admin/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[1]).toEqual({
-            label: 'global.menu.admin.sidebar.users',
-            translate: true,
-            uri: '/admin/user-management/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[2]).toEqual({
-            label: 'test_user',
-            translate: false,
-            uri: '/admin/user-management/test_user/',
-        } as MockBreadcrumb);
-    });
-
-    it('should build breadcrumbs for organization management', () => {
-        const testUrl = '/admin/organization-management/1';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(entityTitleServiceStub).toHaveBeenCalledOnce();
-        expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.ORGANIZATION, [1]);
-        expect(component.breadcrumbs()).toHaveLength(3);
-
-        expect(component.breadcrumbs()[0]).toEqual({
-            label: 'global.menu.admin.main',
-            translate: true,
-            uri: '/admin/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[1]).toEqual({
-            label: 'global.menu.admin.sidebar.organizations',
-            translate: true,
-            uri: '/admin/organization-management/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[2]).toEqual({
-            label: 'Test Organization',
-            translate: false,
-            uri: '/admin/organization-management/1/',
-        } as MockBreadcrumb);
-    });
-
-    it('should show user management breadcrumbs for the admin root', () => {
-        const testUrl = '/admin';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(component.breadcrumbs()).toHaveLength(2);
-        expect(component.breadcrumbs()[0]).toEqual({
-            label: 'global.menu.admin.main',
-            translate: true,
-            uri: '/admin/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[1]).toEqual({
-            label: 'global.menu.admin.sidebar.users',
-            translate: true,
-            uri: '/admin/user-management/',
-        } as MockBreadcrumb);
-    });
-
-    it('should not error without translation', () => {
-        const testUrl = '/admin/route-without-translation';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(component.breadcrumbs()).toHaveLength(2);
-
-        expect(component.breadcrumbs()[0]).toEqual({
-            label: 'global.menu.admin.main',
-            translate: true,
-            uri: '/admin/',
-        } as MockBreadcrumb);
-        expect(component.breadcrumbs()[1]).toEqual({
-            label: 'route-without-translation',
-            translate: false,
-            uri: '/admin/route-without-translation/',
-        } as MockBreadcrumb);
-    });
-
-    it('should hide breadcrumb when exam is started', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
-        const testUrl = '/courses/1/exams/2';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-        component.isExamActive.set(true);
-        fixture.changeDetectorRef.detectChanges();
-        expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
-
-        component.isExamStarted.set(false);
-        component.isExamActive.set(false);
-        fixture.changeDetectorRef.detectChanges();
-        expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
+        expect(component.breadcrumbs()).toHaveLength(0);
+        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
     });
 
     it('should have correct git info', () => {
@@ -526,37 +398,6 @@ describe('NavbarComponent', () => {
         expect(component.gitBranchName()).toBe('code-button');
         expect(component.gitTimestamp()).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
         expect(component.gitUsername()).toBe('Max Musterman');
-    });
-
-    it('should set the exam active state correctly', async () => {
-        vi.useFakeTimers();
-        const now = dayjs();
-        const examParticipationService = TestBed.inject(ExamParticipationService);
-        const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-
-        fixture.detectChanges();
-        activatedRoute.setParameters({ examId: 1 });
-        router.setUrl('/course/2/exams/1');
-
-        examParticipationService.currentlyLoadedStudentExam.next({
-            workingTime: 60,
-            exam: {
-                id: 1,
-                startDate: now.add(1, 'minute'),
-                endDate: now.add(2, 'minutes'),
-                gracePeriod: 180,
-            },
-        } as StudentExam);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.isExamActive()).toBe(false);
-        await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive()).toBe(true);
-        await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive()).toBe(true);
-        await vi.advanceTimersByTimeAsync(180000);
-        expect(component.isExamActive()).toBe(false);
-        vi.useRealTimers();
     });
 
     describe('Special Cases for Breadcrumbs', () => {
@@ -577,7 +418,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
             expect(component.breadcrumbs()[3]).toEqual(importCrumb);
@@ -601,7 +442,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(5);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
             expect(component.breadcrumbs()[3]).toEqual({
@@ -630,7 +471,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(5);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
             expect(component.breadcrumbs()[3]).toEqual({
@@ -655,7 +496,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.assessmentDashboard.home.title',
@@ -711,7 +552,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.course.exercises',
@@ -751,7 +592,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.course.exercises',
@@ -791,7 +632,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.lecture.home.title',
@@ -819,7 +660,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.apollonDiagram.home.title',
@@ -856,7 +697,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.examManagement.title',
@@ -901,7 +742,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(7);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.examManagement.title',
@@ -949,83 +790,6 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
             expect(component.breadcrumbs()).toHaveLength(5);
             expect(component.breadcrumbs()[4]).toMatchObject({ uri: url + '/', label: label });
-        });
-    });
-
-    describe('Special student route breadcrumb cases', () => {
-        it.each([
-            {
-                url: '/courses/1/code-editor/2',
-                label: 'artemisApp.editor.breadCrumbTitle',
-            },
-            {
-                url: '/courses/1/exams/test-exam/2',
-                label: 'artemisApp.courseOverview.menu.testExam',
-            },
-            {
-                url: '/courses/1/exercises/2/participate/3',
-                label: 'artemisApp.submission.detail.title',
-            },
-        ])('should use translated labels for student route id segment %s', ({ url, label }) => {
-            router.setUrl(url);
-
-            fixture.detectChanges();
-
-            expect(component.breadcrumbs().at(-1)).toMatchObject({
-                label,
-                translate: true,
-                uri: url + '/',
-            });
-        });
-
-        it('should resolve a student exercise route without an exercise type segment', () => {
-            const testUrl = '/courses/1/exercises/2';
-            router.setUrl(testUrl);
-
-            fixture.detectChanges();
-
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
-            expect(component.breadcrumbs()).toHaveLength(4);
-            expect(component.breadcrumbs()[3]).toEqual({
-                label: 'Test Exercise',
-                translate: false,
-                uri: '/courses/1/exercises/2/',
-            } as MockBreadcrumb);
-        });
-
-        it('should resolve a student tutorial lecture route', () => {
-            const testUrl = '/courses/1/tutorial-lectures/2';
-            router.setUrl(testUrl);
-
-            fixture.detectChanges();
-
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.LECTURE, [2]);
-            expect(component.breadcrumbs()).toHaveLength(4);
-            expect(component.breadcrumbs()[3]).toEqual({
-                label: 'Test Lecture',
-                translate: false,
-                uri: '/courses/1/tutorial-lectures/2/',
-            } as MockBreadcrumb);
-        });
-
-        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
-            const testUrl = `/courses/1/exercises/${exType}/2`;
-            router.setUrl(testUrl);
-
-            fixture.detectChanges();
-
-            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
-
-            expect(component.breadcrumbs()).toHaveLength(4);
-            expect(component.breadcrumbs()[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
-            expect(component.breadcrumbs()[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
-            expect(component.breadcrumbs()[2]).toMatchObject({
-                uri: '/courses/1/exercises/',
-                label: 'artemisApp.courseOverview.menu.exercises',
-            });
-            expect(component.breadcrumbs()[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
         });
     });
 

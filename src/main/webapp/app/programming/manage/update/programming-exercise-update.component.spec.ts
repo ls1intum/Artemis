@@ -27,7 +27,9 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
     MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
@@ -800,20 +802,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
-                // Only available for Maven
-                if (projectType === ProjectType.PLAIN_MAVEN) {
-                    // Needed to trigger setting of update template since we can't use UI components.
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-
-                    expect(comp.importOptions.updateTemplate).toBe(true);
-
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-                }
-
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
                 fixture.changeDetectorRef.detectChanges();
@@ -822,14 +810,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
-                // Recreate build plan and template update should be automatically selected
+                // Recreating the build plans should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
                 expect(comp.importOptions.recreateBuildPlans).toBe(true);
-                expect(comp.importOptions.updateTemplate).toBe(true);
 
                 comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
-                comp.onRecreateBuildPlanOrUpdateTemplateChange();
+                comp.onRecreateBuildPlanChange();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
@@ -1214,6 +1201,93 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.exercise.form.shortName.minlength',
                 translateValues: {},
             });
+        });
+
+        const setupCustomizeBuildPlan = (buildPlanPhasesJSON: string | undefined, dockerFlags: string | undefined) => {
+            comp.programmingExercise.customizeBuildPlan = true;
+            comp.customBuildPlansSupported = PROFILE_LOCALCI;
+            comp.programmingExercise.buildConfig = Object.assign(new ProgrammingExerciseBuildConfig(), { dockerFlags });
+            const customBuildPlanComponent = {
+                arePhaseNamesValid: () => true,
+                getBuildPlanPhasesJSON: () => buildPlanPhasesJSON,
+            };
+            internals(comp).exerciseLanguageComponent = signal({
+                programmingExerciseCustomBuildPlanComponent: () => customBuildPlanComponent,
+            } as unknown as ProgrammingExerciseLanguageComponent).asReadonly();
+        };
+
+        it('validateBuildConfigSize rejects a build plan configuration exceeding the maximum length', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize accepts a build plan configuration exactly at the maximum length', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH), undefined);
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize rejects docker flags exceeding the maximum length', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize accepts docker flags exactly at the maximum length', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH));
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
+                translateValues: {},
+            });
+        });
+
+        // UI: the build config size reason produced by getInvalidReasons() must disable saving in the rendered form footer.
+        it('disables saving in the form footer when the build plan configuration is too long', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
+            const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong');
+            expect(reasons).toHaveLength(1);
+
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', reasons);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
+        });
+
+        it('disables saving in the form footer when the docker flags are too long', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
+            const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong');
+            expect(reasons).toHaveLength(1);
+
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', reasons);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
+        });
+
+        it('enables saving in the form footer when there are no invalid reasons', () => {
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', []);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(false);
+            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeFalsy();
         });
 
         it('validateExercisePoints', () => {
@@ -1611,6 +1685,38 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(problemStepInputs).not.toBeNull();
     });
 
+    // The getter runs on every change-detection pass, so every value it hands out has to keep its identity between
+    // passes. A fallback such as `?? []` allocates a new array each time, which re-seeds the category selector's local
+    // working copy, re-dirties this component and loops. A production build has no dev-mode guard to break that loop,
+    // so the creation page stopped responding altogether until this was fixed.
+    it('hands out the same identities on repeated calls, so change detection cannot loop', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        const first = comp.getProgrammingExerciseCreationConfig();
+        // Read out before the second call: the config object is cached, so comparing its fields afterwards would
+        // compare each field with itself and pass even if the second call had replaced them.
+        const firstExerciseCategories = first.exerciseCategories;
+        const firstModePickerOptions = first.modePickerOptions;
+        const firstRerenderSubject = first.rerenderSubject;
+        const second = comp.getProgrammingExerciseCreationConfig();
+
+        // the config object itself is cached deliberately
+        expect(second).toBe(first);
+        // and so are the values a child could track by identity, even on a creation page with no categories yet
+        expect(second.exerciseCategories).toBe(firstExerciseCategories);
+        expect(second.exerciseCategories).toBeDefined();
+        expect(second.modePickerOptions).toBe(firstModePickerOptions);
+        expect(second.rerenderSubject).toBe(firstRerenderSubject);
+    });
+
     it('stores with dependencies when changed', () => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
@@ -1639,7 +1745,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
 
         const categories = [new ExerciseCategory(undefined, undefined)];
-        expect(comp.exerciseCategories).toBeUndefined();
+        // Starts as an empty array rather than undefined, on purpose: the creation config getter must hand out a stable
+        // array identity on every change-detection pass, which an undefined field cannot do.
+        expect(comp.exerciseCategories).toEqual([]);
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     });
@@ -1756,8 +1864,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.allowOnlineEditor).toBe(true);
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowFeedbackRequests).toBe(false);
+        // complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBe(false);
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1781,7 +1888,6 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowFeedbackRequests = true;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 

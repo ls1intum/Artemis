@@ -10,11 +10,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingSpecification;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
 
 /**
  * Repository for the {@link UserCourseNotificationSettingSpecification} entity.
@@ -42,10 +45,31 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      * @param userId   to query for
      * @param courseId to query for
      *
-     * @return The list of user setting specifications.
+     * @return The channels the user has enabled per notification type.
      */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO(
+                s.courseNotificationType, s.email, s.push, s.webapp)
+            FROM UserCourseNotificationSettingSpecification s
+            WHERE s.user.id = :userId
+                AND s.course.id = :courseId
+            """)
     @Cacheable(key = "'setting_specifications_' + #userId + '_' + #courseId")
-    List<UserCourseNotificationSettingSpecification> findAllByUserIdAndCourseId(Long userId, Long courseId);
+    List<UserCourseNotificationSettingSpecificationDTO> findAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /***
+     * Get the setting specification entities for a given user id and course id, for a caller that has to write them.
+     * <p>
+     * Deliberately not cached: the cached read above answers with the channel flags alone, so that the store never
+     * holds an entity. A caller that intends to delete these rows needs their identity, and reads them from the
+     * database.
+     *
+     * @param userId   to query for
+     * @param courseId to query for
+     *
+     * @return The list of user setting specification entities.
+     */
+    List<UserCourseNotificationSettingSpecification> findAllEntitiesByUserIdAndCourseId(Long userId, Long courseId);
 
     /***
      * Saving will clear the user's cached settings.

@@ -25,6 +25,7 @@ import {
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -132,6 +133,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.assessments;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     // Icons
     farListAlt = faListAlt;
 
@@ -177,7 +185,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
@@ -204,6 +211,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(routeData?: TextAssessmentRouteData) {
         this.resetComponent();
         this.loadingInitialSubmission.set(false);
+        // The round comes from the resolver, which requested the participation for it, rather than from the URL again:
+        // the results below are indexed by the round, so reading the parameter a second time here would let the page
+        // index a round the resolver never loaded. This also matters when the router reuses this component for the next
+        // submission, where the round must follow the newly resolved data instead of staying on the previous one.
+        this.correctionRound.set(routeData?.correctionRound ?? 0);
         const studentParticipation = routeData?.participation;
         if (!studentParticipation) {
             // The resolver swallows load errors, so a missing participation can also mean that the exam is still running.
@@ -222,8 +234,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(this.submission, this.resultId()));
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(this.submission!.results?.findIndex((result) => result.id === this.resultId())!);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
@@ -238,7 +250,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        this.loadFeedbackSuggestions();
+        if (this.isFeedbackSuggestionsEnabled) {
+            this.loadFeedbackSuggestions();
+        }
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
@@ -273,7 +287,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.exercise?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
     }
 
     private checkPermissions(result?: Result): void {
@@ -369,7 +383,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * (only if this is a fresh submission, i.e. no assessments exist yet)
      */
     loadFeedbackSuggestions(): void {
-        if (this.assessments.length > 0) {
+        // Without a result there is nothing to attach a suggestion to. This happens for a correction round the tutor has
+        // not started yet, where the submission is opened before a result exists.
+        if (this.assessments.length > 0 || !this.result()) {
             return;
         }
         this.loadingFeedbackSuggestions.set(true);

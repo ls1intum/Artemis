@@ -1,0 +1,184 @@
+---
+id: nightly-ci
+title: Nightly CI Runs
+sidebar_label: Nightly CI Runs
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Nightly CI Runs
+
+Most of Artemis's test suites run on every pull request, where a failure blocks the merge. A few cannot work that
+way, either because they boot an external system that takes minutes to install, or because they test Artemis against
+a moving target in another repository. Those run once a night against `develop` instead.
+
+<Callout variant={CalloutVariant.info}>
+
+    Nightly runs are **monitors, not gates**. They never block a merge. A failure says something drifted since
+    yesterday, and the cause may well sit outside this repository, so it needs a person to look rather than an
+    automatic red cross on someone's pull request.
+
+</Callout>
+
+## The two nightly suites
+
+| Suite | Workflow | Schedule | What it guards | Typical duration |
+| --- | --- | --- | --- | --- |
+| Iris E2E | [`nightly-iris-e2e.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-iris-e2e.yml) | 02:00 UTC daily | The Artemis to Pyris wire contract, across two repositories | 6 to 8 minutes |
+| LTI interop | [`nightly-lti-interop.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-lti-interop.yml) | 03:00 UTC daily | The LTI 1.3 launch against a real Moodle install | 6 to 7 minutes |
+
+The two are deliberately an hour apart so a shared-infrastructure outage does not take both down in a way that looks
+like two unrelated failures.
+
+Both also accept a manual `workflow_dispatch`, which is how you re-run one after a fix without waiting for the next
+night, and how you verify a change to the workflow itself.
+
+<Callout variant={CalloutVariant.info}>
+
+    Neither of these is the main Playwright suite. That one runs per pull request and on `develop`; see
+    [Playwright E2E testing](./e2e-testing-playwright.mdx). The nightly suites are separate, much smaller, and
+    scoped to the two integrations that need a real external system.
+
+</Callout>
+
+## Iris E2E
+
+Iris is the AI tutor, and it is served by Pyris, which lives in
+[`ls1intum/edutelligence`](https://github.com/ls1intum/edutelligence) rather than here. Because the two repositories
+release independently, a merge on either side can break the contract between them without any test in either
+repository noticing.
+
+The nightly run boots the real thing: real Pyris, real Weaviate, and a deterministic OpenAI-compatible mock in place
+of the model. Only the LLM is faked, so endpoint paths, DTO field mapping, authentication, and the asynchronous
+accepted-then-callback protocol are all exercised for real. It then runs the Playwright specs under
+`src/test/playwright/e2e/iris/`:
+
+| Spec | What it covers |
+| --- | --- |
+| `IrisCourseTab.spec.ts` | The course chat tab, its context picker over lectures and exercises, and an answered course message |
+| `IrisLectureChat.spec.ts` | The lecture chat panel, collapsing to the icon rail, and a reply streamed back from Pyris |
+| `IrisActivityFeed.spec.ts` | That the live tool call shown is the real one rather than a placeholder rotation, and that the trail persists on the answer |
+
+By default the workflow pulls `ghcr.io/ls1intum/edutelligence/iris:latest`, the image edutelligence's own CI publishes
+on every push to `main`, instead of checking out that repository and building from source. To test an unmerged
+edutelligence branch, dispatch the workflow manually and pass that ref as `edutelligence_ref`; the workflow then
+builds the image itself, because no published image exists for an unmerged branch.
+
+[E2E Testing Iris](./e2e-testing-iris.mdx) documents the stack, the mock LLM, and how to run the same suite locally.
+
+## LTI interop
+
+The LTI 1.3 launch is a redirect dance between Artemis and a learning management system, and most of what can go
+wrong lives in the details of what that system actually sends. Server tests cover Artemis's own side of the launch on
+every pull request, but they necessarily play the platform themselves, which means they cannot notice when a real
+platform changes its behaviour.
+
+The nightly run boots Moodle 5.0.2 and a PostgreSQL for it as Testcontainers on a shared Docker network, registers
+Artemis as an LTI 1.3 tool, and drives a launch through it. `NightlyLtiMoodleInteropTest` covers:
+
+| Test | Launch step |
+| --- | --- |
+| `initiateLoginRedirectsToMoodleAuthEndpoint` | Step 1, that Artemis builds the authorization URL Moodle expects and caches the state for the round trip |
+| `authCallbackProxyAcceptsMoodleSignedJwt` | Step 3a, that the callback accepts a genuinely Moodle-signed launch token and redirects onward |
+| `moodleSignedJwtPassesArtemisValidation` | Step 3b, with Moodle signing through its own `lti_sign_jwt()` so the token carries Moodle's real claim mapping |
+| `syntheticJwtSignedWithMoodleKeyValidates` | Step 3b with a minimal claim set, to separate a signature or JWKS problem from a claim-shape problem |
+| `fullLaunchSucceedsWithCourseAndExerciseFixture` | The whole launch against a course and exercise fixture, including auto-creating the user and enrolling them |
+
+What this catches and a per-pull-request test cannot: a change in the shape of Moodle's JWKS document, a change in how
+Moodle maps LTI claims, and a regression in `NimbusJwtDecoder.withJwkSetUri(...)` or
+`Lti13InitiatingLoginRequestResolver` against a real endpoint rather than a fixture.
+
+The test carries `@Tag("nightly-lti")`, which is how it stays out of the per-pull-request server test run.
+
+To iterate on it locally:
+
+```bash
+./gradlew test --tests "de.tum.cit.aet.artemis.lti.nightly.NightlyLtiMoodleInteropTest" -DincludeTags='nightly-lti' -x webapp
+```
+
+Docker has to be running, and the first execution spends a few minutes on Moodle's one-time install.
+[Local Moodle setup for LTI](./local-moodle-setup-for-lti.mdx) covers the manual, browser-driven alternative.
+
+## What happens when one fails
+
+Nobody is watching at 02:00, so a failing nightly has to raise its own alarm. Both workflows call the local
+[`open-failure-issue`](https://github.com/ls1intum/Artemis/tree/develop/.github/actions/open-failure-issue)
+composite action, which:
+
+1. searches for an **open** issue whose title matches this monitor's exactly;
+2. if there is none, opens one, assigns it to a maintainer, and links the workflow run;
+3. if there is one, adds a `Still failing on <date>` comment instead.
+
+The titles are the deduplication keys and therefore stable: `Nightly Iris e2e failed` and
+`Nightly LTI interop failed (Moodle)`. A streak of bad nights collects as comments on one issue rather than as a pile
+of near-identical issues.
+
+Both workflows also upload their evidence with `if: always()`, so it is there whether the run passed or failed. The
+Iris run uploads the Playwright report, the test results, and the server and client logs; the LTI run uploads the
+JUnit reports.
+
+<Callout variant={CalloutVariant.warning}>
+
+    Closing the issue once the monitor is green again is a **manual** step, and the deduplication makes forgetting it
+    quietly costly: while a stale issue stays open, later failures only ever comment on it, so nothing new appears in
+    the issue list to catch anyone's eye. When you fix a nightly, close its issue in the same breath.
+
+</Callout>
+
+## Current status
+
+Both nightly suites are green. Checked on 4 September 2026 against the scheduled runs on `develop`:
+
+| Suite | Last 12 scheduled runs | Last failure |
+| --- | --- | --- |
+| Iris E2E | 12 of 12 passed | 11 August 2026, ending a four-night streak from 8 August |
+| LTI interop | 12 of 12 passed | None in the 60 runs on record, back to 7 July 2026 |
+
+The Iris suite has now passed every scheduled night since 12 August 2026. The one non-passing run since then, on
+18 August, was `cancelled` rather than failed.
+
+<Callout variant={CalloutVariant.info}>
+
+    Because Iris runs against edutelligence `main` rather than a pinned version, its failures cluster: a contract
+    change lands over there and every night fails until one side catches up. The August streak has that shape. Read a
+    single red night as a question about both repositories, not as flakiness.
+
+</Callout>
+
+## Other scheduled workflows
+
+Not everything on a schedule is a nightly test run. For completeness:
+
+| Workflow | Schedule | Purpose |
+| --- | --- | --- |
+| [`codeql-analysis.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/codeql-analysis.yml) | Sundays 16:00 UTC | Full CodeQL scan of Java and TypeScript, beyond the per-pull-request diff |
+| [`scorecard.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/scorecard.yml) | Mondays 05:31 UTC | OpenSSF Scorecard; reflects repository settings rather than a diff, so weekly is enough |
+| [`pullrequest-stale.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/pullrequest-stale.yml) | Daily 12:00 UTC | Marks inactive pull requests stale. Housekeeping, not a test |
+
+## Adding a nightly suite
+
+Reach for a nightly only when a per-pull-request run genuinely cannot do the job, because a suite nobody is forced to
+look at decays. The two that exist share a shape worth copying:
+
+- **A reason it cannot be a gate.** Either it is slow because it installs an external system, or it tests against
+  something that moves independently of this repository, so a failure is not necessarily attributable to the
+  pull request that happens to be open.
+- **Only the unavoidable part faked.** Iris mocks the model and nothing else. The LTI suite mocks nothing and lets
+  Moodle sign its own tokens. A nightly whose external system is a fixture has lost the reason it exists.
+- **A tag or filter that keeps it out of the per-pull-request run**, such as `@Tag("nightly-lti")` for a server test
+  or a Playwright filter for an E2E spec.
+- **An alarm that does not rely on someone reading a log.** Use the `open-failure-issue` action with a new, stable
+  title, and grant the job `issues: write`.
+- **Evidence uploaded with `if: always()`.** A nightly failure is usually debugged the next morning from artifacts
+  alone, since the containers are long gone.
+- **A `workflow_dispatch` trigger**, so the suite can be re-run on demand rather than only at night.
+- **A pinned external version.** The LTI suite pins Moodle to an exact image tag, so a Moodle release cannot turn
+  into a surprise failure; bumping it is then a deliberate pull request.
+
+## Related pages
+
+- [E2E Testing Iris](./e2e-testing-iris.mdx): the real-Pyris stack, the mock LLM, and running the Iris suite locally
+- [Playwright E2E testing](./e2e-testing-playwright.mdx): the per-pull-request E2E suite and the local runners
+- [Local Moodle setup for LTI](./local-moodle-setup-for-lti.mdx): a browser-driven Moodle for manual LTI work
+- [Server tests](./guidelines/server-tests.mdx): the per-pull-request server suite the LTI tag excludes itself from

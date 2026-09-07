@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -25,6 +26,8 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.SecondaryTable;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.TimeZoneStorage;
+import org.hibernate.annotations.TimeZoneStorageType;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +102,12 @@ public class ProgrammingExercise extends Exercise {
     private boolean showTestNamesToStudents;
 
     @Nullable
+    // Normalized on purpose. This is the only temporal column on the secondary table, and Hibernate writes a secondary
+    // table with a MERGE whose source casts every parameter, here to "timestamp with time zone". The column itself is
+    // "timestamp without time zone", so the database converted the value using the session time zone and the date moved
+    // by the server's UTC offset on every save. NORMALIZE makes Hibernate bind a plain timestamp in the JDBC time zone
+    // (UTC, see hibernate.jdbc.time_zone), which is what the columns of the main exercise table already receive.
+    @TimeZoneStorage(TimeZoneStorageType.NORMALIZE)
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
@@ -314,7 +323,7 @@ public class ProgrammingExercise extends Exercise {
      */
     public String generateRepositoryName(String repositoryName) {
         generateAndSetProjectKey();
-        return this.projectKey.toLowerCase() + "-" + repositoryName;
+        return this.projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryName;
     }
 
     /**
@@ -348,7 +357,7 @@ public class ProgrammingExercise extends Exercise {
 
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
     }
 
     @Override
@@ -607,7 +616,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public void filterResultsForStudents(Participation participation) {
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
             }
@@ -625,7 +634,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Check if manual results are allowed for the exercise
+     * Check if manual results are allowed for the exercise.
      * <p>
      * For exam exercises only the configuration is checked here. The point in time from which on assessment is possible
      * depends on the individual student exams and is enforced by
@@ -647,11 +656,6 @@ public class ProgrammingExercise extends Exercise {
             return false;
         }
         if (isExamExercise()) {
-            return true;
-        }
-        // The relevantDueDate check below keeps us from assessing feedback requests,
-        // as their relevantDueDate is before the due date
-        if (getAllowFeedbackRequests()) {
             return true;
         }
 
@@ -735,27 +739,6 @@ public class ProgrammingExercise extends Exercise {
         // Static code analysis max penalty must be positive
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
-        }
-    }
-
-    /**
-     * Validates settings for exercises, where allowFeedbackRequests is set
-     */
-    public void validateSettingsForFeedbackRequest() {
-        if (!this.getAllowFeedbackRequests()) {
-            return;
-        }
-
-        if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
-        }
-
-        if (this.getDueDate() == null) {
-            throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
-        }
-
-        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
-            throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
 

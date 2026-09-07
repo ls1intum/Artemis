@@ -11,7 +11,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -20,12 +22,15 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -63,6 +68,7 @@ import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@Execution(ExecutionMode.SAME_THREAD)
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "messageintegration";
@@ -338,6 +344,42 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         else {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(NUMBER_OF_POSTS);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessagesPagesDoNotOverlapForEqualCreationDates() {
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "stable-paging");
+        var author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        // Six messages sharing one creation date. Ordering them by date alone leaves their relative order undefined,
+        // so a page boundary between them lets the database return the same message on two consecutive pages, and the
+        // client renders it twice.
+        // Fixed rather than relative to now, because only the messages sharing one date matters here and a wall-clock
+        // value would make the fixture differ between runs.
+        ZonedDateTime sameCreationDate = ZonedDateTime.of(2024, 1, 15, 12, 0, 0, 0, ZoneOffset.UTC);
+        List<Long> savedMessageIds = new ArrayList<>();
+        for (int index = 0; index < 6; index++) {
+            Post message = new Post();
+            message.setAuthor(author);
+            message.setConversation(channel);
+            message.setContent("stable paging " + index);
+            message.setCreationDate(sameCreationDate);
+            savedMessageIds.add(conversationMessageRepository.save(message).getId());
+        }
+
+        var requestingUser = userTestRepository.getUser();
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, new long[] { channel.getId() }, null, null, false, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+
+        List<Long> pagedMessageIds = new ArrayList<>();
+        for (int page = 0; page < 3; page++) {
+            conversationMessageRepository.findMessages(postContextFilter, PageRequest.of(page, 2), requestingUser.getId()).forEach(message -> pagedMessageIds.add(message.getId()));
+        }
+
+        // Newest first, and among equal dates the higher id first. Paging through the conversation therefore visits
+        // every message exactly once, which is what the client needs to chain-load earlier pages without rendering a
+        // message twice or dropping one.
+        assertThat(pagedMessageIds).containsExactlyElementsOf(savedMessageIds.reversed()).doesNotHaveDuplicates();
     }
 
     @Test

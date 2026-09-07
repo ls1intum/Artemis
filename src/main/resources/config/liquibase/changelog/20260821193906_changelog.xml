@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Move the account recovery keys out of jhi_user. An activation key is set on 6.9% of accounts and a reset key on
+        0.5%, both short-lived: issued, redeemed, cleared. They share one row because an account is never meaningfully
+        mid-activation and mid-reset at once.
+
+        Both keys are looked up by value, so each gets an index here - the lookup moves off jhi_user with the columns.
+
+        A row exists only while a key is pending, so the absence of a row means no key is outstanding.
+
+        RK-2 (separate follow-up PR after staging sign-off):
+              DROP jhi_user.activation_key, jhi_user.reset_key and jhi_user.reset_date.
+    -->
+    <changeSet id="20260821193906-1-create-user-recovery-key" author="krusche">
+        <createTable tableName="user_recovery_key">
+            <column name="user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="activation_key" type="VARCHAR(20)"/>
+            <column name="reset_key" type="VARCHAR(20)"/>
+            <column name="reset_date" type="DATETIME(3)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_recovery_key" baseColumnNames="user_id" constraintName="fk_user_recovery_key_user"
+                                 referencedTableName="jhi_user" referencedColumnNames="id" onDelete="CASCADE"/>
+        <createIndex indexName="idx_user_recovery_key_activation_key" tableName="user_recovery_key">
+            <column name="activation_key"/>
+        </createIndex>
+        <createIndex indexName="idx_user_recovery_key_reset_key" tableName="user_recovery_key">
+            <column name="reset_key"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        Runs after 20260820091251, which clears the activation key of the externally managed accounts the student import
+        left unactivated, so those accounts are correctly not carried over as awaiting activation.
+    -->
+    <changeSet id="20260821193906-2-backfill" author="krusche">
+        <sql>
+            INSERT INTO user_recovery_key (user_id, activation_key, reset_key, reset_date)
+            SELECT id, activation_key, reset_key, reset_date
+            FROM jhi_user
+            WHERE activation_key IS NOT NULL OR reset_key IS NOT NULL OR reset_date IS NOT NULL
+        </sql>
+        <rollback>
+            <sql>DELETE FROM user_recovery_key</sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -96,7 +96,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
         test('Edits an exercise group', async ({ page, examExerciseGroups, examExerciseGroupCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.shouldHaveTitle(exerciseGroup.id!, exerciseGroup.title!);
-            await examExerciseGroups.clickEditGroupForTestExam();
+            await examExerciseGroups.clickEditGroup(exerciseGroup.id!);
             const newGroupName = 'Group 3';
             await examExerciseGroupCreation.typeTitle(newGroupName);
             await examExerciseGroupCreation.update();

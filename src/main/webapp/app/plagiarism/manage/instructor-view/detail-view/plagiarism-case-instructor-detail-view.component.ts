@@ -44,6 +44,7 @@ import { LinkifyService } from 'app/communication/link-preview/services/linkify.
 import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
 import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -157,13 +158,14 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             })
             .subscribe({
                 next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
-                    this.plagiarismCase.update((plagiarismCase) => ({
-                        ...plagiarismCase,
-                        verdict: res.body!.verdict,
-                        verdictPointDeduction: res.body!.verdictPointDeduction!,
-                        verdictBy: res.body!.verdictBy,
-                        verdictDate: res.body!.verdictDate,
-                    }));
+                    this.plagiarismCase.update((plagiarismCase) =>
+                        cloneWith(plagiarismCase, {
+                            verdict: res.body!.verdict,
+                            verdictPointDeduction: res.body!.verdictPointDeduction!,
+                            verdictBy: res.body!.verdictBy,
+                            verdictDate: res.body!.verdictDate,
+                        }),
+                    );
                 },
             });
     }
@@ -183,13 +185,14 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             })
             .subscribe({
                 next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
-                    this.plagiarismCase.update((plagiarismCase) => ({
-                        ...plagiarismCase,
-                        verdict: res.body!.verdict,
-                        verdictMessage: res.body!.verdictMessage!,
-                        verdictBy: res.body!.verdictBy,
-                        verdictDate: res.body!.verdictDate,
-                    }));
+                    this.plagiarismCase.update((plagiarismCase) =>
+                        cloneWith(plagiarismCase, {
+                            verdict: res.body!.verdict,
+                            verdictMessage: res.body!.verdictMessage!,
+                            verdictBy: res.body!.verdictBy,
+                            verdictDate: res.body!.verdictDate,
+                        }),
+                    );
                 },
             });
     }
@@ -203,12 +206,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         }
         this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
-                this.plagiarismCase.update((plagiarismCase) => ({
-                    ...plagiarismCase,
-                    verdict: res.body!.verdict,
-                    verdictBy: res.body!.verdictBy,
-                    verdictDate: res.body!.verdictDate,
-                }));
+                this.plagiarismCase.update((plagiarismCase) =>
+                    cloneWith(plagiarismCase, { verdict: res.body!.verdict, verdictBy: res.body!.verdictBy, verdictDate: res.body!.verdictDate }),
+                );
             },
         });
     }
@@ -222,12 +222,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         }
         this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
-                this.plagiarismCase.update((plagiarismCase) => ({
-                    ...plagiarismCase,
-                    verdict: res.body!.verdict,
-                    verdictBy: res.body!.verdictBy,
-                    verdictDate: res.body!.verdictDate,
-                }));
+                this.plagiarismCase.update((plagiarismCase) =>
+                    cloneWith(plagiarismCase, { verdict: res.body!.verdict, verdictBy: res.body!.verdictBy, verdictDate: res.body!.verdictDate }),
+                );
             },
         });
     }

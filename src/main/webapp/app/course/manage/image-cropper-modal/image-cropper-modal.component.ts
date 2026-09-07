@@ -1,9 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Component, booleanAttribute, input, output, signal } from '@angular/core';
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
 import { OutputFormat } from 'app/shared-ui/image-cropper/interfaces/cropper-options.interface';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 export interface ImageCropperModalData {
     uploadFile?: File;
@@ -14,17 +14,19 @@ export interface ImageCropperModalData {
 @Component({
     selector: 'jhi-image-cropper-modal',
     templateUrl: './image-cropper-modal.component.html',
-    imports: [TranslateDirective, ImageCropperComponent],
+    imports: [TranslateDirective, ImageCropperComponent, TumUiButtonDirective],
 })
 export class ImageCropperModalComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly config = inject(DynamicDialogConfig<ImageCropperModalData>);
+    readonly uploadFile = input<File | undefined>(undefined);
+    readonly roundCropper = input(true, { transform: booleanAttribute });
+    readonly fileFormat = input<OutputFormat>('png');
 
-    // State signals
-    readonly uploadFile = signal<File | undefined>(this.config.data?.uploadFile);
+    /** Emits the cropped image when the user saves, so the host can upload it. */
+    readonly cropped = output<string>();
+    /** Emits when the user cancels without saving. */
+    readonly cancelled = output<void>();
+
     readonly croppedImage = signal<string | undefined>(undefined);
-    readonly roundCropper = signal(this.config.data?.roundCropper ?? true);
-    readonly fileFormat = signal<OutputFormat>(this.config.data?.fileFormat ?? 'png');
 
     /**
      * Called when an image is cropped.
@@ -38,7 +40,7 @@ export class ImageCropperModalComponent {
      * Method is called when the modal is closed by clicking 'Cancel' button.
      */
     onCancel(): void {
-        this.dialogRef.close();
+        this.cancelled.emit();
     }
 
     /**
@@ -46,6 +48,9 @@ export class ImageCropperModalComponent {
      * The changes are saved and the croppedImage information is transferred.
      */
     onSave(): void {
-        this.dialogRef.close(this.croppedImage());
+        const image = this.croppedImage();
+        if (image) {
+            this.cropped.emit(image);
+        }
     }
 }

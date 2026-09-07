@@ -92,7 +92,9 @@ public class StudentExamAccessService {
      *                            exists
      */
     public void checkCourseAndExamAccessElseThrow(Long courseId, Long examId, User currentUser, boolean isTestRun, boolean checkRegistered) {
-        // Check that the exam exists
+        // Check that the exam exists. NOTE: the exam is deliberately loaded by the requested examId rather than taken
+        // from a student exam the caller may already hold: the checks below validate the *requested* exam against the
+        // requested course, and substituting a different exam changes which mismatch a bad request is reported as.
         Exam exam = examRepository.findByIdElseThrow(examId);
 
         // Check that the exam belongs to the course
@@ -100,7 +102,9 @@ public class StudentExamAccessService {
             throw new ConflictException("The exam does not belong to the course", "Exam", "examCourseConflict");
         }
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        // Exam#course is a @ManyToOne and therefore already loaded; the check above has just proven it is the requested
+        // course, so re-reading it by id would only repeat a row we are holding.
+        Course course = exam.getCourse();
         if (isTestRun) {
             // Check that the current user is at least instructor in the course.
             if (!authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {

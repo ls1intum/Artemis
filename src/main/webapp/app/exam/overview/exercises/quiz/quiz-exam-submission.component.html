@@ -68,7 +68,7 @@
                             [question]="question"
                             [selectedAnswerOptions]="selectedAnswerOptions().get(question.id!)!"
                             (selectedAnswerOptionsChange)="onSelectedAnswerOptionsChange(question.id!, $event)"
-                            [fnOnSelection]="onSelectionChanged.bind(this)"
+                            [fnOnSelection]="selectionChangedCallback"
                             [quizQuestions]="quizConfiguration().quizQuestions"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
@@ -81,7 +81,7 @@
                             [question]="question"
                             [mappings]="dragAndDropMappings().get(question.id!)!"
                             (mappingsChange)="onDragAndDropMappingsChange(question.id!, $event)"
-                            [onMappingUpdate]="onSelectionChanged.bind(this)"
+                            [onMappingUpdate]="selectionChangedCallback"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />
@@ -93,7 +93,7 @@
                             [question]="question"
                             [submittedTexts]="shortAnswerSubmittedTexts().get(question.id!)!"
                             (submittedTextsChange)="onShortAnswerSubmittedTextsChange(question.id!, $event)"
-                            [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
+                            [fnOnSubmittedTextUpdate]="selectionChangedCallback"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />

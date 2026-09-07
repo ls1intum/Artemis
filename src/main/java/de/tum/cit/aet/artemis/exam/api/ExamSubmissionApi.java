@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.api;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -9,6 +10,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @Conditional(ExamEnabled.class)
 @Controller
@@ -25,7 +27,8 @@ public class ExamSubmissionApi extends AbstractExamApi {
         return examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, withGracePeriod);
     }
 
-    public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
+    @Nullable
+    public StudentParticipation preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         return examSubmissionService.preventMultipleSubmissions(exercise, submission, user);
     }
 

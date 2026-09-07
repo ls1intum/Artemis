@@ -74,6 +74,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
+    @Autowired
+    private StudentExamService studentExamService;
+
     private Course course1;
 
     private Course course2;
@@ -372,6 +375,20 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatNoException().isThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGenerateIndividualStudentExam_ignoresStaleCallerExerciseGroups() {
+        // Simulates a caller (ExamAccessService) that loaded the exam before a concurrent exercise-group move: the
+        // in-memory exercise groups no longer match the database, which actually has exerciseGroup1 with a quiz.
+        Exam staleExam = new Exam();
+        staleExam.setId(exam1.getId());
+
+        StudentExam generated = studentExamService.generateIndividualStudentExam(staleExam, student1);
+
+        assertThat(generated.getExercises()).isNotEmpty();
+        assertThat(generated.getExercises().getFirst().getExerciseGroup().getId()).isEqualTo(exerciseGroup1.getId());
     }
 
     @Test

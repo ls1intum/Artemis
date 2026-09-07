@@ -19,6 +19,7 @@ import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/paginatio
 import { AlertService } from 'app/foundation/service/alert.service';
 import { lastValueFrom } from 'rxjs';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type DialogStep = 'selectCourse' | 'selectOptions';
 
@@ -262,10 +263,7 @@ export class CourseMaterialImportDialogComponent {
         const course = this.selectedCourse();
         if (!course?.id || !this.canImport()) return;
 
-        const options: CourseMaterialImportOptionsDTO = {
-            sourceCourseId: course.id,
-            ...this.getImportOptions(),
-        };
+        const options: CourseMaterialImportOptionsDTO = cloneWith(this.getImportOptions(), { sourceCourseId: course.id });
 
         try {
             this.isImporting.set(true);

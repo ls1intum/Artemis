@@ -2,10 +2,10 @@ import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef,
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
-import { ChartModule } from 'primeng/chart';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -17,16 +17,14 @@ import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { multiSeriesToStackedBarData, singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, doughnutChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { TumUiChartData, singleSeriesChart, stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, distinctUntilChanged, map } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -37,6 +35,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import {
+    TumUiBarChartComponent,
+    TumUiBarChartConfig,
+    TumUiChartDatumContext,
+    TumUiChartSelectEvent,
+    TumUiDoughnutChartComponent,
+    TumUiDoughnutChartConfig,
+} from '@tumaet/ui-angular';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -112,7 +119,8 @@ enum ChartBarTitle {
         TranslateDirective,
         NgbDropdownMenu,
         DocumentationButtonComponent,
-        ChartModule,
+        TumUiBarChartComponent,
+        TumUiDoughnutChartComponent,
         NgbTooltip,
         RouterLink,
         ExerciseScoresChartComponent,
@@ -123,6 +131,9 @@ enum ChartBarTitle {
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
@@ -137,6 +148,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private translateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
+    private gradeSubscription?: Subscription;
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
@@ -197,6 +210,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     exerciseTitles = new Map<ExerciseType, ExerciseTitle>();
 
+    /** Bumped on a language change, so label computeds re-run; the value itself is never read for content. */
+    private readonly currentLanguage = signal<string | undefined>(undefined);
+
     // entries of the "Your overall points" doughnut chart (name is a translation key, color the slice color)
     readonly doughnutChartEntries = signal<YourOverallPointsEntry[]>([]);
 
@@ -231,32 +247,29 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // working copy that is populated while grouping exercises before it is published to the signal
     private exerciseGroupsInProgress = new Map<ExerciseType, NgxExercise[]>();
 
-    private readonly chartColorService = inject(ChartColorService);
     // colors of the doughnut chart slices (depend on the displayed entries)
-    private readonly doughnutColors = this.chartColorService.resolvedColors(() => this.doughnutChartEntries().map((entry) => entry.color));
+    private readonly doughnutColors = computed(() => this.doughnutChartEntries().map((entry) => entry.color));
     // segment colors of the stacked bar charts: no due date, included, not included, bonus, not graded, missed
-    private readonly barColors = this.chartColorService.resolvedColors(() => [
-        GraphColors.LIGHT_GREY,
-        GraphColors.GREEN,
-        GraphColors.LIGHT_GREY,
-        GraphColors.YELLOW,
-        GraphColors.BLUE,
-        GraphColors.RED,
-    ]);
+    private readonly barColors = computed(() => [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED]);
 
-    readonly doughnutData = computed(() => singleSeriesChartData(this.doughnutChartEntries(), this.doughnutColors()));
-    readonly doughnutOptions = computed(() =>
-        doughnutChartOptions({
-            legend: false,
-            tooltip: {
-                title: (items) => this.translateService.instant(items[0]?.label ?? ''),
-                label: (item) => `${item.parsed}`,
-            },
-        }),
-    );
+    readonly doughnutData = computed(() => {
+        // The entries carry translation keys, and the chart renders its labels into the data table a screen
+        // reader reads, so they have to be resolved here rather than only in the tooltip. Reading the language
+        // keeps them correct after a language switch, which does not rebuild the entries themselves.
+        this.currentLanguage();
+        const translated = this.doughnutChartEntries().map((entry) => cloneWith(entry, { name: this.translateService.instant(entry.name) }));
+        return singleSeriesChart(translated, this.doughnutColors());
+    });
+    readonly doughnutConfig = computed<TumUiDoughnutChartConfig>(() => ({
+        legend: false,
+        tooltip: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => `${item.value}`,
+        },
+    }));
 
     readonly groupChartData = computed(() => {
-        const dataPerGroup = new Map<ExerciseType, ChartData<'bar', number[], string>>();
+        const dataPerGroup = new Map<ExerciseType, TumUiChartData>();
         for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
             // Adapt each NgxExercise to a ChartMultiSeriesEntry: its title is optional, so fall back to an empty
             // label (the stacked-bar adapter requires a string name); series is already structurally compatible.
@@ -264,28 +277,25 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 name: ngxExercise.name ?? '',
                 series: ngxExercise.series,
             }));
-            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(entries, this.barColors()));
+            dataPerGroup.set(exerciseType, stackedBarChart(entries, this.barColors()));
         }
         return dataPerGroup;
     });
-    readonly groupChartOptions = computed(() => {
-        const optionsPerGroup = new Map<ExerciseType, ChartOptions<'bar'>>();
+    readonly groupChartConfigs = computed(() => {
+        const configPerGroup = new Map<ExerciseType, TumUiBarChartConfig>();
         for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
-            optionsPerGroup.set(
-                exerciseType,
-                barChartOptions({
-                    horizontal: true,
-                    stacked: true,
-                    legend: false,
-                    xAxis: { max: exerciseGroup[0]?.xScaleMax ?? 100 },
-                    tooltip: {
-                        title: () => '',
-                        label: (item) => this.barTooltipLines(item),
-                    },
-                }),
-            );
+            configPerGroup.set(exerciseType, {
+                horizontal: true,
+                stacked: true,
+                legend: false,
+                xAxis: { max: exerciseGroup[0]?.xScaleMax ?? 100 },
+                tooltip: {
+                    title: () => '',
+                    label: (item) => this.barTooltipLines(item),
+                },
+            });
         }
-        return optionsPerGroup;
+        return configPerGroup;
     });
 
     readonly gradingScaleExists = signal<boolean>(false);
@@ -304,29 +314,97 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     ngOnInit() {
-        // Note: due to lazy loading and router outlet, we use parent 2x here
-        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId));
-        this.onCourseLoad();
-
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course.set(course);
-            this.onCourseLoad();
-        });
-
         // update titles based on the initial language selection
         this.updateExerciseTitles();
 
-        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe((event) => {
             // update titles based on the language changes
+            this.currentLanguage.set(event.lang);
             this.updateExerciseTitles();
             this.groupExercisesByType(this.courseExercises);
         });
 
-        this.calculateCourseGrade();
+        // Note: due to lazy loading and router outlet, we use parent 2x here. Angular reuses this component when only
+        // the course parameter changes, so every distinct id must cancel and rebuild its course-scoped state.
+        this.paramSubscription = this.route.parent?.parent?.params
+            .pipe(
+                map((params) => parseInt(params['courseId'], 10)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
+
+        // Selecting the statistics tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadExercises(this.courseId));
+    }
+
+    private activateCourse(courseId: number): void {
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
+        this.resetCourseState();
+
+        this.courseId = courseId;
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.onCourseLoad();
+
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+            this.course.set(course);
+            this.onCourseLoad();
+        });
+
+        // The exercises and their scores are not part of the course itself, so this tab loads them. The result arrives
+        // through the course update subscription above and through the ScoresStorageService.
+        this.loadExercises(courseId);
+    }
+
+    /**
+     * Fetches the exercises and their scores without clearing the rendered charts.
+     *
+     * Also the refresh path: selecting the statistics tab while already on it re-runs this, so newly graded work is
+     * reflected without a page reload, and the charts keep showing the previous figures until the new ones arrive.
+     *
+     * @param courseId the course to load the exercises and scores of
+     */
+    private loadExercises(courseId: number): void {
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(courseId).subscribe(() => {
+            this.calculateCourseGrade();
+        });
+    }
+
+    private resetCourseState(): void {
+        this.course.set(undefined);
+        this.courseExercises = [];
+        this.courseExercisesNotIncludedInScore = [];
+        this.courseExercisesFilteredByCategories = [];
+        this.currentlyHidingNotIncludedInScoreExercises.set(false);
+        this.filteredExerciseIDs.set([]);
+        this.numberOfAppliedFilters.set(0);
+        this.categoryFilter.filterMap.clear();
+        this.categoryFilter.setupCategoryFilter([]);
+
+        this.overallPoints.set(0);
+        this.overallPointsTotal.set(0);
+        this.totalRelativeScore.set(0);
+        this.overallMaxPoints.set(0);
+        this.reachablePoints.set(0);
+        this.currentRelativeScore.set(0);
+        this.overallPresentationScore.set(0);
+        this.reachablePresentationPoints.set(0);
+        this.overallPointsPerExercise = new Map();
+        this.relativeScoresPerExercise = new Map();
+        this.overallMaxPointsPerExercise = new Map();
+        this.reachablePointsPerExercise = new Map();
+        this.currentRelativeScoresPerExercise = new Map();
+        this.presentationScoresPerExercise = new Map();
+        this.presentationScoreEnabled = new Map();
+        this.exerciseGroupsInProgress = new Map();
+        this.ngxExerciseGroups.set(new Map());
+        this.doughnutChartEntries.set([]);
+
+        this.gradingScaleExists.set(false);
+        this.isBonus.set(false);
+        this.gradeDTO.set(undefined);
     }
 
     private updateExerciseTitles() {
@@ -347,13 +425,22 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {
-        this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore(), this.courseId).subscribe((gradeDTO) => {
+        this.gradeSubscription?.unsubscribe();
+        const relativeScore = this.totalRelativeScore();
+        // NaN when no total scores are stored for the course yet; asking the server to match it is meaningless
+        if (!Number.isFinite(relativeScore)) {
+            return;
+        }
+        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(relativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists.set(true);
                 this.gradeDTO.set(gradeDTO);
@@ -767,16 +854,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Handles the event fired if the user clicks on an arbitrary bar in the stacked bar charts.
      * Delegates the user to the corresponding exercise detail page in a new tab
-     * @param event the event that is fired by p-chart
+     * @param event the event identifying the clicked bar
      * @param exerciseType the exercise group whose chart was clicked
      */
-    onSelect(event: Parameters<typeof toChartSelectEvent>[0], exerciseType: ExerciseType) {
-        const chartData = this.groupChartData().get(exerciseType);
-        if (!chartData) {
-            return;
-        }
-        const selected = toChartSelectEvent(event, chartData);
-        const exerciseId = selected?.meta?.['exerciseId'];
+    onSelect(event: TumUiChartSelectEvent) {
+        const exerciseId = (event.meta as Series | undefined)?.['exerciseId'];
         if (exerciseId === undefined) {
             return;
         }
@@ -786,10 +868,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Builds the tooltip lines for one segment of a stacked bar chart, depending on the segment type
      * and the properties of the corresponding exercise (mirrors the former ngx-charts tooltip template).
-     * @param item the hovered tooltip item provided by chart.js
+     * @param item the hovered tooltip item provided by the chart
      */
-    private barTooltipLines(item: TooltipItem<'bar'>): string[] {
-        const series = item.dataset.meta?.[item.dataIndex] as Series | undefined;
+    private barTooltipLines(item: TumUiChartDatumContext): string[] {
+        const series = item.meta as Series | undefined;
         if (!series) {
             return [];
         }

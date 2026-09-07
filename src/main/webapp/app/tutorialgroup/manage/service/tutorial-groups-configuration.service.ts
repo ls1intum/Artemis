@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { toISO8601DateString } from 'app/foundation/util/date.utils';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type DtoResponseType = HttpResponse<TutorialGroupConfigurationDTO>;
 
@@ -29,7 +30,7 @@ export class TutorialGroupsConfigurationService {
     }
 
     private convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, period: Date[]): TutorialGroupConfigurationDTO {
-        return Object.assign({}, tutorialGroupsConfigurationDto, {
+        return cloneWith(tutorialGroupsConfigurationDto, {
             tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
             tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
             tutorialGroupFreePeriods: tutorialGroupsConfigurationDto.tutorialGroupFreePeriods ?? [],

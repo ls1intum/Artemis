@@ -1,0 +1,66 @@
+---
+id: adoption
+title: Adoption
+sidebar_label: Adoption
+description: Universities and schools that use, evaluate, or are interested in Artemis, and how to get added to the list.
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import AdopterList from "../../src/components/Adoption/AdopterList";
+import {adopters} from "../../src/components/Adoption/data/adopters";
+import {AdoptionStatus} from "../../src/components/Adoption/data/types";
+
+# Adoption
+
+Artemis is used and evaluated by universities and schools in several countries. This page is the
+canonical list; the README and the Artemis website link here instead of keeping their own copies.
+
+<Callout variant={CalloutVariant.info}>
+    Entries are <strong>self-declared</strong>. An institution appears here because it told the project
+    about its use or interest, and each one deploys and operates its own instance. Being listed does not
+    imply an endorsement in either direction, and the project deliberately does not label deployments as
+    production or pilot: that cannot be verified from the outside, and a wrong label would be worse than
+    none.
+</Callout>
+
+## Universities and schools using or evaluating Artemis
+
+<AdopterList adopters={adopters.filter((adopter) => adopter.status === AdoptionStatus.UsingOrEvaluating)} />
+
+## Interested institutions
+
+<AdopterList adopters={adopters.filter((adopter) => adopter.status === AdoptionStatus.Interested)} />
+
+## Adopting Artemis
+
+To evaluate Artemis, start with the [administrator guide](/admin/intro) and the
+[production setup](/admin/production-setup/) documentation. The
+[platform comparison](/compare) helps position Artemis against systems you may already run, and
+[Trust and transparency](./trust) answers the security, privacy, and AI questions that usually come up
+in an institutional review.
+
+If your institution is too small to run its own instance, or you want to try Artemis before deciding,
+the Artemis team at TUM can host an instance for you. Write to
+[artemis@xcit.tum.de](mailto:artemis@xcit.tum.de).
+
+## Keeping this list accurate
+
+The list lives in
+[one data file](https://github.com/ls1intum/Artemis/blob/develop/documentation/src/components/Adoption/data/adopters.ts)
+in the Artemis repository. To be added, corrected, or removed, open a pull request against it or write
+to [artemis@xcit.tum.de](mailto:artemis@xcit.tum.de).
+
+Each entry can carry the year in which it was last confirmed with the institution, shown next to the
+name once it is set. Entries are re-confirmed in a yearly round, and an entry that has not been
+confirmed for two years is re-confirmed or removed, so that the list stays worth trusting.
+
+## Share what Artemis changed for you
+
+A logo says that an institution uses Artemis. What other institutions actually want to read is what
+changed: how large the courses are, how much feedback students now get, what the move cost, and what
+did not work. If you have written that up anywhere durable, a paper, a conference talk, a blog post, or
+a page in this documentation, an entry can link to it and we would like to add it.
+
+Numbers help more than adjectives: cohort size, exam size, submissions per week, time from submission
+to feedback. Send it to [artemis@xcit.tum.de](mailto:artemis@xcit.tum.de) or open a pull request.

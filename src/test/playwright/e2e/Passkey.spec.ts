@@ -75,7 +75,7 @@ test.describe('Passkey', () => {
         // Register passkey via the modal
         await page.getByRole('button', { name: 'Set Up Passkey' }).click();
 
-        const successAlert = page.locator('.alert-inner').getByText('Your passkey has been successfully registered.');
+        const successAlert = page.locator('[data-testid="alert"]').getByText('Your passkey has been successfully registered.');
         await expect(successAlert).toBeVisible();
         await page.waitForURL('**/courses**');
 
@@ -131,8 +131,8 @@ test.describe('Passkey', () => {
         await page.goto('/sign-in');
 
         // Wait for the passkey login button to be stable before clicking
-        await page.locator('#passkey-login-button').waitFor({ state: 'visible' });
-        await page.locator('#passkey-login-button').click();
+        await page.locator('[data-testid="passkey-login-button"]').waitFor({ state: 'visible' });
+        await page.locator('[data-testid="passkey-login-button"]').click();
 
         // Verify login succeeded by checking navigation to courses
         await page.waitForURL('**/courses**');
@@ -170,11 +170,11 @@ test.describe('Passkey', () => {
         await page.goto('/sign-in');
 
         // Wait for the passkey login button to be stable before clicking
-        await page.locator('#passkey-login-button').waitFor({ state: 'visible' });
-        await page.locator('#passkey-login-button').click();
+        await page.locator('[data-testid="passkey-login-button"]').waitFor({ state: 'visible' });
+        await page.locator('[data-testid="passkey-login-button"]').click();
 
         // Verify login fails with an error
-        const errorAlert = page.locator('.alert-inner').getByText('No passkey was found for Artemis.');
+        const errorAlert = page.locator('[data-testid="alert"]').getByText('No passkey was found for Artemis.');
         await expect(errorAlert).toBeVisible();
 
         // Verify user is still on the sign-in page

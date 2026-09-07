@@ -21,12 +21,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -117,7 +117,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     constructor() {
         effect(() => {
-            this.backupQuestion = cloneDeep(this.question());
+            this.backupQuestion = deepClone(this.question());
         });
     }
 
@@ -343,6 +343,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.question().randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question().singleChoice = this.backupQuestion.singleChoice;
         this.question().invalid = this.backupQuestion.invalid;
-        this.question().answerOptions = cloneDeep(this.backupQuestion.answerOptions);
+        this.question().answerOptions = deepClone(this.backupQuestion.answerOptions);
     }
 }

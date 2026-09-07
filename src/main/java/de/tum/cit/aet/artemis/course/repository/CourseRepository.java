@@ -25,12 +25,15 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -45,6 +48,54 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
+    /**
+     * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions
+     * available for practice, and an exam already visible to the user.
+     * <p>
+     * These six used to be six separate round trips, one per feature module, issued on every course entry to build the
+     * sidebar. The schema is shared regardless of which modules are enabled, so a single course-side query can answer
+     * all of them; a disabled module simply has no rows. Module enablement is still applied on top in
+     * {@code CourseAvailableTabsService}, so a disabled module hides its tab even when rows exist.
+     * <p>
+     * Each branch below is an independent existence check against an indexed {@code course_id} (plus one join for quiz
+     * questions and the user-scoped predicate for exams), so the planner satisfies them with index seeks and folding
+     * them together measured faster than issuing them separately rather than slower.
+     * <p>
+     * Iris enablement is deliberately not folded in: its flag lives inside a JSON column and the answer for a course
+     * without a settings row comes from {@code IrisCourseSettings.defaultSettings()} in Java, so expressing it here
+     * would need database-specific JSON extraction and would duplicate that default. It is a primary-key lookup anyway.
+     *
+     * @param courseId      the course to inspect
+     * @param userId        the user asking, for the user-scoped exam visibility check
+     * @param acceptedState the FAQ state that counts as visible to students
+     * @param now           the current time, used for quiz due dates and exam visibility
+     * @return which kinds of content the course has
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO(
+                CASE WHEN EXISTS (SELECT 1 FROM Lecture l WHERE l.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM CourseCompetency cc WHERE cc.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM TutorialGroup tg WHERE tg.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM Faq f WHERE f.course.id = :courseId AND f.faqState = :acceptedState) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM QuizQuestion q WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now)
+                    THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM Exam e
+                    WHERE e.course.id = :courseId
+                        AND e.visibleDate <= :now
+                        AND (
+                            e.testExam = TRUE
+                            OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                            OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                        )
+                ) THEN TRUE ELSE FALSE END
+            )
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    CourseContentAvailabilityDTO findContentAvailability(@Param("courseId") long courseId, @Param("userId") long userId, @Param("acceptedState") FaqState acceptedState,
+            @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT COUNT(c) > 0
             FROM Course c
@@ -56,6 +107,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
+                LEFT JOIN FETCH c.athenaConfig
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
@@ -112,6 +164,29 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActiveWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Returns all courses for the consolidated course dashboard. Active courses are included for every enrolled role;
+     * courses that have not started yet are included only when the user has a management role.
+     *
+     * @param userId the id of the user
+     * @param now    the current time used to determine whether a course is active or has ended
+     * @return the courses visible to the user on the consolidated dashboard
+     */
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+                JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
+            WHERE (c.endDate >= :now OR c.endDate IS NULL)
+                AND (
+                    c.startDate <= :now
+                    OR c.startDate IS NULL
+                    OR ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                                    de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                    de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                )
+            """)
+    List<Course> findAllForDashboardWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
 
     /**
      * Returns the active courses with learning paths enabled in which the given user holds any role. Equivalent to
@@ -234,8 +309,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance for editing.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
+    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
+    // per-course Atlas auto-orchestration settings for editing.
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
@@ -322,23 +398,30 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Get active students in the timeframe from startDate to endDate for the exerciseIds
+     * <p>
+     * Keyed on the participating student's id rather than their login: the consumer only needs a stable key to count
+     * each student once per week, and the login would require joining {@code jhi_user} for every submission in the
+     * window (measured on a production dump: 400k submissions of one course, 0.24s with the join, 0.17s without).
+     * That join was also what excluded team participations, which have no student, so they are excluded explicitly
+     * now.
      *
      * @param exerciseIds exerciseIds from all exercises to get the statistics for
      * @param startDate   the starting date of the query
      * @param endDate     the end date for the query
-     * @return A list with a map for every submission containing date and the username
+     * @return one entry per day and active student, holding the day and the student's id as the deduplication key
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
                 SUBSTRING(CAST(s.submissionDate AS string), 1, 10),
-                p.student.login
+                CAST(p.student.id AS string)
             )
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submissionDate >= :startDate
                 AND s.submissionDate <= :endDate
-            GROUP BY SUBSTRING(CAST(s.submissionDate AS string), 1, 10), p.student.login
+                AND p.student.id IS NOT NULL
+            GROUP BY SUBSTRING(CAST(s.submissionDate AS string), 1, 10), p.student.id
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -598,27 +681,38 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
     /**
-     * Retrieves all inactive courses (end date in the past) with a non-null semester that the user has access to.
+     * Retrieves all inactive courses that the user has access to.
      * Returns all such courses for admins, otherwise only courses where the user has any role.
      *
      * @param isAdmin whether the user is an admin
      * @param userId  the id of the user
      * @param now     the current time used to determine whether a course is inactive
-     * @return a set of inactive courses belonging to a specific semester that the user can access
+     * @return a set of inactive courses that the user can access
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO(
+                c.id, c.title, c.semester, c.color, c.courseIcon, c.testCourse,
+                CASE WHEN :isAdmin = TRUE OR EXISTS (
+                    SELECT managementRole FROM UserCourseRole managementRole
+                    WHERE managementRole.course.id = c.id
+                        AND managementRole.user.id = :userId
+                        AND managementRole.role IN (
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        )
+                ) THEN TRUE ELSE FALSE END
+            )
             FROM Course c
             WHERE (:isAdmin = TRUE
                    OR EXISTS (
                        SELECT ucr FROM UserCourseRole ucr
                        WHERE ucr.course.id = c.id AND ucr.user.id = :userId
                    ))
-                AND c.semester IS NOT NULL
                 AND c.endDate IS NOT NULL
                 AND c.endDate < :now
             """)
-    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("isAdmin") boolean isAdmin, @Param("userId") Long userId, @Param("now") ZonedDateTime now);
+    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesForArchive(@Param("isAdmin") boolean isAdmin, @Param("userId") Long userId, @Param("now") ZonedDateTime now);
 
     /**
      * Finds all courses where the user has at least a teaching assistant role (TA, editor, or instructor),
@@ -680,4 +774,49 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
             """)
     long countCoursesForInstructor(@Param("userId") Long userId);
+
+    /**
+     * Projects the fields the course overview container renders.
+     *
+     * The endpoint used to load the whole {@code Course} to read a handful of scalars off it. Selecting them directly
+     * means the successful path materialises no entity at all, so nothing can lazily initialise on the way out and the
+     * response cannot drift as the entity gains fields.
+     *
+     * The unread notification count lives outside this table, so the caller fills it in with
+     * {@link CourseForOverviewDTO#withNotificationCount(long)}.
+     *
+     * @param courseId the course to project
+     * @return the projected course, or empty when it does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO(
+                course.id,
+                course.title,
+                course.startDate,
+                course.endDate,
+                course.color,
+                course.courseIcon,
+                course.testCourse,
+                course.onlineCourse,
+                course.enrollmentEnabled,
+                course.enrollmentEndDate,
+                course.unenrollmentEnabled,
+                course.unenrollmentEndDate,
+                course.courseInformationSharingConfiguration,
+                course.courseInformationSharingMessagingCodeOfConduct,
+                course.accuracyOfScores,
+                course.presentationScore,
+                course.maxComplaints,
+                course.maxTeamComplaints,
+                course.maxComplaintTimeDays,
+                course.maxComplaintTextLimit,
+                course.maxComplaintResponseTextLimit,
+                course.maxRequestMoreFeedbackTimeDays,
+                COALESCE(athenaConfig.gradingFeedbackEnabled, false),
+                COALESCE(athenaConfig.formativeFeedbackEnabled, false))
+            FROM Course course
+                LEFT JOIN course.athenaConfig athenaConfig
+            WHERE course.id = :courseId
+            """)
+    Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);
 }

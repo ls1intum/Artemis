@@ -19,12 +19,12 @@ export class IrisChat {
 
     /** The Iris tab of the expanded panel (only present when Iris is enabled for the course). */
     getPanelTab(): Locator {
-        return this.page.locator('.p-tab:has(jhi-iris-logo)');
+        return this.page.getByTestId('resizable-panel-tab').filter({ has: this.page.locator('jhi-iris-logo') });
     }
 
     /** The Iris button of the collapsed icon rail. */
     getCollapsedPanelTab(): Locator {
-        return this.page.locator('.collapsed-right-panel-tab:has(jhi-iris-logo)');
+        return this.page.getByTestId('collapsed-panel-tab').filter({ has: this.page.locator('jhi-iris-logo') });
     }
 
     /** Collapses the panel back to the icon rail. */
@@ -55,11 +55,26 @@ export class IrisChat {
      * wired for, and closes the modal.
      */
     getLlmSelectionModal(): Locator {
-        return this.page.locator('jhi-llm-selection-modal .modal-backdrop');
+        return this.page.getByTestId('llm-selection-modal');
     }
 
     getCloudAiOption(): Locator {
-        return this.page.locator('jhi-llm-selection-modal .option-card.cloud-card');
+        return this.page.getByTestId('llm-selection-cloud-option');
+    }
+
+    /**
+     * Answers the LLM-selection modal with Cloud AI if it is up within the given budget, and reports whether it was.
+     */
+    private async acceptCloudAiIfAsked(timeout: number): Promise<boolean> {
+        const modal = this.getLlmSelectionModal();
+        try {
+            await modal.waitFor({ state: 'visible', timeout });
+        } catch {
+            return false;
+        }
+        await this.getCloudAiOption().click();
+        await expect(modal).toBeHidden();
+        return true;
     }
 
     /**
@@ -69,6 +84,11 @@ export class IrisChat {
      * after the modal closes, so no second click is needed.
      */
     async openChat(): Promise<void> {
+        // For a user who has never made the LLM-usage choice the modal is already up when the page finishes loading,
+        // and its backdrop swallows the panel clicks below. So answer it first rather than only afterwards; doing it
+        // the other way round left the tab click retrying until the test timed out.
+        const answeredBeforeOpening = await this.acceptCloudAiIfAsked(3000);
+
         const railTab = this.getCollapsedPanelTab();
         if (await railTab.count()) {
             await railTab.click();
@@ -78,17 +98,19 @@ export class IrisChat {
         await expect(tab).toBeVisible();
         await tab.click();
 
-        // The modal is shown via setTimeout(..., 0), so wait for either it or the input to appear.
-        const modal = this.getLlmSelectionModal();
         const messageInput = this.getMessageInput();
-        const firstVisible = await Promise.race([
-            modal.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'modal' as const),
-            messageInput.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'input' as const),
-        ]);
+        if (!answeredBeforeOpening) {
+            // It can also be opened when the chat itself mounts, via setTimeout(..., 0)
+            const modal = this.getLlmSelectionModal();
+            const firstVisible = await Promise.race([
+                modal.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'modal' as const),
+                messageInput.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'input' as const),
+            ]);
 
-        if (firstVisible === 'modal') {
-            await this.getCloudAiOption().click();
-            await expect(modal).toBeHidden();
+            if (firstVisible === 'modal') {
+                await this.getCloudAiOption().click();
+                await expect(modal).toBeHidden();
+            }
         }
 
         await expect(this.getChat()).toBeVisible();

@@ -107,13 +107,32 @@ public class OIDCConfiguration {
     protected SecurityFilterChain oidcFilterChain(final HttpSecurity http) throws Exception {
         var resolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository(), "/oauth2/authorization");
 
-        // Extract rememberMe field from query and store it into session
+        // Extract rememberMe & redirect field parameters query and store it into session
         resolver.setAuthorizationRequestCustomizer(builder -> {
-            // Get current request
             var attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 var req = attrs.getRequest();
-                req.getSession(true).setAttribute("OIDC_REMEMBER_ME", "true".equalsIgnoreCase(req.getParameter("rememberMe")));
+                var session = req.getSession(true);
+                session.setAttribute(OIDCConstants.OIDC_REMEMBER_ME_SESSION_KEY, "true".equalsIgnoreCase(req.getParameter("rememberMe")));
+
+                String redirectTarget = req.getParameter("redirect");
+                if (redirectTarget != null && !redirectTarget.isBlank()) {
+                    session.setAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY, redirectTarget);
+                }
+                else {
+                    session.removeAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY);
+                }
+
+                String codeChallenge = req.getParameter("code_challenge");
+                if (codeChallenge == null || codeChallenge.isBlank()) {
+                    codeChallenge = req.getParameter("codeChallenge");
+                }
+                if (codeChallenge != null && !codeChallenge.isBlank()) {
+                    session.setAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY, codeChallenge);
+                }
+                else {
+                    session.removeAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY);
+                }
             }
         });
         // @formatter:off

@@ -13,6 +13,7 @@ import { ImageTransform } from 'app/shared-ui/image-cropper/interfaces/image-tra
 import { CropperPosition } from 'app/shared-ui/image-cropper/interfaces/cropper-position.interface';
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
 import { captureException } from '@sentry/angular';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
 // Note: Partially adapted to fit Artemis needs
@@ -60,7 +61,7 @@ export class ImageCropperComponent implements OnInit {
         this._maxSize.set(value);
     }
     private commitMaxSize(): void {
-        this._maxSize.set({ ...this._maxSize() });
+        this._maxSize.set(deepClone(this._maxSize()));
     }
     moveTypes = MoveTypes;
     readonly imageVisible = signal(false);
@@ -79,7 +80,7 @@ export class ImageCropperComponent implements OnInit {
         this._cropper.set(value);
     }
     private commitCropper(): void {
-        this._cropper.set({ ...this._cropper() });
+        this._cropper.set(deepClone(this._cropper()));
     }
 
     readonly wrapper = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
@@ -209,7 +210,7 @@ export class ImageCropperComponent implements OnInit {
 
                 // Keep the internal mutable cropper in sync with the input.
                 if (cropperInputChanged) {
-                    this.cropper = { ...cropperInput };
+                    this.cropper = deepClone(cropperInput);
                 }
 
                 // Apply the cropper settings (idempotent — replaces settings.setOptionsFromChanges(); settings.cropper
@@ -321,7 +322,9 @@ export class ImageCropperComponent implements OnInit {
             width: 0,
             height: 0,
         };
-        Object.assign(this.cropper, defaultCropperPosition());
+        // Assigned rather than Object.assign'd into the existing object: `cropper` is a getter over a signal, so an
+        // in-place mutation would not notify it, and reset() replaces moveStart and maxSize wholesale anyway.
+        this.cropper = defaultCropperPosition();
     }
 
     private loadImageFile(file: File): void {
@@ -375,7 +378,7 @@ export class ImageCropperComponent implements OnInit {
             // change detection on their own. Commit both signals to re-render the template.
             this.commitMaxSize();
             this.commitCropper();
-            this.cropperReady.emit({ ...this.maxSize });
+            this.cropperReady.emit(deepClone(this.maxSize));
         } else {
             this.setImageMaxSizeRetries++;
             setTimeout(() => this.checkImageMaxSizeRecursively(), 50);
@@ -454,14 +457,13 @@ export class ImageCropperComponent implements OnInit {
         if (event.preventDefault) {
             event.preventDefault();
         }
-        this.moveStart = {
+        this.moveStart = cloneWith(this.cropper, {
             active: true,
             type: moveType,
             position,
             clientX: this.cropperPositionService.getClientX(event),
             clientY: this.cropperPositionService.getClientY(event),
-            ...this.cropper,
-        };
+        });
     }
 
     moveImg(event: MouseEvent | TouchEvent): void {

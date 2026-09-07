@@ -139,7 +139,7 @@ describe('Course Group Membership Component', () => {
             const newNavigateSpy = vi.spyOn(newRouter, 'navigate').mockResolvedValue(true);
 
             newFixture.detectChanges();
-            expect(newNavigateSpy).toHaveBeenCalledWith(['/course-management']);
+            expect(newNavigateSpy).toHaveBeenCalledWith(['/courses']);
         });
     });
 });

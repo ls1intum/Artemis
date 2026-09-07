@@ -1,9 +1,13 @@
-<jhi-feedback-learner-profile />
-<hr />
-@if (coursePanelEnabled()) {
-    <jhi-course-learner-profile />
+@if (atlasEnabled()) {
+    <jhi-feedback-learner-profile />
+    @if (coursePanelEnabled()) {
+        <hr />
+        <jhi-course-learner-profile />
+    }
 }
-<hr />
-@if (memirisEnabled()) {
+@if (insightsEnabled()) {
+    @if (atlasEnabled()) {
+        <hr />
+    }
     <jhi-insights-learner-profile />
 }

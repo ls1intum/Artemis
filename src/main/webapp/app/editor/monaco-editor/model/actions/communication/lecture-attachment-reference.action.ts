@@ -9,9 +9,9 @@ import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
-import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureWithDetails {
     id: number;
@@ -50,7 +50,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 this.lecturesWithDetails = lectures
                     .filter((lecture) => !!lecture.id && !!lecture.title)
                     .map((lecture) => {
-                        const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
+                        const attachmentsWithFileUrls = deepClone(lecture.attachments)?.map((attachment) => {
                             if (attachment.link && attachment.name) {
                                 attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version);
                                 attachment.linkUrl = addPublicFilePrefix(attachment.link);

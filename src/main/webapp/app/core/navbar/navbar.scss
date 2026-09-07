@@ -14,8 +14,13 @@
 Navbar
 ========================================================================== */
 
-/* Don't underline the menu items on hover */
-a:not(.btn):hover {
+/*
+ * Don't underline the menu items on hover, overriding the rule that does so for every anchor in `global.scss` — see
+ * the comment there for why the exclusions belong in one `:not()` argument list rather than a chain of clauses. On
+ * the account menu the stray underline is especially visible: the avatar covers the stretch behind it, so all that
+ * surfaces is a short blue dash next to the image.
+ */
+a:not(.btn, .tum-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
 

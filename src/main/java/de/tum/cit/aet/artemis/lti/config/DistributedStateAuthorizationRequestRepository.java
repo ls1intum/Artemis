@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -19,10 +18,11 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import com.hazelcast.core.HazelcastInstance;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
- * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
+ * A specialized {@link AuthorizationRequestRepository} that uses the distributed data provider to store OAuth2 authorization requests.
  * This allows for sharing state across multiple nodes.
  * <p>
  * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
@@ -39,10 +39,10 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
      */
     private final Executor delayedExecutor = CompletableFuture.delayedExecutor(2L, TimeUnit.MINUTES);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     @Nullable
-    private Map<String, OAuth2AuthorizationRequest> store;
+    private DistributedMap<String, OAuth2AuthorizationRequest> store;
 
     /**
      * Should we limit the login to a single IP address.
@@ -50,8 +50,8 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
      */
     private boolean limitIpAddress = true;
 
-    DistributedStateAuthorizationRequestRepository(HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    DistributedStateAuthorizationRequestRepository(DistributedDataProvider distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     public void setLimitIpAddress(boolean limitIpAddress) {
@@ -114,9 +114,9 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         return authorizationRequest;
     }
 
-    private Map<String, OAuth2AuthorizationRequest> getStore() {
+    private DistributedMap<String, OAuth2AuthorizationRequest> getStore() {
         if (this.store == null) {
-            this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
+            this.store = distributedDataProvider.getMap("ltiStateAuthorizationRequestStore");
         }
         return this.store;
     }

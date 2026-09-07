@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingCriterion extends DomainObject {
 
-    // No @Cache here on purpose: mutated while instructors edit grading criteria, same bug class as #12574 / #12584.
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
     private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();

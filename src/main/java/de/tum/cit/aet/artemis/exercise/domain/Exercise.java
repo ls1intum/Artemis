@@ -33,6 +33,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
@@ -95,10 +96,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
-    // TODO: rename in a follow up
-    @Column(name = "allow_manual_feedback_requests")
-    private boolean allowFeedbackRequests;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
@@ -134,9 +131,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
-    private String feedbackSuggestionModule;
-
     @ManyToOne
     private Course course;
 
@@ -148,13 +142,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercises")
     private ExerciseVariantGroup exerciseVariantGroup;
 
-    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
-    // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
-    // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
@@ -167,12 +158,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
-    // No @Cache: instructors edit attachments while students are viewing the exercise page; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
 
-    // No @Cache: plagiarism cases are appended by detection runs while instructors read the list, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
@@ -251,14 +240,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
     }
 
-    public boolean getAllowFeedbackRequests() {
-        return allowFeedbackRequests;
-    }
-
-    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
-        this.allowFeedbackRequests = allowFeedbackRequests;
-    }
-
     public boolean getAllowComplaintsForAutomaticAssessments() {
         return allowComplaintsForAutomaticAssessments;
     }
@@ -311,20 +292,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return studentParticipations;
     }
 
-    public Exercise participations(Set<StudentParticipation> participations) {
-        this.studentParticipations = participations;
-        return this;
-    }
-
     public Exercise addParticipation(StudentParticipation participation) {
         this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
-    }
-
-    public void removeParticipation(StudentParticipation participation) {
-        this.studentParticipations.remove(participation);
-        participation.setExercise(null);
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -400,7 +371,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
-            return this.getExerciseGroup().getExam().getCourse();
+            // Student-facing exam payloads mask the exam out (exerciseGroup.setExam(null)) before serialization, so the
+            // exam (and therefore its course) can be null here. Guard against the resulting NullPointerException by
+            // returning null instead of dereferencing a masked graph; callers that derive a course from an exam exercise
+            // on a masked graph must tolerate a null course (they cannot resolve one anyway).
+            var exam = this.getExerciseGroup().getExam();
+            return exam != null ? exam.getCourse() : null;
         }
         else {
             return this.getCourse();
@@ -533,7 +509,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
 
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 if (!isAssessmentOver) {
                     // For assessment that's not over yet
@@ -714,25 +690,43 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public String getFeedbackSuggestionModule() {
-        return feedbackSuggestionModule;
+    /**
+     * Checks whether Athena formative feedback requests are enabled for this exercise's course.
+     *
+     * @return true if the course has Athena formative feedback enabled, false otherwise
+     */
+    @JsonIgnore
+    public boolean getAllowFeedbackRequests() {
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = course == null ? null : course.getAthenaConfig();
+        // athenaConfig can be an uninitialized Hibernate proxy when the course was loaded via an entity graph that
+        // does not include it (see CourseUpdateResource for the same caveat); Hibernate.isInitialized() checks this
+        // without triggering a lazy load, so it stays safe to call once the persistence context has closed.
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
     }
 
-    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
-        this.feedbackSuggestionModule = feedbackSuggestionModule;
-    }
-
+    /**
+     * Checks whether Athena feedback suggestions are enabled for this exercise.
+     *
+     * @return true if this exercise type is Athena-supported and the course has grading feedback enabled, false otherwise
+     */
     public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
+        if (!(this instanceof TextExercise || this instanceof ProgrammingExercise || this instanceof ModelingExercise)) {
+            // Athena only supports text, programming, and modeling exercises
+            return false;
+        }
+        if (this instanceof ProgrammingExercise && getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            // Automatically assessed programming exercises rely on unit-test feedback; Athena grading feedback is only
+            // relevant for manually assessed submissions
+            return false;
+        }
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = course == null ? null : course.getAthenaConfig();
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
     }
 
     public Set<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
-    }
-
-    public void addGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.add(gradingCriterion);
-        gradingCriterion.setExercise(this);
     }
 
     public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
@@ -981,20 +975,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @return the non-null mutable set of competency links
-     */
-    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
-        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
     }
 }

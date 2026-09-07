@@ -8,7 +8,7 @@ const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 
 export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPage {
     async changeEditMode() {
-        await this.page.locator('#switch-edit-mode-button').click();
+        await this.page.locator('[data-testid="switch-edit-mode-button"]').click();
         // Switching from simple to detailed mode adds the difficulty/mode section, so the form status bar grows from
         // four to five section circles. Wait for the fifth circle before continuing: the status-bar section circles
         // bind their scroll target (and indexing) at render time, so acting before the detailed-mode bar has rendered
@@ -56,13 +56,13 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
 
     /**
      * Sets the Due Date field on the unified exercise timeline (PrimeNG p-datepicker rendered inside
-     * <jhi-exercise-timeline>). The timeline assigns the inputId per visible item dynamically
+     * <jhi-timeline>). The timeline assigns the inputId per visible item dynamically
      * (e.g. datepicker-0, datepicker-1, ...), so we locate the input through its associated label
-     * and then fill it in the format expected by ExerciseTimelineComponent#handleManualInput.
+     * and then fill it in the format expected by the component
      *
      * @param date the due date to set
      */
-    async setDueDate(date: Dayjs) {
+    override async setDueDate(date: Dayjs) {
         const dueDateInput = this.page.getByLabel('Due Date', { exact: true });
         await expect(dueDateInput).toBeEnabled();
         await dueDateInput.fill(date.format(TIMELINE_DATE_FORMAT));

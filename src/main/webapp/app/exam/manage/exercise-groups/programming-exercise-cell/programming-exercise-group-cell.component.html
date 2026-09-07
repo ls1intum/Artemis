@@ -30,16 +30,16 @@
     }
     @if (displayEditorMode()) {
         <div>
-            <div class="d-flex justify-content-between">
+            <div class="flex justify-between">
                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
                 <span [jhiTranslate]="exercise().allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
-            <div class="d-flex justify-content-between">
+            <div class="flex justify-between">
                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
                 <span [jhiTranslate]="exercise().allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
             @if (onlineIdeEnabled()) {
-                <div class="d-flex justify-content-between">
+                <div class="flex justify-between">
                     <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
                     <span [jhiTranslate]="exercise().allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
                 </div>

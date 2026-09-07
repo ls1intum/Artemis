@@ -12,7 +12,6 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/quiz/manage/service/quiz-exercise-popup.service';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
-import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
@@ -27,6 +26,7 @@ import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/
 import { JsonPipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -73,7 +73,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
             this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise.set(response.body!);
                 this.prepareEntity(this.quizExercise());
-                this.savedEntity = cloneDeep(this.quizExercise());
+                this.savedEntity = deepClone(this.quizExercise());
                 this.updateDuration();
             });
         });
@@ -122,7 +122,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         void this.popupService.open(QuizReEvaluateWarningComponent, this.quizExercise(), files).then((res) => {
             res?.onClose.subscribe((confirmed) => {
                 if (confirmed) {
-                    this.savedEntity = cloneDeep(this.quizExercise());
+                    this.savedEntity = deepClone(this.quizExercise());
                     // savedEntity feeds pendingChanges(); re-run cacheValidation so its signal writes re-render under zoneless.
                     this.cacheValidation();
                 }
@@ -153,7 +153,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      * @desc Resets the whole Quiz
      */
     resetAll(): void {
-        this.quizExercise.set(cloneDeep(this.savedEntity));
+        this.quizExercise.set(deepClone(this.savedEntity));
         this.cacheValidation();
     }
 
@@ -175,7 +175,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         if (index === 0) {
             return;
         }
-        const questionToMove: QuizQuestion = Object.assign({}, this.quizExercise().quizQuestions![index]);
+        const questionToMove: QuizQuestion = deepClone(this.quizExercise().quizQuestions![index]);
         /**
          * The splice() method adds/removes items to/from an array, and returns the removed item(s).
          * We create a copy of the question we want to move and remove it from the questions array.
@@ -195,7 +195,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         if (index === this.quizExercise().quizQuestions!.length - 1) {
             return;
         }
-        const questionToMove: QuizQuestion = Object.assign({}, this.quizExercise().quizQuestions![index]);
+        const questionToMove: QuizQuestion = deepClone(this.quizExercise().quizQuestions![index]);
         /**
          * The splice() method adds/removes items to/from an array, and returns the removed item(s).
          * We create a copy of the question we want to move and remove it from the questions array.

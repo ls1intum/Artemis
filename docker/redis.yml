@@ -1,0 +1,35 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Redis base service
+#
+# Alternative distributed data backend to the embedded Hazelcast cluster. Artemis reaches it through the
+# DistributedDataProvider abstraction, selected with `artemis.distributed-data.provider: Redis`, so nothing else about a
+# deployment changes when this container is used instead of Hazelcast.
+#
+# Only started by the multi-node E2E runners when `--middleware redis` is passed; the default stays Hazelcast.
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    redis:
+        container_name: artemis-redis
+        image: "redis/redis-stack-server:${REDIS_STACK_VERSION}"
+        pull_policy: missing
+        # Bound to the loopback interface, like Postgres: the host JVMs of the fast runner connect through it, and it must
+        # not be reachable from outside the machine.
+        ports:
+            - "127.0.0.1:6379:6379"
+        # expose the port so containers on the artemis network reach it even if the published port changes
+        expose:
+            - "6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 30
+            start_period: 60s
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

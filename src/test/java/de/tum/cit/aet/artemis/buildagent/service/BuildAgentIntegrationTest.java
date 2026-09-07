@@ -40,10 +40,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
@@ -693,7 +693,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testDockerVersionIsRetrievedAndStoredInBuildAgentDetails() {
         // Trigger the scheduled Docker version update manually
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Verify that the Docker version was retrieved and stored
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
@@ -711,14 +711,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testDockerVersionChangePropagatedToDistributedMap() {
         // First, trigger an initial update
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
 
         // Now mock a version change
         DockerClientTestService.mockVersionCmd(dockerClient, "25.0.0-updated");
 
         // Trigger the update again
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Verify the version was updated
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("25.0.0-updated");
@@ -734,13 +734,13 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     /**
-     * Test that the updateDockerVersion method handles exceptions gracefully.
+     * Test that the build runner status refresh handles exceptions gracefully.
      * When Docker version retrieval fails, the method should log a warning but not throw.
      */
     @Test
     void testDockerVersionRetrievalFailureHandledGracefully() {
         // Store the current version
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
         String originalVersion = buildAgentInformationService.getDockerVersion();
 
         // Mock versionCmd to throw an exception
@@ -749,7 +749,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         doThrow(new RuntimeException("Docker daemon unavailable")).when(versionCmd).exec();
 
         // Trigger the update - should not throw
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Version should remain unchanged (graceful degradation)
         assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo(originalVersion);
@@ -764,7 +764,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testDockerVersionIncludedInBuildAgentDetailsAfterBuild() {
         // Ensure Docker version is set
-        buildAgentInformationService.updateDockerVersion();
+        buildAgentInformationService.updateBuildRunnerStatus();
 
         // Run a build job
         var queueItem = createBaseBuildJobQueueItemForTrigger();

@@ -8,13 +8,11 @@
         <!-- chart -->
         @if (numberOfSubmissions().total !== 0) {
             <div class="pie-chart pb-2" style="margin-top: -10px">
-                <p-chart
-                    type="pie"
-                    [data]="chartData()"
-                    [options]="chartOptions()"
-                    [responsive]="false"
-                    width="320px"
-                    height="150px"
+                <tum-ui-doughnut-chart
+                    class="h-[150px] w-80"
+                    [labels]="chartData().labels"
+                    [series]="chartData().series"
+                    [config]="chartConfig()"
                     [ariaLabel]="'artemisApp.assessmentDashboard.assessmentsChartAriaLabel' | artemisTranslate"
                 />
             </div>
@@ -41,7 +39,7 @@
                             <div class="col-5">
                                 @if (course()?.isAtLeastInstructor) {
                                     <div>
-                                        <a id="open-complaints" [routerLink]="complaintsLink()">
+                                        <a data-testid="open-complaints" [routerLink]="complaintsLink()">
                                             {{ complaints().done }} / {{ complaints().total }} ({{ complaints().doneToTotalPercentage }})
                                         </a>
                                         |

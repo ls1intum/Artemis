@@ -6,7 +6,7 @@ GEM
     code-scanning-rubocop (0.6.1)
       rubocop (~> 1.0)
     date (3.4.1)
-    json (2.21.1)
+    json (2.21.2)
     language_server-protocol (3.17.0.4)
     minitest (5.25.4)
     minitest-junit (2.1.0)

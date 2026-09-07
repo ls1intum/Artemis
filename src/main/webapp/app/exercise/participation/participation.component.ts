@@ -45,6 +45,7 @@ import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/fil
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum FilterProp {
     ALL = 'All',
@@ -371,10 +372,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
-        const search: ParticipationSearch = {
-            ...base,
-            filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
-        };
+        const search: ParticipationSearch = cloneWith(base, { filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined });
 
         this.participationService.searchParticipations(ex.id, search).subscribe({
             next: (result) => {

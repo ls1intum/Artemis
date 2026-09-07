@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record QuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
         @Nullable @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO,
         @Nullable @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO,
-        @Nullable @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO) {
+        @Nullable @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO) implements QuizQuestionForExamDTO {
 
     /**
      * Creates a QuizQuestionWithSolutionDTO object from a QuizQuestion object.

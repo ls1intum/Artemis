@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('DoughnutChartComponent', () => {
     let fixture: ComponentFixture<DoughnutChartComponent>;
@@ -102,8 +103,8 @@ describe('DoughnutChartComponent', () => {
     });
 
     it('should show only the value in the tooltip body', () => {
-        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+        const tooltip = component.chartConfig().tooltip as TumUiChartTooltipConfig;
 
-        expect(callbacks.label({ parsed: 20 })).toBe('20');
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: 'Done', value: 20 })).toBe('20');
     });
 });

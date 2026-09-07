@@ -1,10 +1,10 @@
 <div
     id="course-{{ courseId() }}-header"
-    class="card-header text-white px-3"
-    [ngClass]="{ 'rounded-bottom-4': archiveMode() }"
-    [ngStyle]="{ '--background-color-for-hover': color() }"
+    class="course-card-header text-white"
+    [ngClass]="{ 'rounded-bottom-4': archiveMode(), 'archive-mode-card': archiveMode(), 'dual-zone-card': showArchiveManagementAction() }"
+    [ngStyle]="{ '--background-color-for-hover': color(), '--title-color': titleColor() }"
 >
-    <div class="d-flex align-items-center justify-content-between gap-1">
+    <ng-template #courseIdentity>
         <div class="position-relative">
             <jhi-course-notification-bubble class="card-header-notification-bubble" [totalAmount]="courseNotificationCount()" />
             @if (courseIcon()) {
@@ -17,13 +17,27 @@
                 </div>
             }
         </div>
-        <div class="text-center px-2">
-            <h5 class="card-title" [ngStyle]="{ color: titleColor() }">
+        <div class="course-title-container text-center px-2">
+            <h5 class="card-title">
                 {{ courseTitle() }}
             </h5>
         </div>
-        <div>
+    </ng-template>
+
+    @if (showArchiveManagementAction()) {
+        <div class="flex h-full">
+            <a class="archive-card-zone archive-course-zone flex items-center px-2" [routerLink]="['/courses', courseId()]">
+                <ng-container *ngTemplateOutlet="courseIdentity" />
+            </a>
+            <a class="archive-card-zone archive-management-zone flex flex-col items-center justify-center gap-1 px-2" [routerLink]="['/course-management', courseId()]">
+                <fa-icon [icon]="faWrench" />
+                <span class="text-sm" jhiTranslate="artemisApp.course.archive.manage"></span>
+            </a>
+        </div>
+    } @else {
+        <div class="flex h-full items-center justify-between gap-1 px-3">
+            <ng-container *ngTemplateOutlet="courseIdentity" />
             <a class="stretched-link" [routerLink]="['/courses', courseId()]"></a>
         </div>
-    </div>
+    }
 </div>

@@ -2,10 +2,16 @@
  * Shadows all exec commands if compiled with
  **/
 
+// Needed so <unistd.h> declares syscall(2) under -std=c11, which kill() below uses to reach the
+// real implementation. Defined before any include, and only in this file, so the student's own
+// translation unit is unaffected.
+#define _GNU_SOURCE
+
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -140,9 +146,16 @@ int execveat(int dirfd, const char* pathname, char* const argv[], char* const en
 }
 
 int kill(pid_t pid, int sig) {
-    if (pid == 0 || pid == -1) {
+    // Only a signal to a single, named process gets through. Every pid <= 0 addresses more than one
+    // process: 0 is the caller's own process group, -1 is every process the user may signal, and any
+    // other negative pid is the process group -pid.
+    if (pid <= 0) {
         printf("You're not allowed to send signals to PID %i! This will be reported.\n", pid);
         return -1;
     }
-    return kill(pid, sig);
+    // Issue the syscall directly. Calling kill() here re-enters this shadow -- it is the only one
+    // that passes anything through, so it is the only one that can recurse -- and the recursion ran
+    // until the stack overflowed. A targeted signal therefore never reached the kernel: the program
+    // died instead, and under AddressSanitizer it died as a bare "AddressSanitizer:DEADLYSIGNAL".
+    return (int) syscall(SYS_kill, pid, sig);
 }

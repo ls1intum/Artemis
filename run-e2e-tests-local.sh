@@ -99,7 +99,12 @@ echo ""
 
 # Environment variables
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
-export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
+# The E2E stacks run under the prod profile, which refuses to start on the published `artemis_admin` password or on
+# a password equal to the username, so the default here is a value of its own.
+export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-local-e2e-admin-not-a-deployment-credential}"
+# The prod-profile stacks need a JWT signing key. A key committed to the repository would be one anyone can use to forge
+# a token, so it is generated per run and shared by every service that reads docker/artemis/config/playwright.env.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
 export SPRING_LIQUIBASE_CONTEXTS="${SPRING_LIQUIBASE_CONTEXTS:-prod,e2e}"
 # Timeouts matching CI values for reliable local execution
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-150}"             # CI: 300

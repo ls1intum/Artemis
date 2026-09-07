@@ -15,7 +15,13 @@ export class ConfigurationService {
                 Object.values(
                     Object.values(configProps.contexts)
                         .map((context) => context.beans)
-                        .reduce((allBeans: Beans, contextBeans: Beans) => ({ ...allBeans, ...contextBeans })),
+                        .reduce((allBeans: Beans, contextBeans: Beans) => {
+                            // Merged into a fresh accumulator key by key; copying it on every step would be quadratic.
+                            for (const beanName of Object.keys(contextBeans)) {
+                                allBeans[beanName] = contextBeans[beanName];
+                            }
+                            return allBeans;
+                        }, {}),
                 ),
             ),
         );

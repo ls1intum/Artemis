@@ -28,6 +28,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/communication/conversations/conversation-permissions.utils';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -262,15 +263,17 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         translationParams: { [key: string]: string },
         confirmedCallback: () => Observable<HttpResponse<void>>,
     ) {
-        const ref = this.dialogService.open(GenericConfirmationDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: {
-                translationParameters: translationParams,
-                translationKeys,
-                canBeUndone: true,
-                isDangerousAction: true,
-            },
-        });
+        const ref = this.dialogService.open(
+            GenericConfirmationDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                data: {
+                    translationParameters: translationParams,
+                    translationKeys,
+                    canBeUndone: true,
+                    isDangerousAction: true,
+                },
+            }),
+        );
 
         ref?.onClose
             .pipe(

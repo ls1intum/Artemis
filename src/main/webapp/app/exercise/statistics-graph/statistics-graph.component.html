@@ -5,7 +5,7 @@
     <div class="flex">
         <fa-icon [icon]="faArrowLeft" size="2x" class="flex justify-end items-center px-0 w-[8.333%]" role="button" (click)="switchTimeSpan(LEFT)" />
         <div class="chart grow px-0" style="height: 250px">
-            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" [ariaLabel]="chartName() | artemisTranslate" />
+            <tum-ui-bar-chart [labels]="chartData().labels" [series]="chartData().series" [config]="chartConfig()" [ariaLabel]="chartName() | artemisTranslate" />
         </div>
         <fa-icon [icon]="faArrowRight" size="2x" class="flex justify-start items-center px-0 w-[8.333%]" role="button" (click)="switchTimeSpan(RIGHT)" />
     </div>

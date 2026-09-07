@@ -13,8 +13,10 @@ public record ShortAnswerQuestionWithMappingDTO(@JsonUnwrapped ShortAnswerQuesti
         List<ShortAnswerMappingDTO> correctMappings) {
 
     public static ShortAnswerQuestionWithMappingDTO of(ShortAnswerQuestion question) {
-        return new ShortAnswerQuestionWithMappingDTO(ShortAnswerQuestionWithoutMappingDTO.of(question),
-                question.getCorrectMappings().stream().map(ShortAnswerMappingDTO::of).toList());
+        // correctMappings is null on a question that has been masked for students (solutions/mappings stripped before
+        // results are published); treat that as no mappings instead of dereferencing null.
+        List<ShortAnswerMappingDTO> correctMappings = question.getCorrectMappings() == null ? null : question.getCorrectMappings().stream().map(ShortAnswerMappingDTO::of).toList();
+        return new ShortAnswerQuestionWithMappingDTO(ShortAnswerQuestionWithoutMappingDTO.of(question), correctMappings);
     }
 
 }

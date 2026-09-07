@@ -175,4 +175,69 @@ describe('Register Component Tests', () => {
             expect(focusSpy).toHaveBeenCalled();
         });
     });
+
+    /**
+     * The behaviour suite above renders no template at all, and the page itself is only reachable on a server
+     * with registration enabled — so nothing else covers the markup of this form.
+     */
+    describe('RegisterComponent template', () => {
+        let fixture: ComponentFixture<RegisterComponent>;
+        let comp: RegisterComponent;
+
+        const fields = ['firstName', 'lastName', 'login', 'email', 'password', 'confirmPassword'];
+
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [RegisterComponent],
+                providers: [
+                    FormBuilder,
+                    LocalStorageService,
+                    SessionStorageService,
+                    ProfileService,
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    provideHttpClient(),
+                ],
+            }).compileComponents();
+
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ registrationEnabled: true } as any);
+
+            fixture = TestBed.createComponent(RegisterComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+        });
+
+        const input = (id: string) => fixture.nativeElement.querySelector(`input#${id}`) as HTMLInputElement;
+
+        it('renders every field as a labelled, required control', () => {
+            for (const id of fields) {
+                const control = input(id);
+                expect(control, id).not.toBeNull();
+                expect(control.required, id).toBe(true);
+
+                const label = fixture.nativeElement.querySelector(`label[for="${id}"]`) as HTMLLabelElement;
+                expect(label, id).not.toBeNull();
+                expect(label.textContent!.trim(), id).not.toBe('');
+            }
+        });
+
+        it('keeps the submit button disabled while the form is invalid', () => {
+            expect(comp.registerForm.invalid).toBe(true);
+            expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
+        });
+
+        it('announces a validation error and describes the control by it', () => {
+            const login = input('login');
+            comp.registerForm.controls.login.markAsTouched();
+            fixture.detectChanges();
+
+            const errorId = login.getAttribute('aria-describedby');
+            expect(errorId).toBeTruthy();
+
+            const error = fixture.nativeElement.querySelector(`#${errorId}`) as HTMLElement;
+            expect(error.getAttribute('role')).toBe('alert');
+            expect(error.hidden).toBe(false);
+            expect(error.textContent!.trim()).not.toBe('');
+            expect(login.getAttribute('aria-invalid')).toBe('true');
+        });
+    });
 });

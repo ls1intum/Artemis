@@ -137,6 +137,33 @@ describe('CodeButtonComponent', () => {
         expect(getCachedSshKeysSpy).toHaveBeenCalled();
     });
 
+    it('should default to token authentication when password was stored in local storage', async () => {
+        localStorageState = RepositoryAuthenticationMethod.Password;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component.ngOnInit();
+        fixture.detectChanges();
+
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
+        expect(component.useToken()).toBe(true);
+        expect(localStorageMock.store).toHaveBeenCalledWith('code-button-state', RepositoryAuthenticationMethod.Token);
+    });
+
+    it('should preserve SSH preference from local storage', async () => {
+        localStorageState = RepositoryAuthenticationMethod.SSH;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component.ngOnInit();
+        fixture.detectChanges();
+
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.SSH);
+        expect(component.useSsh()).toBe(true);
+    });
+
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
         participation.vcsAccessToken = 'vcpat-1234';
         fixture.componentRef.setInput('participations', [participation]);
@@ -549,8 +576,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
-        localStorageState = RepositoryAuthenticationMethod.Password;
-        component.onClick();
+        component.useHttpsPassword();
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();

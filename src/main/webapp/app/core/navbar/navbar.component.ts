@@ -112,7 +112,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly gitBranchName = signal<string>(undefined!);
     readonly gitTimestamp = signal<string>(undefined!);
     readonly gitUsername = signal<string>(undefined!);
-    readonly isBuildAgentDetails = signal(false);
     languages = LANGUAGES;
     readonly version = signal<string>(undefined!);
     readonly currAccount = signal<User | undefined>(undefined);
@@ -131,12 +130,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
-    readonly agentName = signal<string | undefined>(undefined);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.currentCourseContextService.course;
     readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
+    readonly showPerspectiveSwitch = computed(() => {
+        const courseId = this.currentCourse()?.id;
+        if (!courseId) {
+            return false;
+        }
+
+        const path = this.currentRoute().split('?')[0];
+        return [`/courses/${courseId}`, `/course-management/${courseId}`].some((basePath) => path === basePath || path.startsWith(`${basePath}/`));
+    });
     readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
     readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
@@ -151,7 +158,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private globalSearchSubscription?: Subscription;
     private authStateSubscription?: Subscription;
     private routerEventSubscription?: Subscription;
-    private queryParamsSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
@@ -252,7 +258,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.standardizedCompetencySubscription.unsubscribe();
         }
         this.globalSearchSubscription?.unsubscribe();
-        this.queryParamsSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
     }
 
@@ -281,7 +286,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         reset: 'global.menu.account.password',
         register: 'register.title',
         settings: 'global.menu.account.settings',
-        course_management: 'global.menu.course',
+        course_management: 'overview.title',
         exercises: 'artemisApp.course.exercises',
         text_exercises: 'artemisApp.course.exercises',
         programming_exercises: 'artemisApp.course.exercises',
@@ -388,28 +393,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         vcs_access_log: 'artemisApp.repository.vcsAccessLog.title',
     };
 
-    studentPathBreadcrumbTranslations: { [key: string]: string } = {
-        exams: 'artemisApp.courseOverview.menu.exams',
-        test_exam: 'artemisApp.courseOverview.menu.testExam',
-        exercises: 'artemisApp.courseOverview.menu.exercises',
-        lectures: 'artemisApp.courseOverview.menu.lectures',
-        competencies: 'artemisApp.courseOverview.menu.competencies',
-        learning_path: 'artemisApp.courseOverview.menu.learningPath',
-        lecture_unit: 'artemisApp.learningPath.breadcrumbs.lectureUnit',
-        exercise: 'artemisApp.learningPath.breadcrumbs.exercise',
-        statistics: 'artemisApp.courseOverview.menu.statistics',
-        discussion: 'artemisApp.metis.communication.label',
-        messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
-        code_editor: 'artemisApp.editor.breadCrumbTitle',
-        participate: 'artemisApp.submission.detail.title',
-        live: 'artemisApp.submission.detail.title',
-        courses: 'artemisApp.course.home.title',
-        enroll: 'artemisApp.studentDashboard.enroll.title',
-        archive: 'artemisApp.course.archive.title',
-    };
-
     /**
-     * Fills the breadcrumbs array with entries for admin and course-management routes
+     * Fills the breadcrumbs array for routes inside a managed course
      */
     private buildBreadcrumbs(fullURI: string): void {
         this.breadcrumbs.set([]);
@@ -421,23 +406,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Temporarily restrict routes
-        if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management') && !fullURI.startsWith('/courses')) {
+        const path = fullURI.split('?')[0].replace(/\/+$/, '');
+        if (!path.startsWith('/course-management/') || path === '/course-management/new') {
             return;
         }
 
-        // Handle the admin default redirect - when navigating to /admin, it redirects to /admin/user-management
-        // Ensure breadcrumbs reflect the actual destination
-        if (fullURI === '/admin' || fullURI === '/admin/') {
-            fullURI = '/admin/user-management';
-        }
+        fullURI = path;
 
         // try catch for extra safety measures
         try {
-            let currentPath = '/';
+            let currentPath = '/course-management/';
+            this.addTranslationAsCrumb('/courses', 'course-management');
+            this.lastRouteUrlSegment = 'course-management';
 
-            // Remove the leading slash
-            let uri = fullURI.substring(1);
+            // The course management segment is represented by the course overview breadcrumb above.
+            let uri = fullURI.substring(currentPath.length);
 
             // Remove any query parameters
             const questionMark = uri.indexOf('?');
@@ -470,42 +453,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment (string representation of an entityID) to add a crumb for
      */
     private addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
-        const isStudentPath = currentPath.startsWith('/courses');
-        if (isStudentPath) {
-            switch (this.lastRouteUrlSegment) {
-                case 'code-editor':
-                case 'test-exam':
-                case 'repository':
-                case 'participate':
-                    this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
-                    return;
-                case 'exercises':
-                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
-                    return;
-                case 'group':
-                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE_VARIANT_GROUP, [Number(segment)], currentPath, segment);
-                    return;
-                case 'tutorial-lectures':
-                    this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
-                    return;
-                default:
-                    const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
-                    if (exercisesMatcher) {
-                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(`exercises/${exercisesMatcher[0]}`, 'exercises'), 'exercises');
-                        return;
-                    }
-                    break;
-            }
-        }
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
-            case 'system-notification-management':
             case 'teams':
             case 'code-editor':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
-            case 'courses':
                 this.addResolvedTitleAsCrumb(EntityType.COURSE, [Number(segment)], currentPath, segment);
                 break;
             case 'exercises':
@@ -539,9 +493,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exams':
                 this.routeExamId = Number(segment);
                 this.addResolvedTitleAsCrumb(EntityType.EXAM, [this.routeExamId], currentPath, segment);
-                break;
-            case 'organization-management':
-                this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
             case 'tutorial-groups':
                 this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
@@ -589,28 +540,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment to add a (translated) crumb for
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
-        const isStudentPath = currentPath.startsWith('/courses');
-        this.isBuildAgentDetails.set(currentPath.startsWith('/admin/build-agents/') && segment == 'details');
-
-        if (isStudentPath) {
-            if (segment === 'repository') {
-                return;
-            }
-            const exercisesMatcher = segment?.match(/.+-exercises/);
-            if (exercisesMatcher) {
-                return;
-            }
-        }
-
-        if (this.isBuildAgentDetails()) {
-            this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
-                this.agentName.set(params['agentName']);
-                const agentName = this.agentName();
-                if (agentName) {
-                    segment = decodeURIComponent(agentName);
-                }
-            });
-        }
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {
@@ -633,9 +562,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'participate':
             case 'overview':
                 break;
-            case 'admin':
-                this.addBreadcrumb(currentPath, 'global.menu.admin.main', true);
-                break;
             case 'example-submissions':
                 // Hide example submission dashboard for non editor users
                 if (this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
@@ -653,11 +579,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             default:
                 // Special cases:
-                if (this.lastRouteUrlSegment === 'user-management') {
-                    // - Users display their login name directly as crumb
-                    this.addBreadcrumb(currentPath, segment, false);
-                    break;
-                } else if (this.lastRouteUrlSegment === 'example-submissions') {
+                if (this.lastRouteUrlSegment === 'example-submissions') {
                     // - Creating a new example submission should display the text for example submissions
                     this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
                     break;
@@ -751,7 +673,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb
         const crumb = this.addBreadcrumb('', '', false);
-        const isStudentPath = currentPath.startsWith('/courses');
         this.exerciseService.find(exerciseId).subscribe({
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
@@ -759,8 +680,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.removeBreadcrumb(crumb);
                 } else {
                     // If all data is there, overwrite the breadcrumb with the correct link
-                    const replaceValue = isStudentPath ? `/exercises/${response.body.type}-exercises/` : `/${response.body.type}-exercises/`;
-                    this.setBreadcrumb(currentPath.replace('/exercises/', replaceValue), response.body.title, false, this.breadcrumbs().indexOf(crumb));
+                    this.setBreadcrumb(currentPath.replace('/exercises/', `/${response.body.type}-exercises/`), response.body.title, false, this.breadcrumbs().indexOf(crumb));
                 }
             },
             // Same as if data isn't available
@@ -791,9 +711,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addTranslationAsCrumb(uri: string, translationKey: string): void {
         const key = translationKey.split('-').join('_');
-        if (uri.startsWith('/courses') && this.studentPathBreadcrumbTranslations[key]) {
-            this.addBreadcrumb(uri, this.studentPathBreadcrumbTranslations[key], true);
-        } else if (this.breadcrumbTranslation[key]) {
+        if (this.breadcrumbTranslation[key]) {
             this.addBreadcrumb(uri, this.breadcrumbTranslation[key], true);
         } else {
             // If there is no valid entry in the mapping display the raw key instead of a "not found"
@@ -876,16 +794,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
-        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
 
         const courseId = course?.id?.toString();
         const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
         const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
         const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
 
-        if (!isAtLeastTutorInCourse) return ['/course-management'];
+        if (!isAtLeastTutorInCourse || !courseId) return ['/courses'];
 
-        const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
+        const baseManagementPath = ['/course-management', courseId];
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },

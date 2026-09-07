@@ -48,7 +48,7 @@ import org.springframework.stereotype.Component;
  */
 @Lazy
 @Component
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 public class EurekaInstanceHelper {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaInstanceHelper.class);

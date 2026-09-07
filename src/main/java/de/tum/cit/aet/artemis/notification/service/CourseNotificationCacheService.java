@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -13,11 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
-
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.cache.KeyEnumerableCache;
 
 /**
  * Service for managing course notification caches.
@@ -93,38 +93,76 @@ public class CourseNotificationCacheService {
      * Since we cannot tag our cache, this method is used to clear paging-related caches
      * by matching and removing entries with keys that start with the given prefix.
      *
-     * @param cache The name of the cache to invalidate entries from
-     * @param key   The key prefix to match against cache entries
+     * @param cacheName The name of the cache to invalidate entries from
+     * @param keyPrefix The key prefix to match against cache entries
      */
-    private void invalidateCacheForKeyStartingWith(String cache, String key) {
-        HazelcastInstance hazelcastInstance = ((HazelcastCacheManager) cacheManager).getHazelcastInstance();
-        IMap<Object, Object> cacheMap = hazelcastInstance.getMap(cache);
-
-        Set<Object> keys = cacheMap.keySet();
-        keys.stream().filter(k -> k.toString().startsWith(key)).forEach(k -> {
-            try {
-                cacheMap.delete(k);
+    private void invalidateCacheForKeyStartingWith(String cacheName, String keyPrefix) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            log.warn("Cannot invalidate entries of cache '{}' with prefix '{}': the cache is not configured", cacheName, keyPrefix);
+            return;
+        }
+        // Spring's Cache API cannot enumerate keys, so the prefix scan has to go through the cache that @Cacheable
+        // actually writes to. Reading the distributed data provider's map directly instead would be a silent no-op:
+        // @Cacheable resolves against the primary cache manager, and only that manager knows which store serves this
+        // cache name. Getting that wrong once already left users looking at stale notifications.
+        Set<Object> cacheKeys = cacheKeys(cache);
+        if (cacheKeys == null) {
+            log.warn("Cannot invalidate entries of cache '{}' by key prefix: its backing store does not expose its keys", cacheName);
+            return;
+        }
+        for (Object cacheKey : cacheKeys) {
+            if (cacheKey != null && cacheKey.toString().startsWith(keyPrefix)) {
+                evict(cache, cacheKey);
             }
-            catch (ClassCastException | NullPointerException e) {
-                log.error("Failed to delete cache entry with key: {}", k, e);
-            }
-        });
+        }
     }
 
     /**
-     * Invalidates cache entries with a specified key.
+     * Reads the keys a cache currently holds, as a snapshot that is safe to iterate while entries are evicted.
      *
-     * @param cache The name of the cache to invalidate entries from
-     * @param key   The key to delete
+     * @param cache the cache to read
+     * @return the keys, or {@code null} if this cache's store cannot enumerate them
      */
-    private void invalidateCacheForKey(String cache, String key) {
-        HazelcastInstance hazelcastInstance = ((HazelcastCacheManager) cacheManager).getHazelcastInstance();
-        IMap<Object, Object> cacheMap = hazelcastInstance.getMap(cache);
-        try {
-            cacheMap.delete(key);
+    @Nullable
+    private Set<Object> cacheKeys(Cache cache) {
+        if (cache instanceof KeyEnumerableCache keyEnumerableCache) {
+            return keyEnumerableCache.cacheKeys();
         }
-        catch (ClassCastException | NullPointerException e) {
-            // Nothing needs to be done
+        // Fallback for stores that expose a plain map, such as the Caffeine and concurrent-map based caches.
+        if (cache.getNativeCache() instanceof Map<?, ?> nativeCache) {
+            return new HashSet<>(nativeCache.keySet());
+        }
+        return null;
+    }
+
+    /**
+     * Invalidates the cache entry with the specified key.
+     *
+     * @param cacheName The name of the cache to invalidate the entry from
+     * @param key       The key to delete
+     */
+    private void invalidateCacheForKey(String cacheName, String key) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            log.warn("Cannot invalidate key '{}': cache '{}' is not configured", key, cacheName);
+            return;
+        }
+        evict(cache, key);
+    }
+
+    /**
+     * Evicts a single entry, keeping a failure for one key from abandoning the rest of an invalidation.
+     *
+     * @param cache the cache to evict from
+     * @param key   the key to evict
+     */
+    private void evict(Cache cache, Object key) {
+        try {
+            cache.evict(key);
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to delete entry with key {} from cache '{}'", key, cache.getName(), e);
         }
     }
 }

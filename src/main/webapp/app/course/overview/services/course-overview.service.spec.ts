@@ -641,27 +641,24 @@ describe('CourseOverviewService', () => {
         const now = dayjs();
         const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
 
+        // The dates now travel with the channel itself, projected server-side, rather than being looked up in the course
         const conversationWithinRange = {
             id: 5,
             subType: ChannelSubType.EXERCISE,
             subTypeReferenceId: 101,
+            subTypeReferenceEndDate: oneAndHalfWeekBefore.add(3, 'day'),
             type: ConversationType.CHANNEL,
         } as ConversationDTO;
 
         const conversationOutsideRange = {
             subType: ChannelSubType.LECTURE,
             subTypeReferenceId: 102,
+            subTypeReferenceStartDate: oneAndHalfWeekBefore.subtract(1, 'day'),
             type: ConversationType.CHANNEL,
         } as ConversationDTO;
 
-        const exerciseWithinRange = { id: 101, dueDate: oneAndHalfWeekBefore.add(3, 'day') } as unknown as Exercise;
-        const lectureOutsideRange = { id: 102, startDate: oneAndHalfWeekBefore.subtract(1, 'day') } as unknown as Lecture;
-
-        course.exercises = [exerciseWithinRange];
-        course.lectures = [lectureOutsideRange];
-
-        const sidebarCardWithinRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationWithinRange);
-        const sidebarCardOutsideRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationOutsideRange);
+        const sidebarCardWithinRange = courseOverviewService.mapConversationToSidebarCardElement(conversationWithinRange);
+        const sidebarCardOutsideRange = courseOverviewService.mapConversationToSidebarCardElement(conversationOutsideRange);
 
         expect(sidebarCardWithinRange.isCurrent).toBe(true);
         expect(sidebarCardOutsideRange.isCurrent).toBe(false);

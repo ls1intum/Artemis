@@ -2,7 +2,7 @@
     "artemisApp": {
         "websocketAdmin": {
             "title": "Websocket-Broker neu verbinden",
-            "description": "Zeige die Hazelcast-Knoten an und starte eine erneute Verbindung des Websocket-Broker-Relays auf einem ausgewählten Knoten oder auf allen.",
+            "description": "Zeige die Core-Knoten des Clusters an und starte eine erneute Verbindung des Websocket-Broker-Relays auf einem ausgewählten Knoten oder auf allen.",
             "refreshNodes": "Knoten aktualisieren",
             "reconnectAll": "Alle Knoten neu verbinden",
             "reconnectSelected": "Ausgewählten neu verbinden",
@@ -15,13 +15,11 @@
             "actions": "Aktionen",
             "thisNode": "Dieser Knoten",
             "coreNode": "Core-Knoten",
-            "buildAgent": "Build Agent (Lite)",
             "select": "Auswählen",
             "noNodes": "Keine Knoten gefunden.",
             "noCoreNodes": "Keine Core-Knoten für eine Websocket-Broker-Verbindung verfügbar.",
-            "buildAgentInfo": "Build Agents sind Hazelcast-Lite-Member und nicht mit dem Websocket-Broker verbunden; Neuverbindungen werden nur auf Core-Knoten ausgeführt.",
             "autoRefreshInfo": "Diese Seite aktualisiert sich automatisch alle 5 Sekunden.",
-            "loadError": "Hazelcast-Knoten konnten nicht geladen werden.",
+            "loadError": "Die Cluster-Knoten konnten nicht geladen werden.",
             "reconnectRequested": "Neu-Verbindungsanfrage gesendet.",
             "reconnectFailed": "Neu-Verbindungsanfrage fehlgeschlagen.",
             "name": "Name",

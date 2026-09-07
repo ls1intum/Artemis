@@ -15,11 +15,10 @@ import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -51,8 +50,29 @@ public class ProgrammingExerciseFactory {
 
     public static final String DEFAULT_BRANCH = "main";
 
-    // we use a default value or it must be injected from a test class
-    public static URI localVCBaseUri = URI.create("https://version-control.fake.fake");
+    // Every test context that runs a LocalVC server injects its own URL here, and the contexts bind different ports.
+    // The value is held per thread rather than in one shared field because JUnit runs the buckets concurrently in a
+    // single JVM: one shared field lets whichever context wrote last decide the repository URIs of all the others. A
+    // test runs on the thread its own context injected on, so it always reads its own URL. Contexts without a LocalVC
+    // server never write, and read the placeholder below.
+    private static final ThreadLocal<URI> LOCAL_VC_BASE_URI = ThreadLocal.withInitial(() -> URI.create("https://version-control.fake.fake"));
+
+    /**
+     * Records the LocalVC URL of the calling test's context, so that the repository URIs generated here address the
+     * server that test actually talks to.
+     *
+     * @param localVCBaseUri the URL the calling test's context bound its LocalVC server to
+     */
+    public static void setLocalVCBaseUri(URI localVCBaseUri) {
+        LOCAL_VC_BASE_URI.set(localVCBaseUri);
+    }
+
+    /**
+     * @return the LocalVC URL of the calling test's context, or a placeholder for contexts that run no LocalVC server
+     */
+    public static URI localVCBaseUri() {
+        return LOCAL_VC_BASE_URI.get();
+    }
 
     /**
      * Generates a programming exercise with the given release and due date. This exercise is added to the provided course.
@@ -177,7 +197,7 @@ public class ProgrammingExerciseFactory {
         String packageName = generatePackageName(programmingLanguage);
         programmingExercise.setPackageName(packageName);
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repoName);
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri(), programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
@@ -380,9 +400,12 @@ public class ProgrammingExerciseFactory {
      * @param result The result of the feedback.
      * @return The newly created feedback.
      */
-    public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
-        return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
-                .type(FeedbackType.AUTOMATIC).positive(false);
+    public static ScaFeedback createSCAFeedbackWithInactiveCategory(Result result) {
+        ScaFeedback scaFeedback = new ScaFeedback();
+        scaFeedback.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
+        scaFeedback.setToolCategory("miscellaneous");
+        result.addScaFeedback(scaFeedback);
+        return scaFeedback;
     }
 
     /**
@@ -540,7 +563,8 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.getProjectKey() + "tests");
+        // Use the name the server generates ("<projectkey>-tests"), not "<PROJECTKEY>tests", so the URI points at the repository LocalVC actually serves.
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri(), programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(RepositoryType.TESTS));
         programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);

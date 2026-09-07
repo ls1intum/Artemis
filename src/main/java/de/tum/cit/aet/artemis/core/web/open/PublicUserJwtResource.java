@@ -27,7 +27,7 @@ import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AssertionAuthentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -35,9 +35,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.dto.OIDCCodeExchangeDTO;
 import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.security.SAML2Service;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
@@ -47,6 +49,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
@@ -54,6 +57,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authentication/jwt-tokens")
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {
@@ -62,6 +66,8 @@ public class PublicUserJwtResource {
 
     private final JWTCookieService jwtCookieService;
 
+    private final Optional<OIDCExchangeCodeService> oidcExchangeCodeService;
+
     private final AuthenticationManager authenticationManager;
 
     private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
@@ -69,8 +75,9 @@ public class PublicUserJwtResource {
     private final Optional<SAML2Service> saml2Service;
 
     public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            Optional<SAML2Service> saml2Service) {
+            Optional<SAML2Service> saml2Service, Optional<OIDCExchangeCodeService> oidcExchangeCodeService) {
         this.jwtCookieService = jwtCookieService;
+        this.oidcExchangeCodeService = oidcExchangeCodeService;
         this.authenticationManager = authenticationManager;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.saml2Service = saml2Service;
@@ -155,14 +162,17 @@ public class PublicUserJwtResource {
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof final Saml2AuthenticatedPrincipal principal)) {
+        // Spring Security's SAML2 provider hands out a Saml2AssertionAuthentication whose credentials are the accessor
+        // for the validated response. Reading the attributes from there rather than from the principal is what replaces
+        // the deprecated Saml2AuthenticatedPrincipal.
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication instanceof final Saml2AssertionAuthentication saml2Authentication)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(authentication, principal, request);
+            authentication = saml2Service.get().handleAuthentication(authentication, saml2Authentication.getCredentials(), request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {
@@ -176,6 +186,26 @@ public class PublicUserJwtResource {
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Exchanges a single-use OIDC code and PKCE code_verifier for a JWT authentication token.
+     *
+     * @param exchangeDTO Request body containing the single-use exchange code and PKCE code_verifier.
+     * @return ResponseEntity with the JWT token as plain text and Cache-Control: no-store, or 404 (Not Found) if verification fails.
+     */
+    @PostMapping("exchange-code")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
+    public ResponseEntity<String> exchangeCodeToJwtToken(@RequestBody OIDCCodeExchangeDTO exchangeDTO) {
+        if (oidcExchangeCodeService.isEmpty() || exchangeDTO == null || exchangeDTO.code() == null || exchangeDTO.codeVerifier() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        String jwtToken = oidcExchangeCodeService.get().redeemCode(exchangeDTO.code(), exchangeDTO.codeVerifier());
+        if (jwtToken == null || jwtToken.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").header(HttpHeaders.PRAGMA, "no-cache").body(jwtToken);
     }
 
     /**

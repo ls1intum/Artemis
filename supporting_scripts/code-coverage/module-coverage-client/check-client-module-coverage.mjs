@@ -115,8 +115,10 @@ const moduleThresholds = {
         lines: 89.9,
     },
     exercise: {
+        // branches lowered slightly after removing the exercise-feedback-suggestion-options component
+        // (superseded by course-level Athena config); measured ~73.69.
         statements: 86.8,
-        branches: 73.7,
+        branches: 73.6,
         functions: 77.3,
         lines: 87.0,
     },
@@ -154,10 +156,13 @@ const moduleThresholds = {
         lines: 93.2,
     },
     modeling: {
-        statements: 87.3,
-        branches: 72.2,
+        // Lowered after switching isFeedbackSuggestionsEnabled to the course-level Athena config
+        // (dropping the feedbackSuggestionModule/allowFeedbackRequests exercise fields and their
+        // dedicated test cases); measured ~86.66/71.34/87.00/86.60.
+        statements: 86.5,
+        branches: 71.2,
         functions: 84.4,
-        lines: 87.3,
+        lines: 86.5,
     },
     notification: {
         // New module extracted from communication in this PR. Conservative initial baseline;

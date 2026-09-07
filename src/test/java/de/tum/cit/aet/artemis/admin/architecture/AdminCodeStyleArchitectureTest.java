@@ -9,10 +9,10 @@ class AdminCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
         return ARTEMIS_PACKAGE + ".admin";
     }
 
-    // TODO: Reduce this to 0 by converting AuditingEntityDTO and CourseManagementOverviewExerciseStatisticsDTO to records.
+    // TODO: Reduce this to 0 by converting AuditingEntityDTO to a record.
     @Override
     protected int dtoAsAnnotatedRecordThreshold() {
-        return 2;
+        return 1;
     }
 
     // TODO: Reduce this to 0 by renaming CourseStatisticsAverageScore, LegalDocument and StatisticsEntry to end with "DTO".

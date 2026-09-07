@@ -19,6 +19,8 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('QuizExercise Details Component', () => {
     let comp: QuizExerciseDetailComponent;
@@ -45,6 +47,7 @@ describe('QuizExercise Details Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

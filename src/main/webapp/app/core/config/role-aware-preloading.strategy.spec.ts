@@ -9,11 +9,11 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_L
 import routes from 'app/app.routes';
 import { courseManagementRoutes } from 'app/course/manage/course-management.route';
 
-/** Finds a top-level app route by its exact path (throws if the config no longer contains it). */
-function findAppRoute(path: string): Route {
-    const match = (routes as Route[]).find((route) => route.path === path);
+/** Finds a top-level lazy parent by its exact path (throws if the config no longer contains it). */
+function findAppLazyRoute(path: string): Route {
+    const match = (routes as Route[]).find((route) => route.path === path && route.loadChildren);
     if (!match) {
-        throw new Error(`Route '${path}' not found in app.routes`);
+        throw new Error(`Lazy route '${path}' not found in app.routes`);
     }
     return match;
 }
@@ -149,14 +149,14 @@ describe('RoleAwarePreloadingStrategy', () => {
     // declared preload-only authorities the strategy skipped it for everyone and the children were never enqueued.
     it('warms the real course-management lazy parent for eligible staff at the management tier', () => {
         accountStub.hasAnyAuthorityDirect.mockReturnValue(true);
-        expect(emitted(findAppRoute('course-management'))).toBeNull();
+        expect(emitted(findAppLazyRoute('course-management'))).toBeNull();
         expect(enqueue).toHaveBeenCalledOnce();
         expect(enqueue.mock.calls[0][1]).toBe(2);
     });
 
     it('prunes the real course-management lazy parent for a pure student', () => {
         accountStub.hasAnyAuthorityDirect.mockReturnValue(false);
-        expect(emitted(findAppRoute('course-management'))).toBeNull();
+        expect(emitted(findAppLazyRoute('course-management'))).toBeNull();
         expect(enqueue).not.toHaveBeenCalled();
     });
 });
@@ -194,7 +194,7 @@ describe('preloadTierForRoute', () => {
             'courses/:courseId/exams/:examId/exercises/:exerciseId/repository': 1,
         };
         for (const [path, tier] of Object.entries(expectedTierByPath)) {
-            const parent = findAppRoute(path);
+            const parent = findAppLazyRoute(path);
             expect(parent.loadChildren, `${path} should be a lazy parent`).toBeDefined();
             expect(parent.canActivate, `${path} authorities must be preload-only (no access guard)`).toBeUndefined();
             expect(preloadTierForRoute(parent), `${path} preload tier`).toBe(tier);

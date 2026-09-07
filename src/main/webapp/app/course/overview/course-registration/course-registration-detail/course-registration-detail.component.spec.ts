@@ -8,10 +8,10 @@ import { of } from 'rxjs/internal/observable/of';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CoursePrerequisitesButtonComponent } from 'app/course/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from 'app/course/overview/course-registration/course-registration-button/course-registration-button.component';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { firstValueFrom, throwError } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,7 +55,7 @@ describe('CourseRegistrationDetailComponent', () => {
 
         // by default, assume that the course is not fully accessible but only available for registration
         vi.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse<Course>({ body: course1 })));
-        vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        vi.spyOn(courseService, 'hasAccessToCourse').mockReturnValue(of(false));
     });
 
     afterEach(() => {
@@ -76,12 +76,8 @@ describe('CourseRegistrationDetailComponent', () => {
         expect(component.course()?.title).toBe(course1.title);
     });
 
-    it('should have a function isCourseFullyAccessible that returns true if the for-dashboard endpoint returns a 200', async () => {
-        const httpResponseComingFromForDashboardEndpoint = new HttpResponse({
-            body: course1,
-            headers: new HttpHeaders(),
-        });
-        vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(httpResponseComingFromForDashboardEndpoint));
+    it('should have a function isCourseFullyAccessible that returns true when the access-state endpoint reports access', async () => {
+        vi.spyOn(courseService, 'hasAccessToCourse').mockReturnValue(of(true));
 
         component.ngOnInit();
         await fixture.whenStable();
@@ -90,18 +86,25 @@ describe('CourseRegistrationDetailComponent', () => {
         expect(result).toBe(true);
     });
 
-    it('should have a function isCourseFullyAccessible that returns false if the for-dashboard endpoint returns a 403', async () => {
-        const httpResponseComingFromForDashboardEndpoint = new HttpErrorResponse({
-            headers: new HttpHeaders(),
-            status: 403,
-        });
-        vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(() => httpResponseComingFromForDashboardEndpoint));
+    it('should have a function isCourseFullyAccessible that returns false when the access-state endpoint reports no access', async () => {
+        vi.spyOn(courseService, 'hasAccessToCourse').mockReturnValue(of(false));
 
         component.ngOnInit();
         await fixture.whenStable();
 
         const result = await firstValueFrom(component.isCourseFullyAccessible());
         expect(result).toBe(false);
+    });
+
+    it('should ask the lightweight access-state endpoint rather than the deprecated course dashboard', async () => {
+        const accessSpy = vi.spyOn(courseService, 'hasAccessToCourse').mockReturnValue(of(false));
+        const dashboardSpy = vi.spyOn(courseService, 'findOneForDashboard');
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(accessSpy).toHaveBeenCalledWith(123);
+        expect(dashboardSpy).not.toHaveBeenCalled();
     });
 
     it('should redirect to the course page if the dashboard version is fully accessible', async () => {
