@@ -535,8 +535,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void reEvaluateAndUpdateTextExercise_invalidPlagiarismDetectionConfig_badRequestAndPreservesExistingConfig() throws Exception {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+        // Use an authorized exercise; otherwise the request fails with 403 before plagiarism config validation.
 
         var config = new PlagiarismDetectionConfig();
         config.setContinuousPlagiarismControlEnabled(true);
