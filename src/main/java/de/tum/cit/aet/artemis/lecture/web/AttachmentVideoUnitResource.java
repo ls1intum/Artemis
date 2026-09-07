@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -78,6 +79,12 @@ public class AttachmentVideoUnitResource {
     private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentVideoUnit";
+
+    /**
+     * Schemes a videoSource may carry. The value ends up in an {@code <iframe src>} in the client, so this is the same
+     * set the client's safeResourceUrl pipe accepts; keep the two in step.
+     */
+    private static final Set<String> EMBEDDABLE_VIDEO_SOURCE_SCHEMES = Set.of("http", "https");
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -168,7 +175,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
-        validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        validateVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
 
@@ -260,7 +267,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A fileless attachment must include a link", ENTITY_NAME, "attachmentLinkRequired");
         }
 
-        validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        validateVideoSource(attachmentVideoUnitDTO.videoSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -513,14 +520,46 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * Rejects URLs that look like YouTube links (recognized host) but cannot be parsed to a valid 11-character video id.
-     * Non-YouTube URLs are accepted unchanged; blank or {@code null} sources also pass.
+     * Validates the videoSource of a request payload.
+     * <p>
+     * Two checks, in order:
+     * <ol>
+     * <li>the scheme must be http or https. A videoSource is rendered into an {@code <iframe src>} in the client, so a
+     * scheme such as {@code javascript:} would execute there. The client pipe that marks the URL as safe rejects the
+     * same set, but the value is persisted and served to every viewer of the lecture, so it is refused on the way in
+     * rather than only on the way out.</li>
+     * <li>a URL on a recognized YouTube host must parse to a valid 11-character video id.</li>
+     * </ol>
+     * A blank or {@code null} source passes: the field is optional.
      *
      * @param videoSource the videoSource URL from the request payload
      */
-    private void validateYouTubeVideoSource(String videoSource) {
-        if (videoSource != null && !videoSource.isBlank() && youTubeUrlService.hasYouTubeHost(videoSource) && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
+    private void validateVideoSource(String videoSource) {
+        if (videoSource == null || videoSource.isBlank()) {
+            return;
+        }
+        if (!hasEmbeddableScheme(videoSource)) {
+            throw new BadRequestAlertException("The video source must be an http or https URL", ENTITY_NAME, "invalidVideoSourceScheme");
+        }
+        if (youTubeUrlService.hasYouTubeHost(videoSource) && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
             throw new BadRequestAlertException("Invalid YouTube URL format", ENTITY_NAME, "invalidYouTubeUrl");
+        }
+    }
+
+    /**
+     * Whether the given source carries a scheme that is safe to load into an embedding context.
+     *
+     * @param videoSource a non-blank videoSource URL
+     * @return true if the URL parses and its scheme is http or https
+     */
+    private static boolean hasEmbeddableScheme(String videoSource) {
+        try {
+            String scheme = new URI(videoSource).getScheme();
+            // A relative URL has no scheme; it resolves against the client's own origin, so it is safe to embed.
+            return scheme == null || EMBEDDABLE_VIDEO_SOURCE_SCHEMES.contains(scheme.toLowerCase(Locale.ROOT));
+        }
+        catch (URISyntaxException e) {
+            return false;
         }
     }
 
