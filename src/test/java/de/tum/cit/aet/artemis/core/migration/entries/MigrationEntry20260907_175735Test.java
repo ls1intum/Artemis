@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -173,9 +175,8 @@ class MigrationEntry20260907_175735Test {
     }
 
     private void write(Path path, String content) throws IOException {
-        Files.createDirectories(path.getParent());
         created.add(path.getParent());
-        Files.writeString(path, content);
+        FileUtils.writeStringToFile(path.toFile(), content, StandardCharsets.UTF_8);
         created.add(path);
     }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -15,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -187,13 +189,11 @@ class FileSystemLocationTest {
                     .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename));
 
             // The shape the lecture migration leaves behind: the row says the unit, the file is still in the lecture directory.
-            Files.createDirectories(inLectureDirectory.getParent());
-            Files.writeString(inLectureDirectory, "migrated");
+            FileUtils.writeStringToFile(inLectureDirectory.toFile(), "migrated", StandardCharsets.UTF_8);
             assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, lectureId, filename)).isEqualTo(new FileSystemLocation.LectureAttachment(lectureId, filename));
 
             // Once the file has been moved, the lecture is not consulted again even though it is still known.
-            Files.createDirectories(inUnitDirectory.getParent());
-            Files.writeString(inUnitDirectory, "moved");
+            FileUtils.writeStringToFile(inUnitDirectory.toFile(), "moved", StandardCharsets.UTF_8);
             assertThat(FileSystemLocation.ofAttachment(attachmentVideoUnitId, lectureId, filename))
                     .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(attachmentVideoUnitId, filename));
 

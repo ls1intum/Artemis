@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +35,8 @@ import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
  * <li>a file already in the unit directory is left alone, so a second run moves nothing;</li>
  * <li>a source that is not there is treated as done, which is also the answer for the attachment that never had a file in a lecture directory, and that is the overwhelming
  * majority;</li>
- * <li>{@link Files#move} without {@code REPLACE_EXISTING} renames within the upload directory where it can and otherwise copies and then deletes, so the source is never
- * removed unless the copy succeeded;</li>
+ * <li>{@link FileUtils#moveFile} renames within the upload directory where it can, and otherwise copies and then deletes, removing the destination again if the delete of the
+ * source fails, so a source is never deleted without its copy having succeeded. It also refuses a destination that exists, which is the guard above stated a second time;</li>
  * <li>one attachment that fails is counted and logged and the run continues, because there is nothing the others gain from stopping.</li>
  * </ul>
  * No authorization stand-in is installed. {@code SecurityUtils.setAuthorizationObject()} is what a migration entry needs when a query it makes is gated on a principal or when a
@@ -108,8 +109,8 @@ public class MigrationEntry20260907_175735 extends MigrationEntry {
             if (!Files.exists(inLectureDirectory)) {
                 return Outcome.ALREADY_DONE;
             }
-            Files.createDirectories(inUnitDirectory.getParent());
-            Files.move(inLectureDirectory, inUnitDirectory);
+            FileUtils.forceMkdirParent(inUnitDirectory.toFile());
+            FileUtils.moveFile(inLectureDirectory.toFile(), inUnitDirectory.toFile());
             log.debug("Moved the file of attachment {} from {} to {}", location.attachmentId(), inLectureDirectory, inUnitDirectory);
             return Outcome.MOVED;
         }
