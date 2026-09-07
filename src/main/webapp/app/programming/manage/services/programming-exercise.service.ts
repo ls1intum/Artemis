@@ -149,7 +149,8 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
         const options = createRequestOption(importOptions);
-        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        // Route through convertDataFromClient like automaticSetup and importFromFile do, so competency-link back-references are stripped.
+        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
 
         ExerciseService.stringifyExerciseCategories(exercise);
         return this.http

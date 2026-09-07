@@ -511,6 +511,23 @@ describe('ProgrammingExercise Service', () => {
         req.flush({});
     });
 
+    it('should send a serializable competency link in the importExercise request body', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        const competency = new Competency();
+        competency.id = 1;
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 42)];
+
+        service.importExercise(exercise, { recreateBuildPlans: false, setTestCaseVisibilityToAfterDueDate: false }).subscribe();
+
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${resourceUrl}/import?sourceExerciseId=7`);
+        const sentLinks = (req.request.body as ProgrammingExercise).competencyLinks!;
+        expect(sentLinks).toHaveLength(1);
+        expect(sentLinks[0]).not.toHaveProperty('exercise');
+        expect(() => JSON.stringify(req.request.body)).not.toThrow();
+        req.flush({});
+    });
+
     it('should preview automatic after due date with a date response', () => {
         const isoDate = '2026-06-01T12:15:00Z';
         const request = {
