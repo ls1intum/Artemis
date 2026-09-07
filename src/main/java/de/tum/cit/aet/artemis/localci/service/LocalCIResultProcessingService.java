@@ -35,12 +35,12 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -229,7 +229,7 @@ public class LocalCIResultProcessingService {
         BuildJob savedBuildJob;
         Result result = null;
 
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
 
         try {
@@ -304,11 +304,10 @@ public class LocalCIResultProcessingService {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
                 // Run async to not block the result processing thread
-                CompletableFuture.runAsync(() -> {
-                    SecurityUtils.setAuthorizationObject();
-                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
-                            buildJob.repositoryInfo().triggeredByPushTo());
-                });
+                // runAsync uses the common ForkJoinPool, which the Artemis async executors do not wrap, so this
+                // lambda establishes its own context.
+                CompletableFuture.runAsync(() -> SecurityUtils.runAsSystem(() -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
+                        buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo())));
             }
             catch (EntityNotFoundException e) {
                 // Something went wrong while retrieving the template participation.

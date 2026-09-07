@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
+import { TumUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent date range integration', () => {
@@ -83,20 +83,15 @@ describe('CleanupServiceComponent date range integration', () => {
         const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operation.name}"]`));
         const executeButton = () => row.query(By.css('[data-testid="execute-operation"]')).nativeElement as HTMLButtonElement;
 
-        // Valid seeded range → Execute enabled.
         expect(executeButton().disabled).toBe(false);
 
-        // Overwrite the "from" field with garbage. This is the keepInvalid path: the picker does NOT emit
-        // valueChange (so operation.deleteFrom keeps its stale valid date and datesValid stays true), but it
-        // DOES emit parseValidChange(false). The Execute button must reflect that and disable — otherwise the admin
-        // could run the destructive cleanup against a stale range while the field shows unparseable text.
-        const fromInput = row.query(By.css('[data-testid="delete-from-picker"] [data-testid="tum-ui-date-picker-input"]')).nativeElement as HTMLInputElement;
+        const fromInput = row.query(By.css('[data-testid="delete-from-picker"] input')).nativeElement as HTMLInputElement;
         fromInput.value = 'not a date';
         fromInput.dispatchEvent(new Event('input'));
         fixture.detectChanges();
 
-        expect(operation.datesValid()).toBe(true); // value unchanged (keepInvalid), so the range check still passes
-        expect(operation.deleteFromValid()).toBe(false); // but the typed text no longer parses
+        expect(operation.datesValid()).toBe(true);
+        expect(operation.deleteFromValid()).toBe(false);
         expect(executeButton().disabled).toBe(true);
     });
 });

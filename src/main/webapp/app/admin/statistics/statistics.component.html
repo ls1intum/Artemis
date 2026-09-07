@@ -2,6 +2,7 @@
     <h5 *adminTitleBarTitle id="statistics-page-heading" class="mb-0" jhiTranslate="statistics.title"></h5>
     <div *adminTitleBarActions data-testid="span-selector">
         <tum-ui-select-button
+            [attr.aria-label]="'statistics.title' | artemisTranslate"
             [options]="spanOptions"
             [ngModel]="currentSpan()"
             (ngModelChange)="onTabChanged($event)"

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -90,6 +91,35 @@ public class AssessmentService {
     }
 
     /**
+     * Derives the points per test case for programming score calculations. Test-case feedback does not
+     * store credits, so the programming subclass ({@code ProgrammingAssessmentService}) overrides this with
+     * the real derivation; the base implementation is only reached for non-programming exercises (the
+     * programming complaint flow always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise
+     * @param result   the result being scored
+     * @return derived points per test-case id
+     */
+    protected Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        return Map.of();
+    }
+
+    /**
+     * Attaches the synthesized legacy views of a programming result's typed automatic feedback, so that a
+     * response serializing the result still carries the test-case and static code analysis feedback. The
+     * typed collections themselves are JSON-ignored, so without this the automatic feedback is dropped. The
+     * programming subclass ({@code ProgrammingAssessmentService}) overrides this with the real synthesis;
+     * the base implementation is only reached for non-programming exercises (the programming complaint flow
+     * always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise the result belongs to
+     * @param result   the result about to be serialized
+     */
+    protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
+        // no-op, see the programming subclass
+    }
+
+    /**
      * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
@@ -114,13 +144,18 @@ public class AssessmentService {
         resultRepository.save(newResult);
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            newResult.calculateScoreForProgrammingExercise(programmingExercise);
+            newResult.calculateScoreForProgrammingExercise(programmingExercise, calculateTestCasePoints(programmingExercise, newResult));
             newResult.setCompletionDate(ZonedDateTime.now());
             newResult.setRated(true);
             newResult.copyProgrammingExerciseCounters(originalResult);
 
             Result savedResult = resultRepository.save(newResult);
-            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
+            // eagerly load the assessor and the manual feedback the response serializes
+            Result reloadedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(savedResult.getId()).orElseThrow();
+            // the copied automatic test-case and SCA feedback lives in JSON-ignored typed collections - attach
+            // the synthesized legacy views (after all persistence) so the complaint response keeps it
+            attachSynthesizedAutomaticFeedback(programmingExercise, reloadedResult);
+            return reloadedResult;
         }
         else {
             return resultRepository.submitResult(newResult, exercise);
@@ -186,18 +221,18 @@ public class AssessmentService {
      * Therefore, no explicit {@code sendParticipantScoreSchedule()} call is needed here, even though
      * {@link ResultService#deleteResult} may take the JPQL path that skips the {@code @PreRemove} callback.
      *
-     * @param submission the submission for which the current assessment should be canceled
+     * @param submission     the submission for which the current assessment should be canceled
+     * @param resultToCancel the manual result to release, as resolved and authorized by the caller
      */
-    public void cancelAssessmentOfSubmission(Submission submission) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
+    public void cancelAssessmentOfSubmission(Submission submission, Result resultToCancel) {
+        studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
-        // cancel is only possible for the latest result.
-        Result result = submission.getLatestResult();
-
-        // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
-        if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
-            resultService.deleteResult(result, true);
+        // The caller resolves and authorizes the result, so that the authorization check and the deletion cannot act on
+        // two different results. Automatic and Athena results are not correction rounds and are never cancellable.
+        if (resultToCancel == null || resultToCancel.isAutomatic() || resultToCancel.isAthenaBased()) {
+            return;
         }
+        resultService.deleteResult(resultToCancel, true);
     }
 
     /**
@@ -275,7 +310,7 @@ public class AssessmentService {
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText, long exerciseId) {
         Result result = null;
         if (resultId != null) {
-            result = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElse(null);
+            result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
         }
 
         if (result == null) {

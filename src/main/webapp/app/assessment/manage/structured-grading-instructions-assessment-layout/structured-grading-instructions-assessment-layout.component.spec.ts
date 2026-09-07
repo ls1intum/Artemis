@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { computed, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -12,6 +16,11 @@ import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -29,7 +38,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MarkdownDirective),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {
@@ -88,5 +97,231 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         comp.expandableSections().forEach((section) => {
             expect(section.isCollapsed()).toBe(false);
         });
+    });
+
+    it('should sort criteria and their instructions alphabetically', () => {
+        const documentation = {
+            id: 1,
+            title: 'Documentation',
+            structuredGradingInstructions: [
+                { id: 1, instructionDescription: 'Not all methods have proper JavaDoc.', credits: 0 } as GradingInstruction,
+                { id: 2, instructionDescription: 'All methods have proper JavaDoc.', credits: 4 } as GradingInstruction,
+            ],
+        } as GradingCriterion;
+        const camera = {
+            id: 2,
+            title: 'Camera',
+            structuredGradingInstructions: [{ id: 3, instructionDescription: 'The camera follows.', credits: 4 } as GradingInstruction],
+        } as GradingCriterion;
+        fixture.componentRef.setInput('criteria', [documentation, camera]);
+
+        expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Camera', 'Documentation']);
+        expect(comp.sortedCriteria()[1].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
+            'All methods have proper JavaDoc.',
+            'Not all methods have proper JavaDoc.',
+        ]);
+    });
+
+    describe('with an editable feedback list registered', () => {
+        const instruction = { id: 7, instructionDescription: 'description', feedback: 'feedback', credits: 4 } as GradingInstruction;
+        const criterion = { id: 1, title: 'Documentation', structuredGradingInstructions: [instruction] } as GradingCriterion;
+        let host: GradingInstructionSelectionHost;
+        let appliedIds: ReturnType<typeof signal<ReadonlySet<number>>>;
+        let appliedCounts: ReturnType<typeof signal<ReadonlyMap<number, number>>>;
+        /** Set by the tests in which the instruction is applied to a referenced element the feedback list does not own. */
+        let notRemovableIds: ReturnType<typeof signal<ReadonlySet<number>>>;
+
+        beforeEach(() => {
+            appliedIds = signal<ReadonlySet<number>>(new Set());
+            appliedCounts = signal<ReadonlyMap<number, number>>(new Map());
+            notRemovableIds = signal<ReadonlySet<number>>(new Set());
+            // Tests mutate usageCount; reset so they cannot leak into each other.
+            delete instruction.usageCount;
+            host = {
+                appliedInstructionIds: appliedIds,
+                appliedInstructionCounts: appliedCounts,
+                removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
+                applyInstruction: vi.fn(),
+                unapplyInstruction: vi.fn(),
+            };
+            TestBed.inject(GradingInstructionSelectionService).register(host);
+            fixture.componentRef.setInput('readonly', false);
+            fixture.componentRef.setInput('criteria', [criterion]);
+            comp.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        /** Marks the instruction as applied the given number of times (and therefore as present in appliedIds). */
+        function setApplicationCount(count: number): void {
+            if (count <= 0) {
+                appliedIds.set(new Set());
+                appliedCounts.set(new Map());
+            } else {
+                appliedIds.set(new Set([instruction.id!]));
+                appliedCounts.set(new Map([[instruction.id!, count]]));
+            }
+            fixture.detectChanges();
+        }
+
+        /** The kit checkbox renders a real, visually hidden input that covers it, so a click always lands there. */
+        function checkboxInput(): HTMLInputElement {
+            return fixture.debugElement.query(By.directive(TumUiCheckboxComponent)).query(By.css('input[type="checkbox"]')).nativeElement;
+        }
+
+        function clickCheckbox(): void {
+            checkboxInput().click();
+            fixture.detectChanges();
+        }
+
+        it('should render a checkbox instead of the usage count', () => {
+            expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
+        });
+
+        it('should count the applied instructions of the criterion', () => {
+            expect(comp.appliedCountPerCriterion()).toEqual([0]);
+
+            appliedIds.set(new Set([instruction.id!]));
+            expect(comp.appliedCountPerCriterion()).toEqual([1]);
+            expect(comp.isApplied(instruction)).toBe(true);
+        });
+
+        it('should apply the instruction immediately when the checkbox is ticked', () => {
+            clickCheckbox();
+
+            expect(host.applyInstruction).toHaveBeenCalledWith(instruction);
+            // The box follows the applied instructions rather than ticking itself.
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            expect(checkboxInput().checked).toBe(true);
+        });
+
+        it('should ask for confirmation before un-applying, and not un-apply until confirmed', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            clickCheckbox();
+
+            // Unticking must not remove the feedback before the tutor confirms — same as the trash icon.
+            expect(host.unapplyInstruction).not.toHaveBeenCalled();
+            expect(openDeleteDialogSpy).toHaveBeenCalledOnce();
+            const dialogData: DeleteDialogData = openDeleteDialogSpy.mock.calls[0][0];
+            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.question');
+
+            // Simulate the tutor confirming in the dialog.
+            triggerDeleteDialogDelete(dialogData.delete, {});
+            expect(host.unapplyInstruction).toHaveBeenCalledWith(instruction);
+        });
+
+        it('should keep the checkbox ticked while the confirmation is open and when the tutor cancels', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            expect(checkboxInput().checked).toBe(true);
+
+            // Cancelling means the dialog closes without ever invoking its `delete` callback.
+            clickCheckbox();
+
+            expect(host.unapplyInstruction).not.toHaveBeenCalled();
+            expect(checkboxInput().checked).toBe(true);
+            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).not.toBeNull();
+
+            // Clicking again must ask to un-apply once more instead of applying a duplicate feedback.
+            clickCheckbox();
+
+            expect(host.applyInstruction).not.toHaveBeenCalled();
+            expect(openDeleteDialogSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should untick the checkbox once the un-apply is confirmed', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            clickCheckbox();
+            triggerDeleteDialogDelete(openDeleteDialogSpy.mock.calls[0][0].delete, {});
+            appliedIds.set(new Set());
+            fixture.detectChanges();
+
+            expect(checkboxInput().checked).toBe(false);
+            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
+        });
+
+        /** The draggable attribute of the row that carries the instruction. */
+        function instructionRowDraggable(): string | null {
+            return fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('draggable');
+        }
+
+        it('should keep drag enabled after an application when the usage limit is unlimited', () => {
+            // No usageCount / usageCount 0 means unlimited — ticking must not lock drag onto further targets.
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+
+            setApplicationCount(1);
+
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+        });
+
+        it('should keep drag enabled until a finite usage limit is reached', () => {
+            instruction.usageCount = 2;
+            setApplicationCount(1);
+
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+
+            setApplicationCount(2);
+
+            expect(comp.isDraggable(instruction)).toBe(false);
+            expect(instructionRowDraggable()).toBe('false');
+        });
+
+        it('should not hand over any instruction data once its usage limit is exhausted', () => {
+            instruction.usageCount = 1;
+            setApplicationCount(1);
+            const dataTransfer = { setData: vi.fn() };
+            const dragEvent = { dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent;
+
+            comp.drag(dragEvent, instruction);
+
+            expect(dataTransfer.setData).not.toHaveBeenCalled();
+            expect(dragEvent.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should show an instruction applied to a referenced element as ticked but locked', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            setApplicationCount(1);
+            notRemovableIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            expect(comp.isLockedByReferencedFeedback(instruction)).toBe(true);
+            expect(checkboxInput().checked).toBe(true);
+            expect(checkboxInput().disabled).toBe(true);
+
+            // Even a click that reaches the host element must not offer to delete feedback this list does not own.
+            comp.toggleApplied(new Event('click'), instruction);
+
+            expect(openDeleteDialogSpy).not.toHaveBeenCalled();
+            expect(host.unapplyInstruction).not.toHaveBeenCalled();
+            expect(host.applyInstruction).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should keep the usage count when no editable feedback list is mounted', () => {
+        fixture.componentRef.setInput('readonly', false);
+        fixture.componentRef.setInput('criteria', [
+            {
+                id: 1,
+                title: 'Documentation',
+                structuredGradingInstructions: [{ id: 1, instructionDescription: 'description', credits: 4, usageCount: 2 } as GradingInstruction],
+            } as GradingCriterion,
+        ]);
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        expect(comp.selectable()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.css('jhi-help-icon'))).not.toBeNull();
     });
 });

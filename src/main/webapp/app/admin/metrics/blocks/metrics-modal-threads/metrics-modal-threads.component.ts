@@ -4,13 +4,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { Thread, ThreadState } from '../../metrics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiSelectButtonComponent } from 'app/shared-ui/tum-ui/select-button/tum-ui-select-button.component';
-
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiSelectButtonComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 type ThreadStateFilter = ThreadState | 'ALL';
 
 interface ThreadStateFilterOption {

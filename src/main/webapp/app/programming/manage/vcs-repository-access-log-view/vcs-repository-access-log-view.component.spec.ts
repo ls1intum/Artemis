@@ -46,7 +46,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         },
     ];
 
-    const route = { params: of({ repositoryId: '5' }) } as any as ActivatedRoute;
+    const route = { params: of({ repositoryId: '5', repositoryType: 'USER' }) } as any as ActivatedRoute;
 
     function createComponent() {
         fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
@@ -88,5 +88,26 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         fixture.detectChanges();
 
         expect(repositoryVcsAccessLogSpy).toHaveBeenCalledOnce();
+    });
+
+    // A build agent authenticates as the build job it is running rather than as a person, so its entry carries a name
+    // and no email. Concatenating the two unconditionally rendered a literal "undefined" next to the agent's name.
+    it('should render an entry without an email as the name alone', () => {
+        const buildAgentEntry: VcsAccessLogDTO = {
+            id: 3,
+            name: 'Build agent artemis-build-agent-1 (build job 42)',
+            commitHash: 'abcde',
+            authenticationMechanism: 'BUILD_JOB_TOKEN',
+            repositoryActionType: 'PULL',
+            timestamp: dayjs('2021-01-04'),
+        };
+        createComponent();
+        repositoryVcsAccessLogSpy.mockReturnValue(of([buildAgentEntry]));
+        participationVcsAccessLogSpy.mockReturnValue(of([buildAgentEntry]));
+        fixture.detectChanges();
+
+        const authorCell = fixture.nativeElement.querySelectorAll('tbody tr td')[2];
+        expect(authorCell.textContent).toContain('artemis-build-agent-1');
+        expect(authorCell.textContent).not.toContain('undefined');
     });
 });

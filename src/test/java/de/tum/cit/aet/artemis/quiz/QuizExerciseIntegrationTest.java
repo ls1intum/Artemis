@@ -46,7 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
@@ -67,17 +66,18 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -112,8 +112,8 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.SubmittedAnswerTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 
 class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
@@ -162,10 +162,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
-    private SubmittedAnswerRepository submittedAnswerRepository;
+    private SubmittedAnswerTestRepository submittedAnswerRepository;
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     @Autowired
     private ExerciseIntegrationTestService exerciseIntegrationTestService;
@@ -532,6 +535,43 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
+
+    /**
+     * A variant group owns the shared timeline of its members, but this endpoint applies the request's dates straight onto
+     * the managed entity — so without a server-side guard a stale client or a direct request could desynchronize a member
+     * from its group and change when students can take the quiz. The dates are incidental among many other fields here, so
+     * the server overwrites them from the group rather than rejecting: the rest of the edit still lands.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateQuizExerciseCannotChangeVariantGroupTimeline() throws Exception {
+        // Truncated to milliseconds: the database column's precision would otherwise round these differently than the
+        // in-memory values hold them, and the assertions below compare the two.
+        ZonedDateTime groupRelease = ZonedDateTime.now().plusHours(5).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime groupDue = ZonedDateTime.now().plusDays(2).truncatedTo(ChronoUnit.MILLIS);
+        // Only individual-mode quizzes can be variant group members.
+        QuizExercise quizExercise = createQuizOnServer(groupRelease, groupDue, QuizMode.INDIVIDUAL);
+
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setReleaseDate(groupRelease);
+        group.setDueDate(groupDue);
+        quizExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
+        quizExerciseTestRepository.save(quizExercise);
+
+        // Try to move the shared dates, alongside a change the group does not own.
+        quizExercise.setTitle("Renamed variant");
+        quizExercise.setReleaseDate(groupRelease.plusDays(1));
+        quizExercise.setDueDate(groupDue.plusDays(1));
+
+        QuizExercise updated = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        assertThat(updated.getReleaseDate().toInstant()).as("the group's release date wins over the request's").isEqualTo(groupRelease.toInstant());
+        assertThat(updated.getDueDate().toInstant()).as("the group's due date wins over the request's").isEqualTo(groupDue.toInstant());
+        assertThat(updated.getTitle()).as("the rest of the update still applies").isEqualTo("Renamed variant");
+    }
+
+    // The set-visible guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -1278,7 +1318,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(newResult).isPresent();
-        assertThat(newResult.get()).isEqualTo(submission.getResults().getFirst());
+        assertThat(newResult.get()).isEqualTo(submission.getFirstResult());
     }
 
     @Test
@@ -1500,7 +1540,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
         }
         // switch to student
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, resultStart);
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, resultJoin);
@@ -1696,7 +1736,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
 
         // Switch to student to create a submission
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         // Start participation
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, OK);
@@ -1709,7 +1749,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, QuizSubmission.class, OK);
 
         // Switch back to instructor
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         List<QuizExerciseForCourseDTO> quizzesAfter = request.getList("/api/quiz/courses/" + courseId + "/quiz-exercises", OK, QuizExerciseForCourseDTO.class);
         QuizExerciseForCourseDTO dtoAfter = quizzesAfter.stream().filter(q -> q.id() == quizExerciseId).findFirst().orElseThrow();
@@ -1818,7 +1858,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         assertThat(updatedQuiz.getQuizBatches()).extracting(QuizBatch::getId).contains(batch.getId());
 
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + updatedQuiz.getId() + "/start-participation", null, StudentParticipation.class, OK);
         QuizBatch joinedBatch = request.postWithResponseBody("/api/quiz/quiz-exercises/" + updatedQuiz.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()),
                 QuizBatch.class, OK);
@@ -1892,7 +1932,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
 
         // Get as student - no join, so no batch
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         MvcResult result = request.performMvcRequest(get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student")).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 
@@ -1917,7 +1957,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         }
 
         // Get
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         MvcResult result = request.performMvcRequest(get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student")).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 
@@ -1942,12 +1982,12 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().plusMinutes(5), QuizMode.BATCHED);
 
         // As instructor, add and start batch
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         QuizBatch batch = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
         request.put("/api/quiz/quiz-batches/" + batch.getId() + "/start-batch", null, OK);
 
         // As student, join batch
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, OK);
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, OK);
 

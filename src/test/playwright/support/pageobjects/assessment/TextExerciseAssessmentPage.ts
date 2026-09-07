@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { BASE_API, ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
@@ -16,11 +17,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     private async typeIntoFeedbackEditor(sectionIndex: number, feedbackText: string) {
-        await this.getFeedbackSection(sectionIndex).locator('#feedback-editor-text-input').fill(feedbackText);
+        await this.getFeedbackSection(sectionIndex).locator('[data-testid="feedback-editor-text-input"]').fill(feedbackText);
     }
 
     private async typePointsIntoFeedbackEditor(sectionIndex: number, feedbackPoints: number) {
-        const textField = this.getFeedbackSection(sectionIndex).locator('#feedback-editor-points-input');
+        const textField = this.getFeedbackSection(sectionIndex).locator('[data-testid="feedback-editor-points-input"]');
         await textField.clear();
         await textField.fill(feedbackPoints.toString());
     }
@@ -29,7 +30,24 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         return this.page.locator(`#text-feedback-block-${sectionIndex}`);
     }
 
-    async submit() {
+    /**
+     * Cancels the open assessment, accepting the confirmation dialog, and returns the cancel response.
+     * The result id is part of the request: the server releases the correction round the editor has open rather than
+     * resolving one itself, which used to release the newest round instead (issue #13396).
+     */
+    async cancelAssessment() {
+        const cancelButton = this.page.locator('#cancel');
+        await cancelButton.waitFor({ state: 'visible' });
+        await expect(cancelButton).toBeEnabled({ timeout: 10000 });
+        this.page.once('dialog', (dialog) => dialog.accept());
+        const responsePromise = this.page.waitForResponse(
+            (response) => /\/submissions\/\d+\/cancel-assessment(\?|$)/.test(response.url().replace(/^[^?]*?(\/api)/, '$1')) && response.request().method() === 'POST',
+        );
+        await cancelButton.click();
+        return await responsePromise;
+    }
+
+    override async submit() {
         // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag)
         // so the test surfaces the genuine outcome instead of a transient cluster cache error.
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -44,19 +62,19 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         throw new Error('TextExerciseAssessment.submit exhausted retries');
     }
 
-    async rejectComplaint(response: string, examMode: boolean) {
+    override async rejectComplaint(response: string, examMode: boolean) {
         return await super.rejectComplaint(response, examMode, ExerciseType.TEXT);
     }
 
-    async acceptComplaint(response: string, examMode: boolean) {
+    override async acceptComplaint(response: string, examMode: boolean) {
         return await super.acceptComplaint(response, examMode, ExerciseType.TEXT);
     }
 
     getWordCountElement() {
-        return this.page.locator('#text-assessment-word-count');
+        return this.page.locator('[data-testid="text-assessment-word-count"]');
     }
 
     getCharacterCountElement() {
-        return this.page.locator('#text-assessment-character-count');
+        return this.page.locator('[data-testid="text-assessment-character-count"]');
     }
 }

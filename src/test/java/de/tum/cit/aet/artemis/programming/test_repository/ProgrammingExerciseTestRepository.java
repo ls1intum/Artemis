@@ -120,4 +120,17 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
     }
 
     List<ProgrammingExercise> findAllByCourseId(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template participation.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    default ProgrammingExercise findByIdWithTemplateParticipationElseThrow(long programmingExerciseId) {
+        return getValueElseThrow(findWithTemplateParticipationById(programmingExerciseId), programmingExerciseId);
+    }
 }

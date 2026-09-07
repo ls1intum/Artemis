@@ -22,9 +22,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TooltipModule } from 'primeng/tooltip';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -97,7 +95,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ButtonComponent,
         DeimosDateRangeModalComponent,
         AtlasOrchestrationTriggerComponent,
-        TooltipModule,
+        ConsistencyCheckComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -111,7 +109,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
     private eventManager = inject(EventManager);
-    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private statisticsService = inject(StatisticsService);
@@ -120,7 +117,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
 
-    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
 
     protected deimosDateRangeModal = viewChild.required<DeimosDateRangeModalComponent>('deimosDateRangeModal');
@@ -199,7 +195,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * - Course exercises: Teaching assistants (tutors) and above can access
      * - Exam exercises: Only instructors and above can access (more restrictive for exam confidentiality)
      *
-     * This aligns with the access rights documented in docs/admin/access-rights.mdx
+     * This aligns with the access rights documented in documentation/docs/admin/access-rights.mdx
      */
     readonly canAccessParticipationsAndScores = signal(false);
 
@@ -211,7 +207,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    private consistencyCheckDialogRef?: DynamicDialogRef;
+    /** Declarative consistency-check modal state (rendered in the template). */
+    readonly showConsistencyCheck = signal(false);
+    readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
 
     readonly exerciseDetailSections = signal<DetailOverviewSection[]>([]);
 
@@ -255,7 +253,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
-        this.consistencyCheckDialogRef?.close();
     }
 
     /**
@@ -728,14 +725,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                     data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution',
                     data: { boolean: exercise.releaseTestsWithExampleSolution },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },
+
                 { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
                 exercise.gradingCriteria && {
                     type: DetailType.GradingCriteria,
@@ -824,18 +820,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens modal and executes a consistency check for the given programming exercise
+     * Opens the declarative consistency-check modal (rendered in the template) for the given programming exercise.
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        this.consistencyCheckDialogRef =
-            this.dialogService.open(ConsistencyCheckComponent, {
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                header: this.translateService.instant('artemisApp.consistencyCheck.title'),
-                data: { exercisesToCheck: Array.of(exercise) },
-            }) ?? undefined;
+        this.consistencyExercises.set([exercise]);
+        this.showConsistencyCheck.set(true);
     }
 
     /**

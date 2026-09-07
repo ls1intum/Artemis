@@ -8,6 +8,7 @@ import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Synchronization targets used to scope editor sync events.
@@ -220,7 +221,7 @@ export class ExerciseEditorSyncService {
     private subject: Subject<ExerciseEditorSyncEvent> | undefined;
     private subscription: Subscription | undefined;
 
-    private outgoing$?: Subject<{ topic: string; payload: Record<string, unknown> }>;
+    private outgoing$?: Subject<{ topic: string; payload: ExerciseEditorSyncEvent }>;
     private outgoingSubscription?: Subscription;
 
     /**
@@ -267,7 +268,7 @@ export class ExerciseEditorSyncService {
             const topic = this.getTopic(exerciseId);
             this.exerciseId = exerciseId;
             this.subject = new Subject<ExerciseEditorSyncEvent>();
-            this.outgoing$ = new Subject<{ topic: string; payload: Record<string, unknown> }>();
+            this.outgoing$ = new Subject<{ topic: string; payload: ExerciseEditorSyncEvent }>();
             this.outgoingSubscription = this.outgoing$
                 .pipe(
                     concatMap((msg) =>
@@ -317,7 +318,7 @@ export class ExerciseEditorSyncService {
             throw new Error('Cannot send synchronization message: outgoing message buffer not initialized');
         }
         const topic = this.getTopic(exerciseId);
-        this.outgoing$.next({ topic, payload: { ...message, timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId } });
+        this.outgoing$.next({ topic, payload: cloneWith(message, { timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId }) });
     }
 
     /**

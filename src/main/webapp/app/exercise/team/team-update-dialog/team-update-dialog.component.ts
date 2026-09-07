@@ -6,7 +6,7 @@ import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/account/user/user.model';
-import { cloneDeep, isEmpty, omit } from 'lodash-es';
+import { isEmpty, omit } from 'lodash-es';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -19,6 +19,7 @@ import { TeamOwnerSearchComponent } from '../team-owner-search/team-owner-search
 import { TeamStudentSearchComponent } from '../team-student-search/team-student-search.component';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 
@@ -39,7 +40,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     team = signal<Team>(this.dialogConfig.data.team);
     exercise = signal<Exercise>(this.dialogConfig.data.exercise);
 
-    pendingTeam: Team = cloneDeep(this.team());
+    pendingTeam: Team = deepClone(this.team());
     readonly isSaving = signal(false);
 
     searchingStudents = false;
@@ -194,7 +195,7 @@ export class TeamUpdateDialogComponent implements OnInit {
             return;
         }
 
-        const teamToSave = cloneDeep(this.pendingTeam);
+        const teamToSave = deepClone(this.pendingTeam);
 
         if (teamToSave.id !== undefined) {
             this.subscribeToSaveResponse(this.teamService.update(this.exercise(), teamToSave));
@@ -248,7 +249,8 @@ export class TeamUpdateDialogComponent implements OnInit {
             .subscribe((alreadyTakenResponse) => {
                 const alreadyTaken = alreadyTakenResponse.body;
                 const errors = alreadyTaken
-                    ? { ...this.shortNameControl.errors, [this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE]: alreadyTaken }
+                    ? // `?? {}` preserves the previous spread behaviour: a control with no errors yet spread to an empty object.
+                      cloneWith(this.shortNameControl.errors ?? {}, { [this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE]: alreadyTaken })
                     : omit(this.shortNameControl.errors, this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE);
                 this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
             });

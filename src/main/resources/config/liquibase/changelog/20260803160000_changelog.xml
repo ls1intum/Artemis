@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Index the audit event date so the nightly retention pruning can find expired rows without scanning the table.
+        The pruning query is "event_date < cutoff ORDER BY event_date ASC LIMIT n", which without this index is a full scan
+        plus a sort on every batch - and the table has never been pruned, so it is exactly the case where that is worst.
+
+        On a large table this is an online index build (MySQL adds secondary indexes in place, without an exclusive lock),
+        but it still takes time proportional to the table size on the first startup after the upgrade.
+    -->
+    <changeSet id="20260803160000-1" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="jhi_persistent_audit_event" indexName="idx_persistent_audit_event_date"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="idx_persistent_audit_event_date" tableName="jhi_persistent_audit_event">
+            <column name="event_date"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

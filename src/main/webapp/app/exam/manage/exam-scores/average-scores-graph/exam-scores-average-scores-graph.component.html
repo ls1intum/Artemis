@@ -1,8 +1,23 @@
-<div class="row d-flex justify-content-center mb-1">
-    <div class="col-md-8 col-11 align-items-center px-0">
-        <h6 class="text-center" jhiTranslate="artemisApp.examScores.exerciseGroupTitle" [translateValues]="{ groupTitle: this.averageScores().title }"></h6>
-        <div style="height: 100px">
-            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($event)" />
+<div class="flex justify-center">
+    <div class="w-full max-w-4xl">
+        <h5
+            class="mb-2 text-center text-base font-semibold"
+            jhiTranslate="artemisApp.examScores.exerciseGroupTitle"
+            [translateValues]="{ groupTitle: this.averageScores().title }"
+        ></h5>
+        <!-- Flex (not a plain block) so the chart stretches to the explicit height: it fills its container in
+             both dimensions, and a container without a definite height would collapse it. The height grows with
+             the bar count so every bar keeps a readable label. -->
+        <div class="flex" [style.height.px]="chartHeight()">
+            <tum-ui-bar-chart
+                class="w-full"
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig()"
+                interactive
+                (dataSelect)="onSelect($event)"
+                [ariaLabel]="'artemisApp.examScores.exerciseGroupTitle' | artemisTranslate: { groupTitle: averageScores().title }"
+            />
         </div>
     </div>
 </div>

@@ -1,0 +1,63 @@
+<tum-ui-dialog [(visible)]="visible" [header]="headerStringKey() | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="medium">
+    <div class="d-flex flex-column gap-4">
+        <!-- Name + Points -->
+        <div class="d-flex flex-wrap gap-3">
+            <div class="flex-grow-1">
+                <label class="fw-semibold d-block mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
+                <input
+                    id="group-edit-title"
+                    tumUiInput
+                    class="w-100"
+                    [attr.maxlength]="MAX_TITLE_LENGTH"
+                    [ngModel]="draftTitle()"
+                    (ngModelChange)="draftTitle.set($event)"
+                    [placeholder]="'artemisApp.exerciseManagement.groupEdit.namePlaceholder' | artemisTranslate"
+                    [tumUiInputInvalid]="!isTitleValid()"
+                />
+            </div>
+            <div>
+                <label class="d-flex align-items-center gap-1 fw-semibold mb-1" for="group-edit-max-points">
+                    <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
+                    <fa-icon
+                        [icon]="faCircleInfo"
+                        [tumUiTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
+                        tumUiTooltipPlacement="top"
+                        class="text-muted"
+                    />
+                </label>
+                <tum-ui-input-number
+                    inputId="group-edit-max-points"
+                    [ngModel]="draftMaxPoints()"
+                    (ngModelChange)="draftMaxPoints.set($event)"
+                    [min]="0"
+                    [maxFractionDigits]="1"
+                    [showButtons]="true"
+                    [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
+                />
+            </div>
+        </div>
+
+        <!-- Dates -->
+        <div>
+            <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
+            <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2">
+                <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
+            </tum-ui-message>
+            <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
+            @if (!timelineStatus().valid) {
+                <tum-ui-message severity="error" [icon]="faCircleXmark" class="mt-2">
+                    <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>
+                </tum-ui-message>
+            }
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="text" (clicked)="onCancel()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </tum-ui-button>
+        <tum-ui-button [disabled]="isSaveDisabled()" (clicked)="onSave()">
+            <span jhiTranslate="entity.action.save"></span>
+        </tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>

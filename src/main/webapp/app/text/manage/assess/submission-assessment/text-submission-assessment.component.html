@@ -68,6 +68,9 @@
                     [readOnly]="readOnly"
                     [useDefaultFeedbackSuggestionBadgeText]="true"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise?.gradingCriteria ?? []"
+                    [allFeedbacks]="allAssessmentFeedbacks()"
+                    [maxPoints]="getTotalMaxPoints(exercise)"
                 />
             }
         </div>

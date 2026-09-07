@@ -1,6 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/calendar/shared/util/calendar-util';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
 import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
@@ -31,11 +32,14 @@ import { ButtonModule } from 'primeng/button';
     styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
+    private readonly viewState = inject(CalendarViewStateService);
+
     readonly faArrowUpFromBracket = faArrowUpFromBracket;
     readonly faFilter = faFilter;
     readonly CalendarEventFilterOption = CalendarEventFilterOption;
 
-    firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
+    /* Shared with the desktop overview, so a resize past the breakpoint keeps showing the same month. */
+    firstDateOfCurrentMonth = this.viewState.firstDateOfDisplayedMonth;
     selectedDate = signal<Dayjs | undefined>(undefined);
     weekdayNameKeys = utils.getWeekdayNameKeys();
     monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.locale()).format('MMMM YYYY'));

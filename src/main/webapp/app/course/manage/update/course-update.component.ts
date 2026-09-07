@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
+import { Observable, firstValueFrom, forkJoin, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
@@ -17,16 +17,25 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiChipComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -45,7 +54,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
-import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 @Component({
     selector: 'jhi-course-update',
@@ -59,12 +67,10 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         TranslateDirective,
         NgStyle,
         ColorSelectorComponent,
-        NgbTooltip,
         FormDateTimePickerComponent,
         HelpIconComponent,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
-        NgbTypeahead,
         NgTemplateOutlet,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -72,6 +78,14 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         FeatureOverlayComponent,
         RouterLink,
         TumUiDialogComponent,
+        TumUiCheckboxComponent,
+        TumUiTooltipDirective,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        TumUiChipComponent,
+        TumUiAutoCompleteComponent,
+        TumUiInputDirective,
+        ImageCropperModalComponent,
         OrganizationSelectorComponent,
     ],
 })
@@ -83,34 +97,30 @@ export class CourseUpdateComponent implements OnInit {
     private readonly fileService = inject(FileService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly dialogService = inject(DialogService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
     protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faPen = faPen;
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
-    readonly tzTypeAhead = viewChild.required<NgbTypeahead>('timeZoneInput');
 
-    tzFocus$ = new Subject<string>();
-    tzClick$ = new Subject<string>();
     timeZones: string[] = [];
+    readonly filteredTimeZones = signal<string[]>([]);
     originalTimeZone?: string;
 
     courseForm!: FormGroup; // built in ngOnInit()
@@ -119,7 +129,7 @@ export class CourseUpdateComponent implements OnInit {
     // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
     // mutations performed outside a synchronous template event handler (e.g. in a subscribe/promise),
     // call commitCourse() to rebuild the reference so the signal fires.
-    private readonly _course = signal<Course>(undefined!);
+    private readonly _course = signal<Course>(undefined!, { equal: () => false });
     get course(): Course {
         return this._course();
     }
@@ -127,7 +137,10 @@ export class CourseUpdateComponent implements OnInit {
         this._course.set(value);
     }
     private commitCourse(): void {
-        this._course.update((course) => Object.assign(new Course(), course));
+        // No copy: `_course` is declared with `equal: () => false`, so re-setting the same reference emits. Copying the
+        // course here would detach the nested associations (organizations, exercises, …) that are two-way bound into
+        // child components, and it would do so on every keystroke in a date field.
+        this._course.set(this._course());
     }
     readonly isSaving = signal<boolean>(undefined!);
     courseImageUploadFile?: File;
@@ -140,12 +153,19 @@ export class CourseUpdateComponent implements OnInit {
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
+    readonly isAtLeastInstructor = signal(false);
 
     communicationEnabled = true;
     messagingEnabled = true;
+    readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
+    // Global auto-orchestration defaults, fetched when Atlas is active, shown as the override-field
+    // placeholders so instructors see what an empty override resolves to. `undefined` until loaded
+    // (or if the fetch fails) — the template falls back to a plain "Use default" label.
+    readonly debounceWindowSecondsDefault = signal<number | undefined>(undefined);
+    readonly maxDailyOrchestrationDefault = signal<number | undefined>(undefined);
 
     private courseStorageService = inject(CourseStorageService);
 
@@ -196,9 +216,31 @@ export class CourseUpdateComponent implements OnInit {
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
+        // Load the global auto-orchestration defaults to display as override placeholders. Best-effort:
+        // if the feature toggle is off or the request fails, the placeholders stay on the plain
+        // "Use default" label.
+        if (this.atlasEnabled()) {
+            // The defaults endpoint is gated by FeatureToggle.AtlasAgent (and 403s when it is off), the same
+            // toggle that hides the override controls. Only fetch when the toggle is active to avoid a failing
+            // request on every course-edit load in deployments where the agent feature is disabled.
+            firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent))
+                .then((atlasAgentActive) => {
+                    if (!atlasAgentActive) {
+                        return undefined;
+                    }
+                    return this.competencyOrchestrationApiService.getDefaults().then((defaults) => {
+                        this.debounceWindowSecondsDefault.set(defaults.debounceWindowSeconds);
+                        this.maxDailyOrchestrationDefault.set(defaults.maxDailyOrchestrations);
+                    });
+                })
+                .catch(() => {
+                    // Defaults are non-essential; leave the placeholders on the generic label.
+                });
+        }
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
+        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
         this.courseForm = new FormGroup(
             {
@@ -223,6 +265,14 @@ export class CourseUpdateComponent implements OnInit {
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
+                autoOrchestratorEnabled: new FormControl(this.course.courseConfiguration?.autoOrchestratorEnabled ?? false),
+                // Seconds / daily run counts: reject fractional values in addition to the lower bound.
+                debounceWindowSecondsOverride: new FormControl(this.course.courseConfiguration?.debounceWindowSecondsOverride, {
+                    validators: [Validators.min(1), Validators.pattern(/^\d+$/)],
+                }),
+                maxDailyOrchestrationOverride: new FormControl(this.course.courseConfiguration?.maxDailyOrchestrationOverride, {
+                    validators: [Validators.min(1), Validators.pattern(/^\d+$/)],
+                }),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
@@ -251,7 +301,8 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
+                athenaFormativeFeedbackEnabled: new FormControl(this.course.athenaFormativeFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -262,7 +313,7 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
-                timeZone: new FormControl(this.course.timeZone),
+                timeZone: new FormControl(this.course.timeZone, { validators: [this.validTimeZoneValidator] }),
             },
             { validators: CourseValidator },
         );
@@ -285,18 +336,17 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.isAdmin.set(this.accountService.isAdmin());
+        this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
-    tzResultFormatter = (timeZone: string) => timeZone;
-    tzInputFormatter = (timeZone: string) => timeZone;
+    onTimeZoneSearch(event: TumUiAutoCompleteSearchEvent): void {
+        const term = event.query;
+        this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
+    }
 
-    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead().isPopupOpen()));
-        const inputFocus$ = this.tzFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
-        );
+    /** Rejects free-typed text that does not match one of the IANA time zones offered by the autocomplete. */
+    private readonly validTimeZoneValidator: ValidatorFn = (control: AbstractControl) => {
+        const value = control.value;
+        return !value || this.timeZones.includes(value) ? null : { invalidTimeZone: true };
     };
 
     get timeZoneChanged() {
@@ -309,7 +359,11 @@ export class CourseUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new course
      */
     previousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id?.toString());
+        if (this.course.id) {
+            this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id.toString());
+        } else {
+            this.navigationUtilService.navigateBackWithOptional(['courses'], undefined);
+        }
     }
 
     /**
@@ -331,11 +385,15 @@ export class CourseUpdateComponent implements OnInit {
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
 
-        // Map the flat data-privacy form controls into the nested course configuration expected by the update DTO mapper.
+        // Map the flat data-privacy and auto-orchestration form controls into the nested course configuration expected by
+        // the update DTO mapper.
         course.courseConfiguration = {
             id: this.course.courseConfiguration?.id,
             gradeRelevant: rawValue.gradeRelevant ?? true,
             dataRetentionHold: rawValue.dataRetentionHold ?? false,
+            autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
+            debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,
+            maxDailyOrchestrationOverride: rawValue.maxDailyOrchestrationOverride ?? undefined,
         };
 
         if (this.communicationEnabled && this.messagingEnabled) {
@@ -588,9 +646,37 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeRestrictedAthenaModulesEnabled() {
-        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
-        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    changeAthenaFeedbackEnabled() {
+        this.athenaFeedbackEnabled.update((v) => !v);
+        if (!this.athenaFeedbackEnabled()) {
+            this.course.athenaGradingFeedbackEnabled = false;
+            this.course.athenaFormativeFeedbackEnabled = false;
+            this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
+            this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(false);
+        }
+    }
+
+    changeAthenaGradingFeedback() {
+        this.course.athenaGradingFeedbackEnabled = !this.course.athenaGradingFeedbackEnabled;
+        this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
+    }
+
+    changeAthenaFormativeFeedback() {
+        this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
+        this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
+    }
+
+    /**
+     * Reset the per-course override inputs when auto-orchestration is turned off. The override fields
+     * are hidden by an @if on the toggle, so without this they would retain stale values that
+     * getRawValue() would still carry into the update DTO. Clearing them keeps the saved config in
+     * sync with what the instructor can see.
+     */
+    changeAutoOrchestratorEnabled() {
+        if (!this.courseForm.controls['autoOrchestratorEnabled'].value) {
+            this.courseForm.controls['debounceWindowSecondsOverride'].setValue(undefined);
+            this.courseForm.controls['maxDailyOrchestrationOverride'].setValue(undefined);
+        }
     }
 
     /**
@@ -707,19 +793,16 @@ export class CourseUpdateComponent implements OnInit {
         this.fileInput().nativeElement.click();
     }
 
+    /** File the cropper dialog is working on; the dialog is shown while it is set. */
+    readonly imageToCrop = signal<File | undefined>(undefined);
+
     openCropper(): void {
-        const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
-            header: '',
-            width: '500px',
-            data: {
-                uploadFile: this.courseImageUploadFile,
-            },
-        });
-        dialogRef?.onClose.subscribe((result: string | undefined) => {
-            if (result) {
-                this.croppedImage.set(result);
-            }
-        });
+        this.imageToCrop.set(this.courseImageUploadFile);
+    }
+
+    onImageCropped(croppedImage: string): void {
+        this.imageToCrop.set(undefined);
+        this.croppedImage.set(croppedImage);
     }
 
     /**

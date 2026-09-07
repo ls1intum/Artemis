@@ -1,6 +1,7 @@
 import { CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { BaseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface StandardizedCompetency extends BaseCompetency {
     version?: string;
@@ -101,12 +102,12 @@ export function sourceToString(source: Source) {
 }
 
 export function convertToStandardizedCompetencyForTree(competencyDTO: StandardizedCompetencyDTO, isVisible: boolean) {
-    const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
+    const competencyForTree: StandardizedCompetencyForTree = cloneWith(competencyDTO, { isVisible: isVisible });
     return competencyForTree;
 }
 
 export function convertToKnowledgeAreaForTree(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0): KnowledgeAreaForTree {
     const children = knowledgeAreaDTO.children?.map((child) => convertToKnowledgeAreaForTree(child, isVisible, level + 1));
     const competencies = knowledgeAreaDTO.competencies?.map((competency) => convertToStandardizedCompetencyForTree(competency, isVisible));
-    return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
+    return cloneWith(knowledgeAreaDTO, { children: children, competencies: competencies, level: level, isVisible: isVisible });
 }

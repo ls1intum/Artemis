@@ -258,7 +258,7 @@ public class LearningObjectImportService {
 
             clearProgrammingExerciseAttributes(newExercise);
 
-            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false, false);
+            return programmingExerciseImportService.importProgrammingExercise(programmingExercise, newExercise, false, false);
         }
     }
 

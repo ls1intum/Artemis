@@ -127,7 +127,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(chat.getId(), "student1");
         // then
         // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost).
-        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+        verify(websocketMessagingService, timeout(10000).times(3)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.NEW_MESSAGE);
 

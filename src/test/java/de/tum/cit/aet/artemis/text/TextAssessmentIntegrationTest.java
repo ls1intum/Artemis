@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
@@ -258,7 +258,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
+        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
                 .filter(feedback -> Objects.equals(feedback.getId(), feedbackId)).findFirst().orElseThrow();
         assertThat(persistedFeedback.getDetailText()).as("shortened feedback text is persisted").isEqualTo(editedShortText);
         assertThat(persistedFeedback.getHasLongFeedbackText()).as("shortened feedback no longer advertises long text").isFalse();
@@ -594,7 +594,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         // Reload submission to avoid detached entity issues
         textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow();
-        Long firstResultId = textSubmission.getResults().getFirst().getId();
+        Long firstResultId = textSubmission.getFirstResult().getId();
 
         // Add a second result (simulating Athena assessment)
         Result secondResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission);
@@ -643,7 +643,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission student2Submission = ParticipationFactory.generateTextSubmission("Student 2 text", Language.ENGLISH, true);
         student2Submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, student2Submission, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
         student2Submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(student2Submission.getId()).orElseThrow();
-        Long student2ResultId = student2Submission.getResults().getFirst().getId();
+        Long student2ResultId = student2Submission.getFirstResult().getId();
 
         // Student1 requests their own participation but with student2's resultId - should be 404
         request.get("/api/text/text-editor/" + student1Submission.getParticipation().getId() + "?resultId=" + student2ResultId, HttpStatus.NOT_FOUND, TextParticipationDTO.class);
@@ -923,6 +923,51 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addSampleFeedbackToResults(textSubmission.getLatestResult());
         request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
                 expectedStatus, null);
+    }
+
+    /**
+     * An Athena result is created after the tutor's assessment and therefore has a higher id, but it is not a correction
+     * round and carries no assessor. Cancelling used to resolve the submission's "latest" result by id, hit that Athena
+     * result, and fail before releasing anything, so the tutor's lock survived (issue #13396).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cancelAssessmentReleasesTheTutorsLockEvenWhenAnAthenaResultIsNewer() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final long tutorResultId = textSubmission.getLatestResult().getId();
+        // Saved last, so it holds the highest id of the submission.
+        final long athenaResultId = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission).getId();
+        assertThat(athenaResultId).as("setup: the Athena result is the newest by id").isGreaterThan(tutorResultId);
+
+        request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
+                HttpStatus.OK, null);
+
+        // Deleting an entry of an @OrderColumn list leaves a null hole behind, which getResultForCorrectionRound also
+        // documents, so the raw list is filtered before comparing ids.
+        var remainingResults = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow().getResults();
+        var remainingResultIds = remainingResults.stream().filter(Objects::nonNull).map(Result::getId).toList();
+        assertThat(remainingResultIds).as("the tutor's assessment is released and the Athena result is kept").containsExactly(athenaResultId);
+    }
+
+    /**
+     * Naming a result explicitly must not reach a correction round that is already submitted. Without a result id only
+     * the newest manual result is ever released, so an id is the only way to reach an older finished round, and
+     * deleting a finished result requires an instructor through the dedicated endpoints.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cancelAssessmentRejectsAFinishedCorrectionRoundNamedByResultId() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final Result finishedResult = textSubmission.getLatestResult();
+        assertThat(finishedResult.getCompletionDate()).as("setup: the assessment is submitted").isNotNull();
+
+        request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId()
+                + "/cancel-assessment?resultId=" + finishedResult.getId(), null, HttpStatus.BAD_REQUEST, null);
+
+        var remainingResults = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow().getResults();
+        assertThat(remainingResults.stream().filter(Objects::nonNull).map(Result::getId)).as("the submitted assessment is untouched").containsExactly(finishedResult.getId());
     }
 
     @Test
@@ -1245,8 +1290,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAthenaEnabled() throws Exception {
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExerciseRepository.save(textExercise);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
@@ -1487,7 +1535,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutSecondAssessment));
         // result for correction round 1 corresponds to the just-submitted second manual result
-        assertThat(assessedSubmissionList.getFirst().results()).extracting(ResultDTO::id).contains(secondSubmittedManualResult.id());
+        // Only the result of the requested correction round comes back. The results used to be an ordered list whose
+        // position carried the round, so a tutor who had assessed only the second round produced a null at index 0.
+        assertThat(assessedSubmissionList.getFirst().results()).hasSize(1);
+        assertThat(assessedSubmissionList.getFirst().results().getFirst()).isNotNull().extracting(ResultDTO::id).isEqualTo(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -1524,13 +1575,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        Result firstResult = submission.getResults().getFirst();
+        Result firstResult = submission.getFirstResult();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/text/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(submission.getResults().getFirst()).isEqualTo(lastResult);
+        assertThat(submission.getFirstResult()).isEqualTo(lastResult);
     }
 
     @Test

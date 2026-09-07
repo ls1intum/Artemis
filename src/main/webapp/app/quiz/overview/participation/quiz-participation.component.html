@@ -63,8 +63,8 @@
                                     <!-- Show the submit button only in preview mode(). In live and practice modes submission() is handled by the quiz flow; solution mode() is read-only. -->
                                     @if (mode() === 'preview') {
                                         <jhi-button
-                                            id="submit-quiz"
-                                            (onClick)="onSubmit()"
+                                            data-testid="submit-quiz"
+                                            (onClick)="submitExercise()"
                                             [btnSize]="ButtonSize.SMALL"
                                             [btnType]="ButtonType.PRIMARY"
                                             [title]="shouldTreatAsSubmittedForUi() ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
@@ -182,7 +182,7 @@
                                     [question]="question"
                                     [selectedAnswerOptions]="selectedAnswerOptions().get(question.id!)!"
                                     (selectedAnswerOptionsChange)="onSelectedAnswerOptionsChange(question.id!, $event)"
-                                    [fnOnSelection]="onSelectionChanged.bind(this)"
+                                    [fnOnSelection]="selectionChangedCallback"
                                     [clickDisabled]="submission().submitted || remainingTimeSeconds() < 0"
                                     [showResult]="showingResult()"
                                     [submittedResult]="result()"
@@ -199,7 +199,7 @@
                                     [question]="question"
                                     [mappings]="dragAndDropMappings().get(question.id!)!"
                                     (mappingsChange)="onDragAndDropMappingsChange(question.id!, $event)"
-                                    [onMappingUpdate]="onSelectionChanged.bind(this)"
+                                    [onMappingUpdate]="selectionChangedCallback"
                                     [clickDisabled]="submission().submitted || remainingTimeSeconds() < 0"
                                     [showResult]="showingResult()"
                                     [forceSampleSolution]="mode() === 'solution'"
@@ -214,7 +214,7 @@
                                     [question]="question"
                                     [submittedTexts]="shortAnswerSubmittedTexts().get(question.id!)!"
                                     (submittedTextsChange)="onShortAnswerSubmittedTextsChange(question.id!, $event)"
-                                    [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
+                                    [fnOnSubmittedTextUpdate]="selectionChangedCallback"
                                     [clickDisabled]="submission().submitted || remainingTimeSeconds() < 0"
                                     [showResult]="showingResult()"
                                     [forceSampleSolution]="mode() === 'solution'"
@@ -229,7 +229,7 @@
             </div>
             <div class="row sticky-bottom mb-0 mt-auto">
                 @if (mode() === 'live') {
-                    <hr class="mb-0" />
+                    <!-- The status row below sits on the card's own surface at its bottom edge, so it needs no rule above it. -->
                     <div class="container d-flex fs-small align-items-center justify-content-between module-bg mb-n3 py-2">
                         @if (!showingResult()) {
                             @if (!waitingForQuizStart()) {
@@ -319,13 +319,13 @@
                         @if (quizExercise().quizMode === QuizMode.BATCHED && (quizExercise().remainingNumberOfAttempts ?? 1) > 0) {
                             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
                             <div class="join-batch-row">
-                                <input id="join-patch-password" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
-                                <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
+                                <input data-testid="join-patch-password" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
+                                <jhi-button data-testid="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
                             </div>
                         }
                         @if (quizExercise().quizMode === QuizMode.INDIVIDUAL && (quizExercise().remainingNumberOfAttempts ?? 1) > 0) {
                             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>
-                            <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
+                            <jhi-button data-testid="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
                         }
                         @if (quizExercise().quizMode !== QuizMode.SYNCHRONIZED && quizExercise().remainingNumberOfAttempts === 0) {
                             @if ((quizExercise().allowedNumberOfAttempts ?? 0) > 1) {

@@ -13,6 +13,8 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -281,6 +283,82 @@ public class FileUtil {
     }
 
     /**
+     * Resolves a single filename against a base directory and guarantees that the result stays inside that directory.
+     *
+     * <p>
+     * {@link #sanitizeFilename(String)} already replaces every path separator, so a sanitised name cannot traverse on
+     * its own. This method adds the containment check at the point of use, which is what makes the guarantee local and
+     * checkable: the resolved path is normalised and compared against the normalised base directory, so a caller that
+     * forgets to sanitise — or a future change that loosens the sanitiser — fails loudly instead of quietly reading or
+     * writing an arbitrary file.
+     *
+     * <p>
+     * The containment this gives is <em>lexical</em>: it compares path elements and does not resolve symlinks, so a
+     * link already present inside {@code baseDirectory} would still point elsewhere. Callers that create the file are
+     * responsible for opening it with {@link java.nio.file.StandardOpenOption#CREATE_NEW}, which refuses to follow an
+     * existing link, rather than relying on this check alone.
+     *
+     * @param baseDirectory the directory the resolved path has to stay within
+     * @param filename      the single filename to resolve against {@code baseDirectory}
+     * @return the resolved, normalised path, guaranteed to lie inside {@code baseDirectory}
+     * @throws IllegalArgumentException if the filename is blank or escapes {@code baseDirectory}
+     */
+    @NonNull
+    public static Path resolveWithinDirectoryElseThrow(@NonNull Path baseDirectory, @NonNull String filename) {
+        if (filename.isBlank()) {
+            throw new IllegalArgumentException("Invalid filename: must not be blank.");
+        }
+        Path normalisedBaseDirectory = baseDirectory.normalize();
+        Path resolvedPath = normalisedBaseDirectory.resolve(filename).normalize();
+        // startsWith() compares path elements, not characters, so a sibling directory sharing a name prefix cannot pass.
+        if (!resolvedPath.startsWith(normalisedBaseDirectory) || resolvedPath.equals(normalisedBaseDirectory)) {
+            throw new IllegalArgumentException("Invalid filename '%s': the resolved path escapes the expected directory.".formatted(filename));
+        }
+        return resolvedPath;
+    }
+
+    /**
+     * Writes a stream to a path that must not exist yet, creating any missing parent directories.
+     *
+     * <p>
+     * Opens with {@link StandardOpenOption#CREATE_NEW}, which maps to {@code O_CREAT | O_EXCL}. The kernel refuses
+     * that combination when the path already exists — including when it exists only as a symlink, and including a
+     * dangling one — so the write cannot be redirected through a link planted at the destination. This is the
+     * companion to {@link #resolveWithinDirectoryElseThrow(Path, String)}, whose containment check is lexical and
+     * therefore blind to symlinks on its own.
+     *
+     * @param inputStream the stream to write; closed by the caller
+     * @param target      the file to create
+     * @throws java.nio.file.FileAlreadyExistsException if {@code target} already exists, symlink included
+     * @throws IOException                              if creating the directories or writing fails
+     */
+    public static void writeNewFileElseThrow(@NonNull InputStream inputStream, @NonNull Path target) throws IOException {
+        Path parent = target.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        // Opened outside the try so that a failure of the open itself is NOT cleaned up: it throws
+        // FileAlreadyExistsException precisely when the path is somebody else's file or symlink, and that is the case
+        // this method exists to protect. Only once the open succeeds is the file ours to delete.
+        OutputStream outputStream = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        try (outputStream) {
+            inputStream.transferTo(outputStream);
+        }
+        catch (IOException | RuntimeException e) {
+            // CREATE_NEW creates the file before any byte is copied, so a failure part-way through would otherwise leave
+            // a truncated file behind. The caller only registers the path for deletion after this method returns, so
+            // nothing else would ever remove it.
+            try {
+                Files.deleteIfExists(target);
+            }
+            catch (IOException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            throw e;
+        }
+    }
+
+    /**
      * Sanitizes a file path by checking for invalid characters or path traversal.
      *
      * @param filePath the file path to sanitize
@@ -445,6 +523,29 @@ public class FileUtil {
         File targetDirectory = targetDirectoryPath.toFile();
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * Publishes a file or directory that was written under a temporary name by renaming it into place in one step.
+     *
+     * <p>
+     * The point is that the target never exists half written: either the rename happened or it did not. Apache's
+     * {@code FileUtils.moveFile} and {@code moveDirectory} cannot promise that, because they fall back to copying and
+     * deleting when the rename fails, and a copy that fails part way leaves an incomplete target behind that the
+     * caller's cleanup does not cover. This is the one place in the code base that is allowed to call
+     * {@link Files#move}, which {@code ArchitectureTest.testFileWriteUsage} otherwise rejects.
+     *
+     * <p>
+     * Both paths have to live on the same file store, which callers get by keeping the temporary name a sibling of the
+     * final one. They are not on the same store if that is not the case, and the move fails rather than silently
+     * copying.
+     *
+     * @param temporaryPath the path the content was written to
+     * @param targetPath    the path it should appear under, in the same directory
+     * @throws IOException if the rename fails, including when the two paths do not share a file store
+     */
+    public static void publishAtomically(Path temporaryPath, Path targetPath) throws IOException {
+        Files.move(temporaryPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
     }
 
     /**
@@ -763,26 +864,6 @@ public class FileUtil {
         charsetDetector.setText(contentArray);
         String charsetName = charsetDetector.detect().getName();
         return Charset.forName(charsetName);
-    }
-
-    /**
-     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
-     * Note: the method also tries to create the mentioned folder
-     *
-     * @param path the original path, e.g. /opt/artemis/repos-download
-     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
-     */
-    public static Path getUniqueSubfolderPath(Path path) {
-        var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath) && Files.isDirectory(path)) {
-            try {
-                return Files.createDirectories(uniquePath);
-            }
-            catch (IOException e) {
-                log.warn("could not create the directories for the path {}", uniquePath);
-            }
-        }
-        return uniquePath;
     }
 
     /**

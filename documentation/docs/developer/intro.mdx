@@ -1,0 +1,40 @@
+---
+id: intro
+title: Welcome to the Development Guide
+sidebar_label: Introduction
+---
+
+import DocCardList from '@theme/DocCardList';
+
+# 🧑‍💻 Development Guide
+
+This section provides the technical setup and configuration details needed to develop, maintain, or extend Artemis.
+
+You'll find information on:
+
+- Setting up a **local development environment**
+- Running the **Artemis server (Spring Boot)** and **client (Angular)**
+- Database and build configuration
+- Integration with version control and CI/CD systems
+- Setting up **local LLM services** for AI-assisted features
+
+Start with the **[Setup Guide](./setup.mdx)** to install and run Artemis on your local machine.
+
+## Core development guides
+
+<DocCardList
+    items={[
+        {
+            type: 'link',
+            label: 'Coding and Design Guidelines',
+            href: '/developer/guidelines/',
+            description: 'Find the implementation, testing, design-system, and server conventions.',
+        },
+        {
+            type: 'link',
+            label: 'Development Process',
+            href: '/developer/development-process',
+            description: 'Follow the project workflow from feature proposal through review and merge.',
+        },
+    ]}
+/>

@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewMentionPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user they were mentioned in a post or answer post.
@@ -14,31 +16,7 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(3)
 public class NewMentionNotification extends CourseNotification {
 
-    protected String postMarkdownContent;
-
-    protected String postCreationDate;
-
-    protected String postAuthorName;
-
-    protected Long postId;
-
-    protected String replyMarkdownContent;
-
-    protected String replyCreationDate;
-
-    protected String replyAuthorName;
-
-    protected Long replyAuthorId;
-
-    protected String replyImageUrl;
-
-    protected Long replyId;
-
-    protected String channelName;
-
-    protected Long channelId;
-
-    protected boolean replyIsBot;
+    private final NewMentionPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -47,19 +25,8 @@ public class NewMentionNotification extends CourseNotification {
             String replyMarkdownContent, String replyCreationDate, String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName,
             Long channelId, boolean replyIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.postMarkdownContent = postMarkdownContent;
-        this.postCreationDate = postCreationDate;
-        this.postAuthorName = postAuthorName;
-        this.postId = postId;
-        this.replyMarkdownContent = replyMarkdownContent;
-        this.replyCreationDate = replyCreationDate;
-        this.replyAuthorName = replyAuthorName;
-        this.replyAuthorId = replyAuthorId;
-        this.replyImageUrl = replyImageUrl;
-        this.replyId = replyId;
-        this.channelName = channelName;
-        this.channelId = channelId;
-        this.replyIsBot = replyIsBot;
+        this.payload = new NewMentionPayloadDTO(postMarkdownContent, postCreationDate, postAuthorName, postId, replyMarkdownContent, replyCreationDate, replyAuthorName,
+                replyAuthorId, replyImageUrl, replyId, channelName, channelId, replyIsBot);
     }
 
     /**
@@ -67,6 +34,7 @@ public class NewMentionNotification extends CourseNotification {
      */
     public NewMentionNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewMentionPayloadDTO.class);
     }
 
     @Override
@@ -86,12 +54,17 @@ public class NewMentionNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        String returnUrl = "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId;
+        String returnUrl = "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId();
 
-        if (this.replyId != null) {
-            returnUrl += "&openThreadOnFocus=1&postInThread=" + replyId;
+        if (payload.replyId() != null) {
+            returnUrl += "&openThreadOnFocus=1&postInThread=" + payload.replyId();
         }
 
         return returnUrl;
+    }
+
+    @Override
+    public NewMentionPayloadDTO payload() {
+        return payload;
     }
 }

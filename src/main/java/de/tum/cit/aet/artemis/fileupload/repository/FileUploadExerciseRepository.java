@@ -32,6 +32,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @Query("""
             SELECT DISTINCT e FROM FileUploadExercise e
             LEFT JOIN FETCH e.categories
+            LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.course.id = :#{#courseId}
             """)
     List<FileUploadExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -39,7 +40,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<FileUploadExercise> findWithEagerCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig", "exerciseVariantGroup" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
     @Query("""
@@ -51,6 +52,8 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
                 LEFT JOIN FETCH fileUploadExercise.teamAssignmentConfig
+                LEFT JOIN FETCH fileUploadExercise.plagiarismDetectionConfig
+                LEFT JOIN FETCH fileUploadExercise.exerciseVariantGroup
                 LEFT JOIN FETCH fileUploadExercise.gradingCriteria
                 LEFT JOIN FETCH fileUploadExercise.competencyLinks cl
                 LEFT JOIN FETCH cl.competency

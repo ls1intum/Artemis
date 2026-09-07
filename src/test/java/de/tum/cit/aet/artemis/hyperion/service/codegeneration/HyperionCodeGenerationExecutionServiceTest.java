@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -65,12 +66,15 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 class HyperionCodeGenerationExecutionServiceTest {
+
+    private static final String COMMIT_HASH = "abc123abc123abc123abc123abc123abc123abc1";
 
     @Mock
     private GitService gitService;
@@ -120,6 +124,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     @Mock
     private ExerciseVersionService exerciseVersionService;
 
+    @Mock
+    private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private HyperionCodeGenerationExecutionService service;
 
     private User user;
@@ -135,7 +142,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
-                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService);
+                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -198,7 +205,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -211,7 +218,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.isSuccessful()).thenReturn(true);
         when(buildResult.getScore()).thenReturn(100.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
@@ -267,7 +274,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -280,7 +287,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(50.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
@@ -307,7 +314,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -320,7 +327,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(50.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
@@ -360,7 +367,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -394,7 +401,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -439,7 +446,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -453,7 +460,7 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isNull();
         verify(programmingSubmissionRepository, never()).findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(anyLong(), anyString());
-        verify(resultRepository, never()).findLatestResultWithFeedbacksAndTestcasesForSubmission(anyLong());
+        verify(resultRepository, never()).findLatestResultWithFeedbacksForSubmission(anyLong());
         verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
@@ -477,7 +484,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getFileByName(repository, "src/main/java/OldSort.java")).thenReturn(Optional.of(obsoleteFile));
         when(obsoleteFile.isFile()).thenReturn(true);
         doNothing().when(repositoryService).deleteFile(repository, "src/main/java/OldSort.java");
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -490,7 +497,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(1);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
@@ -754,7 +761,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
-        doNothing().when(repositoryService).commitChanges(mockRepository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(mockRepository, user);
         when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
@@ -772,7 +779,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
-        doNothing().when(repositoryService).commitChanges(mockRepository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(mockRepository, user);
         when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash",
@@ -790,7 +797,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
 
-        doNothing().when(repositoryService).commitChanges(mockRepository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(mockRepository, user);
         when(gitService.getLastCommitHash(repositoryUri)).thenReturn("commit-tests");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
 
@@ -814,7 +821,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(mockSubmission.getId()).thenReturn(42L);
         // extractBuildLogs re-loads the submission with an eager build-log graph (the result itself is fetched without build logs).
         ProgrammingSubmission eagerSubmission = mock(ProgrammingSubmission.class);
-        when(eagerSubmission.getBuildLogEntries()).thenReturn(logEntries);
+        when(eagerSubmission.getBuildLogEntries()).thenReturn(new java.util.LinkedHashSet<>(logEntries));
         when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(42L)).thenReturn(Optional.of(eagerSubmission));
         when(logEntry1.getLog()).thenReturn("Error in line 1");
         when(logEntry2.getLog()).thenReturn("Error in line 2");
@@ -850,7 +857,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         // Production re-fetches build logs via the eager query, not the lazy getter; stub that path so the real logs (not the fallback) are asserted.
         when(submission.getId()).thenReturn(7L);
         when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(7L)).thenReturn(Optional.of(submission));
-        when(submission.getBuildLogEntries()).thenReturn(List.of(logEntry));
+        when(submission.getBuildLogEntries()).thenReturn(java.util.Set.of(logEntry));
         when(logEntry.getLog()).thenReturn("javac: cannot find symbol Sort");
 
         String summary = ReflectionTestUtils.invokeMethod(service, "extractBuildFeedback", result);
@@ -885,7 +892,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(99L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.isSuccessful()).thenReturn(true);
         when(buildResult.getScore()).thenReturn(100.0);
 
@@ -905,7 +912,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(100L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(50.0);
 
         Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
@@ -924,7 +931,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(101L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(1);
 
@@ -944,7 +951,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(102L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(0);
 
@@ -969,7 +976,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doNothing().when(repositoryService).commitChanges(repository, user);
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
@@ -983,7 +990,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(88L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(25.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
 

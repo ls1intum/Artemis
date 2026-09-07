@@ -1,0 +1,75 @@
+---
+id: roadmap
+title: Roadmap
+sidebar_label: Roadmap
+description: Where the Artemis roadmap lives, how to read it, and how to propose something for it.
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Roadmap
+
+The Artemis roadmap is a GitHub project board, not a document. It is kept where the work actually
+happens, so a roadmap item and the pull requests that implement it are the same objects rather than two
+lists that drift apart.
+
+**[Open the Artemis Roadmap board](https://github.com/orgs/ls1intum/projects/141)**
+
+<Callout variant={CalloutVariant.info}>
+    The roadmap describes intentions, not commitments. Artemis is developed openly by a group whose
+    capacity changes from semester to semester, and priorities change with it. Nothing on the board is a
+    delivery promise, and items move between stages or are dropped.
+</Callout>
+
+## How to read the board
+
+| Field | Meaning |
+| --- | --- |
+| **Status: Exploring** | Being investigated. No commitment that it will be built. |
+| **Status: Planned** | Agreed and scheduled for a target semester. |
+| **Status: In progress** | Implementation underway. For most items this means an open pull request. |
+| **Status: Shipped** | Released. The [release notes](https://github.com/ls1intum/Artemis/releases) name the version. |
+| **Area** | The feature area, using the same vocabulary as [pull request titles](/developer/development-process#pr-naming-conventions), so an item and the changes implementing it carry the same label. |
+| **Target** | A semester, for example `WS 26/27`. Never a date. |
+
+Targets are semesters on purpose. Universities plan in semesters, a semester communicates intent
+without reading as a delivery date, and it matches how the project itself works: features land in time
+for a teaching period or they wait for the next one.
+
+## What is on it
+
+The board holds two kinds of item:
+
+- **Larger features currently being implemented**, linked to their pull requests. These carry the real
+  status automatically, because the pull request is the item.
+- **Strategic directions** that are not yet implementation work, as drafts. A draft becomes a real issue
+  as soon as someone picks it up, and from then on it is discussed, assigned, and closed like any other
+  issue.
+
+Smaller improvements and bug fixes are not on the roadmap. They go through the normal
+[issue tracker](https://github.com/ls1intum/Artemis/issues) and ship in the
+[two-weekly releases](./releases).
+
+## Proposing something
+
+Anyone can propose something for the roadmap, whether or not they intend to build it:
+
+1. Open a [feature request](https://github.com/ls1intum/Artemis/issues/new/choose) describing the
+   problem, who has it, and why it matters. A problem is a better proposal than a solution.
+2. The maintainers evaluate it, and larger changes get a written
+   [feature proposal](/developer/development-process) covering requirements, architecture, and UI/UX
+   before any code is written.
+3. Accepted directions are added to the board.
+
+## Who keeps it current
+
+The maintainers review the board at their [weekly meeting](./governance#weekly-maintainer-meeting).
+That standing review is what keeps a roadmap alive; without it, boards quietly go stale and become
+misleading, which is worse than having none.
+
+## Related pages
+
+- [Release and support policy](./releases)
+- [Project governance](./governance)
+- [Development process](/developer/development-process)

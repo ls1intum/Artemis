@@ -197,8 +197,8 @@ describe('NotificationSettingsComponent', () => {
         const presetPicker = fixture.debugElement.query(By.directive(CourseNotificationPresetPickerComponent));
         expect(presetPicker).not.toBeNull();
 
-        expect(presetPicker.componentInstance.availableCourseSettingPresets).toEqual(mockPresets);
-        expect(presetPicker.componentInstance.selectedCourseSettingPreset).toEqual(mockPresets[0]);
+        expect(presetPicker.componentInstance.availableCourseSettingPresets()).toEqual(mockPresets);
+        expect(presetPicker.componentInstance.selectedCourseSettingPreset()).toEqual(mockPresets[0]);
     });
 
     it('should render specification cards when not loading', () => {
@@ -211,7 +211,7 @@ describe('NotificationSettingsComponent', () => {
         const specificationCards = fixture.debugElement.queryAll(By.directive(CourseNotificationSettingSpecificationCardComponent));
         expect(specificationCards).toHaveLength(1);
 
-        expect(specificationCards[0].componentInstance.settingSpecification).toEqual(component['notificationSpecifications']()[0]);
+        expect(specificationCards[0].componentInstance.settingSpecification()).toEqual(component['notificationSpecifications']()[0]);
     });
 
     it('should correctly update specifications from notification map', () => {

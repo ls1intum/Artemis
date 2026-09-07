@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -21,31 +22,31 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -53,12 +54,12 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.modeling.api.ModelingFeedbackApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -67,18 +68,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
-import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -122,11 +117,9 @@ public class StudentExamService {
 
     private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
-    private final Optional<TextFeedbackApi> textFeedbackApi;
-
-    private final Optional<ModelingFeedbackApi> modelingFeedbackApi;
-
     private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ExerciseRepository exerciseRepository;
 
     private final ExamRepository examRepository;
 
@@ -136,20 +129,17 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
-    /**
-     * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
-     * attempts for a given exam. Reuses the course-exercise cap so the two stay in sync.
-     */
-    @Value("${artemis.athena.allowed-feedback-requests:10}")
-    private int allowedFeedbackRequests;
+    private final StudentExamSubmitMapper studentExamSubmitMapper;
+
+    private final TransactionTemplate transactionTemplate;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi,
-            SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
-            ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
-            ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
+            StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager,
+            WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
+            StudentExamSubmitMapper studentExamSubmitMapper, PlatformTransactionManager transactionManager) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -157,19 +147,37 @@ public class StudentExamService {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
-        this.textFeedbackApi = textFeedbackApi;
-        this.modelingFeedbackApi = modelingFeedbackApi;
         this.submissionVersionService = submissionVersionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examService = examService;
+        this.studentExamSubmitMapper = studentExamSubmitMapper;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    /**
+     * Reconstructs the transient submission graph from the slim client DTO onto the authoritative student exam and then
+     * submits it. This is the single service entry point for the hand-in endpoint, so the controller does not need to
+     * depend on the reconstruction mapper directly.
+     * <p>
+     * The per-exercise degrade semantics of the reconstruction are owned by {@link StudentExamSubmitMapper} and left
+     * unchanged: a broken exercise drops only its own last-second changes while the hand-in still succeeds.
+     *
+     * @param existingStudentExam  the student exam loaded from the database (with its exercises)
+     * @param submitStudentExamDTO the slim request body carrying the last-second submission changes
+     * @param currentUser          the current user
+     */
+    public void submitStudentExam(StudentExam existingStudentExam, SubmitStudentExamDTO submitStudentExamDTO, User currentUser) {
+        studentExamSubmitMapper.attachSubmissions(existingStudentExam, submitStudentExamDTO, currentUser);
+        submitStudentExam(existingStudentExam, currentUser);
     }
 
     /**
@@ -218,78 +226,6 @@ public class StudentExamService {
         }
     }
 
-    /**
-     * Requests Athena AI feedback for all text and modeling participations of a submitted test exam whose exercise
-     * has a feedback suggestion module configured. Called explicitly by the student via the test exam summary button.
-     * <p>
-     * Rejects the request if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
-     * results across all of their test-exam attempts for this exam (cross-attempt cap), or if no exercise in the
-     * attempt has a feedback suggestion module configured. Individual submissions that already have an Athena result
-     * are skipped silently inside the async dispatch in {@code generateAutomaticFeedbackForTestExamAsync}, so
-     * remaining unassessed submissions in the same attempt still get processed.
-     *
-     * @param studentExam the submitted student exam
-     * @param currentUser the user requesting feedback
-     * @throws BadRequestAlertException if the exam is not a test exam, not submitted, Athena is unavailable, the
-     *                                      request limit is reached, or no exercise has a feedback suggestion module
-     *                                      configured
-     */
-    public void requestAthenaFeedbackForTestExam(StudentExam studentExam, User currentUser) {
-        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
-            throw new BadRequestAlertException("Student exam must be submitted before requesting feedback", "StudentExam", "studentExamNotSubmitted");
-        }
-        if (!studentExam.isTestExam()) {
-            throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
-        }
-        if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
-            throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
-        }
-
-        // Approximate cap: count-and-dispatch is not transactional, so concurrent requests at used == cap - 1 can both pass and briefly exceed the cap by one.
-        long attemptsWithAthenaResult = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(currentUser.getId(), studentExam.getExam().getId());
-        if (attemptsWithAthenaResult >= allowedFeedbackRequests) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "StudentExam", "maxAthenaResultsReached", true);
-        }
-
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
-        List<StudentParticipation> eligibleParticipations = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().getFeedbackSuggestionModule() != null).toList();
-        if (eligibleParticipations.isEmpty()) {
-            throw new BadRequestAlertException("No exam exercises with a configured AI feedback module", "StudentExam", "noFeedbackSuggestionModuleConfigured", true);
-        }
-        for (StudentParticipation participation : eligibleParticipations) {
-            Exercise exercise = participation.getExercise();
-            if (exercise instanceof TextExercise && textFeedbackApi.isEmpty()) {
-                throw new BadRequestAlertException("Athena feedback for text exercises is not available", "StudentExam", "textAthenaNotAvailable");
-            }
-            if (exercise instanceof ModelingExercise && modelingFeedbackApi.isEmpty()) {
-                throw new BadRequestAlertException("Athena feedback for modeling exercises is not available", "StudentExam", "modelingAthenaNotAvailable");
-            }
-        }
-        for (StudentParticipation participation : eligibleParticipations) {
-            Exercise exercise = participation.getExercise();
-            if (exercise instanceof TextExercise textExercise) {
-                textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise));
-            }
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                modelingFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise));
-            }
-        }
-    }
-
-    /**
-     * Returns how many test-exam attempts of the given user have produced a successful Athena feedback result, paired
-     * with the configured cap. Each attempt counts as one request regardless of how many exercises it contains.
-     *
-     * @param userId the id of the student whose test-exam attempts should be counted
-     * @param examId the id of the exam the attempts belong to
-     * @return the number of attempts that already produced an Athena result and the configured cap
-     */
-    public AthenaFeedbackUsageDTO getAthenaFeedbackUsage(Long userId, Long examId) {
-        long used = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(userId, examId);
-        return new AthenaFeedbackUsageDTO(used, allowedFeedbackRequests);
-    }
-
     private void submitStudentExam(StudentExam studentExam) {
         var now = ZonedDateTime.now();
         studentExam.setSubmitted(true);
@@ -298,8 +234,13 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. A null passes an `instanceof` filter, so without the explicit null check the gap would reach
+        // the participation query below (which is not covered by the per-exercise catch) and cost every exercise its
+        // last-second changes.
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         // we only need to save submissions for modeling, text and quiz exercises;
-        var relevantExercises = studentExam.getExercises().stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
+        var relevantExercises = exercises.stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
         if (relevantExercises.isEmpty()) {
             // nothing to save
             return;
@@ -307,7 +248,7 @@ public class StudentExamService {
         // 4. DB Call: read
         List<StudentParticipation> existingRelevantParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam, relevantExercises);
 
-        for (Exercise exercise : studentExam.getExercises()) {
+        for (Exercise exercise : exercises) {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);
@@ -416,155 +357,12 @@ public class StudentExamService {
         }
     }
 
-    /**
-     * Returns {@code true} if the drag and drop answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a drag and drop submitted answer
-     * @param answer2 a drag and drop submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
-        // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
-        Set<DnDMapping> mappings1 = answer1.toDnDMapping();
-        Set<DnDMapping> mappings2 = answer2.toDnDMapping();
-        return Objects.equals(mappings1, mappings2);
-    }
-
-    /**
-     * Returns {@code true} if the multiple choice answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a multiple choice submitted answer
-     * @param answer2 a multiple choice submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
-        // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
-        Set<Long> selections1 = answer1.toSelectedIds();
-        Set<Long> selections2 = answer2.toSelectedIds();
-        return Objects.equals(selections1, selections2);
-    }
-
-    /**
-     * Returns {@code true} if the short answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a short answer submitted answer
-     * @param answer2 a short answer submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
-        // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
-        Set<SAMapping> mappings1 = answer1.toSAMappings();
-        Set<SAMapping> mappings2 = answer2.toSAMappings();
-        return Objects.equals(mappings1, mappings2);
-    }
-
-    /**
-     * Returns {@code true} if the quiz submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a quiz submission
-     * @param submission2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-
-        var answers1 = submission1.getSubmittedAnswers();
-        var answers2 = submission2.getSubmittedAnswers();
-        if (answers1.size() != answers2.size()) {
-            return false;
-        }
-
-        for (var answer1 : answers1) {
-            for (var answer2 : answers2) {
-                QuizQuestion quizQuestion1 = answer1.getQuizQuestion();
-                QuizQuestion quizQuestion2 = answer2.getQuizQuestion();
-
-                // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
-                if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
-                        || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    if (!isContentEqualTo(answer1, answer2)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        // we did not find any differences
-        return true;
-    }
-
-    /**
-     * Returns {@code true} if the quiz submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a quiz submission
-     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     * @throws RuntimeException if the answer types are not supported
-     */
-    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
-        return switch (answer1) {
-            case DragAndDropSubmittedAnswer dndSubmittedAnswer1 when answer2 instanceof DragAndDropSubmittedAnswer dndSubmittedAnswer2 ->
-                isContentEqualTo(dndSubmittedAnswer1, dndSubmittedAnswer2);
-            case MultipleChoiceSubmittedAnswer mcSubmittedAnswer1 when answer2 instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer2 ->
-                isContentEqualTo(mcSubmittedAnswer1, mcSubmittedAnswer2);
-            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer2 ->
-                isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer2);
-            default -> {
-                log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
-                yield false;
-            }
-        };
-    }
-
-    /**
-     * Returns {@code true} if the text submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a text submission
-     * @param submission2 a text submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the text submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-        return Objects.equals(submission1.getText(), submission2.getText());
-    }
-
-    /**
-     * Returns {@code true} if the modeling submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a modeling submission
-     * @param submission2 a modeling submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the modeling submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-        return Objects.equals(submission1.getModel(), submission2.getModel()) && Objects.equals(submission1.getExplanationText(), submission2.getExplanationText());
-    }
-
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
-        // versioning of submission
+        // Versioning of the submission, off the request thread. A version is a full copy of the submission content and
+        // nothing in this request reads it back, so making the student wait for that write buys nothing. It was the
+        // slowest statement in the submit path.
         try {
-            submissionVersionService.saveVersionForIndividual(submissionFromClient, currentUser);
+            submissionVersionService.saveVersionForIndividualAsync(submissionFromClient, currentUser);
         }
         catch (Exception ex) {
             log.error("Submission version could not be saved", ex);
@@ -708,28 +506,66 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     * <p>
+     * Resolution and save share the exam-row lock the random generation paths take, so a concurrent exercise-group
+     * move cannot commit between reading the exercises and persisting the selection. The participation setup runs
+     * afterwards: it only needs the persisted selection and would hold the lock for the length of the setup.
      *
-     * @param testRunConfiguration the configured studentExam
+     * @param exam        the exam the test run belongs to
+     * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return the created testRun studentExam
      */
-    public StudentExam createTestRun(StudentExam testRunConfiguration) {
-        StudentExam testRun = generateTestRun(testRunConfiguration);
+    public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
+        StudentExam testRun = transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
+            return generateTestRun(exam, exercises, workingTime);
+        });
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
 
     /**
+     * Loads the given exercises with a single query and returns them in the order of the given ids
+     * (StudentExam.exercises is an @OrderColumn list, so the order must be preserved).
+     * A test run may only contain exercises of the exam it belongs to; any other exercise id is rejected.
+     *
+     * @param exam        the exam the exercises must belong to
+     * @param exerciseIds the ordered ids of the exercises to load
+     * @return the exercises in the order of the given ids
+     */
+    private List<Exercise> resolveExamExercises(Exam exam, List<Long> exerciseIds) {
+        Map<Long, Exercise> exercisesById = exerciseRepository.findAllById(exerciseIds).stream().collect(Collectors.toMap(Exercise::getId, Function.identity()));
+        List<Exercise> exercises = new ArrayList<>(exerciseIds.size());
+        for (Long exerciseId : exerciseIds) {
+            Exercise exercise = exercisesById.get(exerciseId);
+            if (exercise == null) {
+                throw new EntityNotFoundException("Exercise", exerciseId);
+            }
+            Exam exerciseExam = exercise.getExam();
+            if (exerciseExam == null || !exerciseExam.getId().equals(exam.getId())) {
+                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
+            }
+            exercises.add(exercise);
+        }
+        return exercises;
+    }
+
+    /**
      * Create TestRun student exam based on the configuration provided.
      *
-     * @param testRunConfiguration Contains the exercises and working time for this test run
+     * @param exam        the exam the test run belongs to
+     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return The created test run
      */
-    private StudentExam generateTestRun(StudentExam testRunConfiguration) {
+    private StudentExam generateTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
         StudentExam testRun = new StudentExam();
-        testRun.setExercises(testRunConfiguration.getExercises());
-        testRun.setExam(testRunConfiguration.getExam());
-        testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
+        testRun.setExercises(exercises);
+        testRun.setExam(exam);
+        testRun.setWorkingTime(workingTime);
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
@@ -778,7 +614,7 @@ public class StudentExamService {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
-            // NOTE: the following code is performed in parallel threads, therefore we need to set the authorization here
+            // Stands in only if no caller context reached this thread; a real user's identity is kept.
             SecurityUtils.setAuthorizationObject();
             // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
@@ -930,16 +766,20 @@ public class StudentExamService {
 
     /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
+     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
+     * cannot desync the selection this generates. Called when a student starts a normal or test exam.
      *
-     * @param exam    The exam with eagerly loaded users, exercise groups, and exercises.
+     * @param exam    the exam to generate the student exam for
      * @param student The student for whom the StudentExam should be created.
      * @return The generated StudentExam.
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
-        // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
-        Set<User> userSet = Set.of(student);
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet).getFirst();
+        StudentExam studentExam = transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            Exam lockedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            return studentExamRepository.createRandomStudentExams(lockedExam, Set.of(student)).getFirst();
+        });
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
@@ -950,44 +790,53 @@ public class StudentExamService {
     }
 
     /**
-     * Generates the student exams randomly based on the exam configuration and the exercise groups
-     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     * Generates the student exams randomly based on the exam configuration and the exercise groups.
+     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
+     * cannot desync the selection this generates.
      *
-     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        this.invalidateExerciseStartStatus(exam.getId());
-        final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
-        // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
-        studentExamRepository.deleteAll(existingStudentExams);
+        return transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            Exam lockedExam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
 
-        Set<User> users = exam.getRegisteredUsers();
+            this.invalidateExerciseStartStatus(lockedExam.getId());
+            final var existingStudentExams = studentExamRepository.findByExamId(lockedExam.getId());
+            // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+            studentExamRepository.deleteAll(existingStudentExams);
 
-        // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, users);
+            // StudentExams are saved in the called method
+            return studentExamRepository.createRandomStudentExams(lockedExam, lockedExam.getRegisteredUsers());
+        });
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
-     * <p>
-     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
+     * cannot desync the selection this generates.
      *
-     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
-        this.invalidateExerciseStartStatus(exam.getId());
+        return transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            Exam lockedExam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
 
-        // Get all users who already have an individual exam
-        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(exam.getId());
+            this.invalidateExerciseStartStatus(lockedExam.getId());
 
-        // Get all students who don't have an exam yet
-        Set<User> missingUsers = exam.getRegisteredUsers();
-        missingUsers.removeAll(usersWithStudentExam);
+            // Get all users who already have an individual exam
+            Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(lockedExam.getId());
 
-        // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, missingUsers);
+            // Get all students who don't have an exam yet
+            Set<User> missingUsers = lockedExam.getRegisteredUsers();
+            missingUsers.removeAll(usersWithStudentExam);
+
+            // StudentExams are saved in the called method
+            return studentExamRepository.createRandomStudentExams(lockedExam, missingUsers);
+        });
     }
 }

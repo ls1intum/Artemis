@@ -7,7 +7,11 @@
                     <jhi-documentation-button [type]="documentationType" />
                 </div>
                 <hr />
-                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise()" [isDetailPage]="true" (loadQuizExercises)="load()" />
+                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise()" [isDetailPage]="true" (loadQuizExercises)="load()">
+                    @if (quizExercise().isAtLeastInstructor && !isExamMode()) {
+                        <jhi-atlas-orchestration-trigger [exercise]="quizExercise()" [buttonClass]="'btn btn-primary btn-sm me-1 mb-1'" />
+                    }
+                </jhi-quiz-exercise-manage-buttons>
                 <hr />
                 @if (!isExamMode()) {
                     <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise()" (loadOne)="load()" (handleNewQuizExercise)="load()" />

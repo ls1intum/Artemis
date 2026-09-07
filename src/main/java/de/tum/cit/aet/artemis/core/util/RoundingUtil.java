@@ -57,4 +57,20 @@ public class RoundingUtil {
         return new BigDecimal(String.valueOf(number)).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
     }
 
+    /**
+     * Checks whether two doubles are equal within a given tolerance.
+     * <p>
+     * Returns {@code true} if the values are exactly equal (including identical infinities) or differ by at most
+     * {@code epsilon}. This mirrors the semantics of {@code Precision.equals(a, b, epsilon)} for the finite,
+     * non-NaN score values used across Artemis.
+     *
+     * @param a       the first value
+     * @param b       the second value
+     * @param epsilon the maximum allowed absolute difference (inclusive)
+     * @return {@code true} if the values are equal within the tolerance
+     */
+    public static boolean equalsWithinEpsilon(double a, double b, double epsilon) {
+        return a == b || Math.abs(a - b) <= epsilon;
+    }
+
 }

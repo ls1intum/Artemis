@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.localvc.service.AbstractGitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -53,10 +55,10 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
  * <p>
  * This service extends {@link AbstractGitService} and provides build-agent-specific Git operations,
  * including repository cloning and commit checkout. It supports two authentication mechanisms:
- * <ol>
- * <li><b>SSH authentication</b>: Uses SSH keys for secure access (preferred when available)</li>
- * <li><b>Username/password authentication</b>: Falls back to HTTP(S) with credentials</li>
- * </ol>
+ * <ul>
+ * <li><b>SSH authentication</b>: the key pair the agent generates at startup and publishes to the core nodes</li>
+ * <li><b>Username/password authentication</b>: HTTP(S) with the configured build-agent git credentials</li>
+ * </ul>
  * <p>
  * <b>Usage in Build Jobs:</b>
  * <ul>
@@ -66,10 +68,12 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
  * <li>{@link #deleteLocalRepository} - Cleans up cloned repositories after build completion</li>
  * </ul>
  * <p>
- * <b>Authentication Priority:</b>
- * The service uses SSH if {@code artemis.version-control.build-agent-use-ssh=true} and required
- * SSH configuration (private key path, URL template) is provided. Otherwise, it uses the configured
- * username and password from application properties.
+ * <b>Choosing a mechanism:</b>
+ * {@code artemis.version-control.build-agent-use-ssh} selects one of the two, and there is no fallback between them:
+ * with ssh, a missing private key path or url template fails startup rather than reverting to https, and without ssh,
+ * missing credentials fail startup rather than reverting to a key. On a core node the same property governs only
+ * whether the credential pair still grants build agents repository-wide read; a registered agent's public key is
+ * accepted either way.
  *
  * @see BuildJobExecutionService
  * @see AbstractGitService
@@ -81,11 +85,30 @@ public class BuildJobGitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobGitService.class);
 
-    @Value("${artemis.version-control.build-agent-git-username}")
+    // Optional on purpose: an agent that authenticates with an ssh key or with per-build-job clone tokens never uses
+    // this credential pair, and then must not have to configure one.
+    @Value("${artemis.version-control.build-agent-git-username:}")
     private String buildAgentGitUsername;
 
-    @Value("${artemis.version-control.build-agent-git-password}")
+    @Value("${artemis.version-control.build-agent-git-password:}")
     private String buildAgentGitPassword;
+
+    /**
+     * This agent's own name, presented as the git username so that the core node knows whose token it is checking and
+     * can log the clone against the right agent. It is an identifier, not a secret: the token is what authenticates.
+     */
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
+    /**
+     * The clone token of the build job this thread is currently executing, if any.
+     * <p>
+     * Thread scoped rather than passed as a parameter because the credential is needed inside
+     * {@link #authenticate(TransportCommand)}, which the inherited git operations reach without carrying any build job
+     * context: {@link AbstractGitService#getLastCommitHash} is one such caller. A build job occupies exactly one
+     * executor thread from start to finish, so the scope matches the job's lifetime precisely.
+     */
+    private static final ThreadLocal<String> CURRENT_CLONE_TOKEN = new ThreadLocal<>();
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
@@ -105,11 +128,9 @@ public class BuildJobGitService extends AbstractGitService {
     private SshdSessionFactory sshdSessionFactory;
 
     /**
-     * initialize the BuildJobGitService, in particular which authentication mechanism should be used
-     * Artemis uses the following order for authentication:
-     * 1. ssh key (if available)
-     * 2. username + personal access token (if available)
-     * 3. username + password
+     * Initializes the BuildJobGitService, in particular which authentication mechanism is used, and fails startup when
+     * the configuration for the selected mechanism is incomplete. Failing here rather than at clone time keeps the
+     * error next to the setting that caused it.
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
@@ -124,7 +145,44 @@ public class BuildJobGitService extends AbstractGitService {
                 throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
             }
             configureSsh();
+            return;
         }
+        // Missing credentials are no longer fatal: over https a build job normally carries its own clone token, which
+        // is the preferred mechanism and needs no configured credential at all. The pair only still matters for a job
+        // queued by a core node that has not been upgraded yet and therefore issued no token, which is a transient
+        // state during a rolling upgrade. Warn rather than refuse to start, so the desirable configuration - no shared
+        // secret anywhere - is not the one that fails.
+        if (!StringUtils.hasText(buildAgentGitUsername) || !StringUtils.hasText(buildAgentGitPassword)) {
+            log.warn("No build agent git username and password were set and {} is false, so this agent authenticates purely with per-build-job clone tokens. A build job queued "
+                    + "by a core node that does not issue tokens yet will fail to clone until that node is upgraded.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+            return;
+        }
+        log.info("BuildJobGitService will use per-build-job clone tokens where a job provides one, and otherwise fall back to the configured git username and password. That "
+                + "fallback is deprecated; set {} to true here and on every core node to authenticate with an ssh key instead.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+    }
+
+    /**
+     * Binds a build job's clone token to the calling thread for the duration of that job.
+     * <p>
+     * Must be paired with {@link #clearCloneTokenForCurrentThread()} in a {@code finally} block: executor threads are
+     * reused, so a token left behind would be presented for the next job, whose repositories it does not cover.
+     *
+     * @param cloneToken the token of the build job about to run, may be null for a job that carries none
+     */
+    public void setCloneTokenForCurrentThread(@Nullable String cloneToken) {
+        if (cloneToken == null) {
+            CURRENT_CLONE_TOKEN.remove();
+        }
+        else {
+            CURRENT_CLONE_TOKEN.set(cloneToken);
+        }
+    }
+
+    /**
+     * Releases the clone token bound to the calling thread.
+     */
+    public void clearCloneTokenForCurrentThread() {
+        CURRENT_CLONE_TOKEN.remove();
     }
 
     protected boolean useSsh() {
@@ -330,7 +388,9 @@ public class BuildJobGitService extends AbstractGitService {
     /**
      * Configures authentication for a Git transport command.
      * <p>
-     * Uses SSH callback if SSH is enabled, otherwise uses cached username/password credentials.
+     * With ssh, the key callback. Over https, the clone token of the build job running on this thread, which is valid
+     * only for that job's repositories and only while the job is running. The configured username and password are a
+     * deprecated fallback, used only for a job that carries no token.
      *
      * @param command the transport command to authenticate
      * @param <C>     the type of Git command
@@ -340,22 +400,55 @@ public class BuildJobGitService extends AbstractGitService {
         if (useSsh()) {
             return command.setTransportConfigCallback(sshCallback);
         }
-        else {
-            return command.setCredentialsProvider(getCachedCredentialsProvider());
-        }
+        return command.setCredentialsProvider(getCredentialsProvider());
     }
 
     /**
-     * Returns a cached credentials provider for username/password authentication.
-     * The provider is created once and reused for all subsequent requests.
+     * Returns the credentials to present for an https git operation.
+     * <p>
+     * Not cached, unlike the fallback below: the token changes with every build job, so a cached provider would send
+     * the previous job's credential.
+     *
+     * @return the credentials provider for the current build job
+     */
+    private CredentialsProvider getCredentialsProvider() {
+        String cloneToken = CURRENT_CLONE_TOKEN.get();
+        if (cloneToken != null) {
+            // The username identifies which agent is asking so the core node can find the right jobs and log the
+            // clone; the token is the part that authenticates.
+            return new UsernamePasswordCredentialsProvider(buildAgentShortName, cloneToken);
+        }
+        warnIfNoCredentialCanAuthorize();
+        return getCachedFallbackCredentialsProvider();
+    }
+
+    /**
+     * Returns a cached credentials provider for the deprecated username/password authentication.
+     * The provider is created once and reused, since these credentials never change while the agent runs.
      *
      * @return the cached credentials provider
      */
-    private CredentialsProvider getCachedCredentialsProvider() {
+    private CredentialsProvider getCachedFallbackCredentialsProvider() {
         if (credentialsProvider == null) {
             credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
         }
         return credentialsProvider;
+    }
+
+    /**
+     * Says why the git operation about to run cannot be authorized, when neither mechanism is available for it.
+     * <p>
+     * Deliberately not inside {@link #getCachedFallbackCredentialsProvider()}: that provider is built once and reused
+     * for the lifetime of the agent, so a warning there would be logged for the first affected build job and for no
+     * other. The one that matters is the build failing hours later, whose log would then explain nothing. Each line
+     * here corresponds to a git operation that is about to fail, so the volume is bounded by the failures it explains.
+     */
+    private void warnIfNoCredentialCanAuthorize() {
+        if (!StringUtils.hasText(buildAgentGitUsername) || !StringUtils.hasText(buildAgentGitPassword)) {
+            log.warn("This build job carries no clone token and no build agent git credentials are configured, so the git operation will not be authorized. Either the core node "
+                    + "that queued the job predates per-build-job clone tokens, in which case upgrading it resolves this, or it is configured with credentials this agent does "
+                    + "not have.");
+        }
     }
 
     @Override

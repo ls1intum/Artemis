@@ -46,9 +46,9 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.SubmittedAnswerTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -86,7 +86,7 @@ public class QuizExerciseUtilService {
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private SubmittedAnswerRepository submittedAnswerRepository;
+    private SubmittedAnswerTestRepository submittedAnswerRepository;
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;

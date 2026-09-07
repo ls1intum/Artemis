@@ -20,7 +20,7 @@ Components (see `docker-compose.yml`):
 | Service     | Image                                             | Purpose                                                            |
 | ----------- | ------------------------------------------------- | ------------------------------------------------------------------ |
 | `pyris-app` | `pyris-e2e:local` (built, see below)              | Real Pyris. Reads the mounted config; calls back to Artemis on the host. |
-| `weaviate`  | `cr.weaviate.io/semitechnologies/weaviate:1.34.10`| Vector DB. Required for Pyris `/health` to be UP and for chat to run. |
+| `weaviate`  | `cr.weaviate.io/semitechnologies/weaviate:1.37.14`| Vector DB. Required for Pyris `/health` to be UP and for chat to run. Kept in sync with `WEAVIATE_SERVER_VERSION` in the root `.env`. |
 | `mock-llm`  | `iris-mock-llm:local` (built from `../iris-mock-llm`) | Deterministic OpenAI-compatible LLM. Canned reply contains `mock-llm`. |
 
 ## Why this is the high-fidelity version

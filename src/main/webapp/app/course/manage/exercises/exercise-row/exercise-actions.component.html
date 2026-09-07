@@ -1,0 +1,7 @@
+<jhi-exercise-action-bar [items]="mainActions()" [hasReservedContent]="hasQuizButtons()" (columnMinWidthChange)="quizActionsMinWidth.emit($event)">
+    <ng-container actionBarReserved>
+        @if (quizExercise(); as quiz) {
+            <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
+        }
+    </ng-container>
+</jhi-exercise-action-bar>

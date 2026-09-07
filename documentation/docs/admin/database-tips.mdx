@@ -39,15 +39,33 @@ This dump is called `Artemis.sql` in the following steps.
 and run the following commands to convert the `Artemis.sql` dump into `Artemis.pg.sql` that is usable by PostgreSQL.
 
 **docker-compose.yml with helper containers for MySQL and PostgreSQL:**
+
+<Callout variant={CalloutVariant.warning}>
+
+  The temporary MySQL helper below is deliberately pinned to **8.0** and is *not* kept in sync with the
+  MySQL version Artemis itself runs on. `pgloader` only implements the `mysql_native_password`
+  authentication plugin, which MySQL **disabled by default in 8.4** and **removed in 9.0**. So the
+  `pgloader` step below fails with `Condition QMYND:MYSQL-UNSUPPORTED-AUTHENTICATION was signalled`
+  against a default MySQL 8.4 (where the plugin can still be switched back on with
+  `--mysql-native-password=ON`) and against any MySQL 9.x (where it is gone for good), and neither
+  `caching_sha2_password` (the default) nor `sha256_password` is a usable alternative.
+  This container is a throwaway format converter that only ever talks to `pgloader` on a local Docker
+  network, so running an older MySQL here is safe — but do not copy this snippet as a template for a
+  real Artemis deployment.
+
+</Callout>
+
 ```yaml
    services:
        mysql:
-           image: docker.io/library/mysql:9.5.0
+           image: docker.io/library/mysql:8.0.46
            environment:
                - MYSQL_DATABASE=Artemis
                - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+           # Bind to localhost only: this helper runs with an empty root password and TLS disabled,
+           # so it must never be reachable from outside the host.
            ports:
-               - 3306:3306
+               - 127.0.0.1:3306:3306
            command: >
                mysqld
                    --lower_case_table_names=1 --skip-ssl
@@ -59,13 +77,15 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
                - db-migration
 
        postgres:
-           image: docker.io/library/postgres:18.3-alpine
+           image: docker.io/library/postgres:18.4-alpine
            environment:
                - POSTGRES_USER=root
                - POSTGRES_DB=Artemis
                - POSTGRES_HOST_AUTH_METHOD=trust
+           # Bind to localhost only: POSTGRES_HOST_AUTH_METHOD=trust accepts any connection without
+           # a password, so this must never be reachable from outside the host.
            ports:
-               - 5432:5432
+               - 127.0.0.1:5432:5432
            networks:
                - db-migration
 

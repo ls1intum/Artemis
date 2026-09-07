@@ -26,11 +26,18 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
     imports: [
+        ArtemisTranslatePipe,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
@@ -39,6 +46,9 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
         ExamChecklistComponent,
         DetailOverviewListComponent,
         FeatureOverlayComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
@@ -52,6 +62,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+    private eventManager = inject(EventManager);
 
     readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
@@ -180,6 +191,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         this.examManagementService.delete(this.exam().course!.id!, examId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
+                this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
                 void this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -231,8 +243,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     return {};
                 }
 
-                return {
-                    ...this.getExistingSummaryEntries(),
+                return cloneWith(this.getExistingSummaryEntries(), {
                     'artemisApp.examManagement.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.examManagement.delete.summary.numberRegisteredStudents': summary.numberRegisteredStudents,
                     'artemisApp.examManagement.delete.summary.numberNotStartedExams': summary.numberNotStartedExams,
@@ -240,7 +251,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     'artemisApp.examManagement.delete.summary.numberSubmittedExams': summary.numberSubmittedExams,
                     'artemisApp.examManagement.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.examManagement.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
-                };
+                });
             }),
         );
     }

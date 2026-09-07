@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -214,7 +215,7 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             }
             String message = current.getMessage();
             if (message != null) {
-                String lowerCaseMessage = message.toLowerCase();
+                String lowerCaseMessage = message.toLowerCase(Locale.ROOT);
                 if (lowerCaseMessage.contains("429") || lowerCaseMessage.contains("rate limit") || lowerCaseMessage.contains("too many requests")) {
                     return DeimosFailureType.LLM_RATE_LIMITED;
                 }

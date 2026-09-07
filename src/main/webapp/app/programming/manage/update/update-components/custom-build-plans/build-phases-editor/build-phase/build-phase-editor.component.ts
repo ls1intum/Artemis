@@ -25,6 +25,7 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { Checkbox } from 'primeng/checkbox';
 import { Message } from 'primeng/message';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-build-phase',
@@ -128,7 +129,7 @@ export class BuildPhaseEditorComponent {
      * @param name the new phase name
      */
     updateName(name: string): void {
-        this.phase.update((oldPhase) => ({ ...oldPhase, name }));
+        this.phase.update((oldPhase) => cloneWith(oldPhase, { name }));
     }
 
     /**
@@ -137,7 +138,7 @@ export class BuildPhaseEditorComponent {
      * @param script the new script content
      */
     updateScript(script: string): void {
-        this.phase.update((oldPhase) => ({ ...oldPhase, script }));
+        this.phase.update((oldPhase) => cloneWith(oldPhase, { script }));
     }
 
     /**
@@ -146,7 +147,7 @@ export class BuildPhaseEditorComponent {
      * @param condition the selected execution condition
      */
     updateCondition(condition: BuildPhaseCondition): void {
-        this.phase.update((oldPhase) => ({ ...oldPhase, condition }));
+        this.phase.update((oldPhase) => cloneWith(oldPhase, { condition }));
     }
 
     /**
@@ -155,7 +156,7 @@ export class BuildPhaseEditorComponent {
      * @param forceRun true if this phase should run regardless of previous failures
      */
     updateForceRun(forceRun: boolean): void {
-        this.phase.update((oldPhase) => ({ ...oldPhase, forceRun }));
+        this.phase.update((oldPhase) => cloneWith(oldPhase, { forceRun }));
     }
 
     /**
@@ -168,12 +169,12 @@ export class BuildPhaseEditorComponent {
             const currentResultPaths = oldPhase.resultPaths ?? [];
             if (!testsExpected) {
                 this.cachedResultPaths = [...currentResultPaths];
-                return { ...oldPhase, resultPaths: [] };
+                return cloneWith(oldPhase, { resultPaths: [] });
             }
 
             const restoredResultPaths = this.cachedResultPaths.length ? this.cachedResultPaths : [''];
             this.cachedResultPaths = [];
-            return { ...oldPhase, resultPaths: [...restoredResultPaths] };
+            return cloneWith(oldPhase, { resultPaths: [...restoredResultPaths] });
         });
     }
 
@@ -187,7 +188,7 @@ export class BuildPhaseEditorComponent {
         this.phase.update((oldPhase) => {
             const resultPaths = [...(oldPhase.resultPaths ?? [])];
             resultPaths[index] = value;
-            return { ...oldPhase, resultPaths };
+            return cloneWith(oldPhase, { resultPaths });
         });
     }
 
@@ -195,7 +196,7 @@ export class BuildPhaseEditorComponent {
      * Appends an empty result path entry.
      */
     addResultPath(): void {
-        this.phase.update((oldPhase) => ({ ...oldPhase, resultPaths: [...(oldPhase.resultPaths ?? []), ''] }));
+        this.phase.update((oldPhase) => cloneWith(oldPhase, { resultPaths: [...(oldPhase.resultPaths ?? []), ''] }));
     }
 
     /**
@@ -204,9 +205,6 @@ export class BuildPhaseEditorComponent {
      * @param deleteIndex the index of the result path to remove
      */
     deleteResultPath(deleteIndex: number): void {
-        this.phase.update((oldPhase) => ({
-            ...oldPhase,
-            resultPaths: (oldPhase.resultPaths ?? []).filter((_, i) => i !== deleteIndex),
-        }));
+        this.phase.update((oldPhase) => cloneWith(oldPhase, { resultPaths: (oldPhase.resultPaths ?? []).filter((_, i) => i !== deleteIndex) }));
     }
 }

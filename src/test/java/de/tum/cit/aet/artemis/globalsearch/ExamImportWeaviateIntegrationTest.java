@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -45,6 +46,9 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
 
     @Autowired
     private WeaviateService weaviateService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -124,26 +128,24 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
         List<ExerciseGroup> exerciseGroupsToImport = sourceExam.getExerciseGroups();
 
-        List<ExerciseGroup> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                exerciseGroupsToImport, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
+        var importResult = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsToImport,
+                ExerciseGroupImportResultDTO.class, HttpStatus.OK);
 
-        // The target exam originally had no exercise groups, so all returned groups are newly imported
-        // Filter to only the groups that actually have exercises (the empty group from source is skipped)
-        List<ExerciseGroup> groupsWithExercises = importedGroups.stream().filter(g -> !g.getExercises().isEmpty()).toList();
-        assertThat(groupsWithExercises).hasSize(4);
+        // The target exam originally had no exercise groups, so all returned groups are newly imported. Filter to only the
+        // groups that actually carry exercise summaries (the empty group from source is skipped).
+        assertThat(importResult.exerciseGroups().stream().filter(group -> group.exercises() != null && !group.exercises().isEmpty()).toList()).hasSize(4);
 
         // Verify the exam is indexed/updated in Weaviate
         assertExamExistsInWeaviate(weaviateService, targetExam.getId());
 
-        // Verify all imported exercises are indexed in Weaviate
-        // Set up the course/exam chain that is not populated in the deserialized response
-        targetExam.setCourse(course);
-        for (ExerciseGroup group : groupsWithExercises) {
-            group.setExam(targetExam);
+        // Verify all imported exercises are indexed in Weaviate. The response is now a slim DTO, so reload the persisted
+        // exam graph from the database to obtain managed exercise entities to assert against.
+        Exam reloadedTargetExam = examRepository.findWithExerciseGroupsAndExercisesById(targetExam.getId()).orElseThrow();
+        reloadedTargetExam.setCourse(course);
+        for (ExerciseGroup group : reloadedTargetExam.getExerciseGroups()) {
             for (Exercise exercise : group.getExercises()) {
-                exercise.setExerciseGroup(group);
                 assertExerciseExistsInWeaviate(weaviateService, exercise);
-                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), targetExam);
+                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), reloadedTargetExam);
             }
         }
     }

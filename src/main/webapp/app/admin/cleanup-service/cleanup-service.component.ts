@@ -16,10 +16,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
-
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 /**
  * Admin component for managing data cleanup operations.
  * Allows scheduling and executing various cleanup tasks like deleting orphaned entities.
@@ -208,7 +206,7 @@ export class CleanupServiceComponent implements OnInit {
                 this.cleanupOperations.update((operations) =>
                     operations.map((operation) => {
                         const executionDate = executionDateByJobType.get(this.serverJobTypeByName[operation.name]);
-                        return executionDate ? { ...operation, lastExecuted: convertDateFromServer(executionDate) } : operation;
+                        return executionDate ? cloneWith(operation, { lastExecuted: convertDateFromServer(executionDate) }) : operation;
                     }),
                 );
             },

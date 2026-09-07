@@ -1,15 +1,17 @@
 import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
+import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { provideRouter, withRouterConfig } from '@angular/router';
+import { RouteReuseStrategy, provideRouter, withPreloading, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import routes from 'app/app.routes';
+import { ArtemisRouteReuseStrategy } from 'app/core/config/artemis-route-reuse.strategy';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -29,12 +31,20 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import { AuraArtemis } from './primeng-artemis-theme';
+import { RoleAwarePreloadingStrategy } from 'app/core/config/role-aware-preloading.strategy';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
+        provideArtemisTumUiTranslator(),
+        // Keep CDK overlays inside the active browser-fullscreen element. This is required by the modeling editor and
+        // also applies to every other CDK overlay in the application; PrimeNG overlays use a separate container.
+        { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
         DialogService,
+        // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.
+        { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
         // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.
@@ -52,7 +62,12 @@ export const appConfig: ApplicationConfig = {
         //  this would set non-route inputs to undefined, which not all components can handle, currently
         //  see https://angular.dev/api/router/withComponentInputBinding?tab=usage-notes
         //  provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
-        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
+        // Role-aware staged background preloading: after the app settles, lazy route chunks the current user
+        // can reach are warmed during idle (student tier first, then management, then admin) so later navigation
+        // is instant; a pure student never downloads management/admin code. See RoleAwarePreloadingStrategy.
+        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' }), withPreloading(RoleAwarePreloadingStrategy)),
+        // Ensure components are not reused when key route parameters (like examId) change on routes configured with dontReuseOnParamChange
+        { provide: RouteReuseStrategy, useClass: ArtemisRouteReuseStrategy },
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),

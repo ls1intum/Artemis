@@ -177,7 +177,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faBook,
             type: 'filter',
             enabled: true,
-            filterTags: ['lecture'],
+            filterTags: ['lecture', 'lecture_unit'],
         },
         {
             id: 'communication',

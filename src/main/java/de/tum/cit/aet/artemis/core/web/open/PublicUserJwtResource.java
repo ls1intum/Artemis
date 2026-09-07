@@ -20,12 +20,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AssertionAuthentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -33,9 +35,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.dto.OIDCCodeExchangeDTO;
 import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.security.SAML2Service;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
@@ -45,6 +49,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
@@ -52,6 +57,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authentication/jwt-tokens")
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {
@@ -60,6 +66,8 @@ public class PublicUserJwtResource {
 
     private final JWTCookieService jwtCookieService;
 
+    private final Optional<OIDCExchangeCodeService> oidcExchangeCodeService;
+
     private final AuthenticationManager authenticationManager;
 
     private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
@@ -67,8 +75,9 @@ public class PublicUserJwtResource {
     private final Optional<SAML2Service> saml2Service;
 
     public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            Optional<SAML2Service> saml2Service) {
+            Optional<SAML2Service> saml2Service, Optional<OIDCExchangeCodeService> oidcExchangeCodeService) {
         this.jwtCookieService = jwtCookieService;
+        this.oidcExchangeCodeService = oidcExchangeCodeService;
         this.authenticationManager = authenticationManager;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.saml2Service = saml2Service;
@@ -82,7 +91,11 @@ public class PublicUserJwtResource {
      * @param tool      optional Tool Token Type to define the scope of the token
      * @param request   HTTP request object, used to get the client environment information
      * @param response  HTTP response object, used to set the JWT cookie
-     * @return if successful a map with the access_token information and status 200 (ok), if not successful an empty body with status 401 (unauthorized)
+     * @return if successful a map with the access_token information and status 200 (ok). Every credential that the
+     *         authentication manager refuses answers an empty body with status 401 (unauthorized) - the same status for all
+     *         of them, so that the response does not say which check refused. A malformed request still answers 400 and an
+     *         exhausted rate limit 429, both before the credentials are looked at, and a system problem behind
+     *         authentication (an unreachable directory, for instance) stays a 500.
      */
     @PostMapping("authenticate")
     @EnforceNothing
@@ -109,7 +122,26 @@ public class PublicUserJwtResource {
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
         catch (BadCredentialsException ex) {
-            log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
+            // The message is logged as well: the providers raise this for more than a wrong password - a bot account is
+            // refused with it too, and on an LDAP instance so is a login the directory does not know - and without the
+            // message those cases are indistinguishable in the log.
+            log.warn("Wrong credentials during login for user {}: {}", loginVM.getUsername(), ex.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        catch (UserNotActivatedException | ProviderNotFoundException | AccountStatusException ex) {
+            // The other ways a login can be refused. ProviderNotFoundException is what an unknown login ends in, because a
+            // provider that does not know the user returns null so that the next one can try, and then none produced a
+            // result. UserNotActivatedException and the account-status exceptions speak for themselves.
+            //
+            // Without this, all of them reached the generic exception handler and the caller got a 500. A refused login is
+            // not a server fault, and answering it with a server error sends an operator looking for an outage while telling
+            // the client nothing it can act on. The reason is logged; the response says no more than "unauthorized", the
+            // same as for a wrong password, so it does not become an oracle for which part refused.
+            //
+            // AuthenticationServiceException is deliberately not caught here: by its contract it means the request could not
+            // be processed - a directory that is unreachable, a repository that failed - and answering that with 401 would
+            // hide an outage behind "wrong credentials". It stays a 500, which is what it is.
+            log.warn("Login for user {} was refused ({}): {}", loginVM.getUsername(), ex.getClass().getSimpleName(), ex.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
@@ -130,14 +162,17 @@ public class PublicUserJwtResource {
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof final Saml2AuthenticatedPrincipal principal)) {
+        // Spring Security's SAML2 provider hands out a Saml2AssertionAuthentication whose credentials are the accessor
+        // for the validated response. Reading the attributes from there rather than from the principal is what replaces
+        // the deprecated Saml2AuthenticatedPrincipal.
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication instanceof final Saml2AssertionAuthentication saml2Authentication)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(authentication, principal, request);
+            authentication = saml2Service.get().handleAuthentication(authentication, saml2Authentication.getCredentials(), request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {
@@ -151,6 +186,26 @@ public class PublicUserJwtResource {
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Exchanges a single-use OIDC code and PKCE code_verifier for a JWT authentication token.
+     *
+     * @param exchangeDTO Request body containing the single-use exchange code and PKCE code_verifier.
+     * @return ResponseEntity with the JWT token as plain text and Cache-Control: no-store, or 404 (Not Found) if verification fails.
+     */
+    @PostMapping("exchange-code")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
+    public ResponseEntity<String> exchangeCodeToJwtToken(@RequestBody OIDCCodeExchangeDTO exchangeDTO) {
+        if (oidcExchangeCodeService.isEmpty() || exchangeDTO == null || exchangeDTO.code() == null || exchangeDTO.codeVerifier() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        String jwtToken = oidcExchangeCodeService.get().redeemCode(exchangeDTO.code(), exchangeDTO.codeVerifier());
+        if (jwtToken == null || jwtToken.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").header(HttpHeaders.PRAGMA, "no-cache").body(jwtToken);
     }
 
     /**

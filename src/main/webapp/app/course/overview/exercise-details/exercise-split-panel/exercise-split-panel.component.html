@@ -1,4 +1,11 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="exercise-details-split">
+<!-- Only the modeling editor may sit flush, because it draws its own frame. Before the participation starts there is
+     no editor panel, so the problem statement takes the left panel, and flush would put its text on the panel edge. -->
+<jhi-resizable-panels
+    class="flex-fill h-100 overflow-hidden"
+    [useViewportWidthForCollapse]="true"
+    [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()"
+    storageKey="exercise-details-split"
+>
     @if (showEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
@@ -14,17 +21,24 @@
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
             }
             @if (exampleSolutionInfo()?.exampleSolutionPublished) {
-                <p-panel [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate" [toggleable]="true" [collapsed]="true">
+                <p-panel
+                    [pt]="{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }"
+                    [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate"
+                    [toggleable]="true"
+                    [collapsed]="true"
+                >
                     <dl class="row-md jh-entity-details markdown-preview">
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd>
-                                <jhi-modeling-editor
-                                    [readOnly]="true"
-                                    [diagramType]="exampleSolutionInfo()?.modelingExercise?.diagramType"
-                                    [umlModel]="exampleSolutionInfo()?.exampleSolutionUML"
-                                    [withExplanation]="!!exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation"
-                                    [explanation]="exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation || ''"
-                                />
+                                @defer (on idle) {
+                                    <jhi-modeling-editor
+                                        [readOnly]="true"
+                                        [diagramType]="exampleSolutionInfo()?.modelingExercise?.diagramType"
+                                        [umlModel]="exampleSolutionInfo()?.exampleSolutionUML"
+                                        [withExplanation]="!!exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation"
+                                        [explanation]="exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation ?? ''"
+                                    />
+                                }
                             </dd>
                         }
                         @if (exampleSolutionInfo()?.exampleSolution) {
@@ -54,17 +68,21 @@
                 </p-panel>
             }
             @if (showComplaintView()) {
-                <jhi-complaint-student-view
-                    class="mb-2 mt-2 ms-3"
-                    [exercise]="exercise()"
-                    [participation]="gradedStudentParticipation()!"
-                    [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
-                />
+                @defer (on idle) {
+                    <jhi-complaint-student-view
+                        class="mb-2 mt-2 ms-3"
+                        [exercise]="exercise()"
+                        [participation]="gradedStudentParticipation()!"
+                        [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
+                    />
+                }
             }
             @if (showRating()) {
-                <div class="row">
-                    <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
-                </div>
+                @defer (on idle) {
+                    <div class="row">
+                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
+                    </div>
+                }
             }
             @if (plagiarismCaseInfo()?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                 <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()?.id]">
@@ -80,13 +98,17 @@
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
         </ng-template>
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl" [startsCollapsed]="irisPanelStartsCollapsed()">
-            <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+            @defer (on idle) {
+                <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+            }
         </ng-template>
     }
 
     @if (showDiscussion()) {
         <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
-            <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+            @defer (on idle) {
+                <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+            }
         </ng-template>
     }
 </jhi-resizable-panels>

@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./rating.component.scss'],
     imports: [TranslateDirective, StarRatingComponent],
 })
-export class RatingComponent implements OnInit, OnChanges {
+export class RatingComponent {
     private ratingService = inject(RatingService);
     private accountService = inject(AccountService);
 
@@ -24,16 +24,27 @@ export class RatingComponent implements OnInit, OnChanges {
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
     readonly isOwnerOfParticipation = input<boolean>();
+    readonly starSize = input('24');
+    /**
+     * `stacked` is the page-level callout used by the exercise result pages.
+     * `inline` puts the prompt and the stars on one row for hosts with a column
+     * to spare — a side panel, an editor's chrome — and wraps when there is not.
+     */
+    readonly layout = input<'stacked' | 'inline'>('stacked');
 
-    ngOnInit(): void {
-        this.loadRating();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['result'] && changes['result'].currentValue?.id !== this.previousResultId) {
-            this.previousResultId = changes['result'].currentValue?.id;
-            this.loadRating();
-        }
+    constructor() {
+        // Loads the rating on the first binding and again whenever the result changes to a *different* id: the
+        // reference alone changes on every refresh, and refetching then would only repeat the request. The reload is
+        // untracked so the participation and account reads inside `loadRating` do not become triggers of their own.
+        effect(() => {
+            const result = this.result();
+            untracked(() => {
+                if (result?.id !== this.previousResultId) {
+                    this.previousResultId = result?.id;
+                    this.loadRating();
+                }
+            });
+        });
     }
 
     loadRating() {
@@ -50,12 +61,7 @@ export class RatingComponent implements OnInit, OnChanges {
         });
     }
 
-    /**
-     * Update/Create new Rating for the result
-     * @param event - starRating component that holds new rating value
-     */
     onRate(event: { oldValue: number; newValue: number }) {
-        // block rating to prevent double sending of post request
         const result = this.result();
         if (this.disableRating() || !result) {
             return;
@@ -66,7 +72,6 @@ export class RatingComponent implements OnInit, OnChanges {
 
         this.disableRating.set(true);
         let observable: Observable<number>;
-        // set/update feedback on the server
         if (oldRating) {
             observable = this.ratingService.updateRating(this.rating(), result.id!);
         } else {

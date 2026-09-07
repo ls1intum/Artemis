@@ -272,6 +272,18 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void initializeUserDeactivatedAfterInitialization() throws Exception {
+        userTestService.initializeUserDeactivatedAfterInitialization();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void initializeUserOnlyOnce() throws Exception {
+        userTestService.initializeUserOnlyOnce();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserExternal() throws Exception {
         userTestService.initializeUserExternal();
     }

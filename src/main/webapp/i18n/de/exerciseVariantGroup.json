@@ -1,0 +1,26 @@
+{
+    "artemisApp": {
+        "exerciseVariantGroup": {
+            "detail": {
+                "variants": "Varianten",
+                "pointsTooltip": "Die Varianten dieser Gruppe ergeben zusammen {{ total }} Pkt., aber nur {{ cap }} Pkt. zählen zur Kursnote.",
+                "noProblemStatement": "Keine Aufgabenstellung konfiguriert.",
+                "callout": {
+                    "heading": "Wähle eine Variante zum Bearbeiten",
+                    "body": "Diese Gruppe hat {{ count }} Varianten. Du kannst beliebig viele davon bearbeiten.",
+                    "cappedScore": " Deine Gesamtpunktzahl für diese Gruppe ist auf {{ maxPoints }} Punkte begrenzt."
+                }
+            },
+            "edit": "Gruppe bearbeiten",
+            "delete": "Gruppe löschen",
+            "timelineLocked": {
+                "tooltip": "Diese Termine werden von der Aufgabengruppe verwaltet. Zum Bearbeiten der Termine der Gruppe hier klicken."
+            },
+            "deleted": "Gruppe gelöscht mit ID {{ param }}",
+            "deleteDialog": {
+                "question": "Soll die Gruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Die Aufgaben in dieser Gruppe werden <strong>nicht</strong> gelöscht, sondern nur aus der Gruppe entfernt.",
+                "typeNameToConfirm": "Bitte gib den Namen der Gruppe zur Bestätigung ein."
+            }
+        }
+    }
+}

@@ -204,7 +204,11 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
+                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe({
+                    // the chat itself is created before the conversations are reloaded, and a failed reload is already
+                    // reported by the service, so it must not surface as an unhandled error here
+                    error: () => {},
+                });
             } else {
                 this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
                     void this.router.navigate(['courses', course.id, 'communication'], {
@@ -230,7 +234,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();
+                this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe({
+                    // see above, a failed reload of the conversations must not surface as an unhandled error
+                    error: () => {},
+                });
             } else {
                 this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {
                     void this.router.navigate(['courses', course.id, 'communication'], {

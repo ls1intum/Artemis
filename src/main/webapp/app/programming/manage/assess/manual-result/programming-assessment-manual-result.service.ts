@@ -55,8 +55,9 @@ export class ProgrammingAssessmentManualResultService {
         return this.http.put<Result>(url, assessmentUpdate);
     }
 
-    cancelAssessment(submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null);
+    cancelAssessment(submissionId: number, resultId?: number): Observable<void> {
+        const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
+        return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null, { params });
     }
 
     /**

@@ -4,10 +4,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective } from '@tumaet/ui-angular';
 /**
  * Modal component for confirming the action to clear all distributed data.
  * Requires the user to type a specific confirmation text ("CLEAR DATA") to enable the confirm button.

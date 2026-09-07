@@ -66,7 +66,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
      */
     @Test
     void broadcastNewCommitAlert() {
-        synchronizationService.broadcastNewCommitAlert(90L, ExerciseEditorSyncTarget.TESTS_REPOSITORY, null);
+        synchronizationService.broadcastNewCommitAlert(90L, ExerciseEditorSyncTarget.TESTS_REPOSITORY, null, null);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/exercises/90/synchronization"), captor.capture());
@@ -82,7 +82,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
      */
     @Test
     void broadcastNewCommitAlertForAuxiliaryRepository() {
-        synchronizationService.broadcastNewCommitAlert(100L, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L);
+        synchronizationService.broadcastNewCommitAlert(100L, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L, null);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/exercises/100/synchronization"), captor.capture());
@@ -94,15 +94,18 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
     }
 
     /**
-     * Verifies that the client session header is forwarded into the alert payload.
+     * The session of the committing client has to reach the payload even though there is no request context here.
+     * <p>
+     * This is the actual bug behind #13459. Exercise versioning runs on the {@code exerciseVersionTaskExecutor}, and this
+     * method used to read the session from {@code RequestContextHolder} itself, which on that thread holds nothing. The
+     * payload therefore carried no origin, the committing editor could not recognise the alert as its own, and every
+     * instructor was warned about the commit they had just made. It stayed invisible in the test suite because the executor
+     * is a {@code SyncTaskExecutor} under the test profile, so tests still ran with the caller's request context.
      */
     @Test
-    void broadcastNewCommitAlertUsesClientSessionHeader() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-commits");
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-
-        synchronizationService.broadcastNewCommitAlert(101L, ExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null);
+    void broadcastNewCommitAlertCarriesTheCommittingSessionWithoutARequestContext() {
+        // deliberately no request attributes, which is the situation on the versioning executor thread
+        synchronizationService.broadcastNewCommitAlert(101L, ExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null, "client-commits");
 
         var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/exercises/101/synchronization"), captor.capture());
@@ -110,6 +113,26 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
 
         assertThat(sentMessage.sessionId()).isEqualTo("client-commits");
         assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
+    }
+
+    /**
+     * The helper that callers on a request thread use to capture the session before handing work to an executor.
+     */
+    @Test
+    void getClientSessionIdReadsTheHeaderOnARequestThread() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-commits");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        assertThat(ExerciseEditorSyncService.getClientSessionId()).isEqualTo("client-commits");
+    }
+
+    /**
+     * Off a request thread there is nothing to read, which is why the session has to be captured by the caller.
+     */
+    @Test
+    void getClientSessionIdIsNullWithoutARequestThread() {
+        assertThat(ExerciseEditorSyncService.getClientSessionId()).isNull();
     }
 
     /**

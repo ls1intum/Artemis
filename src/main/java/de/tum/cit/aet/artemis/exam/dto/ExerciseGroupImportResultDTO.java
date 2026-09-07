@@ -4,8 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-
 /**
  * Result of importing exercise groups into an existing exam.
  * <p>
@@ -13,10 +11,10 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * {@code skippedExercises} (cleanly skipped, nothing persisted) and {@code incompleteExercises} (failed partway, may
  * have left an incomplete exercise that should be reviewed/removed). See {@link ExamImportResultDTO} for details.
  *
- * @param exerciseGroups      all exercise groups of the target exam after the import
+ * @param exerciseGroups      all exercise groups of the target exam after the import (with their embedded exercise summaries)
  * @param skippedExercises    titles of exercises that were cleanly skipped (nothing persisted)
  * @param incompleteExercises titles of exercises that failed partway and may be incomplete (need review)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGroupImportResultDTO(List<ExerciseGroup> exerciseGroups, List<String> skippedExercises, List<String> incompleteExercises) {
+public record ExerciseGroupImportResultDTO(List<ExerciseGroupDTO> exerciseGroups, List<String> skippedExercises, List<String> incompleteExercises) {
 }

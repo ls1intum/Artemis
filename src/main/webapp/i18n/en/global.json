@@ -7,13 +7,17 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "filterOptions": "Filter options",
+            "noMatchingOptions": "No matching options",
             "unset": "Unset",
             "create": "Create",
             "start": "Start",
             "edit": "Edit",
             "copy": "Copy",
             "copied": "Copied",
-            "new": "New"
+            "new": "New",
+            "expand": "Expand",
+            "collapse": "Collapse"
         },
         "weekdays": {
             "monday": "Monday",
@@ -38,6 +42,7 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",
             "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
             "searching": "Searching...",
@@ -184,6 +189,7 @@
             },
             "admin": {
                 "main": "Administration",
+                "short": "Admin",
                 "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
                 "setupPasskey": "Setup passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
@@ -217,6 +223,7 @@
                     "logs": "Logs",
                     "metrics": "Metrics",
                     "statistics": "Statistics",
+                    "featureUsage": "Feature Usage",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",
@@ -328,6 +335,7 @@
         },
         "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",
             "next": "Next page",
@@ -335,7 +343,11 @@
             "rowsPerPage": "Rows per page"
         },
         "datePicker": {
+            "placeholder": "DD.MM.YYYY HH:mm",
             "open": "Open calendar",
+            "dialog": "Choose date and time",
+            "previousMonth": "Previous month: {{ month }}",
+            "nextMonth": "Next month: {{ month }}",
             "clear": "Clear",
             "done": "Done",
             "time": "Time",
@@ -345,7 +357,11 @@
             "decrementHour": "Decrement hour",
             "incrementMinute": "Increment minute",
             "decrementMinute": "Decrement minute",
-            "invalid": "Please enter a valid date and time."
+            "invalid": "Please enter a valid date and time.",
+            "invalidTime": "Please enter a valid time.",
+            "openTime": "Open clock",
+            "timeDialog": "Choose time",
+            "timePlaceholder": "HH:mm"
         }
     },
     "entity": {
@@ -358,6 +374,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "clear": "Clear",
             "continue": "Continue",
             "units": "Content",
             "dashboard": "Dashboard",

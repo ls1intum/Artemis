@@ -70,6 +70,53 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
         });
     });
 
+    test.describe('Update Example Submission After Revisit', () => {
+        let modelingExercise: ModelingExercise;
+
+        test.beforeEach('Create Modeling Exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+        });
+
+        test('Saves a reopened example submission that has an example assessment', async ({ login, page, modelingExerciseEditor, modelingExerciseAssessment }) => {
+            // Regression guard for the two #13095 echo defects (missing submissionExerciseType, missing
+            // Result.exerciseId). Both are invisible on the create-then-save path the test above takes: the
+            // exercise detail was fetched before any example submission existed, so the echoed save body is
+            // clean. Only a FRESH page load of an existing example submission - the second visit - makes the
+            // page echo the example-submission projection and the DTO-shaped example assessment back into the
+            // entity-typed save PUT, which is where both defects lived.
+            test.slow();
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.clickCreateExampleSubmission();
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
+            await modelingExerciseEditor.clickCreateNewExampleSubmission();
+            await expect(page).toHaveURL(/example-submissions\/\d+/);
+            await modelingExerciseEditor.showExampleAssessment();
+            await modelingExerciseAssessment.openAssessmentForComponent(1);
+            await modelingExerciseAssessment.assessComponent(5, 'Good');
+            await modelingExerciseAssessment.submitExample();
+
+            // The step under proof: reopen in a fresh load, change the model, save again.
+            await page.reload();
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(2);
+            const savePromise = page.waitForResponse((response) => response.url().includes('/example-submissions') && response.request().method() === 'PUT');
+            await modelingExerciseEditor.saveExampleSubmission();
+            const saveResponse = await savePromise;
+            expect(saveResponse.status()).toBe(200);
+            await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toHaveCount(0);
+        });
+
+        test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {
+            if (modelingExercise) {
+                await login(admin);
+                await exerciseAPIRequests.deleteModelingExercise(modelingExercise.id!);
+            }
+        });
+    });
+
     test.describe('Edit Modeling Exercise', () => {
         let modelingExercise: ModelingExercise;
 

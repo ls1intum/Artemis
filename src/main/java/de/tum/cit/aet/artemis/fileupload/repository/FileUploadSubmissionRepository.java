@@ -8,9 +8,11 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
@@ -23,6 +25,24 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 @Lazy
 @Repository
 public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<FileUploadSubmission, Long> {
+
+    /**
+     * Writes the stored file path of an existing submission by id.
+     * <p>
+     * The row is already there at this point, and only this column changes. Saving the detached entity would merge it,
+     * which reads the submission back before writing it.
+     *
+     * @param submissionId the id of the submission
+     * @param filePath     the path the uploaded file was stored at
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE FileUploadSubmission submission
+            SET submission.filePath = :filePath
+            WHERE submission.id = :submissionId
+            """)
+    void updateFilePath(@Param("submissionId") long submissionId, @Param("filePath") String filePath);
 
     /**
      * @param submissionId the submission id we are interested in

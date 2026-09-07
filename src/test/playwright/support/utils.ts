@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import type { Dayjs as ModelDayjs } from 'dayjs/esm';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
@@ -30,6 +31,21 @@ dayjs.extend(utc);
 /*
  * This file contains all the global utility functions.
  */
+
+/**
+ * Hands a date from the suite over to one of the Angular app's models.
+ *
+ * The app is built against dayjs' ESM entry point and this suite against its CommonJS one. Both describe the very
+ * same object at run time, but the compiler sees two unrelated `Dayjs` types, and resolving the suite to the ESM
+ * build is not an option: Playwright loads these files through Node, which cannot read that build. Naming the
+ * crossing once here keeps it out of every call site.
+ *
+ * @param date a date created by the suite
+ * @returns the same date, typed the way the app's models expect it
+ */
+export function asModelDate(date: dayjs.Dayjs): ModelDayjs {
+    return date as unknown as ModelDayjs;
+}
 
 /**
  * True for the Chrome DevTools Protocol body-eviction error, i.e.
@@ -158,8 +174,10 @@ function captureBodyWithoutReplaying(request: Request): void {
  * /api fetches — Playwright routing never sees service-worker-handled requests, which is what
  * defeated an earlier page-scoped version of this capture.
  *
- * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
- * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart bodies
+ * Scope guards: only `/api/` URLs are routed at all (see the glob below — it must stay a string so
+ * Playwright does not widen interception to every request), GETs are continued untouched (SSE — GET
+ * text/event-stream, e.g. Iris — must not be fetched from Node, and GET evictions are recoverable
+ * read-side by replay), and multipart bodies
  * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive **and** only when
  * Playwright's copy of the body is byte-complete (see {@link isBodyFaithfullyReplayable}). Multipart
  * was previously skipped outright, which left course create/update (Angular posts them as `FormData`)
@@ -176,10 +194,28 @@ function captureBodyWithoutReplaying(request: Request): void {
  */
 export async function installApiResponseCapture(context: BrowserContext): Promise<void> {
     await context.route(
-        (url) => url.pathname.includes('/api/'),
+        // A STRING GLOB, deliberately — not the equivalent `(url) => url.pathname.includes('/api/')`
+        // predicate. Playwright can only push a URL pattern down to the browser when EVERY matcher
+        // registered on the context is a string: `RouteHandler.prepareInterceptionPatterns` sets
+        // `all = true` for any function/RegExp matcher and then returns `[{ glob: '**/*' }]`. With the
+        // predicate, every request in every E2E context therefore round-tripped through this handler
+        // just to be waved through — measured over 12 Iris test attempts: 20334 `route.continue()`
+        // calls with `**/*` versus 326 with this glob, i.e. ~1700 driver round-trips per attempt of
+        // pure overhead. That is dead weight everywhere and it is not free on a CPU-saturated CI
+        // runner (issue #13383).
+        //
+        // What this does NOT buy: HTTP caching. Playwright disables Chromium's cache whenever any
+        // interception is registered at all (`_updateProtocolRequestInterceptionForSession` sends
+        // `Network.setCacheDisabled: <interception enabled>`), so narrowing the pattern changes
+        // nothing there — the same 12 attempts re-fetched the `max-age=31536000,immutable`
+        // `vite/deps/*` bundles 24x either way. Restoring cacheability would mean not routing these
+        // contexts at all, which is a separate question from this pattern.
+        '**/api/**',
         async (route) => {
             const request = route.request();
-            if (request.method() === 'GET') {
+            // The glob above is the browser-side filter; this is the exact predicate it approximates,
+            // so a URL that merely resembles an API path can never take the capture path below.
+            if (request.method() === 'GET' || !new URL(request.url()).pathname.includes('/api/')) {
                 await route.continue();
                 return;
             }
@@ -388,13 +424,17 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
     }
     await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
     await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
-    // The build above produces the automatic result, but for exam programming exercises the server also defaults
-    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
-    // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
-    // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
-    // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
-    // safely past the exam end date (the server keeps a client value only when it is not before the exam end).
-    await exerciseAPIRequests.setProgrammingExerciseBuildAndTestDateToPast(programmingExercise.id);
+    // Two builds are in flight here: the after-due-date one the server scheduled for ten seconds after the exam
+    // ended, and the instructor trigger above. The wait returns after whichever lands first, so without settling
+    // the second result is still being written while the caller starts assessing - and the manual submit is then
+    // rejected with a 404 or 409 that surfaces much later as a wrong-score assertion.
+    await Commands.waitForExerciseResultsToSettle(page, exerciseAPIRequests, programmingExercise.id);
+    // The "Run Tests after Due Date" date does not have to be moved here: the exercise is created with it set to
+    // `getExamBuildAndTestAfterDueDate(exam)`, which is ten seconds after the exam ends with its grace period, and
+    // this helper only runs once the exam is over. Writing it again through the timeline endpoint used to be part of
+    // this helper and is what made every exam programming assessment fail outside UTC: that endpoint stores the date
+    // shifted by the server's UTC offset, so on a UTC+2 machine the date landed two hours in the future, the
+    // assessment dashboard reported that the tests were still pending, and no submission was ever offered to assess.
 }
 
 /**
@@ -527,6 +567,8 @@ export async function setMonacoEditorContent(page: Page, containerSelector: stri
  * @param containerLocator - Locator for the container element that contains the Monaco editor
  * @param text - The text to set in the editor
  */
+// `.monaco-editor` is Monaco's own root element. Monaco renders it itself, so there is no hook to add;
+// scope it through a test id on the surrounding component rather than through further Monaco classes.
 export async function setMonacoEditorContentByLocator(page: Page, containerLocator: Locator, text: string) {
     // Wait for the Monaco editor to be visible
     await containerLocator.waitFor({ state: 'visible' });
@@ -783,6 +825,9 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         case ExerciseType.QUIZ:
             additionalData = { quizExerciseID: 0 };
             break;
+        case ExerciseType.FILE_UPLOAD:
+            additionalData = { fileUploadFixture: 'pdf-test-file.pdf' };
+            break;
     }
 
     const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
@@ -849,4 +894,42 @@ export async function startAssessing(
     }
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
+}
+
+/**
+ * Asserts that nothing on the page can be scrolled past the Apollon canvas.
+ *
+ * The canvas captures the wheel, so anything parked below it inside a scrolling ancestor is
+ * unreachable: the reader scrolls, the diagram zooms, and the content underneath never arrives.
+ *
+ * Only ancestors are checked — a panel that scrolls beside the canvas is fine, since reaching it
+ * never means scrolling past the diagram. Do not call this on the exercise create/edit form, which
+ * is a form first and runs the editor with Apollon's scroll lock engaged so the wheel reaches the page.
+ */
+export async function expectNoScrollPastApollonCanvas(page: Page) {
+    const canvas = page.locator('.apollon-editor').first();
+    await expect(canvas).toBeVisible();
+
+    const overflowing = await canvas.evaluate((element) => {
+        const describe = (node: Element) =>
+            node.tagName.toLowerCase() +
+            (node.id ? `#${node.id}` : '') +
+            (typeof node.className === 'string' && node.className.trim() ? `.${node.className.trim().split(/\s+/)[0]}` : '');
+
+        const offenders: string[] = [];
+        for (let node: Element | null = element; node; node = node.parentElement) {
+            const scrolls = node.scrollHeight > node.clientHeight + 1;
+            if (!scrolls) {
+                continue;
+            }
+            const overflowY = getComputedStyle(node).overflowY;
+            const isScrollContainer = overflowY === 'auto' || overflowY === 'scroll' || node === document.documentElement || node === document.body;
+            if (isScrollContainer) {
+                offenders.push(`${describe(node)} overflows by ${node.scrollHeight - node.clientHeight}px`);
+            }
+        }
+        return offenders;
+    });
+
+    expect(overflowing, 'content below the Apollon canvas forces the page to scroll').toEqual([]);
 }

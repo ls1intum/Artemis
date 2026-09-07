@@ -16,8 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { MockComponent } from 'ng-mocks';
-import { ChartModule, UIChart } from 'primeng/chart';
+import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
@@ -43,9 +42,6 @@ describe('CourseCardComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).overrideComponent(CourseCardComponent, {
-            remove: { imports: [ChartModule] },
-            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseCardComponent);
@@ -70,7 +66,13 @@ describe('CourseCardComponent', () => {
     });
 
     it('should display the total course scores returned from the scores storage service', () => {
-        const mockCourseScores: CourseScores = new CourseScores(0, 20, 0, { absoluteScore: 4, relativeScore: 0.3, currentRelativeScore: 0.2, presentationScore: 0 });
+        const mockCourseScores: CourseScores = new CourseScores(0, 20, 0, {
+            absoluteScore: 4,
+            absoluteScoreTotal: 4,
+            relativeScore: 0.3,
+            currentRelativeScore: 0.2,
+            presentationScore: 0,
+        });
         vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(mockCourseScores);
 
         fixture.detectChanges();
@@ -82,9 +84,10 @@ describe('CourseCardComponent', () => {
     });
 
     it('should show the translated chart label as tooltip title and the value as body', () => {
-        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+        const tooltip = component.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const datum = { seriesIndex: 0, index: 0, label: 'missingPointsLabel', value: 400 };
 
-        expect(callbacks.title([{ label: 'missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
-        expect(callbacks.label({ parsed: 400 })).toBe('400');
+        expect(tooltip.title!([datum])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
+        expect(tooltip.label!(datum)).toBe('400');
     });
 });

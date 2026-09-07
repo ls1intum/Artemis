@@ -35,7 +35,7 @@ public interface ResultTestRepository extends ResultRepository {
     List<Result> findBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
+        return getValueElseThrow(findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
     /**

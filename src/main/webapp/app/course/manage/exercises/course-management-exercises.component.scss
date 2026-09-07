@@ -1,0 +1,84 @@
+// Compacts the view switcher to match the small search field beside it.
+.controls {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    ::ng-deep tum-ui-select-button .tum-ui-select-button-option {
+        padding-block: 0.375rem;
+    }
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+// Mass-actions bar animates its height open/closed rather than snapping in and shoving the cards down
+.selection-entering {
+    display: block;
+    overflow: hidden;
+    animation: selection-expand 0.2s ease-in-out forwards;
+}
+
+.selection-leaving {
+    display: block;
+    overflow: hidden;
+    animation: selection-collapse 0.2s ease-in-out forwards;
+}
+
+@keyframes selection-expand {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    to {
+        max-height: 200px;
+        opacity: 1;
+    }
+}
+
+@keyframes selection-collapse {
+    from {
+        max-height: 200px;
+        opacity: 1;
+    }
+
+    to {
+        max-height: 0;
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .selection-entering,
+    .selection-leaving {
+        animation: none;
+    }
+}
+
+// Keeps a too-wide table scrolling inside the panel rather than widening the page.
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+:host ::ng-deep .tum-ui-panel-content-container {
+    overflow: hidden;
+}
+
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+:host ::ng-deep .tum-ui-panel-content-wrapper {
+    min-width: 0;
+}
+
+.exercise-card-host {
+    min-width: 0;
+}
+
+.cdk-drag-preview {
+    box-shadow:
+        0 5px 5px -3px color-mix(in srgb, var(--black) 20%, transparent),
+        0 8px 10px 1px color-mix(in srgb, var(--black) 14%, transparent);
+}
+
+.cdk-drag-placeholder {
+    opacity: 0.4;
+}
+
+.cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

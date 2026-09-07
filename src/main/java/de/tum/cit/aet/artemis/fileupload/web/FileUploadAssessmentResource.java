@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
+@FeatureUsage("assessment/manual-assessment")
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadAssessmentResource extends AssessmentResource {
@@ -137,12 +139,13 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @param resultId     the id of the result to cancel; without it the newest correction round is released
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("file-upload-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
-        return super.cancelAssessment(submissionId);
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return super.cancelAssessment(submissionId, resultId);
     }
 
     /**

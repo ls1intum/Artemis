@@ -1,0 +1,24 @@
+:host {
+    scrollbar-width: thin;
+}
+
+.tum-ui-tab-indicator {
+    position: absolute;
+    inset-block-end: 0;
+    left: 0;
+    height: 2px;
+    background: var(--tumaet-ui-primary-color);
+    pointer-events: none;
+}
+
+.tum-ui-tab-indicator-animated {
+    transition:
+        width 250ms cubic-bezier(0.35, 0, 0.25, 1),
+        transform 250ms cubic-bezier(0.35, 0, 0.25, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-tab-indicator {
+        transition: none;
+    }
+}

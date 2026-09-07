@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -72,9 +71,9 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         vi.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
         expect(comp.isProgrammingExercise()).toBe(false);
     });
@@ -83,9 +82,9 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise()).toBe(true);
@@ -96,9 +95,9 @@ describe('Text Submission Viewer Component', () => {
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
         fixture.componentRef.setInput('hideContent', true);
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).not.toHaveBeenCalled();
     });
@@ -107,9 +106,9 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError(() => {}));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.cannotLoadFiles()).toBe(true);
@@ -133,9 +132,9 @@ describe('Text Submission Viewer Component', () => {
 
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise()).toBe(true);
@@ -231,6 +230,46 @@ describe('Text Submission Viewer Component', () => {
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor </span>sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr.</span>`;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('uses the reported end position when the last token of a match spans a line break', () => {
+        // `length` counts characters without line breaks, so column + length would put the end on the first line and
+        // stop the highlight early. JPlag reports the real end, and the highlight has to follow that instead.
+        // endColumn is exclusive, the same convention column + length already had, so the trailing space is included.
+        const mockMatches = [
+            {
+                from: { column: 1, line: 1, length: 5 } as PlagiarismSubmissionElement,
+                to: { column: 19, line: 1, length: 14, endLine: 2, endColumn: 11 } as PlagiarismSubmissionElement,
+            },
+        ];
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor sit amet.\nConsetetur </span>sadipscing elitr.`;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('falls back to the token length when a result carries no end position', () => {
+        // Results computed before the end position was recorded cannot be backfilled, so they keep the old derivation.
+        const mockMatches = [
+            {
+                from: { column: 1, line: 1, length: 5 } as PlagiarismSubmissionElement,
+                to: { column: 13, line: 1, length: 5 } as PlagiarismSubmissionElement,
+            },
+        ];
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor </span>sit amet.`;
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);

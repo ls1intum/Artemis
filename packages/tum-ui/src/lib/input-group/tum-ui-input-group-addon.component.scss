@@ -1,0 +1,10 @@
+:host {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--tumaet-ui-spacing) * 2);
+    min-width: calc(var(--tumaet-ui-spacing) * 10);
+    white-space: nowrap;
+    border-color: var(--tum-ui-input-group-border-color, var(--tumaet-ui-control-border-color));
+    transition: border-color 200ms;
+}

@@ -144,10 +144,6 @@ export class Range {
     }
 }
 
-export function getAsMutableObject<T extends object>(object: T): { -readonly [K in keyof T]: T[K] } {
-    return { ...object };
-}
-
 /**
  * Usages:
  * - when the router keeps the position from the previous page for the new page

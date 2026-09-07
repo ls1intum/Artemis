@@ -1,0 +1,18 @@
+:host {
+    display: inline-flex;
+    max-width: 100%;
+}
+
+.tum-ui-select-trigger {
+    border-radius: var(--tumaet-ui-radius-md);
+    appearance: none;
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 1;
+    }
+}

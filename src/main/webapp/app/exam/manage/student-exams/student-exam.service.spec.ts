@@ -90,41 +90,4 @@ describe('Student Exam Service', () => {
         expect(returnedExam).toBe(updateResponse);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 2 : 0);
     });
-
-    it('should fetch and process exams correctly on findAllForExam', () => {
-        const payload = [
-            {
-                exam: {
-                    course: {
-                        id: 1,
-                    },
-                },
-            },
-            {
-                exam: {
-                    course: {
-                        id: 1,
-                    },
-                },
-            },
-            {
-                exam: {
-                    course: undefined,
-                },
-            },
-            {
-                exam: undefined,
-            },
-        ] as StudentExam[];
-        const response = new HttpResponse<StudentExam[]>({ body: payload });
-        const getSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of(response));
-
-        let returnedExams;
-        service.findAllForExam(1, 2).subscribe((result) => (returnedExams = result));
-
-        expect(getSpy).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledWith(`api/exam/courses/1/exams/2/student-exams`, { observe: 'response' });
-        expect(returnedExams).toBe(response);
-        expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(2);
-    });
 });

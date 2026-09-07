@@ -36,11 +36,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseCreationUpdateResource {
@@ -76,11 +79,14 @@ public class QuizExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
@@ -88,6 +94,7 @@ public class QuizExerciseCreationUpdateResource {
         this.courseRepository = courseRepository;
         this.atlasMLApi = atlasMLApi;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -204,6 +211,12 @@ public class QuizExerciseCreationUpdateResource {
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, updateQuizExerciseDTO);
+
+        // A variant group owns its members' timeline, so pin the dates back to the group before performUpdate() validates.
+        // The guard lives here, not in QuizExerciseService: injecting ExerciseVariantGroupService there would close a bean
+        // cycle (examService -> exerciseDeletionService -> quizExerciseService -> ... -> examService).
+        exerciseVariantGroupService.applyOwningGroupTimeline(quizBase);
+
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText, originalCompetencyIds);
 
         // Notify AtlasML about the quiz exercise update

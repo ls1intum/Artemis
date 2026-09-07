@@ -1,10 +1,13 @@
 import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
+// TooltipModule remains for the still-PrimeNG `pTooltip`s on the label / timezone / visible-date hints; the
+// variant-group lock overlay uses the tum-ui kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,13 +29,38 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [FaStackComponent, TooltipModule, ButtonModule, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FaStackComponent,
+        TooltipModule,
+        TumUiTooltipDirective,
+        ButtonModule,
+        FaIconComponent,
+        FaStackItemSizeDirective,
+        FormsModule,
+        DatePickerModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faLock = faLock;
+
+    /**
+     * Names the parts of the PrimeNG picker the end-to-end tests reach for. Declared once rather than as a
+     * template literal so change detection does not hand the picker a fresh object on every cycle.
+     */
+    protected readonly passThrough = {
+        root: { 'data-testid': 'date-picker' },
+        panel: { 'data-testid': 'date-picker-panel' },
+        title: { 'data-testid': 'date-picker-title' },
+        timePicker: { 'data-testid': 'date-picker-time-picker' },
+        weekDay: { 'data-testid': 'date-picker-weekday' },
+        day: { 'data-testid': 'date-picker-day' },
+    };
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -49,6 +77,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     // `valueChange` notification below (Angular 22 NG1054).
     value = signal<dayjs.Dayjs | Date | null | undefined>(undefined);
     disabled = input<boolean>(false);
+    /**
+     * Marks the field read-only because a variant group governs its value: editing is disabled, a lock icon shows, and
+     * clicking emits {@link lockedClick} instead of opening the picker.
+     */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks a {@link lockedToGroup} field. */
+    lockedClick = output<void>();
     error = input<boolean>();
     warning = input<boolean>();
     requiredField = input<boolean>(false);
@@ -57,6 +92,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     pickerType = input<DateTimePickerType>(DateTimePickerType.DEFAULT); // Select type of picker
+    fluid = input(true);
     baseZIndex = input<number>(1060); // z-index floor for the overlay panel so it renders above ng-bootstrap modals (~1055).
     valueChange = output<void>();
 
@@ -91,6 +127,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
         return !isInvalid;
     });
+
+    /** Disabled either explicitly via {@link disabled} or because the value is governed by the variant group. */
+    readonly effectiveDisabled = computed(() => this.disabled() || this.lockedToGroup());
 
     /**
      * Whether the field should render the red "invalid" border. Mirrors the conditions that show the

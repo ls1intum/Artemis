@@ -10,10 +10,7 @@ import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-ico
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-
+import { TumUiButtonDirective, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
 /**
  * Modal component for executing and monitoring cleanup operations.
  * Shows counts of entities to be cleaned up and allows executing the operation.

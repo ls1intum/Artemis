@@ -31,13 +31,12 @@ import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-edi
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
@@ -48,7 +47,9 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
@@ -127,6 +128,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being locked for it. That value must not become the round of the page on its own: the round
+     * is sent to the server when the submission is locked and then indexes the results that come back, and those two may
+     * not disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     courseId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseId!: number; // set in ngOnInit() from route params
@@ -146,6 +154,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     isFirstAssessment = false;
     readonly lockLimitReached = signal(false);
@@ -172,7 +187,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule));
+    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -190,7 +205,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. This round is sent to the server when the submission is locked, so `NaN` from
+            // a hand-edited URL used to leave the tutor on an empty editor. Only remembered here, not shown yet; see
+            // correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
@@ -210,6 +229,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
 
             const submissionId = params['submissionId'];
+            // Taken from the URL once per load, so that the round the submission is locked with is also the round its
+            // results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
             submissionObservable
                 .pipe(
@@ -485,7 +507,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.cancelBusy.set(true);
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel && this.exercise() && this.submission()) {
-            this.manualResultService.cancelAssessment(this.submission()!.id!).subscribe(() => this.navigateBack());
+            this.manualResultService.cancelAssessment(this.submission()!.id!, this.manualResult()?.id).subscribe(() => this.navigateBack());
         }
         this.cancelBusy.set(false);
         this.hasPendingChanges = false;
@@ -524,7 +546,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.exerciseGroupId,
                     undefined,
                 );
-                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among
+                // them. The other three assessment editors were fixed this way in #13421, this one was missed.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.loadingParticipation.set(false);
@@ -771,7 +795,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
         // This is done to update the result string in result.component.ts (the clone also gives the signal a new reference)
-        this.manualResult.set(cloneDeep(manualResult));
+        this.manualResult.set(deepClone(manualResult));
     }
 
     private avoidCircularStructure() {
@@ -789,32 +813,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = getTotalMaxPoints(this.exercise());
-        let totalScore = 0.0;
-        let scoreAutomaticTests = 0.0;
-        const encounteredInstructions = new Map<number, number>(); // instructionId -> noOfEncounters
-
-        feedbacks.forEach((feedback) => {
-            // Check for feedback from automatic tests and store them separately
-            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                scoreAutomaticTests += feedback.credits!;
-            } else {
-                if (feedback.gradingInstruction) {
-                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, encounteredInstructions);
-                } else {
-                    totalScore += feedback.credits!;
-                }
-            }
-        });
-
-        // Cap automatic test feedback to maxScore + bonus points of exercise
-        if (scoreAutomaticTests > maxPoints) {
-            scoreAutomaticTests = maxPoints;
-        }
-        totalScore += scoreAutomaticTests;
-        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
-
-        return totalScore;
+        // Shared with the score summary of the feedback list, so both can never disagree.
+        return this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise()), true).total;
     }
 }
 

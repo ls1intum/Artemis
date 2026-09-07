@@ -1,0 +1,10 @@
+:host {
+    display: block;
+}
+
+.tum-ui-date-picker-input {
+    border-start-start-radius: var(--tum-ui-input-group-start-radius, var(--tumaet-ui-radius-md));
+    border-end-start-radius: var(--tum-ui-input-group-start-radius, var(--tumaet-ui-radius-md));
+    border-start-end-radius: var(--tum-ui-input-group-end-radius, var(--tumaet-ui-radius-md));
+    border-end-end-radius: var(--tum-ui-input-group-end-radius, var(--tumaet-ui-radius-md));
+}

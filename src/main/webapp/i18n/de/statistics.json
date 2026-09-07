@@ -38,6 +38,7 @@
         "postsTitle": "# Beiträge",
         "resolved_postsTitle": "# Beiträge, die als geklärt markiert sind",
         "score_distributionTitle": "% Studierende",
+        "scoreDistributionChartAriaLabel": "Balkendiagramm der Anzahl Teilnehmender pro Ergebnisbereich",
         "score_distribution": "Verteilung der Bewertung"
     },
     "calendar_week": "KW",

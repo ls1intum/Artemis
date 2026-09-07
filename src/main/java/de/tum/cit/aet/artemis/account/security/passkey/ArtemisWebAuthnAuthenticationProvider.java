@@ -109,7 +109,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     }
 
     /**
-     * Creates authentication details containing the passkey super admin approval status.
+     * Creates authentication details containing the passkey super admin approval status and the credential id.
      *
      * @param credential the passkey credential to check for super admin approval
      * @return a map containing the authentication details with the passkey super admin approval status
@@ -117,6 +117,8 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     private Map<String, Object> createAuthenticationDetailsWithPasskeyApprovalStatus(PasskeyCredential credential) {
         Map<String, Object> details = new HashMap<>();
         details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, credential.isSuperAdminApproved());
+        // Recorded so that a silent rotation can verify this passkey still exists before extending the session.
+        details.put(TokenProvider.PASSKEY_CREDENTIAL_ID, credential.getCredentialId());
         return details;
     }
 }

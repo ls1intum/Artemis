@@ -16,20 +16,18 @@
         },
         "entities": {
             "tutorialGroup": {
-                "locationTime": "Location and Time",
                 "plural": "Tutorials",
                 "title": "Title",
-                "isOnline": "Online",
                 "campus": "Campus",
-                "language": "Language",
                 "teachingAssistant": "Tutor",
                 "registrationsWithCapacity": "Registrations / Capacity",
-                "nextSession": "Next Session",
-                "channel": "Chat",
                 "channelReverse": "Channel of the tutorial group {{ title }}",
                 "utilization": "Utilization",
                 "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
-                "averageAttendance": "Average attendance: {{ averageAttendance }}"
+                "averageAttendance": "Average attendance: {{ averageAttendance }}",
+                "room": "Room",
+                "schedule": "Schedule",
+                "noAttendanceRecorded": "No attendance recorded yet."
             },
             "tutorialFreePeriod": {
                 "startDate": "Start Date",
@@ -40,6 +38,7 @@
         "forms": {
             "tutorialFreePeriodForm": {
                 "timeFrame": {
+                    "label": "Time frame",
                     "periodWithinDay": "Free Period within a Day",
                     "period": "Free Period",
                     "day": "Free Day"
@@ -62,7 +61,8 @@
                 "timeZoneInput": {
                     "label": "Tutorial Group Time Zone",
                     "changeWarning": "You have changed the time zone. All individually created sessions and tutorial free days will be deleted. Only scheduled sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
-                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field."
+                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
+                    "invalidTimeZone": "Please select a valid time zone from the list of suggestions."
                 },
                 "periodInput": {
                     "label": "Tutorial Group Period",
@@ -86,9 +86,17 @@
                 "creatTutorialGroupButton": "Create New Tutorial Group",
                 "editConfigurationButton": "Edit Global Configuration",
                 "configurationRequiredForTutor": "Tutorial group management is only available after an instructor has configured tutorial groups for this course.",
+                "notAuthorized": "You are not authorized to access the tutorial group management of this course.",
                 "deleteDialog": {
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."
+                },
+                "searchPlaceholder": "Search…",
+                "noMatchingGroups": "No tutorial group matches your search.",
+                "actions": {
+                    "import": "Import",
+                    "export": "Export",
+                    "create": "Create"
                 }
             },
             "checklist": {
@@ -311,7 +319,6 @@
                 "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",
                 "title": "Tutorial Free Periods Management",
                 "createFreePeriodButton": "Add New Free Period",
-                "timeZoneExplanation": "Every day displayed in the time zone {{ timeZone }}",
                 "deleteDialog": {
                     "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
                 }
@@ -321,8 +328,7 @@
                 "edit": "Edit free day"
             },
             "tutorialGroupSessionManagement": {
-                "title": "Tutorial Group Session Management",
-                "timeZoneExplanation": "Every session displayed in the time zone {{ timeZone }}"
+                "title": "Tutorial Group Session Management"
             },
             "createTutorialGroupsConfiguration": {
                 "title": "Create global Tutorial Groups Configuration",

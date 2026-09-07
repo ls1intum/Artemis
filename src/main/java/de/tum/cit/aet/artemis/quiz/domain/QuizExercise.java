@@ -71,8 +71,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
-    // No @Cache here on purpose: this collection is mutated on every quiz edit/import and re-read on every student participation.
-    // NONSTRICT_READ_WRITE on a clustered L2 cache produced partial / stale reads that were the #12574 / #12584 bug class.
     // Bidirectional mapping: QuizQuestion.exercise owns the exercise_id FK, so a parent saveAndFlush issues targeted
     // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
     // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
@@ -81,8 +79,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @OrderColumn(name = "quiz_questions_order")
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
-    // No @Cache here on purpose: quizBatches is mutated on every student join in BATCHED mode, so the cache is actively hot
-    // and NONSTRICT's async-invalidation window is too loose for the multi-node setup. See #12574 / #12584.
     @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<QuizBatch> quizBatches = new HashSet<>();
 
@@ -350,7 +346,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => clear all results
             participation.getSubmissions().forEach(submission -> {
-                List<Result> results = submission.getResults();
+                Set<Result> results = submission.getResults();
                 if (results != null) {
                     results.clear();
                 }

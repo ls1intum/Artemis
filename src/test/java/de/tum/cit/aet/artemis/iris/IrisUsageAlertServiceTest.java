@@ -10,16 +10,15 @@ import static org.mockito.Mockito.when;
 import java.time.Clock;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
@@ -41,9 +40,9 @@ class IrisUsageAlertServiceTest {
 
     private IrisAdminDashboardRepository dashboardRepository;
 
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
-    private IMap<String, java.time.Instant> scheduleStateMap;
+    private DistributedMap<String, java.time.Instant> scheduleStateMap;
 
     private IrisUsageAlertService alertService;
 
@@ -63,13 +62,15 @@ class IrisUsageAlertServiceTest {
         when(dashboardRepository.countUserMessages(any(), any())).thenReturn(100L);
         when(dashboardRepository.countSessionsWithUserMessages(any(), any())).thenReturn(50L);
 
-        hazelcastInstance = mock(HazelcastInstance.class);
-        scheduleStateMap = mock(IMap.class);
-        doReturn(scheduleStateMap).when(hazelcastInstance).getMap("iris-dashboard-schedule-state");
-        doReturn(true).when(scheduleStateMap).tryLock(any(), any(long.class), any(TimeUnit.class));
+        distributedDataProvider = mock(DistributedDataProvider.class);
+        scheduleStateMap = mock(DistributedMap.class);
+        DistributedLock alertLock = mock(DistributedLock.class);
+        doReturn(scheduleStateMap).when(distributedDataProvider).getMap("iris-dashboard-schedule-state");
+        doReturn(alertLock).when(distributedDataProvider).getLock(any());
+        doReturn(true).when(alertLock).tryLock(any());
         when(scheduleStateMap.get("last-alert-sent-at")).thenReturn(null).thenReturn(java.time.Instant.parse("2026-05-27T12:00:00Z"));
 
-        alertService = new IrisUsageAlertService(profileService, properties, dashboardService, emailService, dashboardRepository, false, hazelcastInstance);
+        alertService = new IrisUsageAlertService(profileService, properties, dashboardService, emailService, dashboardRepository, false, distributedDataProvider);
 
         TimeUtil.setClock(Clock.fixed(ZonedDateTime.of(2026, 5, 27, 12, 0, 0, 0, ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
     }

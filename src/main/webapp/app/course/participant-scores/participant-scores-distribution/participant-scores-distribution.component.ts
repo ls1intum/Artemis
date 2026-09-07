@@ -1,17 +1,15 @@
 import { Component, HostListener, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
-import { ChartModule } from 'primeng/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface ChartClickEvent {
     name: string;
@@ -23,7 +21,7 @@ interface ChartClickEvent {
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
     styleUrls: ['./participant-score-distribution.component.scss'],
-    imports: [ChartModule, TranslateDirective, HelpIconComponent],
+    imports: [TumUiBarChartComponent, TranslateDirective, HelpIconComponent],
 })
 export class ParticipantScoresDistributionComponent implements OnInit {
     private gradingService = inject(GradingService);
@@ -41,7 +39,29 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     readonly scoreToHighlight = input<number>();
 
+    /**
+     * Accessible name for the chart canvas. Set it whenever a page shows more than one distribution (the exam
+     * scores page renders one before and one after the bonus), so screen-reader users can tell them apart.
+     * Defaults to a generic course/exam-agnostic description.
+     */
+    readonly ariaLabel = input<string>();
+
     readonly onSelect = output<ChartClickEvent>();
+
+    /**
+     * Falls back to the generic description when the page does not provide a more specific one. Reads
+     * `languageChange` so the fallback is re-translated on a language switch — `instant()` is not reactive.
+     */
+    protected readonly chartAriaLabel = computed(() => {
+        const provided = this.ariaLabel()?.trim();
+        if (provided) {
+            return provided;
+        }
+        this.languageChange();
+        return this.translateService.instant('statistics.scoreDistributionChartAriaLabel');
+    });
+
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
     readonly gradingScaleExists = signal(false);
     readonly isBonus = signal<boolean | undefined>(undefined);
@@ -60,21 +80,18 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     private readonly xAxisLabel = signal('');
     private backupDomain: string[] = [];
 
-    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
+    private readonly resolvedColors = computed(() => this.chartColors());
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            xAxis: { label: this.xAxisLabel() },
-            yAxis: { label: this.showYAxisLabel() ? this.yAxisLabel() : undefined, max: this.yScaleMax() },
-            tooltip: {
-                title: (items) => items[0]?.label ?? '',
-                label: (item) => `${this.translateService.instant('statistics.amountOfStudents')}: ${item.parsed.y}`,
-            },
-            dataLabels: this.isCourseScore() ? undefined : { formatter: (value) => (this.dataLabelFormatting() ? this.dataLabelFormatting()!(value) : `${value}`) },
-        }),
-    );
-    readonly dataLabelsPlugin = [ChartDataLabels];
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        xAxis: { label: this.xAxisLabel() },
+        yAxis: { label: this.showYAxisLabel() ? this.yAxisLabel() : undefined, max: this.yScaleMax() },
+        tooltip: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => `${this.translateService.instant('statistics.amountOfStudents')}: ${item.value}`,
+        },
+        dataLabels: this.isCourseScore() ? undefined : { formatter: (value) => (this.dataLabelFormatting() ? this.dataLabelFormatting()!(value) : `${value}`) },
+    }));
 
     constructor() {
         // Replaces ngOnChanges: recompute the chart whenever any of the data inputs change.
@@ -127,9 +144,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     }
 
     /**
-     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
+     * Fills `entries` with a default configuration. The assignment of the names is only a placeholder,
      * they will be set to default labels in createChart.
-     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
+     * If a grading key exists, `entries` gets reset according to it in calculateFilterDependentStatistics.
      * If no grading key exists, this default configuration is presented to the user.
      */
     private generateDefaultChartSetting(): void {
@@ -373,10 +390,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     /**
      * Re-emits chart bar clicks in the shape previously provided by ngx-charts.
      */
-    onChartSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
-        const selected = toChartSelectEvent(event, this.chartData());
-        if (selected?.label !== undefined && selected.value !== undefined) {
-            this.onSelect.emit({ name: selected.label, value: selected.value, label: selected.label });
+    onChartSelect(event: TumUiChartSelectEvent): void {
+        if (event.label !== undefined && event.value !== undefined) {
+            this.onSelect.emit({ name: event.label, value: event.value, label: event.label });
         }
     }
 }

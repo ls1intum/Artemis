@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -247,7 +248,8 @@ public class ExamImportService {
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
-        return new ExerciseGroupImportResultDTO(examWithExercises.getExerciseGroups(), skippedExerciseTitles, incompleteExerciseTitles);
+        List<ExerciseGroupDTO> exerciseGroupDTOs = examWithExercises.getExerciseGroups().stream().map(ExerciseGroupDTO::ofWithExercises).toList();
+        return new ExerciseGroupImportResultDTO(exerciseGroupDTOs, skippedExerciseTitles, incompleteExerciseTitles);
     }
 
     /**
@@ -445,7 +447,7 @@ public class ExamImportService {
                         copyProgrammingExerciseInformationForExamImport(originalProgrammingExercise, newProgrammingExercise);
                         prepareProgrammingExerciseForExamImport(newProgrammingExercise);
 
-                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false, false));
+                        yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false));
                     }
 
                     case FILE_UPLOAD -> {
@@ -556,7 +558,6 @@ public class ExamImportService {
         newExercise.setMode(originalExercise.getMode());
         newExercise.setIncludedInOverallScore(originalExercise.getIncludedInOverallScore());
         newExercise.setAllowComplaintsForAutomaticAssessments(originalExercise.getAllowComplaintsForAutomaticAssessments());
-        newExercise.setAllowFeedbackRequests(originalExercise.getAllowFeedbackRequests());
         newExercise.setProblemStatement(originalExercise.getProblemStatement());
         newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
         newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));

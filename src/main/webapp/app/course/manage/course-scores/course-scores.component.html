@@ -148,6 +148,18 @@
                             @if (maxNumberOfPresentationPoints() > 0) {
                                 <th jhiSortBy="presentationPoints"><span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" /></th>
                             }
+                            @if (variantCapReducesPoints()) {
+                                <th jhiSortBy="overallPointsUncapped">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.uncappedPoints"></span>
+                                    <jhi-help-icon text="artemisApp.instructorDashboard.uncappedPointsTooltip" />
+                                    <fa-icon [icon]="faSort" />
+                                </th>
+                                <th jhiSortBy="excessVariantPoints">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.excessVariantPoints"></span>
+                                    <jhi-help-icon text="artemisApp.instructorDashboard.excessVariantPointsTooltip" />
+                                    <fa-icon [icon]="faSort" />
+                                </th>
+                            }
                             <th jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
                             @if (gradingScaleExists()) {
                                 <th jhiSortBy="overallPoints">
@@ -172,6 +184,10 @@
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
                                 <th>{{ maxNumberOfPresentationPoints() }}</th>
+                            }
+                            @if (variantCapReducesPoints()) {
+                                <th>{{ localizedMaxUncappedPoints() }}</th>
+                                <th>{{ localizedMaxExcessVariantPoints() }}</th>
                             }
                             <th>{{ maxNumberOfOverallPoints() }}</th>
                             @if (gradingScaleExists()) {
@@ -209,6 +225,10 @@
                                     {{ localize(averageNumberOfPresentationPoints()) }}
                                     ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfPresentationPoints() / maxNumberOfPresentationPoints(), course()!)) }}%)
                                 </th>
+                            }
+                            @if (variantCapReducesPoints()) {
+                                <th>{{ localizedAverageUncappedPoints() }}</th>
+                                <th>{{ localizedAverageExcessVariantPoints() }}</th>
                             }
                             <th>
                                 {{ localize(averageNumberOfOverallPoints()) }}
@@ -254,6 +274,10 @@
                                         {{ localize(studentStat.presentationPoints) }}
                                         ({{ localize(roundScorePercentSpecifiedByCourseSettings(studentStat.presentationPoints / maxNumberOfPresentationPoints(), course()!)) }}%)
                                     </td>
+                                }
+                                @if (variantCapReducesPoints()) {
+                                    <td>{{ localize(studentStat.overallPointsUncapped) }}</td>
+                                    <td>{{ localizeExcessVariantPoints(studentStat.excessVariantPoints) }}</td>
                                 }
                                 <td>
                                     {{ localize(studentStat.overallPoints) }}

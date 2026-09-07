@@ -3,7 +3,7 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { By } from '@angular/platform-browser';
@@ -63,6 +63,9 @@ describe('CourseConversationComponent with communication disabled', () => {
                     provide: Router,
                     useValue: {
                         url: '/course-management/1/conversations',
+                        // Read by CourseTabRefreshService, which listens for the tab being selected again
+                        events: EMPTY,
+                        currentNavigation: () => null,
                     },
                 },
                 { provide: MetisService, useClass: MockMetisService },

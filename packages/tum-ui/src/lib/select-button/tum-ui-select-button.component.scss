@@ -1,0 +1,75 @@
+:host {
+    display: inline-flex;
+    vertical-align: bottom;
+    user-select: none;
+    border-radius: var(--tumaet-ui-radius-md);
+    outline-color: transparent;
+}
+
+.tum-ui-select-button-option {
+    position: relative;
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 4);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    border-block-width: 1px;
+    border-inline-start-width: 0;
+    border-inline-end-width: 1px;
+    border-style: solid;
+    border-radius: 0;
+    transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+    outline-color: transparent;
+}
+
+.tum-ui-select-button-option:first-child {
+    border-inline-start-width: 1px;
+    border-start-start-radius: var(--tumaet-ui-radius-md);
+    border-end-start-radius: var(--tumaet-ui-radius-md);
+}
+
+.tum-ui-select-button-option:last-child {
+    border-start-end-radius: var(--tumaet-ui-radius-md);
+    border-end-end-radius: var(--tumaet-ui-radius-md);
+}
+
+.tum-ui-select-button-option:disabled {
+    cursor: default;
+}
+
+.tum-ui-select-button-option:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tum-ui-select-button-option::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: transparent;
+    pointer-events: none;
+    transition: background-color 0.15s ease;
+}
+
+.tum-ui-select-button-option:not(:disabled):hover::after {
+    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+}
+
+@media (forced-colors: active) {
+    .tum-ui-select-button-option[aria-pressed='true'] {
+        color: HighlightText;
+        background: Highlight;
+        border-color: Highlight;
+    }
+}

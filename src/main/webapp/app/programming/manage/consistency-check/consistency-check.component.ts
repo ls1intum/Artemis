@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -8,26 +7,24 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-
-interface ConsistencyCheckData {
-    exercisesToCheck: ProgrammingExercise[];
-}
 
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
-    imports: [TranslateDirective, FaIconComponent, RouterLink],
+    imports: [TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe, TumUiDialogComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConsistencyCheckComponent implements OnInit {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+export class ConsistencyCheckComponent {
     private consistencyCheckService = inject(ConsistencyCheckService);
     private alertService = inject(AlertService);
 
-    private readonly data = this.dialogConfig.data as ConsistencyCheckData | undefined;
-
-    readonly exercisesToCheck = signal<ProgrammingExercise[]>(this.data?.exercisesToCheck ?? []);
+    /** Two-way visibility, driven by the parent. */
+    readonly visible = model<boolean>(false);
+    /** The programming exercises whose consistency should be checked. */
+    readonly exercisesToCheck = input<ProgrammingExercise[]>([]);
 
     readonly inconsistencies = signal<ConsistencyCheckError[]>([]);
     readonly isLoading = signal(true);
@@ -36,7 +33,17 @@ export class ConsistencyCheckComponent implements OnInit {
     faTimes = faTimes;
     faCheck = faCheck;
 
-    ngOnInit(): void {
+    constructor() {
+        // Run the check on each open, not just once in ngOnInit; untracked so a mid-open change doesn't re-trigger.
+        effect(() => {
+            if (this.visible()) {
+                untracked(() => this.runCheck());
+            }
+        });
+    }
+
+    private runCheck(): void {
+        this.inconsistencies.set([]);
         this.isLoading.set(true);
         const exercisesToCheck = this.exercisesToCheck();
         if (exercisesToCheck.length === 0) {
@@ -64,6 +71,6 @@ export class ConsistencyCheckComponent implements OnInit {
     }
 
     closeModal() {
-        this.dialogRef.close();
+        this.visible.set(false);
     }
 }

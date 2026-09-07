@@ -6,7 +6,7 @@ import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model
 import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { catchError, finalize, tap } from 'rxjs/operators';
-import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
@@ -26,6 +26,10 @@ import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -53,6 +57,9 @@ export enum BonusStrategyDiscreteness {
         FormsModule,
         CommonModule,
         HelpIconComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumUiButtonDirective,
     ],
 })
 export class BonusComponent implements OnInit {
@@ -68,7 +75,7 @@ export class BonusComponent implements OnInit {
     // Icons
     readonly faSave = faSave;
     readonly faPlus = faPlus;
-    readonly faTimes = faTimes;
+    readonly faTrash = faTrash;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faQuestionCircle = faQuestionCircle;
 
@@ -119,7 +126,7 @@ export class BonusComponent implements OnInit {
      * template keeps writing `bonus.…` while reads stay reactive. Deep mutations (e.g. `this.bonus.id = …`) must be
      * followed by {@link commitBonus} so dependent template bindings re-render under zoneless.
      */
-    private readonly _bonus = signal<Bonus>(new Bonus());
+    private readonly _bonus = signal<Bonus>(new Bonus(), { equal: () => false });
     get bonus(): Bonus {
         return this._bonus();
     }
@@ -128,7 +135,8 @@ export class BonusComponent implements OnInit {
     }
     /** Rebuilds the bonus signal reference after an in-place mutation so dependent template bindings re-render under zoneless. */
     private commitBonus(): void {
-        this._bonus.update((bonus) => Object.assign(new Bonus(), bonus));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._bonus.set(this._bonus());
     }
     readonly hasBonusStrategyWeightMismatch = signal(false);
 
@@ -167,7 +175,7 @@ export class BonusComponent implements OnInit {
                             // The search response carries the owning course/exam only as a flat title/maxPoints pair inside
                             // gradeSteps; reconstruct a minimal course so the dropdown label and the bonus example calculation
                             // can read them.
-                            scale.course = Object.assign(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
+                            scale.course = hydrate(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
                             return scale;
                         }) ?? [],
                     );

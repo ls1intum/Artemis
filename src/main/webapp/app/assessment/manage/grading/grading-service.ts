@@ -9,6 +9,7 @@ import { SearchResult, SearchTermPageableSearch } from 'app/foundation/paginatio
 import { captureException } from '@sentry/angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<GradingScaleDTO>;
 export type EntityArrayResponseType = HttpResponse<GradingScaleDTO[]>;
@@ -278,7 +279,7 @@ export class GradingService {
         }
 
         let sortedGradeSteps: GradeStep[] = [];
-        gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
+        gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(deepClone(gradeStep)));
         sortedGradeSteps = this.sortGradeSteps(sortedGradeSteps);
 
         return percentage > sortedGradeSteps.last()!.upperBoundPercentage ? sortedGradeSteps.last()! : undefined;

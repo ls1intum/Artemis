@@ -359,6 +359,21 @@ jhi-iris-mcq-question {
     font-size: 0.75rem;
 }
 
+// Initial "thinking" state, shown before the assistant starts streaming its draft.
+// Uses the same spinning donut as the streaming indicator so there is a single,
+// consistent thinking animation across the whole run.
+.thinking-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--iris-label-color);
+    font-size: 0.875rem;
+}
+
+.thinking-indicator-text {
+    line-height: 1.2;
+}
+
 .bubble-right {
     --_d: 100%;
 
@@ -466,6 +481,11 @@ pre {
         align-items: stretch; // stretch children to full width
         margin: 0 16px;
 
+        // Named inline-size container so .chat-input can size the ghost-text overlay from the width of the
+        // panel it actually sits in, rather than from the viewport (see --iris-input-lines below). Only the
+        // inline axis is contained, so the flex column keeps sizing from its content in the block axis.
+        container: iris-chat-body / inline-size;
+
         .messages-inner,
         .chat-input,
         .client-chat-error,
@@ -524,6 +544,14 @@ pre {
     gap: 16px;
     overflow: visible;
 
+    // Height of one line of text in the textarea, used to size the input box and to clip the
+    // ghost-text / chip-preview overlays to a whole number of lines.
+    --iris-input-line-height: 24px;
+
+    // Number of lines the collapsed textarea reserves. One line is enough where the input is wide,
+    // so a long ghost suggestion fits without wrapping.
+    --iris-input-lines: 1;
+
     textarea {
         background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
@@ -531,8 +559,18 @@ pre {
         resize: none;
         border: none;
         border-radius: $iris-border-radius-lg $iris-border-radius-lg 0 0;
-        min-height: 40px;
-        max-height: 160px;
+
+        // The collapsed textarea must be tall enough to show the ghost suggestion, which renders in an
+        // overlay pinned inside this box. The previous flat 40px left only 8px of content box after the
+        // 16px vertical padding — less than a single line — so a wrapped suggestion spilled out of the
+        // textarea and painted over the context tag and send button in the controls row below.
+        min-height: calc(var(--iris-input-lines) * var(--iris-input-line-height) + 32px);
+        line-height: var(--iris-input-line-height);
+
+        // Keep at least the original ~5 lines of typing room on top of whatever the collapsed box
+        // reserves, so layouts that reserve more lines for the ghost text do not end up with a shorter
+        // scroll range than the wide layout has.
+        max-height: max(160px, calc((var(--iris-input-lines) + 4) * var(--iris-input-line-height) + 32px));
         overflow-y: auto;
 
         &:focus {
@@ -608,18 +646,25 @@ pre {
         }
     }
 
-    // These values must stay in sync with the textarea padding (16px) and send button width (56px)
+    // These values must stay in sync with the textarea padding (16px)
     .ghost-text-overlay,
     .chip-preview-overlay {
         position: absolute;
         top: 16px;
         left: 16px;
-        right: 56px;
+        right: 16px;
+
+        // Clip to the textarea's content box so a suggestion longer than the input is cut off at its
+        // edge instead of overflowing onto the context tag and send button in the controls row below.
+        // Falls back to the collapsed line count before the textarea has been measured; once the user
+        // types, the textarea grows and --iris-textarea-height (set in adjustTextareaRows) tracks it so
+        // the suggestion stays visible alongside the caret.
+        max-height: calc(var(--iris-textarea-height, calc(var(--iris-input-lines) * var(--iris-input-line-height) + 32px)) - 32px);
         border: 1px solid transparent;
         pointer-events: none;
         font-family: var(--bs-body-font-family);
         font-size: inherit;
-        line-height: inherit;
+        line-height: var(--iris-input-line-height);
         overflow-wrap: break-word;
         overflow: hidden;
     }
@@ -645,6 +690,24 @@ pre {
 // available width before truncating). The wider client/embedded layouts keep it at content width.
 :host.layout-widget .chat-input .textarea-controls jhi-context-selection {
     flex: 1 1 auto;
+}
+
+// The embedded chat is narrower than the full-page layout, so the longest ghost suggestions do not fit
+// on a single line and would otherwise be cut off at the textarea's edge. Reserve two lines by default.
+// The longest placeholder is ~76 characters (the German lecture.keyPoints label), which needs roughly
+// 530px of overlay width on one line — more than the embedded input usually has.
+:host.layout-embedded .chat-input {
+    --iris-input-lines: 2;
+}
+
+// Below this width even two lines are not enough for the longest labels, so reserve a third. This is a
+// container query against .chat-body (see `container: iris-chat-body` above) so a narrow embedded panel
+// gets the third line even in a wide viewport — the embedded chat can be docked into a side panel whose
+// width is independent of the window. The two-line default above still applies at wider panel widths.
+@container iris-chat-body (max-width: 768px) {
+    :host.layout-embedded .chat-input {
+        --iris-input-lines: 3;
+    }
 }
 
 .new-chat-button {

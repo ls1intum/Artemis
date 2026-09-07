@@ -11,11 +11,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonGroupComponent } from 'app/shared-ui/tum-ui/button-group/tum-ui-button-group.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiDialogComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -33,6 +29,7 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/enti
 import { RunningJobsTableComponent } from './tables/running-jobs-table/running-jobs-table.component';
 import { QueuedJobsTableComponent } from './tables/queued-jobs-table/queued-jobs-table.component';
 import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finished-jobs-table.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -336,7 +333,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             const start = dayjs(buildJob.buildStartDate);
             const end = dayjs(buildJob.buildCompletionDate);
             const durationSeconds = end.diff(start, 'milliseconds') / 1000;
-            return { ...buildJob, buildDuration: this.formatFinishedDuration(durationSeconds) };
+            return cloneWith(buildJob, { buildDuration: this.formatFinishedDuration(durationSeconds) });
         }
         return buildJob;
     }
@@ -559,7 +556,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 

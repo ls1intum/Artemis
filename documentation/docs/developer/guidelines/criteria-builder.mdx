@@ -219,41 +219,30 @@ You can find additional information on dependent sub-queries and how to identify
     ```java
     public static Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
         return (root, query, criteriaBuilder) -> {
-            Root<Course> courseRoot = query.from(Course.class);
+            Join<User, UserCourseRole> courseRole = root.join(User_.COURSE_ROLES, JoinType.LEFT);
 
-            Join<User, String> group = root.join(User_.GROUPS, JoinType.LEFT);
+            // Only count memberships in one of the selected courses
+            courseRole.on(criteriaBuilder.in(courseRole.get(UserCourseRole_.COURSE).get(Course_.ID)).value(courseIds));
 
-            // Select all possible group types
-            String[] columns = new String[] { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
-            Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.in(courseRoot.get(column)).value(group)).toArray(Predicate[]::new);
+            // A user matches only if they are a member of every selected course
+            query.groupBy(root.get(User_.ID))
+                    .having(criteriaBuilder.equal(criteriaBuilder.countDistinct(courseRole.get(UserCourseRole_.COURSE)), courseIds.size()));
 
-            // The course needs to be one of the selected
-            Predicate inCourse = criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
-
-            group.on(criteriaBuilder.or(predicates));
-
-            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
-
-            return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
+            return null;
         }
     }
     ```
 
     ```sql
     SELECT DISTINCT user FROM jhi_user user
-    CROSS JOIN course course
-    LEFT OUTER JOIN user_groups groups ON user.id = groups.user_id
-    AND (course.student_group_name IN ( groups.user_groups )
-        OR course.teaching_assistant_group_name IN ( groups.user_groups )
-        OR course.editor_group_name IN ( groups.user_groups )
-        OR course.instructor_group_name IN ( groups.user_groups )
+    LEFT OUTER JOIN user_course_role course_role ON user.id = course_role.user_id
+    AND course_role.course_id IN ( ? )
     WHERE (user.login LIKE ?
         OR user.email LIKE ?
         OR user.first_name LIKE ?
         OR user.last_name LIKE ?)
-    AND ( course.id IN ( ? ) )
     GROUP BY user.id
-    HAVING Count(groups.user_groups) = ?
+    HAVING Count(DISTINCT course_role.course_id) = ?
     ORDER BY user.id ASC
     LIMIT ?
     ```

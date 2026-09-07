@@ -1,4 +1,5 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="fileUploadExercise()" (exerciseChange)="fileUploadExercise.set($event)" />
     <div class="d-flex align-items-center gap-2">
         @if (fileUploadExercise().id && !isImport()) {
             <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel"></h2>
@@ -70,36 +71,23 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
-        @if (!isExamMode()) {
-            <div class="form-group">
-                <jhi-date-time-picker
-                    #solutionPublicationDate
-                    class="form-element"
-                    name="exampleSolutionPublicationDate"
-                    labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
-                    [(ngModel)]="fileUploadExercise().exampleSolutionPublicationDate"
-                    [error]="!!fileUploadExercise().exampleSolutionPublicationDateError"
-                    (valueChange)="validateDate()"
-                    [disabled]="isImport()"
-                />
-                @if (isImport()) {
-                    <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
-                }
-                @if (fileUploadExercise().exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
-                }
-            </div>
-        }
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         <div class="grading-layout">
             @if (!isExamMode()) {
                 <jhi-file-upload-exercise-timeline
                     class="exercise-timeline"
+                    [hasExampleSolution]="!!fileUploadExercise().exampleSolution"
+                    [isImport]="isImport()"
+                    [includedInOverallScore]="fileUploadExercise().includedInOverallScore"
                     [(releaseDate)]="fileUploadExercise().releaseDate"
                     [(startDate)]="fileUploadExercise().startDate"
                     [(dueDate)]="fileUploadExercise().dueDate"
                     [(assessmentDueDate)]="fileUploadExercise().assessmentDueDate"
+                    [exampleSolutionPublicationDate]="fileUploadExercise().exampleSolutionPublicationDate"
+                    (exampleSolutionPublicationDateChange)="fileUploadExercise().exampleSolutionPublicationDate = $event; validateDate()"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                     (timelineStatus)="timelineStatus.set($event)"
                 />
             }
@@ -164,7 +152,13 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise()" />
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="fileUploadExercise()"
+                [editable]="!isSaving()"
+                [exampleSolution]="fileUploadExercise().exampleSolution"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
         </div>
     </div>
     <!-- notificationText signal requires manual two-way binding unwrapping if component acts on prop -->

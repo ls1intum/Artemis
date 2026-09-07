@@ -1,0 +1,113 @@
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import subsystemDecomposition from '../assets/quiz-generation-subsystem-decomposition.png';
+import generationSequence from '../assets/quiz-generation-sequence.png';
+
+# Quiz Question Generation & Refinement
+
+This page describes the architecture behind Hyperion's AI-assisted quiz authoring, covering both question generation, in its free-topic and competency-grounded modes, and question refinement, applied to a single question or in bulk.
+For instructor-facing usage documentation, see [Quiz Exercise: Generate Multiple-Choice Questions with AI](../../instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai) and [Refine Multiple-Choice Questions with AI](../../instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai).
+
+---
+
+## Components
+
+Hyperion hosts two new server components for quiz authoring, backed by a set of prompt templates. The diagram below decomposes the subsystem and shows how it connects to the rest of Artemis and to the external services it depends on.
+
+<Image src={subsystemDecomposition} alt="Subsystem Decomposition" size={ImageSize.large} caption="Subsystem Decomposition: Hyperion's Quiz Generation and Competency Context Components" />
+
+The diagram groups the system into four parts: the Artemis server, the Artemis quiz client, and the external services Edutelligence and the LLM provider. Hyperion hosts the two new server components shown above, `HyperionQuizQuestionGenerationService` (Quiz Generation) and `HyperionCompetencyContextService` (Competency Context).
+
+Quiz Generation builds structured prompts, calls the LLM provider through its service, and parses and validates the responses into valid Artemis questions. Competency Context aggregates the course context and exposes it to Quiz Generation, drawing entirely on existing Artemis services: it reads the competencies, their typed relations, and the linked exercises from Atlas's Competency Service, which in turn resolves the exercises through its own competency-exercise links; fetches the corresponding lecture units from the Lecture Service and calls Edutelligence's Lecture Snippet Service for embedded lecture retrieval.
+
+Both components are backed by Spring AI prompt files under `src/main/resources/prompts/hyperion/`, rendered by `HyperionPromptTemplateService`. All three service beans are lazily initialized and only registered in the Spring context when Hyperion is enabled through configuration; see [Hyperion Setup](../../admin/hyperion) for details.
+
+---
+
+## Question Generation
+
+The system supports two generation modes: a free-topic mode, where the instructor supplies a topic and optional guidance, and a competency-grounded mode, where questions are grounded in the course's competencies and their related lecture content.
+
+### Free-Topic and Competency-Grounded Generation
+
+Both modes render a different user-prompt template against the same system prompt. The free-topic template takes the topic, an optional custom prompt, the language, and the desired question counts and difficulty. The competency-grounded template instead takes the selected competencies, their relations, and the assembled lecture context, alongside the same options as the free-topic template. The two templates are `generate_quiz_questions_user.st` and `generate_quiz_questions_user_competency.st`, both rendered against the shared `generate_quiz_questions_system.st` system prompt.
+
+The sequence diagram below traces a competency-grounded generation request: the generation service delegates context assembly to the context service, which fans out to Atlas and Edutelligence before the generation service builds the prompt, calls the LLM, and validates the response.
+
+<Image src={generationSequence} alt="Grounded Generation Sequence Diagram" size={ImageSize.large} caption="Sequence Diagram of the Competency-Grounded Generation Flow" />
+
+### Competency-Grounded Context Assembly
+
+The `computeContext` method on `HyperionCompetencyContextService` assembles this context in three steps:
+
+1. It first loads all the course's competencies and resolves the requested IDs against that set. Any ID that is not part of the course triggers a bad-request error.
+2. It then resolves the relations (assumes, extends, and matches) that involve the selected competencies.
+3. Finally, it gathers lecture and exercise context from three independent sources, merged and de-duplicated:
+   - **Pyris semantic search** surfaces pre-indexed lecture content ranked by relevance to the competency titles, capped at 20 results and scoped to the course. If Pyris is unreachable, this source is dropped with a logged warning.
+   - **Text units linked to the competencies** are pulled in directly, since their content is already available plain text.
+   - **Exercises linked to the competencies** contribute indirectly: problem statements are not passed to the quiz-generation prompt directly. Instead, each exercise (capped at 10) is first summarized by a separate LLM call that extracts its core challenges and learning objectives from the problem statement and, where available, the reference solution. Because the summarization calls are independent of each other, they run in parallel.
+
+### Output Validation
+
+The LLM response is parsed into a nested record structure, then mapped and re-validated into the DTO shape used by the rest of the system. This mapping step rejects the response if:
+
+- Title is blank or exceeds 500 characters
+- Question text is blank or exceeds 10,000 characters
+- Fewer than 2 options
+- Any option text is blank or exceeds 2,000 characters
+- The correct-option count doesn't match the question type's structural rule (`validateCorrectOptionCount`): exactly 1 for single-choice, ≥1 for multiple-choice, exactly 2 options with exactly 1 correct for true/false
+
+---
+
+## Question Refinement
+
+Refinement takes the question as currently edited in the UI, together with a free-text refinement prompt, and returns either a refined question or an error, reusing the same output-validation path as generation.
+
+The response is modeled as a sealed interface with two variants, a success case and a failure case, discriminated by a `type` field:
+
+```java
+public sealed interface QuizQuestionRefinementResponseDTO permits QuizQuestionRefinementSuccessDTO, QuizQuestionRefinementFailureDTO {
+    record QuizQuestionRefinementSuccessDTO(GeneratedQuizQuestionDTO question, String reasoning, String type) {}
+    record QuizQuestionRefinementFailureDTO(String error, String type) {}
+}
+```
+
+For bulk refinement this means that a single question's LLM call failing must not fail the whole batch.
+
+The refined question can be restored to its previous state via a restore button, since the client snapshots each question before applying the refinement.
+
+### Bulk refinement
+
+Bulk refinement reuses the architecture of the single-question refinement mechanism and parallelizes the requests across the questions, calling the same single-question refinement logic for each with the shared refinement prompt, and catches exceptions per question rather than letting one bad question abort the whole batch. Results are returned in the same order as the input questions.
+
+---
+
+## REST Endpoints
+
+| Method | Path                                                     | Request                                | Response                                |
+|--------|----------------------------------------------------------|----------------------------------------|-----------------------------------------|
+| POST   | `courses/{courseId}/quiz-exercises/generate-questions`   | `QuizQuestionGenerationRequestDTO`     | `QuizQuestionGenerationResponseDTO`     |
+| POST   | `courses/{courseId}/quiz-exercises/refine-question`      | `QuizQuestionRefinementRequestDTO`     | `QuizQuestionRefinementResponseDTO`     |
+| POST   | `courses/{courseId}/quiz-exercises/refine-all-questions` | `QuizQuestionBulkRefinementRequestDTO` | `QuizQuestionBulkRefinementResponseDTO` |
+
+---
+
+## Prompt-Injection Mitigation
+
+Both pipelines sanitize every piece of user- or instructor-authored text before it is used in a prompt template:
+
+1. Strips control characters.
+2. Strips any `-----BEGIN/END ... -----`-style delimiter text the input itself might contain, preventing a competency title, lecture snippet, or refinement instruction from forging its own fake delimiter and breaking out of its untrusted block.
+3. Strips `{{...}}`-style template variable syntax, preventing the input from being (mis)interpreted as a StringTemplate variable reference when the template is re-rendered.
+
+Blocks of instructor-authored but still untrusted content (competency lists, competency relations, lecture snippets) are wrapped in the templates with explicit `-----BEGIN UNTRUSTED INPUT-----` / `-----END UNTRUSTED INPUT-----` markers and an instruction to the model to parse the content as data only.
+
+This is the equivalent delimiter-and-instruction pattern used by the [Consistency Check](./consistency-check) pipeline for problem-statement content.
+
+---
+
+## Client Integration
+
+On the client, `QuizAiGenerationService` wraps the generated OpenAPI client and maps the DTOs and the editor's `MultipleChoiceQuestion` / `GeneratedQuestion` models. The generation dialog and the inline per-question refinement panel plug into the existing Multiple-Choice question editor, while the quiz exercise update view hosts the bulk-refinement action, shown only when Hyperion is enabled and the quiz has at least one Multiple-Choice question.
+
+Before applying a refinement, both the single-question and bulk flows snapshot the pre-refinement question with a deep clone, which is what enables the restore-previous-version action in the refinement UI. The refinement itself then mutates the original question object in place.
+

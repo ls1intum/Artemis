@@ -409,6 +409,47 @@ describe('CourseOverviewService', () => {
         expect(groupedExercises['past'].entityData[2].title).toBe('Past Exercise 3');
     });
 
+    describe('buildGroupedExerciseData', () => {
+        it('uses a type-prefixed tracking key for a group card that collides with an ungrouped exercise id, while keeping the raw group id for routing', () => {
+            // The group id deliberately collides with the ungrouped exercise's id.
+            const collidingId = 5;
+            const ungrouped: Exercise = { id: collidingId, title: 'Ungrouped Exercise', dueDate: dayjs().add(1, 'day') } as Exercise;
+            const variantA: Exercise = {
+                id: 20,
+                title: 'Variant A',
+                dueDate: dayjs().add(1, 'day'),
+                exerciseVariantGroup: { id: collidingId, title: 'Variant Group' },
+            } as Exercise;
+            const variantB: Exercise = {
+                id: 21,
+                title: 'Variant B',
+                dueDate: dayjs().add(1, 'day'),
+                exerciseVariantGroup: { id: collidingId, title: 'Variant Group' },
+            } as Exercise;
+
+            const { ungroupedData } = courseOverviewService.buildGroupedExerciseData([ungrouped, variantA, variantB], course.id!);
+
+            const groupCard = ungroupedData.find((card) => card.targetComponentSubRoute === 'group');
+            const exerciseCard = ungroupedData.find((card) => card.targetComponentSubRoute !== 'group');
+
+            expect(groupCard).toBeDefined();
+            expect(exerciseCard).toBeDefined();
+
+            // Group card: raw id kept for routing, tracking key type-prefixed.
+            expect(groupCard!.id).toBe(collidingId);
+            expect(groupCard!.routerLink).toBe(`/courses/${course.id}/exercises/group/${collidingId}`);
+            expect(groupCard!.trackId).toBe(`group-${collidingId}`);
+
+            // Ungrouped exercise falls back to its raw id.
+            expect(exerciseCard!.id).toBe(collidingId);
+            expect(exerciseCard!.trackId).toBeUndefined();
+
+            const groupTrack = groupCard!.trackId ?? groupCard!.id;
+            const exerciseTrack = exerciseCard!.trackId ?? exerciseCard!.id;
+            expect(groupTrack).not.toBe(exerciseTrack);
+        });
+    });
+
     it('should return undefined if exercises array is undefined', () => {
         expect(courseOverviewService.getUpcomingExercise(undefined)).toBeUndefined();
     });
@@ -600,27 +641,24 @@ describe('CourseOverviewService', () => {
         const now = dayjs();
         const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
 
+        // The dates now travel with the channel itself, projected server-side, rather than being looked up in the course
         const conversationWithinRange = {
             id: 5,
             subType: ChannelSubType.EXERCISE,
             subTypeReferenceId: 101,
+            subTypeReferenceEndDate: oneAndHalfWeekBefore.add(3, 'day'),
             type: ConversationType.CHANNEL,
         } as ConversationDTO;
 
         const conversationOutsideRange = {
             subType: ChannelSubType.LECTURE,
             subTypeReferenceId: 102,
+            subTypeReferenceStartDate: oneAndHalfWeekBefore.subtract(1, 'day'),
             type: ConversationType.CHANNEL,
         } as ConversationDTO;
 
-        const exerciseWithinRange = { id: 101, dueDate: oneAndHalfWeekBefore.add(3, 'day') } as unknown as Exercise;
-        const lectureOutsideRange = { id: 102, startDate: oneAndHalfWeekBefore.subtract(1, 'day') } as unknown as Lecture;
-
-        course.exercises = [exerciseWithinRange];
-        course.lectures = [lectureOutsideRange];
-
-        const sidebarCardWithinRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationWithinRange);
-        const sidebarCardOutsideRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationOutsideRange);
+        const sidebarCardWithinRange = courseOverviewService.mapConversationToSidebarCardElement(conversationWithinRange);
+        const sidebarCardOutsideRange = courseOverviewService.mapConversationToSidebarCardElement(conversationOutsideRange);
 
         expect(sidebarCardWithinRange.isCurrent).toBe(true);
         expect(sidebarCardOutsideRange.isCurrent).toBe(false);

@@ -1,5 +1,9 @@
-<div id="exercise-header" class="d-flex flex-column flex-fill">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+<!--
+    Header card: the title with its actions on one row, the information boxes below. The two rows are separated by the
+    same gap as on the lecture page rather than by a rule, so both detail headers read alike.
+-->
+<div id="exercise-header" class="detail-header-card flex-fill">
+    <div class="detail-header-title-row flex-wrap justify-content-between gap-2">
         <div class="d-flex align-items-center gap-3 overflow-parent">
             @if (showSidebarToggle() && isSidebarCollapsed()) {
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
@@ -26,8 +30,6 @@
             (participationModeChange)="participationMode.set($event)"
         />
     </div>
-
-    <hr class="my-2" />
 
     <div class="d-flex align-items-center gap-2">
         <jhi-exercise-headers-information

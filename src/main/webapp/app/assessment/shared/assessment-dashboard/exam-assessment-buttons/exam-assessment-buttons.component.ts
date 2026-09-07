@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -14,14 +14,13 @@ import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { faClipboard } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',
     templateUrl: './exam-assessment-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective],
+    imports: [TranslateDirective, TumUiButtonDirective],
 })
 export class ExamAssessmentButtonsComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -46,9 +45,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     readonly isExamOver = signal(false);
     readonly longestWorkingTime = signal<number | undefined>(undefined);
     readonly isAdmin = signal(false);
-
-    // icons
-    faClipboard = faClipboard;
 
     /**
      * Initialize the courseId and examId

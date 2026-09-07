@@ -16,9 +16,8 @@ import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.comp
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
-
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 interface NodeOption {
     label: string;
     value: string;
@@ -40,6 +39,7 @@ interface NodeOption {
         MetricsDatasourceComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        ArtemisTranslatePipe,
         TumUiButtonComponent,
         TumUiSelectComponent,
         FormsModule,

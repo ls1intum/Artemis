@@ -29,7 +29,7 @@
                 <h4 class="m-0">
                     {{ competency()?.title }}
                     @if (isMastered) {
-                        <span class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered"></span>
+                        <span class="badge text-white text-bg-success" data-testid="competency-mastered-badge" jhiTranslate="artemisApp.competency.mastered"></span>
                     }
                     @if (competency()?.optional) {
                         <span id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional"></span>

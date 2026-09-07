@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -9,17 +10,14 @@ import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -35,25 +33,24 @@ public class HyperionCodeGenerationJobService {
 
     private static final int JOB_TTL_SECONDS = 3600;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final HyperionCodeGenerationTaskService taskService;
 
-    private IMap<String, JobInfo> jobMap;
+    private DistributedMap<String, JobInfo> jobMap;
 
-    public HyperionCodeGenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, HyperionCodeGenerationTaskService taskService) {
-        this.hazelcastInstance = hazelcastInstance;
+    public HyperionCodeGenerationJobService(DistributedDataProvider distributedDataProvider, HyperionCodeGenerationTaskService taskService) {
+        this.distributedDataProvider = distributedDataProvider;
         this.taskService = taskService;
     }
 
     /**
-     * Initializes the Hazelcast-backed job map with the configured TTL.
+     * Initializes the job map. The entry lifetime is requested here rather than configured on the backend, because a
+     * map-level TTL is not expressible on every provider.
      */
     @PostConstruct
     public void init() {
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
-        jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
+        jobMap = distributedDataProvider.getExpiringMap(JOB_MAP_NAME, Duration.ofSeconds(JOB_TTL_SECONDS));
     }
 
     /**
@@ -135,11 +132,11 @@ public class HyperionCodeGenerationJobService {
     }
 
     /**
-     * Exposes the backing Hazelcast map for internal job slot operations.
+     * Exposes the backing map for internal job slot operations.
      *
-     * @return Hazelcast map storing exercise-level generation jobs
+     * @return map storing exercise-level generation jobs
      */
-    private IMap<String, JobInfo> getJobMap() {
+    private DistributedMap<String, JobInfo> getJobMap() {
         return jobMap;
     }
 
@@ -147,7 +144,7 @@ public class HyperionCodeGenerationJobService {
      * Builds the map key used to store the exercise-level generation slot.
      *
      * @param exerciseId exercise id
-     * @return stringified exercise id used as Hazelcast key
+     * @return stringified exercise id used as map key
      */
     private static String jobKey(long exerciseId) {
         return String.valueOf(exerciseId);

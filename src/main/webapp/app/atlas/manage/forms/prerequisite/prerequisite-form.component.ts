@@ -7,6 +7,7 @@ import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-prerequisite-form',
@@ -29,7 +30,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent {
     readonly CourseCompetencyType = CourseCompetencyType;
 
     submitForm() {
-        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = deepClone(this.form.value);
         this.formSubmitted.emit(competencyFormData);
     }
 }

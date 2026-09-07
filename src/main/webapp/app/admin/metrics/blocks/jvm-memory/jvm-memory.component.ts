@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { JvmMetrics } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiProgressBarComponent } from 'app/shared-ui/tum-ui/progress-bar/tum-ui-progress-bar.component';
+import { TumUiProgressBarComponent } from '@tumaet/ui-angular';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 

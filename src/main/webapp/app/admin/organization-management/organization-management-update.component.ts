@@ -4,9 +4,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomPatternValidatorDirective } from 'app/foundation/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

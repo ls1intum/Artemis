@@ -372,6 +372,10 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(participantScore.getLastResult()).isNull();
         }
         else {
+            // Asserted separately (rather than chaining straight into .getId()) so a still-null lastResult during
+            // the async recompute window raises a retryable AssertionError instead of a NullPointerException, which
+            // Awaitility's untilAsserted() would otherwise propagate immediately instead of retrying.
+            assertThat(participantScore.getLastResult()).as("participant score's last result").isNotNull();
             assertThat(participantScore.getLastResult().getId()).isEqualTo(expectedLastResultId);
         }
         assertThat(participantScore.getLastScore()).isEqualTo(expectedLastScore);
@@ -381,6 +385,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(participantScore.getLastRatedResult()).isNull();
         }
         else {
+            assertThat(participantScore.getLastRatedResult()).as("participant score's last rated result").isNotNull();
             assertThat(participantScore.getLastRatedResult().getId()).isEqualTo(expectedLastRatedResultId);
         }
         assertThat(participantScore.getLastRatedScore()).isEqualTo(expectedLastRatedScore);

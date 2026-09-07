@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
+import { matchesSearch } from 'app/foundation/pipes/search-filter.pipe';
 
 export interface WeekGroup {
     isNoDate: boolean;
@@ -67,14 +68,9 @@ export class WeekGroupingUtil {
      * @returns Array of WeekGroup objects containing the grouped items
      */
     static getGroupedByWeek(items: SidebarCardElement[], storageId?: string, groupKey?: string, searchValue = ''): WeekGroup[] {
-        // Filter items based on search value if provided
-        const filtered = searchValue
-            ? items.filter((i) => {
-                  const title = i.title?.toLowerCase() ?? '';
-                  const type = i.type?.toLowerCase() ?? '';
-                  return title.includes(searchValue.toLowerCase()) || type.includes(searchValue.toLowerCase());
-              })
-            : items;
+        // Filter items based on search value if provided. Group items are retained when one of their members matches,
+        // mirroring the searchFilter pipe used by the sidebar templates.
+        const filtered = searchValue ? items.filter((item) => matchesSearch(item, ['title', 'type'], searchValue, 'groupedItems')) : items;
 
         // Only apply weekly grouping to exercises and default type
         if ((storageId !== 'exercise' && storageId !== 'lecture') || !!searchValue || filtered.length <= MIN_ITEMS_TO_GROUP_BY_WEEK) {

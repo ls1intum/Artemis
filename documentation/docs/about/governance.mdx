@@ -1,0 +1,258 @@
+---
+id: governance
+title: Project Governance
+sidebar_label: Project Governance
+description: Who maintains Artemis, how changes are proposed, reviewed, and approved, and which quality gates every change has to pass.
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Project Governance
+
+This page documents how the Artemis project is governed **today**. It describes the roles that exist,
+the path a change takes from idea to release, and the quality gates that every change has to pass.
+
+<Callout variant={CalloutVariant.info}>
+    This page is about the governance of the software project. There is no separate Artemis legal
+    entity, association, or foundation, and this page does not describe one. See
+    [About Artemis](/about#who-develops-artemis) for the current organizational situation.
+</Callout>
+
+## Roles
+
+Artemis distinguishes three contributor roles in its development process.
+
+| Role | Who | Responsibility |
+| --- | --- | --- |
+| Contributor | Anyone, inside or outside the organization | Proposes features and bug fixes, implements changes, reviews and tests pull requests |
+| Feature maintainer | Named per feature, module, or goal area (see below) | Owns the direction of an area, reviews changes in that area, and approves them before final review |
+| Artemis maintainer | Contributors with merge rights on `develop` | Performs the final review, merges changes, and decides on cross-cutting and release-relevant questions |
+
+Contributors are expected to follow the [contribution guidelines](https://github.com/ls1intum/Artemis/blob/develop/CONTRIBUTING.md),
+including the identity and transparency policy, and the [Code of Conduct](https://github.com/ls1intum/Artemis/blob/develop/CODE_OF_CONDUCT.md).
+
+Maintainer responsibility is assigned on two levels: cross-cutting goals that span the whole platform,
+and individual features and modules.
+
+### Responsible maintainers per goal
+
+Artemis development is organized around four long-running goals that cut across every module. Each one
+has a maintainer who keeps the platform moving in that direction.
+
+- **User experience:** an intuitive and accessible interface for students and instructors across
+  diverse learning scenarios.
+- **Scalable infrastructure:** supporting large courses with thousands of concurrent participants at
+  high availability and performance.
+- **Constructive alignment:** keeping learning goals, learning activities, and assessment deliberately
+  connected, for example through exam mode and competencies.
+- **Learning analytics:** turning data into actionable insight for learners and instructors while
+  preserving data privacy.
+
+| Goal | Responsible maintainer |
+| --- | --- |
+| User experience | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork)) |
+| Scalable infrastructure | Matthias Linhuber ([@mtze](https://github.com/mtze)) |
+| Constructive alignment | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Learning analytics | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+
+### Responsible maintainers per feature and module
+
+Every feature and module of Artemis has a named maintainer. Contact them if you have questions about
+that area or want to develop a new feature in it.
+
+| Feature / Module | Responsible maintainer |
+| --- | --- |
+| Account | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Exercises | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Build agents | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| LocalVC | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| LocalCI | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Jenkins | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Quiz exercises | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Modeling exercises | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich)) |
+| Text exercises | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich)) |
+| File upload exercises | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Exam mode | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Assessment | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch)) |
+| Communication | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Lectures | Patrick Bassner ([@bassner](https://github.com/bassner)) |
+| Atlas | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Iris | Patrick Bassner ([@bassner](https://github.com/bassner)) |
+| Athena | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch)) |
+| Hyperion | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich)) |
+| Tutorial groups | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork)) |
+| Plagiarism checks | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen)) |
+| LTI | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Calendar | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Global search | Patrick Bassner ([@bassner](https://github.com/bassner)) |
+| Video source | Patrick Bassner ([@bassner](https://github.com/bassner)) |
+| Course | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Admin | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+| Notification | Stephan Krusche ([@krusche](https://github.com/krusche)) |
+
+The machine-readable counterpart of this table is
+[`.github/CODEOWNERS`](https://github.com/ls1intum/Artemis/blob/develop/.github/CODEOWNERS). It maps
+source directories to individuals or to GitHub maintainer teams, and GitHub requests those owners as
+reviewers automatically when a pull request touches their area.
+
+## Becoming a maintainer
+
+Maintainer roles are earned through sustained work in an area, and they are granted and recorded in a
+way that is reviewable by everyone.
+
+### Feature maintainer
+
+1. **Nomination.** An existing maintainer nominates a contributor, or a contributor nominates
+   themselves, by opening an issue that names the area and links the work it is based on.
+2. **The bar.** A sustained record of merged pull requests **and** of substantive reviews in that area
+   over at least the last **six months**, visible in the repository history and in
+   [Hephaestus](https://hephaestus.aet.cit.tum.de/), plus demonstrated command of the
+   [guidelines](/developer/guidelines/) that apply to the area. Reviewing counts as much as writing
+   code: a maintainer's main job is judging other people's changes.
+3. **Decision.** Taken at the [weekly maintainer meeting](#weekly-maintainer-meeting). If nobody
+   objects within **one week** of the nomination, it passes by lazy consensus. The maintainer of the
+   goal area that contains the feature can veto.
+4. **Record.** A pull request updates
+   [`.github/CODEOWNERS`](https://github.com/ls1intum/Artemis/blob/develop/.github/CODEOWNERS) and the
+   tables above. That merged pull request **is** the appointment: there is no separate list to keep in
+   sync, and the published table can therefore not drift away from the one GitHub enforces.
+
+<Callout variant={CalloutVariant.info}>
+    Maintainer roles are **not reserved for TUM**. Artemis is primarily maintained at TUM today because
+    that is where most of the sustained contribution has come from, not by rule. The criteria above are
+    the whole rule, they apply to everyone, and an institution that wants to take responsibility for part
+    of Artemis is welcome to work toward it. Write to
+    [artemis@xcit.tum.de](mailto:artemis@xcit.tum.de) if that is you.
+</Callout>
+
+### Artemis maintainer
+
+Artemis maintainers are nominated from among the feature maintainers, following the same steps. The
+decision is taken by the existing Artemis maintainers at the weekly meeting, and it is recorded the same
+way. The role carries merge rights on `develop` and the final review before a change lands, so it
+presupposes a track record across module boundaries rather than in a single area.
+
+### Stepping down and becoming emeritus
+
+A clear exit path is part of the role, not an afterthought. It is what makes the maintainer tables
+trustworthy and what makes the role safe to accept.
+
+- **Voluntarily.** A maintainer can step down at any time, for any reason. They move to the emeritus
+  list, keep the credit for their work, and give up the rights.
+- **Through inactivity.** After **six months** without reviews or merges in their area, the weekly
+  meeting asks the maintainer whether they want to continue. After **twelve months** of inactivity, the
+  move to emeritus happens automatically. A maintainer who is listed but unreachable is worse for
+  contributors than no maintainer at all, because pull requests wait on a review that will not come.
+- **For cause.** Violations of the [Code of Conduct](https://github.com/ls1intum/Artemis/blob/develop/CODE_OF_CONDUCT.md)
+  are handled through the process defined there. A sustained failure to act on the responsibilities of
+  the role is decided at the weekly meeting, and the decision is written down.
+
+Returning is welcome and does not start from zero: an emeritus maintainer who becomes active in their
+area again can be reinstated by the weekly meeting without a new six-month qualifying period.
+
+{/*
+TODO(maintainers): the qualifying bar is deliberately stated as a sustained record rather than a fixed
+count of pull requests and reviews. If the maintainer group wants hard numbers, agree on them at a
+weekly meeting and replace the wording in "The bar" above.
+*/}
+
+## How a change reaches Artemis
+
+The [development process](/developer/development-process) is the authoritative description. In short:
+
+1. **Feature request.** Anyone opens a GitHub issue describing the desired functionality, its
+   rationale, expected benefits, and risks.
+2. **Evaluation.** Maintainers evaluate the request together with the development team for
+   feasibility and impact.
+3. **Feature proposal.** Larger changes get a written proposal appended to the issue from the
+   [feature proposal template](https://github.com/ls1intum/Artemis/blob/develop/.github/ISSUE_TEMPLATE/feature-proposal--developer-.md),
+   covering functional and non-functional requirements, analysis models, system architecture, and
+   UI/UX design where the change is user-facing. Labeling an issue `needs-feature-proposal` triggers a
+   GitHub Action that adds the template automatically.
+4. **Implementation.** Work happens on a branch that follows the `<type>/<area>/<short-description>`
+   convention, against the [coding and design guidelines](/developer/guidelines/).
+5. **Pull request.** Titles follow the [naming conventions](/developer/development-process#pr-naming-conventions),
+   because they become the release notes. The pull request template requires the author to confirm
+   testing, performance, data economy, security annotations, translations, and test coverage.
+6. **Review.** See below.
+7. **Merge.** An Artemis maintainer merges into `develop`.
+
+## Review and approval
+
+Reviewing is a shared responsibility of all developers, and the
+[reviewer guidelines](/developer/reviewer-guidelines) describe what a review has to cover: deploying
+the change to a test server, executing the documented testing steps, checking related functionality
+for regressions, and assessing code quality, correctness, performance, and security.
+
+Approval is layered:
+
+- Reviewers approve the code, the manual test, the exam mode behavior where relevant, and the
+  performance review, and record which of these they actually did.
+- The **feature maintainer** for the affected area verifies the change within their scope and
+  approves it.
+- An **Artemis maintainer** performs the final review and merges.
+
+<Callout variant={CalloutVariant.info}>
+    A pull request is only ready to merge once it has approvals from at least four reviewers, all
+    checklist items in the pull request description are checked, and all review threads are resolved.
+    A GitHub Action validates the last two conditions and reports what is still missing.
+</Callout>
+
+## Weekly maintainer meeting
+
+The maintainers meet weekly. The meeting is where the project resolves what asynchronous review cannot:
+
+- **Disagreements between reviewers and authors** that a pull request thread has not settled, including
+  disputes about scope, architecture, or whether a change should be made at all.
+- **Cross-cutting decisions** that affect more than one feature or module and therefore have no single
+  responsible maintainer.
+- **Prioritization** of feature requests and larger proposals, including a standing review of the
+  [roadmap board](./roadmap).
+
+If a discussion on a pull request or an issue stalls, ask for it to be put on the agenda of the next
+meeting; a maintainer can do that for you. Outcomes are recorded back on the issue or pull request they
+concern, so the decision and its rationale stay where the next reader will look for them.
+
+## Technical quality gates
+
+Every pull request runs the same automated gates before it can be merged. They are defined in
+[`.github/workflows`](https://github.com/ls1intum/Artemis/tree/develop/.github/workflows) and
+aggregated behind a single required check.
+
+| Gate | What it enforces |
+| --- | --- |
+| Build | Server and client build, including the production build |
+| Test | Server tests (JUnit, against PostgreSQL via Testcontainers) and client tests (Vitest), with per-module coverage thresholds |
+| Quality | Java formatting (Spotless) and Javadoc checks (Checkstyle), architecture rules (ArchUnit), dependency family consistency, TypeScript formatting (Prettier), linting (ESLint), style linting (Stylelint), and a type-checked client compilation |
+| E2E | End-to-end tests (Playwright) against a deployed stack |
+| Documentation | The documentation site builds, and broken links or anchors fail the build |
+| Translation keys | German and English translation files define the same keys |
+| Version consistency | The Artemis version agrees across `build.gradle`, the OpenAPI specification, and the README |
+| Bean instantiations | Spring startup behavior does not regress into eager instantiation |
+| Gradle wrapper and workflows | The Gradle wrapper is validated and workflow definitions are linted |
+
+Coverage for changed files is reported back into the pull request, and the review checklist asks for
+line coverage above 90% on changed files together with meaningful assertions.
+
+CodeQL static security analysis runs in parallel as an advisory check rather than a merge blocker, and
+a scheduled scan covers `develop` and `main` independently of pull requests.
+
+Beyond automation, changes are expected to be tested manually on a test server. Test server
+deployments are managed through [Helios](https://helios.aet.cit.tum.de/); see the
+[test server documentation](/developer/test-servers).
+
+## Inactivity and closing
+
+A pull request without activity for 7 days is marked `stale`, and it is closed after 21 days of
+inactivity. Any comment or commit resets the timer, and the `no-stale` label exempts pull requests
+that are blocked on something else.
+
+## Related pages
+
+- [Development process](/developer/development-process)
+- [Reviewer guidelines](/developer/reviewer-guidelines)
+- [Open-source development](/developer/open-source)
+- [Release and support policy](./releases)
+- [Trust and transparency](./trust)

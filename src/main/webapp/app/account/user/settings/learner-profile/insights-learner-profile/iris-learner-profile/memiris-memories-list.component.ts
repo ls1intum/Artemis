@@ -7,21 +7,32 @@ import { MemirisMemory, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } fr
 import { firstValueFrom } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiListComponent, TumUiListItemDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 import { MemirisMemoryDetailsComponent } from './memiris-memory-details.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-memiris-memories-list',
-    imports: [CommonModule, TranslateDirective, FaIconComponent, MemirisMemoryDetailsComponent],
+    imports: [
+        CommonModule,
+        TranslateDirective,
+        FaIconComponent,
+        TumUiButtonComponent,
+        TumUiListComponent,
+        TumUiListItemDirective,
+        TumUiMessageComponent,
+        ArtemisTranslatePipe,
+        MemirisMemoryDetailsComponent,
+        TumUiDialogComponent,
+        ResolveMemoriesConflictsModalComponent,
+    ],
     templateUrl: './memiris-memories-list.component.html',
 })
 export class MemirisMemoriesListComponent implements OnInit {
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     // Signals for component state
     loading = signal<boolean>(false);
@@ -93,14 +104,14 @@ export class MemirisMemoriesListComponent implements OnInit {
      */
     async deleteMemory(memory: MemirisMemory) {
         if (!memory?.id || this.deleting()[memory.id]) return;
-        this.deleting.update((m) => ({ ...m, [memory.id]: true }));
+        this.deleting.update((m) => cloneWith(m, { [memory.id]: true }));
         try {
             await firstValueFrom(this.irisMemoriesHttpService.deleteUserMemory(memory.id));
             this.applyDeletions([memory.id]);
         } catch (error) {
             this.alertService.error('artemisApp.iris.memories.error.deleteFailed');
         } finally {
-            this.deleting.update((m) => ({ ...m, [memory.id]: false }));
+            this.deleting.update((m) => cloneWith(m, { [memory.id]: false }));
         }
     }
 
@@ -112,7 +123,7 @@ export class MemirisMemoriesListComponent implements OnInit {
         if (!memory?.id) return;
         const id = memory.id;
         const currentlyOpen = this.open()[id];
-        this.open.update((o) => ({ ...o, [id]: !currentlyOpen }));
+        this.open.update((o) => cloneWith(o, { [id]: !currentlyOpen }));
     }
 
     /**
@@ -134,7 +145,7 @@ export class MemirisMemoriesListComponent implements OnInit {
         const learnings = (md.learnings ?? []).filter((l) => (mem.learnings ?? []).includes(l.id) || (l.memories ?? []).includes(id));
         const connections = (md.connections ?? [])
             .filter((c) => (mem.connections ?? []).includes(c.id) || (c.memories ?? []).includes(id))
-            .map((c) => ({ ...c, memories: (c.memories ?? []).filter((mid) => validMemoryIds.has(mid)) }));
+            .map((c) => cloneWith(c, { memories: (c.memories ?? []).filter((mid) => validMemoryIds.has(mid)) }));
         return {
             id: mem.id,
             title: mem.title,
@@ -149,6 +160,11 @@ export class MemirisMemoriesListComponent implements OnInit {
     /**
      * Opens the conflict resolution modal. Applies deletions silently on close.
      */
+    /** Conflict groups handed to the dialog, alongside the details each group needs to render. */
+    readonly conflictDialogGroups = signal<string[][]>([]);
+    readonly conflictDialogDetails = signal<Record<string, MemirisMemoryWithRelationsDTO | undefined>>({});
+    readonly conflictDialogVisible = signal(false);
+
     openResolveConflictsModal() {
         const groups = this.conflictGroups();
         const detailsMap: Record<string, MemirisMemoryWithRelationsDTO | undefined> = {};
@@ -157,21 +173,17 @@ export class MemirisMemoriesListComponent implements OnInit {
                 if (!detailsMap[gid]) detailsMap[gid] = this.buildDetails(gid);
             }
         }
-        const ref = this.dialogService.open(ResolveMemoriesConflictsModalComponent, {
-            header: this.translateService.instant('artemisApp.iris.memories.conflict.modalTitle'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            data: { conflictGroups: groups, details: detailsMap },
-        });
-        // onClose emits a single value: the deleted ids when resolved, or undefined when dismissed.
-        ref?.onClose.subscribe((deletedIds: string[] | undefined) => {
-            if (Array.isArray(deletedIds) && deletedIds.length > 0) {
-                this.applyDeletions(deletedIds);
-            }
-        });
+        this.conflictDialogGroups.set(groups);
+        this.conflictDialogDetails.set(detailsMap);
+        this.conflictDialogVisible.set(true);
+    }
+
+    /** The dialog reports the ids it deleted once every conflict is resolved. */
+    onConflictsResolved(deletedIds: string[]): void {
+        this.conflictDialogVisible.set(false);
+        if (deletedIds.length > 0) {
+            this.applyDeletions(deletedIds);
+        }
     }
 
     /**
@@ -185,18 +197,18 @@ export class MemirisMemoriesListComponent implements OnInit {
         if (md) {
             const updated: MemirisMemoryDataDTO = {
                 memories: md.memories.filter((m) => !toDelete.has(m.id)),
-                learnings: (md.learnings ?? []).map((l) => ({ ...l, memories: (l.memories ?? []).filter((id) => !toDelete.has(id)) })),
-                connections: (md.connections ?? []).map((c) => ({ ...c, memories: (c.memories ?? []).filter((id) => !toDelete.has(id)) })),
+                learnings: (md.learnings ?? []).map((l) => cloneWith(l, { memories: (l.memories ?? []).filter((id) => !toDelete.has(id)) })),
+                connections: (md.connections ?? []).map((c) => cloneWith(c, { memories: (c.memories ?? []).filter((id) => !toDelete.has(id)) })),
             };
             this.memoryData.set(updated);
         }
         this.open.update((o) => {
-            const copy = { ...o };
+            const copy = deepClone(o);
             for (const id of deletedIds) delete copy[id];
             return copy;
         });
         this.deleting.update((d) => {
-            const copy = { ...d };
+            const copy = deepClone(d);
             for (const id of deletedIds) delete copy[id];
             return copy;
         });

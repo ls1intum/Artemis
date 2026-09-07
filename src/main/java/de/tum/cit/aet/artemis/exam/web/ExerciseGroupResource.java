@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,17 +33,23 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
+import de.tum.cit.aet.artemis.exam.service.ExerciseGroupService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 
 /**
@@ -49,6 +57,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-groups")
 @RestController
 @RequestMapping("api/exam/")
 public class ExerciseGroupResource {
@@ -74,8 +83,13 @@ public class ExerciseGroupResource {
 
     private final ExamImportService examImportService;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseGroupService exerciseGroupService;
+
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService) {
+            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
+            ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -83,36 +97,42 @@ public class ExerciseGroupResource {
         this.exerciseDeletionService = exerciseDeletionService;
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
+        this.exerciseRepository = exerciseRepository;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
      * POST /courses/{courseId}/exams/{examId}/exercise-groups : Create a new exercise group.
      *
-     * @param courseId      the course to which the exercise group belongs to
-     * @param examId        the exam to which the exercise group belongs to
-     * @param exerciseGroup the exercise group to create
-     * @return the ResponseEntity with status 201 (Created) and with the new exerciseGroup as body,
+     * @param courseId               the course to which the exercise group belongs to
+     * @param examId                 the exam to which the exercise group belongs to
+     * @param exerciseGroupCreateDTO the exercise group to create
+     * @return the ResponseEntity with status 201 (Created) and with the new exercise group as body,
      *         or with status 400 (Bad Request) if the exerciseGroup has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
+    public ResponseEntity<ExerciseGroupDTO> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroupCreateDTO exerciseGroupCreateDTO)
             throws URISyntaxException {
-        log.debug("REST request to create an exercise group : {}", exerciseGroup);
-        if (exerciseGroup.getId() != null) {
+        log.debug("REST request to create an exercise group : {}", exerciseGroupCreateDTO);
+        if (exerciseGroupCreateDTO.id() != null) {
             throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
-        if (exerciseGroup.getExam() == null) {
-            throw new ConflictException("The exercise group has to belong no an exam.", ENTITY_NAME, "missingExam");
+        if (exerciseGroupCreateDTO.exam() == null) {
+            throw new ConflictException("The exercise group has to belong to an exam.", ENTITY_NAME, "missingExam");
         }
 
-        if (!exerciseGroup.getExam().getId().equals(examId)) {
+        if (!examId.equals(exerciseGroupCreateDTO.exam().id())) {
             throw new ConflictException("The exam connected to this group does not have the given exam id.", ENTITY_NAME, "wrongExamId");
         }
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
+
+        // The persisted entity is built from the DTO's title / mandatory flag only; the target exam comes from the path
+        // (the DTO's exam reference is validated above, never persisted).
+        ExerciseGroup exerciseGroup = exerciseGroupCreateDTO.toEntity();
 
         // Save the exerciseGroup as part of the exam to ensure that the order column is set correctly
         Exam examFromDB = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
@@ -120,7 +140,8 @@ public class ExerciseGroupResource {
         Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().getLast();
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId()))
+                .body(ExerciseGroupDTO.of(savedExerciseGroup));
     }
 
     /**
@@ -133,7 +154,8 @@ public class ExerciseGroupResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroupUpdateDTO exerciseGroupUpdateDTO) {
+    public ResponseEntity<ExerciseGroupDTO> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestBody ExerciseGroupUpdateDTO exerciseGroupUpdateDTO) {
         log.debug("REST request to update an exercise group : {}", exerciseGroupUpdateDTO);
 
         if (exerciseGroupUpdateDTO.id() == null) {
@@ -150,7 +172,37 @@ public class ExerciseGroupResource {
         exerciseGroupUpdateDTO.applyTo(exerciseGroup);
 
         ExerciseGroup result = exerciseGroupRepository.save(exerciseGroup);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ExerciseGroupDTO.of(result));
+    }
+
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group : Move an exam exercise into a
+     * different exercise group of the same exam.
+     * <p>
+     * Blocked once a student exam exists: generation has already picked one exercise per group, so a later move would
+     * desync those selections and the exam's point totals.
+     *
+     * @param courseId      the course to which the exam belongs to
+     * @param examId        the exam to which the exercise and both exercise groups belong to
+     * @param exerciseId    the id of the exercise to move
+     * @param assignmentDTO the target exercise group
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Void> moveExerciseToGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseId,
+            @Valid @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
+        log.debug("REST request to move exercise {} in exam {} to exercise group {}", exerciseId, examId, assignmentDTO.exerciseGroupId());
+
+        ExerciseGroup targetGroup = exerciseGroupRepository.findByIdElseThrow(assignmentDTO.exerciseGroupId());
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, targetGroup);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.getExam() == null || !examId.equals(exercise.getExam().getId())) {
+            throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
+        }
+        exerciseGroupService.moveExerciseToGroup(examId, exerciseId, targetGroup.getId());
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -191,13 +243,13 @@ public class ExerciseGroupResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
+    public ResponseEntity<ExerciseGroupDTO> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
 
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(exerciseGroupId);
         examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, exerciseGroup);
 
-        return ResponseEntity.ok(exerciseGroup);
+        return ResponseEntity.ok(ExerciseGroupDTO.of(exerciseGroup));
     }
 
     /**
@@ -209,13 +261,14 @@ public class ExerciseGroupResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<ExerciseGroupDTO>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
         List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
-        return ResponseEntity.ok(exerciseGroupList);
+        List<ExerciseGroupDTO> exerciseGroupDTOs = exerciseGroupList.stream().map(ExerciseGroupDTO::ofWithExercises).toList();
+        return ResponseEntity.ok(exerciseGroupDTOs);
     }
 
     /**

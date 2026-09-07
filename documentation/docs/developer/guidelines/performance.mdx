@@ -120,10 +120,120 @@ Given that courses can have up to 2,000 students, simulate this scale during tes
 
 Perform load testing to ensure that the application can handle the expected volume of data efficiently.
 
-Example:
+Artemis has its own load generator, the [Benchmarking Tool](/admin/benchmarking-tool), which drives a
+full exam through the real REST, WebSocket and git paths rather than a synthetic query mix. That page
+describes how to run a comparable ladder of student counts, what a simulated student does and does not
+have in common with a real one, and how to read which action degraded first.
 
-Use tools like `JMeter` or `Gatling` to simulate concurrent users and large datasets.
-Test both query performance and memory usage under heavy load.
+Measure the server as well as the client during a run. A result that reports only response times cannot
+distinguish an endpoint that got slower from a node that ran out of CPU, and the two call for opposite
+fixes.
+
+## Round Trips Per Request
+
+Under exam load the cost of an endpoint is dominated by how many times it goes to the database, not by
+how expensive any single statement is. Spring Data's `SimpleJpaRepository` is annotated
+`@Transactional(readOnly = true)`, so a repository call made outside an existing transaction opens and
+closes one of its own. What reads in the code like a single statement is two round trips, the statement
+and the commit or rollback. Twenty repository calls in a REST method are forty round trips before a
+single row reaches the client.
+
+Three consequences follow, and they matter more than micro-optimising any one query.
+
+### Guard Hot Endpoints With a Query Count Test
+
+Query counts do not creep up in one large step. They grow by one call at a time, each of them
+reasonable on its own. Pin the count of an endpoint that runs during an exam so that the next one shows
+up as a failing test rather than as a slow exam:
+
+```java
+assertThatDb(() -> request.get("/api/exam/courses/" + courseId + "/exams/" + examId + "/student-exams/" + studentExamId + "/conduction",
+        HttpStatus.OK, StudentExam.class))
+        .hasBeenCalledAtMostTimes(CONDUCTION_QUERY_COUNT);
+```
+
+Set the asserted number to what the endpoint issues today, and write down in a comment what those
+queries are for. A budget with slack in it accepts the next regression silently, which is the one thing
+the test exists to prevent. When a change legitimately adds a query, move the number and say why in the
+commit.
+
+### Prefer a Modifying Query to Saving a Detached Entity
+
+Calling `save()` on an entity that carries an id but is not managed makes Hibernate read the row before
+it writes it, so changing one column costs a select, an update and a commit. Where the columns that
+change are known, write the update instead:
+
+```java
+@Modifying
+@Transactional // ok because of modifying query
+@Query("""
+       UPDATE StudentParticipation p
+       SET p.initializationState = :state
+       WHERE p.id = :participationId
+       """)
+void updateInitializationState(@Param("participationId") long participationId, @Param("state") InitializationState state);
+```
+
+Two things to check before reaching for one. The entity must already exist, since an update against a
+`null` id silently writes nothing where a `save()` would have inserted. And the caller must not depend
+on the merged instance that `save()` returns, because a modifying query gives it nothing back and any
+lazy association it was about to touch is still detached.
+
+### Watch Eager To-One Associations
+
+Because each repository call carries its own transaction, the persistence context does not survive from
+one call to the next. An eager `@ManyToOne` is therefore re-read every time a call returns the owning
+entity, not once per request. Two calls that each return the same participation read its exercise
+twice.
+
+Fetch the chain the endpoint needs in the query that loads the root, rather than letting Hibernate
+discover it:
+
+```java
+@Query("""
+       SELECT p
+       FROM StudentParticipation p
+           LEFT JOIN FETCH p.exercise ex
+           LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+           LEFT JOIN FETCH exerciseGroup.exam exam
+       WHERE p.id = :participationId
+       """)
+Optional<StudentParticipation> findByIdWithExerciseChain(@Param("participationId") long participationId);
+```
+
+Joining to-one associations this way does not multiply result rows, so it is unrelated to the
+cartesian-product problem described under [Optimal Use of Left Join Fetch](#optimal-use-of-left-join-fetch).
+The over-fetch check in CI counts fetch joins without distinguishing the two, so a query that only walks
+a to-one chain may legitimately sit above the usual threshold.
+
+### Load the Acting User Once
+
+Authorisation is the part of a request most likely to read the same rows repeatedly, because every
+check is written to be safe on its own. Load the user once, with what the checks need:
+
+```java
+User user = userRepository.getUserWithCourseRolesAndAuthorities();
+```
+
+With the course roles present, a role check resolves in memory instead of issuing an `EXISTS` query,
+and with the authorities initialised nothing downstream re-reads the user to inspect them. Passing that
+user into the check, rather than letting the check look it up, is what keeps the saving.
+
+### Validate Against a Projection, Not an Entity Graph
+
+A check that needs three fields should read three fields. Loading an entity to compare two dates pulls
+in its eager associations as well, and each of those is a join or a second statement. A record
+projection with a database-side count answers the same question in one statement:
+
+```java
+@Query("""
+       SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO(se.id, se.submitted, se.startedDate, se.workingTime,
+           (SELECT COUNT(ex) FROM se.exercises ex WHERE ex.id = :exerciseId))
+       FROM StudentExam se
+       WHERE se.exam.id = :examId AND se.user.id = :userId AND se.testRun = FALSE
+       """)
+Optional<StudentExamSubmissionGateDTO> findSubmissionGate(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+```
 
 ## Paging
 

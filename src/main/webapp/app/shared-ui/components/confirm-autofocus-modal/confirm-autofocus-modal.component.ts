@@ -3,6 +3,7 @@ import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dy
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface ConfirmAutofocusModalData {
     title: string;
@@ -19,20 +20,11 @@ export interface ConfirmAutofocusModalResult {
 }
 
 export function openConfirmAutofocusDialog(dialogService: DialogService, data: ConfirmAutofocusModalData, options: Partial<DynamicDialogConfig> = {}): DynamicDialogRef | null {
-    return dialogService.open(ConfirmAutofocusModalComponent, {
-        width: '50rem',
-        modal: true,
-        closable: false,
-        closeOnEscape: true,
-        dismissableMask: false,
-        ...options,
-        data: {
-            translateText: false,
-            textIsMarkdown: false,
-            confirmDisabled: false,
-            ...data,
-        } satisfies ConfirmAutofocusModalData,
-    });
+    // `data` is assigned after the copy, never inside it: it can carry a live TemplateRef (contentRef), which must
+    // reach the dialog by reference rather than as a detached clone.
+    const config = cloneWith({ width: '50rem', modal: true, closable: false, closeOnEscape: true, dismissableMask: false }, options);
+    config.data = cloneWith({ translateText: false, textIsMarkdown: false, confirmDisabled: false }, data) satisfies ConfirmAutofocusModalData;
+    return dialogService.open(ConfirmAutofocusModalComponent, config);
 }
 
 @Component({

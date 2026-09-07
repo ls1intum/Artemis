@@ -25,6 +25,7 @@
         "posts": "Created Posts",
         "resolved_posts": "Resolved Posts",
         "score_distribution": "Score distribution",
+        "scoreDistributionChartAriaLabel": "Bar chart showing how many participants fall into each score range",
         "submissionsTitle": "# of submissions",
         "active_usersTitle": "# of users",
         "logged_in_usersTitle": "# of users",

@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -44,6 +45,26 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Repository
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
+
+    /**
+     * Reads who a submission belongs to, without loading the submission entity.
+     * <p>
+     * Returns a row whenever the submission exists, so an empty result means "no such submission". Both fields are null
+     * when the submission has no student participation, which mirrors the previous entity-based check skipping the
+     * ownership comparison in that case.
+     *
+     * @param submissionId the id of the submission
+     * @return the owning student login and team short name, if the submission exists
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO(student.login, team.shortName)
+            FROM Submission submission
+                LEFT JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                LEFT JOIN participation.student student
+                LEFT JOIN participation.team team
+            WHERE submission.id = :submissionId
+            """)
+    Optional<SubmissionOwnerDTO> findOwnerBySubmissionId(@Param("submissionId") long submissionId);
 
     /**
      * Count the number of submissions for a given set of exercises.
@@ -225,11 +246,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
+     * Get all currently locked submissions across the given exercises (used for an exam).
      * These are all submissions for which users started, but did not yet finish the assessment.
+     * <p>
+     * Filters the denormalized {@code result.exerciseId} instead of walking submission → participation → exercise →
+     * exercise group → exam, mirroring {@link #countLockedSubmissionsByExerciseIds}. Example results are excluded
+     * explicitly, because the join this replaced went through the participation and example submissions have none.
      *
-     * @param examId the id of the course
-     * @return currently locked submissions for the given exam
+     * @param exerciseIds the ids of the exam's exercises
+     * @return currently locked submissions across the given exercises, each carrying only its locked results
      */
     @Query("""
             SELECT DISTINCT s
@@ -238,9 +263,10 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id IS NOT NULL
                 AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
-    List<Submission> getLockedSubmissionsAndResultsByExamId(@Param("examId") Long examId);
+    List<Submission> getLockedSubmissionsAndResultsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Checks if a submission for the given participation exists.
@@ -413,7 +439,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :submissionId
@@ -425,7 +450,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH submission.participation p

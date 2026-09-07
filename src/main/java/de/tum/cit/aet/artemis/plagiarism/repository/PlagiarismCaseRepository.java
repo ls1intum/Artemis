@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
@@ -245,22 +246,72 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
             """)
     List<PlagiarismCaseDTO> findPlagiarismCaseDtoByCourseId(@Param("courseId") Long courseId);
 
-    @Query("""
-            SELECT plagiarismCase
-            FROM PlagiarismCase plagiarismCase
-                LEFT JOIN plagiarismCase.team.students teamStudent
-            WHERE plagiarismCase.exercise.course.id = :courseId
-                AND (plagiarismCase.student.id = :studentId OR teamStudent.id = :studentId)
-            """)
-    List<PlagiarismCase> findByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
-
+    /**
+     * The plagiarism cases affecting one student in a course, including those attached to their team.
+     * <p>
+     * Fetches the team and its members for the same reason as {@link #findByStudentIdAndExerciseIds}: consumers resolve
+     * a team case through {@code PlagiarismCase#getStudents()}, which walks {@code team.students}. The filtering join
+     * is kept separate from the fetch joins so that restricting to the requesting user cannot truncate the fetched
+     * membership.
+     *
+     * @param courseId  the course to look in
+     * @param studentId the student whose cases are wanted
+     * @return the student's plagiarism cases, individual and team
+     */
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.team.students filterStudent
+                LEFT JOIN FETCH plagiarismCase.team fetchedTeam
+                LEFT JOIN FETCH fetchedTeam.students
+            WHERE plagiarismCase.exercise.course.id = :courseId
+                AND (plagiarismCase.student.id = :studentId OR filterStudent.id = :studentId)
+            """)
+    List<PlagiarismCase> findByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    /**
+     * The plagiarism cases affecting one student in the given exercises, including those attached to their team.
+     * <p>
+     * The team and its members are fetched, not merely joined: consumers resolve a team case to its members through
+     * {@code PlagiarismCase#getStudents()}, which walks {@code team.students} and would otherwise fail outside a
+     * session. The filtering join is kept separate from the fetch joins so that restricting to the requesting user
+     * cannot truncate the fetched membership.
+     *
+     * @param userId      the student whose cases are wanted
+     * @param exerciseIds the exercises to look in
+     * @return the student's plagiarism cases, individual and team
+     */
+    @Query("""
+            SELECT DISTINCT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.team.students filterStudent
+                LEFT JOIN FETCH plagiarismCase.team fetchedTeam
+                LEFT JOIN FETCH fetchedTeam.students
             WHERE plagiarismCase.exercise.id IN :exerciseIds
-                AND plagiarismCase.student.id = :userId
+                AND (plagiarismCase.student.id = :userId OR filterStudent.id = :userId)
             """)
     List<PlagiarismCase> findByStudentIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Projects only the plagiarism fields that affect one student's course score. Team cases are resolved to the
+     * requesting team member in the query, so the calculator receives the same shape for individual and team exercises.
+     *
+     * @param userId      the requesting student
+     * @param exerciseIds the visible course exercises
+     * @return score-relevant plagiarism cases for the student
+     */
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO(
+                COALESCE(plagiarismCase.student.id, teamStudent.id),
+                plagiarismCase.exercise.id,
+                plagiarismCase.verdict,
+                plagiarismCase.verdictPointDeduction)
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.team.students teamStudent
+            WHERE plagiarismCase.exercise.id IN :exerciseIds
+                AND (plagiarismCase.student.id = :userId OR teamStudent.id = :userId)
+            """)
+    List<PlagiarismCaseScoreDTO> findScoreInformationByStudentIdAndExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
             SELECT DISTINCT plagiarismCase

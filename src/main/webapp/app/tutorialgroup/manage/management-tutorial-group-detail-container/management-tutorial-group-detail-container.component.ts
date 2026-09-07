@@ -23,6 +23,7 @@ import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariab
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
@@ -80,10 +81,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                 if (!success || !tutorialGroup) {
                     return;
                 }
-                this.tutorialGroup.set({
-                    ...tutorialGroup,
-                    sessions: tutorialGroup.sessions.filter((session) => session.id !== tutorialGroupSessionId),
-                });
+                this.tutorialGroup.set(cloneWith(tutorialGroup, { sessions: tutorialGroup.sessions.filter((session) => session.id !== tutorialGroupSessionId) }));
             });
     }
 

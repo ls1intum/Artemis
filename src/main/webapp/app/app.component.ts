@@ -18,6 +18,7 @@ import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.compon
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
+import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundation/util/navbar.util';
 
 @Component({
     selector: 'jhi-app',
@@ -57,6 +58,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private testRunSubscription?: Subscription;
     private ltiSubscription?: Subscription;
     private globalSearchSubscription?: Subscription;
+    private stopObservingShellMetrics?: () => void;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
@@ -130,6 +132,9 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.showSkeleton.set(shouldShowSkeletonNow);
             }
             if (event instanceof NavigationEnd) {
+                // The navbar and footer are re-created with the skeleton, and their heights change with the
+                // breadcrumbs; the shells size their content region from both, so re-target the observer.
+                reattachShellMetricsObserver();
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
                 this.usesModuleBackground.set(this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root));
                 this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
@@ -168,6 +173,7 @@ export class AppComponent implements OnInit, OnDestroy {
             this.globalSearchEnabled.set(isActive);
         });
         this.themeService.initialize();
+        this.stopObservingShellMetrics = observeShellMetrics();
     }
 
     /**
@@ -190,5 +196,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.testRunSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.globalSearchSubscription?.unsubscribe();
+        this.stopObservingShellMetrics?.();
     }
 }

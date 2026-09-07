@@ -9,7 +9,7 @@ import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/foundation/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -60,6 +60,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise';
 
     protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
+    protected readonly MAX_PACKAGE_NAME_LENGTH = MAX_PACKAGE_NAME_LENGTH;
 
     ngAfterViewInit() {
         this.fieldSubscriptions.push(this.selectLanguageField()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));

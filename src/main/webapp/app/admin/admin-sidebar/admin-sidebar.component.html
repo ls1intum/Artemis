@@ -1,12 +1,13 @@
-<div class="sidebar-container flex h-full min-h-full flex-col justify-between bg-[var(--module-bg)]" [class.collapsed]="isNavbarCollapsed()" data-testid="admin-sidebar">
+<div class="sidebar-container flex h-full min-h-full flex-col justify-between bg-(--module-bg)" [class.collapsed]="isNavbarCollapsed() || !canExpand()" data-testid="admin-sidebar">
     <div class="flex-1 overflow-x-hidden overflow-y-auto">
         <!-- Admin Header -->
         <div id="admin-header" class="flex items-center p-3 no-underline">
-            <div class="admin-icon flex h-9 min-w-9 items-center justify-center rounded-full bg-[var(--course-image-bg)] text-color">
+            <div class="admin-icon flex h-9 min-w-9 items-center justify-center rounded-full bg-(--course-image-bg) text-color">
                 <fa-icon [icon]="faUserShield" />
             </div>
             @if (!isNavbarCollapsed()) {
-                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.main"></div>
+                <!-- Short form: the full "Administration" does not fit beside the icon in the rail. -->
+                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.short"></div>
             }
         </div>
 
@@ -18,11 +19,11 @@
                     <!-- Group Header -->
                     @if (!isNavbarCollapsed()) {
                         <li class="nav-group-header pt-2 pb-1">
-                            <span class="px-3 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
+                            <span class="px-2 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
                         </li>
                     } @else if (groupIndex > 0) {
                         <li>
-                            <hr class="mx-2 my-2 border-[var(--p-content-border-color)] opacity-50" />
+                            <hr class="mx-2 my-2 border-surface opacity-50" />
                         </li>
                     }
 
@@ -30,16 +31,16 @@
                     @for (item of group.items; track item.routerLink) {
                         <li>
                             <a
-                                class="nav-link-sidebar flex items-center px-3 py-2 whitespace-nowrap no-underline"
+                                class="nav-link-sidebar flex items-center px-2 py-2 whitespace-nowrap no-underline"
                                 [attr.id]="item.testId"
-                                [class.collapsed]="isNavbarCollapsed()"
+                                [class.collapsed]="isNavbarCollapsed() || !canExpand()"
                                 [routerLink]="item.routerLink"
                                 routerLinkActive="active"
                                 [title]="item.title"
                             >
-                                <fa-icon [fixedWidth]="true" [icon]="item.icon" class="ms-2 me-3" />
+                                <fa-icon [fixedWidth]="true" [icon]="item.icon" />
                                 @if (!isNavbarCollapsed()) {
-                                    <span class="auto-collapse" [jhiTranslate]="item.translation"></span>
+                                    <span class="auto-collapse ms-2" [jhiTranslate]="item.translation"></span>
                                 }
                             </a>
                         </li>
@@ -49,12 +50,12 @@
         </div>
     </div>
 
-    <div class="mb-2 shrink-0 bg-[var(--module-bg)]">
+    <div class="my-2 shrink-0 bg-(--module-bg)">
         @if (!isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="double-arrow flex w-full cursor-pointer items-center justify-end border-none bg-transparent px-2 pe-[10px] font-[inherit] text-inherit"
-                [class.menu-closed]="isNavbarCollapsed()"
+                class="flex w-full justify-end border-none bg-transparent px-2"
+                [class.menu-collapsed]="isNavbarCollapsed()"
                 [tumUiTooltip]="'global.menu.admin.collapseMenu' | artemisTranslate"
                 tumUiTooltipPlacement="right"
                 (click)="toggleCollapseState.emit()"
@@ -71,15 +72,15 @@
         @if (isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="double-arrow mb-2 flex w-full cursor-pointer items-center justify-center border-none bg-transparent pe-[10px] font-[inherit] text-inherit"
-                [class.menu-closed]="isNavbarCollapsed()"
+                class="w-full border-none bg-transparent text-center"
+                [class.menu-collapsed]="isNavbarCollapsed()"
                 [tumUiTooltip]="'global.menu.admin.expandMenu' | artemisTranslate"
                 tumUiTooltipPlacement="right"
                 (click)="toggleCollapseState.emit()"
                 [attr.aria-expanded]="!isNavbarCollapsed()"
                 data-testid="admin-sidebar-expand"
             >
-                <span class="double-arrow-icon inline-flex min-w-10 items-center gap-1">
+                <span class="double-arrow-icon gap-1">
                     <fa-icon class="-me-[10px] fa-xs" [icon]="faChevronRight" />
                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                 </span>

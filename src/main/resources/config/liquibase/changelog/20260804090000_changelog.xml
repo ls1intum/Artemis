@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Records when an account's credentials last changed, so that a session established before that point is not
+        extended any further. It is compared against the token's issue date at rotation only - roughly once per rotation
+        interval per session - not on every request.
+
+        Left NULL for existing accounts: a NULL means "never changed since this column existed", so no current session is
+        invalidated by the upgrade itself.
+    -->
+    <changeSet id="20260804090000-1" author="krusche">
+        <addColumn tableName="jhi_user">
+            <column name="credentials_changed_date" type="datetime"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

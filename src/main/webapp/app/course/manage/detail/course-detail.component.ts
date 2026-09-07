@@ -39,6 +39,7 @@ import { ControlCenterComponent } from 'app/course/manage/control-center/control
 import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -228,8 +229,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.isAthenaEnabled()) {
             athenaDetails.push({
                 type: DetailType.Boolean,
-                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
-                data: { boolean: currentCourse?.restrictedAthenaModulesAccess },
+                title: 'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
+                data: { boolean: currentCourse?.athenaGradingFeedbackEnabled },
+            });
+            athenaDetails.push({
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
+                data: { boolean: currentCourse?.athenaFormativeFeedbackEnabled },
             });
         }
         return athenaDetails;
@@ -406,7 +412,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             const currentCourse = this.course();
             if (currentCourse) {
-                this.course.set(Object.assign(new Course(), currentCourse, { organizations }));
+                this.course.set(hydrate(new Course(), currentCourse, { organizations }));
                 this.getCourseDetailSections();
             }
         });

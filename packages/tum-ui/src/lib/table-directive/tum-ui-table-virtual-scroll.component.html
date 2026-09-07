@@ -1,0 +1,32 @@
+<div
+    role="table"
+    class="tum-ui-vs-table tum:flex tum:min-h-0 tum:flex-col"
+    [style.flex]="isFlexHeight() ? '1 1 0%' : null"
+    [style.min-width]="minWidth()"
+    [attr.aria-describedby]="ariaDescribedBy()"
+    [attr.aria-rowcount]="items().length + 1"
+>
+    <div role="row" aria-rowindex="1" [class]="headerClasses()">
+        <ng-content />
+    </div>
+
+    <cdk-virtual-scroll-viewport
+        [itemSize]="itemSize()"
+        class="tum-ui-vs-viewport"
+        [style.flex]="isFlexHeight() ? '1 1 0%' : null"
+        [style.min-height]="isFlexHeight() ? 0 : null"
+        [style.height]="viewportHeight()"
+        role="rowgroup"
+        tabindex="0"
+    >
+        <div
+            *cdkVirtualFor="let item of items(); let i = index; trackBy: effectiveTrackBy()"
+            role="row"
+            [attr.aria-rowindex]="i + 2"
+            [class]="rowClasses() + stripeClass(i)"
+            [style.height.px]="itemSize()"
+        >
+            <ng-container [ngTemplateOutlet]="rowTemplate()" [ngTemplateOutletContext]="{ $implicit: item, index: i }" />
+        </div>
+    </cdk-virtual-scroll-viewport>
+</div>
