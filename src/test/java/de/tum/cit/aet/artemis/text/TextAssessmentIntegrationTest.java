@@ -320,6 +320,22 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getTextSubmissionWithoutAssessmentAndLock_correctionRoundBeyondExercise_badRequest() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        exerciseDueDatePassed();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("lock", "true");
+        params.add("correction-round", "1");
+
+        request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST, TextSubmissionWithoutAssessmentDTO.class,
+                params);
+
+        assertThat(resultRepository.existsBySubmissionId(textSubmission.getId())).as("no result is created for a correction round the exercise does not have").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForNonExistingSubmission() throws Exception {
         TextParticipationDTO participation = request.get("/api/text/text-submissions/345395769256365/for-assessment", HttpStatus.NOT_FOUND, TextParticipationDTO.class);
         assertThat(participation).as("participation should not be found").isNull();

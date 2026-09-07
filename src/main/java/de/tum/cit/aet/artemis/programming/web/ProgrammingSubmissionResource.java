@@ -398,6 +398,7 @@ public class ProgrammingSubmissionResource {
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
@@ -415,7 +416,6 @@ public class ProgrammingSubmissionResource {
 
         if (submission != null) {
             if (lockSubmission) {
-                programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
                 // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
                 submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             }
