@@ -6,12 +6,9 @@ import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExercis
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,7 +24,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -55,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -115,9 +110,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    @MockitoSpyBean
-    private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
-
     @Autowired
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
@@ -145,6 +137,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
 
     @AfterEach
     void tearDown() {
@@ -511,14 +506,15 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         addedAuxiliaryRepository.setDescription("Must not be created for a rejected update");
         addedAuxiliaryRepository.setCheckoutDirectory("additional");
         programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(addedAuxiliaryRepository)));
-
-        clearInvocations(programmingExerciseRepositoryService);
+        var auxiliaryRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName("additional"));
+        Path auxiliaryRepositoryPath = auxiliaryRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(auxiliaryRepositoryPath).doesNotExist();
 
         request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
                 HttpStatus.BAD_REQUEST);
 
         assertThat(auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
-        verify(programmingExerciseRepositoryService, never()).handleAuxiliaryRepositoriesWhenUpdatingExercises(any(), any());
+        assertThat(auxiliaryRepositoryPath).doesNotExist();
     }
 
     @Test
