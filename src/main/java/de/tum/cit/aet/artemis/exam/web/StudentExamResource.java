@@ -320,6 +320,7 @@ public class StudentExamResource {
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
+        checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
         studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
@@ -337,14 +338,31 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        // Only the id is compared and passed on, so the id-only lookup is enough.
-        long currentUserId = userRepository.getUserIdElseThrow();
+        // The user is needed for the test-run course access check below, which resolves the course roles of this very user.
+        User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         validateExamRequestParametersElseThrow(studentExam, examId, courseId);
-        if (!Objects.equals(currentUserId, studentExam.getUser().getId())) {
+        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUserId, examId, studentExam.isTestRun()));
+        checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUser.getId(), examId, studentExam.isTestRun()));
+    }
+
+    /**
+     * Ensures that the owner of a test run still has instructor access to the course. Test run ownership survives a
+     * role revocation, so ownership alone must not keep an endpoint open for a former instructor. Non test run student
+     * exams are unaffected: their parameters were already validated by the caller and the check is an extra query.
+     *
+     * @param studentExam the student exam the request targets
+     * @param examId      the exam id from the path
+     * @param courseId    the course id from the path
+     * @param currentUser the current user
+     */
+    private void checkCourseAccessForTestRunElseThrow(StudentExam studentExam, Long examId, Long courseId, User currentUser) {
+        if (studentExam.isTestRun()) {
+            studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
     }
 
     /**

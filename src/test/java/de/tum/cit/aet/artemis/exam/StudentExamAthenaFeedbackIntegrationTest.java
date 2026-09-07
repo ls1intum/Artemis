@@ -798,6 +798,25 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void restRequestAthenaFeedback_shouldReturnForbiddenForOwnTestRunAfterInstructorAccessWasRevoked() throws Exception {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+
+            // the test run stays owned by its creator, so only the course access check can close the endpoint again
+            userUtilService.unenrollUserFromCourse(instructor, course);
+
+            String requestUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/request-feedback";
+            request.postWithoutResponseBody(requestUrl, null, HttpStatus.FORBIDDEN);
+
+            String usageUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/athena-feedback-usage";
+            request.get(usageUrl, HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
+        }
+
+        @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void restRequestAthenaFeedback_shouldReturnOkAndInvokeApis() throws Exception {
             Exam testExam = examUtilService.addTestExam(course);
