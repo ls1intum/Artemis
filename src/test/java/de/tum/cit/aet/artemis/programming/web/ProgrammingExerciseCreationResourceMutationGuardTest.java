@@ -9,8 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -64,7 +62,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
         when(userRepository.getUser()).thenReturn(user);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(leaseRelease));
         resource = new ProgrammingExerciseCreationResource(authCheckService, courseService, validationService, creationUpdateService, mock(StaticCodeAnalysisService.class),
-                Optional.empty(), repository, userRepository, exerciseVersionService, mutationGuard);
+                repository, userRepository, exerciseVersionService, mock(de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService.class), mutationGuard);
     }
 
     @Test
@@ -76,10 +74,12 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(requestExercise)).thenReturn(course);
         when(creationUpdateService.createProgrammingExercise(requestExercise, false)).thenReturn(createdExercise);
 
-        var response = resource.createProgrammingExercise(requestExercise, false);
+        var request = mock(de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO.class);
+        when(request.toEntity()).thenReturn(requestExercise);
+        var response = resource.createProgrammingExercise(request, false);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isSameAs(createdExercise);
+        assertThat(response.getBody().id()).isEqualTo(EXERCISE_ID);
         var order = inOrder(creationUpdateService, exerciseVersionService);
         order.verify(creationUpdateService).createProgrammingExercise(requestExercise, false);
         order.verify(exerciseVersionService).createExerciseVersionSynchronously(createdExercise, user);

@@ -61,16 +61,10 @@
                 },
                 "createHint": "Wähle einen Aufgabentyp. Alle Details kannst du im nächsten Schritt anpassen.",
                 "importHint": "Wähle aus, was du importieren möchtest.",
-                "generateHint": "Beginne mit einer Beschreibung der Lehrperson. Artemis erstellt die Aufgabe und generiert und prüft alle Lehrartefakte, bevor sie gespeichert werden.",
-                "generateProgramming": {
-                    "title": "Programmieraufgabe",
-                    "description": "Konfiguriere eine Java-Maven- oder Gradle-Aufgabe und beschreibe, was Studierende lernen und implementieren sollen."
-                },
+                "generateHint": "Beschreibe, was die Studierenden lernen sollen. Prüfe und überarbeite die generierte Aufgabe vor der Veröffentlichung.",
                 "cta": {
                     "create": "Erstellen",
-                    "generate": "Generieren",
-                    "select": "Auswählen",
-                    "configure": "Generierung konfigurieren"
+                    "select": "Auswählen"
                 },
                 "group": {
                     "title": "Aufgabengruppe",

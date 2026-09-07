@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -50,6 +50,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
@@ -62,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("submission/submissions")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {
@@ -275,8 +278,9 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/programming-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+    public ResponseEntity<List<ProgrammingSubmissionForAssessmentDTO>> getAllProgrammingSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
@@ -298,7 +302,10 @@ public class ProgrammingSubmissionResource {
         if (!examMode) {
             programmingSubmissions.forEach(Submission::removeNullResults);
         }
-        return ResponseEntity.ok().body(programmingSubmissions);
+        // The nested exercise is not part of this list payload (the dashboard already holds the exercise), matching
+        // the service, which detaches it from the participations before returning them.
+        var submissionDTOs = programmingSubmissions.stream().map(submission -> ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission, null)).toList();
+        return ResponseEntity.ok().body(submissionDTOs);
     }
 
     /**
@@ -310,7 +317,7 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("programming-submissions/{submissionId}/lock")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
         var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
@@ -326,6 +333,7 @@ public class ProgrammingSubmissionResource {
         }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
@@ -349,25 +357,25 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 
-        participation.setExercise(programmingExercise);
-        // prepare programming submission for response
+        // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
-        // remove automatic results before sending to client
-        // The result of the requested correction round, which used to be read off the position of the result inside the
-        // submission's result list and is now stored on the result itself.
+        // Only the manual result of the requested correction round belongs in the response, read off the correction
+        // round stored on the result itself. The automatic results are filtered in the mapper instead of by mutating
+        // the managed submission, whose result collection is mapped with orphanRemoval.
         var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        List<Result> resultsForResponse;
         if (resultForCorrectionRound == null) {
-            programmingSubmission.setResults(Set.of());
+            resultsForResponse = List.of();
         }
         else {
             // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
             // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
             programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
-            programmingSubmission.setResults(Set.of(resultForCorrectionRound));
+            resultsForResponse = List.of(resultForCorrectionRound);
         }
 
-        return ResponseEntity.ok(programmingSubmission);
+        return ResponseEntity.ok(ProgrammingSubmissionForAssessmentDTO.of(programmingSubmission, ProgrammingExerciseResponseDTO.of(programmingExercise), resultsForResponse));
     }
 
     /**
@@ -380,7 +388,7 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
 
@@ -395,35 +403,32 @@ public class ProgrammingSubmissionResource {
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
-        ProgrammingSubmission submission;
-        if (programmingExercise.getAllowFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            // Assess manual feedback request before the due date
-            submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
-        }
-        else {
-            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound)
-                    .orElse(null);
+        ProgrammingSubmission submission = programmingSubmissionService
+                .getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound).orElse(null);
 
-            // Check if tutors can start assessing the students submission
-            programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+        // Check if tutors can start assessing the students submission
+        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+
+        if (submission == null) {
+            // Keep the genuinely empty 200 body: the dashboard reads "no submission available" from it.
+            return ResponseEntity.ok().body(null);
         }
 
-        if (submission != null) {
-            if (lockSubmission) {
-                // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
-                submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
-            }
-            submission.getParticipation().setExercise(programmingExercise);
-            programmingSubmissionService.hideDetails(submission, user);
-            // remove automatic results before sending to client
-            submission.setResults(submission.getManualResults());
-            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
-            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
-            submission.getResults().forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
+        if (lockSubmission) {
+            // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
         }
+        programmingSubmissionService.hideDetails(submission, user);
+        // Only the manual results belong in the response. Filtering happens in the mapper, never by mutating the
+        // managed submission, whose result collection is mapped with orphanRemoval.
+        Set<Result> manualResults = submission.getManualResults();
+        // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+        // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+        manualResults.forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
 
-        return ResponseEntity.ok().body(submission);
+        return ResponseEntity.ok().body(ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults));
     }
 }

@@ -3,9 +3,7 @@
         "hyperion": {
             "generation": {
                 "entry": {
-                    "title": "Generate with AI",
-                    "description": "Describe an exercise and Artemis writes the problem statement, starter code, sample solution, and tests, then builds and checks them before saving a draft.",
-                    "footnote": "Java with Maven. Runs usually take 10 to 25 minutes.",
+                    "description": "Generate a Java exercise from your brief, with a problem statement, starter code, sample solution, and tests.",
                     "action": "Generate"
                 },
                 "brief": {

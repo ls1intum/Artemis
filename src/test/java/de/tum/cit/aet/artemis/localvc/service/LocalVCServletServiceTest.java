@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,18 +22,24 @@ import java.util.OptionalLong;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -337,7 +344,7 @@ class LocalVCServletServiceTest {
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
         String projectKey = testExercise.getProjectKey();
-        Path repositoryPath = Path.of("/tmp/test-repos", projectKey, projectKey.toLowerCase() + "-tests.git");
+        Path repositoryPath = Path.of("/tmp/test-repos", projectKey, projectKey.toLowerCase(java.util.Locale.ROOT) + "-tests.git");
 
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TESTS)).thenReturn(true);
@@ -353,7 +360,7 @@ class LocalVCServletServiceTest {
     @Test
     void claimProgrammingExerciseMutationClaimsVersionableStaffRepository() {
         Repository repository = mock(Repository.class);
-        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-exercise.git");
+        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-exercise.git");
         var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
@@ -368,7 +375,7 @@ class LocalVCServletServiceTest {
     @Test
     void claimProgrammingExerciseMutationKeepsUserRepositoryUnguarded() {
         Repository repository = mock(Repository.class);
-        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-testuser.git");
+        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-testuser.git");
         var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
@@ -384,7 +391,7 @@ class LocalVCServletServiceTest {
     @Test
     void claimProgrammingExerciseMutationClaimsVersionableAuxiliaryRepository() {
         Repository repository = mock(Repository.class);
-        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-customrepo.git");
+        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-customrepo.git");
         var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
@@ -441,4 +448,54 @@ class LocalVCServletServiceTest {
     private static String basicAuthorization(String credential) {
         return "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + credential).getBytes());
     }
+
+    @Test
+    void resolveRepository_withAPathEscapingTheBaseDirectory_isNotFound(@TempDir java.nio.file.Path baseDir) {
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        // A path that climbs out of the base directory must be refused before the file system is touched, not resolved to whatever lies outside.
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("../../../../../../etc/passwd"));
+    }
+
+    @Test
+    void resolveRepository_withAPathThatDoesNotExist_isNotFound(@TempDir java.nio.file.Path baseDir) {
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC/abc-exercise.git"));
+    }
+
+    @Test
+    void resolveRepository_withASymlinkLeadingOutOfTheBaseDirectory_isNotFound(@TempDir java.nio.file.Path baseDir, @TempDir java.nio.file.Path outside) throws Exception {
+        // The path itself stays inside the base directory, so only resolving symlinks reveals that the repository is elsewhere.
+        java.nio.file.Files.createDirectories(outside.resolve("escaped.git"));
+        java.nio.file.Path project = java.nio.file.Files.createDirectories(baseDir.resolve("ABC"));
+        java.nio.file.Files.createSymbolicLink(project.resolve("abc-exercise.git"), outside.resolve("escaped.git"));
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+
+        assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC/abc-exercise.git"));
+    }
+
+    @Test
+    void resolveRepository_withCarriageReturnsInThePath_isNotFoundAndLogsNoLineBreak(@TempDir java.nio.file.Path baseDir) {
+        // A repository path comes straight from the request. Logging it unchanged would let a caller forge log lines (CWE-117), so it is sanitised before it is logged.
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", baseDir);
+        Logger logger = (Logger) LoggerFactory.getLogger(LocalVCServletService.class);
+        ListAppender<ILoggingEvent> loggedEvents = new ListAppender<>();
+        loggedEvents.start();
+        logger.addAppender(loggedEvents);
+
+        try {
+            assertThatExceptionOfType(RepositoryNotFoundException.class).isThrownBy(() -> localVCServletService.resolveRepository("ABC\r\ninjected/abc-exercise.git"));
+
+            assertThat(loggedEvents.list).as("the failed lookup is logged").isNotEmpty();
+            assertThat(loggedEvents.list).allSatisfy(
+                    event -> assertThat(event.getFormattedMessage()).as("no log line may carry a line break from the request").doesNotContain("\r").doesNotContain("\n"));
+            assertThat(loggedEvents.list).as("the path is still identifiable in the log, with the line breaks replaced")
+                    .anyMatch(event -> event.getFormattedMessage().contains("ABC__injected/abc-exercise.git"));
+        }
+        finally {
+            logger.detachAppender(loggedEvents);
+        }
+    }
+
 }

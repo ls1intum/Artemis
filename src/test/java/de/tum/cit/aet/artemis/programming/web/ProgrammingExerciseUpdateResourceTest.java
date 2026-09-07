@@ -35,7 +35,6 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
@@ -195,8 +194,8 @@ class ProgrammingExerciseUpdateResourceTest {
         ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)));
         return new ProgrammingExerciseUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), courseService, exerciseService,
                 mock(ProgrammingExerciseValidationService.class), updateService, mock(ProgrammingExerciseRepositoryService.class), mock(AuxiliaryRepositoryService.class),
-                Optional.<AthenaApi>empty(), mock(ModuleFeatureService.class), Optional.<SlideApi>empty(), Optional.<AutomaticAfterDueDateService>empty(), versionService,
-                mock(ParticipationRepository.class), mock(CompetencyExerciseLinkService.class), guard, mock(ExerciseVariantGroupService.class));
+                mock(ModuleFeatureService.class), Optional.<SlideApi>empty(), Optional.<AutomaticAfterDueDateService>empty(), versionService, mock(ParticipationRepository.class),
+                mock(CompetencyExerciseLinkService.class), guard, mock(ExerciseVariantGroupService.class));
     }
 
     private UpdateProgrammingExerciseDTO updateDto(long exerciseId) {

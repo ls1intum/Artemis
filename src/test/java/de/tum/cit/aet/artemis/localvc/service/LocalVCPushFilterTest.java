@@ -28,7 +28,7 @@ class LocalVCPushFilterTest {
     @Test
     void authorizedReceivePackHoldsMutationLeaseForCompleteFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         ProgrammingExercise exercise = exercise();
@@ -48,7 +48,7 @@ class LocalVCPushFilterTest {
     @Test
     void authorizedReceivePackReleasesMutationLeaseWhenFilterChainThrows() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         ProgrammingExercise exercise = exercise();
@@ -69,7 +69,7 @@ class LocalVCPushFilterTest {
     @Test
     void busyExerciseReturnsRetryableConflictWithoutEnteringReceivePack() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         ProgrammingExercise exercise = exercise();
@@ -90,7 +90,7 @@ class LocalVCPushFilterTest {
     @Test
     void getRequestSkipsTheMutationGuardAndPassesThroughTheFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService);
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = new MockHttpServletRequest(HttpMethod.GET.name(), "/git/TEST/test-exercise.git/info/refs");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);

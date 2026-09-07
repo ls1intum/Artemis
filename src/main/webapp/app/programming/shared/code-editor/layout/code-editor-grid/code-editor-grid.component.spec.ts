@@ -64,7 +64,7 @@ describe('CodeEditorGridComponent', () => {
         };
 
         const getDebugElement = (windowName: string) => {
-            return fixture.debugElement.query(By.css('#draggableIconFor' + windowName));
+            return fixture.debugElement.query(By.css(`[data-testid="draggableIconFor${windowName}"]`));
         };
 
         const expectAllWindowsToNotBeCollapsed = () => {

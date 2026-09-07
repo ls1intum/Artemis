@@ -74,7 +74,8 @@ class SubmissionPolicyResourceMutationGuardTest {
         SubmissionPolicyService submissionPolicyService = mock(SubmissionPolicyService.class);
         LockRepositoryPolicy policy = new LockRepositoryPolicy();
         IllegalStateException failure = new IllegalStateException("policy add failed");
-        when(submissionPolicyService.addSubmissionPolicyToProgrammingExercise(policy, exercise)).thenThrow(failure);
+        when(submissionPolicyService.addSubmissionPolicyToProgrammingExercise(org.mockito.ArgumentMatchers.any(LockRepositoryPolicy.class),
+                org.mockito.ArgumentMatchers.same(exercise))).thenThrow(failure);
         AtomicBoolean leaseHeld = new AtomicBoolean();
         ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenAnswer(invocation -> {
@@ -85,7 +86,8 @@ class SubmissionPolicyResourceMutationGuardTest {
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ParticipationAuthorizationCheckService.class), mock(ExerciseVersionService.class),
                 mock(UserRepository.class), mutationGuard);
 
-        assertThatThrownBy(() -> resource.addSubmissionPolicyToProgrammingExercise(EXERCISE_ID, policy)).isSameAs(failure);
+        assertThatThrownBy(() -> resource.addSubmissionPolicyToProgrammingExercise(EXERCISE_ID, de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO.of(policy)))
+                .isSameAs(failure);
 
         assertThat(leaseHeld).isFalse();
     }
@@ -97,10 +99,10 @@ class SubmissionPolicyResourceMutationGuardTest {
         void invoke(SubmissionPolicyResource resource) throws Exception {
             LockRepositoryPolicy policy = new LockRepositoryPolicy();
             switch (this) {
-                case ADD -> resource.addSubmissionPolicyToProgrammingExercise(EXERCISE_ID, policy);
+                case ADD -> resource.addSubmissionPolicyToProgrammingExercise(EXERCISE_ID, de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO.of(policy));
                 case REMOVE -> resource.removeSubmissionPolicyFromProgrammingExercise(EXERCISE_ID);
                 case TOGGLE -> resource.toggleSubmissionPolicy(EXERCISE_ID, true);
-                case UPDATE -> resource.updateSubmissionPolicy(EXERCISE_ID, policy);
+                case UPDATE -> resource.updateSubmissionPolicy(EXERCISE_ID, de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO.of(policy));
             }
         }
     }

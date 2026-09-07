@@ -304,11 +304,11 @@ public abstract class RepositoryResource {
     }
 
     private ResponseEntity<Void> commitChanges(Long domainId, Repository repository, User user) throws GitAPIException {
-        repositoryService.commitChanges(repository, user);
+        String createdCommitHash = repositoryService.commitChanges(repository, user);
         var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
         // Trigger a build, and process the result. Jenkins webhooks perform the equivalent notification for remote repositories.
-        localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
+        localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

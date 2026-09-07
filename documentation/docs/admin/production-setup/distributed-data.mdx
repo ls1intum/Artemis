@@ -1,0 +1,119 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Distributed Data with Redis or Valkey
+
+This page explains how to upgrade an Artemis installation that uses Redis or Valkey for distributed data. It is
+intended for system administrators. Developers changing data stored in the distributed provider should follow the
+[developer guideline](/developer/guidelines/distributed-data#changing-a-stored-type).
+
+## When this procedure applies
+
+The procedure applies when `artemis.distributed-data.provider` is set to `Redis`. Valkey implements the Redis protocol
+and follows the same procedure. Redis and Valkey persist queues, maps, sets, and other shared state across an Artemis
+restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
+
+Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
+`artemis:v1:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
+
+```text
+artemis:distributed-data-schema
+artemis:distributed-data-schema:release
+```
+
+The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
+to schema version `1` during startup.
+
+## Prepare an upgrade
+
+<Callout variant={CalloutVariant.warning}>
+
+  Do not perform a rolling upgrade across distributed-data schema versions. Stop every old Artemis core node and every
+  old build-agent node that uses the same Redis or Valkey store before starting the new release. An old node does not
+  know about the new namespace and can continue writing to legacy keys after the migration has finished.
+
+</Callout>
+
+1. Schedule a maintenance window in which no Artemis or build-agent node uses the distributed store.
+2. Stop every Artemis core node and every build-agent node connected to that store.
+3. Prevent process supervisors or orchestration platforms from restarting an old node automatically.
+4. Create and retain a consistent Redis or Valkey backup according to the product's backup procedure.
+5. Verify that no old Artemis process remains connected.
+6. Start one core node with the new Artemis release and wait until it is ready.
+7. Verify the migration as described below.
+8. Start the remaining core and build-agent nodes with exactly the same Artemis release.
+
+Starting several new nodes together is safe because they coordinate migration with a distributed lock. Starting one
+node first makes failures and migration progress easier to diagnose.
+
+## What the migration preserves
+
+The initial schema `0` to `1` migration moves data that cannot be reconstructed safely:
+
+| Structure | Why it is preserved |
+|---|---|
+| `buildJobQueue` | Contains queued student builds. |
+| `processingJobs` | Tracks builds that are already assigned to an agent. |
+| `buildResultQueue` | May contain results that have not yet reached the database. |
+| `features` | Contains runtime feature-toggle changes made by an administrator. |
+| `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
+
+Other distributed structures start empty in the new namespace. They contain reconstructible or transient state such as
+build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
+progress, for example an LTI launch, may need to retry it after the maintenance window.
+
+Entries are moved incrementally, and the schema version is published only after migration finishes. If the migrating
+node stops, start it again with the same new release. The migration resumes safely.
+
+## Verify the migration
+
+The first new node logs messages similar to:
+
+```text
+Distributed store predates schema versions, treating its contents as version 0
+Migrating distributed data from schema version 0 to 1
+Distributed data is now at schema version 1
+```
+
+Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
+
+```bash
+redis-cli GET artemis:distributed-data-schema
+redis-cli GET artemis:distributed-data-schema:release
+redis-cli --scan --pattern 'artemis:v1:*'
+```
+
+The first command must report the schema expected by the release. The second reports the Artemis release that last
+completed a migration. Use `SCAN`, not `KEYS`, when inspecting a production store.
+
+Do not edit the schema metadata or move keys manually. A node refuses to start when it encounters malformed metadata,
+a newer schema, or a schema for which the release has no adjacent migration. Resolve the version mismatch instead of
+bypassing this protection.
+
+## Rollback
+
+<Callout variant={CalloutVariant.danger}>
+
+  Rolling back the Artemis binaries does not roll back distributed data. A previous release cannot use the migrated
+  namespace. Restore the Redis or Valkey backup taken before the upgrade before starting any previous-release node.
+
+</Callout>
+
+Stop all new nodes before restoring the backup. Never let old and new Artemis releases use the restored store at the
+same time.
+
+## Legacy keys after the first migration
+
+The migration removes entries from the unversioned structures that it preserves. Other unversioned keys can remain
+because the legacy namespace covered the entire Redis or Valkey keyspace and cannot be deleted safely with one pattern.
+They are no longer read by the new release and do not prevent startup.
+
+Do not run a broad wildcard deletion, especially when the store is shared with another application. After the upgrade
+and its backup-retention period, an administrator may inventory and remove known obsolete Artemis keys according to the
+installation's normal change procedure.
+
+## Redis does not need a service registry
+
+Artemis nodes using Redis discover shared state through Redis and do not use Eureka to form the distributed-data
+cluster. A Redis deployment therefore does not need a JHipster Registry. This differs from Hazelcast, where Artemis
+uses the registry to discover cluster members.

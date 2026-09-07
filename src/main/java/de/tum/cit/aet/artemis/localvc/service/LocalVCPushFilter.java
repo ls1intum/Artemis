@@ -31,8 +31,11 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
-    public LocalVCPushFilter(LocalVCServletService localVCServletService) {
+    private final LocalVCUsageTrackingService usageTrackingService;
+
+    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.usageTrackingService = usageTrackingService;
     }
 
     /**
@@ -67,8 +70,14 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");
             return;
         }
+        long startNanos = System.nanoTime();
+        boolean failed = true;
         try (mutationLease) {
             filterChain.doFilter(servletRequest, servletResponse);
+            failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+        }
+        finally {
+            usageTrackingService.recordPush(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
         }
     }
 }

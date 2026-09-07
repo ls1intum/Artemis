@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -37,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -65,6 +66,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseUpdateResource {
@@ -89,8 +91,6 @@ public class ProgrammingExerciseUpdateResource {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<SlideApi> slideApi;
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
@@ -112,7 +112,7 @@ public class ProgrammingExerciseUpdateResource {
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
             CompetencyExerciseLinkService competencyExerciseLinkService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
             ExerciseVariantGroupService exerciseVariantGroupService) {
@@ -125,7 +125,6 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseService = exerciseService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
-        this.athenaApi = athenaApi;
         this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
@@ -147,7 +146,7 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
@@ -192,7 +191,6 @@ public class ProgrammingExerciseUpdateResource {
                     ? programmingExerciseBeforeUpdate.getBuildConfig().getTestCheckoutPath()
                     : null;
             final String originalBranch = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getBranch() : null;
-            final String originalFeedbackSuggestionModule = programmingExerciseBeforeUpdate.getFeedbackSuggestionModule();
             final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
             final ZonedDateTime originalReleaseDate = programmingExerciseBeforeUpdate.getReleaseDate();
             final ZonedDateTime originalAssessmentDueDate = programmingExerciseBeforeUpdate.getAssessmentDueDate();
@@ -275,16 +273,6 @@ public class ProgrammingExerciseUpdateResource {
             // Note: conversion between exam/course exercise is already rejected by updateProgrammingExercise, which compares the DTO's courseId and exerciseGroupId before the
             // entity is mutated.
 
-            // Check that only allowed Athena modules are used
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
-                    () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
-            // Changing Athena module after the due date has passed is not allowed
-            // Use a proxy exercise with the old module for comparison since update() mutates the original
-            ProgrammingExercise exerciseWithOldModule = new ProgrammingExercise();
-            exerciseWithOldModule.setFeedbackSuggestionModule(originalFeedbackSuggestionModule);
-            exerciseWithOldModule.setDueDate(originalDueDate);
-            athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedProgrammingExercise, ENTITY_NAME));
-
             // Ignore changes to the default branch - preserve the original
             if (updatedProgrammingExercise.getBuildConfig() != null) {
                 updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
@@ -320,7 +308,7 @@ public class ProgrammingExerciseUpdateResource {
             participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, originalDueDate);
             slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, updatedProgrammingExercise));
             exerciseVersionService.createExerciseVersionSynchronously(savedProgrammingExercise, user);
-            return ResponseEntity.ok(savedProgrammingExercise);
+            return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedProgrammingExercise));
         }
     }
 
@@ -379,9 +367,6 @@ public class ProgrammingExerciseUpdateResource {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
@@ -389,7 +374,6 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
 
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields
@@ -412,7 +396,8 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
 
-        exercise.setSubmissionPolicy(dto.submissionPolicy());
+        // toEntity() copies the id through, so an existing policy keeps its identity instead of inserting a second row
+        exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 
@@ -518,7 +503,7 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
@@ -565,7 +550,7 @@ public class ProgrammingExerciseUpdateResource {
             slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
             exerciseVersionService.createExerciseVersionSynchronously(savedExercise, user);
 
-            return ResponseEntity.ok(savedExercise);
+            return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedExercise));
         }
     }
 }

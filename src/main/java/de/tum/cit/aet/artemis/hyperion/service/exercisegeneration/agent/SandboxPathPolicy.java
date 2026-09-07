@@ -54,7 +54,7 @@ final class SandboxPathPolicy {
      * @return whether it looks like a rewrite of managed build infrastructure
      */
     static boolean mutatesManagedBuildInfrastructure(String command) {
-        String lower = command.toLowerCase();
+        String lower = command.toLowerCase(java.util.Locale.ROOT);
         if (!lower.matches(
                 "(?s).*(?:tests|solution|template)/(buildsrc/.*|gradle/.*|pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
                         + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*")) {

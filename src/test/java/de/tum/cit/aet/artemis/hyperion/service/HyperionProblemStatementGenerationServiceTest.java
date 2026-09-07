@@ -49,8 +49,7 @@ class HyperionProblemStatementGenerationServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        // The ChatClient merges request options into the model's options, which must be non-null
-        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();

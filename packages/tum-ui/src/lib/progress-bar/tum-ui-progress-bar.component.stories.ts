@@ -10,6 +10,7 @@ const meta = {
     args: {
         ariaLabel: 'Course completion',
         severity: 'primary',
+        size: 'default',
         value: 60,
         min: 0,
         max: 100,
@@ -20,6 +21,10 @@ const meta = {
         severity: {
             control: 'select',
             options: ['primary', 'success', 'warning', 'danger', 'info'],
+        },
+        size: {
+            control: 'inline-radio',
+            options: ['small', 'default'],
         },
         value: {
             control: {
@@ -166,5 +171,12 @@ export const LabelAndFirstPaint: Story = {
         await expect(label.textContent?.trim()).toBe('4 of 100 files');
         await expect(label.getBoundingClientRect().width, 'the reading is legible at 4%').toBeGreaterThan(0);
         await expect(bar.getAttribute('data-committed'), 'the first value has been committed').toBe('true');
+    },
+};
+
+export const Small: Story = {
+    args: {
+        size: 'small',
+        severity: 'success',
     },
 };

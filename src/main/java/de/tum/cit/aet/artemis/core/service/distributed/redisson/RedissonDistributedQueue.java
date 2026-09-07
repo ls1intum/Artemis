@@ -27,9 +27,15 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
 
     private final Map<UUID, Integer> topicListenerRegistrations = new ConcurrentHashMap<>();
 
-    public RedissonDistributedQueue(RQueue<T> queue, RTopic notificationTopic) {
+    /**
+     * The name callers know this queue by, without the schema-version namespace the Redis key carries.
+     */
+    private final String logicalName;
+
+    public RedissonDistributedQueue(RQueue<T> queue, RTopic notificationTopic, String logicalName) {
         this.queue = queue;
         this.notificationTopic = notificationTopic;
+        this.logicalName = logicalName;
     }
 
     private void publishSafely(Object event) {
@@ -172,6 +178,8 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
 
     @Override
     public String getName() {
-        return queue.getName();
+        // The logical name rather than the Redis key: the namespace is an implementation detail of this backend, and
+        // Hazelcast answers with the plain name, so leaking the prefix here would make the two disagree.
+        return logicalName;
     }
 }

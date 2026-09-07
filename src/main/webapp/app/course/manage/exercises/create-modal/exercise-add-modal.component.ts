@@ -7,7 +7,14 @@ import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import {
+    TumUiCardComponent,
+    TumUiCardDescriptionComponent,
+    TumUiCardFooterComponent,
+    TumUiCardHeaderComponent,
+    TumUiCardTitleComponent,
+    TumUiDialogComponent,
+} from '@tumaet/ui-angular';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -70,7 +77,18 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
 @Component({
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
-    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, HyperionBriefDialogComponent],
+    imports: [
+        TumUiCardComponent,
+        TumUiCardHeaderComponent,
+        TumUiCardTitleComponent,
+        TumUiCardDescriptionComponent,
+        TumUiCardFooterComponent,
+        TumUiDialogComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        HyperionBriefDialogComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
@@ -113,7 +131,7 @@ export class ExerciseAddModalComponent {
     readonly activeTab = signal<'create' | 'generate' | 'import' | 'export'>('create');
     readonly briefDialogVisible = signal(false);
     private readonly briefDialog = viewChild(HyperionBriefDialogComponent);
-    protected readonly generationEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+    protected readonly generationEnabled = computed(() => this.programmingEnabled() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly faArrowRight = faArrowRight;
@@ -153,6 +171,9 @@ export class ExerciseAddModalComponent {
 
     /** Hands over to the brief dialog. Deliberately no navigation: the exercise does not exist until the brief is sent. */
     protected openProgrammingGeneration(): void {
+        if (!this.generationEnabled() || this.courseId() === undefined) {
+            return;
+        }
         this.briefDialog()?.reset();
         this.close();
         this.briefDialogVisible.set(true);

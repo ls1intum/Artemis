@@ -29,7 +29,7 @@ class ArtemisGitServletServiceTest {
     @Test
     void authorizedPostWithoutFilterAuthenticationContextFailsClosed() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
-        ArtemisGitServletService servletService = new ArtemisGitServletService(localVCServletService);
+        ArtemisGitServletService servletService = new ArtemisGitServletService(localVCServletService, mock(LocalVCUsageTrackingService.class));
         servletService.init();
         Object gitFilter = ReflectionTestUtils.getField(servletService, "gitFilter");
         @SuppressWarnings("unchecked")

@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -295,7 +296,7 @@ public class HyperionConsistencyCheckService {
 
     /** Fills in defaults for the fields a model is free to leave out or spell freely, so that a partially answered issue still reaches the instructor. */
     private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
-        Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
+        Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase(Locale.ROOT)) {
             case "LOW" -> Severity.LOW;
             case "HIGH" -> Severity.HIGH;
             default -> Severity.MEDIUM;

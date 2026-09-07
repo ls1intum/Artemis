@@ -7,10 +7,10 @@
         <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h2>
     }
 
-    <div class="list-group d-block">
+    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.sshKeyDetails' | artemisTranslate">
         <!-- Viewing existing key and creating a new key -->
-        <div class="list-group-item">
-            <div class="d-flex flex-wrap">
+        <li tumUiListItem>
+            <div class="flex flex-wrap">
                 <p>
                     <span class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
                     <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'" />
@@ -19,20 +19,30 @@
 
             @if (isCreateMode()) {
                 <div>
-                    <p class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
+                    <label class="large-text" for="sshKeyField" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></label>
                 </div>
             } @else {
                 <div>
-                    <p class="large-text">{{ displayedKeyLabel }}</p>
+                    <!-- Named by the key label, because there is no field label to point at while viewing a key. -->
+                    <p id="sshKeyFieldLabel" class="large-text">{{ displayedKeyLabel }}</p>
                 </div>
             }
             <div>
-                <textarea class="form-control" rows="10" [readonly]="!isCreateMode()" [(ngModel)]="displayedSshKey" data-testid="sshKeyField"></textarea>
+                <textarea
+                    tumUiInput
+                    id="sshKeyField"
+                    class="w-full"
+                    rows="10"
+                    [attr.aria-labelledby]="isCreateMode() ? null : 'sshKeyFieldLabel'"
+                    [readonly]="!isCreateMode()"
+                    [(ngModel)]="displayedSshKey"
+                    data-testid="sshKeyField"
+                ></textarea>
             </div>
 
             <!-- input fields for key creation -->
             @if (isCreateMode()) {
-                <div class="d-flex flex-wrap mb-4">
+                <div class="mb-4 flex flex-wrap">
                     <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.alreadyHaveKey"> </span>
                         <code> {{ copyInstructions() }} </code>
@@ -40,47 +50,61 @@
                 </div>
 
                 <div class="mb-4">
-                    <p class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
-                    <textarea class="form-control small-text-area" rows="1" [readonly]="!isCreateMode()" [(ngModel)]="displayedKeyLabel" maxlength="50">></textarea>
+                    <label class="large-text" for="sshKeyLabelField" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></label>
+                    <textarea
+                        tumUiInput
+                        id="sshKeyLabelField"
+                        class="small-text-area w-full"
+                        rows="1"
+                        [readonly]="!isCreateMode()"
+                        [(ngModel)]="displayedKeyLabel"
+                        maxlength="50"
+                    ></textarea>
                     <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.commentUsedAsLabel"> </span>
                     </p>
                 </div>
 
                 <!-- Expiry date settings -->
-                <div>
-                    <span class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.title"></span>
+                <fieldset class="border-0 p-0">
+                    <legend class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.title"></legend>
                     <p jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.info"></p>
-                </div>
-                <div>
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="activationOption" [(ngModel)]="selectedOption" value="doNotUseExpiration" />
-                        <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.doNotExpire"></span>
-                    </label>
-                </div>
-                <div>
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="activationOption" [(ngModel)]="selectedOption" value="useExpiration" />
-                        <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.expireAutomatically"></span>
-                    </label>
-                </div>
+                    <div class="flex items-center gap-2">
+                        <tum-ui-radio-button
+                            inputId="doNotUseExpiration"
+                            name="activationOption"
+                            value="doNotUseExpiration"
+                            [(ngModel)]="selectedOption"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+                        <label for="doNotUseExpiration" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.doNotExpire"></label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <tum-ui-radio-button
+                            inputId="useExpiration"
+                            name="activationOption"
+                            value="useExpiration"
+                            [(ngModel)]="selectedOption"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+                        <label for="useExpiration" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.expireAutomatically"></label>
+                    </div>
+                </fieldset>
 
                 <!-- expiry date date picker -->
                 @if (selectedOption === 'useExpiration') {
-                    <div class="mt-4">
-                        <div class="col-sm-4">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate }}"
-                                [(ngModel)]="displayedExpiryDate"
-                                [pickerType]="DateTimePickerType.CALENDAR"
-                                [shouldDisplayTimeZoneWarning]="false"
-                                [min]="currentDate()"
-                                [requiredField]="true"
-                                (valueChange)="validateExpiryDate()"
-                                name="expiryDate"
-                                id="expiryDate"
-                            />
-                        </div>
+                    <div class="mt-4 sm:w-1/3">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate }}"
+                            [(ngModel)]="displayedExpiryDate"
+                            [pickerType]="DateTimePickerType.CALENDAR"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [min]="currentDate()"
+                            [requiredField]="true"
+                            (valueChange)="validateExpiryDate()"
+                            name="expiryDate"
+                            id="expiryDate"
+                        />
                     </div>
                 }
             } @else {
@@ -110,31 +134,28 @@
                     </div>
                 }
             }
-            <div class="col col-auto text-right mt-4">
+            <div class="mt-4 flex justify-end gap-2">
                 @if (isCreateMode()) {
-                    <div class="btn-group" role="group" aria-label="Actions">
-                        <jhi-button
-                            [disabled]="
-                                !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid()) || selectedOption !== 'useExpiration'))
-                            "
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faSave"
-                            [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
-                            (onClick)="saveSshKey()"
-                            data-testid="saveSshKeyButton"
-                        />
-                    </div>
+                    <tum-ui-button
+                        [disabled]="
+                            !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid()) || selectedOption !== 'useExpiration'))
+                        "
+                        size="small"
+                        [icon]="faSave"
+                        (clicked)="saveSshKey()"
+                        data-testid="saveSshKeyButton"
+                    >
+                        <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.saveSshKey"></span>
+                    </tum-ui-button>
                 }
-                <div class="btn-group" role="group" aria-label="Actions">
-                    <jhi-button
-                        [btnType]="ButtonType.PRIMARY"
-                        [btnSize]="ButtonSize.SMALL"
-                        [title]="isCreateMode() ? 'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey' : 'artemisApp.userSettings.sshSettingsPage.back'"
-                        (onClick)="goBack()"
-                    />
-                </div>
+                <tum-ui-button size="small" (clicked)="goBack()">
+                    @if (isCreateMode()) {
+                        <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.back"></span>
+                    }
+                </tum-ui-button>
             </div>
-        </div>
-    </div>
+        </li>
+    </tum-ui-list>
 }

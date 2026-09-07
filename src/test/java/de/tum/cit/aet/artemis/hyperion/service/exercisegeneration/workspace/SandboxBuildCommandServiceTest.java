@@ -663,7 +663,7 @@ class SandboxBuildCommandServiceTest {
                     ProgrammingLanguage.JAVASCRIPT, ProgrammingLanguage.PYTHON, ProgrammingLanguage.R, ProgrammingLanguage.RUBY, ProgrammingLanguage.RUST,
                     ProgrammingLanguage.TYPESCRIPT)) {
                 String fullScript = factory().verifyScriptContent(exercise(language, true));
-                Path scriptFile = tempDir.resolve("full-" + language.name().toLowerCase() + ".sh");
+                Path scriptFile = tempDir.resolve("full-" + language.name().toLowerCase(java.util.Locale.ROOT) + ".sh");
                 VerifyScriptTestHarness.writeString(scriptFile, fullScript);
                 Process process = new ProcessBuilder("sh", "-n", scriptFile.toString()).redirectErrorStream(true).start();
                 String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);

@@ -3,9 +3,7 @@
         "hyperion": {
             "generation": {
                 "entry": {
-                    "title": "Mit KI generieren",
-                    "description": "Beschreibe eine Aufgabe, und Artemis schreibt Aufgabenstellung, Startcode, Musterlösung und Tests, baut sie und prüft sie, bevor ein Entwurf gespeichert wird.",
-                    "footnote": "Java mit Maven. Ein Durchlauf dauert meist 10 bis 25 Minuten.",
+                    "description": "Generiere aus deiner Beschreibung eine Java-Aufgabe mit Aufgabenstellung, Startcode, Musterlösung und Tests.",
                     "action": "Generieren"
                 },
                 "brief": {

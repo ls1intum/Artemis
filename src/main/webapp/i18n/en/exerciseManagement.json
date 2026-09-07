@@ -61,16 +61,10 @@
                 },
                 "createHint": "Select an exercise type. You can customise all details in the next step.",
                 "importHint": "Select what you want to import.",
-                "generateHint": "Start from an instructor brief. Artemis creates the exercise shell, then generates and verifies all teaching artifacts before saving them.",
-                "generateProgramming": {
-                    "title": "Programming exercise",
-                    "description": "Configure a Java Maven or Gradle exercise and describe what students should learn and implement."
-                },
+                "generateHint": "Describe what students should learn. Review and refine the generated exercise before publishing.",
                 "cta": {
                     "create": "Create",
-                    "generate": "Generate",
-                    "select": "Select",
-                    "configure": "Configure generation"
+                    "select": "Select"
                 },
                 "group": {
                     "title": "Exercise Group",

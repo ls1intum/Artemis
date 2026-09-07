@@ -74,6 +74,39 @@ describe('ExerciseAddModalComponent', () => {
         expect(visibleCardTypes()).not.toContain(ExerciseType.PROGRAMMING);
     });
 
+    it('hides generation when programming exercises are disabled, including a previously selected generate tab', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+        createComponent();
+        fixture.componentRef.setInput('mode', 'unified');
+        fixture.componentRef.setInput('visible', true);
+        component.setActiveTab('generate');
+        fixture.detectChanges();
+
+        expect(document.body.querySelector('[data-testid="generate-programming-exercise"]')).toBeNull();
+        expect(document.body.textContent).not.toContain('artemisApp.exerciseManagement.addModal.tab.generate');
+    });
+
+    it('uses outlined cards with native, uniquely labelled actions for every create option', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        createComponent();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+
+        const cards = document.body.querySelectorAll('tum-ui-card');
+        expect(cards).toHaveLength(6);
+        for (const card of cards) {
+            expect(card.getAttribute('data-variant')).toBe('outline');
+            const button = card.querySelector('button');
+            expect(button?.type).toBe('button');
+            const ids = button?.getAttribute('aria-labelledby')?.split(' ') ?? [];
+            expect(ids).toHaveLength(2);
+            for (const id of ids) {
+                expect(card.querySelector('#' + id)).not.toBeNull();
+            }
+        }
+    });
+
     describe('tabs and visibility', () => {
         beforeEach(() => {
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
@@ -111,9 +144,11 @@ describe('ExerciseAddModalComponent', () => {
             fixture.detectChanges();
 
             // The dialog is appended to the body, so it is not reachable from the fixture element.
-            const card = document.body.querySelector('[data-testid="generate-programming-exercise"]');
-            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.title');
-            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.footnote');
+            const card = document.body.querySelector('[data-testid="generate-programming-exercise"]')?.closest('tum-ui-card');
+            expect(card?.textContent).toContain('artemisApp.exerciseManagement.type.PROGRAMMING');
+            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.description');
+            expect(card?.getAttribute('data-variant')).toBe('outline');
+            expect(card?.querySelector('[role="heading"]')?.getAttribute('aria-level')).toBe('3');
             expect(card?.textContent).not.toContain('artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING');
         });
 

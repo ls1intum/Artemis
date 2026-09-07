@@ -16,6 +16,15 @@
     background: var(--tumaet-ui-border-color);
 }
 
+:host([data-size='small']) {
+    height: calc(var(--tumaet-ui-spacing) * 1.5);
+}
+
+// The slim rail is shorter than the label's line box, so the value has to be rendered next to the bar instead.
+:host([data-size='small']) .tum-ui-progress-bar-label {
+    display: none;
+}
+
 .tum-ui-progress-bar-value {
     width: 0;
     height: 100%;

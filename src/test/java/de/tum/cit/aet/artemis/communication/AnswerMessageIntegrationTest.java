@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -871,7 +872,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseId", courseId.toString());
-        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase());
+        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase(Locale.ROOT));
 
         List<PostingDTO> saved = request.getList("/api/communication/saved-posts", HttpStatus.OK, PostingDTO.class, params);
 
@@ -892,7 +893,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseId", courseId.toString());
-        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase());
+        params.add("status", SavedPostStatus.IN_PROGRESS.toString().toLowerCase(Locale.ROOT));
 
         List<PostingDTO> saved = request.getList("/api/communication/saved-posts", HttpStatus.OK, PostingDTO.class, params);
 

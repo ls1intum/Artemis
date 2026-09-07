@@ -1,5 +1,5 @@
 <tum-ui-dialog [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" size="medium">
-    <div class="mb-3 flex border-b">
+    <div class="mb-3 flex flex-wrap border-b">
         <button
             type="button"
             class="-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-4 py-2 text-sm font-medium"
@@ -11,7 +11,7 @@
             (click)="setActiveTab('create')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
         ></button>
-        @if (generationEnabled) {
+        @if (generationEnabled()) {
             <button
                 type="button"
                 class="-mb-px flex cursor-pointer items-center gap-1 border-0 border-b-2 bg-transparent px-4 py-2 text-sm font-medium"
@@ -48,84 +48,107 @@
     <!-- ── Create tab ── -->
     @if (activeTab() === 'create') {
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseManagement.addModal.createHint"></p>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3">
             @for (card of exerciseTypeCards(); track card.type) {
-                <button
-                    type="button"
-                    class="flex cursor-pointer flex-col items-center rounded-border border bg-transparent p-4 text-center hover:bg-emphasis"
-                    [attr.data-testid]="'create-' + card.type + '-exercise'"
-                    (click)="navigateToCreate(card)"
-                >
-                    <div class="mb-3 flex size-11 items-center justify-center rounded-lg bg-primary text-primary-contrast">
-                        <fa-icon [icon]="card.icon" />
+                <tum-ui-card variant="outline" class="relative text-center transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-primary">
+                    <div tumUiCardHeader class="mx-auto mt-5 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                        <fa-icon [icon]="card.icon" size="lg" />
                     </div>
-                    <h6 class="mb-1 text-sm font-semibold" [jhiTranslate]="card.labelKey"></h6>
-                    <p class="mb-3 flex-auto text-xs text-muted-color" [jhiTranslate]="card.descriptionKey"></p>
-                    <span class="inline-flex items-center text-xs font-semibold text-primary">
-                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
-                        <fa-icon [icon]="faArrowRight" class="ml-1" />
-                    </span>
-                </button>
+                    <tum-ui-card-header>
+                        <tum-ui-card-title [level]="3" [id]="'create-' + card.type + '-title'" [jhiTranslate]="card.labelKey" />
+                        <tum-ui-card-description [jhiTranslate]="card.descriptionKey" />
+                    </tum-ui-card-header>
+                    <tum-ui-card-footer class="mt-auto justify-center">
+                        <button
+                            type="button"
+                            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-sm font-semibold text-primary before:absolute before:inset-0 before:rounded-xl focus-visible:outline-none"
+                            [attr.data-testid]="'create-' + card.type + '-exercise'"
+                            (click)="navigateToCreate(card)"
+                            [attr.aria-labelledby]="'create-' + card.type + '-action create-' + card.type + '-title'"
+                        >
+                            <span [id]="'create-' + card.type + '-action'" jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                            <fa-icon [icon]="faArrowRight" aria-hidden="true" />
+                        </button>
+                    </tum-ui-card-footer>
+                </tum-ui-card>
             }
-            <button type="button" class="flex cursor-pointer flex-col items-center rounded-border border bg-transparent p-4 text-center hover:bg-emphasis" (click)="createGroup()">
-                <div class="mb-3 flex size-11 items-center justify-center rounded-lg bg-primary text-primary-contrast">
-                    <fa-icon [icon]="faLayerGroup" />
+            <tum-ui-card variant="outline" class="relative text-center transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-primary">
+                <div tumUiCardHeader class="mx-auto mt-5 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                    <fa-icon [icon]="faLayerGroup" size="lg" />
                 </div>
-                <h6 class="mb-1 text-sm font-semibold" jhiTranslate="artemisApp.exerciseManagement.addModal.group.title"></h6>
-                <p class="mb-3 flex-auto text-xs text-muted-color" jhiTranslate="artemisApp.exerciseManagement.addModal.group.createDescription"></p>
-                <span class="inline-flex items-center text-xs font-semibold text-primary">
-                    <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
-                    <fa-icon [icon]="faArrowRight" class="ml-1" />
-                </span>
-            </button>
+                <tum-ui-card-header>
+                    <tum-ui-card-title [level]="3" id="create-group-title" jhiTranslate="artemisApp.exerciseManagement.addModal.group.title" />
+                    <tum-ui-card-description jhiTranslate="artemisApp.exerciseManagement.addModal.group.createDescription" />
+                </tum-ui-card-header>
+                <tum-ui-card-footer class="mt-auto justify-center">
+                    <button
+                        type="button"
+                        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-sm font-semibold text-primary before:absolute before:inset-0 before:rounded-xl focus-visible:outline-none"
+                        (click)="createGroup()"
+                        aria-labelledby="create-group-action create-group-title"
+                    >
+                        <span id="create-group-action" jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                        <fa-icon [icon]="faArrowRight" aria-hidden="true" />
+                    </button>
+                </tum-ui-card-footer>
+            </tum-ui-card>
         </div>
     }
 
     <!-- ── Generate tab ── -->
-    @if (activeTab() === 'generate') {
+    @if (activeTab() === 'generate' && generationEnabled()) {
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseManagement.addModal.generateHint"></p>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <button
-                type="button"
-                class="flex cursor-pointer flex-col items-center rounded-border border bg-transparent p-4 text-center hover:bg-emphasis"
-                data-testid="generate-programming-exercise"
-                (click)="openProgrammingGeneration()"
-            >
-                <div class="mb-3 flex size-11 items-center justify-center rounded-lg bg-primary text-primary-contrast">
-                    <fa-icon [icon]="faKeyboard" />
+        <div class="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3">
+            <tum-ui-card variant="outline" class="relative text-center transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-primary">
+                <div tumUiCardHeader class="mx-auto mt-5 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                    <fa-icon [icon]="faKeyboard" size="lg" />
                 </div>
-                <h6 class="mb-1 text-sm font-semibold" jhiTranslate="artemisApp.hyperion.generation.entry.title"></h6>
-                <p class="mb-2 flex-auto text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.entry.description"></p>
-                <p class="mb-3 text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.entry.footnote"></p>
-                <span class="inline-flex items-center text-xs font-semibold text-primary">
-                    <span jhiTranslate="artemisApp.hyperion.generation.entry.action"></span>
-                    <fa-icon [icon]="faArrowRight" class="ml-1" />
-                </span>
-            </button>
+                <tum-ui-card-header>
+                    <tum-ui-card-title [level]="3" id="generate-programming-title" jhiTranslate="artemisApp.exerciseManagement.type.PROGRAMMING" />
+                    <tum-ui-card-description jhiTranslate="artemisApp.hyperion.generation.entry.description" />
+                </tum-ui-card-header>
+                <tum-ui-card-footer class="mt-auto justify-center">
+                    <button
+                        type="button"
+                        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-sm font-semibold text-primary before:absolute before:inset-0 before:rounded-xl focus-visible:outline-none"
+                        data-testid="generate-programming-exercise"
+                        (click)="openProgrammingGeneration()"
+                        aria-labelledby="generate-programming-action generate-programming-title"
+                    >
+                        <span id="generate-programming-action" jhiTranslate="artemisApp.hyperion.generation.entry.action"></span>
+                        <fa-icon [icon]="faArrowRight" aria-hidden="true" />
+                    </button>
+                </tum-ui-card-footer>
+            </tum-ui-card>
         </div>
     }
 
     <!-- ── Import tab ── -->
     @if (activeTab() === 'import') {
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3">
             @for (card of exerciseTypeCards(); track card.type) {
-                <button
-                    type="button"
-                    class="flex cursor-pointer flex-col items-center rounded-border border bg-transparent p-4 text-center hover:bg-emphasis"
-                    [attr.data-testid]="'import-' + card.type + '-exercise'"
-                    (click)="startImport(card.type)"
-                >
-                    <div class="mb-3 flex size-11 items-center justify-center rounded-lg bg-primary text-primary-contrast">
-                        <fa-icon [icon]="card.icon" />
+                <tum-ui-card variant="outline" class="relative text-center transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-primary">
+                    <div tumUiCardHeader class="mx-auto mt-5 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                        <fa-icon [icon]="card.icon" size="lg" />
                     </div>
-                    <h6 class="mb-1 text-sm font-semibold" [jhiTranslate]="card.labelKey"></h6>
-                    <p class="mb-3 flex-auto text-xs text-muted-color" [jhiTranslate]="card.descriptionKey"></p>
-                    <span class="inline-flex items-center text-xs font-semibold text-primary">
-                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
-                        <fa-icon [icon]="faArrowRight" class="ml-1" />
-                    </span>
-                </button>
+                    <tum-ui-card-header>
+                        <tum-ui-card-title [level]="3" [id]="'import-' + card.type + '-title'" [jhiTranslate]="card.labelKey" />
+                        <tum-ui-card-description [jhiTranslate]="card.descriptionKey" />
+                    </tum-ui-card-header>
+                    <tum-ui-card-footer class="mt-auto justify-center">
+                        <button
+                            type="button"
+                            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-sm font-semibold text-primary before:absolute before:inset-0 before:rounded-xl focus-visible:outline-none"
+                            [attr.data-testid]="'import-' + card.type + '-exercise'"
+                            (click)="startImport(card.type)"
+                            [attr.aria-labelledby]="'import-' + card.type + '-action import-' + card.type + '-title'"
+                        >
+                            <span [id]="'import-' + card.type + '-action'" jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
+                            <fa-icon [icon]="faArrowRight" aria-hidden="true" />
+                        </button>
+                    </tum-ui-card-footer>
+                </tum-ui-card>
             }
         </div>
     }

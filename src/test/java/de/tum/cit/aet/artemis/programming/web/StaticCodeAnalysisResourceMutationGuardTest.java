@@ -104,10 +104,10 @@ class StaticCodeAnalysisResourceMutationGuardTest {
         StaticCodeAnalysisResource resource = new StaticCodeAnalysisResource(mock(AuthorizationCheckService.class), repository, staticCodeAnalysisService,
                 mock(StaticCodeAnalysisCategoryRepository.class), mutationGuard, userRepository, exerciseVersionService);
 
-        var response = resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, Set.of());
+        var response = resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, java.util.List.of());
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody()).isEqualTo(Set.of());
+        assertThat(response.getBody()).isEmpty();
         assertThat(leaseHeld).isFalse();
     }
 
@@ -140,7 +140,7 @@ class StaticCodeAnalysisResourceMutationGuardTest {
 
             @Override
             void invoke(StaticCodeAnalysisResource resource) {
-                resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, Set.of());
+                resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, java.util.List.of());
             }
         },
         RESET {

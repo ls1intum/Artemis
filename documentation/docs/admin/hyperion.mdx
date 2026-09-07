@@ -225,6 +225,14 @@ feature is usable.
 
 Agentic exercise generation runs inside a **resource-bounded Docker sandbox on a LocalCI build agent**. The agent can be shared with normal LocalCI work or dedicated to generation. Each generation job uses exactly one slot and one sandbox container from workspace setup through automated checks. The container is released before repository persistence and LocalCI synchronization. Jobs can run for several minutes and consume CPU, memory, and Docker resources throughout.
 
+Generation requires a **Docker-backed build agent** (`artemis.continuous-integration.build-runner=docker`). Kubernetes-backed LocalCI builds remain supported independently, but the interactive generation sandbox has no Kubernetes implementation; do not allocate generation slots on Kubernetes-only agents.
+
+#### Distributed-store upgrade
+
+This feature changes the build-agent registration wire format and replaces the legacy code-generation job record. Distributed-data schema version 2 migrates from version 1 through the standard Redis/Valkey startup migrator. Queued/running student builds, unprocessed results, feature toggles, and expiring Pyris jobs are carried over without changing their wire format or resetting their lifetime. Agent registrations and legacy generation jobs are discarded and re-created as appropriate. There is no relational database migration.
+
+Drain in-flight generation before upgrading and follow the [distributed-store upgrade procedure](./production-setup/distributed-data.mdx#prepare-an-upgrade); mixed old/new schema nodes must not process different namespaces concurrently. Terminal replay is not a durable archive: export any evidence that must survive deployment.
+
 Core nodes reach the sandbox over a cluster relay addressed by the build agent's `short-name`. There is no direct in-process shortcut, so a deployment that runs `core` and
 `buildagent` in the same JVM uses the same relay and the same per-agent capacity setting as a distributed one.
 

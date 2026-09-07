@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -28,18 +27,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseCreationResource {
@@ -73,8 +76,6 @@ public class ProgrammingExerciseCreationResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -83,35 +84,41 @@ public class ProgrammingExerciseCreationResource {
 
     private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
+            ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.athenaApi = athenaApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
         this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
      * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
-     * @param programmingExercise the programmingExercise to set up
-     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     * @param createDTO         the programmingExercise to set up
+     * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping("programming-exercises/setup")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> createProgrammingExercise(@RequestBody CreateProgrammingExerciseDTO createDTO,
             @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories) {
-        log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
+        log.debug("REST request to setup ProgrammingExercise : {}", createDTO.title());
+
+        // The id is mapped onto the entity so that the existing "a new exercise must not have an id" validation still fires
+        final ProgrammingExercise programmingExercise = createDTO.toEntity();
 
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -122,8 +129,10 @@ public class ProgrammingExerciseCreationResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
-        // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
+        // The request DTO does not bind the competency links itself: they need managed competencies, which only this
+        // service resolves. The creation pipeline then reads them off the exercise, exactly as the entity request body
+        // used to leave them there.
+        competencyExerciseLinkService.updateCompetencyLinks(createDTO, programmingExercise);
 
         try {
             // Setup all repositories etc
@@ -136,7 +145,8 @@ public class ProgrammingExerciseCreationResource {
 
             exerciseVersionService.createExerciseVersionSynchronously(newProgrammingExercise, user);
 
-            return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
+            return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId()))
+                    .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise));
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);

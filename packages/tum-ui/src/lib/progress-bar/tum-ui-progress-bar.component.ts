@@ -3,6 +3,7 @@ import { TumUiSeverity, TumUiSeverityAlias, resolveSeverity } from '../foundatio
 
 /** Severities a progress bar can carry. A subset of {@link TumUiSeverity}. */
 export type TumUiProgressBarSeverity = Extract<TumUiSeverity, 'primary' | 'success' | 'warning' | 'danger' | 'info'>;
+export type TumUiProgressBarSize = 'small' | 'default';
 
 /**
  * A determinate meter: how far a value has travelled between a floor and a ceiling.
@@ -26,6 +27,7 @@ export type TumUiProgressBarSeverity = Extract<TumUiSeverity, 'primary' | 'succe
     host: {
         class: 'tum-ui-progress-bar',
         role: 'progressbar',
+        '[attr.data-size]': 'size()',
         '[attr.aria-valuemin]': 'min()',
         '[attr.aria-valuemax]': 'max()',
         '[attr.aria-valuenow]': 'clampedValue()',
@@ -58,6 +60,8 @@ export class TumUiProgressBarComponent {
 
     /** Renders `valueText` beside the bar. Projected content replaces it. */
     readonly showValue = input(true, { transform: booleanAttribute });
+
+    readonly size = input<TumUiProgressBarSize>('default');
 
     /** Colour role of the filled track. `warn` is accepted as a deprecated spelling of `warning`. */
     readonly severity = input<TumUiProgressBarSeverity | TumUiSeverityAlias>('primary');
