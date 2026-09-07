@@ -218,9 +218,10 @@ export class ExerciseHeaderActionsComponent {
             // Athena feedback requests for programming exercises require manual assessment to be enabled
             return false;
         }
+        // Not gated on hasUserAcceptedLLM(): the popover itself renders either the AI-feedback request or a
+        // recommendation to enable AI, so it must also be reachable before the assessor has accepted AI usage.
         return (
             !this.examMode() &&
-            this.hasUserAcceptedLLM() &&
             this.athenaEnabled &&
             (exercise.course?.athenaFormativeFeedbackEnabled ?? false) &&
             (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
@@ -528,7 +529,8 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        // The request limit only blocks another Athena request, which is only reachable once AI is accepted.
+        if (this.hasUserAcceptedLLM() && countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
         // "Don't show this again" only suppresses the AI-disabled recommendation; once AI is enabled, the popover should reappear.

@@ -124,10 +124,10 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
         });
 
-        it('should not show the popover when the user has not accepted AI feedback usage', () => {
+        it('should still show the popover recommending AI feedback when the user has not accepted AI feedback usage', () => {
             createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
 
-            expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
+            expect(fixture.componentInstance.showFeedbackPopover()).toBe(true);
         });
 
         it('should not show the popover for a programming exercise without manual assessment enabled', () => {
@@ -137,6 +137,33 @@ describe('ExerciseHeaderActionsComponent', () => {
             createComponent(withCourse(exercise, true));
 
             expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
+        });
+    });
+
+    describe('submitAndShowPopover', () => {
+        function submitPopoverRef() {
+            return (fixture.componentInstance as unknown as { submitPopoverRef: () => { isOpen: () => boolean } }).submitPopoverRef();
+        }
+
+        it('opens the AI-disabled recommendation popover even when the user has not accepted AI usage', () => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
+            fixture.componentRef.setInput('onSubmitExercise', () => vi.fn());
+            fixture.detectChanges();
+
+            fixture.componentInstance.submitAndShowPopover();
+
+            expect(submitPopoverRef().isOpen()).toBe(true);
+        });
+
+        it('does not reopen the dismissed AI-disabled recommendation popover', () => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
+            fixture.componentRef.setInput('onSubmitExercise', () => vi.fn());
+            fixture.detectChanges();
+
+            fixture.componentInstance.dismissAiFeedbackPopoverPermanently();
+            fixture.componentInstance.submitAndShowPopover();
+
+            expect(submitPopoverRef().isOpen()).toBe(false);
         });
     });
 });
