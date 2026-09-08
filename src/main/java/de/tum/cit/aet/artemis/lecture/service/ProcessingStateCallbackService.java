@@ -467,6 +467,9 @@ public class ProcessingStateCallbackService {
     void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
+        // Undo the dispatch attempt, including the claim that started it: startedAt is what marks a job as taken, so
+        // leaving it set would keep this unit out of the idle queue for good.
+        state.setStartedAt(null);
 
         // Preserve existing transcription status in the WebSocket notification so the UI
         // does not lose it when a failure occurs after transcription already completed.
