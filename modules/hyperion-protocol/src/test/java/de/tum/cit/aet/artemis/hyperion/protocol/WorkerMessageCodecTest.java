@@ -1,0 +1,57 @@
+package de.tum.cit.aet.artemis.hyperion.protocol;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+
+class WorkerMessageCodecTest {
+
+    private static final String IMAGE = "sha256:" + "a".repeat(64);
+
+    private final WorkerMessageCodec codec = new WorkerMessageCodec();
+
+    @Test
+    void commandRoundTripPreservesEmptyFilesBinaryWrappersAndDurations() {
+        var identity = identity();
+        var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { -1, 0, 42 }, false),
+                new WorkspaceFile("template/src/.gitkeep", new byte[0], false), new WorkspaceFile("tests/gradlew", new byte[] { 35, 33 }, true)));
+        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var assignment = new GenerationAssignment(identity, new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE), parameters,
+                seed, Instant.parse("2026-09-08T12:00:00Z"), IMAGE);
+        var command = new WorkerCommand(1, WorkerCommand.Type.START, identity, assignment);
+        assertThat(codec.decodeCommand(codec.encode(command))).isEqualTo(command);
+    }
+
+    @Test
+    void outcomeRoundTripPreservesReviewSemantics() {
+        var id = identity();
+        var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of("No verified candidate")), null,
+                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Contradiction", "Review edge cases"))), "RUN_FAILED",
+                null, GenerationOutput.AccountingState.INCOMPLETE, "standard");
+        var event = new WorkerEvent(1, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null, null, output);
+        assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
+    }
+
+    @Test
+    void rejectsUnknownFieldsAndDuplicateKeys() {
+        String command = codec.encode(new WorkerCommand(1, WorkerCommand.Type.CANCEL, identity(), null));
+        assertThatThrownBy(() -> codec.decodeCommand(command.replaceFirst("\\{", "{\"shell\":\"execute on host\","))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> codec.decodeCommand(command.replaceFirst("\\{", "{\"protocolVersion\":1,"))).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void rejectsUnsupportedProtocolVersionsBeforeDispatch() {
+        String command = codec.encode(new WorkerCommand(1, WorkerCommand.Type.CANCEL, identity(), null));
+        assertThatThrownBy(() -> codec.decodeCommand(command.replace("\"protocolVersion\":1", "\"protocolVersion\":2"))).isInstanceOf(RuntimeException.class);
+    }
+
+    private static ExecutionIdentity identity() {
+        return new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker-1", UUID.randomUUID());
+    }
+}
