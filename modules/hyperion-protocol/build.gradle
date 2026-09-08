@@ -1,1 +1,5 @@
 apply from: rootProject.file('gradle/hyperion-module.gradle')
+
+dependencies {
+    implementation 'tools.jackson.core:jackson-databind'
+}

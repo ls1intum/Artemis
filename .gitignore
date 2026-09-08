@@ -276,3 +276,6 @@ __pycache__/
 
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/
+
+# Standalone Java module outputs
+/modules/*/build/

@@ -53,6 +53,11 @@ jobs:
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Java Code Style
         run: ./gradlew spotlessCheck
+      - name: Prepare immutable Hyperion sandbox test image
+        run: |
+          image='redis@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf'
+          docker pull "$image"
+          echo "HYPERION_TEST_IMAGE=$(docker image inspect "$image" --format '{{.Id}}')" >> "$GITHUB_ENV"
       - name: Hyperion module tests and architecture
         run: ./gradlew hyperionCheck -x webapp
         if: ${{ !cancelled() }}
@@ -73,7 +78,9 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: Java Architecture Tests
-          path: build/test-results/test/*.xml
+          path: |
+            build/test-results/test/*.xml
+            modules/*/build/test-results/test/*.xml
           reporter: java-junit
 
   client-style:
