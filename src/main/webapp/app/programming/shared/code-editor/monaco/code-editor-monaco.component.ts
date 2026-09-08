@@ -50,7 +50,6 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
-type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -128,12 +127,17 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
-    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
-    );
+    /**
+     * The feedback objects themselves (same references as in {@link feedbackInternal}, not clones) - the template
+     * derives `line` per item via {@link getFeedbackLine} instead of baking it into a copy. Cloning here would hand
+     * the inline feedback editor a new `feedback` object identity on every keystroke (this recomputes on every
+     * `feedbackInternal` write, i.e. on every character typed once a feedback commits live instead of on save).
+     */
+    readonly feedbackForSelectedFile = computed<Feedback[]>(() => this.filterFeedbackForSelectedFile(this.feedbackInternal()));
 
-    private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
-        return cloneWith(feedback, { line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' });
+    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since already filtered by reference) fallback case. */
+    protected getFeedbackLine(feedback: Feedback): number {
+        return Feedback.getReferenceLine(feedback) ?? -1;
     }
 
     annotationsArray: Array<Annotation> = [];

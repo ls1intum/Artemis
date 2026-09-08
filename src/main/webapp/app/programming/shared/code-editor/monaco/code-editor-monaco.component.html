@@ -7,7 +7,7 @@
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
                     [selectedFile]="selectedFile()!"
-                    [codeLine]="feedback.line"
+                    [codeLine]="getFeedbackLine(feedback)"
                     [feedback]="feedback"
                     [readOnly]="readOnlyManualFeedback()"
                     [highlightDifferences]="highlightDifferences()"
