@@ -74,6 +74,30 @@ class AttachmentFileLocationIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(locationsOf(absolute, blank)).isEmpty();
     }
 
+    /**
+     * The same classification, for the general-purpose location method rather than the projection.
+     * <p>
+     * {@link Attachment#fileLocation()} is what every filesystem caller asks, so the collision above reaches much further than the migration entry: resolving an external link
+     * would hand back the location of whichever stored file shares its last segment, and a caller would then serve that file under this attachment's visibility or schedule it
+     * for deletion with this unit.
+     */
+    @Test
+    void shouldNotLocateAFileForAnAttachmentHostedElsewhere() {
+        Attachment stored = attachmentWithLink("notes.pdf");
+        Attachment external = attachmentWithLink("https://example.org/lecture/notes.pdf");
+
+        assertThat(external.fileLocation()).isEmpty();
+        // The file the external attachment would otherwise have been given.
+        assertThat(stored.fileLocation()).isPresent();
+        assertThat(stored.fileLocation().orElseThrow().path().getFileName()).hasToString("notes.pdf");
+    }
+
+    @Test
+    void shouldNotLocateAFileForAnAttachmentWhoseLinkIsAbsoluteOrBlank() {
+        assertThat(attachmentWithLink("/public/images/placeholder.png").fileLocation()).isEmpty();
+        assertThat(attachmentWithLink("  ").fileLocation()).isEmpty();
+    }
+
     private Attachment attachmentWithLink(String link) {
         AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
         Attachment attachment = unit.getAttachment();

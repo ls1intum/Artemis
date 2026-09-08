@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -158,7 +159,15 @@ public class LectureUnitImportService {
 
         // Where the original lies follows from the attachment itself. Reading it off the stored link instead put a file in the wrong directory whenever that link was written in
         // the other of the two spellings the same endpoint answers to.
-        Path oldPath = importedAttachment.fileLocation().path();
+        Optional<FileSystemLocation> originalLocation = importedAttachment.fileLocation();
+        if (originalLocation.isEmpty()) {
+            // The original points at a document hosted elsewhere, so there is no file to copy. The link carries the reference and is what the copy has to keep verbatim;
+            // resolving it would copy whichever unrelated file happens to share its last segment.
+            attachment.setLink(importedAttachment.getLink());
+            return attachment;
+        }
+
+        Path oldPath = originalLocation.get().path();
         Path newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, FilePathType.ATTACHMENT_UNIT);

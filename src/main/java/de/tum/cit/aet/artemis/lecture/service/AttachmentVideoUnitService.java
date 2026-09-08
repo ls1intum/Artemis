@@ -273,12 +273,14 @@ public class AttachmentVideoUnitService {
         if (existingHash != null) {
             return Optional.of(existingHash);
         }
-        if (existingAttachment.getLink() == null) {
+        // Empty for a missing link and for one that points outside this application: in both cases there is no stored file to hash, so the upload counts as changed content.
+        Optional<FileSystemLocation> existingFileLocation = existingAttachment.fileLocation();
+        if (existingFileLocation.isEmpty()) {
             return Optional.empty();
         }
 
         try {
-            Path existingFilePath = existingAttachment.fileLocation().path();
+            Path existingFilePath = existingFileLocation.get().path();
             if (!Files.exists(existingFilePath)) {
                 log.warn("Stored attachment file {} does not exist. Treating uploaded file as changed content.", existingAttachment.getLink());
                 return Optional.empty();
@@ -380,7 +382,8 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(attachmentVideoUnit.getAttachment().fileLocation().path());
+            // Nothing of ours is cached for an attachment that links elsewhere.
+            attachmentVideoUnit.getAttachment().fileLocation().ifPresent(location -> this.fileService.evictCacheForPath(location.path()));
         }
     }
 

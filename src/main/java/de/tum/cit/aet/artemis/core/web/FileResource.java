@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -491,7 +492,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildAttachmentFileResponse(attachment.fileLocation().path(), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -522,11 +523,15 @@ public class FileResource {
         unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
 
         // Modified to use studentVersion if available
-        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
+        List<Path> attachmentLinks = lectureAttachments.stream().flatMap(unit -> {
             Attachment attachment = unit.getAttachment();
             // The attachment says where its own file is: a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory.
-            return attachment.getStudentVersion() != null ? new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path()
-                    : attachment.fileLocation().path();
+            if (attachment.getStudentVersion() != null) {
+                return Stream.of(new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path());
+            }
+            // An attachment linking to a document hosted elsewhere contributes nothing: there is no file of ours to merge, and the `.pdf` its URL ends in is enough to pass the
+            // extension filter above. Dropping it merges the lecture's own PDFs rather than failing the whole download over one external link.
+            return attachment.fileLocation().map(FileSystemLocation::path).stream();
         }).toList();
 
         Optional<byte[]> file = FileUtil.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
@@ -561,7 +566,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildAttachmentFileResponse(attachment.fileLocation().path(), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -583,7 +588,7 @@ public class FileResource {
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
-        return buildAttachmentFileResponse(attachment.fileLocation().path(), retrieveDownloadFilename(attachment), AttachmentCachePolicy.NONE, requestHeaders);
+        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), retrieveDownloadFilename(attachment), AttachmentCachePolicy.NONE, requestHeaders);
     }
 
     /**
@@ -674,11 +679,25 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            return buildAttachmentFileResponse(attachment.fileLocation().path(), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+            return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 
         return buildAttachmentFileResponse(new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, studentVersion).path(), downloadFilename,
                 AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+    }
+
+    /**
+     * Where an attachment's file lies, for an endpoint that serves that file.
+     * <p>
+     * An attachment may point at a document hosted elsewhere, and such an attachment has no file to serve: the client follows the link itself. Answering with the location its
+     * last path segment resolves to would serve whichever unrelated attachment file happens to share that filename, under this attachment's visibility, so this is a 404
+     * instead. See {@link Attachment#fileLocation()}.
+     *
+     * @param attachment the attachment whose file was requested
+     * @return the location of the file on disk
+     */
+    private static Path storedFileLocationElseThrow(Attachment attachment) {
+        return attachment.fileLocation().orElseThrow(() -> new EntityNotFoundException("Stored file of attachment", attachment.getId())).path();
     }
 
     /**

@@ -164,8 +164,10 @@ public class LectureUnitService {
             // Processing state deletion is handled by DB cascade when lecture unit is deleted
             contentProcessingApi.ifPresent(api -> api.handleUnitDeletion(attachmentVideoUnit));
 
-            if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
-                fileService.schedulePathForDeletion(attachmentVideoUnit.getAttachment().fileLocation().path(), 5);
+            if (attachmentVideoUnit.getAttachment() != null) {
+                // Empty for an attachment that links to a document hosted elsewhere: there is nothing of ours to delete, and the filename such a link ends in may well be one
+                // an unrelated attachment stores.
+                attachmentVideoUnit.getAttachment().fileLocation().ifPresent(location -> fileService.schedulePathForDeletion(location.path(), 5));
             }
         }
 

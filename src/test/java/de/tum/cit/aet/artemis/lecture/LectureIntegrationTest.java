@@ -643,8 +643,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         migratedUnit.setName(migratedAttachment.getName());
         migratedUnit.setReleaseDate(migratedAttachment.getReleaseDate());
         migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
-        assertThat(migratedAttachment.fileLocation()).isInstanceOf(FileSystemLocation.LectureAttachment.class);
-        assertThat(migratedAttachment.fileLocation().path()).isEqualTo(new FileSystemLocation.LectureAttachment(lecture1.getId(), migratedAttachment.getLink()).path()).exists();
+        assertThat(migratedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.LectureAttachment.class);
+        assertThat(migratedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.LectureAttachment(lecture1.getId(), migratedAttachment.getLink()).path()).exists();
         lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(migratedUnit));
 
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -673,9 +674,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     private Attachment assertThatAttachmentLiesUnderItsOwnUnitDirectory(AttachmentVideoUnit importedUnit) {
         Attachment importedAttachment = attachmentVideoUnitRepository.findByIdElseThrow(importedUnit.getId()).getAttachment();
         assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-video-units/" + importedUnit.getId() + "/");
-        assertThat(importedAttachment.fileLocation()).isInstanceOf(FileSystemLocation.AttachmentVideoUnitFile.class);
-        assertThat(importedAttachment.fileLocation().path()).isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(importedUnit.getId(), importedAttachment.getLink()).path())
-                .exists();
+        assertThat(importedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.AttachmentVideoUnitFile.class);
+        assertThat(importedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(importedUnit.getId(), importedAttachment.getLink()).path()).exists();
         return importedAttachment;
     }
 

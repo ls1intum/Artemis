@@ -7,10 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Service
 @Conditional(LectureEnabled.class)
 public class AttachmentService {
+
+    private static final Logger log = LoggerFactory.getLogger(AttachmentService.class);
 
     private final AttachmentRepository attachmentRepository;
 
@@ -69,9 +74,18 @@ public class AttachmentService {
             return;
         }
 
+        // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory. An attachment
+        // that links to a document hosted elsewhere has no file here to redact, and slides are only ever split out of a stored PDF, so hidden slides on such an attachment are
+        // a data inconsistency rather than something to regenerate from.
+        Optional<FileSystemLocation> fileLocation = attachment.fileLocation();
+        if (fileLocation.isEmpty()) {
+            log.warn("Attachment {} links to a document this application does not store, so no student version can be regenerated for its {} hidden slide(s).", attachment.getId(),
+                    hiddenSlides.size());
+            return;
+        }
+
         try {
-            // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory.
-            Path pdfPath = attachment.fileLocation().path();
+            Path pdfPath = fileLocation.get().path();
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 

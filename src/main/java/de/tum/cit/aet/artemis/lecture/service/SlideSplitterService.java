@@ -97,8 +97,14 @@ public class SlideSplitterService {
             return CompletableFuture.completedFuture(null);
         }
 
-        Path attachmentPath = attachmentVideoUnit.getAttachment().fileLocation().path();
-        File file = attachmentPath.toFile();
+        Optional<FileSystemLocation> fileLocation = attachmentVideoUnit.getAttachment().fileLocation();
+        if (fileLocation.isEmpty()) {
+            // An attachment that links to a document hosted elsewhere has no PDF here to split, and the filename its link ends in may belong to an unrelated attachment.
+            log.debug("Skipping slide split job for AttachmentVideoUnit {}, whose attachment links to a document this application does not store", job.attachmentVideoUnitId());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        File file = fileLocation.get().path().toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
             if (job.pageOrder() == null) {

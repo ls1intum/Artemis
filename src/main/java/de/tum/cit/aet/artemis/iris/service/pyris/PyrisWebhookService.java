@@ -77,7 +77,10 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
-        Path path = attachmentVideoUnit.getAttachment().fileLocation().path();
+        // An attachment that links to a document hosted elsewhere has nothing here to ingest. Resolving the link would read whichever unrelated file shares its last segment
+        // and hand that to Pyris as this unit's content.
+        Path path = attachmentVideoUnit.getAttachment().fileLocation().orElseThrow(() -> new IrisInternalPyrisErrorException(
+                "Attachment video unit " + attachmentVideoUnit.getId() + " links to a document this application does not store, so it cannot be ingested")).path();
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);
