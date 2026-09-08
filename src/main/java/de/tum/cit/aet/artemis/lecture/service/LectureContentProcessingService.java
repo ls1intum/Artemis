@@ -184,6 +184,10 @@ public class LectureContentProcessingService {
             log.debug("Unit {} in failed state, skipping (use retryProcessing or change content)", unit.getId());
             return true;
         }
+        if (state.getPhase() == ProcessingPhase.SKIPPED) {
+            log.debug("Unit {} was declined by Iris, awaiting a content change before re-evaluation", unit.getId());
+            return true;
+        }
 
         // Enqueue: save as IDLE with startedAt=null (not yet dispatched)
         if (state.getId() == null) {

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -85,13 +86,17 @@ public class ProcessingStateCallbackService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final LectureUnitContentFingerprintService contentFingerprintService;
+
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            LectureUnitContentFingerprintService contentFingerprintService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
+        this.contentFingerprintService = contentFingerprintService;
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -192,17 +197,19 @@ public class ProcessingStateCallbackService {
         }
 
         try {
-            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
+            String contentFingerprint = contentFingerprintService.computeFingerprint(attachmentUnit);
+            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint);
 
             if (jobToken == null) {
-                log.debug("Processing not applicable for unit {} (course settings or content type)", unit.getId());
-                state.transitionTo(ProcessingPhase.DONE);
+                log.info("Processing not applicable for unit {} (course settings or content type), marking as SKIPPED", unit.getId());
+                state.transitionTo(ProcessingPhase.SKIPPED);
                 processingStateRepository.save(state);
                 return;
             }
 
             state.transitionTo(targetPhase);
             state.setIngestionJobToken(jobToken);
+            state.setContentFingerprint(contentFingerprint);
             processingStateRepository.save(state);
             log.info("Dispatched unit {} as {} with token {}", unit.getId(), targetPhase, maskToken(jobToken));
 
@@ -255,6 +262,7 @@ public class ProcessingStateCallbackService {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
+            state.setConfirmedFingerprint(state.getContentFingerprint());
             processingStateRepository.save(state);
             saveDisplayPageNumbers(state, displayPageNumbers);
 
@@ -324,6 +332,18 @@ public class ProcessingStateCallbackService {
         catch (JsonProcessingException e) {
             log.warn("Failed to parse checkpoint data for unit {}: {}", lectureUnitId, e.getMessage());
         }
+    }
+
+    /**
+     * Resolve the identity of the ingestion job currently associated with the given token.
+     * Backs the database fallback for authenticating Iris ingestion callbacks after the
+     * distributed job map entry expired.
+     *
+     * @param token the ingestion job token from the callback
+     * @return the job identity if a processing state currently carries this token
+     */
+    public Optional<IngestionJobIdentityDTO> findIngestionJobIdentityByToken(String token) {
+        return processingStateRepository.findIngestionJobIdentityByToken(token);
     }
 
     /**

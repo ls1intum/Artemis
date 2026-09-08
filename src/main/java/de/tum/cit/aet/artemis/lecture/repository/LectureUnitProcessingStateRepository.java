@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
  * Spring Data JPA repository for the LectureUnitProcessingState entity.
@@ -33,24 +34,47 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
 
     /**
-     * Find processing states that are stuck (no callback received recently).
+     * Find processing states that are stuck (no callback received recently) or past the absolute deadline.
      * Uses {@code lastUpdated} instead of {@code startedAt} so that heartbeat callbacks
      * from Iris keep resetting the clock — a healthy job is never considered stuck.
+     * The absolute deadline on {@code startedAt} is the backstop for jobs that keep sending
+     * heartbeats without ever terminating: no single ingestion run may exceed it.
      * <p>
      * Only finds states that are NOT already scheduled for retry (retryEligibleAt IS NULL).
      * This prevents stuck detection from interfering with states waiting for their backoff period.
      *
-     * @param phases     the phases to check
-     * @param cutoffTime the time before which states are considered stuck (no callback since)
+     * @param phases             the phases to check
+     * @param cutoffTime         the time before which states are considered stuck (no callback since)
+     * @param absoluteCutoffTime the time before which a started job is considered stuck regardless of heartbeats
      * @return list of stuck processing states
      */
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase IN :phases
-            AND ps.lastUpdated < :cutoffTime
+            AND (ps.lastUpdated < :cutoffTime OR ps.startedAt < :absoluteCutoffTime)
             AND ps.retryEligibleAt IS NULL
             """)
-    List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime);
+    List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime,
+            @Param("absoluteCutoffTime") ZonedDateTime absoluteCutoffTime);
+
+    /**
+     * Resolve the identity of the ingestion job currently associated with the given token.
+     * <p>
+     * Backs the database fallback for authenticating Iris ingestion callbacks: the distributed job map
+     * entry expires after a TTL, but the token stays valid in the processing state row for as long as
+     * the job is in flight, so a late terminal callback is never rejected for a job Artemis still tracks.
+     *
+     * @param token the ingestion job token from the callback's Authorization header
+     * @return the job identity if a processing state currently carries this token
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, lu.id)
+            FROM LectureUnitProcessingState ps
+            JOIN ps.lectureUnit lu
+            JOIN lu.lecture l
+            WHERE ps.ingestionJobToken = :token
+            """)
+    Optional<IngestionJobIdentityDTO> findIngestionJobIdentityByToken(@Param("token") String token);
 
     /**
      * Find processing states that are ready for retry (backoff period has passed).

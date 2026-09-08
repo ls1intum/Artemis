@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.MAX_CONCURRENT_PROCESSING;
 
 import java.time.ZonedDateTime;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -35,8 +37,14 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * <p>
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
+ * <p>
+ * Runs only on the scheduling node: multiple nodes running stuck recovery, backfill, and the
+ * dispatch tick concurrently would each apply the concurrency cap independently. Direct dispatch
+ * from triggers and callbacks still happens on any node; row claiming stays safe everywhere via
+ * {@code FOR UPDATE SKIP LOCKED}.
  */
 @Conditional(LectureWithIrisEnabled.class)
+@Profile(PROFILE_SCHEDULING)
 @Component
 @Lazy
 public class LectureContentProcessingScheduler {
@@ -58,6 +66,15 @@ public class LectureContentProcessingScheduler {
      * is never considered stuck.
      */
     private static final int NO_CALLBACK_TIMEOUT_MINUTES = 20;
+
+    /**
+     * Absolute upper bound in hours for a single ingestion run, regardless of heartbeats.
+     * A pipeline that keeps sending heartbeats without ever terminating would otherwise never
+     * time out, because every heartbeat resets {@code lastUpdated}. Twelve hours is far beyond
+     * any legitimate run (transcribing and ingesting the longest permitted videos), so hitting
+     * it reliably indicates a wedged job.
+     */
+    private static final int ABSOLUTE_TIMEOUT_HOURS = 12;
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -119,9 +136,11 @@ public class LectureContentProcessingScheduler {
      * @param timeoutMinutes the timeout threshold in minutes
      */
     private void recoverStuckPhase(ProcessingPhase phase, int timeoutMinutes) {
-        ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(timeoutMinutes);
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime cutoff = now.minusMinutes(timeoutMinutes);
+        ZonedDateTime absoluteCutoff = now.minusHours(ABSOLUTE_TIMEOUT_HOURS);
 
-        List<LectureUnitProcessingState> stuckStates = processingStateRepository.findStuckStates(List.of(phase), cutoff);
+        List<LectureUnitProcessingState> stuckStates = processingStateRepository.findStuckStates(List.of(phase), cutoff, absoluteCutoff);
 
         if (!stuckStates.isEmpty()) {
             log.info("Found {} stuck processing states in phase {} older than {} minutes", stuckStates.size(), phase, timeoutMinutes);

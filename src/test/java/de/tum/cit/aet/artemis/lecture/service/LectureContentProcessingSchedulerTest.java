@@ -82,8 +82,8 @@ class LectureContentProcessingSchedulerTest {
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setRetryEligibleAt(null);
 
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
 
             // When
@@ -100,7 +100,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(10));
             testState.setRetryEligibleAt(null);
 
-            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
 
             // When
             scheduler.processScheduledRetries();
@@ -116,8 +116,8 @@ class LectureContentProcessingSchedulerTest {
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setRetryEligibleAt(ZonedDateTime.now().plusMinutes(5)); // Already scheduled
 
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
 
             // When
@@ -134,8 +134,8 @@ class LectureContentProcessingSchedulerTest {
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setRetryEligibleAt(null);
 
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
 
             // But when we re-fetch, the state changed to IDLE (user intervention or dispatch)
             LectureUnitProcessingState freshState = new LectureUnitProcessingState(testUnit);
@@ -156,7 +156,7 @@ class LectureContentProcessingSchedulerTest {
         @Test
         void shouldCallDispatchPendingJobsAsBackup() {
             // Given: No stuck states
-            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
 
             // When
             scheduler.processScheduledRetries();

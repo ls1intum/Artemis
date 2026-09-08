@@ -210,6 +210,7 @@ export enum ProcessingPhase {
     INGESTING = 'INGESTING',
     DONE = 'DONE',
     FAILED = 'FAILED',
+    SKIPPED = 'SKIPPED',
 }
 
 /**

@@ -110,6 +110,20 @@ public class LectureUnitProcessingState extends DomainObject {
     @Column(name = "retry_eligible_at")
     private ZonedDateTime retryEligibleAt;
 
+    /**
+     * Fingerprint of the source content sent with the current or most recent ingestion job.
+     * Computed at dispatch time and forwarded to Iris, which stamps it verbatim into the vector store.
+     */
+    @Column(name = "content_fingerprint", length = 80)
+    private String contentFingerprint;
+
+    /**
+     * Fingerprint of the last ingestion run whose terminal success callback arrived.
+     * The unit is verifiably up to date exactly when this matches the fingerprint of its current content.
+     */
+    @Column(name = "confirmed_fingerprint", length = 80)
+    private String confirmedFingerprint;
+
     public LectureUnitProcessingState() {
         // Default constructor for JPA
     }
@@ -201,6 +215,22 @@ public class LectureUnitProcessingState extends DomainObject {
         this.retryEligibleAt = retryEligibleAt;
     }
 
+    public String getContentFingerprint() {
+        return contentFingerprint;
+    }
+
+    public void setContentFingerprint(String contentFingerprint) {
+        this.contentFingerprint = contentFingerprint;
+    }
+
+    public String getConfirmedFingerprint() {
+        return confirmedFingerprint;
+    }
+
+    public void setConfirmedFingerprint(String confirmedFingerprint) {
+        this.confirmedFingerprint = confirmedFingerprint;
+    }
+
     /**
      * Increment the retry count.
      */
@@ -272,12 +302,12 @@ public class LectureUnitProcessingState extends DomainObject {
     }
 
     /**
-     * Check if this is a terminal state (done or failed).
+     * Check if this is a terminal state (done, failed, or skipped).
      *
      * @return true if in terminal state
      */
     public boolean isTerminal() {
-        return phase == ProcessingPhase.DONE || phase == ProcessingPhase.FAILED;
+        return phase == ProcessingPhase.DONE || phase == ProcessingPhase.FAILED || phase == ProcessingPhase.SKIPPED;
     }
 
     @Override
