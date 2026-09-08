@@ -251,13 +251,13 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         var second = struggleTriggerService.prepareTrigger(exercise.getId(), user, "confirm_close", new StruggleEpisodeDTO("ep-touch", true, null), "progress", null, null);
         assertThat(second.accepted()).isTrue();
 
-        // Asserted through the retention delete rather than by reading the timestamp back. A query cannot prove the
-        // refresh landed: Hibernate returns the instance this test already holds for that id, stale timestamp and
-        // all, so the assertion would fail even with a correct refresh. The delete reads the database.
-        int deleted = irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minusDays(7));
+        // Asserted through the retention delete: this row was deliberately aged past the cutoff, so it survives the
+        // delete only if the second trigger refreshed its timestamp in the database. The count is deliberately not
+        // asserted, the same rule the retention test below follows: the delete is table-wide and classes run in
+        // parallel, so another class's aged row would make it flaky.
+        irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minusDays(7));
 
-        assertThat(deleted).as("a repeat trigger must move the row out of the retention window").isZero();
-        assertThat(irisProactiveEpisodeRepository.findById(registered.getId())).as("a repeat trigger must reuse the row, not insert a second one").isPresent();
+        assertThat(irisProactiveEpisodeRepository.findById(registered.getId())).as("a repeat trigger must refresh the row and reuse it, not insert a second one").isPresent();
     }
 
     @Test
