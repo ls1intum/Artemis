@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -55,7 +56,10 @@ public record UpdateProgrammingExerciseDTO(
         @Nullable SubmissionPolicyDTO submissionPolicy, @Nullable ProjectType projectType, boolean releaseTestsWithExampleSolution, @Nullable AssessmentType assessmentType,
 
         // Build config
-        UpdateProgrammingExerciseBuildConfigDTO buildConfig) implements CompetencyLinksHolderDTO {
+        UpdateProgrammingExerciseBuildConfigDTO buildConfig,
+
+        // Plagiarism detection config
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a ProgrammingExercise entity.
@@ -93,6 +97,11 @@ public record UpdateProgrammingExerciseDTO(
                     : exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();
         }
 
+        // Only expose the plagiarism config when the lazy association is already initialized
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfigDTO = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
+                ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
+                : null;
+
         // The submission policy is a lazy one-to-one: on a detached exercise the proxy cannot be unproxied, so map an uninitialized policy to null.
         // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
         var submissionPolicy = exercise.getSubmissionPolicy();
@@ -107,6 +116,6 @@ public record UpdateProgrammingExerciseDTO(
                 exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(),
                 submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
-                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()));
+                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), plagiarismDetectionConfigDTO);
     }
 }
