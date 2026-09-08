@@ -12,6 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
+
 /** Parses and validates problem-statement {@code [task][title](testName)} bindings and detects grader-internal prose leaks. */
 final class ProblemStatementBindingChecker {
 
@@ -68,6 +70,11 @@ final class ProblemStatementBindingChecker {
         Set<String> known = new HashSet<>(actualTestNames);
         known.addAll(seededStructuralTestNames);
         return TESTS_COLOR_NAME.matcher(problemStatement).results().map(match -> match.group(1).strip()).distinct().filter(name -> !known.contains(name)).sorted().toList();
+    }
+
+    static boolean hasInvalidDiagramSyntax(String problemStatement) {
+        return Pattern.compile("@startuml\\b.*?(?:@enduml|\\z)", Pattern.DOTALL).matcher(problemStatement).results()
+                .anyMatch(diagram -> !PlantUmlService.hasValidSyntax(TESTS_COLOR_NAME.matcher(diagram.group()).replaceAll("grey")));
     }
 
     /** Artemis renders a directive outside every {@code @startuml}...{@code @enduml} block as stray statement text. */

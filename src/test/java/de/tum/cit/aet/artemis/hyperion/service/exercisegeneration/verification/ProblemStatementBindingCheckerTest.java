@@ -15,6 +15,15 @@ import org.springframework.core.io.ClassPathResource;
 class ProblemStatementBindingCheckerTest {
 
     @Test
+    void validatesStyledDiagramLabelsWithThePlantUmlParser() {
+        assertThat(ProblemStatementBindingChecker.hasInvalidDiagramSyntax("@startuml\nclass Unclosed")).isTrue();
+        assertThat(ProblemStatementBindingChecker.hasInvalidDiagramSyntax("@startuml\nenum <color:testsColor(testEnum)>Result</color> {\nOK\n}\n@enduml")).isTrue();
+        assertThat(ProblemStatementBindingChecker
+                .hasInvalidDiagramSyntax("@startuml\nenum \"<color:testsColor(testEnum)>Result</color>\" as Result {\nOK\n}\nclass Handler\nHandler ..> Result : returns\n@enduml"))
+                .isFalse();
+    }
+
+    @Test
     void canonicalArtemisBubbleSortStatementUsesResolvableProductionTaskBindings() throws IOException {
         String statement = new ClassPathResource("templates/java/maven_maven/readme").getContentAsString(StandardCharsets.UTF_8);
         List<String> testNames = List.of("testBubbleSort", "testMergeSort", "testClass[SortStrategy]", "testMethods[SortStrategy]", "testAttributes[Context]",

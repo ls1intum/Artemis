@@ -1638,6 +1638,8 @@ class DifferentialVerificationServiceTest {
                             PROBLEM_STATEMENT_WITH_TASK + "Students must implement the comparator.\n", null, "third person"),
                     Arguments.of("a testsColor link naming no real test renders a silently dead diagram link", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
                             PROBLEM_STATEMENT_WITH_TASK + "@startuml\nclass Sorter {\n  <color:testsColor(noSuchTest)>+sort()</color>\n}\n@enduml\n", null, "diagram testsColor"),
+                    Arguments.of("invalid diagram syntax must not be saved even when the code passes", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
+                            PROBLEM_STATEMENT_WITH_TASK + "@startuml\nenum <color:red>Result</color> {\nOK\n}\n@enduml\n", null, "invalid syntax"),
                     Arguments.of("a PlantUML directive outside the diagram block renders as stray statement text", Map.<String, String>of(), Map.<String, String>of(),
                             Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK + "hide empty fields\n@startuml\nclass Sorter\n@enduml\n", null, "render as stray text"),
                     Arguments.of("a heading repeated verbatim duplicates a section", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),

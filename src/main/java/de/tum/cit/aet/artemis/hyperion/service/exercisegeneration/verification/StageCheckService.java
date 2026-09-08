@@ -821,6 +821,9 @@ public class StageCheckService {
         if (!hiddenMentions.isEmpty()) {
             return StageCheckResult.failed(ProblemStatementBindingChecker.hiddenTestMentionsRejection(hiddenMentions));
         }
+        if (ProblemStatementBindingChecker.hasInvalidDiagramSyntax(statement)) {
+            return StageCheckResult.failed("The PlantUML diagram has invalid syntax. Quote styled class/enum labels and give them plain aliases for relationships.");
+        }
         if (ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(statement)) {
             return StageCheckResult.failed("PlantUML directives ('hide empty fields', 'hide empty methods', 'skinparam ...') sit OUTSIDE the @startuml...@enduml block, where "
                     + "Artemis renders them as stray text. Move them inside the block, directly before @enduml.");

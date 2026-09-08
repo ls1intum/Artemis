@@ -44,7 +44,10 @@ fail, showing exactly what remains. Link every element that has a check, and onl
 members as `<color:testsColor(exactTestName)>+member()</color>`, relations as
 `Sub -up-|> Super #testsColor(testClass[Sub])`. Use behavioural test names and seeded structural check names
 (`testClass[X]`, `testMethods[X]`, `testAttributes[X]`, `testConstructors[X]`) exactly as `verify` reports
-them. End with `hide empty fields` / `hide empty methods`.
+them. Styled type names must be quoted and aliased, for example
+`enum "<color:testsColor(testClass[Result])>Result</color>" as Result`; use the plain alias `Result`
+in relationships. Never put an unquoted `<color:...>` tag directly after `class` or `enum`.
+End with `hide empty fields` / `hide empty methods`.
 
 A diagram presented as the complete API includes every student-owned type and required public member,
 including orchestration/driver types with graded work. A focused diagram is allowed: label its scope and

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
+import net.sourceforge.plantuml.error.PSystemError;
 import net.sourceforge.plantuml.security.SecurityProfile;
 import net.sourceforge.plantuml.security.SecurityUtils;
 
@@ -93,6 +94,17 @@ public class PlantUmlService {
             log.error("Unable to load PlantUML theme: {}", fileName, e);
             throw new RuntimeException("Unable to load PlantUML theme: " + fileName, e); // NOPMD
         }
+    }
+
+    /**
+     * Parses diagram syntax without generating an image, using the same sandboxed parser as rendering.
+     *
+     * @param plantUml diagram source with any Artemis color bindings already resolved
+     * @return whether the source contains diagrams and none has a syntax error
+     */
+    public static boolean hasValidSyntax(String plantUml) {
+        var blocks = new SourceStringReader(plantUml).getBlocks();
+        return !blocks.isEmpty() && blocks.stream().noneMatch(block -> block.getDiagram() instanceof PSystemError);
     }
 
     /**

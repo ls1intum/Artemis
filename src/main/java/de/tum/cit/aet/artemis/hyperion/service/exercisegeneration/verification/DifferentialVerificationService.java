@@ -520,6 +520,10 @@ public class DifferentialVerificationService {
             statementReasons.add("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
                     + ". Use exact behavioural or seeded structural check names, or remove the link.");
         }
+        boolean diagramSyntaxValid = !ProblemStatementBindingChecker.hasInvalidDiagramSyntax(problemStatement);
+        if (!diagramSyntaxValid) {
+            statementReasons.add("The PlantUML diagram has invalid syntax. Quote styled class/enum labels and give them plain aliases for relationships.");
+        }
         boolean noStrayUmlDirectives = !ProblemStatementBindingChecker.hasStrayPlantUmlDirectives(problemStatement);
         if (!noStrayUmlDirectives) {
             statementReasons
@@ -543,7 +547,7 @@ public class DifferentialVerificationService {
         boolean testArtifactGatesPass = laneResultsSound && solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && solutionScaClean;
         boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && !taskBindingHiddenInMarkdownCode && taskKeywordsWellFormed && taskBindingsResolve
                 && noDuplicateTaskBindings && allGradableTestsBound && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve && noStrayUmlDirectives
-                && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
+                && diagramSyntaxValid && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         List<String> actionableReasons = new ArrayList<>(reasons);
