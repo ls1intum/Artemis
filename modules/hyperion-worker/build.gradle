@@ -5,12 +5,23 @@ apply plugin: 'org.cyclonedx.bom'
 dependencies {
     implementation project(':hyperion-runtime')
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
     implementation 'org.springframework.boot:spring-boot-starter-artemis'
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
     implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
     implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'commons-io:commons-io:2.21.0'
     implementation 'tools.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+    implementation 'org.springframework.ai:spring-ai-client-chat'
+    implementation('org.springframework.ai:spring-ai-starter-model-openai') {
+        // The OpenAI SDK uses OkHttp; the worker needs no reactive web application stack.
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-webclient'
+    }
+    implementation 'net.sourceforge.plantuml:plantuml-mit:1.2026.7'
+    implementation 'com.thoughtworks.qdox:qdox:2.2.0'
+    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.apache.artemis:artemis-server'
     testImplementation 'org.apache.artemis:artemis-jakarta-server'
@@ -29,6 +40,10 @@ bootJar {
 }
 
 processTestResources {
+    from(rootProject.file('src/main/resources')) {
+        // Negative coverage: a valid Maven harness must still fail Gradle-only admission.
+        include 'templates/java/maven_maven/test/projectTemplate/pom.xml'
+    }
     from(rootProject.file('docker/hyperion/broker.xml')) {
         rename 'broker.xml', 'hyperion-broker.xml'
     }
@@ -43,4 +58,22 @@ cyclonedxDirectBom {
 test {
     // The embedded broker's journal releases JDK-allocated direct buffers, which Netty's Java 25 cleaner cannot release.
     systemProperty 'io.netty.noUnsafe', 'false'
+}
+
+// Use Artemis's canonical build recipe and teaching fixtures without maintaining a competing worker copy.
+processResources {
+    from(rootProject.file('src/main/resources')) {
+        include 'templates/phases/java/plain_gradle.yaml'
+        include 'templates/java/exercise/**'
+        include 'templates/java/solution/**'
+        include 'templates/java/gradle_gradle/**'
+        include 'templates/java/test/testFiles/**'
+        include 'templates/java/test/gradle/**'
+        include 'templates/hyperion/**'
+    }
+}
+
+// Canonical teaching resources contain Gradle's wrapper JAR, which is not worker code.
+jacocoTestReport {
+    classDirectories.setFrom(sourceSets.main.output.classesDirs)
 }

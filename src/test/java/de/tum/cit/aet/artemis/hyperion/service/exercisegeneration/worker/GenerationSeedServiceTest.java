@@ -43,6 +43,8 @@ class GenerationSeedServiceTest {
 
     private final GenerationRequestService requests = mock();
 
+    private final de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository testCases = mock();
+
     private final ProgrammingExercise exercise = mock();
 
     private final LocalVCRepositoryUri uri = new LocalVCRepositoryUri(URI.create("https://artemis.example"), "TEST", "TEST-template");
@@ -57,8 +59,9 @@ class GenerationSeedServiceTest {
 
     @BeforeEach
     void setup() throws Exception {
-        service = new GenerationSeedService(git, new TempFileUtilService(temporary), requests, "main");
+        service = new GenerationSeedService(git, new TempFileUtilService(temporary), requests, testCases, "main");
         when(exercise.getRepositoryURI(any())).thenReturn(uri);
+        when(exercise.getId()).thenReturn(42L);
         when(exercise.getProblemStatement()).thenReturn("The instructor's specification.");
         when(requests.isAuthoritativeProblemStatement(exercise)).thenReturn(true);
         when(git.getOrCheckoutRepository(eq(uri), eq(uri), any(Path.class), eq(true), eq("main"), eq(false))).thenAnswer(invocation -> createRepository(invocation.getArgument(2)));
@@ -96,6 +99,24 @@ class GenerationSeedServiceTest {
         var seed = service.capture(exercise);
         org.mockito.Mockito.verify(git, org.mockito.Mockito.times(3)).getOrCheckoutRepository(eq(uri), eq(uri), any(Path.class), eq(true), eq(expectedBranch), eq(false));
         assertThat(seed.heads().values()).containsAll(commits);
+    }
+
+    @Test
+    void capturesDueDateAndAllPersistedTestNamesForWorkerValidation() {
+        var testCase = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase();
+        testCase.setTestName("testPush");
+        when(testCases.findByExerciseId(42L)).thenReturn(java.util.Set.of(testCase));
+        when(exercise.getDueDate()).thenReturn(java.time.ZonedDateTime.parse("2026-10-01T12:00:00Z"));
+        var grading = service.capture(exercise).gradingContext();
+        assertThat(grading.hasDueDate()).isTrue();
+        assertThat(grading.baselineGradedTestNames()).containsExactly("testPush");
+    }
+
+    @Test
+    void missingGradingReadFailsClosedRatherThanInventingAnEmptyAdaptationBaseline() {
+        when(testCases.findByExerciseId(42L)).thenThrow(new IllegalStateException("unavailable"));
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasMessage("unavailable");
+        assertThat(temporary.toFile().list()).isEmpty();
     }
 
     @Test

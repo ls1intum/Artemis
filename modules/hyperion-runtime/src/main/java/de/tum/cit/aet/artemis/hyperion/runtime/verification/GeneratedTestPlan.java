@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.runtime.verification;
 
 import java.util.ArrayList;
 import java.util.HashSet;
