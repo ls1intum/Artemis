@@ -27,6 +27,11 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
     @Autowired
     protected RedissonDistributedDataProviderService redissonDistributedDataProvider;
 
+    @Override
+    protected boolean exposesAuthoritativeDataNodeTopology() {
+        return false;
+    }
+
     private static RedisStackContainer redis;
 
     static boolean isDockerAvailable() {

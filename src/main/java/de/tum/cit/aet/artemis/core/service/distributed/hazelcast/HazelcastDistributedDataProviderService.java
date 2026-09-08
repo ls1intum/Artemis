@@ -275,6 +275,22 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
         return "[" + memberAddress.getHost() + "]:" + memberAddress.getPort();
     }
 
+    @Override
+    public String getLocalNodeId() {
+        if (!isInstanceRunning()) {
+            throw new HazelcastInstanceNotActiveException();
+        }
+        return hazelcastInstance.getLocalEndpoint().getUuid().toString();
+    }
+
+    @Override
+    public Optional<Set<String>> getDataNodeIds() {
+        if (!isInstanceRunning()) {
+            return Optional.empty();
+        }
+        return Optional.of(getClusterMembers().stream().filter(member -> !member.isLiteMember()).map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet()));
+    }
+
     /**
      * Generates a unique identifier for this instance when the endpoint address is not available.
      * This is used as a fallback for Hazelcast clients with asyncStart=true before they connect.

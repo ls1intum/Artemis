@@ -4,8 +4,8 @@ title: Hyperion Service
 sidebar_label: Hyperion Setup
 ---
 
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Callout from "../../src/components/Callout/Callout";
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Callout from '../../src/components/Callout/Callout';
 
 # Hyperion Service
 
@@ -27,8 +27,8 @@ Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion
 
 ```yaml
 artemis:
-  hyperion:
-    enabled: true
+    hyperion:
+        enabled: true
 ```
 
 ## Configure Spring AI
@@ -39,52 +39,52 @@ Hyperion delegates all model interactions to Spring AI. Artemis ships the single
 
 ```yaml
 spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      api-key: <openai-api-key>
-      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-      chat:
-        model: gpt-5-mini # Or another (reasonably capable) model
-        temperature: 1.0 # Required to be 1.0 for gpt-5
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    ai:
+        model:
+            chat: openai
+        openai:
+            api-key: <openai-api-key>
+            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+            chat:
+                model: gpt-5-mini # Or another (reasonably capable) model
+                temperature: 1.0 # Required to be 1.0 for gpt-5
+        # Retry/response handling tuning for AI providers
+        retry:
+            # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+            on-http-codes: [429]
+            # Conservative defaults; adjust if needed
+            max-attempts: 5
+            backoff:
+                initial-interval: 1000ms
+                multiplier: 2.0
+                max-interval: 30000ms
 ```
 
 ### Azure OpenAI / Microsoft Foundry
 
 ```yaml
 spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      api-key: <azure-openai-api-key>
-      base-url: https://<your-resource-name>.openai.azure.com
-      microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
-      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-      chat:
-        model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
-        temperature: 1.0 # Required to be 1.0 for gpt-5
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    ai:
+        model:
+            chat: openai
+        openai:
+            api-key: <azure-openai-api-key>
+            base-url: https://<your-resource-name>.openai.azure.com
+            microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
+            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+            chat:
+                model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
+                temperature: 1.0 # Required to be 1.0 for gpt-5
+        # Retry/response handling tuning for AI providers
+        retry:
+            # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+            on-http-codes: [429]
+            # Conservative defaults; adjust if needed
+            max-attempts: 5
+            backoff:
+                initial-interval: 1000ms
+                multiplier: 2.0
+                max-interval: 30000ms
 ```
 
 ### Token Usage Tracking
@@ -93,11 +93,11 @@ Artemis tracks LLM token usage and costs per request. Configure model pricing un
 
 ```yaml
 artemis:
-  llm:
-    model-costs:
-      gpt-5-mini:
-        input-cost-per-million-eur: 0.23
-        output-cost-per-million-eur: 1.84
+    llm:
+        model-costs:
+            gpt-5-mini:
+                input-cost-per-million-eur: 0.23
+                output-cost-per-million-eur: 1.84
 ```
 
 Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). If a model has no cost entry, costs default to zero but token counts are still recorded.
@@ -120,32 +120,36 @@ Key benefits of adding observability:
 Langfuse is a platform for observability and tracing of LLM applications and agents. It captures everything happening during an LLM interaction: inputs, outputs, tool usage, retries, latencies and costs.
 
 #### Setup Guide
+
 1. See how to create and setup a Langfuse account (See only "Get API keys") [here](https://langfuse.com/docs/observability/get-started).
 
 2. Request to join a Organization from an Edutelligence maintainer.
 
 3. You will be added to the Project as **Member**.
-> ℹ️ **Note**
-> Project Members can *use* Langfuse and access existing API keys.
-> Only **Project Admins** can create new API keys.
-> If you cannot view API keys, ask the maintainer to generate them for you.
+
+    > ℹ️ **Note**
+    > Project Members can _use_ Langfuse and access existing API keys.
+    > Only **Project Admins** can create new API keys.
+    > If you cannot view API keys, ask the maintainer to generate them for you.
 
 4. Once the Project Admin provides the **Public Key** and **Secret Key**, store them securely.
-These keys authenticate your application when sending observability data to Langfuse.
+   These keys authenticate your application when sending observability data to Langfuse.
 
 5. Identify your Langfuse host URL.
-It appears in the Langfuse UI as: **https://\<host\>**.
+   It appears in the Langfuse UI as: **https://\<host\>**.
 
 Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
 **https://\<host\>/api/public/otel/v1/traces**
+
 - `/api/public/otel` → Langfuse OTLP receiver root
 - `/v1/traces` → Standard OTLP HTTP route
-> For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
+    > For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
 
 6. Generate the Basic Authentication token for Langfuse.
-Use Base64 encoding with the format: base64(public_key:secret_key)
+   Use Base64 encoding with the format: base64(public_key:secret_key)
 
 Example generation command:
+
 ```bash
 echo -n "<public_key>:<secret_key>" | base64
 ```
@@ -168,30 +172,30 @@ To avoid committing secrets, prefer supplying these values via environment varia
 
 ```yaml
 management:
-  # Set true to display contextual name in @Observed on Langfuse
-  observations:
-    annotations:
-      enabled: true
-  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
-  langfuse:
-    enabled: true
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
+    # Set true to display contextual name in @Observed on Langfuse
+    observations:
+        annotations:
+            enabled: true
+    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+    langfuse:
+        enabled: true
     tracing:
-      # LangFuse accepts OTLP over HTTP at the traces path only
-      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-      endpoint: https://example.com
-      transport: http
-      headers:
-        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-        Authorization: "Basic <base64(public_key:secret_key)>"
-      # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-      # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-      # so disabling the default exporter will NOT stop LLM trace export.
-      export:
-        enabled: false
+        sampling:
+            probability: 1.0
+    otlp:
+        tracing:
+            # LangFuse accepts OTLP over HTTP at the traces path only
+            # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+            endpoint: https://example.com
+            transport: http
+            headers:
+                # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+                Authorization: 'Basic <base64(public_key:secret_key)>'
+            # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+            # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
+            # so disabling the default exporter will NOT stop LLM trace export.
+            export:
+                enabled: false
 ```
 
 ## Verifying the integration
@@ -204,3 +208,84 @@ management:
 
 - **Cost control:** Define usage policies and rate limits with your provider. Hyperion requests can process the full problem statement, so costs scale with exercise size.
 - **Data protection:** Model providers receive exercise content. Obtain consent and align with institutional policies before enabling Hyperion in production.
+
+## Whole-exercise generation workers
+
+Whole-exercise generation uses a separate worker supervisor and a dedicated,
+TLS-authenticated broker. It does not execute generated code in the core JVM or
+on ordinary LocalCI build agents. Provision the worker and its narrowly scoped
+broker permissions following the [worker deployment instructions](https://github.com/ls1intum/Artemis/blob/develop/docker/hyperion/README.md).
+A reachable worker without a generation engine advertises no capacity.
+
+Enable the core integration only on nodes with the `core`, `localci`, and
+`localvc` profiles:
+
+```yaml
+artemis:
+    hyperion:
+        enabled: true
+        exercise-generation:
+            enabled: true
+        workers:
+            broker-url: tcp://generation-broker.example:61617?sslEnabled=true&verifyHost=true
+            user: ${HYPERION_CORE_BROKER_USER}
+            password: ${HYPERION_CORE_BROKER_PASSWORD}
+            ids: [worker-1]
+```
+
+The core account sends assignments and consumes worker events; it must not use a
+worker account or the browser STOMP credentials. Configure the JVM truststore for
+the broker certificate. Worker IDs must match explicitly provisioned broker
+addresses. A missing capable worker returns `503 generationCapacityUnavailable`;
+starting a supervisor process is not evidence that generation is available.
+
+Generation accepts only unreleased Java `GRADLE_GRADLE` exercises without
+auxiliary repositories, sequential test runs, or static code analysis. Maven
+projects are not supported. The worker receives a frozen, bounded repository
+snapshot, not credentials or repository paths. Core validates returned artifacts
+against that snapshot before persisting them, and checks repository heads and
+exercise metadata again before writing.
+
+Use identical generation settings on generation-capable core nodes. The
+exercise-mutation guard also runs on `core` and `localvc` writer nodes where
+Hyperion is disabled; it does not load a model or connect to the worker broker.
+Every writer must run this version of Artemis and use the same distributed data
+backend. Writer nodes must be data members; standalone LocalVC clients are not
+supported for generation. Do not mix guarded and older, unguarded nodes while
+generation is enabled. Redis deployments currently cannot admit generation
+because the provider cannot attest data-member topology.
+
+### Save, cancellation, and recovery
+
+Cancellation before persistence changes no exercise repositories or metadata.
+Read-only retained artifacts and job transcripts are temporary inspection data,
+not saved exercises. A worker disconnect cannot authorize a replacement to save
+under the old execution identity. Inspect incomplete accounting as unknown usage,
+not as zero usage.
+
+Once persistence begins, cancellation and ordinary edits are blocked. Shutdown
+allows the non-cancellable phase to drain; keep the process termination grace
+period longer than `artemis.hyperion.generation.shutdown-drain-timeout` (default
+11 minutes). An uncertain save is reported as `PARTIAL` and requires manual
+repository and database reconciliation rather than automatic undo.
+
+If a core process dies while holding a non-cancellable slot, confirm that its JVM
+is stopped before recovery. External-edit slot diagnostics and recovery remain
+available when generation is disabled. Recover generation and revert slots on a
+generation-enabled core node so their job state is reconciled too:
+
+1. Confirm that the owning JVM is stopped, not merely disconnected from the cluster.
+2. Reconcile the exercise's repository heads and metadata before allowing new edits.
+3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot`.
+4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
+
+Recovery records an audit attempt before releasing anything, refuses a live owner,
+and requires a majority of the expected data members. A two-member deployment
+cannot recover after losing one member. A stale token never releases a replacement
+slot. Releasing a slot does not repair an interrupted save.
+
+The LocalCI build that synchronizes saved tests is restricted to network `none`
+and receives no exercise-configured environment variables. Its persisted build
+job ID carries the `hyperion-sync-` prefix so retries retain the same restrictions.
+Provision the matching offline Gradle toolchain and dependencies on those build
+agents; retries do not fall back to a network-enabled build.

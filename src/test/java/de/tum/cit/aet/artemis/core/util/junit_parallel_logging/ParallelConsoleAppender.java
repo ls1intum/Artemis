@@ -168,6 +168,11 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
             }
         }
 
+        // The generation-enabled authorization fixture deliberately does not share the ordinary LocalCI context.
+        if (clazz.getName().equals("de.tum.cit.aet.artemis.hyperion.web.HyperionExerciseGenerationResourceIntegrationTest")) {
+            return clazz;
+        }
+
         if (AbstractArtemisIntegrationTest.class.isAssignableFrom(clazz)) {
             fail("Test class " + clazz.getName() + " extends ArtemisIntegrationTest but is not assigned to a test group");
         }

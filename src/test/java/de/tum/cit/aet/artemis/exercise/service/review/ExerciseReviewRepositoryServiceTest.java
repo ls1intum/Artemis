@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.eclipse.jgit.lib.ObjectReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -218,7 +220,7 @@ class ExerciseReviewRepositoryServiceTest {
     void shouldReturnValidationErrorWhenRepositoryUriIsMissingForFileValidation() {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of());
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, null);
 
         assertThat(validationError).contains("repository URI for TEMPLATE_REPO is missing");
     }
@@ -229,11 +231,26 @@ class ExerciseReviewRepositoryServiceTest {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(CommentThreadLocationType.TEMPLATE_REPO, templateUri), Map.of());
         when(gitService.getBareRepository(eq(templateUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, null);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");
         assertThat(validationError.get()).contains("boom");
+    }
+
+    @Test
+    void shouldReturnValidationErrorWhenRequestedCommitIsMissing() throws Exception {
+        LocalVCRepositoryUri templateUri = new LocalVCRepositoryUri("http://localhost/git/EX1/ex1-template.git");
+        ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(CommentThreadLocationType.TEMPLATE_REPO, templateUri), Map.of());
+        Repository repository = org.mockito.Mockito.mock(Repository.class);
+        ObjectReader objectReader = org.mockito.Mockito.mock(ObjectReader.class);
+        when(gitService.getBareRepository(eq(templateUri), eq(false))).thenReturn(repository);
+        when(repository.newObjectReader()).thenReturn(objectReader);
+        when(repository.resolve("missing-sha^{commit}")).thenReturn(null);
+
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris, "missing-sha");
+
+        assertThat(validationError).contains("commit 'missing-sha' is missing in TEMPLATE_REPO");
     }
 
     @Test
@@ -242,7 +259,7 @@ class ExerciseReviewRepositoryServiceTest {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of(77L, auxiliaryUri));
         when(gitService.getBareRepository(eq(auxiliaryUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris, null);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");

@@ -1367,6 +1367,168 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: generateExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExerciseGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: revertExerciseGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
+  /api/hyperion/courses/{courseId}/programming-exercises/generation/metadata-suggestion:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: suggestGenerationMetadata
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExerciseGenerationMetadataSuggestionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationMetadataSuggestionResponse'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getExerciseGenerationStatus
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/artifacts:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getRetainedGenerationArtifacts
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRetainedArtifacts'}
+  /api/hyperion/programming-exercises/generation/supported-languages:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getSupportedGenerationLanguages
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER,
+                    SWIFT, OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT,
+                    RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+  /api/hyperion/programming-exercises/generation/effort-profiles:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getGenerationEffortProfiles
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
+  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot:
+    get:
+      tags: [admin-hyperion-generation]
+      operationId: getWedgedSlot
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationWedgedSlot'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
+    delete:
+      tags: [hyperion-exercise-generation]
+      operationId: cancelExerciseGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: jobId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
+  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}:
+    delete:
+      tags: [admin-hyperion-generation]
+      operationId: recoverWedgedSlot
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: path
+        required: true
+        schema: {type: string}
+      - name: reason
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
 components:
   schemas:
     QuizBatchWithPassword:
@@ -1480,16 +1642,16 @@ components:
       type: object
       description: Context used to generate structured assessment criteria
       properties:
-        problemStatement: {type: string, description: Current problem statement,
-          maxLength: 50000, minLength: 1}
+        problemStatement: {type: string, description: Current problem statement, maxLength: 50000,
+          minLength: 1}
         maxPoints: {type: number, format: double, description: Maximum regular score,
           exclusiveMinimum: 0}
         bonusPoints: {type: number, format: double, description: Maximum bonus score,
           minimum: 0}
         gradingInstructions: {type: string, description: General assessment instructions,
           maxLength: 50000, minLength: 0}
-        exampleSolution: {type: string, description: Current example solution, if
-            available, maxLength: 200000, minLength: 0}
+        exampleSolution: {type: string, description: Current example solution, maxLength: 200000,
+          minLength: 0}
         additionalContext: {type: string, description: Optional exercise-specific
             context appended to the default prompt, maxLength: 200000, minLength: 0}
       required: [bonusPoints, maxPoints, problemStatement]
@@ -1511,7 +1673,8 @@ components:
         bonus: {type: boolean, description: Whether the criterion awards bonus points}
         structuredGradingInstructions:
           type: array
-          description: Full-credit, partial-credit, and no-credit instructions, in that order
+          description: Full-credit, partial-credit, and no-credit instructions, in
+            that order
           items: {$ref: '#/components/schemas/GeneratedAssessmentInstruction'}
           minItems: 3
           maxItems: 3
@@ -1527,8 +1690,8 @@ components:
         instructionDescription: {type: string, description: Assessment instruction,
           minLength: 1}
         feedback: {type: string, description: Suggested feedback, minLength: 1}
-        usageCount: {type: integer, format: int32, description: Maximum number of uses,
-          minimum: 0}
+        usageCount: {type: integer, format: int32, description: Maximum number of
+            uses, minimum: 0}
       required: [credits, feedback, gradingScale, instructionDescription, usageCount]
     ShortAnswerSubmittedAnswerFromStudent:
       required: [questionId, submittedTexts, type]
@@ -3005,3 +3168,314 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    ExerciseGenerationJobStart:
+      type: object
+      properties:
+        jobId: {type: string}
+      required: [jobId]
+    ExerciseGenerationRetainedArtifacts:
+      type: object
+      description: The current bounded, read-only generated candidate, also retained
+        for inspection when an unsaved run ends
+      properties:
+        jobId: {type: string}
+        completeness:
+          type: string
+          description: Whether the retained files are a complete account of what the
+            run produced
+          enum: [COMPLETE, PARTIAL]
+        problemStatement: {type: string}
+        specDocument: {type: string}
+        files:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationRetainedFile'}
+        empty: {type: boolean}
+      required: [completeness, files, jobId]
+    ExerciseGenerationMetadataSuggestionResponse:
+      type: object
+      description: The metadata Artemis derives for an exercise it is about to generate
+      properties:
+        title: {type: string}
+        shortName: {type: string}
+        packageName: {type: string}
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+      required: [difficulty, maxPoints, packageName, shortName, title]
+    ExerciseGenerationMetadataSuggestionRequest:
+      type: object
+      description: Request for the derived metadata of an exercise an instructor is
+        about to generate
+      properties:
+        prompt: {type: string, description: The instructor's brief for the exercise
+            to be generated, maxLength: 8000, minLength: 0}
+        projectType:
+          type: string
+          description: The project type the exercise will use
+          enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE,
+            GRADLE_GRADLE, MAVEN_BLACKBOX]
+      required: [prompt]
+    ExerciseGenerationVerdict:
+      type: object
+      description: The structured outcome of the differential verification, so the
+        client can show which gates passed without parsing prose
+      properties:
+        mechanicallyVerified: {type: boolean, description: Whether the exercise passed
+            mechanical verification}
+        solutionPassed: {type: boolean, description: Whether the solution passed all
+            its tests}
+        templateFailed: {type: boolean, description: Whether the template compiled
+            but correctly failed the tests}
+        testCount: {type: integer, format: int32, description: The number of tests
+            discovered}
+        reasons:
+          type: array
+          description: Human-readable explanations of any failed gate (empty when
+            mechanically verified)
+          items: {type: string}
+      required: [mechanicallyVerified, reasons, solutionPassed, templateFailed, testCount]
+    ExerciseGenerationEffortProfile:
+      type: object
+      properties:
+        name: {type: string}
+        label: {type: string}
+      required: [label, name]
+    ExerciseGenerationWedgedSlot:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        token: {type: string}
+        kind: {type: string}
+        ownerNodeId: {type: string}
+        startedAt: {type: string, format: date-time}
+        ownerLeftCluster: {type: boolean}
+    ExerciseGenerationUsage:
+      type: object
+      properties:
+        modelCalls: {type: integer, format: int64}
+        toolCalls: {type: integer, format: int64}
+        agentTurns: {type: integer, format: int64}
+        attempts: {type: integer, format: int64}
+        inputTokens: {type: integer, format: int64}
+        outputTokens: {type: integer, format: int64}
+        cachedInputTokens: {type: integer, format: int64}
+        cachedInputTokensComplete: {type: boolean}
+        estimatedCostEur: {type: number, format: double}
+        estimatedCostEurComplete: {type: boolean}
+        models:
+          type: array
+          items: {type: string}
+        providerRequestIds:
+          type: array
+          items: {type: string}
+        providerRequestIdsComplete: {type: boolean}
+      required: [agentTurns, attempts, cachedInputTokens, cachedInputTokensComplete,
+        estimatedCostEur, estimatedCostEurComplete, inputTokens, modelCalls, models,
+        outputTokens, providerRequestIds, providerRequestIdsComplete, toolCalls]
+    ExerciseGenerationEvent:
+      type: object
+      description: A progress event streamed to the instructor while an agentic whole-exercise
+        generation or adaptation runs
+      properties:
+        type:
+          type: string
+          description: The event kind
+          enum: [STARTED, PROGRESS, DONE, CANCELLED, ERROR]
+        message: {type: string, description: Human-readable progress or result message}
+        phase:
+          type: string
+          description: Stable instructor-facing phase of the generation journey
+          enum: [PREPARING, DESIGNING, VERIFYING, REVIEWING, REPAIRING, SAVING]
+        completionStatus:
+          type: string
+          description: On a terminal DONE event, whether the run succeeded, needs
+            review, or partially completed
+          enum: [SUCCESS, NEEDS_REVIEW, PARTIAL]
+        verdict: {$ref: '#/components/schemas/ExerciseGenerationVerdict', description: 'On
+            a terminal event, the structured verification verdict'}
+        liveExerciseChanged: {type: boolean, description: 'On a terminal event, whether
+            the live exercise changed and open editors should refresh'}
+        savedRepositoryCommits:
+          type: object
+          additionalProperties: {type: string}
+          description: Exact saved commit hashes keyed by repository name
+        savedExerciseVersionId: {type: integer, format: int64, description: 'The exact
+            saved exercise version id, on a successful terminal event'}
+        terminationReason:
+          type: string
+          description: On a terminal event, why the generation run ended
+          enum: [CONVERGED, REPAIR_BUDGET_EXHAUSTED, ATTEMPT_CAP_REACHED, MECHANICAL_REPAIR_EXHAUSTED,
+            POST_REPAIR_CORRECTION_EXHAUSTED, NO_SCHEDULABLE_SURFACE, REVIEW_UNAVAILABLE,
+            UNCHANGED_CANDIDATE_RESUBMITTED, REPAIR_DID_NOT_IMPROVE, NO_ADMISSIBLE_CONCEPT,
+            CONCEPT_ADMITTED_WITH_FINDINGS, CANCELLED, DEADLINE_EXCEEDED, TOKEN_BUDGET_EXHAUSTED,
+            AGENT_ERROR, ENVIRONMENT_UNAVAILABLE, RUN_FAILED, NOT_STARTED]
+        repairRound: {$ref: '#/components/schemas/ExerciseGenerationRepairRound',
+          description: 'On a repair-round progress event, that round''s finding bookkeeping'}
+        activity: {$ref: '#/components/schemas/ExerciseGenerationActivity', description: 'On
+            a progress event produced from inside the agent loop, what the run was
+            doing at that moment'}
+        liveUsage: {$ref: '#/components/schemas/ExerciseGenerationLiveUsage', description: 'On
+            an activity or phase event, what the run has spent up to that moment'}
+        timestamp: {type: string, format: date-time, description: The moment the event
+            was produced}
+      required: [timestamp, type]
+    ExerciseGenerationActivity:
+      type: object
+      description: What a generation run is doing right now, so a long synchronous
+        model call is visible instead of silent
+      properties:
+        step: {type: string, description: 'Machine-readable substep the run is inside
+            (concept, spec, artifacts, statement), or null when no substep applies'}
+        attempt: {type: integer, format: int32, description: The 1-based authoring
+            attempt}
+        turn: {type: integer, format: int32, description: The 1-based agent turn inside
+            the current agent session}
+        waitingOnModel: {type: boolean, description: Whether this event was emitted
+            immediately before a provider call the run is now waiting on}
+        modelCalls: {type: integer, format: int32, description: How many provider
+            calls the run has completed so far}
+        toolCalls: {type: integer, format: int32, description: How many tool calls
+            the run has executed so far}
+        filesWritten: {type: integer, format: int32, description: 'How many successful
+            file writes, edits, and deletions the run has made so far'}
+      required: [attempt, filesWritten, modelCalls, toolCalls, turn, waitingOnModel]
+    ExerciseGenerationRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        prompt: {type: string, maxLength: 8000, minLength: 0}
+        selectedFeedbackThreadIds:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 25
+          minItems: 0
+        effortProfile: {type: string, maxLength: 64, minLength: 0}
+        maxTokens: {type: integer, format: int64, minimum: 0}
+        maxJobDuration: {type: string}
+      required: [mode]
+    ExerciseGenerationFileChange:
+      type: object
+      description: A file changed by the generation agent
+      properties:
+        type:
+          type: string
+          description: Constant discriminator identifying a file change on the shared
+            topic
+          enum: [FILE_CHANGE]
+        path: {type: string, description: Workspace-relative file path}
+        repo:
+          type: string
+          description: Owning repository bucket
+          enum: [solution, template, tests, other]
+        action:
+          type: string
+          description: The successful file tool operation
+          enum: [write, edit, delete]
+        turn: {type: integer, format: int32, description: The agent turn the change
+            happened on}
+        timestamp: {type: string, format: date-time, description: The moment the change
+            was produced}
+      required: [action, path, repo, timestamp, turn, type]
+    ExerciseGenerationRepairRound:
+      type: object
+      description: Per-round finding bookkeeping of the semantic repair loop, so a
+        run's transcript shows whether repairing drains findings
+      properties:
+        round: {type: integer, format: int32, description: The 1-based index of this
+            review round within the run}
+        attempt: {type: integer, format: int32, description: The 1-based authoring
+            attempt whose candidate was reviewed}
+        blocking: {type: integer, format: int32, description: How many of this round's
+            findings block acceptance}
+        advisory: {type: integer, format: int32, description: How many of this round's
+            findings are advisory}
+        carriedOver: {type: integer, format: int32, description: How many of this
+            round's findings were already present in the previous round}
+        drained: {type: integer, format: int32, description: How many of the previous
+            round's findings are gone in this round}
+        fresh: {type: integer, format: int32, description: How many of this round's
+            findings are new since the previous round}
+      required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    ExerciseGenerationLiveUsage:
+      type: object
+      description: What a generation run has spent so far, streamed while it runs
+      properties:
+        inputTokens: {type: integer, format: int64, description: Prompt tokens billed
+            so far}
+        outputTokens: {type: integer, format: int64, description: Completion tokens
+            billed so far}
+        cachedInputTokens: {type: integer, format: int64, description: The share of
+            the prompt tokens the provider served from its cache}
+        billableTokens: {type: integer, format: int64, description: 'Tokens charged
+            against the run''s token budget, with cached input discounted'}
+        tokenBudget: {type: integer, format: int64, description: The token ceiling
+            this run was admitted against}
+        modelCalls: {type: integer, format: int64, description: Provider responses
+            accounted for so far}
+        estimatedCostEur: {type: number, format: double, description: 'Estimated cost
+            in EUR, absent when any model used has no configured price'}
+        estimatedCostComplete: {type: boolean, description: Whether a price was configured
+            for every response counted so far}
+      required: [billableTokens, cachedInputTokens, estimatedCostComplete, inputTokens,
+        modelCalls, outputTokens, tokenBudget]
+    ExerciseGenerationRevertResult:
+      type: object
+      description: Result of reverting the last Hyperion generation or adaptation
+      properties:
+        fullyReverted: {type: boolean, description: Whether every captured repository
+            was reverted}
+        revertedRepositories:
+          type: array
+          description: Repositories that were reset
+          items: {type: string}
+        completedAt: {type: string, format: date-time, description: Server time after
+            the revert completed}
+      required: [completedAt, fullyReverted, revertedRepositories]
+    ExerciseGenerationRetainedFile:
+      type: object
+      description: A file of a generated candidate that was not saved to the exercise
+      properties:
+        repo:
+          type: string
+          description: Owning repository bucket
+          enum: [solution, template, tests]
+        path: {type: string, description: Repository-relative file path}
+        content: {type: string, description: The file's text content as the agent
+            left it}
+      required: [content, path, repo]
+    ExerciseGenerationStatus:
+      type: object
+      properties:
+        jobId: {type: string}
+        running: {type: boolean}
+        mode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationEvent'}
+        fileChanges:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationFileChange'}
+        revertAvailable: {type: boolean}
+        revertJobId: {type: string}
+        revertMode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        ownedByCaller: {type: boolean}
+        cancellable: {type: boolean}
+        specDocument: {type: string}
+        usage: {$ref: '#/components/schemas/ExerciseGenerationUsage'}
+        accountingState:
+          type: string
+          description: Whether the reported usage is a complete account of a generation
+            run's provider spend
+          enum: [PENDING, COMPLETE, INCOMPLETE]
+        effortProfile: {type: string}
+        artifactsRetained: {type: boolean, description: Whether a current or retained
+            candidate snapshot from this run is readable}
+      required: [accountingState, artifactsRetained, cancellable, events, fileChanges,
+        jobId, ownedByCaller, revertAvailable, running]

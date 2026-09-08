@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /** Worker-authenticated progress or terminal data. The destination, not the payload alone, establishes sender identity. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
-        String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
+        String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output, @Nullable GenerationProgress progress) {
 
     public WorkerEvent {
         Objects.requireNonNull(incarnation);
@@ -27,6 +27,15 @@ public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation
         if ((type != Type.HEARTBEAT && identity == null) || ((type == Type.CHECKPOINT || type == Type.FINISHED) && output == null)) {
             throw new IllegalArgumentException("Event is missing its assignment or candidate");
         }
+    }
+
+    public WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
+            String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
+        this(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, null);
+    }
+
+    public WorkerEvent withProgress(GenerationProgress detail) {
+        return new WorkerEvent(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, detail);
     }
 
     /** Events project onto the existing public job contract; these internal values are not public completion states. */

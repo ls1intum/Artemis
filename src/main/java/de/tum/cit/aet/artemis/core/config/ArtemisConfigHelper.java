@@ -91,6 +91,15 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * @param environment the Spring environment
+     * @return whether core may coordinate opt-in generation using LocalVC and LocalCI
+     */
+    public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
+        return isHyperionEnabled(environment) && environment.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false)
+                && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("core & localci & localvc"));
+    }
+
+    /**
      * Check if the Deimos malicious participation analysis module is enabled.
      *
      * @param environment the Spring environment

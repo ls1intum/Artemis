@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerEvent;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperionworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.hyperionworker.messaging.WorkerEventPublisher;
@@ -77,6 +76,8 @@ public class WorkerSupervisor implements AutoCloseable {
     @Nullable
     private WorkerEvent pendingCheckpoint;
 
+    private final java.util.Deque<WorkerEvent> pendingAccounting = new java.util.ArrayDeque<>();
+
     private boolean draining;
 
     private boolean prepared;
@@ -88,6 +89,8 @@ public class WorkerSupervisor implements AutoCloseable {
         final GenerationAssignment assignment;
 
         final AtomicBoolean cancelled = new AtomicBoolean();
+
+        final AtomicBoolean stopAuthoring = new AtomicBoolean();
 
         volatile long renewedAt;
 
@@ -144,6 +147,9 @@ public class WorkerSupervisor implements AutoCloseable {
                 if (command.type() == WorkerCommand.Type.CANCEL) {
                     cancel(active);
                 }
+                else if (command.type() == WorkerCommand.Type.STOP_AUTHORING) {
+                    active.stopAuthoring.set(true);
+                }
                 else {
                     active.renewedAt = nanoTime.getAsLong();
                 }
@@ -177,7 +183,7 @@ public class WorkerSupervisor implements AutoCloseable {
         WorkerEvent terminal;
         try {
             publishBestEffort(event(WorkerEvent.Type.STARTED, identity, "Starting generation on the isolated worker.", null, null));
-            AgentActivitySink progress = new AgentActivitySink() {
+            GenerationObserver progress = new GenerationObserver() {
 
                 private final GenerationActivityTracker activity = new GenerationActivityTracker();
 
@@ -192,11 +198,23 @@ public class WorkerSupervisor implements AutoCloseable {
                 }
 
                 @Override
+                public void progress(String message, de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress detail) {
+                    WorkerEvent update = event(WorkerEvent.Type.PROGRESS, identity, bounded(message), null, null).withProgress(detail);
+                    if (detail.usage() == null) {
+                        publishBestEffort(update);
+                    }
+                    else {
+                        retainAccounting(update);
+                    }
+                }
+
+                @Override
                 public void activity(String message, GenerationActivity activity) {
                     publishBestEffort(event(WorkerEvent.Type.PROGRESS, identity, bounded(message), activity, null));
                 }
             };
-            GenerationOutput result = policy.generate(execution.assignment, execution.cancelled::get, progress, checkpoint -> retainCheckpoint(identity, checkpoint));
+            GenerationOutput result = policy.generate(execution.assignment, () -> execution.cancelled.get() || execution.stopAuthoring.get(), progress,
+                    checkpoint -> retainCheckpoint(identity, checkpoint));
             terminal = event(execution.cancelled.get() ? WorkerEvent.Type.CANCELLED : WorkerEvent.Type.FINISHED, identity, null, null, result);
         }
         catch (RuntimeException failure) {
@@ -245,12 +263,26 @@ public class WorkerSupervisor implements AutoCloseable {
         publishBestEffort(event(WorkerEvent.Type.HEARTBEAT, currentIdentity(), null, null, null));
     }
 
+    private synchronized void retainAccounting(WorkerEvent update) {
+        if (pendingAccounting.size() >= 4_096) {
+            throw new IllegalStateException("Worker accounting delivery backlog is full");
+        }
+        pendingAccounting.addLast(update);
+        flushTerminal();
+    }
+
     private synchronized void retainCheckpoint(ExecutionIdentity identity, GenerationOutput checkpoint) {
         pendingCheckpoint = event(WorkerEvent.Type.CHECKPOINT, identity, null, null, checkpoint);
         flushTerminal();
     }
 
     private synchronized void flushTerminal() {
+        while (!pendingAccounting.isEmpty()) {
+            if (!publishBestEffort(pendingAccounting.getFirst())) {
+                return;
+            }
+            pendingAccounting.removeFirst();
+        }
         if (pendingCheckpoint != null) {
             if (!publishBestEffort(pendingCheckpoint)) {
                 return;

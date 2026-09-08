@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
 
 /** Local generation policy. No persistence or transport operations are exposed to model tools. */
 public interface GenerationEngine {
@@ -19,5 +18,5 @@ public interface GenerationEngine {
      * @param checkpoint a frozen inspectable candidate; publishing does not request persistence
      * @return the selected candidate, verification and accounting
      */
-    GenerationOutput generate(GenerationAssignment assignment, BooleanSupplier cancelled, AgentActivitySink progress, Consumer<GenerationOutput> checkpoint);
+    GenerationOutput generate(GenerationAssignment assignment, BooleanSupplier cancelled, GenerationObserver progress, Consumer<GenerationOutput> checkpoint);
 }

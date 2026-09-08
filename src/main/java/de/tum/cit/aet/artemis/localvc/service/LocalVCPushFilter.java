@@ -7,14 +7,19 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.eclipse.jgit.http.server.ServletUtils;
+import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -50,10 +55,24 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             return;
         }
 
-        long startNanos = System.nanoTime();
-        // stays true if doFilter throws, so a push that blew up is not counted as a success
-        boolean failed = true;
+        if (!"POST".equals(servletRequest.getMethod())) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
+        Repository repository = ServletUtils.getRepository(servletRequest);
+        ProgrammingExercise exercise = (ProgrammingExercise) servletRequest.getAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE);
+        final ProgrammingExerciseMutationGuardService.MutationLease mutationLease;
         try {
+            mutationLease = localVCServletService.claimProgrammingExerciseMutation(repository, exercise);
+        }
+        catch (HttpStatusException e) {
+            servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");
+            return;
+        }
+        long startNanos = System.nanoTime();
+        boolean failed = true;
+        try (mutationLease) {
             filterChain.doFilter(servletRequest, servletResponse);
             failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
         }
