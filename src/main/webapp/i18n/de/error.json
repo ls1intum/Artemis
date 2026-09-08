@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Die Bewertung ist noch nicht möglich: Du kannst beginnen, sobald die Klausur für alle Studierenden am {{ date }} beendet ist.",
         "assessmentNotPossibleTestsPending": "Die Bewertung ist noch nicht möglich: Die Tests müssen noch einmal auf den endgültigen Abgaben ausgeführt werden. Du kannst ab {{ date }} bewerten.",
+        "invalidCorrectionRound": "Diese Korrekturrunde gibt es für die Aufgabe nicht.",
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
@@ -321,6 +322,7 @@
         "invalidBuildPhaseName": "Ein Build-Phasenname ist ungültig oder verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
+        "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }
 }

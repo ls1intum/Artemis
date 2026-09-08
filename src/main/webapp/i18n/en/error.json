@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Assessment is not possible yet: you can start once the exam has ended for all students on {{ date }}.",
         "assessmentNotPossibleTestsPending": "Assessment is not possible yet: the tests still have to run once more on the final submissions. You can start assessing on {{ date }}.",
+        "invalidCorrectionRound": "This correction round does not exist for the exercise.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "isNull": "No {{ entityName }} was provided.",
@@ -319,6 +320,7 @@
         "invalidBuildPhaseName": "A build phase name is invalid or uses a reserved name. Please choose a different name.",
         "duplicateBuildPhaseNames": "Build phase names must be unique.",
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
+        "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
 }
