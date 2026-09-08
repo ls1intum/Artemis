@@ -12,7 +12,7 @@ import buildPlanPhases from '../assets/programming/build-plan-phases.png';
 
 Every push to a student repository triggers a build, and the build is what turns code into a result. A new exercise starts with a working build for its language, so most exercises need nothing from this page. Come here when you need to change what the build runs, how long it may take, what the container it runs in is allowed to do, or when you want to add code quality checks.
 
-Unless noted otherwise, these settings require [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) and apply to every build of the exercise: template, solution and student submissions alike.
+Each section below says whether it needs [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) — static code analysis and the Jenkins feedback mechanism do not. Everything on this page applies to every build of the exercise: template, solution and student submissions alike.
 
 ## Adapt Build Phases (Optional)
 
@@ -112,13 +112,12 @@ Use the slider to adjust the time limit for build plan execution:
 
 In most cases, the default container configuration does not need to be changed.
 
-Currently, instructors can change whether the container has internet access, add additional environment variables, and configure resource limits such as CPU and memory.
+Currently, instructors can change which network the container joins, add additional environment variables, and configure resource limits such as CPU and memory.
 
 <Image src={dockerFlagsEdit} alt="Docker Flags Edit" size={ImageSize.large} caption="Container Configuration" />
 
-Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
-If internet access is disabled, the container cannot access the internet during the build process. Thus, it will not be able to download additional dependencies.
-The dependencies must then be included/cached in the Docker image.
+**Use custom network** selects the container's network: the default bridge, one of the networks your administrators have configured, or **None**, which cuts the container off from the network entirely.
+Choosing **None** is how you stop students downloading additional dependencies during the build. The dependencies must then already be present in the Docker image.
 
 Additional environment variables can be added to the container configuration.
 This can be useful if the build process requires specific variables to be set.
@@ -234,11 +233,11 @@ On exercise import, configurations are copied from the imported exercise.
 
 By default, unit test results are extracted and sent to Artemis automatically. Only custom setups may need semi-automatic approaches.
 
-### Jenkins
+Test results normally reach Artemis as XML files in JUnit format, collected from the result paths configured for each build phase. Any language can therefore report results, as long as it writes JUnit XML.
 
-In Jenkins CI, test case feedback is extracted from XML files in JUnit format. The Jenkins plugin reads files from a `results` folder in the Jenkins workspace top level. Regular unit test files are copied automatically.
+### Custom Feedback
 
-For custom test case feedback, create a `customFeedbacks` folder at workspace top level. In this folder, create JSON files for each test case feedback:
+When a test result cannot be expressed as a JUnit case, write a **JSON** file into one of the phase's result paths instead. With Integrated Code Lifecycle, Artemis parses every `.json` file it collects as custom feedback, using this schema:
 
 ```json
 {

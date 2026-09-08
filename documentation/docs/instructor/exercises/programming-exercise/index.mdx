@@ -72,9 +72,11 @@ Artemis ships a template for each supported language, so a new exercise starts f
 | 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   |
 | 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           |
 | 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       |
-| 18  | MATLAB               | ✅        | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
+| 18  | MATLAB               | ✅ \*     | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
 | 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
 | 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
+
+\* MATLAB only appears in the language list if your administrators have configured a license server for it.
 
 ### Using a Language Without a Template
 
@@ -98,13 +100,13 @@ Not all templates support the same feature set. **L** = Local CI, **J** = Jenkin
 | No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis) | [Plagiarism Check](/instructor/assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
 |:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
 |  1  | Java       |                       ✅                       |                            ✅                            |                    ✅                    |               ✅               | Gradle, Maven, DejaGnu |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  2  | Python     |                L: ✅<br />J: ❌                 |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  2  | Python     |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  3  | C          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | FACT, GCC              |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  4  | Haskell    |                L: ✅<br />J: ❌                 |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                        L: ✅<br />J: ❌                         |                  L: ✅<br />J: ❌                   |
-|  5  | Kotlin     |                       ✅                       |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  4  | Haskell    |                L: ✅<br />J: ❌                 |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
+|  5  | Kotlin     |                L: ❌<br />J: ✅                 |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  6  | VHDL       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  7  | Assembler  |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  8  | Swift      |                       ❌                       |                            ✅                            |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  8  | Swift      |                       ❌                       |                     L: ❌<br />J: ✅                      |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  9  | OCaml      |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
 | 10  | Rust       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 11  | JavaScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
@@ -116,7 +118,7 @@ Not all templates support the same feature set. **L** = Local CI, **J** = Jenkin
 | 17  | Bash       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 18  | MATLAB     |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 19  | Ruby       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 
 <Callout variant={CalloutVariant.info}>
 
@@ -134,13 +136,13 @@ Cannot be combined with static code analysis, and cannot be changed after the ex
 
 #### Package Name
 
-For some languages — primarily Java, Kotlin, Swift and Go — you can specify the package that the exercise template uses, which defines the package structure students must follow. This keeps submissions consistent, which matters when tests locate classes by their fully qualified name.
+For some languages — Java, Kotlin, Swift, Go and Dart — you can specify the package that the exercise template uses, which defines the package structure students must follow. This keeps submissions consistent, which matters when tests locate classes by their fully qualified name.
 
 #### Solution Repository Checkout
 
 Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.
 
-Currently supported for OCaml and Haskell only.
+Currently supported for OCaml and Haskell only, with both continuous integration systems.
 
 #### Auxiliary Repositories
 
@@ -150,7 +152,7 @@ Auxiliary repositories are additional repositories beyond the template, solution
 - include libraries or dependencies,
 - overwrite template source code in testing scenarios.
 
-Each has a name, a checkout directory and a description, and is created together with the exercise. If a checkout directory is set, the repository is checked out there during every build. See [Auxiliary Repositories](/instructor/exercises/programming-exercise/create-an-exercise#auxiliary-repositories) for how to configure them.
+Each has a name, a checkout directory and a description. If a checkout directory is set, the repository is checked out there during every build. Unlike most repository settings, auxiliary repositories can be added, edited and removed after the exercise exists. See [Auxiliary Repositories](/instructor/exercises/programming-exercise/create-an-exercise#auxiliary-repositories) for how to configure them.
 
 <Callout variant={CalloutVariant.success}>
   We encourage instructors to contribute improvements to the existing templates or to provide new templates.

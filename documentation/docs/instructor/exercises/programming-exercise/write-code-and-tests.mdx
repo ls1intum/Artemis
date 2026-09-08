@@ -184,7 +184,7 @@ The timeline lists the versions on the left; selecting one shows the exercise me
 - how submissions after the due date are handled,
 - the full build plan configuration and build script.
 
-Fields that did not exist yet in an older version are marked as unavailable rather than shown as empty, so you can tell "was not set" apart from "was not recorded".
+Values that were not set show as **Unset**. If a whole area is missing from a snapshot — the programming metadata, the build plan configuration or the build script — the view says so explicitly instead of showing an empty section.
 
 ## Write the Interactive Problem Statement
 
@@ -603,9 +603,9 @@ Compilation errors are transformed into errors thrown where code doesn't compile
 
 </Callout>
 
-Configure it by pointing the Maven compiler plugin at the Eclipse compiler, which is published as
-`org.eclipse.jdt:ecj`. The Artemis Java templates that use best-effort compilation ship a working
-`pom.xml`, so importing such an exercise is the quickest way to get a known-good configuration.
+Configure it yourself by pointing the Maven compiler plugin at the Eclipse compiler, which is published as
+`org.eclipse.jdt:ecj`, via the plugin's `compilerId`. No Artemis template ships this configuration — the Java test
+templates use the standard `maven-compiler-plugin` — so this is a change you make in the test repository's `pom.xml`.
 
 </details>
 

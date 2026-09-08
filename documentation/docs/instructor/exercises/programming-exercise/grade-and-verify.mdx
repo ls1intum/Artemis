@@ -54,7 +54,7 @@ The grading configuration determines how test cases contribute to the overall sc
 <Image src={configureGradingUpdateInformation} alt="Configure Grading Update Information" size={ImageSize.large} caption="Grading Configuration Update Information" />
 
 - <Image src={gradingSave} alt="Save" inline style={{height: '2rem'}} /> **Save**: Save current grading configuration
-- <Image src={gradingReset} alt="Reset" inline style={{height: '2rem'}} /> **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, and bonus points 0. For the Code Analysis Tab, the default configuration depends on the selected programming language.
+- <Image src={gradingReset} alt="Reset" inline style={{height: '2rem'}} /> **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, bonus points 0, and their visibility back to the exercise default — which is <strong>Always</strong> for a course exercise but <strong>After Due Date</strong> for an exam exercise, so a reset in exam mode also changes when students see feedback. For the Code Analysis Tab, the default configuration depends on the selected programming language.
 - <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '2rem'}} /> **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
 - <Image src={gradingTriggerAll} alt="Trigger All" inline style={{height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
 
@@ -323,7 +323,7 @@ To confirm, you have to type the exercise title.
 
 <Callout variant={CalloutVariant.warning}>
 
-  A reset cannot be undone. Deleting participations, submissions and results without also recreating the repositories and build plans can leave orphaned artifacts behind on the version control and CI systems, so review the selection carefully before confirming.
+  A reset cannot be undone, and deleting participations discards every submission and result the students have produced. Review the selection carefully before confirming.
 
 </Callout>
 

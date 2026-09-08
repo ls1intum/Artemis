@@ -143,7 +143,7 @@ This table contains all rules that are activated by default when creating a new 
       <td>processJavadoc="false"</td>
     </tr>
     <tr>
-      <td rowSpan={7}><strong><a href="https://checkstyle.org/checks/naming/index.html">Naming Conventions</a> / Naming &amp; Formatting</strong></td>
+      <td rowSpan={8}><strong><a href="https://checkstyle.org/checks/naming/index.html">Naming Conventions</a> / Naming &amp; Formatting</strong></td>
       <td>ConstantName</td>
       <td></td>
     </tr>
@@ -165,6 +165,10 @@ This table contains all rules that are activated by default when creating a new 
     </tr>
     <tr>
       <td>ParameterName</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>StaticVariableName</td>
       <td></td>
     </tr>
     <tr>
@@ -242,9 +246,13 @@ This table contains all rules that are activated by default when creating a new 
       <td>tokens="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF"</td>
     </tr>
     <tr>
-      <td rowSpan={4}><strong><a href="https://checkstyle.org/checks/misc/index.html">Miscellaneous</a> / Miscellaneous</strong></td>
+      <td rowSpan={5}><strong><a href="https://checkstyle.org/checks/misc/index.html">Miscellaneous</a> / Miscellaneous</strong></td>
       <td>ArrayTypeStyle</td>
       <td></td>
+    </tr>
+    <tr>
+      <td>RegexpSingleline</td>
+      <td>flags trailing whitespace</td>
     </tr>
     <tr>
       <td>UpperEll</td>
@@ -327,6 +335,10 @@ For a description of the rules refer to the [PMD documentation](https://pmd.gith
       <td>EmptyControlStatement</td>
     </tr>
     <tr>
+      <td><strong>Documentation / Documentation</strong></td>
+      <td>all rules of the category</td>
+    </tr>
+    <tr>
       <td rowSpan={3}><strong>Design / Design</strong></td>
       <td>CollapsibleIfStatements</td>
     </tr>
@@ -337,7 +349,7 @@ For a description of the rules refer to the [PMD documentation](https://pmd.gith
       <td>UselessOverridingMethod</td>
     </tr>
     <tr>
-      <td rowSpan={17}><strong>Error Prone / Potential Bugs</strong></td>
+      <td rowSpan={16}><strong>Error Prone / Potential Bugs</strong></td>
       <td>AvoidBranchingStatementAsLastInLoop</td>
     </tr>
     <tr>
@@ -360,9 +372,6 @@ For a description of the rules refer to the [PMD documentation](https://pmd.gith
     </tr>
     <tr>
       <td>DontUseFloatTypeForLoopIndices</td>
-    </tr>
-    <tr>
-      <td>ImportFromSamePackage</td>
     </tr>
     <tr>
       <td>JumbledIncrementer</td>
