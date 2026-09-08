@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.util;
 import java.nio.file.Path;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The fixed directory each file type is stored under.
@@ -20,9 +21,12 @@ public final class FilePathConverter {
     /**
      * The base path for file uploads, set from application properties.
      * This is used as the root for all file storage locations.
-     * Must be initialized before any file path operations are performed, typically during application startup (see ArtemisApp.java).
+     * <p>
+     * It is process-wide and is published by {@code FileUploadPathEnvironmentPostProcessor} before the application context is created, so that no bean, no
+     * {@code @PostConstruct} and no {@code ApplicationReadyEvent} listener can observe it unset. Server tests set it themselves, once per JVM, from
+     * {@code AbstractArtemisIntegrationTest}.
      */
-    @NonNull
+    @Nullable
     private static Path fileUploadPath;
 
     private FilePathConverter() {
@@ -47,7 +51,27 @@ public final class FilePathConverter {
      *
      * @return the base path for file uploads, or null if it has not been set yet
      */
+    @Nullable
     public static Path getFileUploadPath() {
+        return fileUploadPath;
+    }
+
+    /**
+     * The upload root, or a loud failure if nothing has published it yet.
+     * <p>
+     * Every accessor below goes through this rather than reading the field, so that a caller which runs too early is told what is wrong instead of getting a
+     * {@link NullPointerException} that says nothing. That matters most for a migration entry, which catches its own failures per row and would otherwise count every file as
+     * failed and still be recorded as executed.
+     *
+     * @return the base path every upload location is resolved against
+     * @throws IllegalStateException if the upload path has not been set yet
+     */
+    @NonNull
+    private static Path root() {
+        if (fileUploadPath == null) {
+            throw new IllegalStateException("The file upload path has not been set yet. It is published by FileUploadPathEnvironmentPostProcessor before the application "
+                    + "context is created; a caller reaching this earlier, or a test that has not set it, resolves every stored file against nothing.");
+        }
         return fileUploadPath;
     }
 
@@ -56,7 +80,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getTempFilePath() {
-        return fileUploadPath.resolve("images").resolve("temp");
+        return root().resolve("images").resolve("temp");
     }
 
     /**
@@ -64,7 +88,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getDragAndDropBackgroundFilePath() {
-        return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("backgrounds");
+        return root().resolve("images").resolve("drag-and-drop").resolve("backgrounds");
     }
 
     /**
@@ -72,7 +96,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getDragItemFilePath() {
-        return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("drag-items");
+        return root().resolve("images").resolve("drag-and-drop").resolve("drag-items");
     }
 
     /**
@@ -80,7 +104,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getCourseIconFilePath() {
-        return fileUploadPath.resolve("images").resolve("course").resolve("icons");
+        return root().resolve("images").resolve("course").resolve("icons");
     }
 
     /**
@@ -88,7 +112,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getProfilePictureFilePath() {
-        return fileUploadPath.resolve("images").resolve("user").resolve("profile-pictures");
+        return root().resolve("images").resolve("user").resolve("profile-pictures");
     }
 
     /**
@@ -96,7 +120,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getExamUserSignatureFilePath() {
-        return fileUploadPath.resolve("images").resolve("exam-user").resolve("signatures");
+        return root().resolve("images").resolve("exam-user").resolve("signatures");
     }
 
     /**
@@ -104,7 +128,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getStudentImageFilePath() {
-        return fileUploadPath.resolve("images").resolve("exam-user");
+        return root().resolve("images").resolve("exam-user");
     }
 
     /**
@@ -112,7 +136,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getLectureAttachmentFileSystemPath() {
-        return fileUploadPath.resolve("attachments").resolve("lecture");
+        return root().resolve("attachments").resolve("lecture");
     }
 
     /**
@@ -120,7 +144,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getAttachmentVideoUnitFileSystemPath() {
-        return fileUploadPath.resolve("attachments").resolve("attachment-unit");
+        return root().resolve("attachments").resolve("attachment-unit");
     }
 
     /**
@@ -128,7 +152,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getFileUploadExercisesFilePath() {
-        return fileUploadPath.resolve("file-upload-exercises");
+        return root().resolve("file-upload-exercises");
     }
 
     /**
@@ -136,7 +160,7 @@ public final class FilePathConverter {
      */
     @NonNull
     public static Path getMarkdownFilePath() {
-        return fileUploadPath.resolve("markdown");
+        return root().resolve("markdown");
     }
 
     /**

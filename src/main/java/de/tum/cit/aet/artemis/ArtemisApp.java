@@ -2,12 +2,9 @@ package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_DEFAULT;
-import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_PROPERTY_NAME;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +34,6 @@ import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @SpringBootApplication
@@ -81,11 +77,11 @@ public class ArtemisApp {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
+        // The upload root of FilePathConverter is not set here. It is set by FileUploadPathEnvironmentPostProcessor,
+        // before the context is created, because ApplicationReadyEvent fires inside run() and its listeners resolve
+        // file locations.
         var context = app.run(args);
         Environment env = context.getEnvironment();
-        String fileUploadPath = env.getProperty(UPLOADS_FILE_PATH_PROPERTY_NAME);
-        // Set the file upload path for the FilePathConverter, use the default path "uploads" if not specified
-        FilePathConverter.setFileUploadPath(Path.of(fileUploadPath == null ? UPLOADS_FILE_PATH_DEFAULT : fileUploadPath));
         var buildProperties = context.getBean(BuildProperties.class);
         var gitProperties = context.getBean(GitProperties.class);
         logApplicationStartup(env, buildProperties, gitProperties);
