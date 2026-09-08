@@ -116,22 +116,34 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
     }
 
+    /**
+     * Re-uploading a file replaces the deck rather than adding a second copy of it. This path creates a slide per page
+     * unconditionally, so without detaching the previous set the unit would carry both: a three page file uploaded
+     * twice left six slides attached, each page present twice, and nothing in the UI to tell them apart.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void repeatedBasicSlideSplitUsesUniqueImagePaths() {
+    void repeatedBasicSlideSplitReplacesTheDeckWithUniqueImagePaths() {
         slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> firstImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> firstSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> firstImagePaths = firstSlides.stream().map(Slide::getSlideImagePath).toList();
+        assertThat(firstSlides).as("the first upload produces one slide per page").hasSize(3);
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> allImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> attachedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> attachedImagePaths = attachedSlides.stream().map(Slide::getSlideImagePath).toList();
 
-        assertThat(allImagePaths).hasSize(6).doesNotHaveDuplicates();
-        assertThat(allImagePaths).containsAll(firstImagePaths);
-        assertThat(firstImagePaths).allSatisfy(imagePath -> {
-            Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(imagePath), FilePathType.SLIDE);
-            assertThat(imageFile).exists();
+        assertThat(attachedImagePaths).as("the unit carries exactly one slide per page of the re-uploaded file").hasSize(3).doesNotHaveDuplicates();
+        assertThat(attachedImagePaths).as("every attached slide belongs to the new deck").doesNotContainAnyElementsOf(firstImagePaths);
+
+        // Detached rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
+        assertThat(firstSlides).allSatisfy(slide -> {
+            Slide reloaded = slideRepository.findById(slide.getId()).orElseThrow();
+            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide is detached from the unit").isNull();
+            Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(reloaded.getSlideImagePath()), FilePathType.SLIDE);
+            assertThat(imageFile).as("a detached slide still points at a file that exists").exists();
         });
     }
 

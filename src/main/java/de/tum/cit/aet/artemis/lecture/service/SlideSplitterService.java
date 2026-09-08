@@ -161,6 +161,11 @@ public class SlideSplitterService {
     private void splitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename) {
         log.debug("Splitting AttachmentVideoUnit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
         SlideOperation operation = new SlideOperation();
+        operation.recordRestorePoint(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
+        // Read a second time, and before anything is written: this loop creates a slide per page unconditionally, so
+        // the slides of the previous version of the file have to be collected now and detached at the end, or the unit
+        // ends up carrying both sets. A separate read because the restore point above must not alias what is mutated.
+        List<Slide> supersededSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId());
         try {
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
@@ -183,6 +188,8 @@ public class SlideSplitterService {
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 operation.save(slideEntity);
             }
+
+            detachSupersededSlides(operation, supersededSlides);
         }
         catch (IOException e) {
             operation.compensate();
@@ -393,6 +400,28 @@ public class SlideSplitterService {
                 log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
             });
         }
+    }
+
+    /**
+     * Detach the slides that belonged to the previous version of the file, so that a re-upload replaces the deck
+     * rather than adding a second copy of it.
+     * <p>
+     * Detached rather than deleted, for the same reason {@link #cleanupRemovedSlides} gives: the row may still be
+     * referenced, and {@code attachment_unit_id} is {@code ON DELETE SET NULL}, so clearing the unit is how a slide
+     * leaves a unit here. The image files are left alone, because the detached rows still point at them.
+     *
+     * @param operation        the undo log of the operation writing the new slides
+     * @param supersededSlides the slides the unit carried before this operation, read before anything was written
+     */
+    private void detachSupersededSlides(SlideOperation operation, List<Slide> supersededSlides) {
+        if (supersededSlides.isEmpty()) {
+            return;
+        }
+        for (Slide slide : supersededSlides) {
+            slide.setAttachmentVideoUnit(null);
+            operation.save(slide);
+        }
+        log.debug("Detached {} slides belonging to the previous version of the file", supersededSlides.size());
     }
 
     /**
