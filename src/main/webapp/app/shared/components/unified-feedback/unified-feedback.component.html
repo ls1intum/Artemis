@@ -1,4 +1,4 @@
-<div class="alert unified-feedback" [ngClass]="inferredAlertClass()">
+<div class="unified-feedback" [ngClass]="inferredAlertClass()">
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
@@ -117,9 +117,14 @@
                 </div>
                 @if (correctionStatusLabel()) {
                     <div class="unified-feedback-correction-status">
-                        <span [class.text-success]="isCorrectionStatusCorrect()" [class.text-danger]="!isCorrectionStatusCorrect()">{{ correctionStatusLabel() }}</span>
+                        <span
+                            class="unified-feedback-correction-status-label"
+                            [class.unified-feedback-correction-status-label--correct]="isCorrectionStatusCorrect()"
+                            [class.unified-feedback-correction-status-label--incorrect]="!isCorrectionStatusCorrect()"
+                            >{{ correctionStatusLabel() }}</span
+                        >
                         @if (!isCorrectionStatusCorrect()) {
-                            <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
+                            <fa-icon class="unified-feedback-correction-status-icon" [icon]="faExclamationTriangle" />
                         }
                     </div>
                 }

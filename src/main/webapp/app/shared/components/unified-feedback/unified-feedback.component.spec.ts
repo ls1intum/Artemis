@@ -58,25 +58,25 @@ describe('UnifiedFeedbackComponent', () => {
     it('should infer needs_revision type by default when points = 0', () => {
         expect(component.inferredType()).toBe('needs_revision');
         expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
-        expect(component.inferredAlertClass()).toBe('alert-primary');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--info');
     });
 
     it('should return correct alert class for default needs_revision type', () => {
-        expect(component.inferredAlertClass()).toBe('alert-primary');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--info');
     });
 
     it('should infer correct type when points > 0', () => {
         fixture.componentRef.setInput('points', 5);
         fixture.detectChanges();
         expect(component.inferredType()).toBe('correct');
-        expect(component.inferredAlertClass()).toBe('alert-success');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--success');
     });
 
     it('should infer non_compliant type when points < 0', () => {
         fixture.componentRef.setInput('points', -1);
         fixture.detectChanges();
         expect(component.inferredType()).toBe('non_compliant');
-        expect(component.inferredAlertClass()).toBe('alert-danger');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--danger');
     });
 
     it('should prefer explicit type over inferred from points', () => {
@@ -84,7 +84,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('type', 'correct');
         fixture.detectChanges();
         expect(component.inferredType()).toBe('correct');
-        expect(component.inferredAlertClass()).toBe('alert-success');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--success');
     });
 
     it('should use explicit title when provided', () => {
@@ -240,13 +240,13 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-reference-text')).toBeNull();
     });
 
-    it('should expose alert-primary for needs_revision', () => {
+    it('should expose unified-feedback--info for needs_revision', () => {
         fixture.componentRef.setInput('type', 'needs_revision');
         fixture.detectChanges();
         expect(component.inferredType()).toBe('needs_revision');
-        expect(component.inferredAlertClass()).toBe('alert-primary');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--info');
         const root = fixture.nativeElement.querySelector('.unified-feedback');
-        expect(root.classList.contains('alert-primary')).toBeTruthy();
+        expect(root.classList.contains('unified-feedback--info')).toBeTruthy();
     });
 
     it('should expose the faExclamationTriangle icon for needs_revision (0 points), matching the Apollon legend', () => {
@@ -255,11 +255,11 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredIcon()).toBe(faExclamationTriangle);
     });
 
-    it('should expose alert-secondary for not_attempted', () => {
+    it('should expose unified-feedback--neutral for not_attempted', () => {
         fixture.componentRef.setInput('type', 'not_attempted');
         fixture.detectChanges();
         expect(component.inferredType()).toBe('not_attempted');
-        expect(component.inferredAlertClass()).toBe('alert-secondary');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--neutral');
     });
 
     it('should expose the faMinus icon for not_attempted', () => {
@@ -268,11 +268,11 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredIcon()).toBe(faMinus);
     });
 
-    it('should expose alert-danger for non_compliant', () => {
+    it('should expose unified-feedback--danger for non_compliant', () => {
         fixture.componentRef.setInput('type', 'non_compliant');
         fixture.detectChanges();
         expect(component.inferredType()).toBe('non_compliant');
-        expect(component.inferredAlertClass()).toBe('alert-danger');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--danger');
     });
 
     it('should infer type from feedbackCredits when editable, ignoring the points input', () => {
@@ -281,12 +281,12 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackCredits.set(-2);
         fixture.detectChanges();
         expect(component.inferredType()).toBe('non_compliant');
-        expect(component.inferredAlertClass()).toBe('alert-danger');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--danger');
 
         component.feedbackCredits.set(3);
         fixture.detectChanges();
         expect(component.inferredType()).toBe('correct');
-        expect(component.inferredAlertClass()).toBe('alert-success');
+        expect(component.inferredAlertClass()).toBe('unified-feedback--success');
     });
 
     it('should expose a stripped display title and mark an accepted suggestion as adapted on title edit', () => {

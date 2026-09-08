@@ -2,13 +2,13 @@ import { Component, input, output, signal } from '@angular/core';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-confirm-icon',
     templateUrl: './confirm-icon.component.html',
-    imports: [FaIconComponent, NgbTooltip, NgClass],
+    styleUrl: './confirm-icon.component.scss',
+    imports: [FaIconComponent, TumUiTooltipDirective],
 })
 export class ConfirmIconComponent {
     initialIcon = input<IconProp>(faTrash);

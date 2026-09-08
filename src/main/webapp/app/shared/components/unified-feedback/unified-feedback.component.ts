@@ -128,10 +128,10 @@ export class UnifiedFeedbackComponent {
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
-        correct: { icon: faCheck, alertClass: 'alert-success' },
-        needs_revision: { icon: faExclamationTriangle, alertClass: 'alert-primary' },
-        not_attempted: { icon: faMinus, alertClass: 'alert-secondary' },
-        non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
+        correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
+        needs_revision: { icon: faExclamationTriangle, alertClass: 'unified-feedback--info' },
+        not_attempted: { icon: faMinus, alertClass: 'unified-feedback--neutral' },
+        non_compliant: { icon: faTimes, alertClass: 'unified-feedback--danger' },
     };
 
     private readonly feedbackTypeTitleKeys: Record<FeedbackType, string> = {

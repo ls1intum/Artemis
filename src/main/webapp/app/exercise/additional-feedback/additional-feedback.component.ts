@@ -1,47 +1,27 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faCommentDots } from '@fortawesome/free-regular-svg-icons';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
-import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-additional-feedback',
     templateUrl: './additional-feedback.component.html',
     styleUrls: ['./additional-feedback.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, UnifiedFeedbackComponent],
 })
 export class AdditionalFeedbackComponent {
-    private translateService = inject(TranslateService);
-    private localeConversionService = inject(LocaleConversionService);
-
     readonly feedback = input<Feedback[]>(undefined!);
     readonly additional = input<boolean>(undefined!);
     readonly course = input<Course>();
 
     // Icons
     faCommentDots = faCommentDots;
-    faExclamationTriangle = faExclamationTriangle;
 
     // Expose the function to the template
     readonly getCourseFromExercise = getCourseFromExercise;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
-
-    /**
-     * Translates the points string based on the singularity of the given points.
-     * In addition, the points are returned in a localized form.
-     * @param points Number of points assigned to a feedback
-     */
-    public pointTranslation(points: number): string {
-        const singular = Math.abs(points) === 1;
-        return this.translateService.instant(`artemisApp.assessment.detail.points.${singular ? 'one' : 'many'}`, {
-            points: this.localeConversionService.toLocaleString(points, this.course()?.accuracyOfScores),
-        });
-    }
 }

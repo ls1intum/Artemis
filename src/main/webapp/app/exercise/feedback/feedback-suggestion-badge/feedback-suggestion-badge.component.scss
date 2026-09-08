@@ -13,8 +13,18 @@
 .suggestion-badge {
     position: absolute;
     top: -8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35em 0.65em;
+    border-radius: var(--tumaet-ui-radius-sm);
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
     vertical-align: middle;
     background-color: var(--feedback-suggestions-primary);
+    color: var(--white);
     cursor: default;
 }
 
