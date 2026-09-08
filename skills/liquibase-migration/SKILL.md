@@ -1,6 +1,6 @@
 ---
 name: liquibase-migration
-description: Write an Artemis Liquibase changelog that survives a rolling deployment on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for rolling deploys, and the local validation steps.
+description: Write an Artemis Liquibase changelog that applies cleanly on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for a column code still reads, and the local validation steps.
 ---
 
 # Write a Liquibase migration
@@ -36,11 +36,26 @@ application from starting. This is the single most dangerous migration in this c
 pattern is non-obvious, so read the section in `reference/migration-patterns.md` before writing it.
 
 **Dropping or renaming a column that code still reads.** Use expand and contract across two
-releases. During a rolling deployment, nodes on the old version are still running.
+releases, so that rolling the application back to the previous version still finds a schema it can
+read.
 
 **Anything involving a trigger or a stored routine.** Do not. This repository removed its last
 trigger when it moved to PostgreSQL and has rejected proposals to add new ones. Express the
 behaviour in the entity design or in application code instead.
+
+## How migrations are deployed
+
+Artemis is **not** deployed as a rolling update. Every instance is stopped, the first instance is
+started alone and applies the migrations, and the remaining instances start only once it is up. See
+`documentation/docs/admin/production-setup/multiple-artemis-instances.mdx` (Deploying a New Version).
+
+So a changelog never has to be compatible with two versions of the application at once. Do not phase
+a migration across releases to keep old nodes working, do not add a column as nullable purely to
+make it NOT NULL in the next release, and do not reason about an old node inserting a row without a
+newly added column. Add the column, backfill it, and constrain it in one changeset.
+
+The one thing that still argues for two releases is **rollback**: dropping a column that the previous
+version reads makes rolling back impossible, which is why expand and contract survives below.
 
 ## Both databases
 
