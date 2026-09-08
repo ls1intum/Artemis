@@ -31,6 +31,12 @@
                 "-Dartemis.lti.enabled=true",
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
                 "-Dartemis.hyperion.enabled=true",
+                "-Dartemis.hyperion.exercise-generation.enabled=true",
+                // Controller introspection only; no generation job is admitted by this documentation process.
+                "-Dartemis.hyperion.workers.broker-url=tcp://localhost:61617?sslEnabled=true&verifyHost=true",
+                "-Dartemis.hyperion.workers.user=openapi-docs",
+                "-Dartemis.hyperion.workers.password=unused",
+                "-Dartemis.hyperion.workers.ids=openapi-docs",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",

@@ -257,6 +257,9 @@ repositories {
 }
 
 configurations.configureEach {
+    // The OpenAI SDK brings the pre-Jakarta Swagger annotations with the same class names as springdoc's
+    // newer Jakarta artifact. Keep only the latter so schema generation cannot load an incompatible Schema.
+    exclude group: "io.swagger.core.v3", module: "swagger-annotations"
     exclude group: "org.dom4j", module: "dom4j"
     exclude group: "org.xmlpull", module: "pull-parser"
     exclude group: "jaxen", module: "jaxen"
@@ -325,6 +328,9 @@ configurations.configureEach {
 }
 
 dependencies {
+    implementation project(':hyperion-runtime')
+    implementation 'org.springframework:spring-jms'
+    implementation 'org.apache.artemis:artemis-jakarta-client:2.53.0'
 
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"

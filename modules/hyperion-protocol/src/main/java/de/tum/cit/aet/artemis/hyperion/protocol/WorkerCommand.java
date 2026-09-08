@@ -22,6 +22,6 @@ public record WorkerCommand(int protocolVersion, Type type, ExecutionIdentity id
 
     /** Commands are idempotent for the exact assignment identity. */
     public enum Type {
-        START, CANCEL, RENEW
+        START, CANCEL, STOP_AUTHORING, RENEW
     }
 }

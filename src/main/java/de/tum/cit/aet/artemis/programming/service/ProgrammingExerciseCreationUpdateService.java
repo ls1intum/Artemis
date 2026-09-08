@@ -443,7 +443,8 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
+     * Loads the exercise and updates its timeline. Callers that already hold the exercise's mutation lease must load it
+     * themselves and use the overload taking the exercise, so the read happens inside the lease.
      *
      * @param timelineUpdateDTO containing the timeline changes that have to be saved
      * @param notificationText  optional text for a notification to all students about the update
@@ -470,9 +471,21 @@ public class ProgrammingExerciseCreationUpdateService {
         return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
     }
 
+    /**
+     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
+     *
+     * @param programmingExercise the current exercise loaded while holding its mutation lease
+     * @param timelineUpdateDTO   containing the timeline changes that have to be saved
+     * @param notificationText    optional text for a notification to all students about the update
+     * @return the updated ProgrammingExercise object.
+     */
+    public ProgrammingExercise updateTimeline(ProgrammingExercise programmingExercise, ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
     private ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
             @Nullable Duration originalBuildAndTestOffset, ProgrammingExercise programmingExercise) {
-
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
