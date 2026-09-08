@@ -60,7 +60,7 @@ spring:
 
 server:
     port: 8080
-    url: http://localhost
+    url: http://localhost:${server.port}
 # ===================================================================
 # JHipster specific properties
 #
