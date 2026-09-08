@@ -89,7 +89,7 @@
         "attachmentVideoUnit": {
             "errors": {
                 "invalidYouTubeUrl": "This looks like a YouTube URL but couldn't be parsed. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/...",
-                "invalidVideoSourceScheme": "The video source must be a web address starting with http:// or https://."
+                "invalidVideoSourceScheme": "The video source may only use http or https."
             },
             "created": "New file/video content created",
             "updated": "File/video content updated",

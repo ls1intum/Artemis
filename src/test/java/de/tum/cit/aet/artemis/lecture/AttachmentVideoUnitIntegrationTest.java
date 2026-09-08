@@ -1060,4 +1060,26 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         attachmentVideoUnit.setVideoSource("http://live.rbg.tum.de/w/course/1");
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
     }
+
+    // A browser strips tabs and line breaks out of a URL before parsing it, so a scheme split across one of them
+    // reaches the page whole. The scheme check has to see what the browser will see.
+    @ParameterizedTest
+    @ValueSource(strings = { "java\nscript:alert(1)", "java\tscript:alert(1)", "java\rscript:alert(1)", " javascript:alert(1)" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_schemeHiddenByControlCharacters_shouldReturnBadRequest(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    // Validating the scheme must not turn into validating the whole URL. A recording link with a space or an umlaut in
+    // its path is ordinary, was always accepted, and has nothing to do with the scheme.
+    @ParameterizedTest
+    @ValueSource(strings = { "https://live.rbg.tum.de/w/Einführung in die Informatik/1", "https://live.rbg.tum.de/w/Übung/1", "https://example.org/a b c.mp4",
+            "https://example.org/video.mp4 " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_urlNeedingEncoding_shouldCreate(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+    }
 }

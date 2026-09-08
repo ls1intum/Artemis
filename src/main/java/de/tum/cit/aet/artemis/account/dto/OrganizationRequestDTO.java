@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.account.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.account.domain.Organization;
-
 /**
  * DTO for creating and updating an organization.
  * <p>
@@ -11,7 +7,8 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
  * omits the url and description, so it cannot serve as a request body.
  * <p>
  * The endpoints take this rather than the {@code Organization} entity so that the writable fields are stated in one
- * place instead of being whatever the entity happens to expose.
+ * place instead of being whatever the entity happens to expose. Mapping to the entity lives in the resource: a DTO is
+ * transport data and does not reference the domain.
  *
  * @param id           the organization id; required when updating, {@code null} when creating
  * @param name         the display name
@@ -21,23 +18,5 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
  * @param logoUrl      a link to the organization's logo
  * @param emailPattern the regular expression matching the email addresses of the organization's members
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record OrganizationRequestDTO(Long id, String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
-
-    /**
-     * Build the entity this DTO describes.
-     *
-     * @return an organization carrying the values of this DTO
-     */
-    public Organization toEntity() {
-        Organization organization = new Organization();
-        organization.setId(id);
-        organization.setName(name);
-        organization.setShortName(shortName);
-        organization.setUrl(url);
-        organization.setDescription(description);
-        organization.setLogoUrl(logoUrl);
-        organization.setEmailPattern(emailPattern);
-        return organization;
-    }
 }

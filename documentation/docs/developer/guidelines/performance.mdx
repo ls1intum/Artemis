@@ -387,7 +387,14 @@ Always perform sorting, filtering, and counting at the database level whenever p
 
 A transaction boundary may only be declared inside a repository, and in practice only on a `@Modifying`
 query that needs one. `@Transactional`, `TransactionTemplate` and `PlatformTransactionManager` are not
-allowed in services or controllers, and an architecture test enforces this with no exception list.
+allowed in services or controllers.
+
+An architecture test enforces the annotation, with no exception list: `@Transactional` on a method must be
+declared in a repository interface, and no class outside one may carry it. Programmatic transaction
+management is not yet covered by a test — a handful of services still construct a `TransactionTemplate`
+from an injected `PlatformTransactionManager`, so the rule cannot be turned on until those are gone. Treat
+that as debt to pay down rather than as permission: it is the same boundary with a different spelling, and
+it has the same consequences.
 
 The reason is not that transactions are slow in themselves. It is that the cost of one scales with how
 long it stays open and how much it touches, and a boundary declared high up in a service is open for the

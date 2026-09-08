@@ -177,7 +177,7 @@ public class AdminOrganizationResource {
     @PostMapping("organizations")
     public ResponseEntity<Organization> addOrganization(@RequestBody OrganizationRequestDTO organization) {
         log.debug("REST request to add new organization : {}", organization);
-        Organization created = organizationService.add(organization.toEntity());
+        Organization created = organizationService.add(toOrganization(organization));
 
         return ResponseEntity.ok().body(created);
     }
@@ -199,8 +199,29 @@ public class AdminOrganizationResource {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
         organizationRepository.findByIdElseThrow(organization.id());
-        Organization updated = organizationService.update(organization.toEntity());
+        Organization updated = organizationService.update(toOrganization(organization));
         return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Build the entity a request describes.
+     * <p>
+     * Here rather than on the record: a DTO is transport data and must not reference the domain, which the module's
+     * DTO rules and its entity-usage architecture test both require.
+     *
+     * @param organization the request payload
+     * @return an organization carrying the values of the payload
+     */
+    private static Organization toOrganization(OrganizationRequestDTO organization) {
+        Organization entity = new Organization();
+        entity.setId(organization.id());
+        entity.setName(organization.name());
+        entity.setShortName(organization.shortName());
+        entity.setUrl(organization.url());
+        entity.setDescription(organization.description());
+        entity.setLogoUrl(organization.logoUrl());
+        entity.setEmailPattern(organization.emailPattern());
+        return entity;
     }
 
     /**

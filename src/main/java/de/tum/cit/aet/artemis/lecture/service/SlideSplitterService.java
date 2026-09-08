@@ -142,13 +142,23 @@ public class SlideSplitterService {
         try {
             SlideOperation operation = new SlideOperation();
             Map<String, HiddenPageInfoDTO> hiddenPagesMap = hiddenPages.stream().collect(Collectors.toMap(HiddenPageInfoDTO::slideId, dto -> dto));
-            // No file is written here and every slide already exists, so there is nothing to compensate: the operation
-            // only carries the deferred unhide scheduling, which must not run before the rows are written.
-            slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).forEach(slide -> {
-                ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slide, hiddenPagesMap, String.valueOf(slide.getId()));
-                Slide savedSlide = operation.save(slide);
-                scheduleUnhideIfNeeded(operation, savedSlide, previousHiddenValue, savedSlide.getHidden());
-            });
+            // No file is written here, but rows are: a hidden date is written per slide, and a save part-way through
+            // the list would otherwise leave the deck half hidden with none of the unhide scheduling done, so the
+            // slides that were written would stay hidden past their date. Take a restore point and undo on failure,
+            // exactly as the splitting paths do.
+            operation.recordRestorePoint(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
+            try {
+                slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).forEach(slide -> {
+                    ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slide, hiddenPagesMap, String.valueOf(slide.getId()));
+                    Slide savedSlide = operation.save(slide);
+                    scheduleUnhideIfNeeded(operation, savedSlide, previousHiddenValue, savedSlide.getHidden());
+                });
+            }
+            catch (Throwable t) {
+                operation.compensate();
+                throw t;
+            }
+            // Outside the guarded region, for the reason given on the splitting overloads.
             operation.succeed();
         }
         finally {
@@ -206,17 +216,20 @@ public class SlideSplitterService {
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 operation.save(slideEntity);
             }
-            operation.succeed();
         }
         catch (IOException e) {
             operation.compensate();
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
-        catch (RuntimeException e) {
+        catch (Throwable t) {
             operation.compensate();
-            throw e;
+            throw t;
         }
+        // Outside the guarded region on purpose. succeed() discards the images this operation replaced, so a throw
+        // from inside it must not reach compensate(): that would delete the replacements too and restore rows pointing
+        // at originals which are already gone, losing both copies of every slide.
+        operation.succeed();
     }
 
     /**
@@ -275,17 +288,18 @@ public class SlideSplitterService {
 
             // Clean up slides that are no longer in the page order
             cleanupRemovedSlides(operation, pageOrder, existingSlides);
-            operation.succeed();
         }
         catch (IOException e) {
             operation.compensate();
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
-        catch (RuntimeException e) {
+        catch (Throwable t) {
             operation.compensate();
-            throw e;
+            throw t;
         }
+        // Outside the guarded region: see the note on the overload above.
+        operation.succeed();
     }
 
     /**
@@ -549,8 +563,18 @@ public class SlideSplitterService {
          * call has already committed by the time this runs, so this is the point the old afterCommit hook stood for.
          */
         private void succeed() {
+            // Deferred actions first, each isolated. They reach the cluster messaging layer and the database, so one of
+            // them failing during a rolling deploy is expected; it must not cost the others their turn, and it must not
+            // abort the file cleanup below. Nothing here can be undone at this point anyway — the rows are committed.
+            for (Runnable action : onSuccess) {
+                try {
+                    action.run();
+                }
+                catch (RuntimeException e) {
+                    log.error("A deferred slide action failed after the slides were written; the slides themselves are intact", e);
+                }
+            }
             supersededFiles.forEach(SlideSplitterService.this::deleteFile);
-            onSuccess.forEach(Runnable::run);
         }
 
         /**
@@ -559,7 +583,9 @@ public class SlideSplitterService {
          * to diagnose than the leftovers it is trying to remove.
          */
         private void compensate() {
-            createdFiles.forEach(SlideSplitterService.this::deleteFile);
+            // Rows before files. If the row work fails once the files are already gone, the rows survive pointing at
+            // nothing, which is the one leftover shape that is invisible in the database; the other way round leaves an
+            // orphaned file, which is inert.
             try {
                 if (!createdSlideIds.isEmpty()) {
                     slideRepository.deleteAllById(createdSlideIds);
@@ -569,9 +595,10 @@ public class SlideSplitterService {
                 }
             }
             catch (RuntimeException e) {
-                log.error("Could not undo the slide rows written before the failure; created {} and {} pre-existing slides may now be inconsistent", createdSlideIds,
+                log.error("Could not undo the slide rows written before the failure; {} created and {} pre-existing slides may now be inconsistent", createdSlideIds.size(),
                         restorePoint.size(), e);
             }
+            createdFiles.forEach(SlideSplitterService.this::deleteFile);
         }
     }
 

@@ -11,6 +11,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
@@ -85,6 +87,12 @@ public class AttachmentVideoUnitResource {
      * set the client's safeResourceUrl pipe accepts; keep the two in step.
      */
     private static final Set<String> EMBEDDABLE_VIDEO_SOURCE_SCHEMES = Set.of("http", "https");
+
+    /** The scheme production from RFC 3986, anchored: a match means the value opens with a scheme. */
+    private static final Pattern URL_SCHEME = Pattern.compile("^([A-Za-z][A-Za-z0-9+.\\-]*):");
+
+    /** C0 controls and DEL. A browser drops some of these before parsing a URL, which can reveal a hidden scheme. */
+    private static final Pattern URL_CONTROL_CHARACTERS = Pattern.compile("[\\u0000-\\u001F\\u007F]");
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -548,19 +556,28 @@ public class AttachmentVideoUnitResource {
 
     /**
      * Whether the given source carries a scheme that is safe to load into an embedding context.
+     * <p>
+     * Deliberately not implemented with {@code new URI(...)}. That parser rejects any URL containing a character which
+     * would need percent-encoding, so a perfectly ordinary lecture recording link with a space or an umlaut in its path
+     * came back as "not an http or https URL" — a rejection for the wrong reason, and one that had never been made
+     * before. Only the scheme is of interest here, so only the scheme is read.
      *
      * @param videoSource a non-blank videoSource URL
-     * @return true if the URL parses and its scheme is http or https
+     * @return true if the URL carries no scheme, or one that may be embedded
      */
     private static boolean hasEmbeddableScheme(String videoSource) {
-        try {
-            String scheme = new URI(videoSource).getScheme();
-            // A relative URL has no scheme; it resolves against the client's own origin, so it is safe to embed.
-            return scheme == null || EMBEDDABLE_VIDEO_SOURCE_SCHEMES.contains(scheme.toLowerCase(Locale.ROOT));
-        }
-        catch (URISyntaxException e) {
+        String candidate = videoSource.strip();
+        // Browsers strip tabs and line breaks out of a URL before parsing it, so "java\nscript:alert(1)" reaches the
+        // page as "javascript:alert(1)". Reject rather than normalise: normalising for the check while persisting the
+        // original would just move the mismatch to the client. Nothing legitimate carries a control character.
+        if (URL_CONTROL_CHARACTERS.matcher(candidate).find()) {
             return false;
         }
+        Matcher scheme = URL_SCHEME.matcher(candidate);
+        // A value with no scheme is accepted. "google.com" is a shape instances already store, so rejecting it would
+        // refuse existing data, and it cannot execute: the client resolves it against the Artemis origin, where it is
+        // at worst a broken frame. What this check exists to stop is a scheme that runs.
+        return !scheme.find() || EMBEDDABLE_VIDEO_SOURCE_SCHEMES.contains(scheme.group(1).toLowerCase(Locale.ROOT));
     }
 
     /**
