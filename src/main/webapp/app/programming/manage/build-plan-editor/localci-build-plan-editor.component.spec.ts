@@ -418,6 +418,71 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.isSaving()).toBe(true);
     });
 
+    it('should not let a delayed save response of the previous exercise change the baseline or report success once a different exercise is open', () => {
+        const phasesB: BuildPhase[] = [{ name: 'build', script: 'echo build', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+        const exerciseA = {
+            id: 7,
+            buildConfig: { buildPlanConfiguration: JSON.stringify({ phases, dockerImage: 'image-a' }), timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        const exerciseB = {
+            id: 8,
+            buildConfig: { buildPlanConfiguration: JSON.stringify({ phases: phasesB, dockerImage: 'image-b' }), timeoutSeconds: 120 },
+        } as unknown as ProgrammingExercise;
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
+            .mockReturnValueOnce(of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })))
+            .mockReturnValueOnce(of(new HttpResponse<ProgrammingExercise>({ body: { id: 8 } as ProgrammingExercise })));
+        // A's save is deferred so it can resolve after B has become active
+        const saveResponseA = new Subject<HttpResponse<object>>();
+        vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(saveResponseA.asObservable());
+        const successStub = vi.spyOn(alertService, 'success');
+
+        // drive both exercises through the same component instance, mimicking a same-route navigation
+        const routeData = new Subject<{ exercise: ProgrammingExercise }>();
+        activatedRoute.data = routeData.asObservable();
+        comp.ngOnInit();
+        routeData.next({ exercise: exerciseA });
+
+        // an edit on A is submitted, and the navigation to B happens while that save is still in flight
+        comp.timeout.set(90);
+        comp.submit();
+        expect(comp.isSaving()).toBe(true);
+        routeData.next({ exercise: exerciseB });
+        expect(comp.programmingExercise()?.id).toBe(8);
+        expect(comp.canDeactivate()).toBe(true);
+
+        saveResponseA.next(new HttpResponse<object>({ body: {} }));
+        saveResponseA.complete();
+
+        // the in-flight flag is released, but B's baseline stays B's own state and A's success is not reported on B's page
+        expect(comp.isSaving()).toBe(false);
+        expect(comp.canDeactivate()).toBe(true);
+        expect(successStub).not.toHaveBeenCalled();
+    });
+
+    it('should not report a delayed save error of the previous exercise once a different exercise is open', () => {
+        const exerciseA = { id: 7, buildConfig: { buildPlanConfiguration, timeoutSeconds: 60 } } as unknown as ProgrammingExercise;
+        const exerciseB = { id: 8, buildConfig: { buildPlanConfiguration, timeoutSeconds: 120 } } as unknown as ProgrammingExercise;
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
+            .mockReturnValueOnce(of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })))
+            .mockReturnValueOnce(of(new HttpResponse<ProgrammingExercise>({ body: { id: 8 } as ProgrammingExercise })));
+        const saveResponseA = new Subject<HttpResponse<object>>();
+        vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(saveResponseA.asObservable());
+        const errorStub = vi.spyOn(alertService, 'error');
+
+        const routeData = new Subject<{ exercise: ProgrammingExercise }>();
+        activatedRoute.data = routeData.asObservable();
+        comp.ngOnInit();
+        routeData.next({ exercise: exerciseA });
+        comp.submit();
+        routeData.next({ exercise: exerciseB });
+
+        saveResponseA.error(new HttpErrorResponse({ status: 400 }));
+
+        // A's failure is not B's news; only the in-flight flag is released so B can be saved
+        expect(comp.isSaving()).toBe(false);
+        expect(errorStub).not.toHaveBeenCalled();
+    });
+
     it('should surface an error alert when saving fails', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
         comp.containers.set([container('student_tests')]);

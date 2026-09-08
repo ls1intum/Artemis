@@ -9,18 +9,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * A Attachment.
@@ -51,14 +48,6 @@ public class Attachment extends DomainObject implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "attachment_type")
     private AttachmentType attachmentType;
-
-    @ManyToOne
-    @JsonIgnoreProperties("attachments")
-    private Exercise exercise;
-
-    @ManyToOne
-    @JsonIgnoreProperties("attachments")
-    private Lecture lecture;
 
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
@@ -126,22 +115,6 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setAttachmentType(AttachmentType attachmentType) {
         this.attachmentType = attachmentType;
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public Lecture getLecture() {
-        return lecture;
-    }
-
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
     }
 
     public AttachmentVideoUnit getAttachmentVideoUnit() {
