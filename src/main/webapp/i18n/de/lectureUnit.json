@@ -88,7 +88,8 @@
         },
         "attachmentVideoUnit": {
             "errors": {
-                "invalidYouTubeUrl": "Diese URL sieht wie eine YouTube-URL aus, konnte aber nicht verarbeitet werden. Unterstützte Formate: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/..."
+                "invalidYouTubeUrl": "Diese URL sieht wie eine YouTube-URL aus, konnte aber nicht verarbeitet werden. Unterstützte Formate: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/...",
+                "invalidVideoSourceScheme": "Die Video-Quelle muss eine Web-Adresse sein und mit http:// oder https:// beginnen."
             },
             "created": "Neuer Datei-/Video-Inhalt erstellt",
             "updated": "Datei-/Video-Inhalt aktualisiert",
