@@ -99,6 +99,9 @@ final class ReviewerClient {
         String systemPrompt = templateService.render(systemPromptTemplate, Map.of());
         int outputTokens = reviewerOutputTokens(systemPrompt, userPrompt, maxOutputTokens);
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
+        if (configuredOptions instanceof OpenAiChatOptions openAiOptions) {
+            options.timeout(openAiOptions.getTimeout());
+        }
         if (usesLegacyMaxTokens) {
             options.maxTokens(outputTokens);
         }
