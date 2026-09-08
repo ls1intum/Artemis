@@ -78,6 +78,37 @@ If you attempt to start a major version without having deployed the required int
 
 To resolve this, deploy the required intermediate version first, start Artemis, wait for it to fully initialize, stop it, and then deploy the desired major version.
 
+## Version-Specific Migration Steps
+
+Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
+
+### 9.9: Accounts provisioned through SAML2
+
+The sign-in page asks for the identifier first and then decides, from the account's internal flag, whether to offer a password field or to send the user to the configured identity provider. Only an account marked as internal authenticates against a password stored in Artemis; every other account is sent to the identity provider.
+
+Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as internal accounts. They are therefore offered the password form instead of the identity provider, and the password they hold is a random one that was never given to the user, so they cannot sign in. Accounts provisioned from LDAP are not affected, because they have always been stored as externally managed.
+
+<Callout variant={CalloutVariant.warning}>
+  Artemis cannot repair this automatically. An affected account is indistinguishable in the database from an account that is genuinely internal: both are activated, both hold a password hash, and both hold a reset key. Which accounts the identity provider manages is therefore an administrator's decision.
+</Callout>
+
+Clear the internal flag for the affected accounts in one of two ways:
+
+- **For a few accounts**, open **Administration → User management**, edit the user, and clear the **Internal** checkbox.
+- **For many accounts**, update the `is_internal` column of the `jhi_user` table. Review which accounts carry the flag first:
+
+  ```sql
+  SELECT login, email, is_internal FROM jhi_user WHERE is_internal = TRUE;
+  ```
+
+  Then clear it for the accounts the identity provider manages, for example by email domain:
+
+  ```sql
+  UPDATE jhi_user SET is_internal = FALSE WHERE is_internal = TRUE AND email LIKE '%@example.org';
+  ```
+
+Keep the internal administrator configured in `artemis.user-management.internal-admin.username` internal, and keep every other account that does authenticate against a password stored in Artemis internal as well. Accounts that Artemis provisions after the upgrade are stored correctly.
+
 ## Database Compatibility
 
 Artemis supports both **MySQL** and **PostgreSQL**. The migration system works identically on both databases. The initial schema uses database-agnostic Liquibase types with additional database-specific changesets for:
