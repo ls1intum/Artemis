@@ -49,6 +49,7 @@ describe('AppComponent', () => {
                     // resolver surfaces a missing entity, so both NavigationError branches can be driven for real.
                     { path: 'chunk-failure', loadComponent: () => Promise.reject(new Error('Failed to fetch dynamically imported module: /chunk-ABC123.js')) },
                     { path: 'server-error-404', loadComponent: () => Promise.reject({ status: 404 }) },
+                    { path: 'rejected-without-error', loadComponent: () => Promise.reject() },
                 ]),
             ],
             providers: [
@@ -139,6 +140,15 @@ describe('AppComponent', () => {
 
             expect(navigate).toHaveBeenCalledExactlyOnceWith(['/404']);
             expect(handleNavigationError).not.toHaveBeenCalled();
+        });
+
+        // The router types the error as any, so reading a property off it unconditionally would throw here.
+        it('should survive a navigation that failed without an error value', async () => {
+            const router = TestBed.inject(Router);
+
+            await router.navigateByUrl('/rejected-without-error').catch(() => {});
+
+            expect(handleNavigationError).toHaveBeenCalledExactlyOnceWith(undefined, '/rejected-without-error');
         });
     });
 });

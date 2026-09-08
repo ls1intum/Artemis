@@ -152,7 +152,9 @@ export class AppComponent implements OnInit, OnDestroy {
                 }
             }
             if (event instanceof NavigationError) {
-                if (event.error.status === 404) {
+                // Optional access: the router types this as any, so a guard rejecting with null or undefined would
+                // otherwise throw here and take the recovery below down with it.
+                if (event.error?.status === 404) {
                     // noinspection JSIgnoredPromiseFromCall
                     void this.router.navigate(['/404']);
                 } else {

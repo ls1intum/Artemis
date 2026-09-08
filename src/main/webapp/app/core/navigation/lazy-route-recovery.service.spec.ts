@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
+import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { LAZY_ROUTE_RECOVERY_KEY_PREFIX, LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
 
 describe('LazyRouteRecoveryService', () => {
     let service: LazyRouteRecoveryService;
     let assign: ReturnType<typeof vi.fn>;
     let addAlert: ReturnType<typeof vi.fn>;
+    let handleError: ReturnType<typeof vi.fn>;
     let store: Map<string, string>;
 
     const FAILED_URL = '/course-management/1/programming-exercises/new';
@@ -17,6 +19,7 @@ describe('LazyRouteRecoveryService', () => {
     beforeEach(() => {
         assign = vi.fn();
         addAlert = vi.fn();
+        handleError = vi.fn();
         store = new Map<string, string>();
 
         const windowStub = {
@@ -28,7 +31,12 @@ describe('LazyRouteRecoveryService', () => {
         };
 
         TestBed.configureTestingModule({
-            providers: [LazyRouteRecoveryService, { provide: WINDOW_INJECTOR_TOKEN, useValue: windowStub }, { provide: AlertService, useValue: { addAlert } }],
+            providers: [
+                LazyRouteRecoveryService,
+                { provide: WINDOW_INJECTOR_TOKEN, useValue: windowStub },
+                { provide: AlertService, useValue: { addAlert } },
+                { provide: SentryErrorHandler, useValue: { handleError } },
+            ],
         });
 
         service = TestBed.inject(LazyRouteRecoveryService);
@@ -104,28 +112,64 @@ describe('LazyRouteRecoveryService', () => {
         expect(addAlert).not.toHaveBeenCalled();
     });
 
-    it('should recover even when session storage cannot be read', () => {
-        TestBed.resetTestingModule();
-        TestBed.configureTestingModule({
-            providers: [
-                LazyRouteRecoveryService,
-                {
-                    provide: WINDOW_INJECTOR_TOKEN,
-                    useValue: {
-                        location: { assign },
-                        // A browser configured to block site data throws on access rather than returning null.
-                        get sessionStorage(): Storage {
-                            throw new Error('The operation is insecure.');
+    // A reload can only be limited to one attempt while the marker is readable afterwards. Where it is not, every
+    // fresh document would see the same url fail for the "first" time, so reloading at all would never terminate.
+    describe('when the recovery attempt cannot be recorded', () => {
+        function configureWithStorage(sessionStorage: Partial<Storage> | (() => never)) {
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [
+                    LazyRouteRecoveryService,
+                    {
+                        provide: WINDOW_INJECTOR_TOKEN,
+                        useValue: {
+                            location: { assign },
+                            get sessionStorage(): Partial<Storage> {
+                                return typeof sessionStorage === 'function' ? sessionStorage() : sessionStorage;
+                            },
                         },
                     },
-                },
-                { provide: AlertService, useValue: { addAlert } },
-            ],
+                    { provide: AlertService, useValue: { addAlert } },
+                    { provide: SentryErrorHandler, useValue: { handleError } },
+                ],
+            });
+            return TestBed.inject(LazyRouteRecoveryService);
+        }
+
+        it('should alert rather than reload when session storage throws', () => {
+            // A browser configured to block site data throws on access rather than returning null.
+            const service = configureWithStorage(() => {
+                throw new Error('The operation is insecure.');
+            });
+
+            service.handleNavigationError(chunkError(), FAILED_URL);
+
+            expect(assign).not.toHaveBeenCalled();
+            expect(addAlert).toHaveBeenCalledOnce();
         });
 
-        TestBed.inject(LazyRouteRecoveryService).handleNavigationError(chunkError(), FAILED_URL);
+        it('should alert rather than reload when session storage silently drops the write', () => {
+            const service = configureWithStorage({ getItem: () => null, setItem: () => {} });
 
-        expect(assign).toHaveBeenCalledExactlyOnceWith(FAILED_URL);
+            service.handleNavigationError(chunkError(), FAILED_URL);
+
+            expect(assign).not.toHaveBeenCalled();
+            expect(addAlert).toHaveBeenCalledOnce();
+        });
+    });
+
+    it('should report the failure so it is visible in monitoring', () => {
+        const error = chunkError();
+
+        service.handleNavigationError(error, FAILED_URL);
+
+        expect(handleError).toHaveBeenCalledExactlyOnceWith(error);
+    });
+
+    it('should not report an error it does not act on', () => {
+        service.handleNavigationError(new Error('Cannot activate the route because the guard rejected it'), FAILED_URL);
+
+        expect(handleError).not.toHaveBeenCalled();
     });
 
     it('should remember the attempt under a namespaced key so it survives the reload', () => {

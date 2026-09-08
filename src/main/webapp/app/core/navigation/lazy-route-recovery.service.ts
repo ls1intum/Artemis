@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
+import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 
 /** Prefix for the per-url marker that records an attempted recovery, so a reload loop cannot form. */
 export const LAZY_ROUTE_RECOVERY_KEY_PREFIX = 'artemis.lazyRouteRecovery.';
@@ -35,6 +36,7 @@ const CHUNK_LOAD_FAILURE_PATTERNS = [
 export class LazyRouteRecoveryService {
     private readonly injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
     private readonly alertService = inject(AlertService);
+    private readonly sentryErrorHandler = inject(SentryErrorHandler);
 
     /**
      * Recovers from, or reports, a failed navigation. Anything that is not a chunk load failure is left alone, so
@@ -48,7 +50,13 @@ export class LazyRouteRecoveryService {
             return;
         }
 
-        if (this.hasAlreadyAttemptedRecovery(url)) {
+        // Report before recovering. A full page load tears the document down, so anything after it never runs, and
+        // without this a chunk failure leaves no trace at all for whoever operates the instance.
+        this.sentryErrorHandler.handleError(error);
+
+        // Reloading is only safe while the attempt can be recorded. Without a readable marker every fresh document
+        // treats the same url as its first failure, so the reloads would never stop; tell the user instead.
+        if (this.hasAlreadyAttemptedRecovery(url) || !this.recordRecoveryAttempt(url)) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,
                 message: 'artemisApp.lazyRouteLoadFailedAlert',
@@ -61,7 +69,6 @@ export class LazyRouteRecoveryService {
             return;
         }
 
-        this.rememberRecoveryAttempt(url);
         this.injectedWindow.location.assign(url);
     }
 
@@ -79,8 +86,8 @@ export class LazyRouteRecoveryService {
 
     /**
      * Session storage is read through a try/catch because a browser configured to block site data throws on access
-     * rather than returning null. Recovering twice is a far better failure mode than never recovering at all, so an
-     * unreadable store is treated as "not attempted yet".
+     * rather than returning null. An unreadable store reports "not attempted", and the write below then fails too,
+     * which is what routes such a browser to the alert rather than to a reload it could not bound.
      */
     private hasAlreadyAttemptedRecovery(url: string): boolean {
         try {
@@ -90,11 +97,20 @@ export class LazyRouteRecoveryService {
         }
     }
 
-    private rememberRecoveryAttempt(url: string): void {
+    /**
+     * Records that this url is being recovered, and reports whether that record can be relied on. The marker is read
+     * back rather than assumed from a successful write, because a store that silently drops writes would let the
+     * reloads repeat just as endlessly as one that throws.
+     *
+     * @return true when the marker is in place, so at most one reload can follow
+     */
+    private recordRecoveryAttempt(url: string): boolean {
+        const key = LAZY_ROUTE_RECOVERY_KEY_PREFIX + url;
         try {
-            this.injectedWindow.sessionStorage.setItem(LAZY_ROUTE_RECOVERY_KEY_PREFIX + url, String(Date.now()));
+            this.injectedWindow.sessionStorage.setItem(key, String(Date.now()));
+            return this.injectedWindow.sessionStorage.getItem(key) !== null;
         } catch {
-            // Nothing to do: the recovery below still runs, it just cannot be limited to one attempt.
+            return false;
         }
     }
 }
