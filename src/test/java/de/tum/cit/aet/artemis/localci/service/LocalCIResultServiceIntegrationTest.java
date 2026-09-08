@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepository
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -55,6 +58,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private BuildJobRepository buildJobRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
@@ -202,6 +208,10 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         submission.setSubmitted(true);
         submission.setParticipation(participation);
         submission = programmingSubmissionRepository.save(submission);
+
+        // a test-case feedback row exists only for a registered test case, so the instructor test is registered first
+        testCaseRepository.save(new ProgrammingExerciseTestCase().testName("instructorTest").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
 
         // the instructor container finishes with a passing test
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));

@@ -940,25 +940,30 @@ public class ProgrammingExerciseGradingService {
         if (result.getId() == null) {
             return;
         }
+        // The rows are fetched together with their test cases AND their messages. The test cases because lazily loaded
+        // rows reach them through proxies, which the equality the score calculation compares test cases with never
+        // satisfies. The messages because the result is reported to the client after the merge transaction has ended,
+        // and synthesizing the feedback for that report reads every message: a proxy left over from the transaction
+        // would then fail with no session to load it in, the report would never be sent, and the template rebuild that
+        // follows a solution build would never be triggered.
         if (!Hibernate.isInitialized(result.getTestCaseFeedbacks())) {
             if (processingInsideTransaction()) {
-                // A managed result keeps its collection and initializes it here, after a fetch of its rows with their
-                // test cases: on their own, lazily loaded rows reach their test cases through proxies, which the equality
-                // the score calculation compares test cases with never satisfies. The rows the collection initializes
-                // with are the ones the fetch has just put into the persistence context, with the real test case entities.
-                testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId()));
+                // A managed result keeps its collection and initializes it here, after the fetch: the rows the collection
+                // initializes with are the ones the fetch has just put into the persistence context, whole.
+                testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId()));
                 Hibernate.initialize(result.getTestCaseFeedbacks());
             }
             else {
-                result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
+                result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(result.getId())));
             }
         }
         if (!Hibernate.isInitialized(result.getScaFeedbacks())) {
             if (processingInsideTransaction()) {
+                scaFeedbackRepository.findWithMessageByResultIds(List.of(result.getId()));
                 Hibernate.initialize(result.getScaFeedbacks());
             }
             else {
-                result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
+                result.setScaFeedbacks(scaFeedbackRepository.findWithMessageByResultIds(List.of(result.getId())));
             }
         }
     }
