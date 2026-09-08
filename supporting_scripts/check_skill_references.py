@@ -51,7 +51,9 @@ MAX_DESCRIPTION_LENGTH = 1024
 
 # Documents that route to a skill: AGENTS.md for agents reading the checkout, the
 # developer page for people. Both link the file directly, on GitHub or by relative path.
-ROUTING_DOCUMENTS = ("AGENTS.md", "documentation/docs/developer/work-with-ai.mdx")
+ENTRY_POINT = "AGENTS.md"
+
+ROUTING_DOCUMENTS = (ENTRY_POINT, "documentation/docs/developer/work-with-ai.mdx")
 
 SKILL_LINK = re.compile(r"skills/(?P<name>[A-Za-z0-9._-]+)/SKILL\.md")
 
@@ -354,12 +356,17 @@ def self_test() -> int:
 
 
 def path_errors(skills_dir: Path, root: Path) -> tuple[list[str], int]:
-    """Report cited paths that no longer exist, with the number of citations resolved."""
+    """Report cited paths that no longer exist, with the number of citations resolved.
+
+    The entry point is scanned with the skills, because an agent acts on the paths it names
+    just as directly. The developer page is not: it shows an example skill tree whose files
+    are meant to be absent.
+    """
     known_top_level = tracked_top_level_names(root)
     broken: set[tuple[Path, str]] = set()
     checked: set[tuple[Path, str]] = set()
 
-    for skill_file in sorted(skills_dir.rglob("*.md")):
+    for skill_file in sorted(skills_dir.rglob("*.md")) + [root / ENTRY_POINT]:
         text = skill_file.read_text(encoding="utf-8")
         relative_file = skill_file.relative_to(root)
         inline = (raw.strip().rstrip(TRAILING_PUNCTUATION) for raw in BACKTICK.findall(text))
