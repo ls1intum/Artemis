@@ -46,6 +46,16 @@ class IrisProactivePropertiesTest {
     }
 
     @Test
+    void aNaNConfidenceThresholdIsRejected() {
+        var properties = withJobTimeout(300);
+        // Reaches the binder as YAML `.NaN` or as the string `NaN`. It passes a plain range check, and afterwards
+        // every confidence compares as not below it, so the gate the threshold exists for stands open.
+        properties.getStruggle().setConfidenceThreshold(Double.NaN);
+
+        assertThatIllegalArgumentException().isThrownBy(properties::validate).withMessageContaining("confidence-threshold");
+    }
+
+    @Test
     void theDefaultRetentionPassesValidationAgainstTheDefaultJobTimeout() {
         assertThatCode(() -> withJobTimeout(300).validate()).doesNotThrowAnyException();
     }

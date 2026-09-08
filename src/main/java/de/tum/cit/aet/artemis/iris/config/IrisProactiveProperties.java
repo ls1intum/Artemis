@@ -106,7 +106,11 @@ public class IrisProactiveProperties {
         if (persistMaxAttempts < 1) {
             throw new IllegalArgumentException("artemis.iris.proactive.persist-max-attempts must be >= 1");
         }
-        if (struggle.getConfidenceThreshold() < 0 || struggle.getConfidenceThreshold() > 1) {
+        // NaN needs naming: it fails both comparisons, so a range check alone lets it through, and a threshold of NaN
+        // then reads as "not below" for every confidence there is, which is the gate open rather than closed. The
+        // infinities are already covered, one by each side of the range.
+        double confidenceThreshold = struggle.getConfidenceThreshold();
+        if (Double.isNaN(confidenceThreshold) || confidenceThreshold < 0 || confidenceThreshold > 1) {
             throw new IllegalArgumentException("artemis.iris.proactive.struggle.confidence-threshold must be within [0, 1]");
         }
     }
