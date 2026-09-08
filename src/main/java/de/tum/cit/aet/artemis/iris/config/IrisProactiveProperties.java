@@ -166,11 +166,22 @@ public class IrisProactiveProperties {
     /** Settings specific to the struggle-intervention pipeline, kept nested so the existing property key is unchanged. */
     public static class Struggle {
 
+        /** Installation-wide availability, ahead of the per-course flag. On, because that course flag is off by default. */
+        private boolean enabled = true;
+
         /**
          * The confidence Pyris has to report before an unsolicited decision is delivered. A decision below it is
          * downgraded to silent; a consented help request bypasses the gate entirely.
          */
         private double confidenceThreshold = 0.6;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
 
         public double getConfidenceThreshold() {
             return confidenceThreshold;

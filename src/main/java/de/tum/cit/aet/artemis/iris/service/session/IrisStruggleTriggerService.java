@@ -203,8 +203,8 @@ public class IrisStruggleTriggerService {
     }
 
     /**
-     * Synchronous core: light exercise load (id only), STUDENT-role gate, then the iris-enabled + proactive gate,
-     * then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
+     * Synchronous core: deployment gate, light exercise load (id only), STUDENT-role gate, then the iris-enabled +
+     * proactive gate, then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
      * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
      *
      * @param exerciseId      the programming exercise id
@@ -219,6 +219,10 @@ public class IrisStruggleTriggerService {
      */
     public TriggerPreparation prepareTrigger(long exerciseId, User user, @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason,
             @Nullable String requestToken, @Nullable String proactivityMode) {
+        // Ahead of every lookup, and answered like the course-off case: for the client both mean "stop asking".
+        if (!irisSettingsService.isGlobalStruggleEnabled()) {
+            return TriggerPreparation.courseOff();
+        }
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);

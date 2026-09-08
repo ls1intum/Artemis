@@ -96,7 +96,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Decides the admin-only legacy build-trigger switch for a course, i.e. whether Artemis' own
+     * Decides the legacy build-trigger switch for a course, i.e. whether Artemis' own
      * {@code build_failed} / {@code progress_stalled} events may fire for it.
      *
      * @param course  the course to update

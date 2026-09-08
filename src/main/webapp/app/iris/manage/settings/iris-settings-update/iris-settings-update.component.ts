@@ -505,9 +505,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      *
      * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
      * the change is written to the server right away (no separate "Save Changes" step).
-     * Only the General-tab editable fields are reset: `supportLevel` and
-     * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
-     * admin-only `variant` / `rateLimit` fields are left as they are.
+     * Only `supportLevel` and `customInstructions` are reset. The `enabled` toggle
+     * (auto-saved separately), the two proactive toggles and the admin-only
+     * `variant` / `rateLimit` fields are left as they are.
      *
      * No-ops if the General-tab fields already hold their default values, so an
      * idempotent click does not trigger an unnecessary network request.
@@ -577,12 +577,10 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private restoreAdminOnlyFields(target: IrisCourseSettingsDTO, original: IrisCourseSettingsDTO): void {
         target.variant = original.variant;
         target.rateLimit = original.rateLimit;
-        target.proactiveStruggleEnabled = original.proactiveStruggleEnabled;
-        target.legacyBuildTriggersEnabled = original.legacyBuildTriggersEnabled;
     }
 
     /**
-     * Update the admin-only proactive-struggle flag in the settings signal (saved via the Save button).
+     * Update the proactive-struggle flag in the settings signal (saved via the Save button).
      */
     updateProactiveStruggleEnabled(value: boolean): void {
         const currentSettings = this.settings();
@@ -592,8 +590,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
-     * Writes an EXPLICIT boolean, which is the point: the field's third state ("no admin ever decided") exists so a
-     * save can leave the stored value alone, and touching the toggle is exactly the moment that stops being true.
+     * Writes an EXPLICIT boolean, which is the point: the field's third state ("nobody ever decided") exists so a
+     * save from a client that does not know the field leaves the stored value alone, and touching the toggle is
+     * exactly the moment that stops being true.
      */
     updateLegacyBuildTriggersEnabled(value: boolean): void {
         const currentSettings = this.settings();
@@ -605,7 +604,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     /**
      * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
      * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
-     * has to stay observable, but the admin should not discover it by reading a chat transcript.
+     * has to stay observable, but the instructor should not discover it by reading a chat transcript.
      */
     readonly bothProactiveMechanismsActive = computed(() => {
         const currentSettings = this.settings();

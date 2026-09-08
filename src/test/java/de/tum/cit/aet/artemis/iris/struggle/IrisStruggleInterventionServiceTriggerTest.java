@@ -137,10 +137,24 @@ class IrisStruggleInterventionServiceTriggerTest {
         service = new IrisStruggleTriggerService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService,
                 irisRateLimitService);
+        lenient().when(irisSettingsService.isGlobalStruggleEnabled()).thenReturn(true);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
         // Every trigger charges the admission cooldown first; a Mockito Optional defaults to empty, which would
         // reject them all with a 429. The cooldown's own cases stub this explicitly.
         lenient().when(pyrisJobService.chargeStruggleCooldown(anyLong(), anyLong(), any())).thenReturn(Optional.of("cool"));
+    }
+
+    @Test
+    void deploymentDisabled_rejectsBeforeTouchingTheCourse() {
+        when(irisSettingsService.isGlobalStruggleEnabled()).thenReturn(false);
+
+        var prepared = service.prepareTrigger(EX, user, null, null, null, null, null);
+
+        // Course-off shaped, so the client stops asking, and cheap: no exercise load, no settings read, nothing reserved.
+        assertThat(prepared.accepted()).isFalse();
+        assertThat(prepared.courseDisabled()).isTrue();
+        verifyNoInteractions(programmingExerciseRepository, pyrisJobService, pyrisPipelineService);
+        verify(irisSettingsService, never()).getSettingsForCourse(any());
     }
 
     @Test

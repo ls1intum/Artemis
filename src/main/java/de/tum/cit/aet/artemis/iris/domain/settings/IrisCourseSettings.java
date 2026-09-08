@@ -45,7 +45,7 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
      * Whether Artemis' own build-triggered proactive Iris events (build_failed / progress_stalled,
      * {@code IrisChatSessionService#handleNewResultEvent}) may fire for this course.
      * <p>
-     * Three states, and the distinction is load-bearing. {@code null} means no admin ever decided:
+     * Three states, and the distinction is load-bearing. {@code null} means nobody ever decided:
      * a settings row written before this field existed has no key, and a full PUT from a client that
      * does not know the field omits it. Both must keep whatever is stored rather than silently
      * flipping a course, so the default lives HERE and nowhere else, and the update path merges a
@@ -106,7 +106,7 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
 
     /**
      * Like {@link #of(boolean, String, IrisPipelineVariant, IrisSupportLevel, IrisRateLimitConfiguration, boolean)} but
-     * carries the admin-only legacy-trigger decision as well. The nullable value is passed through UNCHANGED, never
+     * carries the legacy-trigger decision as well. The nullable value is passed through UNCHANGED, never
      * defaulted: only the update path may resolve a null, by merging the persisted value.
      *
      * @param enabled                    desired enabled flag

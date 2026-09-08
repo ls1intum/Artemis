@@ -239,6 +239,8 @@ artemis:
       # on its own; this turns them off everywhere regardless.
       legacy-build-triggers: true
       struggle:
+        # Kill switch ahead of the per-course flag: false stops struggle detection without editing every course.
+        enabled: true
         # Confidence Pyris has to report before an unsolicited decision is delivered; below it the run goes silent.
         confidence-threshold: 0.6
     dashboard:

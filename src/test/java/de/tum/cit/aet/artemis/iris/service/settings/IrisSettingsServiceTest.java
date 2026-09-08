@@ -8,12 +8,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -138,31 +138,24 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void updateCourseSettings_anInstructorMaySaveAnUntouchedCourseButNotFlipTheFlag() {
-        // Stored null against a request carrying explicit true is the SAME decision. Comparing the raw values would
-        // reject it and lock instructors out of saving anything on a course no admin has configured.
-        var allowed = IrisCourseSettings.of(true, "instructor edit", null, null, null, false, true);
-        var saved = irisSettingsService.updateCourseSettings(course.getId(), allowed, false);
-        // ...and the undecided state SURVIVES it. Letting the instructor's explicit true through would consume an
-        // admin-only state: nothing changes at runtime, but "no admin ever decided" is gone for good.
-        assertThat(saved.settings().legacyBuildTriggersEnabled()).isNull();
-        assertThat(saved.settings().customInstructions()).isEqualTo("instructor edit");
+    void updateCourseSettings_anInstructorOwnsBothProactiveToggles() {
+        // Both flags are course-scoped teaching decisions, so a non-admin save may set either one.
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, "instructor edit", null, null, null, true, false), false);
 
-        var forbidden = IrisCourseSettings.of(true, null, null, null, null, false, false);
-        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), forbidden, false)).isInstanceOf(AccessForbiddenAlertException.class)
-                .hasMessageContaining("build-triggered");
+        assertThat(saved.settings().proactiveStruggleEnabled()).isTrue();
+        assertThat(saved.settings().legacyBuildTriggersEnabled()).isFalse();
+        assertThat(saved.settings().customInstructions()).isEqualTo("instructor edit");
     }
 
     @Test
-    void updateCourseSettings_anInstructorCannotConsumeAnAdminsExplicitDecisionEither() {
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
+    void updateCourseSettings_aClientThatOmitsTheLegacyFlagLeavesItAlone() {
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), false);
 
-        // Same effective value, so the restriction does not fire; the raw value must still be the admin's.
-        var instructorSave = IrisCourseSettings.of(true, "instructor edit", null, null, null, false, false);
-        var saved = irisSettingsService.updateCourseSettings(course.getId(), instructorSave, false);
+        // Null is "this client does not edit the field", not "turn it back on": the stored decision has to survive.
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, "later edit", null, null, null, false, null), false);
 
         assertThat(saved.settings().legacyBuildTriggersEnabled()).isFalse();
-        assertThat(saved.settings().customInstructions()).isEqualTo("instructor edit");
+        assertThat(saved.settings().customInstructions()).isEqualTo("later edit");
     }
 
     @Test
@@ -424,6 +417,6 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisSettingsService createServiceWithDefaults(int defaultLimit, int defaultTimeframeHours) {
-        return new IrisSettingsService(mock(IrisCourseSettingsRepository.class), mock(CourseRepository.class), defaultLimit, defaultTimeframeHours);
+        return new IrisSettingsService(mock(IrisCourseSettingsRepository.class), mock(CourseRepository.class), defaultLimit, defaultTimeframeHours, new IrisProactiveProperties());
     }
 }

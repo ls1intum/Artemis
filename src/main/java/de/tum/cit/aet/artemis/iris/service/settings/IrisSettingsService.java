@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -13,6 +12,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -35,13 +35,26 @@ public class IrisSettingsService {
 
     private final int configuredDefaultTimeframeHours;
 
+    private final boolean globalStruggleEnabled;
+
     public IrisSettingsService(IrisCourseSettingsRepository irisCourseSettingsRepository, CourseRepository courseRepository,
             @Value("${artemis.iris.ratelimit.default-limit:0}") int configuredDefaultRateLimit,
-            @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours) {
+            @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours, IrisProactiveProperties proactiveProperties) {
         this.irisCourseSettingsRepository = irisCourseSettingsRepository;
         this.courseRepository = courseRepository;
         this.configuredDefaultRateLimit = configuredDefaultRateLimit;
         this.configuredDefaultTimeframeHours = configuredDefaultTimeframeHours;
+        // Snapshotted like the legacy switch in IrisChatSessionService, so a rebind cannot flip it mid-run.
+        this.globalStruggleEnabled = proactiveProperties.getStruggle().isEnabled();
+    }
+
+    /**
+     * The course flag decides whether a course's students get struggle detection; this decides whether anyone can.
+     *
+     * @return {@code true} unless the deployment turned the mechanism off
+     */
+    public boolean isGlobalStruggleEnabled() {
+        return globalStruggleEnabled;
     }
 
     /**
@@ -91,22 +104,18 @@ public class IrisSettingsService {
     public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettings payload, boolean isAdmin) {
         var current = getSettingsForCourse(courseId);
         var request = Objects.requireNonNullElse(payload, current);
-        // A full PUT cannot tell "the admin cleared this" from "the client does not know this field": both arrive as
-        // null. Merging the persisted value is what keeps an explicit opt-out alive across a save from any of the
-        // three clients that write these settings, only one of which edits the flag.
+        // A full PUT cannot tell "this was cleared" from "the client does not know this field": both arrive as null.
+        // Merging the persisted value is what keeps an explicit opt-out alive across a save from any of the three
+        // clients that write these settings, only one of which edits the flag.
         if (request.legacyBuildTriggersEnabled() == null) {
-            request = withLegacyBuildTriggers(request, current.legacyBuildTriggersEnabled());
+            request = IrisCourseSettings.of(request.enabled(), request.customInstructions(), request.variant(), request.supportLevel(), request.rateLimit(),
+                    request.proactiveStruggleEnabled(), current.legacyBuildTriggersEnabled());
         }
         var sanitizedRequest = sanitizePayload(request);
         var sanitizedCurrent = sanitizePayload(current);
 
         if (!isAdmin) {
             enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
-            // The restriction above compares EFFECTIVE values, so a request carrying an explicit true against a
-            // stored null passes it: both mean "on". Persisting it anyway would let a non-admin turn "no admin ever
-            // decided" into a decision, which is an admin-only write even though nothing changes at runtime. Restore
-            // the raw stored value so an instructor save can never consume the undecided state.
-            sanitizedRequest = withLegacyBuildTriggers(sanitizedRequest, sanitizedCurrent.legacyBuildTriggersEnabled());
         }
 
         var entity = irisCourseSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
@@ -122,26 +131,13 @@ public class IrisSettingsService {
     }
 
     /**
-     * Copy of {@code settings} carrying a different legacy-trigger decision. The value is passed through raw,
-     * {@code null} included: the whole point of the field's third state is that it can be preserved.
-     *
-     * @param settings the settings to copy
-     * @param value    the decision to carry (null = undecided)
-     * @return a copy differing only in that field
-     */
-    private static IrisCourseSettings withLegacyBuildTriggers(IrisCourseSettings settings, @Nullable Boolean value) {
-        return IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.supportLevel(), settings.rateLimit(),
-                settings.proactiveStruggleEnabled(), value);
-    }
-
-    /**
-     * Validates that non-admin users are not trying to change restricted settings.
-     * Instructors can only modify enabled status and custom instructions; variant, rate limits and proactive struggle
-     * detection are admin-only.
+     * Validates that non-admin users are not trying to change restricted settings. Variant and rate limits are
+     * deployment concerns and stay admin-only; everything else on the course, the proactive toggles included, is a
+     * teaching decision its instructor owns.
      *
      * @param request the requested new settings
      * @param current the current settings
-     * @throws AccessForbiddenAlertException if the request attempts to change variant, rate limits or proactive struggle detection
+     * @throws AccessForbiddenAlertException if the request attempts to change variant or rate limits
      */
     private void enforceInstructorRestrictions(IrisCourseSettings request, IrisCourseSettings current) {
         if (!Objects.equals(request.variant(), current.variant())) {
@@ -152,15 +148,6 @@ public class IrisSettingsService {
             throw new AccessForbiddenAlertException("Only administrators can change Iris rate limits", "IrisSettings", "irisRateLimitRestricted");
         }
 
-        if (request.proactiveStruggleEnabled() != current.proactiveStruggleEnabled()) {
-            throw new AccessForbiddenAlertException("Only administrators can change proactive struggle detection", "IrisSettings", "irisProactiveStruggleRestricted");
-        }
-
-        // Compared on the EFFECTIVE value: a request carrying an explicit true against a stored null is the same
-        // decision, and rejecting it would block an instructor from saving anything on an untouched course.
-        if (request.legacyBuildTriggersEffective() != current.legacyBuildTriggersEffective()) {
-            throw new AccessForbiddenAlertException("Only administrators can change Artemis' build-triggered Iris events", "IrisSettings", "irisLegacyBuildTriggersRestricted");
-        }
     }
 
     /**

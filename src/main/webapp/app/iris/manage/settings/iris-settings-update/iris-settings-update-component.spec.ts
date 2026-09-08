@@ -431,7 +431,7 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.settings()?.proactiveStruggleEnabled).toBe(true);
         });
 
-        it('restores the admin-only flag for non-admins on save', async () => {
+        it('sends a non-admin change to the server instead of restoring it', async () => {
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             await fixture.whenStable();
@@ -440,13 +440,12 @@ describe('IrisSettingsUpdateComponent', () => {
             component.isAdmin.set(false);
             const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
 
-            // A non-admin tries to flip the proactive flag on.
-            component.settings.set(cloneWith(component.settings()!, { proactiveStruggleEnabled: true }));
+            component.settings.set(cloneWith(component.settings()!, { proactiveStruggleEnabled: true, legacyBuildTriggersEnabled: false }));
             component.saveSettings();
             await fixture.whenStable();
 
-            // The flag is restored to the original (false), not the attempted true.
-            expect(updateSpy.mock.calls[0][1].proactiveStruggleEnabled).toBe(false);
+            expect(updateSpy.mock.calls[0][1].proactiveStruggleEnabled).toBe(true);
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(false);
         });
     });
 
@@ -457,22 +456,6 @@ describe('IrisSettingsUpdateComponent', () => {
             component.updateLegacyBuildTriggersEnabled(false);
 
             expect(component.settings()?.legacyBuildTriggersEnabled).toBe(false);
-        });
-
-        it('restores the admin-only flag for non-admins on save', async () => {
-            routeParamsSubject.next({ courseId: '1' });
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-            component.isAdmin.set(false);
-            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
-
-            component.settings.set(cloneWith(component.settings()!, { legacyBuildTriggersEnabled: false }));
-            component.saveSettings();
-            await fixture.whenStable();
-
-            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(mockSettings.legacyBuildTriggersEnabled);
         });
 
         it('an explicit false survives the enabled-toggle auto-save', async () => {

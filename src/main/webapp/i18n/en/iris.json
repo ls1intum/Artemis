@@ -40,7 +40,7 @@
                 "variant": "Pipeline Variant",
                 "variantHelp": "Select the AI pipeline variant to use for this course.",
                 "proactiveStruggle": "Proactive Struggle Detection",
-                "proactiveStruggleHelp": "When enabled, Iris proactively detects when a student is stuck and offers help. Off by default; enable only for courses in the proactive A/B condition.",
+                "proactiveStruggleHelp": "When enabled, Iris watches for signs that a student in this course is stuck and offers a hint on its own. Off by default.",
                 "legacyBuildTriggers": "Artemis' Own Build-Triggered Messages",
                 "legacyBuildTriggersHelp": "Artemis sends Iris messages on its own when a build fails, or when three submissions in a row do not improve. On by default and unrelated to struggle detection. Turn it off for courses where struggle detection should own build-triggered proactivity, so a student gets one intervention per build instead of two.",
                 "bothProactiveActiveWarning": "Both proactive mechanisms are on. A single build can produce a struggle-detection hint and an Artemis message, from different pipelines and unaware of each other.",

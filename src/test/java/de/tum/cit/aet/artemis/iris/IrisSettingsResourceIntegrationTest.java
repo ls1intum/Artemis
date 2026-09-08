@@ -191,14 +191,15 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateCourseSettings_asInstructor_cannotChangeProactiveStruggle() throws Exception {
+    void testUpdateCourseSettings_asInstructor_enablesProactiveStruggle() throws Exception {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);   // proactive off (default)
-        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit(), true);  // attempt to
-                                                                                                                                                                    // flip it on
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit(), true);
 
-        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response.settings().proactiveStruggleEnabled()).isTrue();
     }
 
     @Test
