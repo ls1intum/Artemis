@@ -48,11 +48,17 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     List<Attachment> findAllInLecture(@Param("lectureId") Long lectureId);
 
     /**
-     * Projects what is needed to locate the file of every attachment with an id above the given one, ordered by id.
+     * Projects what is needed to locate the file of every attachment with an id above the given one whose link names a file this application stores, ordered by id.
      * <p>
      * This backs {@code MigrationEntry20260907_175735}, which has to look at every attachment in the installation. It reads the column rather than {@code Attachment#getLink},
      * which builds a URL, and it loads no entity: the four values are all the two candidate locations of an attachment file need. Keyset paging on the primary key is used
      * because the entry runs over the whole table and moves files while it does, so a page must not shift under it.
+     * <p>
+     * The three exclusions are {@code FileSystemLocation#refersToStoredFile} written as SQL, and they are what keeps the entry from treating something that is not a stored file
+     * as one. An attachment may point at a document hosted elsewhere, and the last segment of {@code https://example.org/lecture-notes.pdf} is a filename in shape only: taking
+     * it as one would have the entry look for {@code notes.pdf} in the lecture directory, and if some other attachment of that lecture genuinely has a file of that name, move
+     * that file into the wrong unit and strand the attachment it belongs to. The blank check is there for the same reason, so that a row holding an empty string does not
+     * resolve to the directory itself.
      *
      * @param minimumAttachmentId only attachments with a larger id are returned
      * @param pageable            how many to return
@@ -65,6 +71,9 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
                 JOIN unit.lecture lecture
             WHERE attachment.id > :minimumAttachmentId
                 AND attachment.link IS NOT NULL
+                AND TRIM(attachment.link) <> ''
+                AND attachment.link NOT LIKE '/%'
+                AND attachment.link NOT LIKE '%://%'
             ORDER BY attachment.id
             """)
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
