@@ -332,7 +332,7 @@ public class LearningPathResource {
         log.debug("REST request to generate learning path for current user in course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
         final var learningPathDTO = learningPathService.generateLearningPathForCurrentUser(courseId);
-        return ResponseEntity.created(new URI("api/atlas/learning-paths/" + learningPathDTO.id())).body(learningPathDTO);
+        return ResponseEntity.created(new URI("/api/atlas/learning-paths/" + learningPathDTO.id())).body(learningPathDTO);
     }
 
     /**
