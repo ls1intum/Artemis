@@ -296,6 +296,7 @@
                 "selectLecture": "Bitte wähle eine Vorlesung aus."
             },
             "exerciseDetails": {
+                "moreActions": "Weitere Aktionen",
                 "details": "Aufgabendetails",
                 "dueDate": "Einreichungsfrist",
                 "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist",

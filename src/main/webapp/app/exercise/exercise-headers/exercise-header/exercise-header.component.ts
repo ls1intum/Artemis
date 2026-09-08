@@ -1,24 +1,47 @@
-import { Component, computed, input, model, output, signal, viewChild } from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ExerciseHeadersInformationComponent, QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
 import { ParticipationMode, ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { faEllipsis, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { RouterLink } from '@angular/router';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonDirective, TumUiMenuComponent, TumUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { QuizExerciseCountdownComponent } from 'app/exercise/exercise-headers/quiz-countdown/quiz-exercise-countdown.component';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-header',
     templateUrl: './exercise-header.component.html',
-    imports: [FaIconComponent, ExerciseHeadersInformationComponent, ExerciseHeaderActionsComponent, ParticipationModeToggleComponent, CourseSidebarToggleButtonComponent],
+    imports: [
+        FaIconComponent,
+        ExerciseHeaderActionsComponent,
+        ParticipationModeToggleComponent,
+        CourseSidebarToggleButtonComponent,
+        QuizExerciseCountdownComponent,
+        TumUiButtonDirective,
+        TumUiMenuComponent,
+        TumUiMenuTriggerDirective,
+        RouterLink,
+        NgbTooltip,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExerciseHeaderComponent {
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly faEllipsis = faEllipsis;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
     readonly studentParticipation = input<StudentParticipation>();
@@ -79,9 +102,14 @@ export class ExerciseHeaderComponent {
         return this.participationMode() === 'practice' ? this.effectivePracticeParticipation() : this.studentParticipation();
     });
 
-    readonly isViewingSubmission = signal(false);
+    /**
+     * Whether the student is looking at an earlier submission. Reported by the details panel, which now owns the
+     * information boxes that know it; the header only reacts to it.
+     */
+    readonly isViewingSubmission = input<boolean>(false);
 
-    private readonly headersInfo = viewChild(ExerciseHeadersInformationComponent);
+    /** Returns the student to their latest submission; supplied by the details panel for the same reason. */
+    readonly onContinueToLatest = input<() => void>();
 
     readonly effectiveOnSubmitExercise = computed(() => {
         if (this.isViewingSubmission()) {
@@ -104,7 +132,7 @@ export class ExerciseHeaderComponent {
         if (!this.isViewingSubmission()) {
             return undefined;
         }
-        return () => this.headersInfo()?.resultHistoryDropdown()?.continueToLatest();
+        return this.onContinueToLatest();
     });
 
     onNewParticipation(participation: StudentParticipation) {
@@ -117,4 +145,15 @@ export class ExerciseHeaderComponent {
             this.participationMode.set('practice');
         }
     }
+    /** The plagiarism case worth surfacing in the bar, if any. */
+    readonly plagiarismCase = computed(() => {
+        const info = this.plagiarismCaseInfo();
+        return info && info.verdict !== PlagiarismVerdict.NO_PLAGIARISM ? info : undefined;
+    });
+
+    readonly plagiarismCaseLabel = computed(() =>
+        this.plagiarismCase()?.createdByContinuousPlagiarismControl
+            ? 'artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity'
+            : 'artemisApp.plagiarism.plagiarismCases.plagiarismCase',
+    );
 }

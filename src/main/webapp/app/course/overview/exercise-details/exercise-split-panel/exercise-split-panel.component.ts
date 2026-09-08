@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -92,6 +92,19 @@ export class ExerciseSplitPanelComponent {
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
+
+    /**
+     * Whether the student is looking at an earlier submission, reported by the information boxes now that they live
+     * in this panel. The header reads it back to hide submit and to offer "continue to latest" instead.
+     */
+    readonly isViewingSubmission = signal(false);
+
+    private readonly headersInfo = viewChild(ExerciseHeadersInformationComponent);
+
+    /** Returns the student to their latest submission. No-op while the details tab is closed and the boxes unrendered. */
+    continueToLatest(): void {
+        this.headersInfo()?.resultHistoryDropdown()?.continueToLatest();
+    }
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;

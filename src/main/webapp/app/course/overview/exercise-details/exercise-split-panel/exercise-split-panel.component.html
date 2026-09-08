@@ -106,6 +106,7 @@
             [athenaEnabled]="athenaEnabled()"
             [quizLiveStatus]="quizLiveStatus()"
             [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
+            (viewingSubmissionChange)="isViewingSubmission.set($event)"
         />
     </ng-template>
 

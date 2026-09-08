@@ -22,6 +22,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -92,6 +93,38 @@ describe('ExerciseHeaderActionsComponent', () => {
         fixture.detectChanges();
         return fixture;
     }
+
+    describe('feedback button participation', () => {
+        // Lives here rather than in the header spec: the button moved into the overflow slot, which the header only
+        // renders inside an opened CDK menu overlay, out of reach of its fixture.
+        it('should follow the participation mode when choosing the participation for feedback', () => {
+            const graded = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
+            const practice = { id: 20, testRun: true, submissions: [{ submitted: false }] } as StudentParticipation;
+
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            vi.spyOn(TestBed.inject(ParticipationService), 'getSpecificStudentParticipation').mockImplementation((participations: StudentParticipation[], testRun: boolean) =>
+                participations.find((participation) => participation.testRun === testRun),
+            );
+
+            // Setting the exercise now, so the effect that reads the participations runs against the stub.
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.allowOnlineEditor = false;
+            exercise.studentParticipations = [graded, practice];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('actionSlot', 'overflow');
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipationForCode()?.id).toBe(10);
+
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipationForCode()?.id).toBe(20);
+        });
+    });
 
     describe('action slots', () => {
         it('should resolve submit as the primary action when submitting is possible', () => {

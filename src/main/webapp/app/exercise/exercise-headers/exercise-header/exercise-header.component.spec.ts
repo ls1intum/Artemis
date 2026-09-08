@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
-import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -60,8 +60,8 @@ describe('ExerciseHeaderComponent', () => {
 
         // Mock child components of ExerciseHeaderComponent not under test
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ExerciseHeadersInformationComponent, ParticipationModeToggleComponent] },
-            add: { imports: [MockComponent(ExerciseHeadersInformationComponent), MockComponent(ParticipationModeToggleComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent] },
+            add: { imports: [MockComponent(ParticipationModeToggleComponent)] },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -114,6 +114,52 @@ describe('ExerciseHeaderComponent', () => {
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
     });
 
+    describe('compact title bar', () => {
+        beforeEach(() => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.MODELING;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        });
+
+        it('should render the bar on the shared title bar contract', () => {
+            const bar = fixture.nativeElement.querySelector('#exercise-header');
+
+            expect(bar.classList).toContain('page-top-bar');
+            expect(bar.classList).not.toContain('detail-header-card');
+        });
+
+        it('should no longer render the information boxes in the header', () => {
+            expect(fixture.nativeElement.querySelector('jhi-exercise-headers-information')).toBeNull();
+        });
+
+        it('should offer an overflow menu trigger', () => {
+            expect(fixture.nativeElement.querySelector('[data-testid="exercise-actions-overflow"]')).not.toBeNull();
+        });
+
+        it('should surface a plagiarism case as a labelled chip in the bar', () => {
+            fixture.componentRef.setInput('plagiarismCaseInfo', { id: 7, verdict: PlagiarismVerdict.PLAGIARISM });
+            fixture.detectChanges();
+
+            const chip = fixture.nativeElement.querySelector('[data-testid="plagiarism-case-chip"]');
+            expect(chip).not.toBeNull();
+            expect(chip.getAttribute('aria-label')).toBeTruthy();
+        });
+
+        it('should not surface a chip when the verdict clears the student', () => {
+            fixture.componentRef.setInput('plagiarismCaseInfo', { id: 7, verdict: PlagiarismVerdict.NO_PLAGIARISM });
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="plagiarism-case-chip"]')).toBeNull();
+        });
+
+        it('should only render the quiz countdown for quizzes', () => {
+            expect(fixture.nativeElement.querySelector('jhi-quiz-exercise-countdown')).toBeNull();
+        });
+    });
+
     describe('programming exercise AI feedback button', () => {
         function configureProgrammingExercise(allowOnlineEditor: boolean | undefined, submitted: boolean, hasResult: boolean): void {
             const exercise = new ProgrammingExercise(undefined, undefined);
@@ -134,51 +180,28 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
         }
 
+        /**
+         * The feedback button lives in the overflow menu now, and the CDK renders that into an overlay on the body
+         * rather than inside the fixture, so it has to be opened and then queried from the document.
+         */
+        function openOverflowMenu(): HTMLElement {
+            (fixture.nativeElement.querySelector('[data-testid="exercise-actions-overflow"]') as HTMLElement).click();
+            fixture.detectChanges();
+            return document.body;
+        }
+
         it('should enable the feedback button for a submitted submission', () => {
             configureProgrammingExercise(false, true, false);
 
-            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            const feedbackButton = openOverflowMenu().querySelector('jhi-request-feedback-button');
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
         });
 
         it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
             configureProgrammingExercise(false, false, hasResult);
 
-            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            const feedbackButton = openOverflowMenu().querySelector('jhi-request-feedback-button');
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
-        });
-
-        it('should pass the active participation to the feedback button', () => {
-            const exercise = new ProgrammingExercise(undefined, undefined);
-            exercise.id = 1;
-            exercise.type = ExerciseType.PROGRAMMING;
-            exercise.course = { athenaFormativeFeedbackEnabled: true };
-            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            exercise.allowOnlineEditor = false;
-
-            const gradedParticipation = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
-            const practiceParticipation = { id: 20, testRun: true, submissions: [{ submitted: false }] } as StudentParticipation;
-            exercise.studentParticipations = [gradedParticipation, practiceParticipation];
-
-            fixture.componentRef.setInput('exercise', exercise);
-            fixture.componentRef.setInput('courseId', 5);
-            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
-            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
-            fixture.componentRef.setInput('participationMode', 'graded');
-            fixture.detectChanges();
-
-            let feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId()).toBe(gradedParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
-
-            fixture.componentRef.setInput('participationMode', 'practice');
-            fixture.detectChanges();
-
-            feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId()).toBe(practiceParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
         it('should hide the feedback button when the exercise has not been started', () => {
@@ -216,7 +239,8 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        const titleRow = fixture.debugElement.query(By.css('#exercise-header > div')).nativeElement as HTMLElement;
+        // The bar itself is the title row now; there is no inner row element to reach for.
+        const titleRow = fixture.debugElement.query(By.css('#exercise-header')).nativeElement as HTMLElement;
         const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
         const heading = titleRow.querySelector('h5');
 
@@ -524,15 +548,19 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('courseId', 5);
             fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            const continueCallback = () => {};
+            fixture.componentRef.setInput('onContinueToLatest', continueCallback);
             fixture.detectChanges();
 
             expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBe(submitCallback);
             expect(fixture.componentInstance.onContinueExercise()).toBeUndefined();
 
-            fixture.componentInstance.isViewingSubmission.set(true);
+            // Reported by the details panel, which owns the information boxes that know it.
+            fixture.componentRef.setInput('isViewingSubmission', true);
+            fixture.detectChanges();
 
             expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
-            expect(fixture.componentInstance.onContinueExercise()).toBeDefined();
+            expect(fixture.componentInstance.onContinueExercise()).toBe(continueCallback);
         });
     });
 

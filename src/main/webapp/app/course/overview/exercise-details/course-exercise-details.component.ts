@@ -564,6 +564,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return updatedExisting.concat(newSubmissions);
     }
 
+    /** Handed to the header, which cannot reach the result history itself now that it lives in the details panel. */
+    readonly continueToLatest = (): void => this.splitPanel()?.continueToLatest();
+
     onNewParticipation(participation: StudentParticipation) {
         const current = this._studentParticipations();
         if (current.some((p) => p.id === participation.id)) {
