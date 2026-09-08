@@ -185,7 +185,7 @@ artemis:
     Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist
     bounds hosts, not individual agents.
 
-    **The binding works on both backends, by two routes.** It compares where an agent was seen with where its clone
+    **The binding works on both providers, by two routes.** It compares where an agent was seen with where its clone
     arrives, so the two have to be measurements of the same network path.
 
     - **Hazelcast** clients connect to the cluster members, which are the nodes that serve git, so a core node observes
@@ -201,7 +201,7 @@ artemis:
     An agent that has neither — one that has not reported yet, or one sharing a JVM with a core node under Hazelcast
     before it reports — is unconstrained rather than refused, because refusing an agent whose origin nothing has
     established yet would fail its first clones. **`allowed-ranges` and the per-build-job scoping apply on every
-    backend regardless**, since both are checked against the address of the request itself.
+    provider regardless**, since both are checked against the address of the request itself.
 </Callout>
 
 #### SSH behind a load balancer

@@ -1,0 +1,40 @@
+name: Terminology
+
+# Repo-wide prose check: no "frontend", no "backend" (terminology-check: allow). See
+# documentation/docs/developer/guidelines/terminology.mdx for the rationale and the exceptions.
+#
+# Deliberately its own workflow rather than a job in ci-quality.yml: `quality` is gated on
+# `build_relevant`, which is false for a documentation-only pull request, and documentation is
+# where these words most often come back. This one runs on every pull request.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR builds use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}  # default-deny; the job grants only what it needs
+
+jobs:
+  terminology:
+    name: Terminology Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          # A pure source scan (no git diff), so pin the PR head and check exactly the tree
+          # Build and Test run against.
+          ref: ${{ inputs.commit_sha }}
+      # First, because every failure mode of the checker is a silent pass: without a PCRE-enabled
+      # git the scan errors out, finds nothing, and reports success. The self-test proves the
+      # engine and the patterns still work before the result of the real scan is believed.
+      - name: Checker self-test
+        run: ./supporting_scripts/check_terminology.sh --self-test
+      - name: Terminology check
+        run: ./supporting_scripts/check_terminology.sh
