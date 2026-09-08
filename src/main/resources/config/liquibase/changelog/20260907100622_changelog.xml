@@ -45,6 +45,13 @@
         explicit rather than because the column drop needs them, and each is guarded so that a database which never had
         the index under that name skips it instead of failing.
 
+        This file already ran on every database that follows develop, and only its comments and the rollback of the
+        last changeset are edited here. Neither is part of a changeset checksum, which Liquibase computes from the
+        forward changes and any modifySql alone, so no recorded checksum changes and no validCheckSum is needed. The
+        rollback has to be edited all the same: it is read from this file at the moment a rollback runs, not from the
+        database, so leaving the old statement in place would leave a rollback that silently recovers nothing while
+        claiming to.
+
         Both columns come back empty on rollback. exercise_id never held a value. lecture_id held one, and it is not
         recoverable here: the only row-level evidence of which attachments the migration touched was that their link
         still named the lecture attachment directory, and 20260906221008_changelog.xml reduced every link to a bare

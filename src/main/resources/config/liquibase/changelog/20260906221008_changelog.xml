@@ -44,11 +44,18 @@
     and it is not needed: the application reads a bare filename correctly, so rolling back the code without rolling
     back the data leaves a working system.
 
+    Ordering. This file is included after 20260905235721_changelog.xml, which is chronological and also the only order
+    master.xml should ever be in, but the two are independent in the forward direction either way:
+    20260905235721_changelog.xml creates a lecture unit per attachment and never reads jhi_link, and the statements
+    here select on the value alone and are re-runnable, so neither can see a state the other has to have produced.
+
     One rollback elsewhere does depend on the old shape. The last changeset of 20260905235721_changelog.xml recovers
     which attachment video units it created by looking for an attachment whose link still names the lecture attachment
-    directory, and after this changeset no link names a directory at all. Rolling that changelog back therefore leaves
-    the units it created in place with their attachments attached, which is the same position it describes for a node
-    that was never upgraded. Rolling forward, which is the only path this release is deployed on, is unaffected.
+    directory, and after this changeset no link names a directory at all. That holds whichever of the two is listed
+    first, because rollback runs the file list in reverse and the rollback here is empty, so the links are bare by the
+    time the predecessor rollback reads them. Rolling that changelog back therefore leaves the units it created in
+    place with their attachments attached, which is the same position it describes for a node that was never upgraded.
+    Rolling forward, which is the only path this release is deployed on, is unaffected.
     -->
 
     <changeSet id="20260906221008-01-attachment-link-filename" author="krusche">
