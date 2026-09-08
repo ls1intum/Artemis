@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 import static de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.MAX_CONCURRENT_PROCESSING;
 
 import java.time.ZonedDateTime;
@@ -109,34 +108,32 @@ public class LectureContentProcessingScheduler {
         recoverStuckPhase(ProcessingPhase.TRANSCRIBING, NO_CALLBACK_TIMEOUT_MINUTES);
         recoverStuckPhase(ProcessingPhase.INGESTING, NO_CALLBACK_TIMEOUT_MINUTES);
 
-        // Then release claims whose owner never finished dispatching them, e.g. a node killed by a rolling deploy
-        // between taking the claim and writing the phase. Nothing else selects those rows, so without this the unit
-        // waits forever; see releaseAbandonedIdleClaims.
-        releaseAbandonedClaims();
+        // Then release dispatch claims whose owner never finished dispatching them, e.g. a node killed by a rolling
+        // deploy between taking the claim and writing the phase. Nothing else selects those rows, so without this the
+        // unit waits forever; see releaseAbandonedIdleClaims.
+        releaseAbandonedDispatchClaims();
 
         // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
         callbackService.dispatchPendingJobs();
     }
 
     /**
-     * Release the two claim shapes that a node can abandon mid-dispatch.
+     * Release dispatch claims that a node abandoned mid-dispatch.
      * <p>
-     * Both claims commit before the dispatch they belong to, so a node dying in between leaves a row that no query
-     * selects: IDLE with a {@code startedAt}, or FAILED with no scheduled retry. The cutoff is the same
-     * no-callback timeout used above — a claim older than that is not in flight any more.
+     * The claim commits before the dispatch it belongs to, so a node dying in between leaves a row that no query
+     * selects: IDLE with a {@code startedAt} set. The cutoff is the same no-callback timeout used above — a claim
+     * older than that is not in flight any more.
+     * <p>
+     * Retry claims need nothing here: {@code claimRetryEligible} leases {@code retryEligibleAt} into the future
+     * instead of clearing it, so an abandoned retry becomes eligible again when the lease lapses.
      */
-    private void releaseAbandonedClaims() {
+    private void releaseAbandonedDispatchClaims() {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime cutoff = now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES);
 
         int releasedClaims = processingStateRepository.releaseAbandonedIdleClaims(cutoff, now);
         if (releasedClaims > 0) {
             log.info("Released {} abandoned dispatch claims older than {} minutes; the units are back in the queue", releasedClaims, NO_CALLBACK_TIMEOUT_MINUTES);
-        }
-
-        int rescheduledRetries = processingStateRepository.rescheduleAbandonedRetries(cutoff, now, MAX_PROCESSING_RETRIES);
-        if (rescheduledRetries > 0) {
-            log.info("Re-scheduled {} retries whose claim was abandoned older than {} minutes", rescheduledRetries, NO_CALLBACK_TIMEOUT_MINUTES);
         }
     }
 

@@ -192,23 +192,37 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     /**
      * Claim one retry-eligible job, so that exactly one node retries it.
      * <p>
-     * Mirrors {@link #claimIdleForDispatch}: clearing {@code retry_eligible_at} is the claim, because
-     * {@link #findStatesReadyForRetry} only lists rows where it is set.
+     * The claim is a lease rather than a clear: it pushes {@code retryEligibleAt} into the future, and
+     * {@link #findStatesReadyForRetry} only lists rows whose value has passed, so the row is invisible to every other
+     * caller for the length of the lease. Two callers racing on the same row both pass the {@code <= :now} guard, but
+     * the update is one statement, so the second one matches nothing and is told it lost.
+     * <p>
+     * Leasing rather than clearing is what makes an abandoned claim recover itself. A node killed between the claim
+     * and the phase write leaves the row exactly as the lease left it, and once the lease expires the row is eligible
+     * again with no recovery query involved. That matters because a cleared {@code retryEligibleAt} is
+     * indistinguishable from the deliberate representation of a permanently failed unit — {@code handleProcessingFailure}
+     * leaves a YOUTUBE_PRIVATE failure FAILED with no scheduled retry and attempts still on the clock — so any
+     * sweep that resurrected such rows would keep sending private videos back to Iris. With a lease there is
+     * nothing to sweep: a permanent failure is null forever and is never eligible.
+     * <p>
+     * A successful dispatch clears the lease on its own, because the phase transition out of FAILED sets
+     * {@code retryEligibleAt} to null.
      *
-     * @param id  the id of the state to claim
-     * @param now the current time, which the backoff must already have passed
+     * @param id          the id of the state to claim
+     * @param now         the current time, which the backoff must already have passed
+     * @param leaseExpiry when the claim lapses and the row becomes eligible again
      * @return 1 if this caller claimed the retry, 0 if another caller already had it
      */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.retryEligibleAt = NULL, ps.lastUpdated = :now
+            SET ps.retryEligibleAt = :leaseExpiry, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.retryEligibleAt IS NOT NULL
             AND ps.retryEligibleAt <= :now
             """)
-    int claimRetryEligible(@Param("id") long id, @Param("now") ZonedDateTime now);
+    int claimRetryEligible(@Param("id") long id, @Param("now") ZonedDateTime now, @Param("leaseExpiry") ZonedDateTime leaseExpiry);
 
     /**
      * Release IDLE claims whose owner never got as far as dispatching them.
@@ -222,6 +236,9 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * The previous {@code SELECT ... FOR UPDATE SKIP LOCKED} could not produce this state, because the claim was not
      * visible to anyone until the dispatch committed alongside it. Trading that for a released row is the cost of
      * keeping the boundary out of the service, and this is what pays it.
+     * <p>
+     * {@link #claimRetryEligible} needs no counterpart to this, because it leases rather than clears and therefore
+     * recovers on its own.
      *
      * @param cutoffTime rows claimed before this are considered abandoned
      * @param now        the timestamp to record as the last update
@@ -238,27 +255,4 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int releaseAbandonedIdleClaims(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now);
 
-    /**
-     * Re-schedule retries whose claim was taken but never acted on.
-     * <p>
-     * The counterpart to {@link #releaseAbandonedIdleClaims} for {@link #claimRetryEligible}, which clears
-     * {@code retryEligibleAt} as its claim. A node dying next leaves a FAILED row with no retry scheduled, which
-     * {@link #findStatesReadyForRetry} skips, so the unit is never retried even though it has attempts left.
-     *
-     * @param cutoffTime rows untouched since this are considered abandoned
-     * @param now        the timestamp to record as the last update, and the moment they become eligible again
-     * @param maxRetries the retry ceiling; a row that has reached it is genuinely terminal and left alone
-     * @return how many retries were re-scheduled
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.retryEligibleAt = :now, ps.lastUpdated = :now
-            WHERE ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED
-            AND ps.retryEligibleAt IS NULL
-            AND ps.retryCount < :maxRetries
-            AND ps.lastUpdated < :cutoffTime
-            """)
-    int rescheduleAbandonedRetries(@Param("cutoffTime") ZonedDateTime cutoffTime, @Param("now") ZonedDateTime now, @Param("maxRetries") int maxRetries);
 }

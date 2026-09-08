@@ -622,6 +622,7 @@ public class SlideSplitterService {
             // Rows before files. If the row work fails once the files are already gone, the rows survive pointing at
             // nothing, which is the one leftover shape that is invisible in the database; the other way round leaves an
             // orphaned file, which is inert.
+            boolean rowsUndone = true;
             try {
                 if (!createdSlideIds.isEmpty()) {
                     slideRepository.deleteAllById(createdSlideIds);
@@ -631,10 +632,19 @@ public class SlideSplitterService {
                 }
             }
             catch (RuntimeException e) {
+                rowsUndone = false;
                 log.error("Could not undo the slide rows written before the failure; {} created and {} pre-existing slides may now be inconsistent", createdSlideIds.size(),
                         restorePoint.size(), e);
             }
-            createdFiles.forEach(SlideSplitterService.this::deleteFile);
+            if (rowsUndone) {
+                createdFiles.forEach(SlideSplitterService.this::deleteFile);
+            }
+            else {
+                // The rows are still there, so their images are still referenced. Deleting them anyway would produce
+                // exactly the rows-pointing-at-nothing state the ordering above exists to avoid, and it is the shape
+                // that is invisible in the database. Leaving the files costs disk and nothing else.
+                log.error("Keeping the {} slide images written before the failure, because the rows referencing them could not be removed", createdFiles.size());
+            }
         }
     }
 

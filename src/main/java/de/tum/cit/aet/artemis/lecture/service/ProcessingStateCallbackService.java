@@ -64,6 +64,14 @@ public class ProcessingStateCallbackService {
     static final int MAX_CONCURRENT_PROCESSING = 2;
 
     /**
+     * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
+     * to, and it doubles as the recovery window: a node killed mid-dispatch leaves the claim in place until it lapses,
+     * after which the row is eligible again. Matches the scheduler's no-callback timeout, which is the point at which
+     * a dispatch is no longer considered in flight.
+     */
+    private static final int RETRY_CLAIM_LEASE_MINUTES = 20;
+
+    /**
      * Lock to serialize dispatch so the count check + dispatch are atomic.
      * Without this, concurrent calls to dispatchPendingJobs() can each see the
      * same activeCount and over-dispatch beyond MAX_CONCURRENT_PROCESSING.
@@ -139,14 +147,16 @@ public class ProcessingStateCallbackService {
                 if (availableSlots <= 0) {
                     break;
                 }
-                if (processingStateRepository.claimRetryEligible(state.getId(), now) == 0) {
+                ZonedDateTime leaseExpiry = now.plusMinutes(RETRY_CLAIM_LEASE_MINUTES);
+                if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
                     log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
                 log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
                 // Mirror the claim onto the loaded entity: it is saved again further down, and writing back the stale
-                // value would put the row back into the candidate list.
-                state.clearRetryEligibility();
+                // value would put the row back into the candidate list. A successful dispatch clears the lease when it
+                // transitions out of FAILED; a failed one leaves it, which is what makes the claim lapse on its own.
+                state.setRetryEligibleAt(leaseExpiry);
                 dispatchSingleJob(state);
                 availableSlots--;
             }
