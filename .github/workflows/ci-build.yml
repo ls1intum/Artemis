@@ -38,6 +38,32 @@ env:
   java: 25
 
 jobs:
+  build-hyperion-worker:
+    name: Build Hyperion worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+      - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+      - name: Build worker executable and SBOM
+        run: ./gradlew :hyperion-worker:bootJar -x webapp
+      - name: Build worker container
+        run: docker build -f docker/hyperion/worker.Dockerfile -t hyperion-worker:ci .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hyperion-worker
+          path: modules/hyperion-worker/build/libs/hyperion-worker.jar
+          if-no-files-found: error
+          retention-days: 7
+
   build-war:
     name: Build .war artifact
     runs-on: ubuntu-latest
