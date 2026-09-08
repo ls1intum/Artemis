@@ -145,7 +145,7 @@ class AccountSecurityEventServiceTest {
 
     @Test
     void testAuditFailureDoesNotBreakTheAccountOperation() {
-        doThrow(new RuntimeException("audit backend down")).when(auditEventRepository).add(any());
+        doThrow(new RuntimeException("audit store down")).when(auditEventRepository).add(any());
 
         // A logging outage must not become an outage of the account operation itself.
         assertThatCode(() -> service.recordEmailChanged(user, "old@tum.de", "en")).doesNotThrowAnyException();
