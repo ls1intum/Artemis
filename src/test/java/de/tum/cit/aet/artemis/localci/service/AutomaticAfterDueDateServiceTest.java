@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.AutomaticAfterDueDatePreviewRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -127,6 +128,24 @@ class AutomaticAfterDueDateServiceTest {
         exercise.setBuildConfig(createBuildConfig(BuildPhaseCondition.ALWAYS));
         var thirdResult = service.computeBuildAndTestDate(exercise, null);
         assertThat(thirdResult).isNull();
+    }
+
+    @Test
+    void computeBuildAndTestDateForExistingExercise_courseExercise_afterDueDatePhaseInSecondContainer_returnsCorrectDate() throws JsonProcessingException {
+        var dueDate = BASE_TIME.plusDays(1);
+        var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);
+
+        // the after-due-date phase lives in the second container; the service flattens phases across containers, so the
+        // rebuild must still be scheduled regardless of which container the phase runs in
+        var firstContainer = new BuildContainerDTO("compile", "ghcr.io/example-image",
+                List.of(new BuildPhaseDTO("build", "echo build", BuildPhaseCondition.ALWAYS, false, List.of())));
+        var secondContainer = new BuildContainerDTO("tests", "ghcr.io/example-image",
+                List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"))));
+        exercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(firstContainer, secondContainer)).toBuildPlanConfiguration());
+
+        var result = service.computeBuildAndTestDate(exercise, null);
+
+        assertThat(result).isEqualTo(dueDate.plusMinutes(15));
     }
 
     @Test
