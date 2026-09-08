@@ -371,6 +371,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList().getFirst();
         assertThat(exerciseUnitDTO.competencyLinks()).hasSize(1);
+        // the exercise is projected as on the course overview; the lecture page renders it with the same exercise row
+        assertThat(exerciseUnitDTO.exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(exerciseUnitDTO.exercise().type()).isEqualTo(textExercise.getExerciseType());
+        assertThat(exerciseUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
         LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
                 .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
