@@ -18,7 +18,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * ({@code NON_EMPTY} would drop the key and make Pyris reject the payload with a 422). The bare form inherits
  * Jackson's default {@code ALWAYS} inclusion, keeping the empty collection on the wire, while still satisfying
  * both iris-DTO architecture rules (every DTO must carry {@code @JsonInclude}, and any explicitly declared value
- * must be {@code NON_EMPTY}). The {@code emptyCollectionsAreNotDroppedFromWire} test guards this contract.
+ * must be {@code NON_EMPTY}). Two tests guard this: {@code emptyCollectionsAreNotDroppedFromWire} pins the
+ * annotation's effect, and the round-trip test reads {@code trajectory} back out of the request body the
+ * production mapper wrote, which is where a global inclusion setting would show.
  */
 @JsonInclude
 public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, double sessionSeconds) {

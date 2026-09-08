@@ -202,12 +202,22 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         // frozen and reveals it on click. The event still carries a sessionId (from session resolution
         // without persisting) so the client knows which session to target on reveal.
         AtomicReference<String> runId = new AtomicReference<>();
-        irisRequestMockProvider.mockStruggleInterventionResponse(dto -> runId.set(dto.settings().authenticationToken()));
+        // Captured rather than asserted inside the callback, so a mismatch fails with its own message instead of
+        // breaking the request and surfacing as an await timeout.
+        AtomicReference<List<PyrisStruggleSignalDTO.TickDTO>> sentTrajectory = new AtomicReference<>();
+        irisRequestMockProvider.mockStruggleInterventionResponse(dto -> {
+            sentTrajectory.set(dto.struggleSignal().trajectory());
+            runId.set(dto.settings().authenticationToken());
+        });
 
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "STATE", List.of("STATE"), 0.65, "armed", false, false), List.of(), 540);
         var body = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, HttpStatus.ACCEPTED);
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
+        // Read back from the body the production mapper wrote. Pyris declares trajectory as required with no
+        // default, so an inclusion setting that dropped the empty list would arrive here as null and earn a 422.
+        // PyrisStruggleSignalDTOTest serialises with a plain mapper and cannot see that.
+        assertThat(sentTrajectory.get()).isNotNull().isEmpty();
 
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", PyrisRunState.FINISHED, null, List.of(), null, null,
                 null, null, null, null);
