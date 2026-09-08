@@ -46,6 +46,6 @@ public record ExerciseCourseScoreDTO(long id, ExerciseType type, @NotNull Includ
         Double variantGroupMaxPoints = variantGroup != null ? variantGroup.getMaxPoints() : null;
         return new ExerciseCourseScoreDTO(exercise.getId(), ExerciseType.getExerciseTypeFromClass(exercise.getClass()), exercise.getIncludedInOverallScore(),
                 exercise.getAssessmentType(), exercise.getDueDate(), exercise.getAssessmentDueDate(), buildAndTestStudentSubmissionsAfterDueDate, exercise.getMaxPoints(),
-                exercise.getBonusPoints(), exercise.getCourseViaExerciseGroupOrCourseMember().getId(), variantGroupId, variantGroupMaxPoints);
+                exercise.getBonusPoints(), exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(), variantGroupId, variantGroupMaxPoints);
     }
 }

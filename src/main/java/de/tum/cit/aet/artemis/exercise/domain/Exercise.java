@@ -35,6 +35,7 @@ import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.ConcreteProxy;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -361,8 +362,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
      * the course class member
      *
-     * @return Course of the exercise
+     * @return Course of the exercise, or null when it cannot be resolved from a masked exam graph
      */
+    @Nullable
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
@@ -376,6 +378,29 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         else {
             return this.getCourse();
         }
+    }
+
+    /**
+     * Same as {@link #getCourseViaExerciseGroupOrCourseMember()}, for the callers that cannot do anything without a
+     * course.
+     * <p>
+     * That method returns null for one documented reason: a student-facing exam payload masks the exam out before
+     * serialization, so neither the exam nor its course can be reached. A caller that then dereferences the course
+     * threw a NullPointerException from somewhere unrelated to the masking. This one names the problem instead, and
+     * being non-null it also tells a static analyser what the surrounding code already assumes.
+     *
+     * @return the course this exercise belongs to
+     * @throws IllegalStateException if the course cannot be resolved, i.e. the exercise belongs to neither a course
+     *                                   nor an exam whose graph is intact
+     */
+    @NonNull
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMemberElseThrow() {
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Exercise " + getId() + " has no resolvable course: it belongs to neither a course nor an exam with an intact graph");
+        }
+        return course;
     }
 
     /**

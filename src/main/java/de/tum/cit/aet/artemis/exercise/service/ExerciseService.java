@@ -726,10 +726,15 @@ public class ExerciseService {
                     notificationText);
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
-        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(updatedExercise.getExam().getStartDate()) && updatedExercise.isExamExercise()
-                && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
-            ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
-            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+        else if (updatedExercise.isExamExercise() && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
+            // Read the exam only once the exercise is known to have an exercise group. The guard used to sit after the
+            // dereference, so an exercise belonging to neither a course nor an exam threw a NullPointerException here,
+            // and so did an exam exercise whose graph was masked: getExam() returns null in both cases.
+            var exam = updatedExercise.getExam();
+            if (exam != null && now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(exam.getStartDate())) {
+                ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
+                api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+            }
         }
     }
 

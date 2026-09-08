@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
@@ -305,7 +306,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleParticipationWithIndividualDueDate(ZonedDateTime now, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
             boolean isScoreUpdateNeeded) {
-        final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
+        // Only reached from the branch in scheduleParticipationTasks that has already established a non-null individual
+        // due date. Stated here rather than left implicit: the precondition is what the method name promises, it is
+        // dereferenced three times below, and an analyser cannot see a guard one frame up.
+        final ZonedDateTime individualDueDate = Objects.requireNonNull(participation.getIndividualDueDate(), "the participation must have an individual due date");
+        final boolean isBeforeDueDate = now.isBefore(individualDueDate);
         // Update scores on due date
         if (isBeforeDueDate) {
             scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
@@ -317,7 +322,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // Build and test after individual due date:
         // only special scheduling if the individual due date is after the build and test date
         if (isBeforeDueDate && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && participation.getIndividualDueDate().isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+                && individualDueDate.isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleBuildAndTestAfterDueDateForParticipation(participation);
         }
         else {
