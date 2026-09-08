@@ -1013,7 +1013,7 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void tokenAccountingFailure_cancelsTheJobAndRetainsItsWorstCaseReservation() {
+    void tokenAccountingFailure_reportsErrorRatherThanUserCancellationAndRetainsItsWorstCaseReservation() {
         when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
             throw new GenerationJobService.TokenUsageAccountingException();
         });
@@ -1027,7 +1027,9 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
                 "reservation-accounting-failed"));
 
-        assertThat(sentEvents().getLast().message()).contains("token usage could not be accounted for");
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(sentEvents().getLast().terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
+        assertThat(sentEvents().getLast().message()).contains("AI provider request failed");
         verify(jobService).markTokenAccountingIncomplete(JOB_ID);
         // The local stop flag already ends every further model call. A hard system cancellation would additionally mark the job cancelled, which is what used to destroy a
         // verified candidate the provider had already been paid for.
@@ -1098,7 +1100,9 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
                 "reservation-provider-failed"));
 
-        assertThat(sentEvents().getLast().message()).contains("token usage could not be accounted for");
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(sentEvents().getLast().terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
+        assertThat(sentEvents().getLast().message()).contains("AI provider request failed");
         verify(generationBudgetService).retainReservationForBudgetWindow("reservation-provider-failed");
         verify(generationBudgetService, never()).releaseReservation("reservation-provider-failed");
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());

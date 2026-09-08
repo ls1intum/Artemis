@@ -100,8 +100,8 @@ spring:
             chat: openai
         openai:
             api-key: <openai-api-key>
-            # HTTP client request timeout (default 60s); reasoning models and tool-calling loops can exceed it.
-            # It must be set at this level: the chat-level timeout key does not reach the HTTP client.
+            # Provider request timeout, applied to both the SDK clients and model request options.
+            # A chat-specific spring.ai.openai.chat.timeout overrides this value.
             timeout: 5m
             chat:
                 model: gpt-5-mini # Or another (reasonably capable) model
@@ -140,7 +140,7 @@ spring:
             # Routes auth as an Azure api-key header. Auto-detected for *.openai.azure.com base URLs; set it explicitly
             # for a custom domain, and keep it false or omitted for plain OpenAI and OpenAI-compatible endpoints.
             microsoft-foundry: true
-            timeout: 5m # As above; must be set at this level
+            timeout: 5m # Default for provider requests
             chat:
                 model: <azure-deployment> # The Azure deployment name; used as the request model. A gpt-5-mini deployment is recommended
                 temperature: 1.0 # Required to be 1.0 for gpt-5

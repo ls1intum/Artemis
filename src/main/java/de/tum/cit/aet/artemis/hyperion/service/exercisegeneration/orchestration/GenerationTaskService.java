@@ -269,8 +269,9 @@ public class GenerationTaskService {
                 }
                 if (tokenAccountingFailed.get() && !outcome.isMechanicallyVerified()) {
                     emitter.milestone(ExerciseGenerationEventDTO
-                            .of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation stopped because token usage could not be accounted for. Nothing was changed.")
-                            .withTerminationReason(terminationReason));
+                            .of(ExerciseGenerationEventDTO.Type.ERROR,
+                                    "The AI provider request failed or returned no usable usage information. Generation stopped without saving. Please try again later.")
+                            .withTerminationReason(TerminationReason.RUN_FAILED));
                     return;
                 }
                 if (tokenAccountingFailed.get()) {
