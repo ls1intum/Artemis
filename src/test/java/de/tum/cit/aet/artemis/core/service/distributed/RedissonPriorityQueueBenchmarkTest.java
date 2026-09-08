@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
 
-import com.redis.testcontainers.RedisStackContainer;
+import com.redis.testcontainers.RedisContainer;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistribu
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
  * Measures how the cost of enqueueing a build job into a Redis-backed queue scales with the queue depth.
@@ -66,7 +67,7 @@ class RedissonPriorityQueueBenchmarkTest {
      */
     private static final int[] DEPTHS = { 100, 1000, 5000 };
 
-    private static RedisStackContainer redis;
+    private static RedisContainer valkey;
 
     private static RedissonClient redissonClient;
 
@@ -81,12 +82,12 @@ class RedissonPriorityQueueBenchmarkTest {
 
     @BeforeAll
     static void beforeAll() {
-        assertThat(isDockerAvailable()).as("this benchmark requires Docker for the Redis testcontainer").isTrue();
-        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag(RedisStackContainer.DEFAULT_TAG));
-        redis.start();
+        assertThat(isDockerAvailable()).as("this benchmark requires Docker for the Valkey testcontainer").isTrue();
+        valkey = ValkeyTestContainerFactory.create();
+        valkey.start();
 
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
+        config.useSingleServer().setAddress("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379));
         redissonClient = Redisson.create(config);
     }
 
@@ -95,8 +96,8 @@ class RedissonPriorityQueueBenchmarkTest {
         if (redissonClient != null) {
             redissonClient.shutdown();
         }
-        if (redis != null) {
-            redis.stop();
+        if (valkey != null) {
+            valkey.stop();
         }
     }
 
