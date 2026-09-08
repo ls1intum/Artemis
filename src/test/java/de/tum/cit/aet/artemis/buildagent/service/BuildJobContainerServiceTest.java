@@ -138,6 +138,17 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void customNetworkPreservesFractionalDefaultCpuQuota() {
+        when(buildAgentConfiguration.hostConfig()).thenReturn(HostConfig.newHostConfig().withCpuPeriod(100_000L).withCpuQuota(50_000L).withMemory(2L * 1024 * 1024 * 1024)
+                .withMemorySwap(2L * 1024 * 1024 * 1024).withPidsLimit(1000L));
+        var runConfig = new DockerRunConfig(List.of(), "custom-network", 0, 0, 0);
+
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        assertThat(captureHostConfig().getCpuQuota()).isEqualTo(50_000L);
+    }
+
+    @Test
     void testEmptyNetworkIsIgnored() {
         var runConfig = new DockerRunConfig(List.of(), "", 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
@@ -155,6 +166,19 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         HostConfig hostConfig = captureHostConfig();
         assertThat(hostConfig).isNotNull();
         assertThat(hostConfig.getNetworkMode()).isEqualTo("my-network-name");
+    }
+
+    @Test
+    void networkDisabledContainerDoesNotReceiveProxyConfiguration() {
+        ReflectionTestUtils.setField(buildJobContainerService, "useSystemProxy", true);
+        ReflectionTestUtils.setField(buildJobContainerService, "httpProxy", "http://proxy.invalid");
+        ReflectionTestUtils.setField(buildJobContainerService, "httpsProxy", "https://proxy.invalid");
+        ReflectionTestUtils.setField(buildJobContainerService, "noProxy", "localhost");
+
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 0, 0, 0));
+
+        verify(createContainerCmd).withEnv(List.of("SCRIPT=" + BUILD_SCRIPT));
+        assertThat(captureHostConfig().getNetworkMode()).isEqualTo("none");
     }
 
     @Test

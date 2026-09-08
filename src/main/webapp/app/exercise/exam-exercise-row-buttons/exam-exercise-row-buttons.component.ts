@@ -160,7 +160,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'grading',
                 labelKey: 'artemisApp.programmingExercise.configureGrading.shortTitle',
                 icon: faFileSignature,
-                severity: 'warn',
+                severity: 'warning',
                 kind: 'link',
                 link: [...groupSeg, 'programming-exercises', ex.id!, 'grading', 'test-cases'],
             });
@@ -200,7 +200,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
                 icon: faPencilAlt,
-                severity: 'warn',
+                severity: 'warning',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
@@ -227,7 +227,7 @@ export class ExamExerciseRowButtonsComponent {
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
                     icon: faWrench,
-                    severity: 'warn',
+                    severity: 'warning',
                     kind: 'link',
                     link: [...groupSeg, 'quiz-exercises', ex.id!, 're-evaluate'],
                 });
@@ -237,7 +237,7 @@ export class ExamExerciseRowButtonsComponent {
                     id: 'edit',
                     labelKey: 'entity.action.edit',
                     icon: faWrench,
-                    severity: 'warn',
+                    severity: 'warning',
                     kind: 'link',
                     link: [...typeSeg, 'edit'],
                     disabled: this.hasExamStarted(),
@@ -245,7 +245,7 @@ export class ExamExerciseRowButtonsComponent {
                 });
             }
         } else if (course.isAtLeastEditor) {
-            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faWrench, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
+            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faWrench, severity: 'warning', kind: 'link', link: [...typeSeg, 'edit'] });
         }
         if (course.isAtLeastInstructor) {
             items.push({

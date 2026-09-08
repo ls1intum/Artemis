@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -28,6 +30,8 @@ describe('ExerciseAddModalComponent', () => {
             imports: [ExerciseAddModalComponent],
             providers: [
                 provideRouter([]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: DialogService, useClass: MockDialogService },
@@ -70,6 +74,43 @@ describe('ExerciseAddModalComponent', () => {
         expect(visibleCardTypes()).not.toContain(ExerciseType.PROGRAMMING);
     });
 
+    it('hides generation when programming exercises are disabled, including a previously selected generate tab', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+        createComponent();
+        fixture.componentRef.setInput('mode', 'unified');
+        fixture.componentRef.setInput('visible', true);
+        component.setActiveTab('generate');
+        fixture.detectChanges();
+
+        expect(document.body.querySelector('[data-testid="generate-programming-exercise"]')).toBeNull();
+        expect(document.body.textContent).not.toContain('artemisApp.exerciseManagement.addModal.tab.generate');
+    });
+
+    it.each([
+        ['create', 6],
+        ['import', 5],
+    ] as const)('uses compact native cards without additional component padding in %s', (tab, count) => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        createComponent();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+
+        component.setActiveTab(tab);
+        fixture.detectChanges();
+
+        const cards = document.body.querySelectorAll<HTMLButtonElement>('.exercise-grid > .exercise-card');
+        expect(cards).toHaveLength(count);
+        expect(document.body.querySelector('tum-ui-card')).toBeNull();
+        for (const card of cards) {
+            expect(card.tagName).toBe('BUTTON');
+            expect(card.type).toBe('button');
+            expect([...card.children].map((child) => child.tagName)).toEqual(['DIV', 'H6', 'P', 'SPAN']);
+            expect(card.firstElementChild?.classList.contains('card-icon-wrapper')).toBe(true);
+            expect(card.lastElementChild?.classList.contains('card-cta')).toBe(true);
+        }
+    });
+
     describe('tabs and visibility', () => {
         beforeEach(() => {
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
@@ -96,6 +137,24 @@ describe('ExerciseAddModalComponent', () => {
             component.visibleChange.subscribe((v) => emitted.push(v));
             component.close();
             expect(emitted).toEqual([false]);
+        });
+
+        it('describes the generate tab with the generation entry copy, not the plain programming description', () => {
+            // `unified` so the mode effect leaves the tab alone; every other mode forces its own tab on open.
+            fixture.componentRef.setInput('mode', 'unified');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            component.setActiveTab('generate');
+            fixture.detectChanges();
+
+            // The dialog is appended to the body, so it is not reachable from the fixture element.
+            const card = document.body.querySelector('[data-testid="generate-programming-exercise"]')?.closest('.exercise-card');
+            expect(card?.textContent).toContain('artemisApp.exerciseManagement.type.PROGRAMMING');
+            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.description');
+            expect(card?.tagName).toBe('BUTTON');
+            expect(card?.querySelector('.card-icon-wrapper')).not.toBeNull();
+            expect(card?.querySelector('h6')).not.toBeNull();
+            expect(card?.textContent).not.toContain('artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING');
         });
 
         it('renders the translated dialog header', () => {
@@ -140,6 +199,27 @@ describe('ExerciseAddModalComponent', () => {
 
             expect(navigateSpy).not.toHaveBeenCalled();
             expect(emitted).toEqual([false]);
+        });
+
+        it('opens the brief dialog without navigating to the programming-exercise create page', () => {
+            fixture.componentRef.setInput('courseId', 42);
+
+            (component as unknown as { openProgrammingGeneration: () => void }).openProgrammingGeneration();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(component.briefDialogVisible()).toBe(true);
+        });
+
+        it('returns to the generate tab when the brief dialog asks to go back', () => {
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+            component.briefDialogVisible.set(true);
+
+            (component as unknown as { backToGenerationTypes: () => void }).backToGenerationTypes();
+
+            expect(component.briefDialogVisible()).toBe(false);
+            expect(component.activeTab()).toBe('generate');
+            expect(emitted).toEqual([true]);
         });
     });
 

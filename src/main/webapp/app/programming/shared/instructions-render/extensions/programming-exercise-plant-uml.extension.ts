@@ -123,6 +123,9 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
      * 5) Inject the computed svg for the plantUml (from the server) into the plantUml div container based on the unique placeholder id (see step 2)
      */
     replaceText(text: string): string {
+        // Diagram fences must disappear with their contents, otherwise Markdown escapes the generated container as code.
+        const fencedPlantUml = /^(`{3,}|~{3,})plantuml[ \t]*\r?\n(@startuml[^@]*@enduml)[ \t]*\r?\n\1[ \t]*$/gm;
+        text = text.replace(fencedPlantUml, '$2');
         const idPlaceholder = '%idPlaceholder%';
         // E.g. [task][Implement BubbleSort](testBubbleSort)
         const plantUmlRegex = /@startuml([^@]*)@enduml/g;

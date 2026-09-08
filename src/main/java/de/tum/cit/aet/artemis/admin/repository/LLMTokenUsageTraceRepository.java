@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -12,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -45,6 +47,37 @@ public interface LLMTokenUsageTraceRepository extends ArtemisJpaRepository<LLMTo
             WHERE req.trace.courseId = :courseId
             """)
     Double calculateTotalLlmCostInEurForCourse(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT COALESCE(SUM(req.numInputTokens + req.numOutputTokens), 0)
+            FROM LLMTokenUsageRequest req
+            WHERE req.trace.serviceType = :serviceType
+                AND req.servicePipelineId = :pipelineId
+                AND req.trace.userId = :userId
+                AND req.trace.time >= :since
+            """)
+    long sumTokensSinceForUser(@Param("serviceType") LLMServiceType serviceType, @Param("pipelineId") String pipelineId, @Param("userId") Long userId,
+            @Param("since") ZonedDateTime since);
+
+    @Query("""
+            SELECT COALESCE(SUM(req.numInputTokens + req.numOutputTokens), 0)
+            FROM LLMTokenUsageRequest req
+            WHERE req.trace.serviceType = :serviceType
+                AND req.servicePipelineId = :pipelineId
+                AND req.trace.courseId = :courseId
+                AND req.trace.time >= :since
+            """)
+    long sumTokensSinceForCourse(@Param("serviceType") LLMServiceType serviceType, @Param("pipelineId") String pipelineId, @Param("courseId") Long courseId,
+            @Param("since") ZonedDateTime since);
+
+    @Query("""
+            SELECT COALESCE(SUM(req.numInputTokens + req.numOutputTokens), 0)
+            FROM LLMTokenUsageRequest req
+            WHERE req.trace.serviceType = :serviceType
+                AND req.servicePipelineId = :pipelineId
+                AND req.trace.time >= :since
+            """)
+    long sumTokensSince(@Param("serviceType") LLMServiceType serviceType, @Param("pipelineId") String pipelineId, @Param("since") ZonedDateTime since);
 
     /**
      * Deletes all LLM token usage traces for a given course.

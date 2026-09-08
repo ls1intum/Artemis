@@ -20,40 +20,44 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-card--docs';
         case 'data-display-chip':
             return 'data-display-chip--docs';
-        case 'data-display-list':
-            return 'data-display-list--docs';
+        case 'data-display-empty':
+            return 'data-display-empty--docs';
+        case 'data-display-item':
+            return 'data-display-item--docs';
         case 'data-display-native-table':
             return 'data-display-native-table--docs';
         case 'data-display-paginator':
             return 'data-display-paginator--docs';
         case 'data-display-panel':
             return 'data-display-panel--docs';
+        case 'data-display-prose':
+            return 'data-display-prose--docs';
+        case 'data-display-separator':
+            return 'data-display-separator--docs';
         case 'data-display-table':
             return 'data-display-table--docs';
         case 'data-display-tag':
             return 'data-display-tag--docs';
         case 'data-display-virtual-scroll-table':
             return 'data-display-virtual-scroll-table--docs';
-        case 'data-bar-chart':
-            return 'data-bar-chart--docs';
-        case 'data-doughnut-chart':
-            return 'data-doughnut-chart--docs';
-        case 'data-line-chart':
-            return 'data-line-chart--docs';
         case 'feedback-message':
             return 'feedback-message--docs';
         case 'feedback-progress-bar':
             return 'feedback-progress-bar--docs';
         case 'feedback-progress-spinner':
             return 'feedback-progress-spinner--docs';
+        case 'feedback-skeleton':
+            return 'feedback-skeleton--docs';
+        case 'feedback-status-dot':
+            return 'feedback-status-dot--docs';
+        case 'feedback-stepper':
+            return 'feedback-stepper--docs';
         case 'forms-autocomplete':
             return 'forms-autocomplete--docs';
         case 'forms-checkbox':
             return 'forms-checkbox--docs';
         case 'forms-date-picker':
             return 'forms-date-picker--docs';
-        case 'forms-form-field':
-            return 'forms-form-field--docs';
         case 'forms-icon-field':
             return 'forms-icon-field--docs';
         case 'forms-input':
@@ -64,16 +68,12 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-input-number--docs';
         case 'forms-radio-button':
             return 'forms-radio-button--docs';
-        case 'forms-search-field':
-            return 'forms-search-field--docs';
         case 'forms-select':
             return 'forms-select--docs';
         case 'forms-select-button':
             return 'forms-select-button--docs';
         case 'forms-toggle-switch':
             return 'forms-toggle-switch--docs';
-        case 'navigation-menu':
-            return 'navigation-menu--docs';
         case 'navigation-tabs':
             return 'navigation-tabs--docs';
         case 'overlays-confirm-dialog':
@@ -84,6 +84,12 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-popover--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
+        case 'patterns-document-review':
+            return 'patterns-document-review--docs';
+        case 'patterns-metering':
+            return 'patterns-metering--docs';
+        case 'patterns-run-status':
+            return 'patterns-run-status--docs';
         default:
             return DEFAULT_STORY;
     }

@@ -18,7 +18,8 @@
                     "CONSTRUCTOR_PARAMETER_MISMATCH": "Constructor parameter mismatch",
                     "ATTRIBUTE_TYPE_MISMATCH": "Attribute type mismatch",
                     "VISIBILITY_MISMATCH": "Visibility mismatch",
-                    "IDENTIFIER_NAMING_INCONSISTENCY": "Identifier naming inconsistency"
+                    "IDENTIFIER_NAMING_INCONSISTENCY": "Identifier naming inconsistency",
+                    "GENERATION_REVIEW_REQUIRED": "Generation review required"
                 }
             }
         }

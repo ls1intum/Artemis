@@ -7,7 +7,7 @@
     [header]="'cleanupService.operation.' + operation().name | artemisTranslate"
 >
     @if (dialogError(); as error) {
-        <tum-ui-message severity="error" [text]="error" class="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
+        <tum-ui-message severity="danger" [text]="error" class="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
     }
     @if (operation().ageBased) {
         <p

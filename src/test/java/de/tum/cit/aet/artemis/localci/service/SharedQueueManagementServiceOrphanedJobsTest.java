@@ -95,7 +95,7 @@ class SharedQueueManagementServiceOrphanedJobsTest {
     }
 
     private static BuildAgentInformation agentInformation(String name) {
-        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), 1, 0, List.of(), null, "ssh-key", null, 0);
+        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), 1, 0, List.of(), null, "ssh-key", null, 0, 0, 0);
     }
 
     private void withProcessingJobs(BuildJobQueueItem... jobs) {

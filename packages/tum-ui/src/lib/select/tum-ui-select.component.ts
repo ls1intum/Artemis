@@ -45,6 +45,7 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
     styleUrl: './tum-ui-select.component.scss',
     imports: [FaIconComponent, TumUiTranslatePipe],
     host: {
+        '[attr.data-slot]': '"select"',
         // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
         class: 'tum-ui-select',
     },

@@ -40,12 +40,12 @@
         <!-- Dates -->
         <div>
             <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
-            <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2">
+            <tum-ui-message severity="warning" [icon]="faTriangleExclamation" class="mb-2">
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
             </tum-ui-message>
             <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
             @if (!timelineStatus().valid) {
-                <tum-ui-message severity="error" [icon]="faCircleXmark" class="mt-2">
+                <tum-ui-message severity="danger" [icon]="faCircleXmark" class="mt-2">
                     <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>
                 </tum-ui-message>
             }

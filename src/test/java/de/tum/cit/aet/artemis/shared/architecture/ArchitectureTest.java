@@ -205,8 +205,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoLocaleLessCaseConversion() {
-        String reason = "String.toLowerCase() and String.toUpperCase() fold case with the JVM default locale, so the same input gives a different answer depending on where the "
-                + "server happens to run. Under a Turkish locale the ASCII letter I lowercases to the dotless \u0131, which turns System.getProperty(\"os.name\").toLowerCase() "
+        String reason = "String.toLowerCase(java.util.Locale.ROOT) and String.toUpperCase(java.util.Locale.ROOT) fold case with the JVM default locale, so the same input gives a different answer depending on where the "
+                + "server happens to run. Under a Turkish locale the ASCII letter I lowercases to the dotless \u0131, which turns System.getProperty(\"os.name\").toLowerCase(java.util.Locale.ROOT) "
                 + "into \"w\u0131ndows\" and makes the Windows branch in WebConfigurer stop matching without any error; every case-insensitive comparison of an identifier, a "
                 + "file extension, a MIME type, a header value or a login is unreliable in the same way. Pass the locale explicitly. Locale.ROOT is the default choice, because "
                 + "it folds case the same way everywhere, which is what a machine-facing value needs (identifiers, logins, emails, file names and extensions, MIME types, header "
@@ -234,7 +234,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
      * @return the condition
      */
     private ArchCondition<JavaClass> notReferenceLocaleLessCaseConversion() {
-        return new ArchCondition<>("not reference String.toLowerCase() or String.toUpperCase() without a locale") {
+        return new ArchCondition<>("not reference String.toLowerCase(java.util.Locale.ROOT) or String.toUpperCase(java.util.Locale.ROOT) without a locale") {
 
             @Override
             public void check(JavaClass item, ConditionEvents events) {
@@ -486,9 +486,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
                 // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
                 // an incomplete target behind. Callers that need that guarantee go through the helper.
-                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").and()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.TempFileUtilService").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
-                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
+                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils, or TempFileUtilService for atomic replacement.");
         usage.check(allClasses);
     }
 
@@ -645,17 +646,19 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoRestControllersImported() {
-        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
-                "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
-                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
-                "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
-                "LegacyCalendarResource",
-                // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
-                // failure to a status, and the access checks made inside the method rather than by its annotations. They call
-                // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
-                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest",
-                "RepositoryProgrammingExerciseParticipationResourceTest" };
-        final var classes = classesExcept(allClasses, exceptions);
+        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminBuildJobQueueResourceTest", "AdminResourceArchitectureTest",
+                "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest",
+                "CourseResourceArchitectureTest", "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest",
+                "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest",
+                "HyperionExerciseGenerationResourceTest", "LegacyCalendarResource", "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest",
+                "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest" };
+        // Real-HTTP tests that assert a resource's own authorization and mutation behaviour necessarily reference it. Listed separately because several build their cases as
+        // anonymous inner classes, which have no simple name for the list above to match.
+        final var resourceBehaviourTests = new String[] { "ExerciseResourceMutationGuardTest", "HyperionExerciseGenerationContextTest",
+                "ProgrammingExerciseCreationResourceMutationGuardTest", "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
+                "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
+                "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest" };
+        final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
 

@@ -26,8 +26,8 @@
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.status"></span>
                     <span class="font-bold">:</span>
-                    <fa-icon [icon]="agent.status === 'PAUSED' || agent.status === 'SELF_PAUSED' ? faPauseCircle : faCircleCheck" />
-                    <span>{{ agent.status }}</span>
+                    <fa-icon [icon]="effectiveStatus() === 'PAUSED' || effectiveStatus() === 'SELF_PAUSED' ? faPauseCircle : faCircleCheck" />
+                    <span>{{ effectiveStatus() }}</span>
                 </div>
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.startDate"></span>
@@ -48,6 +48,15 @@
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
                     <span class="font-bold">:</span>
                     <span>{{ agent.maxNumberOfConcurrentBuildJobs }}</span>
+                </div>
+                <div>
+                    <span class="font-bold" jhiTranslate="artemisApp.buildAgents.generationSandboxSlots"></span>
+                    <span class="font-bold">:</span>
+                    @if (agent.reservedGenerationSandboxSlots !== undefined && agent.maxGenerationSandboxSlots !== undefined) {
+                        <span>{{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}</span>
+                    } @else {
+                        <span>—</span>
+                    }
                 </div>
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>
@@ -81,6 +90,31 @@
 
             <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-4" />
 
+            <section id="active-hyperion-generations" class="mb-4" aria-labelledby="active-hyperion-generations-heading">
+                <h4 id="active-hyperion-generations-heading" class="flex items-center gap-2">
+                    <span jhiTranslate="artemisApp.buildAgents.activeHyperionGenerations"></span>
+                    <tum-ui-tag severity="info" [value]="generationJobs().length.toString()" />
+                </h4>
+                <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-3"></div>
+                @if (generationSandboxesLoading()) {
+                    <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></p>
+                }
+                @if (generationSandboxesLoadFailed()) {
+                    <tum-ui-message severity="warning" class="mb-3 block">
+                        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
+                        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="refreshGenerationSandboxes()">
+                            <fa-icon [icon]="faSync" />
+                            <span jhiTranslate="metrics.refresh.button"></span>
+                        </tum-ui-button>
+                    </tum-ui-message>
+                }
+                @if (generationJobs().length) {
+                    <jhi-hyperion-generation-jobs-table [jobs]="generationJobs()" />
+                } @else if (!generationSandboxesLoading() && !generationSandboxesLoadFailed()) {
+                    <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.empty"></p>
+                }
+            </section>
+
             <div>
                 <h4 id="build-queue-running-heading" class="flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
@@ -99,7 +133,7 @@
         </div>
     }
     @if (agentNotFound()) {
-        <tum-ui-message severity="warn" class="mb-4 block">
+        <tum-ui-message severity="warning" class="mb-4 block">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />

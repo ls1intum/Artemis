@@ -19,7 +19,7 @@ describe('ProblemStatementService', () => {
         refineProblemStatementGlobally: ReturnType<typeof vi.fn>;
         refineProblemStatementTargeted: ReturnType<typeof vi.fn>;
     };
-    let alertServiceMock: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+    let alertServiceMock: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
 
     const exerciseWithCourse = {
         course: { id: 42 } as Course,
@@ -38,6 +38,7 @@ describe('ProblemStatementService', () => {
         alertServiceMock = {
             success: vi.fn(),
             error: vi.fn(),
+            addAlert: vi.fn(),
         } as any;
 
         TestBed.configureTestingModule({
@@ -118,6 +119,28 @@ describe('ProblemStatementService', () => {
             response$.next({ draftProblemStatement: 'Generated!' });
             response$.complete();
             expect(loadingSignal()).toBeFalsy();
+        });
+
+        it('should surface a single warning alert when the draft carries advisory hygiene warnings, without blocking the draft', () => {
+            hyperionApiMock.generateProblemStatement.mockReturnValue(
+                of({ draftProblemStatement: 'Generated!', hygieneWarnings: ['The draft may include public API details.'] }) as any,
+            );
+            const loadingSignal = signal(false);
+            let result: any;
+            service.generateProblemStatement(exerciseWithCourse, 'Generate a sorting exercise', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
+            expect(result.success).toBeTruthy();
+            expect(result.content).toBe('Generated!');
+            expect(alertServiceMock.success).toHaveBeenCalled();
+            expect(alertServiceMock.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'The draft may include public API details.', disableTranslation: true }));
+        });
+
+        it('should not raise a warning alert when there are no hygiene warnings', () => {
+            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }) as any);
+            const loadingSignal = signal(false);
+            let result: any;
+            service.generateProblemStatement(exerciseWithCourse, 'Generate a sorting exercise', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
+            expect(result.success).toBeTruthy();
+            expect(alertServiceMock.addAlert).not.toHaveBeenCalled();
         });
 
         it('should handle invalid generation response', () => {

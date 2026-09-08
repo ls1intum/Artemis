@@ -65,7 +65,7 @@ public class LocalCIInfoContributor implements InfoContributor {
             String value = defaultDockerFlags.get(i + 1);
 
             switch (flag) {
-                case "--cpus" -> parseAmount(value).ifPresent(cpuCount -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, cpuCount));
+                case "--cpus" -> parseCpuCount(value).ifPresent(cpuCount -> builder.withDetail(Constants.DOCKER_FLAG_CPUS, cpuCount));
                 case "--memory" -> parseMemoryStringToMB(value).ifPresent(memory -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_MB, memory));
                 case "--memory-swap" -> parseMemoryStringToMB(value).ifPresent(memory -> builder.withDetail(Constants.DOCKER_FLAG_MEMORY_SWAP_MB, memory));
             }
@@ -98,6 +98,15 @@ public class LocalCIInfoContributor implements InfoContributor {
         }
         // A flag configured without a unit is already a plain megabyte count.
         return parseAmount(value);
+    }
+
+    private static Optional<Double> parseCpuCount(String amountString) {
+        String value = unquote(amountString);
+        if (!value.matches("\\d+(?:\\.\\d+)?")) {
+            return Optional.empty();
+        }
+        double amount = Double.parseDouble(value);
+        return Double.isFinite(amount) && amount > 0 ? Optional.of(amount) : Optional.empty();
     }
 
     private static Optional<Long> parseAmount(String amount) {

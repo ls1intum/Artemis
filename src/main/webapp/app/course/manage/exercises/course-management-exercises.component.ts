@@ -273,6 +273,15 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.rebuildCards();
     }
 
+    onGeneratedExerciseCreated(exercise: ProgrammingExercise): void {
+        const course = this.course();
+        exercise.isAtLeastTutor = course?.isAtLeastTutor;
+        exercise.isAtLeastEditor = course?.isAtLeastEditor;
+        exercise.isAtLeastInstructor = course?.isAtLeastInstructor;
+        this.exercises.update((exercises) => [...exercises.filter((current) => current.id !== exercise.id), exercise]);
+        this.rebuildCards();
+    }
+
     /** Only individual-mode quizzes support per-student dates, so only they can join a group's shared timeline. */
     private isQuizNonIndividual(exercise: Exercise): boolean {
         return exercise.type === ExerciseType.QUIZ && (exercise as QuizExercise).quizMode !== undefined && (exercise as QuizExercise).quizMode !== QuizMode.INDIVIDUAL;

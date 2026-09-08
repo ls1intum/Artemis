@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/account/user/user.model';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -43,6 +43,7 @@ import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRout
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { HyperionJobsIndicatorComponent } from 'app/hyperion/jobs-indicator/hyperion-jobs-indicator.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -73,6 +74,7 @@ import { CourseNotificationOverviewComponent } from 'app/notification/course-not
         ImageComponent,
         SlicePipe,
         CourseNotificationOverviewComponent,
+        HyperionJobsIndicatorComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -130,6 +132,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
+    readonly hyperionExerciseGenerationEnabled = signal(false);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.currentCourseContextService.course;
     readonly currentRoute = getCurrentRouteSignal(this.router);
@@ -211,6 +214,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
+        this.hyperionExerciseGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;

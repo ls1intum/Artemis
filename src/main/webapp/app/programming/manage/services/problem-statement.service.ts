@@ -4,7 +4,7 @@ import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxj
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
-import { AlertService } from 'app/foundation/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import {
     InlineRefinementEvent,
     MAX_INSTRUCTION_LENGTH,
@@ -52,17 +52,16 @@ export class ProblemStatementService {
             return of({ success: false, errorHandled: true });
         }
         setLoading(true);
-        return this.hyperionApiService
-            .generateProblemStatement(courseId, buildGenerationRequest(prompt))
-            .pipe(
-                this.handleApiResponse(
-                    setLoading,
-                    'artemisApp.programmingExercise.problemStatement.generationSuccess',
-                    'artemisApp.programmingExercise.problemStatement.generationError',
-                    isValidGenerationResponse,
-                    (response) => response?.draftProblemStatement,
-                ),
-            );
+        return this.hyperionApiService.generateProblemStatement(courseId, buildGenerationRequest(prompt)).pipe(
+            this.handleApiResponse(
+                setLoading,
+                'artemisApp.programmingExercise.problemStatement.generationSuccess',
+                'artemisApp.programmingExercise.problemStatement.generationError',
+                isValidGenerationResponse,
+                (response) => response?.draftProblemStatement,
+                (response) => response?.hygieneWarnings,
+            ),
+        );
     }
 
     /** Refines a problem statement globally using the provided prompt. */
@@ -138,6 +137,7 @@ export class ProblemStatementService {
         errorKey: string,
         isValid: (response: T) => boolean,
         getContent: (response: T) => string | undefined,
+        getWarnings?: (response: T) => string[] | undefined,
     ): OperatorFunction<T, OperationResult> {
         return (source) =>
             source.pipe(
@@ -145,6 +145,12 @@ export class ProblemStatementService {
                     const success = isValid(response);
                     if (success) {
                         this.alertService.success(successKey);
+                        // Advisory-only hygiene findings: the draft is still applied, so surface them as a single
+                        // warning alert alongside the success alert instead of blocking the flow (see HyperionUtils).
+                        const warnings = getWarnings?.(response);
+                        if (warnings && warnings.length > 0) {
+                            this.alertService.addAlert({ type: AlertType.WARNING, message: warnings.join(' '), disableTranslation: true });
+                        }
                     } else {
                         this.alertService.error(errorKey);
                     }

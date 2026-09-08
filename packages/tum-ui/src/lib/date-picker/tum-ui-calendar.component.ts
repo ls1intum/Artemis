@@ -22,6 +22,7 @@ import { TUM_UI_TRANSLATOR } from '../i18n/tum-ui-translations';
 
 @Component({
     selector: 'tum-ui-calendar',
+    host: { '[attr.data-slot]': '"calendar"' },
     templateUrl: './tum-ui-calendar.component.html',
     imports: [FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,

@@ -10,5 +10,10 @@ package de.tum.cit.aet.artemis.admin.domain;
  * @param costPerMillionOutputToken cost in Euro per million output tokens
  * @param pipelineId                String with the pipeline name (e.g. IRIS_COURSE_CHAT_PIPELINE)
  */
-public record LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId) {
+public record LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId,
+        String providerRequestId, Long numCachedInputTokens, float costPerMillionCachedInputToken, boolean costEstimateComplete) {
+
+    public LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId) {
+        this(model, numInputTokens, costPerMillionInputToken, numOutputTokens, costPerMillionOutputToken, pipelineId, null, null, 0f, true);
+    }
 }

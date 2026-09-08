@@ -243,6 +243,8 @@ public final class Constants {
 
     public static final String RESET_COURSE = "RESET_COURSE";
 
+    public static final String HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT = "HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT";
+
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
@@ -461,6 +463,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
 
     /**
+     * The name of the module feature used for whole programming exercise generation.
+     */
+    public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
      */
     public static final String MODULE_FEATURE_DEIMOS = "deimos";
@@ -554,6 +561,10 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
+
+    public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.
@@ -649,11 +660,6 @@ public final class Constants {
      * The name of the property used to enable or disable Weaviate integration.
      */
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
-
-    /**
-     * The name of the property used to enable or disable the Deimos malicious participation analysis module.
-     */
-    public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
 
     /**
      * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with

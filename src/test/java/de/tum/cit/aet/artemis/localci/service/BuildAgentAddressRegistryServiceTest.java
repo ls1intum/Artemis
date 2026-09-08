@@ -118,7 +118,8 @@ class BuildAgentAddressRegistryServiceTest {
      * @param memberAddress the middleware identity the agent reports for itself
      */
     private void registerAgentWithMemberAddress(String agentName, String memberAddress) {
-        registeredAgents.put(agentName, new BuildAgentInformation(new BuildAgentDTO(agentName, memberAddress, agentName), 1, 0, List.of(), BuildAgentStatus.IDLE, null, null, 0));
+        registeredAgents.put(agentName,
+                new BuildAgentInformation(new BuildAgentDTO(agentName, memberAddress, agentName), 1, 0, List.of(), BuildAgentStatus.IDLE, null, null, 0, 0, 0));
     }
 
     private void registerAgent(String agentName) {

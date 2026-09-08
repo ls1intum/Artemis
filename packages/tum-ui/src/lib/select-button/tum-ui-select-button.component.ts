@@ -31,6 +31,7 @@ function displayLabel(value: unknown): string | undefined {
     styleUrl: './tum-ui-select-button.component.scss',
     imports: [NgTemplateOutlet],
     host: {
+        '[attr.data-slot]': '"select-button"',
         role: 'group',
         class: 'tum-ui-select-button',
         '[attr.aria-disabled]': 'effectiveDisabled() || null',

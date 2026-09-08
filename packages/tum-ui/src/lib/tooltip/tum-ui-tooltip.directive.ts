@@ -11,6 +11,7 @@ let nextTooltipId = 0;
 @Directive({
     selector: '[tumUiTooltip]',
     host: {
+        '[attr.data-slot]': '"tooltip-trigger"',
         '(mouseenter)': 'onHoverStart()',
         '(mouseleave)': 'onHoverEnd()',
         '(focusin)': 'onFocusStart()',

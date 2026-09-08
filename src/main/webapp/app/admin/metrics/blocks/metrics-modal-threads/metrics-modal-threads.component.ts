@@ -10,7 +10,7 @@ type ThreadStateFilter = ThreadState | 'ALL';
 interface ThreadStateFilterOption {
     label: string;
     value: ThreadStateFilter;
-    severity: 'secondary' | 'success' | 'info' | 'warn' | 'danger';
+    severity: 'secondary' | 'success' | 'info' | 'warning' | 'danger';
     testId: string;
     count: () => number;
 }
@@ -56,7 +56,7 @@ export class MetricsModalThreadsComponent {
         { label: 'All', value: 'ALL', severity: 'secondary', testId: 'filter-all', count: this.threadDumpAll },
         { label: 'Runnable', value: ThreadState.Runnable, severity: 'success', testId: 'filter-runnable', count: this.threadDumpRunnable },
         { label: 'Waiting', value: ThreadState.Waiting, severity: 'info', testId: 'filter-waiting', count: this.threadDumpWaiting },
-        { label: 'Timed Waiting', value: ThreadState.TimedWaiting, severity: 'warn', testId: 'filter-timed-waiting', count: this.threadDumpTimedWaiting },
+        { label: 'Timed Waiting', value: ThreadState.TimedWaiting, severity: 'warning', testId: 'filter-timed-waiting', count: this.threadDumpTimedWaiting },
         { label: 'Blocked', value: ThreadState.Blocked, severity: 'danger', testId: 'filter-blocked', count: this.threadDumpBlocked },
     ];
 
@@ -64,14 +64,14 @@ export class MetricsModalThreadsComponent {
         return this.threads().filter((thread) => this.isMatchingTextFilter(thread) && this.isMatchingSelectedThreadState(thread));
     });
 
-    getBadgeSeverity(threadState: ThreadState): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    getBadgeSeverity(threadState: ThreadState): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
         switch (threadState) {
             case ThreadState.Runnable:
                 return 'success';
             case ThreadState.Waiting:
                 return 'info';
             case ThreadState.TimedWaiting:
-                return 'warn';
+                return 'warning';
             case ThreadState.Blocked:
                 return 'danger';
             default:

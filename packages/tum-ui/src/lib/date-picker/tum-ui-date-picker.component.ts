@@ -40,6 +40,7 @@ let nextDatePickerId = 0;
     templateUrl: './tum-ui-date-picker.component.html',
     styleUrl: './tum-ui-date-picker.component.scss',
     host: {
+        '[attr.data-slot]': '"date-picker"',
         // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
         class: 'tum-ui-date-picker',
     },

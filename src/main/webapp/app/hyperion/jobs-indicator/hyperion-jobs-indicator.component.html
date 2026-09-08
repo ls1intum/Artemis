@@ -1,0 +1,86 @@
+@if (indicatorState() !== 'idle') {
+    <button
+        tumUiButton
+        variant="text"
+        severity="secondary"
+        size="small"
+        class="flex items-center gap-2 whitespace-nowrap"
+        data-testid="hyperion-jobs-indicator-trigger"
+        [attr.data-state]="indicatorState()"
+        [tumUiPopoverTrigger]="tray"
+        [attr.aria-label]="triggerAriaLabel()"
+        [tumUiTooltip]="'artemisApp.hyperion.jobs.title' | artemisTranslate"
+    >
+        <tum-ui-status-dot [state]="indicatorDotState()" [label]="indicatorStateLabel()" [showLabel]="false" />
+        <span data-testid="hyperion-jobs-indicator-summary">{{ summaryLabel() }}</span>
+        @if (unseenCount() > 0) {
+            <tum-ui-tag rounded variant="quiet" size="small" severity="secondary" data-testid="hyperion-jobs-indicator-badge" [value]="unseenCount().toString()" />
+        }
+    </button>
+    <tum-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.jobs.title' | artemisTranslate" (openChange)="onTrayOpenChange($event)">
+        <div class="flex w-80 flex-col gap-3" data-testid="hyperion-jobs-indicator-tray">
+            <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.jobs.title"></p>
+
+            @if (loadFailed()) {
+                <!-- The runs already known stay on screen: a failed reconciliation says nothing about the runs themselves. -->
+                <tum-ui-message severity="danger" live class="block" data-testid="hyperion-jobs-indicator-load-failed">
+                    <div class="flex flex-col items-start gap-2">
+                        <span jhiTranslate="artemisApp.hyperion.jobs.loadFailed"></span>
+                        <button tumUiButton variant="outlined" severity="secondary" size="small" data-testid="hyperion-jobs-indicator-retry" (click)="retry()">
+                            <span jhiTranslate="artemisApp.hyperion.jobs.retry"></span>
+                        </button>
+                    </div>
+                </tum-ui-message>
+            }
+
+            @if (rows().length === 0) {
+                <tum-ui-empty size="small" data-testid="hyperion-jobs-indicator-empty">
+                    <tum-ui-empty-header>
+                        <tum-ui-empty-title><span jhiTranslate="artemisApp.hyperion.jobs.empty"></span></tum-ui-empty-title>
+                        <tum-ui-empty-description><span jhiTranslate="artemisApp.hyperion.jobs.emptyHint"></span></tum-ui-empty-description>
+                    </tum-ui-empty-header>
+                </tum-ui-empty>
+            } @else {
+                <ul tumUiItemGroup separators size="small" [ariaLabel]="'artemisApp.hyperion.jobs.title' | artemisTranslate">
+                    @for (row of rows(); track row.jobId) {
+                        <li class="flex items-center gap-1" [attr.data-state]="row.status">
+                            <a
+                                tumUiItem
+                                class="hyperion-jobs-indicator-row min-w-0 flex-1"
+                                data-testid="hyperion-jobs-indicator-entry"
+                                [routerLink]="row.routerLink"
+                                (click)="openEntry(row.jobId)"
+                            >
+                                <!-- The dot repeats the status word printed beside it, so it is decoration here. -->
+                                <tum-ui-item-media aria-hidden="true">
+                                    <tum-ui-status-dot [state]="row.dotState" [label]="row.statusLabel" [showLabel]="false" />
+                                </tum-ui-item-media>
+                                <tum-ui-item-content>
+                                    <tum-ui-item-title>{{ row.title }}</tum-ui-item-title>
+                                    <tum-ui-item-description>
+                                        {{ row.statusLabel }}
+                                        @if (row.duration) {
+                                            <span> · {{ row.duration }}</span>
+                                        }
+                                    </tum-ui-item-description>
+                                </tum-ui-item-content>
+                            </a>
+                            <button
+                                tumUiButton
+                                variant="text"
+                                severity="secondary"
+                                size="small"
+                                data-testid="hyperion-jobs-indicator-dismiss"
+                                [attr.aria-label]="'artemisApp.hyperion.jobs.dismiss' | artemisTranslate"
+                                [tumUiTooltip]="'artemisApp.hyperion.jobs.dismiss' | artemisTranslate"
+                                (click)="dismiss(row.jobId)"
+                            >
+                                <fa-icon [icon]="faXmark" />
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </tum-ui-popover>
+}

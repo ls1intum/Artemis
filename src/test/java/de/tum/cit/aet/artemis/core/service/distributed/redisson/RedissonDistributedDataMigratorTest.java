@@ -160,6 +160,31 @@ class RedissonDistributedDataMigratorTest {
     }
 
     @Test
+    void testV1UpgradePreservesStudentWorkAndDiscardsChangedAgentAndHyperionRecords() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("1");
+        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("queued-build");
+        redissonClient.getMap(keyFor(1, "processingJobs")).put("running-build", "agent");
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("unprocessed-result");
+        redissonClient.getMap(keyFor(1, "features")).put("Science", Boolean.FALSE);
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map")).put("job", "callback", 1, TimeUnit.HOURS);
+        redissonClient.getMap(keyFor(1, "buildAgentInformation")).put("agent", "old-wire-format");
+        redissonClient.getMap(keyFor(1, "hyperion-code-generation-jobs")).put("exercise", "legacy-job");
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getPriorityQueue(keyFor(VERSION, "buildJobQueue"))).containsExactly("queued-build");
+        assertThat(redissonClient.getMap(keyFor(VERSION, "processingJobs")).get("running-build")).isEqualTo("agent");
+        assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).containsExactly("unprocessed-result");
+        assertThat(redissonClient.getMap(keyFor(VERSION, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.getMapCache(keyFor(VERSION, "pyris-job-map")).get("job")).isEqualTo("callback");
+        assertThat(redissonClient.getMapCache(keyFor(VERSION, "pyris-job-map")).remainTimeToLive("job")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        assertThat(redissonClient.getMap(keyFor(VERSION, "buildAgentInformation"))).isEmpty();
+        assertThat(redissonClient.getMap(keyFor(VERSION, "hyperion-code-generation-jobs"))).isEmpty();
+        assertThat(redissonClient.getKeys().countExists(keyFor(1, "buildAgentInformation"), keyFor(1, "hyperion-code-generation-jobs"))).isZero();
+        assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
+    }
+
+    @Test
     void testAnExpiringEntryKeepsItsRemainingLifetime() {
         redissonClient.getMapCache("pyris-job-map").put("job-1", "session-1", 1, TimeUnit.HOURS);
 
@@ -263,7 +288,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("must-remain-unversioned");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> migrationServiceFor(VERSION + 1).migrateToCurrentVersion())
-                .withMessageContaining("no migration step from 1").withMessageContaining("explicit adjacent-version migration");
+                .withMessageContaining("no migration step from " + VERSION).withMessageContaining("explicit adjacent-version migration");
         assertThat(storedVersion()).isNull();
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();

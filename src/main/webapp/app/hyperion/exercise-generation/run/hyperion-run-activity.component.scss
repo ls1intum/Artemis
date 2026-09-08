@@ -1,0 +1,80 @@
+/*
+ * The recent-activity heading, sized here rather than by `!` utilities.
+ *
+ * Bootstrap's unlayered `h1`-`h6` rules (size, `margin-bottom: .5rem`, `font-weight: 500`) and `global.scss`'s
+ * `body, h1, h2, h3, h4 { font-weight: 400 }` beat Tailwind's `@layer utilities`, so `mt-1 mb-1 text-sm font-semibold`
+ * on this element set neither the margins, the size nor the weight. A class inside an Angular component carries the
+ * encapsulation attribute and outranks a bare `h4` without `!important`, and the size is named from the Tailwind type
+ * scale so it cannot drift from the `text-sm` utilities beside it.
+ */
+.hyperion-activity-title {
+    margin: 0.25rem 0;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: var(--font-weight-semibold);
+
+    /* Not `--bs-heading-color`: the heading takes the colour of the surface it sits on, like every other heading here. */
+    color: inherit;
+}
+
+/*
+ * Motion on the activity area does exactly two jobs, and nothing else moves.
+ *
+ * 1. A state change: "working" becomes "stalled", carried by a colour crossfade on the liveness line.
+ * 2. An arrival: a new message fades in, so the reader can tell a line that just landed from one that was already
+ *    there. Opacity only — no slide, no height animation, no stagger, no leave animation for a line falling out of
+ *    the rolling window. Everything here is server-triggered, which is the kind of motion that interrupts rather
+ *    than informs, so it is kept to the smallest thing that still carries the meaning.
+ *
+ * Durations and easings come from the TUM UI motion tokens; the literal fallbacks keep the transition working in a
+ * build where the package's compiled `styles.css` is a step behind the token source.
+ */
+.hyperion-liveness {
+    color: var(--tumaet-ui-muted-color);
+    transition: color var(--tumaet-ui-duration-state, 180ms) var(--tumaet-ui-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+}
+
+/*
+ * The stalled tone. Named through the TUM UI semantic layer rather than `text-state-warning`, which aliases the raw
+ * Bootstrap #ffc107 and measures 1.63:1 on a light card. The `-foreground` token is the value the design system
+ * already corrected for both themes. Colour is never the only signal: the sentence says "No update for N minutes",
+ * the status dot changes shape-carrying state, and the dot's label reaches assistive technology as a word.
+ */
+[data-liveness='stalled'] .hyperion-liveness {
+    color: var(--tumaet-ui-state-warning-foreground);
+    font-weight: 500;
+}
+
+/*
+ * The log reserves the height of its full rolling window. Without it, the first few messages of a run grow the list
+ * downwards and push the page under the reader between one event and the next.
+ */
+.hyperion-activity-log {
+    min-height: calc(var(--hyperion-activity-rows, 5) * 1.5rem);
+}
+
+.hyperion-activity-row-entering {
+    animation: hyperion-activity-row-enter var(--tumaet-ui-duration-enter, 200ms) var(--tumaet-ui-easing-enter, cubic-bezier(0, 0, 0, 1));
+}
+
+@keyframes hyperion-activity-row-enter {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/*
+ * Reduced motion removes nothing that carried information here, because nothing here is carried by motion alone: the
+ * stalled state is a sentence and a dot, and an arriving row is a row. The colour transition is kept — WCAG 2.3.3
+ * excludes changes of colour that do not affect perceived size, shape or position — and the fade is dropped, so a row
+ * simply appears.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .hyperion-activity-row-entering {
+        animation: none;
+    }
+}

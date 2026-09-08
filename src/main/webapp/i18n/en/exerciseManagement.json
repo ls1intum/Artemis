@@ -55,11 +55,13 @@
                 "header": "Manage Exercises",
                 "tab": {
                     "create": "Create",
+                    "generate": "Generate",
                     "import": "Import",
                     "export": "Export"
                 },
                 "createHint": "Select an exercise type. You can customise all details in the next step.",
                 "importHint": "Select what you want to import.",
+                "generateHint": "Describe what students should learn. Review and refine the generated exercise before publishing.",
                 "cta": {
                     "create": "Create",
                     "select": "Select"

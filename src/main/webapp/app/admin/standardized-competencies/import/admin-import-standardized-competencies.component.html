@@ -55,7 +55,7 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.empty"></span>
     }
     @if (validationErrors().length) {
-        <tum-ui-message severity="error" class="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
+        <tum-ui-message severity="danger" class="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
             <div class="flex flex-col">
                 <strong jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.fileValidation" [translateValues]="{ count: validationErrors().length }"></strong>
                 <ul class="mb-0 mt-1">

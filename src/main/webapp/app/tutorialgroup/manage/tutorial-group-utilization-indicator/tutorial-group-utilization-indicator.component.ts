@@ -22,6 +22,6 @@ export class TutorialGroupUtilizationIndicatorComponent {
         if (utilization === undefined || utilization < UNDER_ATTENDED_PERCENTAGE) {
             return 'danger';
         }
-        return utilization < WELL_UTILIZED_PERCENTAGE ? 'warn' : 'success';
+        return utilization < WELL_UTILIZED_PERCENTAGE ? 'warning' : 'success';
     });
 }

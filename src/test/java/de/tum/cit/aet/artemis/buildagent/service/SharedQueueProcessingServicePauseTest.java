@@ -99,6 +99,7 @@ class SharedQueueProcessingServicePauseTest {
         service = new SharedQueueProcessingService(buildAgentConfiguration, buildJobManagementService, buildLogsMap, null, null, buildAgentInformationService,
                 distributedDataAccessService);
         ReflectionTestUtils.setField(service, "buildAgentShortName", AGENT_NAME);
+        ReflectionTestUtils.setField(service, "runBuildJobs", true);
         ReflectionTestUtils.setField(service, "pauseGracePeriodSeconds", 1);
         ReflectionTestUtils.setField(service, "isPaused", new AtomicBoolean(false));
 
@@ -216,7 +217,7 @@ class SharedQueueProcessingServicePauseTest {
         // away builds that are legitimately in flight.
         verify(buildJobManagementService, never()).cancelBuildJob(anyString());
         verify(buildJobQueue, never()).addAll(any());
-        verify(buildAgentConfiguration, never()).closeBuildAgentServices();
+        verify(buildAgentConfiguration, never()).pauseBuildJobs();
     }
 
     private void resumeWhileThePauseIsInProgress() {
@@ -306,6 +307,6 @@ class SharedQueueProcessingServicePauseTest {
 
         pause();
 
-        verify(buildAgentConfiguration, never()).closeBuildAgentServices();
+        verify(buildAgentConfiguration, never()).pauseBuildJobs();
     }
 }

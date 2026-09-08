@@ -12,6 +12,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -180,11 +182,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testBuildAgentConcurrentBuilds() throws IOException {
+    void testBuildAgentConcurrentBuilds() throws IOException, InterruptedException {
+        CountDownLatch containersStarted = new CountDownLatch(2);
+        CountDownLatch finishContainers = new CountDownLatch(1);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(1000);
+            containersStarted.countDown();
+            finishContainers.await(30, TimeUnit.SECONDS);
             return null;
         }).when(startContainerCmd).exec();
         // For this test, we need to return different test result streams for different containers. This is necessary since the first job would close the stream
@@ -208,19 +213,25 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
         buildJobQueue.add(queueItem2);
 
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var processingJob = processingJobs.get(queueItem.id());
-            var processingJob2 = processingJobs.get(queueItem2.id());
-            return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
-                    && processingJob2.jobTimingInfo().buildStartDate() != null;
-        });
+        try {
+            assertThat(containersStarted.await(30, TimeUnit.SECONDS)).isTrue();
+            await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                var processingJob = processingJobs.get(queueItem.id());
+                var processingJob2 = processingJobs.get(queueItem2.id());
+                return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
+                        && processingJob2.jobTimingInfo().buildStartDate() != null;
+            });
 
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(buildAgentShortName);
-            return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
-                    && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
-                    && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
-        });
+            await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                var buildAgent = buildAgentInformation.get(buildAgentShortName);
+                return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
+                        && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
+                        && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
+            });
+        }
+        finally {
+            finishContainers.countDown();
+        }
 
         await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
@@ -395,6 +406,36 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
         });
+    }
+
+    @Test
+    void testResumeDuringPauseGracePeriodDoesNotStopTheReopenedExecutor() throws InterruptedException {
+        CountDownLatch buildStarted = new CountDownLatch(1);
+        CountDownLatch finishBuild = new CountDownLatch(1);
+        CountDownLatch stalePauseCall = new CountDownLatch(1);
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doAnswer(invocation -> {
+            buildStarted.countDown();
+            finishBuild.await(30, TimeUnit.SECONDS);
+            return null;
+        }).when(startContainerCmd).exec();
+        doAnswer(invocation -> {
+            stalePauseCall.countDown();
+            return null;
+        }).when(buildAgentConfiguration).pauseBuildJobs();
+
+        buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
+        assertThat(buildStarted.await(30, TimeUnit.SECONDS)).isTrue();
+        CompletableFuture<Void> pause = CompletableFuture.runAsync(() -> pauseBuildAgentTopic.publish(buildAgentShortName));
+        await().atMost(30, TimeUnit.SECONDS).until(sharedQueueProcessingService::isPaused);
+        resumeBuildAgentTopic.publish(buildAgentShortName);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+
+        finishBuild.countDown();
+        assertThat(pause).succeedsWithin(Duration.ofSeconds(30));
+
+        assertThat(stalePauseCall.getCount()).isEqualTo(1);
     }
 
     @Test

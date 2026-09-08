@@ -1,0 +1,84 @@
+<div
+    class="overflow-x-auto rounded focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+    data-testid="hyperion-generation-jobs-scroll"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'artemisApp.buildAgents.activeHyperionGenerations' | artemisTranslate"
+>
+    <table tumUiTable class="min-w-[56rem]" [size]="'small'" [striped]="true">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.status"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.exercise"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></th>
+                @if (showAgent()) {
+                    <th scope="col" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></th>
+                }
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildQueue.actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (row of rows(); track row.job.jobId) {
+                @let job = row.job;
+                <tr [attr.data-stale]="job.stale || null">
+                    <td>
+                        <!-- The same status vocabulary the instructor-facing run surfaces use, so one job reads the same everywhere. -->
+                        <tum-ui-status-dot
+                            [state]="job.stale ? 'unknown' : 'running'"
+                            [label]="
+                                (job.stale ? 'artemisApp.buildAgents.generationSandboxes.snapshotUnavailable' : 'artemisApp.buildAgents.generationSandboxes.running')
+                                    | artemisTranslate
+                            "
+                        />
+                    </td>
+                    <td>
+                        @if (job.courseId) {
+                            <a [routerLink]="['/course-management', job.courseId, 'programming-exercises', job.exerciseId, 'edit']">
+                                {{ job.exerciseTitle }} (#{{ job.exerciseId }})
+                            </a>
+                        } @else {
+                            {{ job.exerciseTitle }} (#{{ job.exerciseId }})
+                        }
+                    </td>
+                    <td>{{ row.modeLabelKey | artemisTranslate }}</td>
+                    <td>{{ job.userLogin }}</td>
+                    @if (showAgent()) {
+                        <td>
+                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: job.agentName }">{{ job.agentName }}</a>
+                        </td>
+                    }
+                    <td>{{ job.startedAt | artemisDate: 'short' : true }}</td>
+                    <td>
+                        @if (job.stale) {
+                            <span data-testid="hyperion-generation-duration-unavailable" jhiTranslate="artemisApp.buildAgents.generationSandboxes.unavailable"></span>
+                        } @else {
+                            {{ row.elapsedSeconds | artemisDurationFromSeconds }}
+                        }
+                    </td>
+                    <td [title]="job.lastActivityAt | artemisDate: 'long' : true">{{ job.lastActivityAt | artemisTimeAgo }}</td>
+                    <td>
+                        @if (job.stale) {
+                            <span
+                                class="text-muted-color"
+                                data-testid="hyperion-generation-details-unavailable"
+                                jhiTranslate="artemisApp.buildAgents.generationSandboxes.liveDetailsUnavailable"
+                            ></span>
+                        } @else {
+                            <a
+                                data-testid="hyperion-generation-details"
+                                [routerLink]="['/admin/hyperion-generations', job.jobId]"
+                                [queryParams]="{ agentName: job.agentName }"
+                                [attr.aria-label]="('artemisApp.buildAgents.generationSandboxes.viewDetails' | artemisTranslate) + ' ' + job.exerciseId"
+                                jhiTranslate="artemisApp.buildAgents.generationSandboxes.details"
+                            ></a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

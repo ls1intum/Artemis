@@ -4,6 +4,8 @@ import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/sha
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { provideHttpClient } from '@angular/common/http';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { of } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 /**
@@ -69,6 +71,26 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
         }
         return ids;
     }
+
+    it.each(['```', '~~~'])('renders a %s plantuml fence as a diagram instead of displaying placeholder HTML', (fence) => {
+        extension.setExerciseId(204);
+        const renderSvg = vi.spyOn(TestBed.inject(ProgrammingExercisePlantUmlService), 'getPlantUmlSvg').mockReturnValue(of('<svg><text>FineCategory</text></svg>'));
+        let injectDiagram: (() => void) | undefined;
+        const subscription = extension.subscribeForInjectableElementsFound().subscribe((inject) => (injectDiagram = inject));
+        const host = document.createElement('div');
+        document.body.append(host);
+        try {
+            host.innerHTML = htmlForMarkdown(`${fence}plantuml\n@startuml\nenum FineCategory { NO_FINE }\n@enduml\n${fence}`, [extension.getExtension()]);
+            injectDiagram?.();
+            expect(host.querySelector('#plantUml-204-0 svg')?.textContent).toBe('FineCategory');
+            expect(host.querySelector('pre')).toBeNull();
+            expect(host.textContent).not.toContain('<div');
+            expect(renderSvg).toHaveBeenCalledExactlyOnceWith('@startuml\nenum FineCategory { NO_FINE }\n@enduml');
+        } finally {
+            subscription.unsubscribe();
+            host.remove();
+        }
+    });
 
     describe('single exercise with single diagram', () => {
         it('should generate exercise-scoped container ID', () => {

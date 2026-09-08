@@ -9,6 +9,7 @@ let nextConfirmDialogId = 0;
 /** Renders requests from the nearest `TumUiConfirmationService` as modal decisions. */
 @Component({
     selector: 'tum-ui-confirm-dialog',
+    host: { '[attr.data-slot]': '"confirm-dialog"' },
     templateUrl: './tum-ui-confirm-dialog.component.html',
     imports: [TumUiDialogComponent, TumUiButtonComponent, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,

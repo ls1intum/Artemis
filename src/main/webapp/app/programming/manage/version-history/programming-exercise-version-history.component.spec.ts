@@ -35,6 +35,7 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
                     useValue: {
                         snapshot: {
                             paramMap: convertToParamMap({ exerciseId: '42' }),
+                            queryParamMap: convertToParamMap({}),
                             params: { exerciseId: '42', courseId: '1' },
                         },
                         parent: null,
@@ -59,6 +60,15 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         expect(serviceMock.getVersions).toHaveBeenCalledWith(42, 0, 20);
         expect(serviceMock.getSnapshot).toHaveBeenCalledWith(42, 9);
         expect(component.selectedVersionId()).toBe(9);
+    });
+
+    it('should select the requested version even when a newer version is on the first page', () => {
+        (TestBed.inject(ActivatedRoute).snapshot as any).queryParamMap = convertToParamMap({ versionId: '7' });
+
+        fixture.detectChanges();
+
+        expect(serviceMock.getSnapshot).toHaveBeenCalledWith(42, 7);
+        expect(component.selectedVersionId()).toBe(7);
     });
 
     it('should load more versions', () => {
@@ -151,6 +161,7 @@ describe('ProgrammingExerciseVersionHistoryComponent (missing exerciseId)', () =
                     useValue: {
                         snapshot: {
                             paramMap: convertToParamMap({}),
+                            queryParamMap: convertToParamMap({}),
                             params: {},
                         },
                         parent: null,

@@ -17,7 +17,7 @@
     [attr.aria-valuemax]="max() ?? null"
     [attr.aria-valuetext]="ariaValueText()"
     [disabled]="isDisabled()"
-    [tumUiInputInvalid]="invalid()"
+    [invalid]="invalid()"
     (input)="onInput($event)"
     (blur)="onBlurHandler()"
     (keydown)="onKeydown($event)"

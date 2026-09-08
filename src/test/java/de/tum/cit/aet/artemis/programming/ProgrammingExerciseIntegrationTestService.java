@@ -745,10 +745,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
-        assertThat(programmingExerciseServer.studentParticipations()).isNotEmpty();
+        assertThat(programmingExerciseServer.studentParticipations()).hasSize(1);
         // The instructor code editor reads {id, repositoryUri} off every participation slot.
         assertThat(programmingExerciseServer.studentParticipations()).allSatisfy(participation -> {
             assertThat(participation.id()).isNotNull();
@@ -882,12 +883,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         String problemStatement = "[task][taskname](test1)";
         String problemStatementWithId = "[task][taskname](<testid>%s</testid>)".formatted(test1.getId());
-        programmingExercise.setProblemStatement(problemStatement);
-
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
-        var response = request.putWithResponseBody("/api/programming/programming-exercises",
-                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        // The problem statement is owned by its own endpoint; a metadata update leaves it untouched (issue #13046).
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        var response = request.patchWithResponseBody(endpoint, problemStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
         assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
@@ -2234,7 +2234,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
-        request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.NOT_FOUND);
+        programmingExercise.setId(123456789L);
+        request.put("/api/programming/programming-exercises/123456789/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.NOT_FOUND);
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {

@@ -1,13 +1,11 @@
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { TranslateService } from '@ngx-translate/core';
 
-/**
- * Sorts comments by creation timestamp and then by id for deterministic ordering.
- *
- * @param comments The comments to sort.
- * @returns A sorted copy of the provided comments.
- */
+/** Sorts comments by creation timestamp and then by id for deterministic ordering. */
 export function sortCommentsByCreatedDateThenId(comments: Comment[] | undefined): Comment[] {
     if (!comments?.length) {
         return [];
@@ -23,24 +21,12 @@ export function sortCommentsByCreatedDateThenId(comments: Comment[] | undefined)
     });
 }
 
-/**
- * Returns the first comment according to chronological ordering by creation timestamp and id.
- *
- * @param comments The comments to inspect.
- * @returns The first chronological comment, if present.
- */
+/** Returns the first comment according to chronological ordering by creation timestamp and id. */
 export function getFirstCommentByCreatedDateThenId(comments: Comment[] | undefined): Comment | undefined {
     return sortCommentsByCreatedDateThenId(comments)[0];
 }
 
-/**
- * Checks whether a thread belongs to the currently selected repository.
- *
- * @param thread The comment thread to check.
- * @param repositoryType The selected repository type.
- * @param auxiliaryRepositoryId The selected auxiliary repository id, if any.
- * @returns True if the thread matches the repository selection.
- */
+/** Checks whether a thread belongs to the currently selected repository. */
 export function matchesSelectedRepository(thread: CommentThread, repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): boolean {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -63,12 +49,7 @@ export function matchesSelectedRepository(thread: CommentThread, repositoryType?
     }
 }
 
-/**
- * Maps a repository type to the corresponding thread target type.
- *
- * @param repositoryType The repository type from the code editor.
- * @returns The matching comment thread location type.
- */
+/** Maps a repository type to the corresponding thread target type. */
 export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType | undefined {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -84,12 +65,7 @@ export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType
     }
 }
 
-/**
- * Checks whether review comments are supported for the selected repository.
- *
- * @param repositoryType The repository type from the code editor.
- * @returns True if review comments are supported for this repository type.
- */
+/** Checks whether review comments are supported for the selected repository. */
 export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryType): boolean {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -100,4 +76,113 @@ export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryT
         default:
             return false;
     }
+}
+
+/**
+ * Returns the consistency-issue content of a thread's first (chronological) comment, or {@code undefined} if that comment is not a consistency-check finding. Used to decide whether
+ * a thread can be turned into Artemis Intelligence adapt feedback.
+ */
+export function consistencyIssueContentOf(firstComment: Comment | undefined): ConsistencyIssueCommentContent | undefined {
+    if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+        return undefined;
+    }
+    const content = firstComment.content as CommentContent | undefined;
+    if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+        return undefined;
+    }
+    return content;
+}
+
+export function firstConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
+    return consistencyIssueContentOf(getFirstCommentByCreatedDateThenId(thread.comments));
+}
+
+/** Maps a thread location type to its human-readable repository label. */
+export function reviewRepositoryLabel(targetType: CommentThreadLocationType, translate: TranslateService): string {
+    switch (targetType) {
+        case CommentThreadLocationType.PROBLEM_STATEMENT:
+            return translate.instant('artemisApp.review.relatedLocationRepository.problemStatement');
+        case CommentThreadLocationType.TEMPLATE_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.template');
+        case CommentThreadLocationType.SOLUTION_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.solution');
+        case CommentThreadLocationType.TEST_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.tests');
+        case CommentThreadLocationType.AUXILIARY_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.auxiliary');
+        default:
+            return translate.instant('artemisApp.review.relatedLocationRepository.repository');
+    }
+}
+
+/** Builds a short location label ({@code Repository: file:line}) for a thread, or {@code undefined} when it has no concrete line. */
+export function threadLocationLabel(thread: CommentThread, translate: TranslateService): string | undefined {
+    const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
+    if (!lineNumber || lineNumber < 1) {
+        return undefined;
+    }
+    const repositoryLabel = reviewRepositoryLabel(thread.targetType, translate);
+    if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+        return `${repositoryLabel}:${lineNumber}`;
+    }
+    const filePath = thread.filePath ?? thread.initialFilePath;
+    if (!filePath) {
+        return undefined;
+    }
+    return `${repositoryLabel}: ${filePath}:${lineNumber}`;
+}
+
+/**
+ * A structured consistency finding for the adapt dialog's read-only display (severity tag, category, location, description, suggested fix). The dialog renders these as cards; the
+ * agent prompt itself is assembled server-side from the selected thread ids, so this type never leaves the client.
+ */
+type AdaptFindingTagSeverity = 'danger' | 'warning' | 'info';
+
+/** Maps a finding severity to its {@code tum-ui-tag} severity. Called once at build time so the template binds a plain field, not a per-change-detection method. */
+export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent['severity']): AdaptFindingTagSeverity {
+    switch (severity) {
+        case ConsistencyIssueSeverityEnum.High:
+            return 'danger';
+        case ConsistencyIssueSeverityEnum.Medium:
+            return 'warning';
+        default:
+            return 'info';
+    }
+}
+
+export interface AdaptFinding {
+    category: ConsistencyIssueCommentContent['category'];
+    severity: ConsistencyIssueCommentContent['severity'];
+    /** The {@code tum-ui-tag} severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
+    tagSeverity: AdaptFindingTagSeverity;
+    /** A short {@code Repository: file:line} label, absent when the thread has no concrete line. */
+    locationLabel?: string;
+    /** The finding's description text. */
+    description: string;
+    /** The optional concrete code change the check suggests. */
+    suggestedFix?: InlineCodeChange;
+}
+
+/** Builds the structured {@link AdaptFinding} shown in the adapt dialog for a single consistency-issue content. */
+export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locationLabel: string | undefined): AdaptFinding {
+    return {
+        category: issueContent.category,
+        severity: issueContent.severity,
+        tagSeverity: adaptFindingTagSeverity(issueContent.severity),
+        locationLabel,
+        description: issueContent.text,
+        suggestedFix: issueContent.suggestedFix ?? undefined,
+    };
+}
+
+/**
+ * The structured findings for a set of threads (only consistency-issue threads contribute), in thread order. Used for the read-only cards in the adapt dialog.
+ */
+export function selectedThreadsFindings(threads: CommentThread[], translate: TranslateService): AdaptFinding[] {
+    return threads
+        .map((thread) => {
+            const issue = firstConsistencyIssueContent(thread);
+            return issue ? adaptFinding(issue, threadLocationLabel(thread, translate)) : undefined;
+        })
+        .filter((finding): finding is AdaptFinding => !!finding);
 }

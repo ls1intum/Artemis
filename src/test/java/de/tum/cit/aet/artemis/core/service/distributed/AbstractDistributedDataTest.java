@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.core.service.distributed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -44,6 +46,51 @@ import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
+
+    protected boolean exposesAuthoritativeDataNodeTopology() {
+        return true;
+    }
+
+    @Test
+    void testStableNodeIdentityAndTopology() {
+        DistributedDataProvider provider = getDistributedDataProvider();
+        assertThat(provider.getLocalNodeId()).isNotBlank().isEqualTo(provider.getLocalNodeId());
+        if (exposesAuthoritativeDataNodeTopology()) {
+            assertThat(provider.getDataNodeIds()).isPresent();
+            assertThat(provider.getDataNodeIds().orElseThrow()).contains(provider.getLocalNodeId());
+            assertThat(provider.getDataNodeAttributes("hyperion.exercise-generation-capable")).isPresent();
+            assertThat(provider.getDataNodeAttributes("hyperion.exercise-generation-capable").orElseThrow().keySet()).isEqualTo(provider.getDataNodeIds().orElseThrow());
+        }
+        else {
+            assertThat(provider.getDataNodeIds()).isEmpty();
+            assertThat(provider.getDataNodeAttributes("hyperion.exercise-generation-capable")).isEmpty();
+        }
+    }
+
+    @Test
+    void testValueGuardedReplace() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("testValueGuardedReplace");
+        map.put("key", "owner-one");
+
+        assertThat(map.replace("key", "wrong-owner", "owner-two")).isFalse();
+        assertThat(map.get("key")).isEqualTo("owner-one");
+        assertThat(map.replace("key", "owner-one", "owner-two")).isTrue();
+        assertThat(map.get("key")).isEqualTo("owner-two");
+    }
+
+    @Test
+    void testRefreshTimeToLiveIsAtomicAndRequiresExpiringMap() throws InterruptedException {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofSeconds(3));
+        map.put("key", "value", Duration.ofSeconds(2));
+        Thread.sleep(100);
+
+        assertThat(map.refreshTimeToLive("key", Duration.ofSeconds(2))).isTrue();
+        Thread.sleep(1000);
+        assertThat(map.get("key")).isEqualTo("value");
+        assertThat(map.refreshTimeToLive("absent", Duration.ofSeconds(2))).isFalse();
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofSeconds(1)));
+    }
 
     @Test
     void testQueueListener() {
@@ -603,6 +650,18 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         map.put("shortLived", "value");
 
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> assertThat(map.get("shortLived")).isNull());
+    }
+
+    @Test
+    void testExpiringMapDoesNotPublishRemovalNotification() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("silentExpiryTest", Duration.ofSeconds(1));
+        MapEntryListener<String, String> listener = Mockito.mock(MapEntryListener.class);
+        map.addEntryListener(listener);
+
+        map.put("shortLived", "value");
+
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> assertThat(map.get("shortLived")).isNull());
+        verify(listener, after(500).never()).entryRemoved(any());
     }
 
     @Test

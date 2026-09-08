@@ -11,6 +11,7 @@ let nextPanelId = 0;
     styleUrl: './tum-ui-panel.component.scss',
     imports: [FaIconComponent],
     host: {
+        '[attr.data-slot]': '"panel"',
         class: 'tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text',
         '[attr.data-collapsed]': 'toggleable() && collapsed()',
     },

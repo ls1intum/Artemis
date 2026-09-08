@@ -1,0 +1,174 @@
+<h1 *adminTitleBarTitle id="hyperion-generation-detail-heading" class="mb-0 text-xl" jhiTranslate="artemisApp.buildAgents.generationSandboxes.detailTitle"></h1>
+
+<div *adminTitleBarActions class="flex items-center gap-2">
+    @if (job() && !released() && !naturallyEnded()) {
+        <tum-ui-button severity="danger" size="small" [loading]="canceling()" [disabled]="cancellationRequested()" (clicked)="confirmCancel()">
+            <span
+                [jhiTranslate]="cancellationRequested() ? 'artemisApp.buildAgents.generationSandboxes.cancellationRequested' : 'artemisApp.buildAgents.generationSandboxes.cancel'"
+            ></span>
+        </tum-ui-button>
+    }
+</div>
+
+@if (agentName) {
+    <a
+        #backToAgent
+        data-testid="back-to-build-agent"
+        class="mb-3 inline-block"
+        [routerLink]="['/admin/build-agents/details']"
+        [queryParams]="{ agentName }"
+        jhiTranslate="artemisApp.buildAgents.generationSandboxes.backToAgent"
+    ></a>
+}
+
+@if (loading()) {
+    <div class="my-5 flex items-center justify-center gap-2" role="status">
+        <fa-icon [icon]="faSpinner" animation="spin" />
+        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></span>
+    </div>
+} @else if (loadFailed()) {
+    <tum-ui-message severity="danger" class="mb-3 block">
+        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
+        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="load()">
+            <fa-icon [icon]="faRotate" />
+            <span jhiTranslate="metrics.refresh.button"></span>
+        </tum-ui-button>
+    </tum-ui-message>
+} @else if (notFound()) {
+    <tum-ui-message severity="warning" class="mb-3 block">
+        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.notFound"></span>
+    </tum-ui-message>
+}
+
+@if (job(); as generation) {
+    @if (backgroundRefreshFailed()) {
+        <tum-ui-message severity="warning" class="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.refreshFailed"></span>
+            <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="load(false)">
+                <span jhiTranslate="metrics.refresh.button"></span>
+            </tum-ui-button>
+        </tum-ui-message>
+    }
+    @if (cancelFailed()) {
+        <tum-ui-message severity="danger" class="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed"></span>
+        </tum-ui-message>
+    }
+    @if (released()) {
+        <tum-ui-message severity="info" class="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.endedAfterCancellationRequest"></span>
+        </tum-ui-message>
+    } @else if (naturallyEnded()) {
+        <tum-ui-message severity="info" class="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.completed"></span>
+        </tum-ui-message>
+    } @else if (cancellationRequested()) {
+        <tum-ui-message severity="info" class="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancellationPending"></span>
+        </tum-ui-message>
+    }
+
+    <div class="mb-3 rounded-lg border p-4">
+        <div class="flex flex-wrap items-center gap-3">
+            <fa-icon [icon]="released() || naturallyEnded() ? faCircleCheck : faSpinner" [animation]="released() || naturallyEnded() ? undefined : 'spin'" size="2x" />
+            <div class="flex flex-wrap items-center gap-2">
+                <h2 class="mb-0 text-xl">{{ modeLabelKey() | artemisTranslate }} · {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})</h2>
+                <tum-ui-tag
+                    [severity]="released() || naturallyEnded() ? 'secondary' : 'info'"
+                    [value]="
+                        (released()
+                            ? 'artemisApp.buildAgents.generationSandboxes.endedStatus'
+                            : naturallyEnded()
+                              ? 'artemisApp.buildAgents.generationSandboxes.completedStatus'
+                              : cancellationRequested()
+                                ? 'artemisApp.buildAgents.generationSandboxes.cancelling'
+                                : 'artemisApp.buildAgents.generationSandboxes.running'
+                        ) | artemisTranslate
+                    "
+                />
+            </div>
+        </div>
+    </div>
+
+    <section class="mb-3 rounded-lg border" aria-labelledby="hyperion-generation-info-heading">
+        <h3 id="hyperion-generation-info-heading" class="border-b px-4 py-2 text-base font-semibold" jhiTranslate="artemisApp.buildAgents.generationSandboxes.information"></h3>
+        <div class="grid grid-cols-1 gap-x-8 p-4 md:grid-cols-2">
+            <dl class="mb-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.exercise"></dt>
+                <dd>
+                    @if (generation.courseId) {
+                        <a [routerLink]="['/course-management', generation.courseId, 'programming-exercises', generation.exerciseId, 'edit']">
+                            {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})
+                        </a>
+                    } @else {
+                        {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})
+                    }
+                </dd>
+                @if (generation.courseId) {
+                    <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.course"></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', generation.courseId]">{{ generation.courseId }}</a>
+                    </dd>
+                }
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></dt>
+                <dd>{{ modeLabelKey() | artemisTranslate }}</dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></dt>
+                <dd>{{ generation.userLogin }}</dd>
+            </dl>
+            <dl class="mb-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
+                <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></dt>
+                <dd>
+                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName }">{{ agentName }}</a>
+                </dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.jobId"></dt>
+                <dd class="min-w-0">
+                    <code class="select-all break-all">{{ generation.jobId }}</code>
+                </dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.containerId"></dt>
+                <dd class="min-w-0">
+                    <code data-testid="hyperion-container-id" class="select-all break-all">{{ containerId() }}</code>
+                </dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="mb-3 rounded-lg border" aria-labelledby="hyperion-generation-timing-heading">
+        <h3 id="hyperion-generation-timing-heading" class="border-b px-4 py-2 text-base font-semibold" jhiTranslate="artemisApp.buildAgents.generationSandboxes.timing"></h3>
+        <dl class="mb-0 grid grid-cols-1 gap-x-4 gap-y-1 p-4 sm:grid-cols-[max-content_minmax(0,1fr)]">
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></dt>
+            <dd>{{ generation.startedAt | artemisDate: 'long' : true }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></dt>
+            <dd>{{ elapsedSeconds() | artemisDurationFromSeconds }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></dt>
+            <dd>
+                {{ generation.lastActivityAt | artemisTimeAgo }}
+                <span class="text-muted-color">({{ generation.lastActivityAt | artemisDate: 'long' : true }})</span>
+            </dd>
+        </dl>
+    </section>
+
+    <tum-ui-dialog
+        [(visible)]="confirmCancelVisible"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [dismissableMask]="true"
+        [size]="'small'"
+        [header]="'artemisApp.buildAgents.generationSandboxes.cancelTitle' | artemisTranslate"
+    >
+        <div class="flex items-start gap-2">
+            <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
+            <span
+                jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelQuestion"
+                [translateValues]="{ exerciseId: generation.exerciseId, userLogin: generation.userLogin }"
+            ></span>
+        </div>
+        <ng-template #footer>
+            <tum-ui-button type="button" severity="secondary" size="small" variant="outlined" (clicked)="confirmCancelVisible.set(false)">
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.keepRunning"></span>
+            </tum-ui-button>
+            <tum-ui-button type="button" severity="danger" size="small" (clicked)="acceptCancel()">
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.confirmCancel"></span>
+            </tum-ui-button>
+        </ng-template>
+    </tum-ui-dialog>
+}

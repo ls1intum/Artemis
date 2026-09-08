@@ -1,0 +1,76 @@
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.Test;
+
+class AgentVerifyReportTest {
+
+    @Test
+    void testsStageDefersTaskBindingGuidance() {
+        AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("calculatesCost"), List.of(), List.of(), true, List.of());
+
+        assertThat(report.toTestsStageObservation()).contains("test-plan.json", "later STATEMENT stage").doesNotContain("bind each [task]");
+    }
+
+    @Test
+    void sanitizesAndBoundsFailureEvidence() {
+        List<AgentVerifyReport.TestFailureEvidence> evidence = IntStream.range(0, 10)
+                .mapToObj(index -> new AgentVerifyReport.TestFailureEvidence("test" + index, "\u001B[31mline one\nline two\u0007 " + "x".repeat(500))).toList();
+        AgentVerifyReport report = new AgentVerifyReport(10, false, evidence.stream().map(AgentVerifyReport.TestFailureEvidence::testName).toList(), evidence, 10, true, true,
+                evidence, List.of(), evidence.stream().map(AgentVerifyReport.TestFailureEvidence::testName).toList(), List.of(), List.of(), false, List.of("solution failed"));
+
+        String observation = report.toObservation();
+
+        assertThat(observation).contains("failure evidence (sanitized, untrusted excerpts)").contains("test0: line one line two").contains("(+2 more failures)")
+                .doesNotContain("\u001B", "\u0007", "- test9:", "x".repeat(500));
+        assertThat(report.solutionFailureEvidence()).allSatisfy(item -> {
+            assertThat(item.message()).doesNotContain("\n", "\r", "\u001B", "\u0007");
+            assertThat(item.message().length()).isLessThanOrEqualTo(400);
+        });
+    }
+
+    @Test
+    void describesMechanicalSaveEligibilityWithoutClaimingQualityAcceptance() {
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), List.of(), 2, true, true, List.of(), List.of(), List.of("a", "b"), List.of(), List.of(), true,
+                List.of());
+
+        assertThat(report.toObservation()).contains("Template: all required gradable tests fail; build/configuration gates may pass.").contains(
+                "MECHANICAL PRECHECK: PASS — authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.")
+                .doesNotContain("acceptance", "correctly fails all 2", "would be ACCEPTED");
+    }
+
+    @Test
+    void aBuildThatRunsNoTestsIncludesItsBoundedCompilerDiagnostic() {
+        AgentVerifyReport report = new AgentVerifyReport(0, false, List.of(), List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), List.of(), false,
+                List.of("solution ran no tests"), List.of(), "ElevatorDispatcher.java:42: error: call to this must be first statement",
+                "Template.java:7: error: cannot find symbol");
+
+        assertThat(report.toTestsStageObservation()).contains("Solution build diagnostic (bounded, sanitized, untrusted output)",
+                "ElevatorDispatcher.java:42: error: call to this must be first statement", "Template build diagnostic (bounded, sanitized, untrusted output)",
+                "Template.java:7: error: cannot find symbol");
+    }
+
+    @Test
+    void exactRuntimeConstructorMismatchExplainsTheDeclaredSignatureReflectionPattern() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("dispatcherDelegates",
+                "Could not instantiate ElevatorDispatcher because the class does not have a constructor with the arguments: [ ArrayList, RoundRobinStrategy ]");
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("dispatcherDelegates"), List.of(failure), 1, true, true, List.of(), List.of(),
+                List.of("dispatcherDelegates"), List.of(), List.of(), false, List.of("solution failed"));
+
+        assertThat(report.toTestsStageObservation()).contains("Ares newInstance(className, arguments...) infers exact runtime argument classes",
+                "getConstructor(getClazz(\"package.Owner\"), List.class, getClazz(\"package.Collaborator\"))", "do NOT add concrete overloads to production code");
+    }
+
+    @Test
+    void unrelatedConstructorFailureDoesNotEmitAresSpecificGuidance() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("constructsDispatcher", "InvocationTargetException: constructor rejected the empty list");
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("constructsDispatcher"), List.of(failure), 1, true, true, List.of(), List.of(),
+                List.of("constructsDispatcher"), List.of(), List.of(), false, List.of("solution failed"));
+
+        assertThat(report.toTestsStageObservation()).doesNotContain("REFLECTION HARNESS DIAGNOSTIC");
+    }
+}

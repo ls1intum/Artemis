@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
 import de.tum.cit.aet.artemis.localci.exception.ImagePullException;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -173,6 +175,8 @@ public class SharedQueueProcessingService {
      */
     private final ReentrantLock agentStateTransitionLock = new ReentrantLock();
 
+    private final ReentrantReadWriteLock generationAdmissionLock = new ReentrantReadWriteLock(true);
+
     private UUID listenerId;
 
     /** UUID of the pause build agent message listener. Stored to allow removal on reconnection. */
@@ -202,6 +206,12 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
+    @Value("${artemis.continuous-integration.build-agent.run-build-jobs:true}")
+    private boolean runBuildJobs;
+
     /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
@@ -213,7 +223,32 @@ public class SharedQueueProcessingService {
      * @param paused true to pause the build agent, false to resume
      */
     public void setPauseState(boolean paused) {
-        isPaused.set(paused);
+        setPaused(paused);
+    }
+
+    boolean tryAcquireGenerationAdmission() {
+        var readLock = generationAdmissionLock.readLock();
+        readLock.lock();
+        if (isPaused.get()) {
+            readLock.unlock();
+            return false;
+        }
+        return true;
+    }
+
+    void releaseGenerationAdmission() {
+        generationAdmissionLock.readLock().unlock();
+    }
+
+    private void setPaused(boolean paused) {
+        var writeLock = generationAdmissionLock.writeLock();
+        writeLock.lock();
+        try {
+            isPaused.set(paused);
+        }
+        finally {
+            writeLock.unlock();
+        }
     }
 
     /**
@@ -1067,50 +1102,15 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Pauses the local build agent and transitions it into a {@code PAUSED} state.
+     * Stops new build and generation admission, then waits for student builds up to the grace period before cancelling them.
+     * Docker remains available to existing generation sessions.
      * <p>
-     * The method performs the following steps:
-     * <ol>
-     * <li>Serializes the state transition using {@link #agentStateTransitionLock} so that
-     * pause and resume operations cannot interfere with each other.</li>
-     * <li>Checks whether the agent is already paused and returns early if so
-     * (the operation is idempotent).</li>
-     * <li>Marks the agent as paused via {@link #isPaused}, removes listeners and scheduled
-     * tasks that may enqueue new jobs, and updates the distributed
-     * build-agent information so other components observe the {@code PAUSED} status.</li>
-     * <li>Looks up all currently running build jobs and collects their associated
-     * {@link java.util.concurrent.CompletableFuture}s.</li>
-     * <li>After releasing the state-transition lock, waits for all running jobs to finish
-     * for at most {@link #pauseGracePeriodSeconds} seconds. If they do not finish in time,
-     * {@link #handleTimeoutAndCancelRunningJobs()} is invoked to enforce cancellation.</li>
-     * <li>Finally, closes the local build-agent services
-     * (e.g. executors, Docker client) via {@link #buildAgentConfiguration#closeBuildAgentServices()}.</li>
-     * </ol>
+     * The wait releases {@link #agentStateTransitionLock}; cancellation and executor shutdown reacquire it and recheck the pause state so a concurrent resume wins safely.
      *
-     * <h3>Concurrency and locking semantics</h3>
-     * <ul>
-     * <li>The {@code isPaused} flag is both read and written <strong>only while holding</strong>
-     * {@link #agentStateTransitionLock}. This prevents time-of-check/time-of-use (TOCTOU)
-     * races between pause and resume operations.</li>
-     * <li>The method intentionally does <strong>not</strong> hold
-     * {@link #agentStateTransitionLock} while waiting for running jobs to complete.
-     * This avoids potential deadlocks where completion callbacks of those futures
-     * might themselves try to acquire the same lock or update build-agent state.</li>
-     * <li>Because of that, a resume can complete while the wait is in progress. Everything
-     * the method does <em>after</em> the wait is irreversible - cancelling and re-queueing
-     * jobs, and closing the services - so it retakes {@link #agentStateTransitionLock} and
-     * re-checks {@code isPaused} inside it, and does nothing when a resume got there first.</li>
-     * <li>The distributed build-agent information is updated immediately after setting
-     * {@code isPaused = true}, so other nodes and services can already treat the agent
-     * as paused while it is still finishing or cancelling in-flight jobs.</li>
-     * </ul>
-     *
-     * @param dueToFailures {@code true} if the pause was triggered by repeated build failures
-     *                          (e.g. to implement back-off behaviour), {@code false} if the pause
-     *                          was initiated administratively or for maintenance.
+     * @param dueToFailures whether repeated build failures triggered the pause
      */
     private void pauseBuildAgent(boolean dueToFailures) {
-        // Collect the running jobs and their futures outside the lock so we can wait on them without holding it.
+        // Capture jobs under the transition lock, but wait for them after releasing it.
         Set<String> runningBuildJobIds = Set.of();
         Set<String> awaitableBuildJobIds = Set.of();
         List<CompletableFuture<BuildResult>> runningFuturesWrapper = List.of();
@@ -1124,7 +1124,7 @@ public class SharedQueueProcessingService {
             log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
             // Mark the agent as paused so all subsequent logic and status updates are consistent.
-            isPaused.set(true);
+            setPaused(true);
 
             // Stop accepting / scheduling new work before we update the distributed state.
             // Note: We only remove the queue listener and scheduled task, NOT the pause/resume
@@ -1193,11 +1193,11 @@ public class SharedQueueProcessingService {
         }
 
         // The wait above deliberately runs without the lock, so a resume can complete while it is in progress.
-        // Everything that follows is irreversible - cancelling and re-queueing jobs, and closing the services the agent
+        // Everything that follows is irreversible - cancelling and re-queueing jobs, and pausing the build executor the agent
         // runs on - so it happens under the transition lock with the paused state re-checked inside it. Either this
         // pause is still the one in effect and it finishes its work, or a resume got there first and it does nothing:
         // cancelling a resumed agent's jobs would throw away builds it had just been told to keep running, and closing
-        // its services would leave it reporting itself as active with no executor.
+        // build executor would leave it reporting itself as active with no executor.
         agentStateTransitionLock.lock();
         try {
             if (!isPaused.get()) {
@@ -1222,7 +1222,9 @@ public class SharedQueueProcessingService {
                     handleTimeoutAndCancelRunningJobs();
                 }
             }
-            buildAgentConfiguration.closeBuildAgentServices();
+            // Keep Docker available for active Hyperion sessions while normal build-job intake is paused.
+            buildAgentConfiguration.pauseBuildJobs();
+
         }
         finally {
             agentStateTransitionLock.unlock();
@@ -1324,11 +1326,18 @@ public class SharedQueueProcessingService {
 
             log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
-            // Mark the agent as running again and enable result processing.
-            isPaused.set(false);
+            // Re-open the underlying services (executors, Docker client, etc.) required to run jobs. A preceding executor shutdown can still be finishing; keep the agent paused so
+            // a later resume command can retry instead of exposing a half-open agent as available.
+            try {
+                buildAgentConfiguration.openBuildAgentServices();
+            }
+            catch (LocalCIException e) {
+                log.warn("Build agent cannot resume yet and remains paused: {}", e.getMessage());
+                return;
+            }
 
-            // Re-open the underlying services (executors, Docker client, etc.) required to run jobs.
-            buildAgentConfiguration.openBuildAgentServices();
+            // Mark the agent as running only after its executor is ready.
+            setPaused(false);
 
             // Reset the consecutive failure counter so that previous failures do not penalize new runs.
             consecutiveBuildJobFailures.set(0);
@@ -1368,6 +1377,10 @@ public class SharedQueueProcessingService {
      * </p>
      */
     private boolean nodeIsAvailable() {
+        if (!runBuildJobs) {
+            log.debug("Build agent {} is configured with run-build-jobs=false and will not consume CI build jobs.", buildAgentShortName);
+            return false;
+        }
         var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
         if (buildExecutorService == null) {
             log.warn("build node is not available yet because buildExecutorService is null!");

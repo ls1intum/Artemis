@@ -415,13 +415,11 @@ public class HyperionChecklistService {
                         + "Current structural metrics: " + wrapUserValue(taskCount) + " tasks, " + wrapUserValue(testCount) + " tests.\n"
                         + "Target ranges: EASY (1-6 tasks, 3-15 tests), MEDIUM (4-15 tasks, 8-20 tests), HARD (8-25 tasks, 12-30 tests).\n"
                         + (reasoning.isEmpty() ? "" : "Context: " + wrapUserValue(reasoning) + "\n") + "\nCRITICAL INSTRUCTIONS:\n"
-                        + "You MUST adjust the NUMBER of tasks and tests to fall within the target range.\n"
-                        + "- Artemis tasks use this exact format: [task][Task Name](testCaseName1,testCaseName2)\n"
-                        + "- Each [task] block counts as one task. The names inside (...) count as tests.\n"
-                        + "- For EASIER: MERGE or REMOVE [task] blocks to reduce task count. Remove test references from the parentheses.\n"
-                        + "- For HARDER: SPLIT existing [task] blocks into multiple smaller ones or ADD new [task] blocks. Add new test references inside the parentheses.\n"
-                        + "- Invent reasonable new test case names following the existing naming convention (e.g., testMethodName).\n" + "\nContent changes:\n"
-                        + "- For EASIER: simplify requirements, reduce edge cases, add more hints and structure.\n"
+                        + "- Preserve existing [task] bindings and their exact runner test names unless the difficulty change clearly requires merging or removing a task.\n"
+                        + "- Do NOT invent new test names, structural placeholders, or display names. New graded behavior needs generated tests first.\n"
+                        + "- For EASIER: merge or remove existing [task] blocks only when the corresponding requirement is also removed or simplified.\n"
+                        + "- For HARDER: add the desired new behavior in prose; leave new task bindings for the generation/verification workflow that knows exact test names.\n"
+                        + "\nContent changes:\n" + "- For EASIER: simplify requirements, reduce edge cases, add more hints and structure.\n"
                         + "- For HARDER: add complexity, edge cases, require deeper analysis.\n" + "\nPreserve the overall Artemis markdown structure and formatting style.";
             }
         };

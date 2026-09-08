@@ -55,11 +55,13 @@
                 "header": "Aufgaben verwalten",
                 "tab": {
                     "create": "Erstellen",
+                    "generate": "Generieren",
                     "import": "Importieren",
                     "export": "Exportieren"
                 },
                 "createHint": "Wähle einen Aufgabentyp. Alle Details kannst du im nächsten Schritt anpassen.",
                 "importHint": "Wähle aus, was du importieren möchtest.",
+                "generateHint": "Beschreibe, was die Studierenden lernen sollen. Prüfe und überarbeite die generierte Aufgabe vor der Veröffentlichung.",
                 "cta": {
                     "create": "Erstellen",
                     "select": "Auswählen"

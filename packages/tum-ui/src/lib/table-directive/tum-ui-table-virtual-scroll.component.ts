@@ -12,6 +12,7 @@ const HEADER_PADDING: Record<TumUiTableSize, string> = {
 /** Fixed-row-height virtual table for large in-memory collections. */
 @Component({
     selector: 'tum-ui-table-virtual-scroll',
+    host: { '[attr.data-slot]': '"table-virtual-scroll"' },
     templateUrl: './tum-ui-table-virtual-scroll.component.html',
     styleUrl: './tum-ui-table-virtual-scroll.component.scss',
     imports: [ScrollingModule, NgTemplateOutlet],

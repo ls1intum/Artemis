@@ -111,11 +111,27 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
-            grepInvert: /@multi-node/,
+            grepInvert: /@multi-node|@hyperion/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',
                 viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Hyperion uses one shared mock provider and intentionally exercises the application's single generation slot.
+        // A dedicated worker keeps that state isolated without serial mode's whole-suite retry cascade.
+        {
+            name: 'hyperion-tests',
+            grep: /@hyperion/,
+            grepInvert: /@multi-node/,
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+                trace: 'retain-on-failure',
             },
         },
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and

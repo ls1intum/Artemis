@@ -38,6 +38,8 @@ const normalizeLineEndings = (text: string, lineEnding: "CRLF" | "LF" = "CRLF") 
         : text.replace(/\r?\n/g, "\n");
 };
 
+const normalizeWhitespace = (text: string) => text.split(/\r?\n/).map((line) => line.trimEnd()).join("\n").replace(/\n*$/, "\n");
+
 const main = async () => {
     const isWindows = process.platform === "win32";
     const directory = "src/main/webapp/app/openapi";
@@ -87,7 +89,7 @@ const main = async () => {
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
         const path = sourceFile.getFilePath();
-        const content = sourceFile.getFullText();
+        const content = normalizeWhitespace(sourceFile.getFullText());
         const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
 
         writeFileSync(path, fixedContent, "utf8");

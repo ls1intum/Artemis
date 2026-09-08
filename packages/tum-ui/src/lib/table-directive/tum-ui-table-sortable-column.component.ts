@@ -11,6 +11,7 @@ type TumUiSortDirection = 'asc' | 'desc' | 'none';
     styleUrl: './tum-ui-table-sortable-column.component.scss',
     imports: [FaIconComponent],
     host: {
+        '[attr.data-slot]': '"table-sortable-column"',
         '[class]': 'hostClasses()',
         '[attr.aria-sort]': 'ariaSort()',
     },

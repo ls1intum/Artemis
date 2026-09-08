@@ -48,7 +48,7 @@
 } @else if (combinedSbom()) {
     <!-- Upgrade Recommendation Banner -->
     @if (versionInfo()?.updateAvailable) {
-        <tum-ui-message class="mb-4 block" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
+        <tum-ui-message class="mb-4 block" [severity]="upgradeUrgency() === 'critical' ? 'danger' : upgradeUrgency() === 'high' ? 'warning' : 'info'" data-testid="upgrade-banner">
             <div class="flex items-center gap-3">
                 <fa-icon [icon]="faArrowUp" size="lg" />
                 <div class="grow">
@@ -73,7 +73,7 @@
                         rel="noopener noreferrer"
                         tumUiButton
                         size="small"
-                        [severity]="upgradeUrgency() === 'critical' ? 'danger' : upgradeUrgency() === 'high' ? 'warn' : 'info'"
+                        [severity]="upgradeUrgency() === 'critical' ? 'danger' : upgradeUrgency() === 'high' ? 'warning' : 'info'"
                         data-testid="view-release-button"
                     >
                         <span jhiTranslate="artemisApp.dependencies.viewRelease"></span>
@@ -152,10 +152,10 @@
                             <tum-ui-tag severity="danger" [value]="vulnerabilities()?.criticalCount + ' Critical'" />
                         }
                         @if (vulnerabilities()?.highCount) {
-                            <tum-ui-tag severity="warn" [value]="vulnerabilities()?.highCount + ' High'" />
+                            <tum-ui-tag severity="warning" [value]="vulnerabilities()?.highCount + ' High'" />
                         }
                         @if (vulnerabilities()?.mediumCount) {
-                            <tum-ui-tag severity="warn" [value]="vulnerabilities()?.mediumCount + ' Medium'" />
+                            <tum-ui-tag severity="warning" [value]="vulnerabilities()?.mediumCount + ' Medium'" />
                         }
                         @if (vulnerabilities()?.lowCount) {
                             <tum-ui-tag severity="info" [value]="vulnerabilities()?.lowCount + ' Low'" />
@@ -346,7 +346,7 @@
         </div>
     </tum-ui-message>
 } @else {
-    <tum-ui-message severity="error" class="block" data-testid="sbom-load-error-message">
+    <tum-ui-message severity="danger" class="block" data-testid="sbom-load-error-message">
         <span jhiTranslate="artemisApp.dependencies.loadError"></span>
     </tum-ui-message>
 }

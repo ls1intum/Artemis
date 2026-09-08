@@ -91,6 +91,25 @@ public abstract class AbstractArchitectureTest {
         return classes.that(not(belongToAnyOf(exceptions)));
     }
 
+    /**
+     * Excludes the classes with the given simple names AND everything nested inside them from the ArchUnit rule checks.
+     * <p>
+     * {@link #classesExcept(JavaClasses, String...)} matches on the simple name, which cannot name an anonymous inner class: its simple name is empty. A test that builds its
+     * cases as anonymous subclasses would therefore keep violating a rule its enclosing class is exempt from, and the only way to silence it would be to weaken the rule itself.
+     * Matching on the fully qualified name and its {@code $} nesting prefix keeps the exemption at exactly one unit — the named class and its own inner classes.
+     *
+     * @param classes    The classes to be filtered.
+     * @param exceptions The simple names of the enclosing classes to be excluded together with their nested classes.
+     * @return A JavaClasses object excluding the specified classes and everything nested inside them.
+     */
+    protected JavaClasses classesAndNestedExcept(JavaClasses classes, String... exceptions) {
+        var predicates = Arrays.stream(exceptions)
+                .map(exception -> DescribedPredicate.describe("class " + exception + " or nested in it", (JavaClass javaClass) -> javaClass.getName().equals(exception)
+                        || javaClass.getName().endsWith("." + exception) || javaClass.getName().contains("." + exception + "$")))
+                .toList();
+        return classes.that(not(or(predicates)));
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     protected static DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {

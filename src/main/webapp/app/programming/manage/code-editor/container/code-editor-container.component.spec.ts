@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorBottomPanel, CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
     CommitState,
     CreateFileChange,
@@ -81,7 +81,7 @@ describe('CodeEditorContainerComponent', () => {
             highlightLines: vi.fn(),
             editor: vi.fn().mockReturnValue({ revealLine: vi.fn() }),
         };
-        gridStub = { toggleCollapse: vi.fn() };
+        gridStub = { toggleCollapse: vi.fn(), expandBottomPanel: vi.fn(), buildOutputIsCollapsed: vi.fn().mockReturnValue(false) };
         (component as any).monacoEditor = () => monacoEditorStub;
         (component as any).grid = () => gridStub;
     });
@@ -363,11 +363,15 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should clear unsaved files after refresh', () => {
+        const commitStateChanged = vi.fn();
+        component.onCommitStateChange.subscribe(commitStateChanged);
         component.unsavedFiles = { 'src/main/App.java': 'x' };
 
         component.onRefreshFiles();
 
         expect(component.unsavedFiles).toEqual({});
+        expect(component.commitState).toBe(CommitState.CLEAN);
+        expect(commitStateChanged).toHaveBeenCalledWith(CommitState.CLEAN);
     });
 
     it('should keep only files with errors after saving and show alert', () => {
@@ -442,6 +446,42 @@ describe('CodeEditorContainerComponent', () => {
         expect(gridStub.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
     });
 
+    it('should fall back to the projected bottom panel while no build output exists, and keep it once one does', () => {
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.BUILD_OUTPUT);
+
+        fixture.componentRef.setInput('buildable', false);
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
+
+        fixture.componentRef.setInput('buildable', true);
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
+    });
+
+    it('should select and expand the projected bottom panel', () => {
+        component.openEditorBottomPanel();
+
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
+        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('should expand a collapsed bottom panel when selecting a tab', () => {
+        component.bottomPanelCollapsed.set(true);
+
+        component.selectBottomPanel(CodeEditorBottomPanel.BUILD_OUTPUT);
+
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.BUILD_OUTPUT);
+        expect(component.bottomPanelCollapsed()).toBe(false);
+        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('should expand the bottom panel when activating the already-selected tab', () => {
+        component.bottomPanelCollapsed.set(true);
+
+        component.expandSelectedBottomPanel();
+
+        expect(component.bottomPanelCollapsed()).toBe(false);
+        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
+    });
+
     it('should expose feedbacks for submission when inline feedback is enabled', () => {
         const feedback = { id: 1 } as Feedback;
         fixture.componentRef.setInput('participation', {
@@ -467,6 +507,23 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('should bypass the unload warning once after an explicit discard confirmation', () => {
+        const event = { preventDefault: vi.fn() } as any;
+        component.unsavedFiles = { 'src/main/App.java': 'x' };
+
+        component.allowNextUnloadWithoutConfirmation();
+
+        expect(component.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+    });
+
+    it.each(Object.values(CommitState))('should report whether %s is a verified clean repository state', (commitState) => {
+        component.commitState = commitState;
+        expect(component.hasCleanRepositoryState()).toBe(commitState === CommitState.CLEAN);
     });
 
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {

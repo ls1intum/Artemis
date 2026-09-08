@@ -135,7 +135,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentStatus.IDLE, null, null,
-                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
+                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 0, 0);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", buildAgent, 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
@@ -657,7 +657,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.add(job5);
 
         agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentStatus.ACTIVE, null, null,
-                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
+                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 0, 0);
         buildAgentInformation.put(buildAgentShortName, agent1);
 
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());

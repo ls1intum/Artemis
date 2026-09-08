@@ -43,6 +43,7 @@ let nextAutoCompleteId = 0;
     styleUrl: './tum-ui-autocomplete.component.scss',
     imports: [TumUiChipComponent, TumUiTranslatePipe],
     host: {
+        '[attr.data-slot]': '"autocomplete"',
         // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
         class: 'tum-ui-autocomplete',
     },

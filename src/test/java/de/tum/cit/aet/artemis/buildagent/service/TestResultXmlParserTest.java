@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,6 +73,30 @@ class TestResultXmlParserTest {
         var test = failedTests.getFirst();
         assertThat(test.name()).isEqualTo("testMergeSort()");
         assertThat(failedTests.getFirst().testMessages()).containsExactly("org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)");
+    }
+
+    @Test
+    void testParseDtdAndEntityLiteralsInsideFailureCData() throws IOException {
+        String exampleXml = """
+                <testsuite>
+                    <testcase name="testXmlOutput()">
+                        <failure><![CDATA[Expected output to contain:
+                <!DOCTYPE html>
+                <!ENTITY example "value">]]></failure>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
+
+        assertThat(failedTests).singleElement().satisfies(test -> {
+            assertThat(test.name()).isEqualTo("testXmlOutput()");
+            assertThat(test.testMessages()).containsExactly("""
+                    Expected output to contain:
+                    <!DOCTYPE html>
+                    <!ENTITY example "value">""");
+        });
+        assertThat(successfulTests).isEmpty();
     }
 
     @Test
@@ -320,7 +345,6 @@ class TestResultXmlParserTest {
         String input = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <!-- comment describing <testsuites> -->
-                <!DOCTYPE testsuites>
                 <testsuites>
                     <testsuite>
                         <testcase name="Test"/>
@@ -332,6 +356,23 @@ class TestResultXmlParserTest {
 
         assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Test");
         assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void rejectsDtdDeclarations() {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE testsuites [
+                    <!ENTITY xxe SYSTEM "file:///etc/passwd">
+                ]>
+                <testsuites>
+                    <testsuite>
+                        <testcase name="&xxe;"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests));
     }
 
     @Test

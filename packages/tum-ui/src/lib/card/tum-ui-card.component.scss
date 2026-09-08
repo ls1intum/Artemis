@@ -1,0 +1,47 @@
+// One spacing variable feeds the padding and every internal gap, so a consumer who needs a denser card sets one
+// property instead of fighting four class lists. It is the sanctioned override route: a consumer class and a host
+// class merge additively and the winner is stylesheet order, which the consumer does not control.
+:host {
+    --tum-ui-card-spacing: calc(var(--tumaet-ui-spacing) * 5);
+}
+
+:host([data-size='small']) {
+    --tum-ui-card-spacing: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+:host([data-size='large']) {
+    --tum-ui-card-spacing: calc(var(--tumaet-ui-spacing) * 7);
+}
+
+.tum-ui-card-body {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--tum-ui-card-spacing);
+    padding: var(--tum-ui-card-spacing);
+}
+
+// The default slot always has a wrapper so the legacy projection keeps working, and an empty wrapper would
+// otherwise contribute a gap the consumer never asked for.
+.tum-ui-card-content:empty {
+    display: none;
+}
+
+// Deprecated caption, kept rendering so no existing call site breaks. It is a `<div>`, which is exactly why the
+// sub-components exist: a card whose title is a `<div>` is invisible to heading navigation.
+.tum-ui-card-caption {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 1);
+}
+
+.tum-ui-card-caption .tum-ui-card-title {
+    font-size: var(--tumaet-ui-font-size-xl);
+    font-weight: 500;
+    line-height: var(--tumaet-ui-line-height-xl);
+}
+
+.tum-ui-card-subtitle {
+    color: var(--tumaet-ui-muted-color);
+}

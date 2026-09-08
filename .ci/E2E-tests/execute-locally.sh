@@ -110,6 +110,10 @@ services:
             rm -f test-reports/results*.xml &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
+            if env | grep -qx HYPERION_LLM_MODE=mock; then
+              chmod +x ./support/hyperion-llm-mock/start.sh &&
+              HYPERION_LLM_MOCK_PORT=1234 ./support/hyperion-llm-mock/start.sh
+            fi &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
@@ -202,6 +206,11 @@ for xml_file in "${XML_FILES[@]}"; do
 done
 
 TOTAL_PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS - TOTAL_SKIPPED))
+
+if [ -n "$TEST_FILTER" ] && [ "$TOTAL_TESTS" -gt 0 ] && [ "$TOTAL_SKIPPED" -eq "$TOTAL_TESTS" ]; then
+    echo "Filtered E2E run skipped every selected test. Check that the selected configuration enables the required test mode." >&2
+    EXIT_CODE=1
+fi
 
 if [ $TOTAL_TESTS -gt 0 ]; then
     echo "  Total:   $TOTAL_TESTS tests"

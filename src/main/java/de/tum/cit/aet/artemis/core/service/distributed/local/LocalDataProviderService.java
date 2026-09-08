@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 @Conditional(LocalDataCondition.class)
 public class LocalDataProviderService implements DistributedDataProvider {
 
+    private static final String LOCAL_NODE_ID = "local-node";
+
     private final ConcurrentHashMap<String, DistributedQueue<?>> queues = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<String, DistributedMap<?, ?>> maps = new ConcurrentHashMap<>();
@@ -122,6 +124,22 @@ public class LocalDataProviderService implements DistributedDataProvider {
     @Override
     public String getLocalMemberAddress() {
         return "localhost";
+    }
+
+    @Override
+    public String getLocalNodeId() {
+        return LOCAL_NODE_ID;
+    }
+
+    @Override
+    public Optional<Set<String>> getDataNodeIds() {
+        return Optional.of(Set.of(LOCAL_NODE_ID));
+    }
+
+    @Override
+    public Optional<Map<String, String>> getDataNodeAttributes(String attributeName) {
+        // A local deployment has no second node with which its feature profile could disagree.
+        return Optional.of(Map.of(LOCAL_NODE_ID, Boolean.FALSE.toString()));
     }
 
     @Override

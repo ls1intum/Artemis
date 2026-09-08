@@ -40,6 +40,7 @@ dependencies {
     }
 
     testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
+    testImplementation 'net.bytebuddy:byte-buddy:1.17.6'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
 
     // testImplementation(':${exerciseNamePomXml}')

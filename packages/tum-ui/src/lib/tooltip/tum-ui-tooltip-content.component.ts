@@ -14,6 +14,7 @@ const ARROW_POSITION: Record<TumUiOverlayPlacement, string> = {
     selector: 'tum-ui-tooltip-content',
     template: `{{ text() }}<span aria-hidden="true" [class]="arrowClasses()"></span>`,
     host: {
+        '[attr.data-slot]': '"tooltip-content"',
         role: 'tooltip',
         '[attr.id]': 'id()',
         class: 'tum-ui-tooltip-bubble tum:relative tum:inline-block tum:max-w-50 tum:rounded-md tum:bg-tooltip-background tum:px-3 tum:py-2 tum:text-sm tum:text-tooltip tum:shadow-md',

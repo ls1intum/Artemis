@@ -1,7 +1,1 @@
-<span [class]="tagClasses()" [attr.data-severity]="severity()">
-    @if (value(); as tagValue) {
-        {{ tagValue }}
-    } @else {
-        <ng-content />
-    }
-</span>
+<span [class]="tagClasses()">{{ value() }}<ng-content /></span>

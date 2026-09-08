@@ -52,13 +52,34 @@ describe('TumUiPopoverComponent', () => {
         expect(emitSpy).not.toHaveBeenCalled();
     });
 
-    it('exposes the open panel as a modal dialog', () => {
+    it('exposes the open panel as a named dialog, and does not claim the page behind it is unavailable', () => {
         component.open(origin);
         fixture.detectChanges();
         const panel = document.querySelector('.tum-ui-popover-panel');
         expect(panel).not.toBeNull();
         expect(panel?.getAttribute('role')).toBe('dialog');
-        expect(panel?.getAttribute('aria-modal')).toBe('true');
+        // The backdrop is transparent and the page behind it is not inert, so `aria-modal` would tell a screen
+        // reader something the page does not honour.
+        expect(panel?.getAttribute('aria-modal')).toBeNull();
+    });
+
+    it('returns focus to whatever had it before opening', () => {
+        const trigger = document.createElement('button');
+        document.body.appendChild(trigger);
+        trigger.focus();
+        expect(document.activeElement).toBe(trigger);
+
+        component.open(origin);
+        fixture.detectChanges();
+        // The CDK focus trap captures asynchronously, so focus is moved here explicitly: what is under test is the
+        // restore, not the capture.
+        (document.querySelector('.tum-ui-popover-panel') as HTMLElement).focus();
+        expect(document.activeElement).not.toBe(trigger);
+
+        component.close();
+        fixture.detectChanges();
+        expect(document.activeElement).toBe(trigger);
+        trigger.remove();
     });
 
     it('renders a pointer-capturing backdrop and closes on backdrop click', () => {

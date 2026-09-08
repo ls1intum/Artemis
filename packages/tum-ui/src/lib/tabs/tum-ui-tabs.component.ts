@@ -6,6 +6,7 @@ import { TumUiTabsService } from './tum-ui-tabs.service';
     selector: 'tum-ui-tabs',
     template: '<ng-content />',
     host: {
+        '[attr.data-slot]': '"tabs"',
         class: 'tum-ui-tabs tum:flex tum:w-full tum:min-w-0 tum:max-w-full tum:flex-col',
     },
     providers: [TumUiTabsService],

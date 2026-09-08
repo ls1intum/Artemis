@@ -1,0 +1,212 @@
+// Every rule is nested under `.tum-ui-prose` rather than relying on Angular's emulated encapsulation, because the
+// content this component styles usually arrives through `[innerHTML]` and never carries an `_ngcontent` attribute.
+// ---
+// Do not wrap these selectors in `:where()`. `.tum-ui-prose h2` is specificity (0,1,1) and beats a host page's bare
+// `h2` rule at (0,0,1) inside the same unlayered origin; `:where()` would zero the class out and the host page would
+// win again. Winning that cascade without `!important` is the entire reason this component exists.
+.tum-ui-prose {
+    // The comfortable measure for continuous reading. Set it to `none` where the prose shares a row with something
+    // else and has to fill its column.
+    --tum-ui-prose-measure: 65ch;
+    --tum-ui-prose-block-gap: calc(var(--tumaet-ui-spacing) * 4);
+
+    max-width: var(--tum-ui-prose-measure);
+    color: var(--tumaet-ui-text-color);
+    font-family: var(--tumaet-ui-font-family);
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+    overflow-wrap: break-word;
+}
+
+.tum-ui-prose[data-density='compact'] {
+    --tum-ui-prose-block-gap: calc(var(--tumaet-ui-spacing) * 3);
+
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+}
+
+// One rhythm for the whole document: no block carries its own margin, and the gap lives between siblings, so a
+// leading or trailing heading never pushes the container's padding around.
+.tum-ui-prose > * {
+    margin-block: 0;
+}
+
+.tum-ui-prose > * + * {
+    margin-block-start: var(--tum-ui-prose-block-gap);
+}
+
+// A heading opens a new section, so it gets more room above it than an ordinary block does.
+.tum-ui-prose > * + h1,
+.tum-ui-prose > * + h2,
+.tum-ui-prose > * + h3,
+.tum-ui-prose > * + h4,
+.tum-ui-prose > * + h5,
+.tum-ui-prose > * + h6 {
+    margin-block-start: calc(var(--tum-ui-prose-block-gap) * 1.75);
+}
+
+// The scale ends below a page's own `h1`: a projected document is subordinate to the surface that hosts it, however
+// its author numbered its headings.
+.tum-ui-prose h1,
+.tum-ui-prose h2,
+.tum-ui-prose h3,
+.tum-ui-prose h4,
+.tum-ui-prose h5,
+.tum-ui-prose h6 {
+    color: var(--tumaet-ui-text-color);
+    font-weight: 600;
+    text-wrap: balance;
+}
+
+.tum-ui-prose h1 {
+    font-size: var(--tumaet-ui-font-size-xl);
+    line-height: var(--tumaet-ui-line-height-xl);
+}
+
+.tum-ui-prose h2 {
+    font-size: var(--tumaet-ui-font-size-lg);
+    line-height: var(--tumaet-ui-line-height-lg);
+}
+
+.tum-ui-prose h3 {
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+.tum-ui-prose h4,
+.tum-ui-prose h5,
+.tum-ui-prose h6 {
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+    text-transform: none;
+}
+
+.tum-ui-prose p {
+    margin-block: 0;
+}
+
+.tum-ui-prose ul,
+.tum-ui-prose ol {
+    margin-block: 0;
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 6);
+}
+
+.tum-ui-prose ul {
+    list-style: disc;
+}
+
+.tum-ui-prose ol {
+    list-style: decimal;
+}
+
+.tum-ui-prose li + li {
+    margin-block-start: calc(var(--tumaet-ui-spacing) * 1.5);
+}
+
+// A nested list belongs to the item above it, so it is spaced as part of that item rather than as a new block.
+.tum-ui-prose li > ul,
+.tum-ui-prose li > ol {
+    margin-block-start: calc(var(--tumaet-ui-spacing) * 1.5);
+}
+
+.tum-ui-prose li::marker {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.tum-ui-prose a {
+    color: var(--tumaet-ui-accent-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.tum-ui-prose a:hover {
+    color: var(--tumaet-ui-primary-color);
+}
+
+.tum-ui-prose a:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+    border-radius: var(--tumaet-ui-radius-sm);
+}
+
+.tum-ui-prose strong,
+.tum-ui-prose b {
+    font-weight: 600;
+}
+
+// Code sits on its own surface tier, never on the hover background: muted-on-hover measures 4.34:1 in light and
+// 4.11:1 in dark, both below the 4.5:1 a code span needs at this size.
+.tum-ui-prose code {
+    padding: calc(var(--tumaet-ui-spacing) * 0.5) calc(var(--tumaet-ui-spacing) * 1.5);
+    border-radius: var(--tumaet-ui-radius-sm);
+    background: var(--tumaet-ui-code-background);
+    color: var(--tumaet-ui-code-color);
+    font-family: var(--tumaet-ui-font-family-mono);
+    font-size: 0.9em;
+}
+
+.tum-ui-prose pre {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-code-background);
+    color: var(--tumaet-ui-code-color);
+    font-family: var(--tumaet-ui-font-family-mono);
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+    tab-size: 4;
+}
+
+.tum-ui-prose pre code {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+}
+
+.tum-ui-prose blockquote {
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 4);
+    border-inline-start: 3px solid var(--tumaet-ui-control-border-color);
+    color: var(--tumaet-ui-muted-color);
+}
+
+.tum-ui-prose hr {
+    height: 0;
+    border: 0;
+    border-block-start: 1px solid var(--tumaet-ui-border-color);
+    opacity: 1;
+}
+
+.tum-ui-prose table {
+    max-width: 100%;
+    border-collapse: collapse;
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+}
+
+.tum-ui-prose th,
+.tum-ui-prose td {
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    border-block-end: 1px solid var(--tumaet-ui-border-color);
+    text-align: start;
+    vertical-align: top;
+}
+
+.tum-ui-prose th {
+    font-weight: 600;
+}
+
+.tum-ui-prose img,
+.tum-ui-prose video {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+// In forced-colors the code surface disappears into the canvas, so the block needs a real boundary to stay a block.
+@media (forced-colors: active) {
+    .tum-ui-prose pre,
+    .tum-ui-prose code {
+        border: 1px solid CanvasText;
+    }
+}

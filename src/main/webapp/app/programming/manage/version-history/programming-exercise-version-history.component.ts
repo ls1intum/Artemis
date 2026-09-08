@@ -46,6 +46,7 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
     private snapshotSubscription?: Subscription;
 
     private readonly pageSize = 20;
+    private requestedVersionId?: number;
 
     /** Parsed exercise id from the route, set once in {@link ngOnInit}. */
     readonly exerciseId = signal<number | undefined>(undefined);
@@ -89,6 +90,10 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
         }
 
         this.exerciseId.set(exerciseId);
+        const requestedVersionId = Number(this.route.snapshot.queryParamMap?.get('versionId'));
+        if (Number.isSafeInteger(requestedVersionId) && requestedVersionId > 0) {
+            this.requestedVersionId = requestedVersionId;
+        }
         this.loadVersions(0, true);
     }
 
@@ -151,8 +156,9 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
                     this.versions.set(reset ? versions : [...this.versions(), ...versions]);
 
                     if (reset) {
-                        if (versions.length > 0) {
-                            this.onSelectVersion(versions[0].id);
+                        const initialVersionId = this.requestedVersionId ?? versions[0]?.id;
+                        if (initialVersionId !== undefined) {
+                            this.onSelectVersion(initialVersionId);
                         } else {
                             this.selectedVersionId.set(undefined);
                             this.selectedSnapshot.set(undefined);

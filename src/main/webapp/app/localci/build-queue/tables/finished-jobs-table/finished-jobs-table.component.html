@@ -68,7 +68,7 @@
                             </span>
                         } @else {
                             <tum-ui-tag
-                                [severity]="finishedBuildJob.status === 'CANCELLED' ? 'warn' : 'danger'"
+                                [severity]="finishedBuildJob.status === 'CANCELLED' ? 'warning' : 'danger'"
                                 [value]="finishedBuildJob.status"
                                 [rounded]="true"
                                 data-testid="finished-job-status"

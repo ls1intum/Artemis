@@ -23,6 +23,7 @@ import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -37,6 +38,7 @@ describe('BuildAgentDetailsComponent', () => {
     const mockBuildAgentsService = {
         getBuildAgentDetails: vi.fn().mockReturnValue(of([])),
         getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
+        getGenerationSandboxes: vi.fn().mockReturnValue(of([])),
         pauseBuildAgent: vi.fn().mockReturnValue(of({})),
         resumeBuildAgent: vi.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: vi.fn().mockReturnValue(of({})),
@@ -228,6 +230,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(of([]));
         mockWebsocketService.subscribe.mockImplementation((topic: string) => {
             if (topic === '/topic/admin/running-jobs') {
                 return runningJobsSubject.asObservable();
@@ -250,6 +253,167 @@ describe('BuildAgentDetailsComponent', () => {
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
     });
 
+    it('should expose each active generation as its single sandbox job', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(
+            of([
+                {
+                    sessionId: 'agent1::container-1',
+                    jobId: 'job-1',
+                    exerciseId: 42,
+                    exerciseTitle: 'Concurrency Lab',
+                    courseId: 7,
+                    userLogin: 'instructor',
+                    mode: 'GENERATE',
+                    startedAt: '2026-07-12T09:00:00Z',
+                    lastActivityAt: '2026-07-12T09:01:00Z',
+                },
+            ]),
+        );
+
+        component.ngOnInit();
+
+        expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledWith('agent1');
+        expect(component.generationJobs()).toEqual([
+            expect.objectContaining({ jobId: 'job-1', sessionId: 'agent1::container-1', exerciseId: 42, lastActivityAt: '2026-07-12T09:01:00Z', agentName: 'agent1' }),
+        ]);
+    });
+
+    it('should expose sandbox loading errors without hiding agent details', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(throwError(() => new Error('unavailable')));
+
+        component.ngOnInit();
+
+        expect(component.generationSandboxesLoadFailed()).toBe(true);
+        expect(component.buildAgent()).toEqual(mockBuildAgent);
+    });
+
+    it('should preserve last-known sandbox data when refresh fails', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getGenerationSandboxes
+            .mockReturnValueOnce(
+                of([
+                    {
+                        sessionId: 'authoring',
+                        jobId: 'job-1',
+                        exerciseId: 42,
+                        exerciseTitle: 'Concurrency Lab',
+                        userLogin: 'instructor',
+                        mode: 'GENERATE',
+                        startedAt: '2026-07-12T09:00:00Z',
+                        lastActivityAt: '2026-07-12T09:01:00Z',
+                    },
+                ]),
+            )
+            .mockReturnValueOnce(throwError(() => new Error('offline')));
+
+        fixture.detectChanges();
+        component.refreshGenerationSandboxes();
+        fixture.detectChanges();
+
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1', stale: true })]);
+        expect(component.generationSandboxesLoadFailed()).toBe(true);
+    });
+
+    it('should refresh sandbox activity periodically', async () => {
+        vi.useFakeTimers();
+        try {
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+            const initialRefreshes = mockBuildAgentsService.getGenerationSandboxes.mock.calls.length;
+
+            await vi.advanceTimersByTimeAsync(14_999);
+            expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledTimes(initialRefreshes);
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledTimes(initialRefreshes + 1);
+        } finally {
+            component.ngOnDestroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('should not overlap sandbox activity refreshes', async () => {
+        vi.useFakeTimers();
+        const pendingRefresh = new Subject<GenerationSandboxJob[]>();
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(pendingRefresh);
+        try {
+            fixture.detectChanges();
+            const initialRefreshes = mockBuildAgentsService.getGenerationSandboxes.mock.calls.length;
+
+            await vi.advanceTimersByTimeAsync(30_000);
+
+            expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledTimes(initialRefreshes);
+        } finally {
+            component.ngOnDestroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('should load the new agent immediately and ignore a late sandbox response from the previous route', () => {
+        const firstAgentRefresh = new Subject<GenerationSandboxJob[]>();
+        const secondAgentRefresh = new Subject<GenerationSandboxJob[]>();
+        const firstAgentUpdates = new Subject<BuildAgentInformation>();
+        const secondAgentUpdates = new Subject<BuildAgentInformation>();
+        mockWebsocketService.subscribe.mockImplementation((topic: string) => {
+            if (topic === '/topic/admin/running-jobs') {
+                return runningJobsSubject.asObservable();
+            }
+            return topic.endsWith('/agent1') ? firstAgentUpdates.asObservable() : secondAgentUpdates.asObservable();
+        });
+        mockBuildAgentsService.getGenerationSandboxes.mockImplementation((agentName: string) => (agentName === 'agent1' ? firstAgentRefresh : secondAgentRefresh));
+        mockBuildAgentsService.getBuildAgentDetails.mockImplementation((agentName: string) =>
+            of({ ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: agentName } }),
+        );
+
+        component.ngOnInit();
+        const firstSearchSubscription = component.searchSubscription;
+        const firstDurationInterval = component.buildDurationInterval;
+        const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+        activatedRoute.setParameters({ agentName: 'agent2' });
+
+        expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenNthCalledWith(1, 'agent1');
+        expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenNthCalledWith(2, 'agent2');
+
+        secondAgentRefresh.next([
+            {
+                sessionId: 'agent2-session',
+                jobId: 'agent2-job',
+                exerciseId: 42,
+                exerciseTitle: 'Agent 2 exercise',
+                userLogin: 'instructor',
+                mode: 'GENERATE',
+                startedAt: '2026-07-12T09:00:00Z',
+                lastActivityAt: '2026-07-12T09:01:00Z',
+            },
+        ]);
+        firstAgentRefresh.next([
+            {
+                sessionId: 'agent1-session',
+                jobId: 'agent1-job',
+                exerciseId: 41,
+                exerciseTitle: 'Agent 1 exercise',
+                userLogin: 'instructor',
+                mode: 'GENERATE',
+                startedAt: '2026-07-12T09:00:00Z',
+                lastActivityAt: '2026-07-12T09:01:00Z',
+            },
+        ]);
+        firstAgentUpdates.next(mockBuildAgent);
+
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ agentName: 'agent2', jobId: 'agent2-job' })]);
+        expect(component.buildAgent()?.buildAgent?.name).toBe('agent2');
+        expect(firstSearchSubscription.closed).toBe(true);
+        expect(clearIntervalSpy).toHaveBeenCalledWith(firstDurationInterval);
+    });
+
+    it('should present sandbox activity as active agent status', () => {
+        component.buildAgent.set({ ...mockBuildAgent, status: BuildAgentStatus.IDLE, numberOfCurrentBuildJobs: 0, reservedGenerationSandboxSlots: 2 });
+
+        expect(component.effectiveStatus()).toBe(BuildAgentStatus.ACTIVE);
+    });
+
     it('should initialize websocket subscription on initialization', () => {
         component.ngOnInit();
 
@@ -264,11 +428,13 @@ describe('BuildAgentDetailsComponent', () => {
 
         const agentUnsubscribeSpy = vi.spyOn(component.agentDetailsWebsocketSubscription!, 'unsubscribe');
         const runningUnsubscribeSpy = vi.spyOn(component.runningJobsWebsocketSubscription!, 'unsubscribe');
+        const searchUnsubscribeSpy = vi.spyOn(component.searchSubscription, 'unsubscribe');
 
         component.ngOnDestroy();
 
         expect(agentUnsubscribeSpy).toHaveBeenCalled();
         expect(runningUnsubscribeSpy).toHaveBeenCalled();
+        expect(searchUnsubscribeSpy).toHaveBeenCalled();
     });
 
     it('should cancel a build job', () => {

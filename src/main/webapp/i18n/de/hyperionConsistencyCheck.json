@@ -18,7 +18,8 @@
                     "CONSTRUCTOR_PARAMETER_MISMATCH": "Konstruktorparameter stimmen nicht überein",
                     "ATTRIBUTE_TYPE_MISMATCH": "Attributtyp stimmt nicht überein",
                     "VISIBILITY_MISMATCH": "Sichtbarkeit stimmt nicht überein",
-                    "IDENTIFIER_NAMING_INCONSISTENCY": "Inkonsistente Benennung von Bezeichnern"
+                    "IDENTIFIER_NAMING_INCONSISTENCY": "Inkonsistente Benennung von Bezeichnern",
+                    "GENERATION_REVIEW_REQUIRED": "Überprüfung der Generierung erforderlich"
                 }
             }
         }

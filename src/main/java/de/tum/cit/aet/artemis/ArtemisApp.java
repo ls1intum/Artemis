@@ -97,7 +97,7 @@ public class ArtemisApp {
             context.publishEvent(new PrintStartupBeansEvent());
         }
 
-        if (env.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+        if (env.acceptsProfiles(Profiles.of(PROFILE_CORE)) && !env.getProperty("artemis.openapi-docs-generation", Boolean.class, false)) {
             deferredEagerBeanInitialization(context);
         }
     }

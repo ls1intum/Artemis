@@ -431,10 +431,10 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise:
     post:
-      tags: [hyperion-code-generation]
-      operationId: generateCode
+      tags: [hyperion-exercise-generation]
+      operationId: generateExercise
       parameters:
       - name: exerciseId
         in: path
@@ -443,83 +443,18 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CodeGenerationRequest'}
+            schema: {$ref: '#/components/schemas/ExerciseGenerationRequest'}
         required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
-  /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
-    put:
-      tags: [quiz-exercise-batch]
-      operationId: addBatch
-      parameters:
-      - name: quizExerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizBatchWithPassword'}
-  /api/quiz/quiz-exercises/{quizBatchId}/start-batch:
-    put:
-      tags: [quiz-exercise-batch]
-      operationId: startBatch
-      parameters:
-      - name: quizBatchId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizBatch'}
-  /api/quiz/quiz-batches/{quizBatchId}/start-batch:
-    put:
-      tags: [quiz-exercise-batch]
-      operationId: startBatch_1
-      parameters:
-      - name: quizBatchId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizBatch'}
-  /api/quiz/quiz-exercises/{quizExerciseId}/join:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
     post:
-      tags: [quiz-exercise-batch]
-      operationId: joinBatch
-      parameters:
-      - name: quizExerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/QuizBatchJoin'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizBatch'}
-  /api/quiz/quiz-exercises/{exerciseId}/start-participation:
-    post:
-      tags: [quiz-participation]
-      operationId: startParticipation
+      tags: [hyperion-exercise-generation]
+      operationId: revertExerciseGeneration
       parameters:
       - name: exerciseId
         in: path
@@ -530,71 +465,101 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/StudentQuizParticipation'}
-  /api/quiz/exercises/{exerciseId}/submissions/preview:
-    post:
-      tags: [quiz-submission]
-      operationId: submitForPreview
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getExerciseGenerationStatus
       parameters:
       - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/artifacts:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getRetainedGenerationArtifacts
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRetainedArtifacts'}
+        '404': {description: The caller's most recent run retained no unsaved candidate}
+  /api/hyperion/programming-exercises/generation/supported-languages:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getSupportedGenerationLanguages
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER,
+                    SWIFT, OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT,
+                    RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+  /api/hyperion/programming-exercises/generation/effort-profiles:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getGenerationEffortProfiles
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
+  /api/hyperion/courses/{courseId}/programming-exercises/generation/metadata-suggestion:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: suggestGenerationMetadata
+      parameters:
+      - name: courseId
         in: path
         required: true
         schema: {type: integer, format: int64}
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/QuizSubmissionFromStudent'}
+            schema: {$ref: '#/components/schemas/ExerciseGenerationMetadataSuggestionRequest'}
         required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ResultAfterEvaluationWithSubmission'}
-  /api/quiz/exercises/{exerciseId}/submissions/practice:
-    post:
-      tags: [quiz-submission]
-      operationId: submitForPractice
+              schema: {$ref: '#/components/schemas/ExerciseGenerationMetadataSuggestionResponse'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
+    delete:
+      tags: [hyperion-exercise-generation]
+      operationId: cancelExerciseGeneration
       parameters:
       - name: exerciseId
         in: path
         required: true
         schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/QuizSubmissionFromStudent'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ResultAfterEvaluationWithSubmission'}
-  /api/quiz/exercises/{exerciseId}/submissions/live:
-    post:
-      tags: [quiz-submission]
-      operationId: saveOrSubmitForLiveMode
-      parameters:
-      - name: exerciseId
+      - name: jobId
         in: path
         required: true
-        schema: {type: integer, format: int64}
-      - name: submit
-        in: query
-        required: false
-        schema: {type: boolean, default: false}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/QuizSubmissionFromLiveClient'}
-        required: true
+        schema: {type: string}
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+        '200': {description: OK}
   /api/quiz/courses/{courseId}/training-questions:
     post:
       tags: [quiz-training]
@@ -1694,13 +1659,254 @@ components:
         spotNr: {type: integer, format: int32}
         width: {type: integer, format: int32}
         invalid: {type: boolean}
-    CodeGenerationJobStart:
+    ExerciseGenerationFileChange:
+      type: object
+      description: A file changed by the generation agent
+      properties:
+        type:
+          type: string
+          description: Constant discriminator identifying a file change on the shared
+            topic
+          enum: [FILE_CHANGE]
+        path: {type: string, description: Workspace-relative file path}
+        repo:
+          type: string
+          description: Owning repository bucket
+          enum: [solution, template, tests, other]
+        action:
+          type: string
+          description: The successful file tool operation
+          enum: [write, edit, delete]
+        turn: {type: integer, format: int32, description: The agent turn the change
+            happened on}
+        timestamp: {type: string, format: date-time, description: The moment the change
+            was produced}
+      required: [action, path, repo, timestamp, turn, type]
+    ExerciseGenerationUsage:
+      type: object
+      properties:
+        modelCalls: {type: integer, format: int64}
+        toolCalls: {type: integer, format: int64}
+        agentTurns: {type: integer, format: int64}
+        attempts: {type: integer, format: int64}
+        inputTokens: {type: integer, format: int64}
+        outputTokens: {type: integer, format: int64}
+        cachedInputTokens: {type: integer, format: int64}
+        cachedInputTokensComplete: {type: boolean}
+        estimatedCostEur: {type: number, format: double}
+        estimatedCostEurComplete: {type: boolean}
+        models:
+          type: array
+          items: {type: string}
+        providerRequestIds:
+          type: array
+          items: {type: string}
+        providerRequestIdsComplete: {type: boolean}
+      required: [agentTurns, attempts, cachedInputTokens, cachedInputTokensComplete,
+        estimatedCostEur, estimatedCostEurComplete, inputTokens, modelCalls, models,
+        outputTokens, providerRequestIds, providerRequestIdsComplete, toolCalls]
+    ExerciseGenerationJobStart:
       type: object
       properties:
         jobId: {type: string}
-        repositoryType:
+      required: [jobId]
+    ExerciseGenerationEvent:
+      type: object
+      description: A progress event streamed to the instructor while an agentic whole-exercise
+        generation or adaptation runs
+      properties:
+        type:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          description: The event kind
+          enum: [STARTED, PROGRESS, DONE, CANCELLED, ERROR]
+        message: {type: string, description: Human-readable progress or result message}
+        completionStatus:
+          type: string
+          description: On a terminal DONE event, whether the run succeeded, needs
+            review, or partially completed
+          enum: [SUCCESS, NEEDS_REVIEW, PARTIAL]
+        verdict: {$ref: '#/components/schemas/ExerciseGenerationVerdict', description: 'On
+            a terminal event, the structured verification verdict'}
+        liveExerciseChanged: {type: boolean, description: 'On a terminal event, whether
+            the live exercise changed and open editors should refresh'}
+        savedRepositoryCommits:
+          type: object
+          additionalProperties: {type: string}
+          description: Exact saved commit hashes keyed by repository name
+        savedExerciseVersionId: {type: integer, format: int64, description: 'The exact
+            saved exercise version id, on a successful terminal event'}
+        terminationReason:
+          type: string
+          description: On a terminal event, why the generation run ended
+          enum: [CONVERGED, REPAIR_BUDGET_EXHAUSTED, ATTEMPT_CAP_REACHED, MECHANICAL_REPAIR_EXHAUSTED,
+            POST_REPAIR_CORRECTION_EXHAUSTED, NO_SCHEDULABLE_SURFACE, REVIEW_UNAVAILABLE,
+            UNCHANGED_CANDIDATE_RESUBMITTED, REPAIR_DID_NOT_IMPROVE, NO_ADMISSIBLE_CONCEPT,
+            CONCEPT_ADMITTED_WITH_FINDINGS, CANCELLED, DEADLINE_EXCEEDED, TOKEN_BUDGET_EXHAUSTED,
+            AGENT_ERROR, ENVIRONMENT_UNAVAILABLE, RUN_FAILED, NOT_STARTED]
+        repairRound: {$ref: '#/components/schemas/ExerciseGenerationRepairRound',
+          description: 'On a repair-round progress event, that round''s finding bookkeeping'}
+        timestamp: {type: string, format: date-time, description: The moment the event
+            was produced}
+      required: [timestamp, type]
+    ExerciseGenerationEffortProfile:
+      type: object
+      properties:
+        name: {type: string}
+        label: {type: string}
+      required: [label, name]
+    ExerciseGenerationRetainedFile:
+      type: object
+      description: A file of a generated candidate that was not saved to the exercise
+      properties:
+        repo:
+          type: string
+          description: Owning repository bucket
+          enum: [solution, template, tests]
+        path: {type: string, description: Repository-relative file path}
+        content: {type: string, description: The file's text content as the agent
+            left it}
+      required: [content, path, repo]
+    ExerciseGenerationRetainedArtifacts:
+      type: object
+      description: A generated candidate that was not saved to the exercise, retained
+        read-only for inspection
+      properties:
+        jobId: {type: string}
+        completeness:
+          type: string
+          description: Whether the retained files are a complete account of what the
+            run produced
+          enum: [COMPLETE, PARTIAL]
+        problemStatement: {type: string}
+        specDocument: {type: string}
+        files:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationRetainedFile'}
+      required: [completeness, files, jobId]
+    ExerciseGenerationStatus:
+      type: object
+      properties:
+        jobId: {type: string}
+        running: {type: boolean}
+        mode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationEvent'}
+        fileChanges:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationFileChange'}
+        revertAvailable: {type: boolean}
+        revertJobId: {type: string}
+        revertMode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        ownedByCaller: {type: boolean}
+        cancellable: {type: boolean}
+        specDocument: {type: string}
+        usage: {$ref: '#/components/schemas/ExerciseGenerationUsage'}
+        accountingState:
+          type: string
+          description: Whether the reported usage is a complete account of a generation
+            run's provider spend
+          enum: [PENDING, COMPLETE, INCOMPLETE]
+        effortProfile: {type: string}
+      required: [accountingState, cancellable, events, fileChanges, jobId, ownedByCaller,
+        revertAvailable, running]
+    ExerciseGenerationVerdict:
+      type: object
+      description: The structured outcome of the differential verification, so the
+        client can show which gates passed without parsing prose
+      properties:
+        mechanicallyVerified: {type: boolean, description: Whether the exercise passed
+            mechanical verification}
+        solutionPassed: {type: boolean, description: Whether the solution passed all
+            its tests}
+        templateFailed: {type: boolean, description: Whether the template compiled
+            but correctly failed the tests}
+        testCount: {type: integer, format: int32, description: The number of tests
+            discovered}
+        reasons:
+          type: array
+          description: Human-readable explanations of any failed gate (empty when
+            mechanically verified)
+          items: {type: string}
+      required: [mechanicallyVerified, reasons, solutionPassed, templateFailed, testCount]
+    ExerciseGenerationRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        prompt: {type: string, maxLength: 8000, minLength: 0}
+        selectedFeedbackThreadIds:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 25
+          minItems: 0
+        effortProfile: {type: string, maxLength: 64, minLength: 0}
+        maxTokens: {type: integer, format: int64}
+        maxJobDuration: {type: string}
+      required: [mode]
+    ExerciseGenerationMetadataSuggestionRequest:
+      type: object
+      description: Request for the derived metadata of an exercise an instructor is
+        about to generate
+      properties:
+        prompt: {type: string, description: The instructor's brief for the exercise
+            to be generated, maxLength: 8000, minLength: 1}
+        projectType:
+          type: string
+          description: The project type the exercise will use
+          enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE,
+            MAVEN_BLACKBOX]
+      required: [prompt]
+    ExerciseGenerationMetadataSuggestionResponse:
+      type: object
+      description: The metadata Artemis derives for an exercise it is about to generate
+      properties:
+        title: {type: string}
+        shortName: {type: string}
+        packageName: {type: string}
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+      required: [difficulty, maxPoints, packageName, shortName, title]
+    ExerciseGenerationRevertResult:
+      type: object
+      description: Result of reverting the last Hyperion generation or adaptation
+      properties:
+        fullyReverted: {type: boolean, description: Whether every captured repository
+            was reverted}
+        revertedRepositories:
+          type: array
+          description: Repositories that were reset
+          items: {type: string}
+        completedAt: {type: string, format: date-time, description: Server time after
+            the revert completed}
+      required: [completedAt, fullyReverted, revertedRepositories]
+    ExerciseGenerationRepairRound:
+      type: object
+      description: Per-round finding bookkeeping of the semantic repair loop, so a
+        run's transcript shows whether repairing drains findings
+      properties:
+        round: {type: integer, format: int32, description: The 1-based index of this
+            review round within the run}
+        attempt: {type: integer, format: int32, description: The 1-based authoring
+            attempt whose candidate was reviewed}
+        blocking: {type: integer, format: int32, description: How many of this round's
+            findings block acceptance}
+        advisory: {type: integer, format: int32, description: How many of this round's
+            findings are advisory}
+        carriedOver: {type: integer, format: int32, description: How many of this
+            round's findings were already present in the previous round}
+        drained: {type: integer, format: int32, description: How many of the previous
+            round's findings are gone in this round}
+        fresh: {type: integer, format: int32, description: How many of this round's
+            findings are new since the previous round}
+      required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -1721,7 +1927,8 @@ components:
           type: string
           description: Category of the issue
           enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
-            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY]
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY,
+            GENERATION_REVIEW_REQUIRED]
           example: METHOD_RETURN_TYPE_MISMATCH
         description: {type: string, description: Detailed description of the issue,
           example: Problem statement does not match test cases}
@@ -2252,6 +2459,11 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+        hygieneWarnings:
+          type: array
+          items: {type: string}
+          description: Advisory hygiene warnings about the draft to review before
+            use; omitted when there are none
     ShortAnswerSubmittedText:
       type: object
       properties:
@@ -2330,38 +2542,6 @@ components:
           additionalProperties: {}
           description: Additional type-specific metadata such as courseId, dueDate,
             or points
-    StudentQuizParticipationWithoutQuestions:
-      required: [quizQuestionsType]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        type: {type: string}
-        initializationState:
-          type: string
-          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
-            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
-        initializationDate: {type: string, format: date-time}
-        student: {$ref: '#/components/schemas/DomainObject'}
-        exercise: {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
-        submissions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
-          uniqueItems: true
-        quizQuestionsType:
-          type: string
-          default: before-quiz-start
-          enum: [before-quiz-start]
-    CodeGenerationRequest:
-      type: object
-      properties:
-        repositoryType:
-          type: string
-          enum: [exercise, solution, tests, auxiliary, user]
-        checkOnly: {type: boolean}
-        initialAutoGeneration: {type: boolean}
-        selectedFeedbackThreadIds:
-          type: array
-          items: {type: integer, format: int64}
     QuizQuestionRefinementResponse:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message

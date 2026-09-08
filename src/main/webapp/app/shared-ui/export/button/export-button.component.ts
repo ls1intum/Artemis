@@ -52,7 +52,7 @@ export class ExportButtonComponent {
             case ButtonSize.LARGE:
                 return 'large';
             default:
-                return 'default';
+                return 'medium';
         }
     });
 

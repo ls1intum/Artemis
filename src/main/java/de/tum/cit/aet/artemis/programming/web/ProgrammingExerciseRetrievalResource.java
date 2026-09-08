@@ -232,6 +232,8 @@ public class ProgrammingExerciseRetrievalResource {
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
         programmingExercise.setStudentParticipations(participations);
+        Long participationCount = studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(programmingExercise.getId(), false);
+        programmingExercise.setNumberOfParticipations(participationCount == null ? 0 : participationCount);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
         return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));

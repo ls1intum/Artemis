@@ -70,7 +70,8 @@
                             <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
                                 <div class="form-group">
                                     @if (authenticationError()) {
-                                        <tum-ui-message severity="error" class="my-3 w-100" aria-live="assertive">
+                                        <!-- `live` on a `danger` message is an `alert`, which is what a failed sign-in owes the reader; a hand-written `aria-live` here would compete with it. -->
+                                        <tum-ui-message severity="danger" live class="my-3 w-100">
                                             <span [jhiTranslate]="'home.errors.failedToLogin'"> Failed to sign in! Please check your login and password and try again. </span>
                                         </tum-ui-message>
                                     }

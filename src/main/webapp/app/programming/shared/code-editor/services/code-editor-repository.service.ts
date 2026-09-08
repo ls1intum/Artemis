@@ -33,7 +33,7 @@ export interface ICodeEditorRepositoryFileService {
 export interface ICodeEditorRepositoryService {
     getStatus: () => Observable<{ repositoryStatus: string }>;
     commit: () => Observable<void>;
-    pull: () => Observable<void>;
+    pull: (domain?: DomainChange) => Observable<void>;
     resetRepository: () => Observable<void>;
 }
 
@@ -101,8 +101,9 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
-    pull = () => {
-        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
+    pull = (domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http.get<void>(`${restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     /**

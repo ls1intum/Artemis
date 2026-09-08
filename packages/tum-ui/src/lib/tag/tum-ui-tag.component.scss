@@ -1,20 +1,35 @@
+// The semantic fills are mixed against the surface the tag sits on, which no utility class can express, so they
+// are keyed off `data-severity` on the host. The hook is on the host and not on the inner span, so an application
+// can match `tum-ui-tag[data-severity='danger']` from outside — the same depth `tum-ui-message` uses.
 @mixin tag-state($background, $foreground) {
     background: color-mix(in srgb, var($background) 20%, var(--tumaet-ui-content-background));
     color: var($foreground);
 }
 
-:host span[data-severity='success'] {
+:host([data-severity='success']) span {
     @include tag-state(--tumaet-ui-state-success, --tumaet-ui-state-success-foreground);
 }
 
-:host span[data-severity='info'] {
+:host([data-severity='info']) span {
     @include tag-state(--tumaet-ui-state-info, --tumaet-ui-state-info-foreground);
 }
 
-:host span[data-severity='warn'] {
+:host([data-severity='warning']) span {
     @include tag-state(--tumaet-ui-state-warning, --tumaet-ui-state-warning-foreground);
 }
 
-:host span[data-severity='danger'] {
+:host([data-severity='danger']) span {
     @include tag-state(--tumaet-ui-state-danger, --tumaet-ui-state-danger-foreground);
+}
+
+// Every severity is a `color-mix()` against the page surface, and forced-colors discards all of them — six tags
+// that differ only by fill become six identical tags. A border restores the boundary; the word inside the tag is
+// what still carries the meaning, which is why the severity was never allowed to be the only signal.
+@media (forced-colors: active) {
+    :host span {
+        border: 1px solid CanvasText;
+        background: Canvas;
+        color: CanvasText;
+        forced-color-adjust: none;
+    }
 }

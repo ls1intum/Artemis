@@ -166,9 +166,9 @@ describe('AdminDataExportsComponent', () => {
         expect(component.getStateSeverity(DataExportState.REQUESTED)).toBe('contrast');
         expect(component.getStateSeverity(DataExportState.IN_CREATION)).toBe('info');
         expect(component.getStateSeverity(DataExportState.EMAIL_SENT)).toBe('success');
-        expect(component.getStateSeverity(DataExportState.DOWNLOADED)).toBe('warn');
+        expect(component.getStateSeverity(DataExportState.DOWNLOADED)).toBe('warning');
         expect(component.getStateSeverity(DataExportState.FAILED)).toBe('danger');
-        expect(component.getStateSeverity(DataExportState.EMAIL_FAILED)).toBe('warn');
+        expect(component.getStateSeverity(DataExportState.EMAIL_FAILED)).toBe('warning');
         expect(component.getStateSeverity(DataExportState.DELETED)).toBe('secondary');
         expect(component.getStateSeverity(DataExportState.DOWNLOADED_DELETED)).toBe('secondary');
     });

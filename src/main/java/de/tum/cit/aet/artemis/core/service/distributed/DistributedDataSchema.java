@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -93,6 +93,14 @@ public final class DistributedDataSchema {
             // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * Hyperion changes agent registrations and replaces the legacy generation job record. Both are ephemeral and
+     * deliberately discarded. Student build jobs/results, feature toggles and Pyris jobs retain their v1 wire shape.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
+            new CarriedOverStructure("features", StructureKind.MAP), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

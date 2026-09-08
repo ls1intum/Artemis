@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -64,7 +65,7 @@ class LocalCIInfoContributorTest {
         // Docker states memory with a unit; the client renders megabytes, so gigabytes have to be converted rather than published as the bare number.
         Info info = contribute(List.of("--cpus", "\"2\"", "--memory", "\"2g\"", "--memory-swap", "\"3g\""));
 
-        assertThat(info.getDetails()).as("the CPU count is published as a number").containsEntry(Constants.DOCKER_FLAG_CPUS, 2L);
+        assertThat(info.getDetails()).as("the CPU count is published as a number").containsEntry(Constants.DOCKER_FLAG_CPUS, 2.0);
         assertThat(info.getDetails()).as("2g is published as 2048 MB").containsEntry(Constants.DOCKER_FLAG_MEMORY_MB, 2048L);
         assertThat(info.getDetails()).as("3g of swap is published as 3072 MB").containsEntry(Constants.DOCKER_FLAG_MEMORY_SWAP_MB, 3072L);
     }
@@ -102,11 +103,11 @@ class LocalCIInfoContributorTest {
 
         assertThat(info.getDetails()).as("a negative memory value is not published as a positive limit").doesNotContainKey(Constants.DOCKER_FLAG_MEMORY_MB);
         assertThat(info.getDetails()).as("a value that is not a number at all is left out as well").doesNotContainKey(Constants.DOCKER_FLAG_MEMORY_SWAP_MB);
-        assertThat(info.getDetails()).as("the flags that are configured properly are still published").containsEntry(Constants.DOCKER_FLAG_CPUS, 2L);
+        assertThat(info.getDetails()).as("the flags that are configured properly are still published").containsEntry(Constants.DOCKER_FLAG_CPUS, 2.0);
     }
 
     @Test
-    void contribute_leavesOutACpuCountThatIsNotAWholeAmount() {
+    void contribute_leavesOutANegativeCpuCount() {
         Info info = contribute(List.of("--cpus", "\"-2\""));
 
         assertThat(info.getDetails()).doesNotContainKey(Constants.DOCKER_FLAG_CPUS);
@@ -117,5 +118,16 @@ class LocalCIInfoContributorTest {
         Info info = contribute(List.of("--memory", "\"-2g\""));
 
         assertThat(info.getDetails()).as("the sign is not silently dropped from a value with a unit either").doesNotContainKey(Constants.DOCKER_FLAG_MEMORY_MB);
+    }
+
+    @Test
+    void contributePreservesFractionalDefaultCpuCount() {
+        ProgrammingLanguageConfiguration configuration = mock(ProgrammingLanguageConfiguration.class);
+        when(configuration.getDefaultDockerFlags()).thenReturn(List.of("--cpus", "0.5"));
+        Info.Builder builder = new Info.Builder();
+
+        new LocalCIInfoContributor(configuration).contribute(builder);
+
+        assertThat(builder.build().getDetails().get("defaultContainerCpuCount")).isEqualTo(0.5);
     }
 }

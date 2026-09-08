@@ -14,15 +14,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 class HyperionUtilsTest {
 
     @Test
-    void constants_haveExpectedValues() {
-        assertThat(HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH).isEqualTo(50_000);
-        assertThat(HyperionUtils.MAX_USER_PROMPT_LENGTH).isEqualTo(1_000);
-        assertThat(HyperionUtils.MAX_INSTRUCTION_LENGTH).isEqualTo(500);
-        assertThat(HyperionUtils.DEFAULT_COURSE_TITLE).isEqualTo("Programming Course");
-        assertThat(HyperionUtils.DEFAULT_COURSE_DESCRIPTION).isEqualTo("A programming course");
-    }
-
-    @Test
     void sanitizeInput_returnsEmptyStringForNull() {
         assertThat(HyperionUtils.sanitizeInput(null)).isEmpty();
     }
@@ -44,14 +35,12 @@ class HyperionUtilsTest {
 
     @Test
     void sanitizeInput_preservesNewlinesAndTabs() {
-        // cover both \r and \r\n variants seen in branches
         String input = "line1\nline2\r\nline3\tindented\rcarriage";
         assertThat(HyperionUtils.sanitizeInput(input)).isEqualTo(input);
     }
 
     @Test
     void sanitizeInput_stripsControlCharacters() {
-        // \u0000 (null), \u0007 (bell), \u001B (escape) are control chars that should be removed
         String input = "hello\u0000world\u0007test\u001Bend";
         assertThat(HyperionUtils.sanitizeInput(input)).isEqualTo("helloworldtestend");
     }
@@ -112,7 +101,7 @@ class HyperionUtilsTest {
 
     @Test
     void sanitizeInput_stripsNestedBraces() {
-        // {{foo{bar}}} should strip everything from {{ to the first }}
+        // The placeholder pattern is non-greedy: it strips from "{{" to the first "}}", not to the last one.
         String input = "a{{foo{bar}}}b";
         String result = HyperionUtils.sanitizeInput(input);
         assertThat(result).doesNotContain("{{");
@@ -151,7 +140,6 @@ class HyperionUtilsTest {
         String result = HyperionUtils.sanitizeInputPreserveLines(input);
 
         assertThat(result).doesNotContain("BEGIN SECTION");
-        // Delimiter content is blanked but the newline structure is kept
         assertThat(result.split("\n", -1)).hasSameSizeAs(input.split("\n", -1));
     }
 
@@ -189,7 +177,6 @@ class HyperionUtilsTest {
     @Test
     void validateUserPrompt_acceptsValidPrompt() {
         HyperionUtils.validateUserPrompt("A valid prompt", "Test");
-        // No exception expected
     }
 
     @Test
@@ -202,7 +189,6 @@ class HyperionUtilsTest {
     void validateUserPrompt_acceptsExactlyMaxLength() {
         String maxPrompt = "a".repeat(HyperionUtils.MAX_USER_PROMPT_LENGTH);
         HyperionUtils.validateUserPrompt(maxPrompt, "Test");
-        // No exception expected
     }
 
     @ParameterizedTest
@@ -215,7 +201,6 @@ class HyperionUtilsTest {
     @Test
     void validateInstruction_acceptsValidInstruction() {
         HyperionUtils.validateInstruction("A valid instruction", "Test");
-        // No exception expected
     }
 
     @Test
@@ -228,7 +213,6 @@ class HyperionUtilsTest {
     void validateInstruction_acceptsExactlyMaxLength() {
         String maxInstruction = "a".repeat(HyperionUtils.MAX_INSTRUCTION_LENGTH);
         HyperionUtils.validateInstruction(maxInstruction, "Test");
-        // No exception expected
     }
 
     @Test
@@ -307,9 +291,7 @@ class HyperionUtilsTest {
         course.setDescription("A course about {{topic}}");
         String result = HyperionUtils.getSanitizedCourseDescription(course);
 
-        assertThat(result).doesNotContain("{{");
-        // after stripping, trailing whitespace may or may not remain depending on implementation; be robust:
-        assertThat(result.trim()).isEqualTo("A course about");
+        assertThat(result).isEqualTo("A course about");
     }
 
     @Test
@@ -334,7 +316,6 @@ class HyperionUtilsTest {
 
     @Test
     void stripLineNumbers_preservesNonSequentialPrefixes() {
-        // Numbers start at 3 instead of 1 — should not be stripped
         String input = "3: First item\n5: Second item";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo(input);
     }
@@ -347,22 +328,20 @@ class HyperionUtilsTest {
 
     @Test
     void stripLineNumbers_preservesMixedLines() {
-        // First line has prefix, second doesn't — should not be stripped
         String input = "1: Introduction\nNo prefix here";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo(input);
     }
 
     @Test
     void stripLineNumbers_handlesBlankLinesInMiddle() {
-        // LLM drops the "2: " prefix from the blank line — blank counts as slot 2,
-        // so the next non-blank is correctly numbered 3.
+        // A blank line consumes its numbering slot even when the model drops the prefix, so the next non-blank is 3.
         String input = "1: First\n\n3: Third";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo("First\n\nThird");
     }
 
     @Test
     void stripLineNumbers_handlesBlankLineNumberedByLlm() {
-        // LLM preserves the number on the blank line ("2: ") — also valid
+        // A blank line that keeps its "2: " prefix is numbered just the same.
         String input = "1: First\n2: \n3: Third";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo("First\n\nThird");
     }
@@ -376,7 +355,7 @@ class HyperionUtilsTest {
 
     @Test
     void stripLineNumbers_preservesResponseWithOutOfSequenceNumber() {
-        // "2: Third" after a blank is wrong (blank consumed slot 2, so 2 != expected 3).
+        // "2: Third" after a blank is out of sequence (the blank consumed slot 2), so nothing is stripped.
         String input = "1: First\n\n2: Third";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo(input);
     }
@@ -395,7 +374,7 @@ class HyperionUtilsTest {
 
     @Test
     void stripLineNumbers_preservesNumberedListContent() {
-        // Content that looks like "1. First" should not be stripped (colon-space pattern, not dot)
+        // Only the "N: " prefix is a line number; "N. " is ordinary numbered-list content.
         String input = "1. First item\n2. Second item";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo(input);
     }

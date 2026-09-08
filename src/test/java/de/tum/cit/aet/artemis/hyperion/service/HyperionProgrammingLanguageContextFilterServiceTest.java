@@ -21,7 +21,6 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         filterService = new HyperionProgrammingLanguageContextFilterService();
     }
 
-    // Basic Positive Case
     @Test
     void filter_withJavaLanguage_filtersCorrectly() {
         Map<String, String> files = new LinkedHashMap<>();
@@ -30,7 +29,7 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         files.put("README.md", "# Project README");
         files.put("pom.xml", "<project>...</project>");
 
-        // .gitignore is NOT in SAFE_EXTENSIONS or SAFE_FILENAMES, so it should be excluded
+        // ".gitignore" is neither a safe extension nor a safe filename.
         files.put(".gitignore", "*.class");
 
         Map<String, String> result = filterService.filter(files, ProgrammingLanguage.JAVA);
@@ -43,21 +42,18 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         assertThat(result).doesNotContainKey(".gitignore");
     }
 
-    // Global & Language-Specific Exclusions
     @Test
     void filter_withJavaFiles_excludesArtifactsAndSpecifics() {
         Map<String, String> files = new LinkedHashMap<>();
-        // Valid (Now included!)
         files.put("src/main/java/Service.java", "public class Service {}");
         files.put("build.gradle", "dependencies {}");
 
-        // Global Exclusions (Must be excluded)
         files.put("target/classes/Service.class", "compiled class");
         files.put(".idea/workspace.xml", "<xml>");
         files.put("node_modules/package/index.js", "module.exports = {}");
         files.put(".git/HEAD", "ref: refs/heads/main");
 
-        // Language-Specific Exclusion (Java strategy excludes gradlew)
+        // The Java strategy excludes the Gradle wrapper scripts.
         files.put("gradlew", "#!/bin/bash");
         files.put("gradlew.bat", "echo off");
 
@@ -66,28 +62,23 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         assertThat(result).containsKey("src/main/java/Service.java");
         assertThat(result).containsKey("build.gradle");
 
-        // Assert Global Exclusions
         assertThat(result).doesNotContainKey("target/classes/Service.class");
         assertThat(result).doesNotContainKey(".idea/workspace.xml");
         assertThat(result).doesNotContainKey("node_modules/package/index.js");
         assertThat(result).doesNotContainKey(".git/HEAD");
 
-        // Assert Language-Specific Exclusions
         assertThat(result).doesNotContainKey("gradlew");
         assertThat(result).doesNotContainKey("gradlew.bat");
     }
 
-    // Safety Net & Binaries
     @Test
     void filter_withMixedExtensions_includesAllowedTextOnly() {
         Map<String, String> files = new LinkedHashMap<>();
-        // Allowed Text
         files.put("script.js", "console.log('hello');");
         files.put("style.css", "body { color: red; }");
         files.put("data.json", "{ \"key\": \"value\" }");
         files.put("Dockerfile", "FROM java:17");
 
-        // Disallowed / Binary
         files.put("image.png", "binary_data");
         files.put("archive.zip", "binary_data");
         files.put("unknown.bin", "binary_data");
@@ -100,12 +91,11 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         assertThat(result).doesNotContainKey("unknown.bin");
     }
 
-    // Size Guard
     @Test
     void filter_withLargeFile_excludesContent() {
         Map<String, String> files = new LinkedHashMap<>();
 
-        // Create a string larger than 100KB (100 * 1024 + 1 bytes)
+        // One byte past the 100 KB per-file limit.
         String largeContent = IntStream.range(0, 102401).mapToObj(i -> "a").collect(Collectors.joining(""));
 
         files.put("src/Large.java", largeContent);
@@ -117,24 +107,36 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         assertThat(result).doesNotContainKey("src/Large.java");
     }
 
-    // Unregistered Language
     @Test
     void filter_withUnsupportedLanguage_fallsBackToGlobalStrategy() {
         Map<String, String> files = new LinkedHashMap<>();
-        files.put("main.dart", "void main() {}"); // Safe extension
-        files.put("node_modules/pkg.json", "{}"); // Global exclusion
+        files.put("main.dart", "void main() {}");
+        files.put("node_modules/pkg.json", "{}");
 
-        // Passing null simulates an unregistered or unknown language, falling back to default
+        // A null language stands in for an unregistered one and falls back to the global strategy.
         Map<String, String> result = filterService.filter(files, null);
 
         assertThat(result).containsKey("main.dart");
         assertThat(result).doesNotContainKey("node_modules/pkg.json");
     }
 
-    // Null/Empty Handling
     @Test
     void filter_withEmptyOrNull_returnsEmpty() {
         assertThat(filterService.filter(new LinkedHashMap<>(), ProgrammingLanguage.JAVA)).isEmpty();
         assertThat(filterService.filter(null, ProgrammingLanguage.JAVA)).isEmpty();
+    }
+
+    @Test
+    void filter_excludesCredentialPathsAndSupportedMaterialWithoutBlockingOrdinarySource() {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        Map<String, String> files = new LinkedHashMap<>();
+        // ".json" is a safe extension, so this file can only be rejected by the credential-path gate, not by the extension net.
+        files.put("service-account.json", "{\"private_key\": \"-----BEGIN PRIVATE KEY-----\\nfixture-key-material\\n-----END PRIVATE KEY-----\"}");
+        files.put("src/sentinel.txt", githubSentinel);
+        files.put("src/Example.java", "String token = \"token\"; String password = \"change-me\"; String apiKey = \"example\";");
+
+        Map<String, String> result = filterService.filter(files, ProgrammingLanguage.JAVA);
+
+        assertThat(result).containsOnlyKeys("src/Example.java");
     }
 }

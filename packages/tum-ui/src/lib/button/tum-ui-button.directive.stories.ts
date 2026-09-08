@@ -8,17 +8,17 @@ const meta = {
     component: TumUiButtonDirective,
     args: {
         severity: 'primary',
-        size: 'default',
+        size: 'medium',
         variant: 'solid',
     },
     argTypes: {
         severity: {
             control: 'select',
-            options: ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'],
+            options: ['primary', 'secondary', 'success', 'info', 'warning', 'danger', 'contrast'],
         },
         size: {
             control: 'inline-radio',
-            options: ['small', 'default', 'large'],
+            options: ['small', 'medium', 'large'],
         },
         variant: {
             control: 'inline-radio',

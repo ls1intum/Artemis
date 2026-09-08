@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 class HyperionProgrammingExerciseContextRendererServiceTest {
@@ -160,6 +163,19 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
     }
 
     @Test
+    void getBuildEnvironmentContext_excludesSupportedSecretMaterial() throws IOException {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        FileUtils.writeStringToFile(tempDir.resolve("pom.xml").toFile(), "<project>safe</project>", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("gradle.properties").toFile(), githubSentinel, StandardCharsets.UTF_8);
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getBuildEnvironmentContext(repository);
+
+        assertThat(result).contains("pom.xml").doesNotContain("gradle.properties").doesNotContain(githubSentinel);
+    }
+
+    @Test
     void getBuildEnvironmentContext_withSymlinkedBuildFile_skipsSymlinkTarget() throws IOException {
         Path externalBuildFile = externalTempDir.resolve("hyperion-external-build-file.xml");
         FileUtils.writeStringToFile(externalBuildFile.toFile(), "<project>outside</project>", StandardCharsets.UTF_8);
@@ -186,5 +202,68 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
         assertThat(result).contains("requirements.txt");
         assertThat(result).contains("... [truncated]");
         assertThat(result).doesNotContain("x".repeat(4100));
+    }
+
+    @Test
+    void getExistingSolutionCode_withSecretBearingSourceFile_dropsOnlyThatFile() throws Exception {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        Path solutionSrc = tempDir.resolve("src");
+        Files.createDirectories(solutionSrc);
+        FileUtils.writeStringToFile(solutionSrc.resolve("Config.java").toFile(), "class Config { String token = \"" + githubSentinel + "\"; }", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(solutionSrc.resolve("Library.java").toFile(), "class Library {}", StandardCharsets.UTF_8);
+
+        ProgrammingExercise exerciseWithSolutionRepo = spy(exercise);
+        when(exerciseWithSolutionRepo.getVcsSolutionRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        Repository solutionRepository = mock(Repository.class);
+        when(solutionRepository.getLocalPath()).thenReturn(tempDir);
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(solutionRepository);
+
+        String result = contextRendererService.getExistingSolutionCode(exerciseWithSolutionRepo, gitService);
+
+        assertThat(result).contains("Library.java").doesNotContain("Config.java").doesNotContain(githubSentinel);
+    }
+
+    @Test
+    void getExistingTestCode_withSecretBearingTestFile_dropsOnlyThatFile() throws Exception {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        FileUtils.writeStringToFile(tempDir.resolve("CredentialsTest.java").toFile(), "class CredentialsTest { String token = \"" + githubSentinel + "\"; }",
+                StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("AaaTest.java").toFile(), "class AaaTest {}", StandardCharsets.UTF_8);
+
+        ProgrammingExercise exerciseWithTestRepo = spy(exercise);
+        when(exerciseWithTestRepo.getVcsTestRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        Repository testRepository = mock(Repository.class);
+        when(testRepository.getLocalPath()).thenReturn(tempDir);
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(testRepository);
+
+        String result = contextRendererService.getExistingTestCode(exerciseWithTestRepo, gitService);
+
+        assertThat(result).contains("AaaTest.java").doesNotContain("CredentialsTest.java").doesNotContain(githubSentinel);
+    }
+
+    @Test
+    void getRepositoryStructure_omitsCredentialPathTreeEntries() throws IOException {
+        Files.createDirectories(tempDir.resolve(".aws"));
+        FileUtils.writeStringToFile(tempDir.resolve(".aws/credentials").toFile(), "ordinary", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("README.md").toFile(), "# Readme", StandardCharsets.UTF_8);
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getRepositoryStructure(repository);
+
+        assertThat(result).contains("README.md").doesNotContain("credentials");
+    }
+
+    @Test
+    void renderContext_withSecretBearingProblemStatement_throwsBeforeAnyRepositoryAccess() {
+        String githubSentinel = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+        exercise.setProblemStatement("Implement login using token " + githubSentinel + " for CI.");
+        TemplateProgrammingExerciseParticipation templateParticipation = mock(TemplateProgrammingExerciseParticipation.class);
+        when(templateParticipation.getVcsRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        exercise.setTemplateParticipation(templateParticipation);
+
+        assertThatExceptionOfType(HyperionSecretMaterialPolicy.SecretMaterialException.class).isThrownBy(() -> contextRendererService.renderContext(exercise))
+                .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(githubSentinel);
+        verifyNoInteractions(repositoryService);
     }
 }

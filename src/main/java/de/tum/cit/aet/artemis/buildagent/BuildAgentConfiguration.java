@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.buildagent;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -61,7 +63,7 @@ public class BuildAgentConfiguration {
     String dockerConnectionUri;
 
     @Value("${artemis.continuous-integration.build-runner:docker}")
-    String buildRunner;
+    String buildRunner = "docker";
 
     @Value("${artemis.continuous-integration.concurrent-build-size:1}")
     int concurrentBuildSize;
@@ -124,7 +126,7 @@ public class BuildAgentConfiguration {
      */
     @NonNull
     public HostConfig hostConfig() {
-        long cpuCount = 0;
+        BigDecimal cpuCount = null;
         long cpuPeriod = 100000L;
         long memory = 0;
         long memorySwap = 0;
@@ -137,18 +139,28 @@ public class BuildAgentConfiguration {
             String value = defaultDockerFlags.get(i + 1);
 
             switch (flag) {
-                case "--cpus" -> cpuCount = Long.parseLong(value.replaceAll("[^0-9]", ""));
+                case "--cpus" -> cpuCount = new BigDecimal(value.replace("\"", "").trim());
                 case "--memory" -> memory = parseMemoryString(value);
                 case "--memory-swap" -> memorySwap = parseMemoryString(value);
-                case "--pids-limit" -> pidsLimit = Long.parseLong(value.replaceAll("[^0-9]", ""));
+                case "--pids-limit" -> pidsLimit = Long.parseLong(value.replace("\"", "").trim());
                 default -> throw new LocalCIException("Unknown docker flag: " + flag);
             }
         }
 
-        log.info("Using build job container docker host config with CPU(s): {}, memory: {}, memory swap: {}, pids limit: {}.", cpuCount, formatMemory(memory),
-                formatMemory(memorySwap), pidsLimit);
+        log.info("Using build job container docker host config with CPU(s): {}, memory: {}, memory swap: {}, pids limit: {}.", cpuCount != null ? cpuCount : "unlimited",
+                formatMemory(memory), formatMemory(memorySwap), pidsLimit);
 
-        return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
+        long cpuQuota = 0;
+        if (cpuCount != null) {
+            if (cpuCount.signum() <= 0) {
+                throw new IllegalArgumentException("Docker --cpus must be greater than zero");
+            }
+            cpuQuota = cpuCount.multiply(BigDecimal.valueOf(cpuPeriod)).setScale(0, RoundingMode.DOWN).longValueExact();
+            if (cpuQuota == 0) {
+                throw new IllegalArgumentException("Docker --cpus is below the supported CPU quota precision");
+            }
+        }
+        return HostConfig.newHostConfig().withCpuQuota(cpuQuota).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
                 .withAutoRemove(true);
     }
 
@@ -255,23 +267,35 @@ public class BuildAgentConfiguration {
         }
     }
 
-    private void shutdownBuildExecutors() {
-        shutdownExecutor(buildExecutor, "build");
-        shutdownExecutor(buildResultExecutor, "build result");
-        buildExecutor = null;
-        buildResultExecutor = null;
+    private synchronized void shutdownBuildExecutors() {
+        if (shutdownExecutor(buildExecutor, "build")) {
+            buildExecutor = null;
+        }
+        if (shutdownExecutor(buildResultExecutor, "build result")) {
+            buildResultExecutor = null;
+        }
     }
 
-    private void shutdownExecutor(ThreadPoolExecutor executor, String executorName) {
-        if (executor != null && !executor.isShutdown()) {
-            executor.shutdown();
-            try {
-                executor.awaitTermination(5, TimeUnit.SECONDS);
+    private boolean shutdownExecutor(ThreadPoolExecutor executor, String executorName) {
+        if (executor == null) {
+            return true;
+        }
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.error("{} executor did not stop after forced cancellation; refusing to replace it", executorName);
+                    return false;
+                }
             }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("{} executor termination interrupted", executorName, e);
-            }
+            return true;
+        }
+        catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+            log.warn("{} executor termination interrupted", executorName, e);
+            return false;
         }
     }
 
@@ -287,25 +311,43 @@ public class BuildAgentConfiguration {
         }
     }
 
-    public void closeBuildAgentServices() {
+    public synchronized void closeBuildAgentServices() {
         dockerAvailable = false;
         shutdownBuildExecutors();
         closeDockerClient();
     }
 
-    public void openBuildAgentServices() {
-        this.buildExecutor = createBuildExecutor();
-        this.buildResultExecutor = createBuildResultExecutor();
+    /** Stops normal LocalCI execution while keeping Docker available for generation sandboxes. */
+    public synchronized void pauseBuildJobs() {
+        shutdownBuildExecutors();
+    }
+
+    /** Reopens terminated build executors and the selected Docker backend; refuses to overlap with executors still stopping. */
+    public synchronized void openBuildAgentServices() {
+        if (isStopping(buildExecutor) || isStopping(buildResultExecutor)) {
+            throw new LocalCIException("The previous build executor is still stopping; the build agent cannot resume yet");
+        }
+        if (buildExecutor == null || buildExecutor.isTerminated()) {
+            buildExecutor = createBuildExecutor();
+        }
+        if (buildResultExecutor == null || buildResultExecutor.isTerminated()) {
+            buildResultExecutor = createBuildResultExecutor();
+        }
         openDockerServicesIfSelected();
+    }
+
+    private static boolean isStopping(ThreadPoolExecutor executor) {
+        return executor != null && executor.isShutdown() && !executor.isTerminated();
     }
 
     private void openDockerServicesIfSelected() {
         if (!"docker".equalsIgnoreCase(buildRunner)) {
-            dockerClient = null;
             dockerAvailable = false;
             return;
         }
-        dockerClient = createDockerClient();
+        if (dockerClient == null) {
+            dockerClient = createDockerClient();
+        }
         probeDockerAvailability();
     }
 

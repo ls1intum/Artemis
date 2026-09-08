@@ -3,13 +3,16 @@ import {
     buildGenerationRequest,
     buildGlobalRefinementRequest,
     buildTargetedRefinementRequest,
+    deriveDraftMetadataPrefill,
+    deriveProposedPackageName,
+    extractProblemStatementTitle,
     getCourseId,
     isTemplateOrEmpty,
     isValidGenerationResponse,
     isValidRefinementResponse,
     normalizeString,
 } from './problem-statement.utils';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -148,6 +151,10 @@ describe('ProblemStatementUtils', () => {
         it('should return true for valid draft', () => {
             expect(isValidGenerationResponse({ draftProblemStatement: 'Generated draft' })).toBeTruthy();
         });
+
+        it('should return true when the draft carries advisory hygiene warnings (they never block the draft)', () => {
+            expect(isValidGenerationResponse({ draftProblemStatement: 'Generated draft', hygieneWarnings: ['possible unrequested scope'] })).toBeTruthy();
+        });
     });
 
     describe('buildGlobalRefinementRequest', () => {
@@ -181,6 +188,115 @@ describe('ProblemStatementUtils', () => {
         it('should build request with trimmed prompt', () => {
             const result = buildGenerationRequest('  generate something  ');
             expect(result.userPrompt).toBe('generate something');
+        });
+    });
+
+    describe('extractProblemStatementTitle', () => {
+        it('should extract the first level-1 heading and strip inline formatting', () => {
+            expect(extractProblemStatementTitle('# Summarizing *Bicycle-Share* Trips\n\n## Tasks')).toBe('Summarizing Bicycle-Share Trips');
+        });
+
+        it('should return undefined when there is no heading or no statement', () => {
+            expect(extractProblemStatementTitle('plain text without heading')).toBeUndefined();
+            expect(extractProblemStatementTitle(undefined)).toBeUndefined();
+            expect(extractProblemStatementTitle('#    ')).toBeUndefined();
+        });
+
+        it('should ignore deeper headings before the level-1 heading', () => {
+            expect(extractProblemStatementTitle('intro\n# Event Scheduler\n# Second')).toBe('Event Scheduler');
+        });
+    });
+
+    describe('deriveProposedPackageName', () => {
+        it('should join title words into a lowercase single segment for Java', () => {
+            expect(deriveProposedPackageName('Summarizing Bicycle-Share Trips', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.summarizing');
+        });
+
+        it('should fold accents and drop non-ASCII characters', () => {
+            expect(deriveProposedPackageName('Café Menü Planner', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.cafemenuplanner');
+        });
+
+        it('should not start with a digit', () => {
+            expect(deriveProposedPackageName('2048 Game', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.game');
+        });
+
+        it('should escape reserved words by appending exercise', () => {
+            expect(deriveProposedPackageName('Switch', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.switchexercise');
+        });
+
+        it('should cap the length', () => {
+            const derived = deriveProposedPackageName('A '.repeat(60) + 'Very Long Exercise Title Indeed', ProgrammingLanguage.JAVA);
+            expect(derived!.length).toBeLessThanOrEqual(32);
+        });
+
+        it('should truncate at a word boundary instead of cutting mid-word', () => {
+            expect(deriveProposedPackageName('Strategy Based Music Playlist Playback', ProgrammingLanguage.JAVA)).toBe('de.tum.cit.aet.strategybased');
+        });
+
+        it('should hard-cap a single overlong word', () => {
+            const derived = deriveProposedPackageName('Supercalifragilisticexpialidocious Adventures', ProgrammingLanguage.JAVA);
+            expect(derived).toBe('de.tum.cit.aet.supercalifragilis');
+        });
+
+        it('should produce a PascalCase app name for Swift', () => {
+            expect(deriveProposedPackageName('robot rover state', ProgrammingLanguage.SWIFT)).toBe('RobotRoverState');
+        });
+
+        it('should respect the blackbox pattern for Java blackbox projects', () => {
+            expect(deriveProposedPackageName('Transit Fare Ledger', ProgrammingLanguage.JAVA, ProjectType.MAVEN_BLACKBOX)).toBe('transitfareledger');
+        });
+
+        it('should return undefined for languages without a package concept or unusable titles', () => {
+            expect(deriveProposedPackageName('Bicycle Share', ProgrammingLanguage.PYTHON)).toBeUndefined();
+            expect(deriveProposedPackageName('---', ProgrammingLanguage.JAVA)).toBeUndefined();
+            expect(deriveProposedPackageName('123', ProgrammingLanguage.JAVA)).toBeUndefined();
+        });
+    });
+
+    describe('deriveDraftMetadataPrefill', () => {
+        const draft = '# Warehouse Batch Allocation\n\nIntro text.';
+
+        it('should propose title and package name for blank fields on a new exercise without mutating it', () => {
+            const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            const prefill = deriveDraftMetadataPrefill(exercise, draft);
+            expect(prefill).toEqual({ title: 'Warehouse Batch Allocation', packageName: 'de.tum.cit.aet.warehousebatch' });
+            expect(exercise.title).toBeUndefined();
+            expect(exercise.packageName).toBeUndefined();
+        });
+
+        it('should sanitize punctuation and accents that are invalid in exercise titles', () => {
+            const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, '# Café Sorting: Dates!')).toEqual({ title: 'Cafe Sorting Dates', packageName: 'de.tum.cit.aet.cafesortingdates' });
+        });
+
+        it('should not propose a title that is shorter than the exercise form minimum', () => {
+            const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, '# AI')).toEqual({ packageName: 'de.tum.cit.aet.ai' });
+        });
+
+        it('should never propose over instructor-typed values', () => {
+            const exercise = { title: 'My Title', packageName: 'my.pkg', programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, draft)).toBeUndefined();
+        });
+
+        it('should propose only the missing field', () => {
+            const exercise = { title: 'My Title', programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, draft)).toEqual({ packageName: 'de.tum.cit.aet.warehousebatch' });
+        });
+
+        it('should not propose anything for an already created exercise', () => {
+            const exercise = { id: 42, programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, draft)).toBeUndefined();
+        });
+
+        it('should propose only the title when the language has no package concept', () => {
+            const exercise = { programmingLanguage: ProgrammingLanguage.PYTHON } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, draft)).toEqual({ title: 'Warehouse Batch Allocation' });
+        });
+
+        it('should propose nothing when the draft has no title heading', () => {
+            const exercise = { programmingLanguage: ProgrammingLanguage.JAVA } as ProgrammingExercise;
+            expect(deriveDraftMetadataPrefill(exercise, 'no heading here')).toBeUndefined();
         });
     });
 });

@@ -17,6 +17,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -106,6 +108,8 @@ import inet.ipaddr.IPAddressString;
 @Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
+
+    static final String AUTHORIZED_EXERCISE_ATTRIBUTE = LocalVCServletService.class.getName() + ".authorizedExercise";
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
@@ -141,6 +145,8 @@ public class LocalVCServletService {
     private final RateLimitService rateLimitService;
 
     private final ExerciseVersionService exerciseVersionService;
+
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
 
@@ -208,7 +214,8 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
+            UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
             BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider) {
         this.authenticationManager = authenticationManager;
@@ -227,6 +234,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
@@ -404,7 +412,25 @@ public class LocalVCServletService {
             throw e;
         }
 
+        request.setAttribute(AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
+
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    /**
+     * Claims the existing per-exercise mutation slot when a push targets a versionable staff repository. Student repositories receive a no-op lease.
+     *
+     * @param repository the repository targeted by receive-pack
+     * @param exercise   the already-authorized exercise
+     * @return a lease held by the transport until receive-pack and synchronous post-receive processing complete
+     */
+    public ProgrammingExerciseMutationGuardService.MutationLease claimProgrammingExerciseMutation(Repository repository, ProgrammingExercise exercise) {
+        LocalVCRepositoryUri repositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        RepositoryType repositoryType = getRepositoryType(repositoryUri.getRepositoryTypeOrUserName(), exercise);
+        if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+            return programmingExerciseMutationGuard.claimExternalMutation(exercise.getId());
+        }
+        return programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty());
     }
 
     /**
@@ -1335,10 +1361,6 @@ public class LocalVCServletService {
 
         try {
             if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                // The identified commit, not the repository head. Attribution has to name the commit this request created, and
-                // re-reading the head here would be a race: the online editor shares one working copy per repository, so a
-                // concurrent commit can move it and the alert would then be attributed to the wrong client.
-                // An alert about an auxiliary repository names one specific repository by id, so attributing it needs that id too
                 Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
                         ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
                         : null;

@@ -1,0 +1,110 @@
+<tum-ui-dialog
+    [header]="'artemisApp.hyperion.generation.brief.header' | artemisTranslate"
+    [(visible)]="visible"
+    [closable]="!busy()"
+    [closeOnEscape]="!busy()"
+    [dismissableMask]="false"
+    ariaDescribedBy="hyperion-brief-intro"
+    size="medium"
+>
+    <div class="flex flex-col gap-y-3" data-testid="hyperion-brief-content">
+        <p id="hyperion-brief-intro" class="text-muted-color m-0" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
+
+        @if (setupFailed()) {
+            <tum-ui-message severity="danger" live class="block" data-testid="hyperion-brief-setup-failed">
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.setupFailed"></span>
+            </tum-ui-message>
+        }
+
+        @if (startFailed()) {
+            <tum-ui-message severity="danger" live class="block" data-testid="hyperion-brief-start-failed">
+                <div class="flex flex-col gap-2">
+                    <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailed"></span>
+                    @if (capacityUnavailable()) {
+                        <span jhiTranslate="error.generationCapacityUnavailable"></span>
+                    }
+                    <div class="flex flex-wrap items-center gap-2">
+                        <tum-ui-button
+                            size="small"
+                            [severity]="capacityUnavailable() ? 'primary' : 'secondary'"
+                            [variant]="capacityUnavailable() ? 'solid' : 'outlined'"
+                            [loading]="provisioning()"
+                            [disabled]="busy()"
+                            (clicked)="retryStart()"
+                            data-testid="hyperion-brief-start-retry"
+                        >
+                            <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedRetry"></span>
+                        </tum-ui-button>
+                        <tum-ui-button
+                            size="small"
+                            severity="danger"
+                            variant="outlined"
+                            [loading]="deleting()"
+                            [disabled]="busy()"
+                            (clicked)="deleteCreatedExercise()"
+                            data-testid="hyperion-brief-start-delete"
+                        >
+                            <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedDelete"></span>
+                        </tum-ui-button>
+                    </div>
+                    @if (deleteFailed()) {
+                        <span jhiTranslate="artemisApp.hyperion.generation.brief.deleteFailed"></span>
+                    }
+                </div>
+            </tum-ui-message>
+        }
+
+        <section aria-labelledby="hyperion-brief-label">
+            <label id="hyperion-brief-label" for="hyperion-brief" class="mb-2 block font-semibold" jhiTranslate="artemisApp.hyperion.generation.brief.label"></label>
+            <p id="hyperion-brief-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.hint"></p>
+            <textarea
+                id="hyperion-brief"
+                tumUiTextarea
+                class="min-h-56 w-full resize-y"
+                rows="9"
+                [attr.maxlength]="maximumBriefLength"
+                [disabled]="busy() || createdExercise() !== undefined"
+                [ngModel]="brief()"
+                (ngModelChange)="brief.set($event)"
+                (blur)="briefTouched.set(true)"
+                [invalid]="showBriefError()"
+                [tumUiInputDescribedBy]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
+                data-testid="hyperion-brief-input"
+            ></textarea>
+            <div class="mt-2 flex items-start justify-between gap-4 text-sm">
+                <div class="min-w-0">
+                    @if (showBriefError()) {
+                        <p id="hyperion-brief-error" class="m-0 text-state-danger" data-testid="hyperion-brief-error">
+                            {{ 'artemisApp.hyperion.generation.brief.error' | artemisTranslate: { min: minimumBriefLength } }}
+                        </p>
+                    }
+                </div>
+                <span class="shrink-0 text-muted-color tabular-nums" data-testid="hyperion-brief-counter">
+                    {{ 'artemisApp.hyperion.generation.brief.counter' | artemisTranslate: { count: briefLength() | number, max: maximumBriefLength | number } }}
+                </span>
+            </div>
+        </section>
+
+        <p class="sr-only m-0" role="status">
+            @if (provisioning()) {
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.preparing"></span>
+            }
+        </p>
+
+        <p
+            class="m-0 text-sm text-muted-color"
+            jhiTranslate="artemisApp.hyperion.generation.brief.consequences"
+            [translateValues]="typicalBandParams"
+            data-testid="hyperion-brief-commitment"
+        ></p>
+    </div>
+
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="outlined" size="small" [disabled]="busy()" (clicked)="back()" data-testid="hyperion-brief-back">
+            <span jhiTranslate="entity.action.back"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="primary" size="small" [disabled]="!canGenerate()" [loading]="provisioning()" (clicked)="generate()" data-testid="hyperion-brief-generate">
+            <span jhiTranslate="artemisApp.hyperion.generation.brief.generate"></span>
+        </tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>

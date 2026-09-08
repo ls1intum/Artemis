@@ -255,7 +255,7 @@ describe('ExerciseTableComponent', () => {
 
         it('maps difficulty to a tag severity', () => {
             expect(component.difficultySeverity({ difficulty: DifficultyLevel.EASY } as Exercise)).toBe('success');
-            expect(component.difficultySeverity({ difficulty: DifficultyLevel.MEDIUM } as Exercise)).toBe('warn');
+            expect(component.difficultySeverity({ difficulty: DifficultyLevel.MEDIUM } as Exercise)).toBe('warning');
             expect(component.difficultySeverity({ difficulty: DifficultyLevel.HARD } as Exercise)).toBe('danger');
             expect(component.difficultySeverity({} as Exercise)).toBe('secondary');
         });
@@ -362,8 +362,9 @@ describe('ExerciseTableComponent', () => {
 
             const difficultyTag = element.querySelector('tum-ui-tag');
             expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);
-            // The kit tag carries its severity on the inner pill span, not the host element.
-            expect(difficultyTag?.querySelector('span')?.getAttribute('data-severity')).toBe('success');
+            // The kit tag publishes its severity on the host, so a consumer can style or assert on it without
+            // reaching into the component's internals.
+            expect(difficultyTag?.getAttribute('data-severity')).toBe('success');
         });
 
         it('renders the effective dates of a row', () => {

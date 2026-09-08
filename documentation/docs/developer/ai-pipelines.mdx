@@ -104,9 +104,9 @@ The authoring resources expose focused workflows, rather than one monolithic pip
 | Consistency verification                    | `HyperionProblemStatementResource`, `HyperionConsistencyCheckService`, plus the programming-language context services                                                                    |
 | Checklist analysis and actions              | `HyperionProblemStatementResource`, `HyperionChecklistService`                                                                                                                           |
 | Quiz generation and refinement              | `HyperionQuizQuestionGenerationResource`, `HyperionQuizQuestionGenerationService`                                                                                                        |
-| Staged programming-exercise code generation | `HyperionCodeGenerationResource`, `HyperionCodeGenerationService`, `HyperionCodeGenerationJobService`, `HyperionCodeGenerationTaskService`, and `HyperionCodeGenerationExecutionService` |
+| Whole programming-exercise generation and adaptation | `HyperionExerciseGenerationResource` and the `exercisegeneration` orchestration, persistence, and verification services |
 
-The staged code-generation services coordinate Artemis exercise and repository context, jobs, tasks, execution, and generated artifacts. They should not be documented as a direct external service call. For the detailed consistency-check flow, including its language-aware context filtering and verification pass, see [Consistency Check](./hyperion/consistency-check).
+Whole-exercise generation runs inside Artemis and delegates untrusted builds to isolated LocalCI sandboxes; it is not an external AI service API. For its deployment, security, and operational model, see [Hyperion setup](../admin/hyperion). For the detailed consistency-check flow, including language-aware context filtering and verification, see [Consistency Check](./hyperion/consistency-check).
 
 ## Atlas agents, competency orchestration, and AtlasML
 

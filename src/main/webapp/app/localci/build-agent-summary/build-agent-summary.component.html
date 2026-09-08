@@ -18,7 +18,9 @@
         <div class="flex justify-between items-center border-b border-surface pb-2 mb-3">
             <p class="mb-0">
                 {{ buildAgents().length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds() }}
-                <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
+                <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span> ·
+                {{ generationSandboxSlots().reserved }} <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ generationSandboxSlots().maximum }}
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxSlotsInUse"></span>
             </p>
         </div>
         <div class="build-agents-section">
@@ -30,6 +32,7 @@
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.status"></th>
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></th>
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></th>
+                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.generationSandboxSlots"></th>
                         <th scope="col" class="build-agents-column-jobs" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></th>
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildQueue.actions"></th>
                     </tr>
@@ -55,7 +58,7 @@
                             </td>
                             <td class="build-agents-column-strings">{{ agent.buildAgent?.memberAddress }}</td>
                             <td class="build-agents-column">
-                                @switch (agent.status) {
+                                @switch (effectiveStatus(agent)) {
                                     @case ('ACTIVE') {
                                         <tum-ui-tag severity="success" [value]="'artemisApp.buildAgents.running' | artemisTranslate" />
                                     }
@@ -63,15 +66,32 @@
                                         <tum-ui-tag severity="secondary" [value]="'artemisApp.buildAgents.idle' | artemisTranslate" />
                                     }
                                     @case ('PAUSED') {
-                                        <tum-ui-tag severity="warn" [value]="'artemisApp.buildAgents.paused' | artemisTranslate" />
+                                        <tum-ui-tag severity="warning" [value]="'artemisApp.buildAgents.paused' | artemisTranslate" />
                                     }
                                     @case ('SELF_PAUSED') {
-                                        <tum-ui-tag severity="warn" [value]="'artemisApp.buildAgents.selfPaused' | artemisTranslate" />
+                                        <tum-ui-tag severity="warning" [value]="'artemisApp.buildAgents.selfPaused' | artemisTranslate" />
                                     }
                                 }
                             </td>
                             <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
                             <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
+                            <td class="build-agents-column">
+                                @if (agent.reservedGenerationSandboxSlots !== undefined && agent.maxGenerationSandboxSlots !== undefined) {
+                                    @if (agent.buildAgent?.name && agent.maxGenerationSandboxSlots > 0) {
+                                        <a
+                                            [routerLink]="['/admin/build-agents/details']"
+                                            [queryParams]="{ agentName: agent.buildAgent.name }"
+                                            fragment="active-hyperion-generations"
+                                        >
+                                            {{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}
+                                        </a>
+                                    } @else {
+                                        {{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}
+                                    }
+                                } @else {
+                                    —
+                                }
+                            </td>
                             <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
                                 @for (job of agent.runningBuildJobs ?? []; track job.id ?? $index) {
                                     <div class="running-job-item">

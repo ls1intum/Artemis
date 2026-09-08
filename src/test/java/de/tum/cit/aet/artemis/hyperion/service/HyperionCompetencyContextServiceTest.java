@@ -230,7 +230,6 @@ class HyperionCompetencyContextServiceTest {
 
         CompetencyContext context = service.computeContext(42L, List.of(1L));
 
-        // Exercise is silently skipped; no exception propagated to caller
         assertThat(context.lectureSnippets()).isEmpty();
     }
 
@@ -242,7 +241,6 @@ class HyperionCompetencyContextServiceTest {
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of(5L, 6L));
         when(competencyRelationApi.findExercisesByCompetencyIds(anySet())).thenReturn(Set.of());
         when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
-        // Two text units with identical formatted output
         when(lectureUnitApi.findAllByIds(anySet())).thenReturn(
                 List.of(makeTextUnit("Sorting", "Lecture: Basics", "Merge sort splits the array."), makeTextUnit("Sorting", "Lecture: Basics", "Merge sort splits the array.")));
 
@@ -346,8 +344,6 @@ class HyperionCompetencyContextServiceTest {
         assertThat(context.lectureSnippets()).isEmpty();
         verify(chatModel, never()).call(any(Prompt.class));
     }
-
-    // --- Helper methods ---
 
     private static Competency makeCompetency(long id, String title) {
         Competency c = new Competency();

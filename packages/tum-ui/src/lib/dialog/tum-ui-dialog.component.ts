@@ -68,7 +68,12 @@ function unlockPageScroll(): void {
 @Component({
     selector: 'tum-ui-dialog',
     templateUrl: './tum-ui-dialog.component.html',
+    styleUrl: './tum-ui-dialog.component.scss',
     imports: [NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe],
+    host: {
+        '[attr.data-slot]': '"dialog"',
+        '[attr.data-state]': "visible() ? 'open' : 'closed'",
+    },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiDialogComponent implements OnDestroy {

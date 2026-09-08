@@ -23,9 +23,8 @@
                                 <td class="align-top">{{ healthDetail.key }}</td>
                                 <td>
                                     @if (isBuildAgentsArray(healthDetail.value, healthDetail.key)) {
-                                        <!-- Special formatting for LocalCI build agents -->
                                         <div class="build-agents-health">
-                                            @for (agent of formatBuildAgents(healthDetail.value, healthDetail.key); track agent.name) {
+                                            @for (agent of formatBuildAgents(healthDetail.value, healthDetail.key); track agent.memberAddress + ':' + agent.name) {
                                                 <div class="mb-3 rounded-lg border border-surface-200 dark:border-surface-700 p-2">
                                                     <div class="mb-1 flex items-center justify-between">
                                                         <strong>{{ agent.displayName }}</strong>
@@ -39,6 +38,12 @@
                                                         <span class="me-2" jhiTranslate="health.details.jobs"></span>
                                                         <strong>{{ agent.currentJobs }}</strong> / {{ agent.maxJobs }}
                                                     </div>
+                                                    @if (hasHyperionSandboxCapacity(agent)) {
+                                                        <div class="mb-1">
+                                                            <span class="me-2" jhiTranslate="health.details.generationSandboxSlots"></span>
+                                                            <strong>{{ agent.reservedGenerationSandboxSlots }}</strong> / {{ agent.maxGenerationSandboxSlots }}
+                                                        </div>
+                                                    }
                                                     @if (agent.runningJobNames.length > 0) {
                                                         <div class="text-sm">
                                                             <span class="text-muted-color" jhiTranslate="health.details.running"></span>

@@ -1,0 +1,31 @@
+:host {
+    --tum-ui-separator-color: var(--tumaet-ui-border-color);
+    --tum-ui-separator-thickness: 1px;
+
+    flex-shrink: 0;
+    background: var(--tum-ui-separator-color);
+}
+
+:host([data-orientation='horizontal']) {
+    display: block;
+    width: 100%;
+    height: var(--tum-ui-separator-thickness);
+}
+
+// A vertical rule takes the height of the row it sits in, so it does not need one hard-coded and it never has to be
+// kept in sync with the tallest item beside it.
+:host([data-orientation='vertical']) {
+    display: block;
+    width: var(--tum-ui-separator-thickness);
+    height: auto;
+    align-self: stretch;
+    min-height: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+// A background colour is dropped entirely in forced-colors mode, which would delete the rule.
+@media (forced-colors: active) {
+    :host {
+        background: CanvasText;
+        forced-color-adjust: none;
+    }
+}

@@ -340,12 +340,12 @@ describe('AdminSbomComponent', () => {
             expect(component.getSeverityLevel('CRITICAL')).toBe('danger');
         });
 
-        it('should return warn for HIGH', () => {
-            expect(component.getSeverityLevel('HIGH')).toBe('warn');
+        it('should return warning for HIGH', () => {
+            expect(component.getSeverityLevel('HIGH')).toBe('warning');
         });
 
-        it('should return warn for MEDIUM', () => {
-            expect(component.getSeverityLevel('MEDIUM')).toBe('warn');
+        it('should return warning for MEDIUM', () => {
+            expect(component.getSeverityLevel('MEDIUM')).toBe('warning');
         });
 
         it('should return info for LOW', () => {

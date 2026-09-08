@@ -6,6 +6,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     template: '<ng-content />',
     styleUrl: './tum-ui-tab-panels.component.scss',
     host: {
+        '[attr.data-slot]': '"tab-panels"',
         class: 'tum-ui-tab-panels',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
