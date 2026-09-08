@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * Mirrors the pre-refactor wire shape of associations declared as {@code @JsonIncludeProperties({"id","name"})}
  * — currently {@code Reaction.user}. Unlike {@link UserSummaryDTO} (which also carries {@code imageUrl}/{@code bot}
  * to match {@code Posting.author}), this keeps the payload to exactly the two fields the original serialized, so
- * embedding it does not broaden the wire shape the frontend consumes. Like {@link UserSummaryDTO}, it carries no
+ * embedding it does not broaden the wire shape the client consumes. Like {@link UserSummaryDTO}, it carries no
  * {@code login}/{@code email}/{@code registrationNumber}, preserving the data-minimization guarantee.
  *
  * @param id   the user id
