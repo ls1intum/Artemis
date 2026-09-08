@@ -916,12 +916,14 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
         });
 
-        it('documents a known client/server gap: the client accepts a 2-char title, but the server requires 3+ for every exercise type', () => {
+        it('should report a title shorter than the minimum length', () => {
             comp.modelingExercise = filledInExercise('ab');
             comp.isExamMode.set(false);
             comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
-            expect(comp.getInvalidReasons()).toEqual([]);
+            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
         });
 
         it('should forward the timeline reasons', () => {

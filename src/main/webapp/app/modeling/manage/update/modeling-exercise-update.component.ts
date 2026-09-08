@@ -310,6 +310,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
         return getCommonExerciseInvalidReasons(this.modelingExercise, {
             isExamMode: this.isExamMode(),
+            minTitleLength: 3,
             isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
             isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
             timelineStatus: this.timelineStatus(),

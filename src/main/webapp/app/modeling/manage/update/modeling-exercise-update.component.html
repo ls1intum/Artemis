@@ -19,6 +19,7 @@
             [exercise]="modelingExercise"
             [course]="modelingExercise.course"
             [courseId]="modelingExercise.course?.id"
+            [minTitleLength]="3"
             [isExamMode]="isExamMode()"
             [isImport]="isImport()"
             (onTitleChange)="calculateFormSectionStatus()"
