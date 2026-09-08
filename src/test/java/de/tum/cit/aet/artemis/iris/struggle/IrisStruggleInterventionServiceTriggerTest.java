@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
@@ -155,6 +156,22 @@ class IrisStruggleInterventionServiceTriggerTest {
         assertThat(prepared.courseDisabled()).isTrue();
         verifyNoInteractions(programmingExerciseRepository, pyrisJobService, pyrisPipelineService);
         verify(irisSettingsService, never()).getSettingsForCourse(any());
+    }
+
+    @Test
+    void examExercise_rejectsBeforeAnythingReachesPyris() {
+        // Iris serves no exam exercise, and the rejection has to land here rather than in the callback: past this
+        // point the exercise, the latest submission and the student's uncommitted files would go out.
+        exercise.setCourse(null);
+        exercise.setExerciseGroup(new ExerciseGroup());
+
+        var prepared = service.prepareTrigger(EX, user, null, null, null, null, null);
+
+        assertThat(prepared.accepted()).isFalse();
+        assertThat(prepared.courseDisabled()).isTrue();
+        verify(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        verify(irisSettingsService, never()).getSettingsForCourse(any(Course.class));
+        verifyNoInteractions(irisRateLimitService, pyrisJobService, pyrisPipelineService, irisProactiveEpisodeRepository);
     }
 
     @Test

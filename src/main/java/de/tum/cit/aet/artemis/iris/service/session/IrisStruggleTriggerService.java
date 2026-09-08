@@ -107,7 +107,7 @@ public class IrisStruggleTriggerService {
 
     /**
      * Trigger a proactive struggle intervention. Returns a typed outcome: accepted (with job token), or rejected
-     * carrying whether the rejection was a deliberate course-off or a run already in flight for this
+     * carrying whether proactive help is unavailable for this exercise or a run is already in flight for this
      * {@code (user, exercise)}. A spent Iris budget and an active admission cooldown do not appear here at all;
      * they throw, and the endpoint answers 429. The sync part runs on the request thread; only the heavy DTO build
      * and POST are off-thread.
@@ -121,7 +121,7 @@ public class IrisStruggleTriggerService {
      * @param requestToken     the scoped-cancel identity; null on older clients
      * @param proactivityMode  the presence level ({@code pull} | {@code push}); enforces Pull in the callback
      * @param user             the requesting student
-     * @return the trigger outcome (accepted + job token, or rejected with the course-off flag for the 202)
+     * @return the trigger outcome (accepted + job token, or rejected with the unavailability flag for the 202)
      */
     public StruggleTriggerOutcome requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, @Nullable String intent,
             @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode, User user) {
@@ -203,9 +203,9 @@ public class IrisStruggleTriggerService {
     }
 
     /**
-     * Synchronous core: deployment gate, light exercise load (id only), STUDENT-role gate, then the iris-enabled +
-     * proactive gate, then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
-     * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
+     * Synchronous core: deployment gate, light exercise load (id only), STUDENT-role gate, exam gate, then the
+     * iris-enabled + proactive gate, then reserve the single-flight slot by minting the job. A SINGLE settings read
+     * distinguishes a lasting unavailability from a transient in-flight skip, both of which reject.
      *
      * @param exerciseId      the programming exercise id
      * @param user            the requesting student
@@ -215,7 +215,7 @@ public class IrisStruggleTriggerService {
      * @param confirmReason   the close-mode discriminator; stamped on the job for close routing
      * @param requestToken    the scoped-cancel UUID; stamped on the job for cancel matching
      * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped on the job and forwarded to Pyris for tone
-     * @return a typed preparation: the reserved trigger, or a rejection tagged course-off vs in-flight
+     * @return a typed preparation: the reserved trigger, or a rejection tagged unavailable vs in-flight
      */
     public TriggerPreparation prepareTrigger(long exerciseId, User user, @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason,
             @Nullable String requestToken, @Nullable String proactivityMode) {
@@ -224,8 +224,15 @@ public class IrisStruggleTriggerService {
             return TriggerPreparation.courseOff();
         }
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        // Iris serves no exam exercise, the same rule the two chat paths enforce. It has to be answered HERE, ahead
+        // of the dispatch: the callback would reject the exam too, but only after the exercise, the submission and
+        // the student's uncommitted files had already gone to Pyris. After the role check, so an outsider still
+        // learns nothing beyond the 403 they already get.
+        if (exercise.isExamExercise()) {
+            return TriggerPreparation.courseOff();
+        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.proactiveStruggleEffective()) {
             return TriggerPreparation.courseOff();
@@ -304,6 +311,9 @@ public class IrisStruggleTriggerService {
      * {@code getCourseViaExerciseGroupOrCourseMember()} off-thread is safe. This method captures only ids + the immutable
      * payload - do NOT "fix" it by wrapping it in {@code @Transactional} (a self-invoked, non-proxied call would be a no-op
      * anyway) or by passing a request-thread entity across the boundary.
+     *
+     * Takes a snapshot that {@link #prepareTrigger} admitted, and relies on it: the gates that decide whether this
+     * exercise may reach Pyris at all, the exam gate among them, are enforced there and not repeated here.
      *
      * @param p                the immutable trigger snapshot (ids + payload)
      * @param signal           the struggle signal from the client engine
@@ -417,9 +427,9 @@ public class IrisStruggleTriggerService {
 
     /**
      * Why a trigger was (not) prepared, from a SINGLE settings read: a reserved trigger, or a rejection that is either
-     * a deliberate course-off (Iris/proactive disabled) or a run already in flight for this {@code (user, exercise)}.
-     * Distinguishing the two lets the 202 carry an exact {@code courseDisabled} so a slow in-flight job is never
-     * mis-read by the client as a course disable. The budget and cooldown rejections are not in here: they answer
+     * lasting (Iris or proactive off for the course, or an exercise Iris does not serve, currently an exam exercise)
+     * or a run already in flight for this {@code (user, exercise)}. Distinguishing the two lets the 202 carry an exact
+     * {@code courseDisabled} so a slow in-flight job is never mis-read as "stop asking". The budget and cooldown rejections are not in here: they answer
      * 429, because neither leaves a run behind that could deliver the frame an unaccepted 202 makes the client await.
      */
     public record TriggerPreparation(@Nullable PreparedTrigger trigger, boolean courseDisabled) {
@@ -444,7 +454,7 @@ public class IrisStruggleTriggerService {
         }
     }
 
-    /** Outcome surfaced to the REST layer: accepted (with job token) or rejected, course-off carried for the 202. */
+    /** Outcome surfaced to the REST layer: accepted (with job token) or rejected, unavailability carried for the 202. */
     public record StruggleTriggerOutcome(boolean accepted, boolean courseDisabled, @Nullable String jobToken) {
     }
 }
