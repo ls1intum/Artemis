@@ -92,14 +92,15 @@ Some releases change behavior in a way that requires a one-time action on existi
 
 The sign-in page asks for the identifier first and then decides, from the account's internal flag, whether to offer a password field or to send the user to the configured identity provider. Only an account marked as internal authenticates against a password stored in Artemis; every other account is sent to the identity provider.
 
-Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as internal accounts, so they are offered the password form instead of the identity provider. Accounts provisioned from LDAP are not affected, because they have always been stored as externally managed.
+An account is either internal or external, never both. An internal account authenticates against a password stored in Artemis; an external one authenticates against the identity provider that manages it. A SAML2 account belongs in the second group, alongside OIDC and LDAP.
 
-Clearing the internal flag takes away everything that authenticates against a password stored in Artemis: the password form on the sign-in page, **Change password**, the password reset function, and Git over HTTPS with a password. VCS access tokens and SSH keys keep working, because neither is checked against the password.
+Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as internal accounts, so they are offered the password form instead of the identity provider. The password such an account holds is a random one that was never given to its owner, so the owner cannot sign in until the flag is cleared. Accounts provisioned from LDAP are not affected, because they have always been stored as externally managed.
 
-What this means for your users depends on `info.saml2.enablePassword`:
+Clearing the internal flag takes away everything that authenticates against a password stored in Artemis: the password form on the sign-in page, **Change password**, the password reset function, and Git over HTTPS with a password. VCS access tokens and SSH keys keep working, because neither is checked against the password, and they are what an externally managed account uses for Git.
 
-- **Unset or `false` for the whole life of the instance**: every SAML2-provisioned account holds a random password that was never given to its owner, so the owner cannot sign in at all and nothing about the account depends on the password. These are the accounts the change below is for.
-- **`true` at any point**: every account provisioned while it was `true` was sent a mail with a link to set an Artemis password, and the password form works for whoever used that link. Artemis records that it provisioned the account, but not whether the owner completed the setup, so you cannot tell from Artemis alone which of these accounts still depends on its password. Treat this group as manual review rather than a bulk update.
+<Callout variant={CalloutVariant.warning}>
+  `info.saml2.enablePassword` predates this separation. It mails a newly provisioned SAML2 user a link to set an Artemis password, which gives an account the identity provider manages a second credential stored in Artemis. Do not enable it. Where an instance has used it, still clear the internal flag, and tell the affected users to sign in through the identity provider and to replace a password they used for Git with a VCS access token or an SSH key.
+</Callout>
 
 #### Identifying the Affected Accounts
 
@@ -133,7 +134,7 @@ If the audit log does not reach back far enough, build the list from the identit
 
 **For a few accounts**, open **Administration → User management**, edit the user, and clear the **Internal** checkbox.
 
-**For many accounts**, update `jhi_user.is_internal` directly — but only for accounts that are safe to change in bulk, which means only while `info.saml2.enablePassword` has been unset or `false` for the whole life of the instance. Confirm that the `SELECT` above returns what you expect and that you have a backup, then run the update in a transaction:
+**For many accounts**, update `jhi_user.is_internal` directly. Confirm that the `SELECT` above returns what you expect and that you have a backup, then run the update in a transaction:
 
 ```sql
 BEGIN;
@@ -145,30 +146,6 @@ WHERE is_internal = TRUE
                 WHERE d.name = 'user' AND e.event_type = 'SAML2_ACCOUNT_CREATE');
 COMMIT;
 ```
-
-If `info.saml2.enablePassword` has ever been `true`, do not run that statement as it stands. `SAML2_ACCOUNT_CREATE` says only that Artemis provisioned the account; it records neither the setting that was in force at the time nor whether the owner completed the password setup. Narrow the set before you change anything:
-
-- Restrict it by provisioning date. `event_date` on the audit event holds when the account was provisioned, so adding a condition such as `AND e.event_date < '2026-01-01'` to the subquery limits the set to the period in which your own configuration history says the setting was `false`.
-- Exclude every account that has a password event of its own. From version 9.9 on, Artemis records `COMPLETE_PASSWORD_RESET`, `CHANGE_OWN_PASSWORD` and `ADMIN_CHANGE_USER_PASSWORD`, each naming the account the same way `SAML2_ACCOUNT_CREATE` does:
-
-  ```sql
-  SELECT u.login, u.email
-  FROM jhi_user u
-  WHERE u.is_internal = TRUE
-    AND u.login IN (SELECT d.event_data
-                    FROM jhi_persistent_audit_evt_data d
-                         JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
-                    WHERE d.name = 'user' AND e.event_type = 'SAML2_ACCOUNT_CREATE')
-    AND u.login NOT IN (SELECT d.event_data
-                        FROM jhi_persistent_audit_evt_data d
-                             JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
-                        WHERE d.name = 'user'
-                          AND e.event_type IN ('COMPLETE_PASSWORD_RESET', 'CHANGE_OWN_PASSWORD', 'ADMIN_CHANGE_USER_PASSWORD'));
-  ```
-
-  Artemis writes these three events from version 9.9 on, so on a database that ran an earlier release they cover only the time since that upgrade, and immediately after the upgrade they cover nothing at all. A missing password event narrows the review list; it is not proof that the owner never set a password.
-
-Whatever remains after those two steps is a manual decision. Settle it with the account owners, or leave the accounts internal: an account that stays internal is offered the password form, which is recoverable, whereas an account wrongly turned external loses its password access until an administrator sets the flag back.
 
 Keep the internal administrator configured in `artemis.user-management.internal-admin.username` internal, and keep every other account that does authenticate against a password stored in Artemis internal as well. Accounts that Artemis provisions after the upgrade are stored correctly.
 
