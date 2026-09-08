@@ -531,6 +531,20 @@ the first instance is both faster and easier to diagnose.
   backfills it, and adds a constraint over it can do all three in one release.
 </Callout>
 
+<Callout variant={CalloutVariant.warning}>
+  Stopping the cluster removes the need for two versions to share a schema, but it does not make
+  **rolling back** safe. Starting the previous version again does not undo the migration: the schema
+  it meets is the new one. A column added as `NOT NULL` without a default breaks every `INSERT` the
+  previous version issues against that table, even though it never selects the column, and a
+  constraint the new version tightened rejects writes the previous version considers valid.
+
+  So a version is only revertible on its own if the new schema still accepts everything the previous
+  version reads and writes. Where a migration breaks that — and adding a required column or
+  tightening a constraint usually does — plan the way back before deploying: take a backup
+  immediately before the migration and restore it as part of the rollback, or keep the schema
+  backward compatible and complete the tightening in a later release.
+</Callout>
+
 
 ## Integrated Code Lifecycle
 

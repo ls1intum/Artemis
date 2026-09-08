@@ -116,7 +116,8 @@ no Hibernate second-level cache, and the counted gates that sit at their limit.
 
 **`liquibase-migration`** covers how migrations are deployed (the cluster is stopped, the first
 instance migrates, the rest follow), the guarded pattern for adding a NOT NULL constraint, expand and
-contract for a column the previous version still reads, and why triggers are not an option here.
+contract for a column the previous version still reads or writes, the rollback invariant that a new
+required column or a tightened constraint also breaks, and why triggers are not an option here.
 
 **`client-conventions`** covers signal APIs, the `ngOnChanges` ban, `@if` and `@for`, `deepClone`
 rather than spread or `structuredClone`, and TUM UI with semantic colour tokens.
