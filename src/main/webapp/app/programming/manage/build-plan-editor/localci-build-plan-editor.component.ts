@@ -227,7 +227,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Persists the edited build plan configuration via the dedicated build-config endpoint.
+     * Persists the edited build plan configuration via the dedicated build-config endpoint. A response that arrives after
+     * a different exercise was opened on this page only releases the in-flight flag: the baseline it would set and the
+     * alert it would raise belong to the exercise that was submitted, not to the one on screen.
      */
     submit(): void {
         const exercise = this.programmingExercise();
@@ -241,6 +243,10 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         // that state becomes the baseline; an edit made in the meantime therefore stays unsaved instead of being marked
         // as persisted and silently discarded on the next navigation
         const submittedSnapshot = this.snapshot();
+        // The editor page is reused when the instructor navigates from one exercise's build plan to another's (same route,
+        // other id), so this response may arrive while a different exercise is open. The in-flight flag is the component's
+        // own and is released either way; everything else the response would do is checked against the submitted exercise.
+        const submittedExerciseId = exercise.id;
         this.buildPlanConfigurationService
             .updateBuildPlanConfiguration(exercise.id, {
                 // the image is validated trimmed, so it is also stored trimmed instead of keeping the whitespace an instructor pasted
@@ -252,11 +258,17 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             .subscribe({
                 next: () => {
                     this.isSaving.set(false);
+                    if (this.programmingExercise()?.id !== submittedExerciseId) {
+                        return;
+                    }
                     this.persistedSnapshot.set(submittedSnapshot);
                     this.alertService.success('artemisApp.programmingExercise.buildPlanConfiguration.saved');
                 },
                 error: (error) => {
                     this.isSaving.set(false);
+                    if (this.programmingExercise()?.id !== submittedExerciseId) {
+                        return;
+                    }
                     onError(this.alertService, error);
                 },
             });

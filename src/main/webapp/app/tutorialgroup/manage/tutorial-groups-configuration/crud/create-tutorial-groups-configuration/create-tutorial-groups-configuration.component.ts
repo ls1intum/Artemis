@@ -12,6 +12,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
@@ -19,7 +20,7 @@ import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto
     selector: 'jhi-create-tutorial-groups-configuration',
     templateUrl: './create-tutorial-groups-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupsConfigurationFormComponent],
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupsConfigurationFormComponent, TumUiMessageComponent],
 })
 export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Die Bewertung ist noch nicht möglich: Du kannst beginnen, sobald die Klausur für alle Studierenden am {{ date }} beendet ist.",
         "assessmentNotPossibleTestsPending": "Die Bewertung ist noch nicht möglich: Die Tests müssen noch einmal auf den endgültigen Abgaben ausgeführt werden. Du kannst ab {{ date }} bewerten.",
+        "invalidCorrectionRound": "Diese Korrekturrunde gibt es für die Aufgabe nicht.",
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
@@ -325,6 +326,7 @@
         "duplicateBuildContainerName": "Der Build-Container-Name {{ container }} wird mehrfach verwendet.",
         "invalidBuildContainerName": "Der Build-Container-Name {{ container }} ist ungültig. Verwende nur Buchstaben, Ziffern und Unterstriche und beginne nicht mit einer Ziffer.",
         "emptyBuildContainer": "Der Build-Container {{ container }} muss mindestens eine Build-Phase enthalten.",
+        "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }
 }
