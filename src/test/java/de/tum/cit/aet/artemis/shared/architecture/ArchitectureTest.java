@@ -250,6 +250,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoTransactionSynchronization() {
+        String reason = """
+                A transaction synchronization callback only runs while a transaction is open, and a transaction boundary may only be \
+                declared inside a repository, where it lasts for one statement. Registering a callback from anywhere else therefore \
+                does nothing at all: TransactionSynchronizationManager.isSynchronizationActive() is false, so afterCommit and \
+                afterCompletion never fire, and nothing is logged. That is the failure mode this rule exists to prevent — code written \
+                to delete a file on rollback or to publish an event after commit silently skips both, leaving orphaned files and \
+                half-written state behind.
+                Do the work explicitly instead. After a repository call returns, its transaction has committed, so "after commit" is \
+                simply the next statement. To undo work on failure, compensate in a catch block: see SlideSplitterService.SlideOperation \
+                for the pattern, which records the files and rows an operation created and puts them back if it fails.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Checked over allClasses, tests included: a test that activates synchronization by hand keeps a dead production branch
+        // looking covered, which is how the previous usages survived.
+        ArchRule noTransactionSynchronization = noClasses().should()
+                .dependOnClassesThat(resideInAnyPackage("org.springframework.transaction.support..").and(simpleNameContaining("TransactionSynchronization"))).because(reason);
+
+        noTransactionSynchronization.check(allClasses);
+    }
+
+    @Test
     void testNoHibernateSecondLevelCacheAnnotation() {
         String reason = "Hibernate L2 cache is disabled cluster-wide. @Modifying queries bypass L2 invalidation and the absence of service-level @Transactional leaves no clean "
                 + "place to coordinate cache eviction within a REST call, both of which produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR "
