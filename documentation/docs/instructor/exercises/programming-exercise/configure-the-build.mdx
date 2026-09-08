@@ -233,11 +233,11 @@ On exercise import, configurations are copied from the imported exercise.
 
 By default, unit test results are extracted and sent to Artemis automatically. Only custom setups may need semi-automatic approaches.
 
-Test results normally reach Artemis as XML files in JUnit format, collected from the result paths configured for each build phase. Any language can therefore report results, as long as it writes JUnit XML.
+Test results normally reach Artemis as XML files in JUnit format, collected from the result paths of the phases that actually ran. Phases dropped by their inclusion condition — an `After due date` phase during a student's working time, for instance — contribute no results, so a test only reports once its phase is active. Any language can therefore report results, as long as it writes JUnit XML.
 
 ### Custom Feedback
 
-When a test result cannot be expressed as a JUnit case, write a **JSON** file into one of the phase's result paths instead. With Integrated Code Lifecycle, Artemis parses every `.json` file it collects as custom feedback, using this schema:
+When a test result cannot be expressed as a JUnit case, write a **JSON** file into a result path of an active phase instead. With Integrated Code Lifecycle, Artemis parses every `.json` file it collects as custom feedback, using this schema:
 
 ```json
 {
