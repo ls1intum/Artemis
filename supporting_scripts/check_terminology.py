@@ -82,6 +82,15 @@ SELF_EXCLUDED = frozenset(
     }
 )
 
+# Liquibase changelogs are immutable once merged. Liquibase stores a checksum per changeset and the
+# application refuses to start when a recorded changeset no longer matches, so editing a released
+# changelog breaks startup on every database that already ran it, production included. That outranks
+# a wording preference in a comment, and the rule has to be structural rather than a marker somebody
+# has to remember: a checker that asks for an unsafe edit will eventually get one. Say "provider",
+# "server" or "database" in new changelogs; leave merged ones alone.
+# See skills/liquibase-migration/SKILL.md.
+EXCLUDED_PREFIXES = ("src/main/resources/config/liquibase/",)
+
 GUIDANCE = """\
 Name the component instead:
 
@@ -108,6 +117,11 @@ def offending(line: str) -> bool:
     return bool(WORD_INITIAL.search(line) or CAMEL_CASE.search(line))
 
 
+def excluded(path: str) -> bool:
+    """Return whether a tracked path is out of scope, either self-referential or unsafe to edit."""
+    return path in SELF_EXCLUDED or path.startswith(EXCLUDED_PREFIXES)
+
+
 def tracked_files(repo_root: Path) -> list[str]:
     """Return every tracked path, so the scan matches what a reviewer would see in the tree."""
     listing = subprocess.run(
@@ -124,7 +138,7 @@ def scan(repo_root: Path) -> list[tuple[str, int, str]]:
     """Return every (path, line number, line) that violates the rule, in tracked-file order."""
     hits: list[tuple[str, int, str]] = []
     for path in tracked_files(repo_root):
-        if path in SELF_EXCLUDED:
+        if excluded(path):
             continue
         try:
             text = (repo_root / path).read_text(encoding="utf-8")
@@ -176,6 +190,19 @@ SELF_TEST_CASES = (
 )
 
 
+# Which paths the scan covers. The changelog entries matter most: the checker must never be the
+# reason somebody edits a merged changeset and breaks startup on a database that already ran it.
+SELF_TEST_PATHS = (
+    (True, "src/main/resources/config/liquibase/changelog/20260410144433_changelog.xml"),
+    (True, "src/main/resources/config/liquibase/master.xml"),
+    (True, "supporting_scripts/check_terminology.py"),
+    (True, "documentation/docs/developer/guidelines/terminology.mdx"),
+    (False, "src/main/resources/config/application.yml"),
+    (False, "src/main/java/de/tum/cit/aet/artemis/core/domain/User.java"),
+    (False, "documentation/docs/developer/guidelines/database.mdx"),
+)
+
+
 def self_test() -> int:
     """Classify a fixed set of strings through the real matcher. Returns a process exit code.
 
@@ -185,15 +212,20 @@ def self_test() -> int:
     """
     failures = 0
     for expected, text in SELF_TEST_CASES:
-        actual = offending(text)
-        if actual != expected:
+        if offending(text) != expected:
             wanted = "a hit" if expected else "clean"
             print(f"FAIL: expected {wanted}: {text}", file=sys.stderr)
+            failures += 1
+    for expected, path in SELF_TEST_PATHS:
+        if excluded(path) != expected:
+            wanted = "excluded" if expected else "scanned"
+            print(f"FAIL: expected {path} to be {wanted}", file=sys.stderr)
             failures += 1
     if failures:
         print(f"Terminology checker self-test failed ({failures} case(s)).", file=sys.stderr)
         return 1
-    print(f"OK: terminology checker self-test passed ({len(SELF_TEST_CASES)} cases).")
+    total = len(SELF_TEST_CASES) + len(SELF_TEST_PATHS)
+    print(f"OK: terminology checker self-test passed ({total} cases).")
     return 0
 
 

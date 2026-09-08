@@ -100,6 +100,19 @@ occurrence out of the line and matches what is left, so `const frontendUrl = res
 `resolveBackendService`, and `backendRefsList` is still reported even though `backendRefs` is allowlisted. Otherwise an
 allowlist entry would be a way to smuggle a new name past a required check.
 
+### Liquibase changelogs are out of scope
+
+`src/main/resources/config/liquibase/` is not scanned at all. Liquibase stores a checksum per
+changeset, and the application refuses to start when a recorded changeset no longer matches what the
+file says, so editing a changelog that has already been merged breaks startup on every database that
+ran it, production included. A comment that says "backend" in a changeset from last spring stays as
+it is.
+
+This is a scope rule rather than an allowlist entry on purpose. If the check reported those lines,
+somebody would eventually do as it asked, and a checker must never be the reason for an unsafe edit.
+New changelogs should of course say provider, server or database like everything else. See
+[the migration guidelines](/developer/guidelines/database) and `skills/liquibase-migration/SKILL.md`.
+
 ### When the check is genuinely wrong
 
 The pattern looks for "back" or "front" followed by "end", so ordinary English can trip it: *"this rolls back end users'
