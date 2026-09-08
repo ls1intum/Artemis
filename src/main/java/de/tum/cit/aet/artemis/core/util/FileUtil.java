@@ -74,17 +74,20 @@ public class FileUtil {
      *                                            64
      * </pre>
      *
-     * The four columns sized by this are all below that ceiling: a course icon reaches 53, a profile picture 57, an exam user signature 60, and an exam user photo 55. The
-     * remaining 36 characters are headroom, so a longer type prefix or a newly allowed extension does not need a migration; {@code StoredFileReferenceTest} fails first if one
-     * ever would.
+     * The two columns declared with this width, {@code exam_user.signing_image_path} and {@code exam_user.student_image_path}, are well below that ceiling: a signature reaches
+     * 60 and a photo 55. The remaining 36 characters are headroom, so a longer type prefix or a newly allowed extension does not need a migration;
+     * {@code StoredFileReferenceTest} fails first if one ever would. Its check covers every file path type rather than those two, because the prefixes come from one switch and
+     * a new longest entry in it is what would break the sum.
      * <p>
-     * This does <b>not</b> bound the other four file reference columns. {@code attachment.jhi_link}, {@code attachment.student_version},
-     * {@code drag_and_drop_question.background_file_path} and {@code slide.slide_image_path} are written with {@code keepFilename} set, so their value embeds the name the user
-     * gave the uploaded file. Nothing in this application bounds that name, so their width is a cap on how long a file may be named rather than a number derived from the code,
-     * and they keep the width they have.
+     * This does <b>not</b> bound the other file reference columns, and none of them is narrowed to it. Four are written with {@code keepFilename} set, so their value embeds the
+     * name the user gave the uploaded file: {@code attachment.jhi_link}, {@code attachment.student_version}, {@code quiz_question.background_file_path} and
+     * {@code slide.slide_image_path}. Nothing in this application bounds that name, so their width is a cap on how long a file may be named rather than a number derived from
+     * the code. The remaining two, {@code course.course_icon} and {@code jhi_user.image_url}, do hold a generated name and would fit, but narrowing a column is a migration of
+     * its own and is not part of this change; they keep the width they have.
      * <p>
-     * The Liquibase column definitions have to state the same number literally; they are in
-     * {@code src/main/resources/config/liquibase/changelog/20260907001339_changelog.xml}.
+     * The Liquibase column definitions state the same number literally, in
+     * {@code src/main/resources/config/liquibase/changelog/00000000000000_initial_schema.xml}, where both {@code exam_user} columns have been {@code varchar(100)} since the
+     * schema was created.
      */
     public static final int GENERATED_FILENAME_MAX_LENGTH = 100;
 

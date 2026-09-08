@@ -260,8 +260,8 @@ class StoredFileReferenceTest {
      * The two {@code exam_user} columns sized after {@link FileUtil#GENERATED_FILENAME_MAX_LENGTH} hold a name the server generates in full, and the arithmetic behind that width
      * is stated in that constant's documentation rather than executed anywhere. This executes it, so that lengthening a type prefix or allowing a longer file extension fails
      * here instead of failing an insert in production. The bound is checked for every file path type, not only those two, because the prefixes come from one switch and a new
-     * longest entry in it is exactly the change that would break the sum. The other columns keep a width that caps how long a user may name an uploaded file, which is not a
-     * number this sum describes.
+     * longest entry in it is exactly the change that would break the sum. No other file reference column is declared with this width: four of them keep a width that caps how
+     * long a user may name an uploaded file, which is not a number this sum describes, and the remaining two are simply not narrowed to it.
      */
     @Test
     void everyFilenameTheServerGeneratesInFullFitsTheColumnsSizedForOne() {
