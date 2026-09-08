@@ -99,7 +99,7 @@ Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as
 Clearing the internal flag takes away everything that authenticates against a password stored in Artemis: the password form on the sign-in page, **Change password**, the password reset function, and Git over HTTPS with a password. VCS access tokens and SSH keys keep working, because neither is checked against the password, and they are what an externally managed account uses for Git.
 
 <Callout variant={CalloutVariant.warning}>
-  `info.saml2.enablePassword` predates this separation. It mails a newly provisioned SAML2 user a link to set an Artemis password, which gives an account the identity provider manages a second credential stored in Artemis. Do not enable it. Where an instance has used it, still clear the internal flag, and tell the affected users to sign in through the identity provider and to replace a password they used for Git with a VCS access token or an SSH key.
+  Releases up to 9.9 had a setting, `info.saml2.enablePassword`, that mailed a newly provisioned SAML2 user a link to set an Artemis password. It predates this separation, because it gave an account the identity provider manages a second credential stored in Artemis, and it has since been removed. Where an instance used it, still clear the internal flag for those accounts, and tell the affected users to sign in through the identity provider and to replace a password they used for Git with a VCS access token or an SSH key.
 </Callout>
 
 #### Identifying the Affected Accounts
