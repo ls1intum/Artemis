@@ -170,19 +170,22 @@ describe('build-plan-phases.model', () => {
                 }),
             ),
         ).toBeUndefined();
+    });
 
-        // Missing script
-        expect(
-            parseBuildPlanPhases(
-                JSON.stringify({
-                    phases: [
-                        {
-                            name: 'test',
-                        },
-                    ],
-                }),
-            ),
-        ).toBeUndefined();
+    it('recovers a phase whose blank script was dropped on write', () => {
+        // BuildPhaseDTO serializes with @JsonInclude(NON_EMPTY), so a stored plan can have a phase with no script key at
+        // all. Such a plan has to stay readable, otherwise the whole exercise opens as an empty editor and the remaining
+        // phases are lost. The phase is kept and saved as a no-op.
+        const parsed = parseBuildPlanPhases(
+            JSON.stringify({
+                phases: [{ name: 'compile', script: './gradlew compile' }, { name: 'test' }],
+            }),
+        );
+
+        expect(parsed?.phases).toEqual([
+            { name: 'compile', script: './gradlew compile', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+            { name: 'test', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+        ]);
     });
 
     it('detects phases that expect tests before the due date', () => {

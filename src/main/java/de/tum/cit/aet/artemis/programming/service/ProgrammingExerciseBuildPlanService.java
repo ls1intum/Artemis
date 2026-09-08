@@ -17,13 +17,16 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
@@ -46,16 +49,20 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
     public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             Optional<BuildPhasesTemplateService> buildPhasesTemplateService, ProfileService profileService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseValidationService programmingExerciseValidationService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.profileService = profileService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
     }
 
     /**
@@ -143,6 +150,69 @@ public class ProgrammingExerciseBuildPlanService {
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
             updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildPlanConfiguration);
+        }
+    }
+
+    /**
+     * Updates the build plan configuration (build phases and Docker image), the build timeout, and the Docker flags of an
+     * existing programming exercise from the dedicated build plan editor, without re-running the full programming exercise
+     * update.
+     * <p>
+     * The structured configuration is serialized and stored in the build config. For LocalCI the configuration is
+     * interpreted at build time, so persisting it is sufficient; {@link #updateBuildPlanForExercise} recreates the build
+     * plans for external CI systems when the configuration changed.
+     *
+     * @param programmingExercise    the programming exercise whose build config should be updated (with its build config loaded)
+     * @param buildPlanConfiguration the new build plan configuration (build phases, Docker image, timeout, and Docker flags)
+     * @return the persisted build config
+     * @throws JsonProcessingException if the build plan configuration cannot be serialized
+     */
+    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration)
+            throws JsonProcessingException {
+        // reuse the shared build phase validation so a misconfiguration is rejected with the same error and key as on the
+        // full exercise update path
+        programmingExerciseValidationService.validateBuildPhases(buildPlanConfiguration.buildPlan().phases());
+        validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
+
+        var buildConfig = programmingExercise.getBuildConfig();
+        final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();
+        // parse the serialized configuration back with the same bounded reader used at build time to reject an oversized plan up front
+        try {
+            BuildPlanPhasesDTO.fromBuildPlanConfiguration(serializedBuildPlanConfiguration);
+        }
+        catch (JsonProcessingException e) {
+            throw new BadRequestAlertException("The build plan configuration is too large to be processed", "buildConfig", "buildPlanConfigurationTooLarge");
+        }
+        buildConfig.setBuildPlanConfiguration(serializedBuildPlanConfiguration);
+        buildConfig.setBuildScript(null);
+        buildConfig.setTimeoutSeconds(buildPlanConfiguration.timeoutSeconds());
+        buildConfig.setDockerFlags(buildPlanConfiguration.dockerFlags());
+
+        // Validate the Docker flags with the same rules the full programming exercise update applies (malformed JSON,
+        // disallowed networks, invalid resource limits), so the build plan editor cannot persist a configuration the
+        // regular editing path would reject. This runs before any save, so a rejected payload leaves the config unchanged.
+        programmingExerciseValidationService.validateDockerFlags(programmingExercise);
+
+        // this endpoint is LocalCI-only, so updateBuildPlanForExercise never takes its non-LocalCI delete-and-recreate
+        // branch here; it is still called for parity with the shared full exercise update path
+        updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise);
+
+        return programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
+    }
+
+    /**
+     * Validates the Docker image submitted by the build plan editor. A null image is allowed and means that the default
+     * image of the exercise is used (see how {@code BuildPlanPhasesDTO#dockerImage()} is consumed when scheduling a
+     * build); a blank image, on the other hand, would be persisted verbatim and leave the exercise with an unusable
+     * image, so it is rejected. This is validated on the endpoint only, so the default-image semantics of the shared
+     * {@code BuildPlanPhasesDTO} are unchanged for its other consumers.
+     *
+     * @param dockerImage the submitted Docker image, or null to use the exercise default
+     */
+    private void validateDockerImage(@Nullable String dockerImage) {
+        if (dockerImage != null && dockerImage.isBlank()) {
+            throw new BadRequestAlertException("The Docker image must not be blank", "buildConfig", "blankDockerImage");
         }
     }
 

@@ -218,7 +218,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
     ngOnInit() {
-        this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS));
+        this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS) || this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
