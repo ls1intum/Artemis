@@ -76,6 +76,7 @@ describe('ExerciseSplitPanelComponent', () => {
                             @if (exercise().type !== ExerciseType.QUIZ) {
                                 <ng-template jhiPanel [label]="'problemStatement'">Problem Statement</ng-template>
                             }
+                            <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details</ng-template>
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
                             }
@@ -171,6 +172,41 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+    });
+
+    describe('exercise details panel', () => {
+        /**
+         * The details panel must never be panels()[0], because ResizablePanelsComponent makes the first panel the
+         * left pane and the rest the right-hand tabs. What guarantees that is showEditorPanel(): quiz always has an
+         * editor panel, every other type always has a problem statement panel. That logic is what these assert; the
+         * spec's overridden template mirrors the real panel order so the list under test matches production.
+         */
+        function panelLabels(): string[] {
+            const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance.panels();
+            return panels.map((panel: PanelDirective) => panel.label());
+        }
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.QUIZ])(
+            'should render the details panel without making it the first panel for %s',
+            (type) => {
+                fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+                fixture.detectChanges();
+
+                const labels = panelLabels();
+                expect(labels).toContain('artemisApp.courseOverview.exerciseDetails.details');
+                expect(labels[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
+            },
+        );
+
+        it('should keep the details panel off index 0 once a participation opens the editor', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+            fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+            fixture.detectChanges();
+
+            const labels = panelLabels();
+            expect(labels[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
+            expect(labels).toContain('artemisApp.courseOverview.exerciseDetails.details');
+        });
     });
 
     describe('submit dispatch', () => {

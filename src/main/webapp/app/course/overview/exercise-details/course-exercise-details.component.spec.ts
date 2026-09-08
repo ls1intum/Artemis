@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { ActivatedRoute, Navigation, ParamMap, Router, UrlTree, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -571,6 +573,12 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should show discussion section when communication is enabled', async () => {
         vi.useFakeTimers();
+        fixture.detectChanges();
+        // The right-hand group renders only its active tab, and Exercise Details is now the first of them, so the
+        // communication tab has to be selected before its content exists.
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent));
+        const labels = panels.componentInstance.rightPanels().map((panel: PanelDirective) => panel.label());
+        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.metis.communication.label'));
         fixture.detectChanges();
         await vi.advanceTimersByTimeAsync(500);
 
