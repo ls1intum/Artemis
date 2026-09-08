@@ -13,6 +13,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -37,7 +39,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * behaviors are the contract: an opted-in student gets a {@code 202 Accepted} body with {@code accepted == true}
  * and a non-null {@code jobId}, and the async pipeline fires; an opted-out student is rejected with {@code 403}
  * by the server-side AI opt-in gate before any pipeline work.
+ * <p>
+ * SAME_THREAD overrides the CONCURRENT mode inherited from the base class, for the same reason as
+ * {@link IrisLegacyTriggerFlagTest}: one test here disables a feature toggle that lives on a singleton shared by
+ * every method in this class. Run in parallel, a sibling would see the mechanism off and assert against a dispatch
+ * that never happens.
  */
+@Execution(ExecutionMode.SAME_THREAD)
 class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "struggleendpoint";
