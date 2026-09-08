@@ -20,6 +20,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Capability;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.hyperionworker.config.DockerConfiguration;
 import de.tum.cit.aet.artemis.hyperionworker.config.WorkerSettings;
 
@@ -80,6 +81,17 @@ class DockerSandboxIsolationTest {
             assertThat(tar.getNextEntry().getName()).isEqualTo("wrapper");
             assertThat(tar.readAllBytes()).containsExactly(content);
         }
+    }
+
+    @Test
+    void missingReportDoesNotDestroyWorkspace() {
+        String session = sandbox.createSession();
+        assertThat(sandbox.exec(session, Duration.ofSeconds(5), "sh", "-c", "printf retained > /workspace/probe").isSuccess()).isTrue();
+
+        assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(() -> sandbox.copyOut(session, "/workspace/missing-report"))
+                .withMessageContaining("Could not archive files");
+
+        assertThat(sandbox.exec(session, Duration.ofSeconds(5), "cat", "/workspace/probe").stdout()).isEqualTo("retained");
     }
 
     @Test

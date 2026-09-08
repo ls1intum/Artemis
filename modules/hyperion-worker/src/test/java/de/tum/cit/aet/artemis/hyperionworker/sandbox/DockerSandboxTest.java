@@ -20,6 +20,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import com.github.dockerjava.api.DockerClient;
@@ -263,6 +266,41 @@ class DockerSandboxTest {
         verify(execCreateCmd).withCmd(command.capture());
         assertThat(command.getValue()).endsWith("sandbox-copy-out", "/workspace");
         assertThat(command.getValue()[2]).contains("[ -n \"$parent\" ] || parent=/").doesNotContain("/workspace");
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(longs = { 1, 2 })
+    void copyOutKeepsSessionOnlyWhenFailedCommandHasExited(Long exitCode) {
+        ExecCreateCmd create = mock(ExecCreateCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        ExecCreateCmdResponse created = mock(ExecCreateCmdResponse.class);
+        ExecStartCmd start = mock(ExecStartCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        InspectExecCmd inspect = mock(InspectExecCmd.class);
+        InspectExecResponse inspected = mock(InspectExecResponse.class);
+        RemoveContainerCmd remove = mock(RemoveContainerCmd.class, org.mockito.Mockito.RETURNS_SELF);
+        when(dockerClient.execCreateCmd("container-1")).thenReturn(create);
+        when(create.exec()).thenReturn(created);
+        when(created.getId()).thenReturn("copy-1");
+        when(dockerClient.execStartCmd("copy-1")).thenReturn(start);
+        doAnswer(invocation -> {
+            ResultCallback<Frame> callback = invocation.getArgument(0);
+            callback.onNext(new Frame(StreamType.STDERR, "report: Cannot stat".getBytes(StandardCharsets.UTF_8)));
+            callback.onComplete();
+            return callback;
+        }).when(start).exec(any());
+        when(dockerClient.inspectExecCmd("copy-1")).thenReturn(inspect);
+        when(inspect.exec()).thenReturn(inspected);
+        when(inspected.getExitCodeLong()).thenReturn(exitCode);
+        when(dockerClient.removeContainerCmd("container-1")).thenReturn(remove);
+        DockerSandbox service = new DockerSandbox(dockerClient,
+                new WorkerSettings("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128, Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5)));
+        service.markActive("container-1");
+
+        assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(() -> service.copyOut("container-1", "/missing-report"))
+                .withMessageContaining("report: Cannot stat");
+
+        assertThat(service.lastActivity("container-1").isPresent()).isEqualTo(exitCode != null);
+        verify(remove, org.mockito.Mockito.times(exitCode == null ? 1 : 0)).exec();
     }
 
     @Test
