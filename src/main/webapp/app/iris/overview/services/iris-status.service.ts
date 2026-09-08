@@ -21,6 +21,13 @@ export class IrisStatusService implements OnDestroy {
     private httpClient = inject(HttpClient);
     private profileService = inject(ProfileService);
 
+    /**
+     * Whether this instance does anything at all. Without the iris module the iris REST controllers are not registered, so
+     * every request to them answers 404. The guard has to live here rather than at the call sites: components outside the
+     * iris route guard inject {@link IrisChatService} unconditionally, and its constructor sets the current course.
+     */
+    private readonly irisModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+
     intervalId: ReturnType<typeof setInterval> | undefined;
     websocketStatusSubscription?: Subscription;
     disconnected = false;
@@ -36,7 +43,7 @@ export class IrisStatusService implements OnDestroy {
      * Creates an instance of IrisStatusService.
      */
     constructor() {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS)) {
+        if (!this.irisModuleActive) {
             return;
         }
 
@@ -91,7 +98,7 @@ export class IrisStatusService implements OnDestroy {
      * Requires a course ID to be set via setCurrentCourse().
      */
     private checkHeartbeat(): void {
-        if (this.disconnected || !this.currentCourseId) return;
+        if (!this.irisModuleActive || this.disconnected || !this.currentCourseId) return;
         void firstValueFrom(this.getIrisStatus(this.currentCourseId)).then((response: HttpResponse<IrisStatusDTO>) => {
             if (response.body) {
                 this.active = Boolean(response.body.active);
