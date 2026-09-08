@@ -463,6 +463,42 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
     }
 
+    /**
+     * The sibling rollback test above covers a failure while replacing an existing slide's image. This covers the other
+     * half of the compensation: a slide row that this operation created has to be removed again, or a retry would add a
+     * second copy of every page it had already written before the failure.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void slideSplitRollbackRemovesSlidesCreatedBeforeTheFailure() throws IOException {
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        Slide brokenSlide = slides.getFirst();
+        Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
+        Path brokenSlideFile = slideDirectory.resolve(brokenSlide.getId().toString()).resolve(Path.of(brokenSlide.getSlideImagePath()).getFileName());
+        brokenSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(brokenSlideFile, FilePathType.SLIDE, brokenSlide.getId()).toString());
+        slideRepository.save(brokenSlide);
+        // Removing the file makes updateExistingSlideImage throw once the loop reaches this slide.
+        Files.delete(brokenSlideFile);
+
+        Set<Long> slideIdsBefore = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
+        Set<Path> filesBefore;
+        try (var files = Files.walk(attachmentDirectory)) {
+            filesBefore = files.filter(Files::isRegularFile).collect(Collectors.toSet());
+        }
+
+        // The new slide is ordered first so that it is created, and its image written, before the failure hits.
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO("temp_created_before_failure", 1), new SlideOrderDTO(brokenSlide.getId().toString(), 2));
+
+        assertThatThrownBy(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", List.of(), pageOrder))
+                .isInstanceOf(InternalServerErrorException.class);
+
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId())).extracting(Slide::getId).containsExactlyInAnyOrderElementsOf(slideIdsBefore);
+        try (var files = Files.walk(attachmentDirectory)) {
+            assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBefore);
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUpdateExistingSlideImage() throws IOException {
