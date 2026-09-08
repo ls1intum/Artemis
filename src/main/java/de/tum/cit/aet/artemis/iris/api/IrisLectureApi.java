@@ -24,14 +24,15 @@ public class IrisLectureApi extends AbstractIrisApi {
     /**
      * Adds the provided PDF attachment video unit to the vector database in Pyris.
      * <p>
-     * This method calls {@link PyrisWebhookService#addLectureUnitToPyrisDB(AttachmentVideoUnit)}.
+     * This method calls {@link PyrisWebhookService#addLectureUnitToPyrisDB(AttachmentVideoUnit, String)}.
      * The lecture ingestion must be enabled for the course.
      *
      * @param attachmentVideoUnit the attachment video unit to be added
+     * @param contentFingerprint  fingerprint of the unit's source content; stamped verbatim into the vector store by Pyris
      * @return a job token if ingestion is triggered successfully, otherwise null
      */
-    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
-        return pyrisWebhookService.addLectureUnitToPyrisDB(attachmentVideoUnit);
+    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint) {
+        return pyrisWebhookService.addLectureUnitToPyrisDB(attachmentVideoUnit, contentFingerprint);
     }
 
     /**
