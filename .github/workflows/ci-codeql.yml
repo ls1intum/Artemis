@@ -65,6 +65,6 @@ jobs:
       - name: Prepare client source
         run: pnpm run clean-www && pnpm run prebuild
       - name: Build Java
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        run: ./gradlew -Pprod -Pwar bootWar :hyperion-runtime:classes -x webapp
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

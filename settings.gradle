@@ -24,3 +24,7 @@ rootProject.name = "Artemis"
 // needed for programming exercise templates
 DirectoryScanner.removeDefaultExclude "**/.gitattributes"
 DirectoryScanner.removeDefaultExclude "**/.gitignore"
+
+include 'hyperion-protocol', 'hyperion-runtime'
+project(':hyperion-protocol').projectDir = file('modules/hyperion-protocol')
+project(':hyperion-runtime').projectDir = file('modules/hyperion-runtime')

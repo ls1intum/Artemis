@@ -1,0 +1,11 @@
+apply from: rootProject.file('gradle/hyperion-module.gradle')
+
+dependencies {
+    api project(':hyperion-protocol')
+    api 'org.springframework.ai:spring-ai-openai'
+    implementation 'org.slf4j:slf4j-api'
+}
+
+dependencies {
+    testImplementation 'com.tngtech.archunit:archunit:1.5.0'
+}

@@ -53,6 +53,9 @@ jobs:
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Java Code Style
         run: ./gradlew spotlessCheck
+      - name: Hyperion module tests and architecture
+        run: ./gradlew hyperionCheck -x webapp
+        if: ${{ !cancelled() }}
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
         if: ${{ !cancelled() }}
