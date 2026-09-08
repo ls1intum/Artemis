@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -25,7 +27,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
  * Hazelcast's {@code putIfAbsent(ttl)} reservation + token-conditional {@code remove(key, value)} semantics; a
  * mocked map would not exercise them. Each test uses distinct {@code (courseId, userId, exerciseId)} longs so the
  * shared cluster map cannot cross-contaminate.
+ *
+ * <p>
+ * Serialised, because two of these tests rewrite state that the singletons share with every other method: the
+ * cooldown on {@code IrisProactiveProperties} and {@code PyrisJobService}'s {@code jobTimeout}. Both are restored in
+ * a finally block, which does nothing for a sibling that is already running inside the window.
  */
+@Execution(ExecutionMode.SAME_THREAD)
 class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
 
     @Autowired

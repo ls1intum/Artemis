@@ -35,7 +35,8 @@ class PyrisStruggleSignalDTOTest {
     void emptyCollectionsAreNotDroppedFromWire() throws Exception {
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "STATE", List.of("STATE"), 0.6, "armed", true, false), List.of(), 1);
         JsonNode node = mapper.valueToTree(signal);
-        assertThat(node.has("trajectory")).isTrue();
+        assertThat(node.get("trajectory").isArray()).as("Pyris requires the field, and as an array").isTrue();
+        assertThat(node.get("trajectory")).isEmpty();
     }
 
     @Test
