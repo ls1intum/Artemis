@@ -215,7 +215,15 @@ public class IrisStruggleInterventionService {
                 // out of every lookup and column, but a legacy job without an episode still gets its ambient
                 // bookkeeping pointer, while an unusable id stays silent: it can never be revealed, so pointing the
                 // client at it would only produce a 409.
-                Boolean offered = episodeId == null ? job.episodeId() == null : irisProactiveEpisodeService.offerAmbientHint(user.getId(), job.exerciseId(), episodeId, result);
+                // Two statements, not a ternary: mixing the primitive with the nullable Boolean would make Java unbox
+                // the offer, and a null answer would throw right here instead of reaching the check below.
+                Boolean offered;
+                if (episodeId != null) {
+                    offered = irisProactiveEpisodeService.offerAmbientHint(user.getId(), job.exerciseId(), episodeId, result);
+                }
+                else {
+                    offered = job.episodeId() == null;
+                }
                 if (offered == null) {
                     // The episode went terminal between the fast path above and the locked check. Nothing was
                     // offered, so complete silently instead of pointing the client at a hint it has already closed.

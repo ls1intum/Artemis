@@ -338,6 +338,22 @@ class IrisStruggleInterventionDecisionTest {
     }
 
     @Test
+    void ambient_episodeRowVanishedUnderTheLock_emitsSilentInsteadOfThrowing() {
+        // The fast path sees an open episode, and the row is gone by the time the offer takes its lock. The offer
+        // answers null for that, which the caller has to read as "nothing offered" rather than unbox.
+        when(irisProactiveEpisodeRepository.touchLastTriggeredAt(eq(3L), eq(42L), eq("ep-123"), any())).thenReturn(1);
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
+
+        service.handleDecision(jobWithEpisode, update);
+
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
+    }
+
+    @Test
     void active_aboveThreshold_pullMode_cappedToAmbient_noPersist() {
         // Less/Pull: an above-threshold ACTIVE decision is deterministically capped to ambient.
         // No message row is persisted, no chat message is sent, and the emitted event carries action="ambient".
