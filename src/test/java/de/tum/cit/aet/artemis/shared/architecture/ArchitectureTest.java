@@ -290,9 +290,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 remote request inside it, and two concurrent callbacks with overlapping rows deadlock under load.
                 Do the work explicitly instead. To make a check and a write atomic, put the check into the WHERE clause \
                 of a @Modifying repository query and act on whether it updated a row — see \
-                AnswerPostRepository.verifyIfUnverified. To serialise two operations that read state and then write a \
-                value derived from it, take a cluster mutex through DistributedDataProvider.getLock — see \
-                ExamExerciseSelectionLockService. To undo work on failure, compensate in a catch block — see \
+                AnswerPostRepository.verifyIfUnverified. To undo work on failure, compensate in a catch block — see \
                 SlideSplitterService.SlideOperation.
                 Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
 

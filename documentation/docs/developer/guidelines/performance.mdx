@@ -441,7 +441,7 @@ statement, its transaction is as short as that statement, and it is always reach
 
 #### What to write instead
 
-Almost every boundary that looked necessary in a service turns out to be one of three patterns.
+Almost every boundary that looked necessary in a service turns out to be one of two patterns.
 
 **Making a check and a write atomic: put the check in the `WHERE` clause.** A boundary is often there so
 that nothing can change between reading a row and writing it. A single statement cannot be interleaved, so
@@ -462,29 +462,6 @@ Two tutors pressing approve at the same moment both pass a preceding `isVerified
 updates a row, and the other is told the answer is already verified. `AnswerPostRepository.verifyIfUnverified`
 and `LectureUnitProcessingStateRepository.claimIdleForDispatch` are the worked examples. This also replaces
 `SELECT ... FOR UPDATE SKIP LOCKED` for claiming queued work.
-
-**Serialising two operations against each other: take a cluster mutex.** Where one operation reads state
-and then writes a value derived from it, and another changes that state, the two need to be mutually
-exclusive rather than transactional. Ask `DistributedDataProvider` for a named lock instead of holding a
-database row:
-
-```java
-DistributedLock lock = distributedDataProvider.getLock("exam-exercise-selection-" + examId);
-if (!lock.tryLock(LOCK_TIMEOUT)) {
-    throw new InternalServerErrorException(...);
-}
-try {
-    ...
-}
-finally {
-    lock.unlock();
-}
-```
-
-`ExamExerciseSelectionLockService` does this for student exam generation against exercise-group moves;
-`SlideSplitterService` does it per attachment video unit. Read the guarantees in `DistributedLock` before
-relying on one: none of the backends are consensus-backed, so this de-duplicates work rather than
-protecting an invariant on its own — keep a definitive guard in the statement as well.
 
 **Undoing work when a later step fails: compensate explicitly.** Record what an operation created and put
 it back in a `catch` block. `SlideSplitterService.SlideOperation` is the pattern: it collects the files

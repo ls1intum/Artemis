@@ -31,16 +31,12 @@ modules with a `*RepositoryArchitectureTest` subclass get it, which is why the g
 later in the call see writes from earlier in the call rolled into one atomic unit, and do not
 attempt to coordinate cache eviction across a request boundary that does not exist.
 
-**What to write instead.** Three patterns cover nearly every boundary that looked necessary:
+**What to write instead.** Two patterns cover nearly every boundary that looked necessary:
 
 - To make a check and a write atomic, move the check into the `WHERE` clause of a `@Modifying`
   query and act on the row count — `AnswerPostRepository.verifyIfUnverified`,
   `LectureUnitProcessingStateRepository.claimIdleForDispatch`. This also replaces
   `SELECT ... FOR UPDATE SKIP LOCKED`.
-- To serialise two operations that read state and then write a value derived from it, take a
-  cluster mutex via `DistributedDataProvider.getLock` — `ExamExerciseSelectionLockService`,
-  `SlideSplitterService`. Read the guarantees on `DistributedLock` first: no backend is
-  consensus-backed, so keep a definitive guard in the statement too.
 - To undo work when a later step fails, compensate in a `catch` block —
   `SlideSplitterService.SlideOperation`.
 

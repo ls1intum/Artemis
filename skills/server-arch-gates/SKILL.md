@@ -51,8 +51,8 @@ modifying queries, and `TransactionSynchronizationManager` is banned outright. E
 `testTransactionBoundariesOnlyInRepositories`, `testNoProgrammaticTransactionManagement` and
 `testNoTransactionSynchronization` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`. The replacements
-are a check in the `WHERE` clause of a `@Modifying` query, a cluster mutex from
-`DistributedDataProvider.getLock`, or explicit compensation in a `catch` block.
+are a check in the `WHERE` clause of a `@Modifying` query, or explicit compensation in a `catch`
+block.
 
 **No direct persistence access.** No injected `EntityManager` or `EntityManagerFactory`, and no
 `JdbcClient`, `JdbcTemplate`, or `DataSource`. Write the statement as a `@Query` on a repository,
