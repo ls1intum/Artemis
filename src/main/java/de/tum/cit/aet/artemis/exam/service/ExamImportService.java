@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
@@ -65,6 +66,8 @@ public class ExamImportService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizExerciseImportService quizExerciseImportService;
@@ -95,7 +98,7 @@ public class ExamImportService {
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService,
-            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService) {
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -112,6 +115,7 @@ public class ExamImportService {
         this.channelService = channelService;
         this.searchableItemWeaviateService = searchableItemWeaviateService;
         this.websocketMessagingService = websocketMessagingService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -411,6 +415,7 @@ public class ExamImportService {
                 // Hibernate conflicts with managed entities that have the same ID in the persistence context
                 Long sourceExerciseId = exerciseToCopy.getId();
                 exerciseToCopy.setId(null);
+                exerciseRepository.findById(sourceExerciseId).ifPresent(sourceExercise -> copyCallerOwnedSettingsFromSource(sourceExercise, exerciseToCopy));
                 // The exercise is not editable on this path, so the skeleton carries no grading criteria of its own; null
                 // asks the import service to deep-copy the source's (an initialized empty collection would count as "the
                 // caller wants none", see ExerciseImportService#copyExerciseBasis).
@@ -501,6 +506,23 @@ public class ExamImportService {
             }
         }
         exerciseGroupRepository.save(exerciseGroupCopied);
+    }
+
+    /**
+     * Copies the settings that {@link de.tum.cit.aet.artemis.exercise.service.ExerciseImportService#copyExerciseBasis} leaves exactly as the caller set them
+     * (they have non-null defaults, so a skeleton's default is indistinguishable from an intentional value) from the source exercise onto the skeleton.
+     * The exam import skeleton is built from {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}, which carries none of them, so without this
+     * copy every imported exercise would silently fall back to the defaults (fully included, no presentation score, no second correction, no complaints
+     * for automatic assessments).
+     *
+     * @param sourceExercise the exercise the import copies
+     * @param skeleton       the skeleton built from the import DTO
+     */
+    private static void copyCallerOwnedSettingsFromSource(Exercise sourceExercise, Exercise skeleton) {
+        skeleton.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        skeleton.setPresentationScoreEnabled(sourceExercise.getPresentationScoreEnabled());
+        skeleton.setSecondCorrectionEnabled(sourceExercise.getSecondCorrectionEnabled());
+        skeleton.setAllowComplaintsForAutomaticAssessments(sourceExercise.getAllowComplaintsForAutomaticAssessments());
     }
 
     /**

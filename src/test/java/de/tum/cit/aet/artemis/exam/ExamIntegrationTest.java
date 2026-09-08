@@ -51,7 +51,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -95,7 +94,9 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
@@ -112,6 +113,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -2588,38 +2590,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExerciseGroup_echoesQuizConfigScalars_survivesImport() throws Exception {
-        // Reproduces the exercise-group import modal end to end: GET the import fetch, echo the raw exercise-group JSON
-        // unchanged to import-exercise-group (exactly what exam-exercise-import.component does), then reload the
-        // persisted quiz and assert its configuration was NOT silently reset. Regression guard for
-        // QuizExerciseImportService#copyQuizExerciseBasis, which reads randomizeQuestionOrder, allowedNumberOfAttempts,
-        // quizMode and duration off the posted skeleton (this echoed body), not off the original source exercise.
+        // Reproduces the exercise-group import modal end to end: the client loads the source exam, converts its exercise
+        // groups to the slim import DTO shape (exam-management.service.ts#convertExerciseGroupsToImportDTOs) and posts that.
+        // The DTO carries none of the quiz configuration, so the persisted quiz must get it from the source exercise.
+        // Regression guard for QuizExerciseImportService#copyQuizExerciseBasis.
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(course1, true);
         ExerciseGroup quizGroup = sourceExam.getExerciseGroups().getFirst();
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
         // Deliberately NON-DEFAULT quiz config (factory defaults are randomizeQuestionOrder=true,
-        // allowedNumberOfAttempts=1, duration=10, quizMode=SYNCHRONIZED): NON_EMPTY only hides nulls/empties, but using
-        // values that differ from every default proves the round-trip actually carried the poster's data instead of
-        // coincidentally matching a fallback.
+        // allowedNumberOfAttempts=1, duration=10, quizMode=SYNCHRONIZED) so a fallback to the defaults cannot pass by
+        // coincidence.
         quiz.setRandomizeQuestionOrder(false);
         quiz.setAllowedNumberOfAttempts(5);
         quiz.setDuration(999);
         quiz.setQuizMode(QuizMode.BATCHED);
         quizExerciseRepository.save(quiz);
-
         Exam targetExam = examUtilService.addExam(course1);
 
-        ObjectMapper mapper = request.getObjectMapper();
-        JsonNode examJson = request.get("/api/exam/exams/" + sourceExam.getId(), HttpStatus.OK, JsonNode.class);
-        JsonNode exerciseGroupsJson = examJson.get("exerciseGroups");
-        JsonNode fetchedQuiz = exerciseGroupsJson.get(0).get("exercises").get(0);
-        // Sanity: the fetched skeleton actually carries the non-default scalars under test (i.e. Finding 1's fix is present).
-        assertThat(fetchedQuiz.get("randomizeQuestionOrder").asBoolean()).isFalse();
-        assertThat(fetchedQuiz.get("allowedNumberOfAttempts").asInt()).isEqualTo(5);
-        assertThat(fetchedQuiz.get("duration").asInt()).isEqualTo(999);
-        assertThat(fetchedQuiz.get("quizMode").asText()).isEqualTo("BATCHED");
-
+        List<ExerciseGroupImportDTO> body = List.of(new ExerciseGroupImportDTO(quizGroup.getTitle(), quizGroup.getIsMandatory(), List.of(ExerciseImportDTO.of(quiz))));
         ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                mapper.writeValueAsString(exerciseGroupsJson), true, ExerciseGroupImportResultDTO.class, HttpStatus.OK, null, null, null);
+                body, ExerciseGroupImportResultDTO.class, HttpStatus.OK);
 
         long importedQuizId = importResult.exerciseGroups().getFirst().exercises().getFirst().id();
         QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizId);
@@ -2627,6 +2617,35 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(importedQuiz.getAllowedNumberOfAttempts()).isEqualTo(5);
         assertThat(importedQuiz.getDuration()).isEqualTo(999);
         assertThat(importedQuiz.getQuizMode()).isEqualTo(QuizMode.BATCHED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_keepsCallerOwnedSettingsOfSourceExercise() throws Exception {
+        // The import body is a slim DTO (id, type, title, short name, points). Every setting that copyExerciseBasis leaves
+        // "as the caller set it" (non-null defaults) must be taken from the persisted source exercise, otherwise the import
+        // silently resets it. Use values that differ from every default so a fallback cannot pass by coincidence.
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(course1, true);
+        ExerciseGroup textGroup = sourceExam.getExerciseGroups().getFirst();
+        TextExercise text = TextExerciseFactory.generateTextExerciseForExam(textGroup);
+        text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        text.setPresentationScoreEnabled(true);
+        text.setSecondCorrectionEnabled(true);
+        text.setAllowComplaintsForAutomaticAssessments(true);
+        textExerciseRepository.save(text);
+
+        Exam targetExam = examUtilService.addExam(course1);
+
+        ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                List.of(new ExerciseGroupImportDTO(textGroup.getTitle(), true, List.of(ExerciseImportDTO.of(text)))), ExerciseGroupImportResultDTO.class, HttpStatus.OK);
+
+        long importedId = importResult.exerciseGroups().getFirst().exercises().getFirst().id();
+        assertThat(importedId).isNotEqualTo(text.getId());
+        Exercise imported = exerciseRepository.findByIdElseThrow(importedId);
+        assertThat(imported.getIncludedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        assertThat(imported.getPresentationScoreEnabled()).isTrue();
+        assertThat(imported.getSecondCorrectionEnabled()).isTrue();
+        assertThat(imported.getAllowComplaintsForAutomaticAssessments()).isTrue();
     }
 
     @Test
@@ -2937,14 +2956,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExerciseGroupsToExistingExam_preservesAllContent() throws Exception {
-        // Regression guard for the import-exercise-group path (which binds full request entities), where a quiz previously
+        // Regression guard for the import-exercise-group path, where a quiz previously
         // failed to import because of a detached QuizPointStatistic. Verify every exercise type preserves its content here.
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         Exam targetExam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(targetExam, "import-eg-content");
 
         List<ExerciseGroupDTO> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                sourceExam.getExerciseGroups(), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
+                sourceExam.getExerciseGroups().stream().map(ExerciseGroupImportDTO::of).toList(), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
         // The response carries slim exercise summaries, so reload each imported exercise to assert on its content.
         List<Exercise> importedExercises = importedGroups.stream().filter(group -> group.exercises() != null).flatMap(group -> group.exercises().stream())
