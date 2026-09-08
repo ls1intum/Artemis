@@ -39,6 +39,7 @@
                 "adminOnly": "Nur Administratoren können diese Einstellungen sehen und ändern.",
                 "variant": "Pipeline-Variante",
                 "variantHelp": "Wähle die KI-Pipeline-Variante für diesen Kurs.",
+                "proactiveHelp": "Proaktive Hilfe",
                 "proactiveStruggle": "Proaktive Schwierigkeitserkennung",
                 "proactiveStruggleHelp": "Wenn aktiviert, erkennt Iris in diesem Kurs von sich aus, wenn Studierende nicht weiterkommen, und bietet einen Hinweis an. Standardmäßig aus.",
                 "legacyBuildTriggers": "Artemis-eigene Nachrichten bei Build-Ergebnissen",
