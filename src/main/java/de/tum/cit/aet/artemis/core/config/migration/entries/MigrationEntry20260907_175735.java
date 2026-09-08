@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
+import de.tum.cit.aet.artemis.core.config.migration.MigrationIncompleteException;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.api.LectureAttachmentApi;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
@@ -39,6 +40,11 @@ import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
  * source fails, so a source is never deleted without its copy having succeeded. It also refuses a destination that exists, which is the guard above stated a second time;</li>
  * <li>one attachment that fails is counted and logged and the run continues, because there is nothing the others gain from stopping.</li>
  * </ul>
+ * That last point is why the entry ends by throwing {@link MigrationIncompleteException} when anything failed. {@code MigrationService} writes the changelog row as soon as
+ * {@code execute} returns, so an entry that swallowed its failures would be recorded as done and the files it could not move would never be looked at again, which is exactly
+ * the state the fallback in {@link FileSystemLocation#ofAttachment} is waiting to be able to leave. Reporting the run as incomplete instead means it is offered again on the
+ * next start, and being offered again is harmless because every decision above is made from the filesystem: the files that did move are skipped, and only the ones that did not
+ * are attempted a second time. Startup is not aborted; see {@link MigrationIncompleteException} for why not, and for what an operator sees instead.
  * No authorization stand-in is installed. {@code SecurityUtils.setAuthorizationObject()} is what a migration entry needs when a query it makes is gated on a principal or when a
  * write it makes is audited, and this entry neither writes a row nor makes a query that resolves an authentication; see the guideline in
  * {@code documentation/docs/developer/guidelines/database.mdx}.
@@ -90,6 +96,11 @@ public class MigrationEntry20260907_175735 extends MigrationEntry {
 
         log.info("Moved {} attachment files out of their lecture directory into the directory of their attachment video unit, {} needed no move, {} failed", moved, skipped,
                 failed);
+
+        if (failed > 0) {
+            throw new MigrationIncompleteException(failed + " attachment file(s) could not be moved out of their lecture directory. They are still served from where they are, "
+                    + "and this entry runs again on the next start. The error logged for each of them says which file and why.");
+        }
     }
 
     /**

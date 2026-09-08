@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.migration.entries;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
+import de.tum.cit.aet.artemis.core.config.migration.MigrationIncompleteException;
 import de.tum.cit.aet.artemis.core.config.migration.entries.MigrationEntry20260907_175735;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
@@ -141,11 +143,14 @@ class MigrationEntry20260907_175735Test {
     }
 
     /**
-     * One attachment that cannot be moved is logged and counted, and the run goes on. Here the unit directory cannot be created because a regular file already occupies its
-     * path, which is the closest a test can get to the kind of filesystem failure this has to survive.
+     * One attachment that cannot be moved does not stop the ones after it, and is reported at the end so that the entry is not recorded as done. Here the unit directory cannot
+     * be created because a regular file already occupies its path, which is the closest a test can get to the kind of filesystem failure this has to survive.
+     * <p>
+     * Both halves matter. Stopping at the first failure would leave every following attachment unmoved for a reason that has nothing to do with it, and returning normally would
+     * have {@code MigrationService} write the changelog row, after which the file that stayed behind would never be looked at again.
      */
     @Test
-    void shouldKeepGoingAfterOneAttachmentFails() throws IOException {
+    void shouldKeepGoingAfterOneAttachmentFailsAndReportTheRunAsIncomplete() throws IOException {
         Attachment failing = register();
         write(failing.inLectureDirectory(), CONTENT_IN_LECTURE_DIRECTORY);
         write(failing.inUnitDirectory().getParent(), "not a directory");
@@ -153,11 +158,32 @@ class MigrationEntry20260907_175735Test {
         Attachment following = register();
         write(following.inLectureDirectory(), CONTENT_IN_LECTURE_DIRECTORY);
 
-        assertThatCode(() -> entry.execute()).doesNotThrowAnyException();
+        assertThatExceptionOfType(MigrationIncompleteException.class).isThrownBy(() -> entry.execute()).withMessageContaining("1 attachment file(s) could not be moved");
 
         assertThat(failing.inLectureDirectory()).hasContent(CONTENT_IN_LECTURE_DIRECTORY);
         assertThat(following.inUnitDirectory()).hasContent(CONTENT_IN_LECTURE_DIRECTORY);
         assertThat(following.inLectureDirectory()).doesNotExist();
+    }
+
+    /**
+     * The retry the report above buys. The attachment that failed is attempted again on the next run, and once the obstacle is gone the file moves and the run reports success,
+     * which is what finally lets the changelog row be written.
+     */
+    @Test
+    void shouldMoveTheFileOnTheNextRunOnceTheObstacleIsGone() throws IOException {
+        Attachment failing = register();
+        write(failing.inLectureDirectory(), CONTENT_IN_LECTURE_DIRECTORY);
+        Path obstacle = failing.inUnitDirectory().getParent();
+        write(obstacle, "not a directory");
+
+        assertThatExceptionOfType(MigrationIncompleteException.class).isThrownBy(() -> entry.execute());
+
+        Files.delete(obstacle);
+
+        assertThatCode(() -> entry.execute()).doesNotThrowAnyException();
+        created.add(failing.inUnitDirectory());
+        assertThat(failing.inUnitDirectory()).hasContent(CONTENT_IN_LECTURE_DIRECTORY);
+        assertThat(failing.inLectureDirectory()).doesNotExist();
     }
 
     /**
