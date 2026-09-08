@@ -10,6 +10,18 @@ tags:
     courses, exercises, lectures, lecture units, exams, FAQs, and public communication
     channels including their messages and replies'}
 paths:
+  /api/hyperion/admin/workers:
+    get:
+      tags: [admin-hyperion-worker]
+      operationId: getGenerationWorkers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/GenerationWorkerStatus'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
     get:
       tags: [tutorial-group]
@@ -1531,6 +1543,18 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    GenerationWorkerStatus:
+      type: object
+      properties:
+        workerId: {type: string}
+        state:
+          type: string
+          enum: [OFFLINE, NOT_READY, AVAILABLE, RESERVED, BUSY]
+        lastHeartbeat: {type: string, format: date-time}
+        imageDigest: {type: string}
+        incarnation: {type: string, format: uuid}
+        activeExecution: {type: string, format: uuid}
+        leaseHeld: {type: boolean}
     QuizBatchWithPassword:
       type: object
       properties:

@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'exercises/programming-exercise',
+                'exercises/hyperion-generation',
                 'exercises/consistency-check',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',

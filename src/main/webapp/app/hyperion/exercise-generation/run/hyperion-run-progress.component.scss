@@ -1,0 +1,20 @@
+/*
+ * The rule that separates a stage's live detail from the substep ladder printed above it.
+ *
+ * Drawn from the TUM UI border token rather than from a bare Tailwind `border-t`. Tailwind preflight is not loaded in
+ * this application, and the `@layer base` rule that would otherwise supply a border colour is overridden by a
+ * dependency that points `border-color` at an undefined custom property — so a bare border utility falls back to
+ * `currentColor` and draws the hairline in the *text* colour. Measured in dark: 17.63:1 where 1.24:1 was intended.
+ * Naming the token here is deterministic and correct in both themes today.
+ */
+.hyperion-stage-rule {
+    border-top: 1px solid var(--tumaet-ui-border-color);
+}
+
+/*
+ * No motion is declared on the ladder itself, and that is a decision rather than an omission.
+ *
+ * `tum-ui-step` already crossfades its own colours on a state change. A travelling wipe down the connector would be
+ * peripheral motion running beside the activity text the instructor is reading, repeating once per stage, carrying
+ * nothing the marker and the label do not already say.
+ */

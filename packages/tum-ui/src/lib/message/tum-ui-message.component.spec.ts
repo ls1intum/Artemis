@@ -42,6 +42,17 @@ describe('TumUiMessageComponent', () => {
         expect(host.getAttribute('role')).toBe('alert');
     });
 
+    it('can leave announcements to an enclosing live announcer', () => {
+        fixture.componentRef.setInput('severity', 'error');
+        fixture.componentRef.setInput('announce', false);
+        fixture.detectChanges();
+        expect(host.getAttribute('role')).toBeNull();
+        expect(host.getAttribute('data-severity')).toBe('error');
+        fixture.componentRef.setInput('announce', true);
+        fixture.detectChanges();
+        expect(host.getAttribute('role')).toBe('alert');
+    });
+
     it('renders the text input', () => {
         fixture.componentRef.setInput('text', 'Something went wrong');
         fixture.detectChanges();

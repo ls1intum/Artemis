@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionWorkerProperties;
+import de.tum.cit.aet.artemis.hyperion.domain.GenerationWorkerState;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerEvent;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerMessageCodec;
 
@@ -127,6 +128,50 @@ class GenerationWorkerRegistryServiceTest {
     private WorkerEvent completion(GenerationWorkerRegistryService.Claim claim, long sequence, boolean ready) {
         return new WorkerEvent(1, "worker", incarnation, sequence, Instant.now(), WorkerEvent.Type.ERROR, claim.identity(), ready, claim.imageDigest(), "Generation failed", null,
                 null);
+    }
+
+    @Test
+    void reportsConfiguredOfflineAndUnreadyWorkersWithoutClaimingCapacity() {
+        assertThat(registry.workerStatuses()).singleElement().satisfies(status -> {
+            assertThat(status.workerId()).isEqualTo("worker");
+            assertThat(status.state()).isEqualTo(GenerationWorkerState.OFFLINE);
+            assertThat(status.lastHeartbeat()).isNull();
+            assertThat(status.leaseHeld()).isFalse();
+        });
+        registry.recordPresence("worker", heartbeat(incarnation, 1, false));
+        assertThat(registry.workerStatuses()).singleElement().satisfies(status -> {
+            assertThat(status.state()).isEqualTo(GenerationWorkerState.NOT_READY);
+            assertThat(status.lastHeartbeat()).isNotNull();
+            assertThat(status.incarnation()).isEqualTo(incarnation);
+            assertThat(status.imageDigest()).isEqualTo("sha256:" + "a".repeat(64));
+        });
+        registry.recordPresence("worker", heartbeat(incarnation, 2, true));
+        assertThat(registry.workerStatuses()).singleElement().satisfies(status -> assertThat(status.state()).isEqualTo(GenerationWorkerState.AVAILABLE));
+        assertThat(registry.availableWorkers()).isEqualTo(1);
+    }
+
+    @Test
+    void distinguishesCoreReservationFromActiveWorkerExecutionAndExpiredPresence() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true));
+        var claim = registry.claim("job", 1);
+        assertThat(registry.workerStatuses()).singleElement().satisfies(status -> {
+            assertThat(status.state()).isEqualTo(GenerationWorkerState.RESERVED);
+            assertThat(status.activeExecution()).isNull();
+            assertThat(status.leaseHeld()).isTrue();
+        });
+        registry.recordPresence("worker",
+                new WorkerEvent(1, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.HEARTBEAT, claim.identity(), false, claim.imageDigest(), null, null, null));
+        assertThat(registry.workerStatuses()).singleElement().satisfies(status -> {
+            assertThat(status.state()).isEqualTo(GenerationWorkerState.BUSY);
+            assertThat(status.activeExecution()).isEqualTo(claim.identity().executionId());
+        });
+        data.getExpiringMap("hyperion-worker-presence", properties.presenceTtl()).clear();
+        assertThat(registry.workerStatuses()).singleElement().satisfies(status -> {
+            assertThat(status.state()).isEqualTo(GenerationWorkerState.OFFLINE);
+            assertThat(status.leaseHeld()).isTrue();
+            assertThat(status.activeExecution()).isNull();
+        });
+        assertThat(registry.availableWorkers()).isZero();
     }
 
     private WorkerEvent heartbeat(UUID workerIncarnation, long sequence, boolean ready) {

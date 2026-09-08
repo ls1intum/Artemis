@@ -56,7 +56,8 @@
                 "tab": {
                     "create": "Erstellen",
                     "import": "Importieren",
-                    "export": "Exportieren"
+                    "export": "Exportieren",
+                    "generate": "Generieren"
                 },
                 "createHint": "Wähle einen Aufgabentyp. Alle Details kannst du im nächsten Schritt anpassen.",
                 "importHint": "Wähle aus, was du importieren möchtest.",
@@ -82,7 +83,8 @@
                     "MODELING": "UML-Diagramme und modellbasierte Aufgaben mit halbautomatischer Bewertung.",
                     "TEXT": "Freitext-Essays und offene Fragen mit manueller Bewertung.",
                     "FILE_UPLOAD": "Arbeitsblatt- oder Dokumenteinreichungen, die von Lehrenden bewertet werden."
-                }
+                },
+                "generateHint": "Beschreibe, was die Studierenden lernen sollen. Prüfe und überarbeite die generierte Aufgabe vor der Veröffentlichung."
             },
             "groupEdit": {
                 "header": "Gruppe bearbeiten",

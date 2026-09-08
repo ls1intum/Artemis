@@ -1,0 +1,102 @@
+---
+id: hyperion-generation
+title: Generate a programming exercise with Hyperion
+sidebar_label: AI-assisted programming exercises
+---
+
+Hyperion drafts a problem statement, student template, reference solution, and
+tests together from a short brief. Artemis verifies the candidate before saving
+it. You remain responsible for reviewing the exercise and deciding when to
+release it.
+
+## Prerequisites
+
+- Your administrator enables whole-exercise generation and provisions a ready
+  [generation worker](/admin/hyperion#whole-exercise-generation-workers).
+- You are an editor or instructor in the course.
+- The exercise uses Java with Gradle student and Gradle test projects on LocalVC
+  and LocalCI. Maven projects, auxiliary repositories, sequential test runs, and
+  static code analysis are not supported.
+- The release date is in the future, and no students have started the exercise.
+  Exam exercises are not supported by this workflow.
+
+## Start from a brief
+
+1. Open the course's exercise administration and choose **Add exercise**.
+2. Select **Generate**, then the programming-exercise card.
+3. Describe the topic, learning objectives, intended difficulty, and important
+   behavior. For example: “Create a generic bounded stack. Students implement
+   push, pop, and peek, including clear exceptions for overflow and underflow.”
+4. Submit the brief. Artemis creates a draft with a future release date and
+   opens its generation page.
+
+If starting generation fails after the draft was created, retry using that same
+draft rather than creating another exercise. The dialog also offers to delete
+an unused draft. A failure to start is not a saved generated exercise.
+
+For an existing supported draft, open the instructor code editor and choose
+**Generate exercise** from its AI controls. Save or discard your local changes
+first. Generation coordinates all three repositories and the statement; it does
+not apply independent per-repository suggestions.
+
+## Follow a run
+
+The generation page has a stable URL. Reloading or leaving the page does not
+cancel a running job. The navbar's generation indicator lets you return to
+tracked runs. The code editor also shows an AI activity tab next to build output.
+
+The stages show specification, executable artifacts, problem statement,
+verification, and review progress. Inspect the specification, statement, and file
+activity as they arrive. A file shown during generation is working material, not
+necessarily a file saved to the live exercise.
+
+Only the run's owner sees private run content and usage. Other authorized editors
+can see that generation is active without receiving another person's brief or
+artifacts. Conflicting mutations are blocked while a generation owns the
+exercise. If the client cannot determine the job state, retry the status check
+rather than trying to bypass the lock.
+
+## Interpret the result
+
+| Result              | What to do                                                                                                                 |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Saved               | Inspect the statement, template, solution, and tests before releasing.                                                     |
+| Needs review        | The candidate passed verification, but review findings remain. Read and address them.                                      |
+| Failed or cancelled | No generated candidate was saved. Inspect retained material if the run reports that any exists.                            |
+| Partially saved     | Do not release or start another run to repair it blindly. Ask an administrator to reconcile the repositories and metadata. |
+
+Verification requires the solution to pass and the template to fail the intended
+graded tests. It also checks the repository baseline and task bindings. These
+checks do not establish that an exercise is pedagogically suitable or free of
+semantic defects.
+
+Usage reports distinguish complete accounting from incomplete or pending
+accounting. Missing usage or prices are unknown, not zero. Model estimates are
+not an invoice.
+
+## Cancel, adapt, and undo
+
+**Cancel** is available only before saving starts. Once persistence begins,
+Artemis must finish or reconcile that save; closing the browser cannot interrupt
+it safely. Cancellation can retain a verified checkpoint for inspection, but
+retention does not itself save it to the exercise.
+
+To adapt a saved exercise, select relevant review findings in the code editor
+and choose **Adapt with feedback**. Inspect the selected findings and add any
+instructions before confirming. Adaptation goes through the same verification
+and guarded persistence checks as generation.
+
+**Undo generation** or **Undo adaptation** restores the most recent complete
+Hyperion save while its guarded undo window remains available. Confirm the
+warning before proceeding. Undo is unavailable if the saved state has changed,
+the window expired, or the save outcome is uncertain. Preserve any local edits
+before refreshing the editor after an undo.
+
+## Before release
+
+- Read the statement and confirm that its tasks match the intended public API.
+- Check that the student template does not expose the reference implementation.
+- Review the solution and tests for edge cases and unintended shortcuts.
+- Run the solution and template through LocalCI and inspect the graded results.
+- Address review findings, confirm the exercise settings, and choose the real
+  release date yourself.

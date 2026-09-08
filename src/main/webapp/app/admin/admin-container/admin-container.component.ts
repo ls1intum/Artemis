@@ -5,7 +5,15 @@ import { Subscription, filter } from 'rxjs';
 import { AdminSidebarComponent } from 'app/admin/admin-sidebar/admin-sidebar.component';
 import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, MODULE_FEATURE_PASSKEY, PROFILE_LOCALCI } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_LTI,
+    MODULE_FEATURE_PASSKEY,
+    PROFILE_LOCALCI,
+} from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
@@ -46,11 +54,13 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     readonly passkeyEnabled = signal(false);
     readonly isSuperAdmin = signal(false);
     readonly irisEnabled = signal(false);
+    readonly hyperionGenerationEnabled = signal(false);
 
     private standardizedCompetencySubscription?: Subscription;
     private routerSubscription?: Subscription;
 
     ngOnInit() {
+        this.hyperionGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.examEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM));
         this.localCIActive.set(this.profileService.isProfileActive(PROFILE_LOCALCI));

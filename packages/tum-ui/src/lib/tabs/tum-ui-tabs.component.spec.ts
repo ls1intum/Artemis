@@ -346,3 +346,64 @@ describe('TumUiTabs family (tabs declared with @for / @if)', () => {
         expect(errors).toEqual([]);
     });
 });
+
+@Component({
+    template: `
+        <tum-ui-tabs [value]="value()" (valueChange)="value.set($event ?? 1)">
+            <tum-ui-tab-list>
+                <tum-ui-tab [value]="1">Files</tum-ui-tab>
+                <tum-ui-tab [value]="2">Statement</tum-ui-tab>
+            </tum-ui-tab-list>
+            <tum-ui-tab-panels>
+                <tum-ui-tab-panel [value]="1" preserveContent><span class="kept">Files</span></tum-ui-tab-panel>
+                <tum-ui-tab-panel [value]="2"><span class="discarded">Statement</span></tum-ui-tab-panel>
+            </tum-ui-tab-panels>
+        </tum-ui-tabs>
+    `,
+    imports: [TumUiTabsComponent, TumUiTabListComponent, TumUiTabComponent, TumUiTabPanelsComponent, TumUiTabPanelComponent],
+})
+class PreserveContentHostComponent {
+    readonly value = signal<number | string>(1);
+}
+
+describe('TumUiTabPanelComponent preserveContent', () => {
+    let fixture: ComponentFixture<PreserveContentHostComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [PreserveContentHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(PreserveContentHostComponent);
+        fixture.detectChanges();
+    });
+
+    function panel(value: number): HTMLElement {
+        return fixture.debugElement.queryAll(By.css('tum-ui-tab-panel'))[value - 1].nativeElement as HTMLElement;
+    }
+
+    it('destroys an inactive panel by default', () => {
+        expect(fixture.debugElement.query(By.css('.discarded'))).toBeNull();
+        fixture.componentInstance.value.set(2);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.discarded'))).not.toBeNull();
+        fixture.componentInstance.value.set(1);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.discarded'))).toBeNull();
+    });
+
+    it('keeps a preserved panel in the DOM, so a trip to another tab does not reset its state', () => {
+        fixture.componentInstance.value.set(2);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.kept'))).not.toBeNull();
+    });
+
+    it('takes the preserved panel out of the accessibility tree and out of the tab order while hidden', () => {
+        fixture.componentInstance.value.set(2);
+        fixture.detectChanges();
+        const preserved = panel(1);
+        expect(preserved.hasAttribute('hidden')).toBe(true);
+        expect(preserved.hasAttribute('inert')).toBe(true);
+        expect(preserved.getAttribute('tabindex')).toBeNull();
+        expect(preserved.getAttribute('data-state')).toBe('inactive');
+        expect(panel(2).getAttribute('data-state')).toBe('active');
+        expect(panel(2).hasAttribute('inert')).toBe(false);
+    });
+});

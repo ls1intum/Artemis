@@ -300,11 +300,9 @@
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
             "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
-
             "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
             "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
-
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         },
@@ -318,6 +316,8 @@
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
-        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
+        "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut."
     }
 }

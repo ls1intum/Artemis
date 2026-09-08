@@ -1,0 +1,46 @@
+// One line fills the host, so `height` on the host sizes a block placeholder. Several lines stack inside it, and
+// the host becomes the paragraph rather than the line.
+:host {
+    --tum-ui-skeleton-color: var(--tumaet-ui-hover-background);
+    --tum-ui-skeleton-line-height: calc(var(--tumaet-ui-spacing) * 3);
+    --tum-ui-skeleton-gap: calc(var(--tumaet-ui-spacing) * 2);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--tum-ui-skeleton-gap);
+    min-height: var(--tum-ui-skeleton-line-height);
+
+    // The crossfade the component does own: the placeholder and the real content share a grid cell, so the exchange
+    // happens in place instead of the page resizing under the reader. Opacity only, and short — nothing moves.
+    transition: opacity var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard);
+}
+
+.tum-ui-skeleton-line {
+    display: block;
+    flex: 1 1 auto;
+    min-height: var(--tum-ui-skeleton-line-height);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tum-ui-skeleton-color);
+}
+
+// A paragraph's last line stops short. Without it a stack of equal bars reads as a table, which is a different
+// promise about what is arriving.
+:host(:not([data-lines='1'])) .tum-ui-skeleton-line:last-child {
+    max-width: 60%;
+}
+
+// In forced-colors a background is dropped entirely, which would delete the placeholder. An outline survives, and
+// keeps the reserved box visible so the layout still reads as "something is coming".
+@media (forced-colors: active) {
+    .tum-ui-skeleton-line {
+        border: 1px solid GrayText;
+        background: none;
+        forced-color-adjust: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host {
+        transition: none;
+    }
+}

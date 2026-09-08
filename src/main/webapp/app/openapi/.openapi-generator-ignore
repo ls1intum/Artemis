@@ -47,4 +47,5 @@ api/hyperion-faq-resources.ts
 api/calendar-resources.ts
 api/quiz-training-resources.ts
 api/admin-hyperion-generation-resources.ts
+api/admin-hyperion-worker-resources.ts
 api/quiz-exercise-batch-resources.ts

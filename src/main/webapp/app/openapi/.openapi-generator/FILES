@@ -1,4 +1,5 @@
 api/admin-hyperion-generation-api.ts
+api/admin-hyperion-worker-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -71,6 +72,7 @@ model/exercise-generation-wedged-slot.ts
 model/exercise-variant-group-reference.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
+model/generation-worker-status.ts
 model/global-search-result.ts
 model/inferred-competency.ts
 model/leaderboard-entry.ts

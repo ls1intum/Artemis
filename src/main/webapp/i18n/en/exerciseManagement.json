@@ -56,7 +56,8 @@
                 "tab": {
                     "create": "Create",
                     "import": "Import",
-                    "export": "Export"
+                    "export": "Export",
+                    "generate": "Generate"
                 },
                 "createHint": "Select an exercise type. You can customise all details in the next step.",
                 "importHint": "Select what you want to import.",
@@ -82,7 +83,8 @@
                     "MODELING": "UML diagrams and model-based exercises with semi-automatic assessment.",
                     "TEXT": "Free-text essays and open-ended questions with manual review.",
                     "FILE_UPLOAD": "Worksheet or document submissions reviewed by instructors."
-                }
+                },
+                "generateHint": "Describe what students should learn. Review and refine the generated exercise before publishing."
             },
             "groupEdit": {
                 "header": "Edit Group",

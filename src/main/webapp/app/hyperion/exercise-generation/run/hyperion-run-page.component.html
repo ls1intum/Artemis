@@ -1,0 +1,191 @@
+<div class="mx-auto flex max-w-4xl flex-col gap-4 p-4" data-testid="hyperion-run-page">
+    <jhi-hyperion-run-header
+        [exerciseTitle]="exercise()?.title"
+        [metaLabelKeys]="metaLabelKeys()"
+        [statusState]="statusDotState()"
+        [statusLabelKey]="statusLabelKey()"
+        [startedAt]="startedAt()"
+        [endedAt]="endedAt()"
+        [terminal]="terminal()"
+        [ownedByCaller]="ownedByCaller()"
+        [cancelAvailable]="cancelAvailable()"
+        [cancelPending]="cancelRequested()"
+        [runAgainAvailable]="runAgainAvailable()"
+        [startAvailable]="startAvailable()"
+        [startPending]="starting()"
+        [editorLink]="editorLink()"
+        [exerciseLink]="exerciseLink()"
+        [stepPosition]="stepPosition()"
+        [stepTotal]="stepTotal"
+        [spend]="spend()"
+        [fileCount]="fileCount()"
+        (cancelRequested)="cancel()"
+        (runAgainRequested)="runAgain()"
+        (startRequested)="startFirstRun()"
+    />
+
+    @if (canRevert() || reverting()) {
+        <tum-ui-button severity="secondary" variant="outlined" [disabled]="reverting()" (clicked)="confirmRevert()" data-testid="hyperion-run-undo">
+            {{ 'artemisApp.hyperion.generationActivity.' + (reverting() ? 'reverting' : undoKey()) | artemisTranslate }}
+        </tum-ui-button>
+    }
+    @if (reverted()) {
+        <tum-ui-message severity="success" data-testid="hyperion-run-undone">
+            {{ 'artemisApp.hyperion.generationActivity.' + undoKey() + 'Success' | artemisTranslate }}
+        </tum-ui-message>
+    }
+    @if (revertPartialRepositories(); as repositories) {
+        <tum-ui-message severity="error" data-testid="hyperion-run-undo-partial">
+            {{ 'artemisApp.hyperion.generationActivity.revertPartialFailed' | artemisTranslate: { repositories } }}
+        </tum-ui-message>
+    }
+
+    @if (startFailed() && !startDialogVisible()) {
+        <tum-ui-message severity="error" class="block" data-testid="hyperion-run-start-failed">
+            <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
+        </tum-ui-message>
+    }
+
+    @if (statusLoadFailed()) {
+        <tum-ui-message severity="error" class="block" data-testid="hyperion-run-status-unavailable">
+            <div class="flex min-w-0 flex-col gap-2">
+                <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
+                @if (running()) {
+                    <span class="text-sm" jhiTranslate="artemisApp.hyperion.generation.run.stillRunningOnServer"></span>
+                }
+                <div class="flex flex-wrap items-center gap-3">
+                    @if (lastUpdateTime(); as time) {
+                        <span class="text-sm" data-testid="hyperion-run-last-update">{{ 'artemisApp.hyperion.generation.run.lastUpdate' | artemisTranslate: { time } }}</span>
+                    }
+                    <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="retryStatus()" data-testid="hyperion-run-status-retry">
+                        <span jhiTranslate="artemisApp.hyperion.generation.run.retryStatus"></span>
+                    </tum-ui-button>
+                </div>
+            </div>
+        </tum-ui-message>
+    }
+
+    @if (notStarted()) {
+        <tum-ui-card data-testid="hyperion-run-not-started">
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="text-xl font-medium">{{ 'artemisApp.hyperion.generation.run.notStartedTitle' | artemisTranslate }}</h2>
+            </div>
+            <p class="m-0 text-sm" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
+            @if (!startAvailable()) {
+                <p class="mt-2 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedWhoCanAct"></p>
+            }
+        </tum-ui-card>
+    } @else {
+        @if (outcomeView(); as view) {
+            <tum-ui-card>
+                <jhi-hyperion-run-outcome [view]="view" />
+                <tum-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="stageStripHeader()" data-testid="hyperion-run-stage-strip">
+                    <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
+                </tum-ui-panel>
+            </tum-ui-card>
+        } @else {
+            <!-- Keep projected headers outside control-flow blocks within the card. -->
+            <tum-ui-card>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="text-xl font-medium" id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
+                    <div class="flex items-center gap-2">
+                        @if (stepPosition(); as position) {
+                            <span class="text-sm tabular-nums text-muted-color" data-testid="hyperion-run-step-counter">{{
+                                'artemisApp.hyperion.generation.run.stepCounter' | artemisTranslate: { position, total: stepTotal }
+                            }}</span>
+                        }
+                    </div>
+                </div>
+                <section class="mt-3" aria-labelledby="hyperion-run-progress-title">
+                    <jhi-hyperion-run-progress
+                        [stages]="stages()"
+                        [liveMessage]="liveMessage()"
+                        [repairRound]="repairRound()"
+                        [activity]="activityView()"
+                        [cancelAvailable]="cancelAvailable()"
+                        [cancelPending]="cancelRequested()"
+                        [connected]="connected()"
+                        (cancelRequested)="cancel()"
+                    />
+                </section>
+            </tum-ui-card>
+        }
+
+        <tum-ui-card>
+            <jhi-hyperion-artifacts
+                [jobId]="jobId()"
+                [exercise]="exercise()"
+                [exerciseId]="exerciseId()"
+                [specDocument]="specDocument()"
+                [savedProblemStatement]="savedProblemStatement()"
+                [files]="fileChanges()"
+                [running]="running()"
+                [terminal]="terminal()"
+            />
+        </tum-ui-card>
+
+        @if (spend(); as spendView) {
+            <section class="hyperion-run-detail pt-4">
+                <jhi-hyperion-run-usage [spend]="spendView" [sealedAt]="endedAt()" />
+            </section>
+        }
+    }
+</div>
+
+<tum-ui-dialog
+    [header]="(adapting() ? 'artemisApp.review.adaptExercise.confirm' : 'artemisApp.hyperion.generation.actions.start') | artemisTranslate"
+    [(visible)]="startDialogVisible"
+    [closable]="!starting()"
+    [closeOnEscape]="!starting()"
+    [dismissableMask]="false"
+    ariaDescribedBy="hyperion-run-prompt-hint"
+    size="medium"
+>
+    <div class="flex flex-col gap-3">
+        <p id="hyperion-run-prompt-hint" class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.newRunHint"></p>
+        <label for="hyperion-run-prompt" class="font-semibold">
+            {{ (adapting() ? 'artemisApp.hyperion.generation.run.feedbackLabel' : 'artemisApp.hyperion.generation.brief.label') | artemisTranslate }}
+        </label>
+        <textarea
+            id="hyperion-run-prompt"
+            tumUiTextarea
+            class="w-full resize-y"
+            rows="6"
+            [attr.maxlength]="maximumPromptLength"
+            [disabled]="starting()"
+            [ngModel]="startPrompt()"
+            (ngModelChange)="startPrompt.set($event)"
+            data-testid="hyperion-run-prompt"
+        ></textarea>
+        @if (startFailed()) {
+            <tum-ui-message severity="error" live>
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
+            </tum-ui-message>
+        }
+        <div class="flex justify-end gap-2">
+            <tum-ui-button severity="secondary" [disabled]="starting()" (clicked)="startDialogVisible.set(false)" data-testid="hyperion-run-prompt-cancel">
+                <span jhiTranslate="global.button.cancel"></span>
+            </tum-ui-button>
+            <tum-ui-button [disabled]="!startPromptValid() || starting()" [loading]="starting()" (clicked)="start()" data-testid="hyperion-run-prompt-confirm">
+                {{ (adapting() ? 'artemisApp.review.adaptExercise.confirm' : 'artemisApp.hyperion.generation.actions.start') | artemisTranslate }}
+            </tum-ui-button>
+        </div>
+    </div>
+</tum-ui-dialog>
+
+<tum-ui-dialog
+    [header]="'artemisApp.hyperion.generationActivity.' + undoKey() + 'ConfirmHeader' | artemisTranslate"
+    [visible]="confirmRevertVisible()"
+    (visibleChange)="dismissRevert()"
+    size="small"
+>
+    <p>{{ 'artemisApp.hyperion.generationActivity.' + undoKey() + 'ConfirmMessage' | artemisTranslate }}</p>
+    <div tumUiDialogFooter class="flex justify-end gap-2">
+        <tum-ui-button severity="secondary" variant="outlined" (clicked)="dismissRevert()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="danger" (clicked)="acceptRevert()" data-testid="hyperion-run-undo-confirm">
+            {{ 'artemisApp.hyperion.generationActivity.' + undoKey() | artemisTranslate }}
+        </tum-ui-button>
+    </div>
+</tum-ui-dialog>
