@@ -258,11 +258,12 @@ public class PyrisJobService {
             return Optional.empty();
         }
         try {
-            // Shares the job map with every other pipeline, which is what keeps a rolling deploy safe WITHOUT a
-            // DistributedDataSchema version bump: a build that does not know this record never deserializes one,
+            // Shares the job map with every other pipeline. A build that does not know this record never reads one,
             // because the map is only ever read by token (getJob, never iterated) and a struggle token only ever
-            // reaches the struggle callback path, which such a build does not serve. Whoever adds a read that
-            // iterates the map, or routes a struggle token through a shared endpoint, breaks that and owes the bump.
+            // reaches the struggle callback path, which such a build does not serve. That is what keeps the entry
+            // harmless next to older ones, not what makes the release compatible: this record is one of the two
+            // reasons DistributedDataSchema.VERSION was raised to 2, so an older build reads the previous namespace
+            // rather than this one.
             getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode));
         }
         catch (RuntimeException e) {

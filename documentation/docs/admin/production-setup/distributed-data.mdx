@@ -22,7 +22,8 @@ artemis:distributed-data-schema:release
 ```
 
 The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
-to schema version `1` during startup.
+to schema version `1` during startup. A release declaring a later schema runs every step in between during the same
+startup, so a store that has never been migrated goes from `0` through `1` to the version the release expects.
 
 ## Prepare an upgrade
 
@@ -48,7 +49,8 @@ node first makes failures and migration progress easier to diagnose.
 
 ## What the migration preserves
 
-The initial schema `0` to `1` migration moves data that cannot be reconstructed safely:
+Every migration moves the data that cannot be reconstructed safely. Both the initial schema `0` to `1` migration and
+the `1` to `2` migration carry the same structures:
 
 | Structure | Why it is preserved |
 |---|---|
@@ -57,6 +59,11 @@ The initial schema `0` to `1` migration moves data that cannot be reconstructed 
 | `buildResultQueue` | May contain results that have not yet reached the database. |
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
+
+Schema version `2` exists because the runtime feature toggles gained a constant. The keys of the `features` map are
+encoded by the position of the constant in the list Artemis knows, so a node of the previous release cannot read a key
+the new release writes. Reading it under a namespace of its own is what keeps the two apart. The same release also
+adds a new kind of Iris job to `pyris-job-map`.
 
 Other distributed structures start empty in the new namespace. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
@@ -73,14 +80,18 @@ The first new node logs messages similar to:
 Distributed store predates schema versions, treating its contents as version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
+Migrating distributed data from schema version 1 to 2
+Distributed data is now at schema version 2
 ```
+
+A store that is already at a numbered version logs only the steps that are still missing.
 
 Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 
 ```bash
 redis-cli GET artemis:distributed-data-schema
 redis-cli GET artemis:distributed-data-schema:release
-redis-cli --scan --pattern 'artemis:v1:*'
+redis-cli --scan --pattern 'artemis:v2:*'
 ```
 
 The first command must report the schema expected by the release. The second reports the Artemis release that last
