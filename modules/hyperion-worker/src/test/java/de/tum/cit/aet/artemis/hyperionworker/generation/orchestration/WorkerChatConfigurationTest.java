@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
@@ -18,7 +19,10 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationParameters;
+import de.tum.cit.aet.artemis.hyperionworker.generation.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperionworker.sandbox.InteractiveSandbox;
 import io.micrometer.observation.ObservationRegistry;
 import okhttp3.MediaType;
@@ -55,6 +59,11 @@ class WorkerChatConfigurationTest {
             var settings = context.getBean(GradleGenerationEngine.class).settings(parameters);
             var response = context.getBean(OpenAiChatModel.class).call(new Prompt("Reply OK", settings.chatOptions()));
             assertThat(response.getResult().getOutput().getText()).isEqualTo("OK");
+            assertThat(actualTimeout.get()).isEqualTo(Duration.ofMinutes(chatOverride ? 2 : 10));
+
+            actualTimeout.set(null);
+            var critic = new SpecFidelityCriticService(ChatClient.create(context.getBean(OpenAiChatModel.class)), new ObjectMapper()).forSettings(settings);
+            critic.reviewSpecification("A bounded stack exercise", "A bounded stack with push and pop", null, () -> false);
             assertThat(actualTimeout.get()).isEqualTo(Duration.ofMinutes(chatOverride ? 2 : 10));
         });
     }
