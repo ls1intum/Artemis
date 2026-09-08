@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *
  * @param buildPlan the build plan script
  */
+// @JsonInclude has no effect on a record that is only ever deserialized, but AbstractModuleCodeStyleTest requires it on
+// every DTO, so it is uniform rather than per-DTO reasoning about direction.
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildPlanRequestDTO(String buildPlan) {
 }

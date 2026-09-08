@@ -9,7 +9,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -76,7 +75,10 @@ public abstract class PushNotificationService {
         // Dispatch on the application task executor, not the common ForkJoinPool. sendRelayRequest retries up to four
         // times with a backoff that reaches a minute, so a batch of notifications would otherwise occupy common-pool
         // threads for minutes, and the common pool is shared with every parallel stream in the JVM.
-        requests.forEach(request -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(List.of(request), relayServerBaseUrl), taskExecutor));
+        // execute() rather than CompletableFuture.runAsync(..., taskExecutor): the future would be discarded, and a
+        // discarded future swallows the throwable. taskExecutor is an ExceptionHandlingAsyncTaskExecutor, so handing
+        // it the task directly means a relay failure is logged instead of vanishing.
+        requests.forEach(request -> taskExecutor.execute(() -> sendSpecificNotificationRequestsToEndpoint(List.of(request), relayServerBaseUrl)));
     }
 
     /**

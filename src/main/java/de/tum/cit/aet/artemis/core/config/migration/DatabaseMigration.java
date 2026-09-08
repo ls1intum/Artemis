@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -181,7 +182,6 @@ public class DatabaseMigration {
         try (var connection = openConnection(); var statement = connection.createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");
             var result = statement.executeQuery("SELECT latest_version FROM artemis_version;");
-            statement.closeOnCompletion();
             if (result.next()) {
                 return result.getString("latest_version");
             }
@@ -189,9 +189,11 @@ public class DatabaseMigration {
             return null;
         }
         catch (SQLException e) {
-            boolean isEmptyH2Database = e.getMessage().contains("not found");
-            if (Strings.CI.contains(e.getMessage(), "databasechangelog")
-                    && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")) || isEmptyH2Database)) {
+            // Defaulted, because a driver may raise an SQLException with no message and this branch is now reachable for
+            // a failure to connect: opening the connection throws here, where the previous helper exited the JVM first.
+            String message = Objects.requireNonNullElse(e.getMessage(), "");
+            boolean isEmptyH2Database = message.contains("not found");
+            if (Strings.CI.contains(message, "databasechangelog") && (message.contains("does not exist") || message.contains("doesn't exist") || isEmptyH2Database)) {
                 return null;
             }
             log.error(error, e);

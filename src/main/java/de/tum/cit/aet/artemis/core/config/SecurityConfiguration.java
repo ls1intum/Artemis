@@ -317,8 +317,11 @@ public class SecurityConfiguration {
             //     forgeable. Some already exist: `pullChanges` is mapped with @GetMapping in TestRepositoryResource
             //     and AuxiliaryRepositoryResource while calling RepositoryService.pullChanges. Those want to become
             //     POST; until they do, they are not covered by the reasoning here.
-            //  2. Nothing attacker-controlled is served as HTML from the Artemis origin, since same-site is an origin
-            //     property and not a per-endpoint one. The file endpoints are same-origin, which is why that matters.
+            //  2. Every same-SITE origin is trusted. SameSite is evaluated per site — registrable domain plus scheme —
+            //     and not per origin, so a page on any other origin of the same site can send this cookie: a sibling
+            //     subdomain of the deployment, or anything else served under it. So the requirement is not merely that
+            //     Artemis serves nothing attacker-controlled as HTML (its file endpoints are same-origin, which is why
+            //     that part matters); it is that no host sharing the site does either.
             //
             // Consequence: relaxing the attribute to SameSite=None removes the only CSRF defence this application has.
             // Do not change it without adding token-based protection here first.

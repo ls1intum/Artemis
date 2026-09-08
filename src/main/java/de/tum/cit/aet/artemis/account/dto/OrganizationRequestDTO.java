@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.account.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * DTO for creating and updating an organization.
  * <p>
@@ -18,5 +20,6 @@ package de.tum.cit.aet.artemis.account.dto;
  * @param logoUrl      a link to the organization's logo
  * @param emailPattern the regular expression matching the email addresses of the organization's members
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record OrganizationRequestDTO(Long id, String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
 }

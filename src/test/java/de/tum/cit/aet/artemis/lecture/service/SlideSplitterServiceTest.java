@@ -467,6 +467,11 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
      * The sibling rollback test above covers a failure while replacing an existing slide's image. This covers the other
      * half of the compensation: a slide row that this operation created has to be removed again, or a retry would add a
      * second copy of every page it had already written before the failure.
+     * <p>
+     * Deliberately against the real repository and the real filesystem rather than static mocks, as the sibling test is.
+     * What is under test is whether a row and a file that were genuinely written are genuinely gone again; a mock would
+     * only confirm that {@code deleteAllById} was called, which is the part that was never in doubt. This is the
+     * mechanism that replaced a transaction, so it has to be verified against something that can actually persist.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")

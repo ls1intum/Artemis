@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.notification.service.notifications.push_notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import org.apache.commons.collections4.ListUtils;
@@ -46,7 +45,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl) {
         // The relay server accepts at most 500 messages per batch. Dispatch on the application task executor rather
         // than the common ForkJoinPool, for the reason given on the overridden method.
-        ListUtils.partition(requests, 500).forEach(batch -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl), taskExecutor));
+        ListUtils.partition(requests, 500).forEach(batch -> taskExecutor.execute(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl)));
     }
 
     @Override
