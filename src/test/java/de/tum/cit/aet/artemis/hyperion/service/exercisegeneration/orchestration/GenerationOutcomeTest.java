@@ -6,10 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
+import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
@@ -74,7 +76,7 @@ class GenerationOutcomeTest {
     }
 
     private static GenerationSeedService.Seed seed(List<WorkspaceFile> files) {
-        return new GenerationSeedService.Seed(new WorkspaceSnapshot(files), Map.of(RepositoryType.TEMPLATE, "core-only-head"));
+        return new GenerationSeedService.Seed(new WorkspaceSnapshot(files), Map.of(RepositoryType.TEMPLATE, "core-only-head"), new GradingContext(false, Set.of()));
     }
 
     private static GenerationOutput output(List<WorkspaceFile> files) {

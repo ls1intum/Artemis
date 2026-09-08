@@ -158,8 +158,8 @@ class WorkerSupervisorTest {
             WorkerCommand first = start(worker, events);
             var identity = new ExecutionIdentity(UUID.randomUUID().toString(), 2, UUID.randomUUID(), first.identity().workerId(), first.identity().workerIncarnation());
             var assignment = first.assignment();
-            var second = new WorkerCommand(1, WorkerCommand.Type.START, identity,
-                    new GenerationAssignment(identity, assignment.brief(), assignment.parameters(), assignment.seed(), assignment.authoringDeadline(), IMAGE));
+            var second = new WorkerCommand(1, WorkerCommand.Type.START, identity, new GenerationAssignment(identity, assignment.brief(), assignment.parameters(), assignment.seed(),
+                    assignment.authoringDeadline(), IMAGE, assignment.gradingContext()));
             worker.accept(first);
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
             worker.accept(second);
@@ -269,7 +269,8 @@ class WorkerSupervisorTest {
         var identity = new ExecutionIdentity(UUID.randomUUID().toString(), 1, UUID.randomUUID(), heartbeat.workerId(), heartbeat.incarnation());
         var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE);
         var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
-        var assignment = new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.now().plusSeconds(300), IMAGE);
+        var assignment = new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.now().plusSeconds(300), IMAGE,
+                new de.tum.cit.aet.artemis.hyperion.protocol.GradingContext(false, java.util.Set.of()));
         return new WorkerCommand(1, WorkerCommand.Type.START, identity, assignment);
     }
 

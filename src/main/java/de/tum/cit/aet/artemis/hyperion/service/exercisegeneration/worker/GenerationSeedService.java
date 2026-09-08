@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.Constants;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 /** Captures exact Git trees on core; the worker receives bytes and expected heads never leave core. */
 @Lazy
@@ -43,11 +46,14 @@ public class GenerationSeedService {
 
     private final String branch;
 
-    public GenerationSeedService(GitService gitService, TempFileUtilService temporaryFiles, GenerationRequestService requests,
+    private final ProgrammingExerciseTestCaseRepository testCases;
+
+    public GenerationSeedService(GitService gitService, TempFileUtilService temporaryFiles, GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases,
             @Value("${artemis.version-control.default-branch:main}") String branch) {
         this.gitService = gitService;
         this.temporaryFiles = temporaryFiles;
         this.requests = requests;
+        this.testCases = testCases;
         this.branch = branch;
     }
 
@@ -63,7 +69,9 @@ public class GenerationSeedService {
         }
         String statement = requests.isAuthoritativeProblemStatement(exercise) ? exercise.getProblemStatement() : "";
         files.add(new WorkspaceFile("problem-statement.md", statement.getBytes(StandardCharsets.UTF_8), false));
-        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads));
+        var baseline = testCases.findByExerciseId(exercise.getId()).stream().map(test -> test.getTestName()).filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.toSet());
+        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline));
     }
 
     private void captureRepository(ProgrammingExercise exercise, RepositoryType role, List<WorkspaceFile> files, Map<RepositoryType, String> heads) {
@@ -116,6 +124,6 @@ public class GenerationSeedService {
     }
 
     /** File transport and optimistic concurrency evidence are deliberately kept separate. */
-    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads) {
+    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads, GradingContext gradingContext) {
     }
 }

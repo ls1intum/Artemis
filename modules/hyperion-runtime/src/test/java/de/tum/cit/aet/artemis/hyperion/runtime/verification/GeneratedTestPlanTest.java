@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.runtime.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;

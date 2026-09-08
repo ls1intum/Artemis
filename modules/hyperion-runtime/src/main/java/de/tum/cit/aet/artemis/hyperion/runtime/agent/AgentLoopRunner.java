@@ -47,6 +47,9 @@ import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPo
  */
 public class AgentLoopRunner {
 
+    /** Upper bound available to tool adapters before the loop truncates a response. */
+    public static final int MAX_TOOL_RESPONSE_CHARS = AgentConversationContext.MAX_TOOL_RESPONSE_CHARS;
+
     private static final Logger log = LoggerFactory.getLogger(AgentLoopRunner.class);
 
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
