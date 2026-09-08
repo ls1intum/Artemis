@@ -1,0 +1,25 @@
+.quiz-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+
+    &__label {
+        color: var(--bs-secondary-color);
+    }
+
+    &__value {
+        /* Tabular figures so the row does not jitter as the digits change. */
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+        min-width: 5rem;
+
+        &[data-severity='warning'] {
+            color: var(--bs-warning-text-emphasis);
+        }
+
+        &[data-severity='danger'] {
+            color: var(--bs-danger-text-emphasis);
+        }
+    }
+}
