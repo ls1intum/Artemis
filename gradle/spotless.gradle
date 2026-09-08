@@ -6,6 +6,8 @@ spotless {
                 include (
                     "src/main/java/**/*.java",
                     "src/test/java/**/*.java",
+                    "modules/hyperion-*/src/main/java/**/*.java",
+                    "modules/hyperion-*/src/test/java/**/*.java",
                 )
                 exclude(
                     "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",

@@ -1,0 +1,69 @@
+apply plugin: 'java-library'
+apply plugin: 'jacoco'
+apply plugin: 'checkstyle'
+
+group = rootProject.group
+version = rootProject.version
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+repositories {
+    maven { url = 'https://reposilite.aet.cit.tum.de/releases' }
+    mavenCentral()
+}
+
+dependencies {
+    api platform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
+    api platform('org.springframework.ai:spring-ai-bom:2.0.1')
+    api platform('com.fasterxml.jackson:jackson-bom:2.22.2')
+    api 'org.jspecify:jspecify:1.0.0'
+    api 'com.fasterxml.jackson.core:jackson-annotations'
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
+    testImplementation 'org.assertj:assertj-core:3.27.7'
+    testImplementation "org.mockito:mockito-core:${mockito_version}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_version}"
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = rootProject.jacoco.toolVersion
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+checkstyle {
+    toolVersion = rootProject.checkstyle.toolVersion
+    configFile = rootProject.file('checkstyle.xml')
+}
+
+// Catch forbidden transitive runtime dependencies too, even if no source imports them yet.
+tasks.register('verifyRuntimeBoundary') {
+    group = 'verification'
+    doLast {
+        def forbiddenGroups = ['org.hibernate.orm', 'org.postgresql', 'com.mysql', 'com.hazelcast',
+                               'org.redisson', 'org.springframework.data', 'org.apache.tomcat.embed', 'org.eclipse.jetty']
+        def forbiddenSpringModules = ['spring-jdbc', 'spring-orm', 'spring-webmvc', 'spring-websocket', 'spring-webflux']
+        def violations = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll { artifact ->
+            forbiddenGroups.contains(artifact.moduleVersion.id.group) ||
+                (artifact.moduleVersion.id.group == 'org.springframework' && forbiddenSpringModules.contains(artifact.name))
+        }
+        if (!violations.empty) {
+            throw new GradleException("Forbidden Hyperion runtime dependencies: ${violations*.moduleVersion*.id}")
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'verifyRuntimeBoundary'
+}
