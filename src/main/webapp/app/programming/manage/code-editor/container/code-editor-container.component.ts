@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, linkedSignal, output, signal, untracked, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -35,12 +35,23 @@ import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/sh
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { TumUiButtonDirective, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faChevronDown, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
     BuildOutput,
     Instructions,
+}
+
+export enum CodeEditorBottomPanel {
+    BUILD_OUTPUT = 'build-output',
+    ADDITIONAL = 'additional',
 }
 
 @Component({
@@ -56,6 +67,15 @@ export enum CollapsableCodeEditorElement {
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         KeysPipe,
+        TumUiTabsComponent,
+        TumUiTabListComponent,
+        TumUiTabComponent,
+        TumUiTabPanelsComponent,
+        TumUiTabPanelComponent,
+        TumUiButtonDirective,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
@@ -100,29 +120,55 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
+    /** Forwarded to the editor: whether the per-thread "Adapt with feedback" action may be offered (agentic adaptation is supported: Hyperion enabled AND LocalCI active). */
+    adaptReviewCommentThreadEnabled = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
+    /** Translation key for an optional host-provided panel in the shared resizable bottom area. */
+    editorBottomPanelTitle = input<string | undefined>();
+    /** Icon for that panel's tab, so it is recognisable next to the build output's terminal icon. */
+    editorBottomPanelIcon = input<IconProp | undefined>();
+    /**
+     * The tab the host would like selected and expanded *on arrival*. Every distinct value is applied exactly once:
+     * a user who then picks another tab, or collapses the panel, is not overruled while the preference stays put.
+     */
+    preferredBottomPanel = input<CodeEditorBottomPanel | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
     onFileLoad = output<string>();
+    onRepositoryFilesLoaded = output<void>();
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    onAdaptReviewCommentThread = output<number>();
     onCommit = output<void>();
-
-    /** Work in Progress: temporary properties needed to get first prototype working */
 
     participation = input.required<Participation>();
 
-    /** END WIP */
-
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
+    private bypassNextUnloadWarning = false;
     unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
-    readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
+
+    /**
+     * File-browser badges for code files and the Problem Statement entry, covering feedback
+     * suggestions, graded feedbacks, and active review-comment threads.
+     */
+    readonly fileBadges = computed<{ [fileName: string]: FileBadge[] }>(() => {
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+        }
+        return fileBadges;
+    });
+
     get selectedFile(): string | undefined {
         return this.selectedFileValue();
     }
@@ -145,14 +191,55 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);
+    /**
+     * Without a build output there is no build-output tab, so the additional panel takes over.
+     * Keeping the previous value when the build output reappears preserves an explicit user choice.
+     *
+     * A newly arrived {@link preferredBottomPanel} wins once, and only once: the computation compares against the
+     * preference it last acted on, so any later `set()` from a tab click survives every recomputation.
+     */
+    readonly activeBottomPanel = linkedSignal<{ buildable: boolean; preferred: CodeEditorBottomPanel | undefined }, CodeEditorBottomPanel>({
+        source: () => ({ buildable: this.buildable(), preferred: this.preferredBottomPanel() }),
+        computation: ({ buildable, preferred }, previous) => {
+            if (!buildable) {
+                return CodeEditorBottomPanel.ADDITIONAL;
+            }
+            if (preferred !== undefined && preferred !== previous?.source.preferred) {
+                return preferred;
+            }
+            return previous?.value ?? CodeEditorBottomPanel.BUILD_OUTPUT;
+        },
+    });
+    readonly bottomPanelCollapsed = signal(false);
+    /**
+     * The AI activity panel needs far more room than a build log, so the grid gets a taller default for it. It is
+     * derived from the selected tab rather than passed in: only this container knows which tab is showing.
+     */
+    readonly bottomPanelSize = computed<'compact' | 'expanded'>(() =>
+        this.editorBottomPanelTitle() !== undefined && this.activeBottomPanel() === CodeEditorBottomPanel.ADDITIONAL ? 'expanded' : 'compact',
+    );
+    readonly CodeEditorBottomPanel = CodeEditorBottomPanel;
+    readonly faChevronDown = faChevronDown;
+    readonly faChevronUp = faChevronUp;
+    readonly faTerminal = faTerminal;
 
     private fileTreeChangeSubscription?: Subscription;
+    /** The preference {@link expandPreferredBottomPanel} has already acted on, so arrival expands the panel once. */
+    private appliedPreferredBottomPanel?: CodeEditorBottomPanel;
 
     constructor() {
         this.initializeProperties();
 
+        // Selecting the tab is `activeBottomPanel`'s job; only the grid's collapse state has to be pushed, because it
+        // lives in DOM classes the grid owns. The guard keeps this a one-shot arrival action rather than a policy that
+        // re-expands a panel the user just collapsed.
         effect(() => {
-            this.updateFileBadges();
+            const preferred = this.preferredBottomPanel();
+            if (preferred === undefined || preferred === this.appliedPreferredBottomPanel) {
+                return;
+            }
+            this.appliedPreferredBottomPanel = preferred;
+            untracked(() => this.expandSelectedBottomPanel());
         });
 
         effect(() => {
@@ -162,6 +249,24 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
                 this.fileTreeChangeSubscription = syncService.fileTreeChange$.subscribe((event) => this.handleRemoteFileTreeEvent(event));
             }
         });
+    }
+
+    openEditorBottomPanel(): void {
+        this.activeBottomPanel.set(CodeEditorBottomPanel.ADDITIONAL);
+        this.grid().expandBottomPanel();
+        this.bottomPanelCollapsed.set(false);
+    }
+
+    selectBottomPanel(value: string | number | undefined): void {
+        if (value === CodeEditorBottomPanel.BUILD_OUTPUT || value === CodeEditorBottomPanel.ADDITIONAL) {
+            this.activeBottomPanel.set(value);
+            this.expandSelectedBottomPanel();
+        }
+    }
+
+    expandSelectedBottomPanel(): void {
+        this.grid().expandBottomPanel();
+        this.bottomPanelCollapsed.set(false);
     }
 
     ngOnDestroy(): void {
@@ -192,23 +297,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
             this.editorState = EditorState.UNSAVED_CHANGES;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         }
-    }
-
-    /**
-     * Updates file-browser badges for code files and the Problem Statement entry
-     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
-     */
-    updateFileBadges() {
-        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
-
-        this.collectFeedbackSuggestionBadges(fileBadgesByType);
-        this.collectReviewThreadBadges(fileBadgesByType);
-
-        const fileBadges: { [fileName: string]: FileBadge[] } = {};
-        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
-            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
-        }
-        this.fileBadges.set(fileBadges);
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
@@ -273,7 +361,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.fileBadges.set({});
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -374,11 +461,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         this.onCommit.emit();
     }
 
-    /**
-     * On successful pull during a refresh operation, we remove all unsaved files.
-     */
-    onRefreshFiles() {
+    /** Clears local editor state after a successful repository refresh. */
+    onRefreshFiles(): void {
         this.unsavedFiles = {};
+        this.commitState = CommitState.CLEAN;
+        this.onCommitStateChange.emit(this.commitState);
     }
 
     /**
@@ -437,6 +524,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         this.grid().toggleCollapse(event, collapsableElement);
+        if (collapsableElement === CollapsableCodeEditorElement.BuildOutput) {
+            this.bottomPanelCollapsed.set(this.grid().buildOutputIsCollapsed());
+        }
     }
 
     /**
@@ -453,6 +543,18 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     canDeactivate() {
         return _isEmpty(this.unsavedFiles);
+    }
+
+    allowNextUnloadWithoutConfirmation(): void {
+        this.bypassNextUnloadWarning = true;
+    }
+
+    hasCleanRepositoryState(): boolean {
+        return this.commitState === CommitState.CLEAN;
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.monacoEditor()?.hasReviewCommentDrafts() ?? false;
     }
 
     /**
@@ -481,6 +583,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
+        if (this.bypassNextUnloadWarning) {
+            this.bypassNextUnloadWarning = false;
+            return true;
+        }
         if (!this.canDeactivate()) {
             event.preventDefault();
             return this.translateService.instant('pendingChanges');

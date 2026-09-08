@@ -30,6 +30,19 @@ describe('AdminSidebarComponent', () => {
         fixture.detectChanges();
     });
 
+    it('offers standalone workers only when whole-exercise generation is enabled', () => {
+        const workerEntries = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .filter((item) => item.routerLink === '/admin/hyperion-workers');
+        expect(workerEntries()).toHaveLength(0);
+        fixture.componentRef.setInput('hyperionGenerationEnabled', true);
+        fixture.detectChanges();
+        expect(workerEntries()).toHaveLength(1);
+        expect(workerEntries()[0].testId).toBe('admin-hyperion-workers');
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });

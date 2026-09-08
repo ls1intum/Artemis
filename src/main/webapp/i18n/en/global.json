@@ -362,6 +362,13 @@
             "openTime": "Open clock",
             "timeDialog": "Choose time",
             "timePlaceholder": "HH:mm"
+        },
+        "stepState": {
+            "pending": "Not started",
+            "current": "In progress",
+            "complete": "Done",
+            "failed": "Failed",
+            "skipped": "Skipped"
         }
     },
     "entity": {

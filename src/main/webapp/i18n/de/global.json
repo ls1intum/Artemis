@@ -362,6 +362,13 @@
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
             "timePlaceholder": "HH:mm"
+        },
+        "stepState": {
+            "pending": "Noch nicht begonnen",
+            "current": "Läuft",
+            "complete": "Fertig",
+            "failed": "Fehlgeschlagen",
+            "skipped": "Übersprungen"
         }
     },
     "entity": {

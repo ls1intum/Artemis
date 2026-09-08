@@ -1,4 +1,5 @@
 api/admin-hyperion-generation-monitoring-api.ts
+api/admin-hyperion-worker-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -10,11 +11,11 @@ api/legacy-calendar-api.ts
 api/quiz-training-api.ts
 api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts
-api/tutorial-group-session-api.ts
 api/tutorial-groups-configuration-api.ts
+api/tutorial-group-session-api.ts
 model/active-generation.ts
-model/answer-option-with-solution.ts
 model/answer-option-without-solution.ts
+model/answer-option-with-solution.ts
 model/artifact-location.ts
 model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
@@ -47,6 +48,7 @@ model/exercise-generation-feedback.ts
 model/exercise-generation-input.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
+model/generation-worker-status.ts
 model/global-search-result.ts
 model/inferred-competency.ts
 model/leaderboard-entry.ts
@@ -73,8 +75,8 @@ model/quiz-question-refinement-request.ts
 model/quiz-question-refinement-response.ts
 model/quiz-question-refinement-success.ts
 model/quiz-question-training.ts
-model/quiz-question-with-solution.ts
 model/quiz-question-without-solution.ts
+model/quiz-question-with-solution.ts
 model/rewrite-faq-request.ts
 model/rewrite-faq-response.ts
 model/short-answer-mapping.ts

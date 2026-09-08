@@ -1,17 +1,21 @@
-import { Component, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FaIconComponent, ResizableDirective],
+    // The bottom area is an inner element of this template, so the mode is flagged on the host and read from there by
+    // the (unencapsulated) stylesheet. That keeps the size policy in one place instead of a second class binding.
+    host: { '[class.editor-bottom-expanded]': "bottomPanelSize() === 'expanded'" },
+    imports: [FaIconComponent, ResizableDirective, ArtemisTranslatePipe],
 })
 export class CodeEditorGridComponent {
     private renderer = inject(Renderer2);
@@ -24,38 +28,40 @@ export class CodeEditorGridComponent {
     readonly isTutorAssessment = input(false);
     readonly showEditorNavbar = input(true);
     readonly showEditorSidebarRight = input(true);
+    /**
+     * How much room the shared bottom area should take by default. `compact` suits a build log; `expanded` suits a
+     * panel that reports on a long-running job and is the reason the instructor is looking at the editor at all.
+     * It only moves the *default* — an explicit resize writes an inline height, which keeps winning and persisting.
+     */
+    readonly bottomPanelSize = input<'compact' | 'expanded'>('compact');
     readonly onResize = output<ResizeType>();
 
     readonly fileBrowserIsCollapsed = signal(false);
     readonly rightPanelIsCollapsed = signal(false);
     readonly buildOutputIsCollapsed = signal(false);
 
-    // Resizable constraints (px). The min values mirror the previous interact.js configuration,
-    // which derived them from the screen dimensions at view init.
-    readonly resizableMinHeightMain = window.screen.height / 3;
-    readonly resizableMinWidthLeft = window.screen.width / 7;
-    readonly resizableMinWidthRight = window.screen.width / 6;
-    readonly resizableMinHeightBottom = window.screen.height / 6;
+    private readonly viewport = signal({ width: window.innerWidth, height: window.innerHeight });
+    protected readonly resizableMinHeightMain = computed(() => Math.min(500, Math.max(192, this.viewport().height / 3)));
+    protected readonly resizableMinWidthLeft = computed(() => Math.min(310, Math.max(128, this.viewport().width / 7)));
+    protected readonly resizableMinWidthRight = computed(() => Math.min(500, Math.max(160, this.viewport().width / 6)));
+    protected readonly resizableMinHeightBottom = computed(() =>
+        this.bottomPanelSize() === 'expanded' ? Math.min(320, Math.max(224, this.viewport().height / 3)) : Math.min(200, Math.max(128, this.viewport().height / 6)),
+    );
+    /** Upper bound a drag or keyboard resize of the bottom area may reach, before the available-height clamp. */
+    private readonly bottomPanelHeightCap = computed(() => (this.bottomPanelSize() === 'expanded' ? 900 : 600));
+    protected readonly panelSizes = signal({ heightMain: 500, heightBottom: 200, widthLeft: 310, widthRight: 500 });
 
-    // Width that must always remain for the code editor in the middle, and small safety buffers for the
-    // inter-panel gap / grip / margins, so a resize cannot collapse a neighbour to nothing.
+    // Keep enough space for the editor and resize grips when a sidebar grows.
     private static readonly EDITOR_CENTER_MIN_WIDTH = 300;
     private static readonly VERTICAL_BUFFER_PX = 40;
     private static readonly HORIZONTAL_BUFFER_PX = 24;
 
-    /**
-     * Maximum panel sizes (px), recomputed on layout-affecting events (see {@link recomputeMaxConstraints}) rather
-     * than per change-detection, so the editor does not pay a layout read on every keystroke. The maxima are
-     * sum-aware: each panel's max leaves room for its neighbour and the editor, so editor + build output (height) or
-     * file browser + editor + instructions (width) can never exceed the visible area and push a panel - or its resize
-     * grip - off the clipped wrapper (which previously left it unrecoverable without a reload). interact.js bounded
-     * this implicitly via its parent restriction; the in-house directive only clamps to explicit px limits.
-     */
+    // Recomputed only after layout changes to avoid layout reads during editor change detection.
     protected readonly maxConstraints = signal({
         heightMain: 1200,
         heightBottom: 600,
-        widthLeft: window.screen.width / 2,
-        widthRight: window.screen.width / 1.3,
+        widthLeft: window.innerWidth / 2,
+        widthRight: window.innerWidth / 1.3,
     });
 
     protected readonly ResizeType = ResizeType;
@@ -70,20 +76,126 @@ export class CodeEditorGridComponent {
 
     @HostListener('window:resize')
     onWindowResize(): void {
+        this.viewport.set({ width: window.innerWidth, height: window.innerHeight });
         this.recomputeMaxConstraints();
     }
 
     /** Re-emit a panel resize and refresh the sum-aware maxima so the next drag accounts for the new sizes. */
-    protected onPanelResized(type: ResizeType): void {
+    protected onPanelResized(type: ResizeType, size?: number): void {
+        const element = this.elementForResizeType(type);
+        const dimension = type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT ? 'width' : 'height';
+        const measuredSize = size ?? (dimension === 'width' ? element.offsetWidth : element.offsetHeight);
+        this.updatePanelSize(type, measuredSize);
         this.recomputeMaxConstraints();
         this.onResize.emit(type);
     }
 
-    /**
-     * Recomputes the sum-aware panel maxima from the current layout: each panel may grow only into the space left
-     * by its neighbour and the editor, within the visible viewport. Called on init, window resize, resize end and
-     * collapse, so it never runs during typing.
-     */
+    protected onPanelResizeMove(type: ResizeType, size: ResizableSizeEvent): void {
+        const horizontalResize = type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT;
+        this.updatePanelSize(type, horizontalResize ? size.width : size.height);
+    }
+
+    onResizeHandleKeydown(event: KeyboardEvent, type: ResizeType): void {
+        const step = 20;
+        const element = this.elementForResizeType(type);
+        const horizontalResize = type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT;
+        const currentSize = horizontalResize ? element.offsetWidth : element.offsetHeight;
+        const minimum = this.minimumForResizeType(type);
+        const maximum = this.maximumForResizeType(type);
+        let nextSize: number | undefined;
+        switch (event.key) {
+            case 'ArrowLeft':
+                if (horizontalResize) {
+                    nextSize = currentSize + (type === ResizeType.SIDEBAR_RIGHT ? step : -step);
+                }
+                break;
+            case 'ArrowRight':
+                if (horizontalResize) {
+                    nextSize = currentSize + (type === ResizeType.SIDEBAR_RIGHT ? -step : step);
+                }
+                break;
+            case 'ArrowUp':
+                if (!horizontalResize) {
+                    nextSize = currentSize + (type === ResizeType.BOTTOM ? step : -step);
+                }
+                break;
+            case 'ArrowDown':
+                if (!horizontalResize) {
+                    nextSize = currentSize + (type === ResizeType.BOTTOM ? -step : step);
+                }
+                break;
+            case 'Home':
+                nextSize = minimum;
+                break;
+            case 'End':
+                nextSize = maximum;
+                break;
+        }
+        if (nextSize === undefined) {
+            return;
+        }
+
+        event.preventDefault();
+        const size = Math.round(Math.max(minimum, Math.min(maximum, nextSize)));
+        this.renderer.setStyle(element, horizontalResize ? 'width' : 'height', `${size}px`);
+        this.onPanelResized(type, size);
+    }
+
+    private elementForResizeType(type: ResizeType): HTMLElement {
+        switch (type) {
+            case ResizeType.SIDEBAR_LEFT:
+                return this.fileBrowserElement().nativeElement;
+            case ResizeType.SIDEBAR_RIGHT:
+                return this.instructionsElement().nativeElement;
+            case ResizeType.MAIN_BOTTOM:
+                return this.editorWrapperElement()!.nativeElement.querySelector<HTMLElement>('.editor-main')!;
+            case ResizeType.BOTTOM:
+                return this.buildOutputElement().nativeElement;
+        }
+    }
+
+    private minimumForResizeType(type: ResizeType): number {
+        switch (type) {
+            case ResizeType.SIDEBAR_LEFT:
+                return this.resizableMinWidthLeft();
+            case ResizeType.SIDEBAR_RIGHT:
+                return this.resizableMinWidthRight();
+            case ResizeType.MAIN_BOTTOM:
+                return this.resizableMinHeightMain();
+            case ResizeType.BOTTOM:
+                return this.resizableMinHeightBottom();
+        }
+    }
+
+    private maximumForResizeType(type: ResizeType): number {
+        const constraints = this.maxConstraints();
+        switch (type) {
+            case ResizeType.SIDEBAR_LEFT:
+                return constraints.widthLeft;
+            case ResizeType.SIDEBAR_RIGHT:
+                return constraints.widthRight;
+            case ResizeType.MAIN_BOTTOM:
+                return constraints.heightMain;
+            case ResizeType.BOTTOM:
+                return constraints.heightBottom;
+        }
+    }
+
+    private updatePanelSize(type: ResizeType, size: number): void {
+        this.panelSizes.update((sizes) => {
+            switch (type) {
+                case ResizeType.SIDEBAR_LEFT:
+                    return { heightMain: sizes.heightMain, heightBottom: sizes.heightBottom, widthLeft: size, widthRight: sizes.widthRight };
+                case ResizeType.SIDEBAR_RIGHT:
+                    return { heightMain: sizes.heightMain, heightBottom: sizes.heightBottom, widthLeft: sizes.widthLeft, widthRight: size };
+                case ResizeType.MAIN_BOTTOM:
+                    return { heightMain: size, heightBottom: sizes.heightBottom, widthLeft: sizes.widthLeft, widthRight: sizes.widthRight };
+                case ResizeType.BOTTOM:
+                    return { heightMain: sizes.heightMain, heightBottom: size, widthLeft: sizes.widthLeft, widthRight: sizes.widthRight };
+            }
+        });
+    }
+
     private recomputeMaxConstraints(): void {
         const wrapper = this.editorWrapperElement()?.nativeElement;
         if (!wrapper) {
@@ -100,12 +212,34 @@ export class CodeEditorGridComponent {
         const availableWidth = content?.clientWidth ?? window.innerWidth;
         const reservedWidth = CodeEditorGridComponent.EDITOR_CENTER_MIN_WIDTH + CodeEditorGridComponent.HORIZONTAL_BUFFER_PX;
 
-        this.maxConstraints.set({
-            heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom))),
-            heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
-            widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
-            widthRight: Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
-        });
+        const constraints = {
+            heightMain: Math.max(this.resizableMinHeightMain(), Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom()))),
+            heightBottom: Math.max(this.resizableMinHeightBottom(), Math.min(this.bottomPanelHeightCap(), availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain()))),
+            widthLeft: Math.max(this.resizableMinWidthLeft(), Math.min(this.viewport().width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
+            widthRight: Math.max(this.resizableMinWidthRight(), Math.min(this.viewport().width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
+        };
+        this.maxConstraints.set(constraints);
+
+        this.syncPanelSize(ResizeType.MAIN_BOTTOM, main, this.resizableMinHeightMain(), constraints.heightMain, false);
+        this.syncPanelSize(ResizeType.BOTTOM, bottom, this.resizableMinHeightBottom(), constraints.heightBottom, this.buildOutputIsCollapsed());
+        this.syncPanelSize(ResizeType.SIDEBAR_LEFT, left, this.resizableMinWidthLeft(), constraints.widthLeft, this.fileBrowserIsCollapsed());
+        this.syncPanelSize(ResizeType.SIDEBAR_RIGHT, right, this.resizableMinWidthRight(), constraints.widthRight, this.rightPanelIsCollapsed());
+    }
+
+    private syncPanelSize(type: ResizeType, element: HTMLElement | null, minimum: number, maximum: number, collapsed: boolean): void {
+        if (!element || collapsed) {
+            return;
+        }
+        const horizontalResize = type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT;
+        const actualSize = horizontalResize ? element.offsetWidth : element.offsetHeight;
+        if (!actualSize) {
+            return;
+        }
+        const size = Math.round(Math.max(minimum, Math.min(maximum, actualSize)));
+        if (size !== actualSize) {
+            this.renderer.setStyle(element, horizontalResize ? 'width' : 'height', `${size}px`);
+        }
+        this.updatePanelSize(type, size);
     }
 
     private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {
@@ -125,13 +259,7 @@ export class CodeEditorGridComponent {
      * @param collapsableElement an enum to decide which card is collapsed
      */
     toggleCollapse(interactableEvent: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
-        const event = interactableEvent.event;
         const horizontal = interactableEvent.horizontal;
-        // The collapse buttons emit a plain DOM event; blur the clicked control so it doesn't keep focus styling.
-        // (The old `event.event?.toElement || event.relatedTarget` chain was interact.js's wrapped-event shape and
-        // is dead now that interact.js is gone.)
-        const target = event.target as HTMLElement | undefined;
-        target?.blur();
         const cardElement = this.elementRefForCollapsableElement(collapsableElement);
 
         const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
@@ -142,8 +270,6 @@ export class CodeEditorGridComponent {
             this.renderer.addClass(cardElement.nativeElement, collapsed);
         }
 
-        // Toggle the collapse signals. They both hide the draggable grip icons and disable the
-        // matching panel's resizing (bound via [resizableEnabled] in the template).
         switch (collapsableElement) {
             case CollapsableCodeEditorElement.Instructions: {
                 this.rightPanelIsCollapsed.update((value) => !value);
@@ -159,7 +285,16 @@ export class CodeEditorGridComponent {
             }
         }
 
-        // A collapse changes the space available to the other panels; refresh the sum-aware maxima.
+        this.recomputeMaxConstraints();
+    }
+
+    /** Opens the shared bottom area without toggling an already-open panel closed. */
+    expandBottomPanel(): void {
+        if (!this.buildOutputIsCollapsed()) {
+            return;
+        }
+        this.renderer.removeClass(this.buildOutputElement().nativeElement, 'collapsed--vertical');
+        this.buildOutputIsCollapsed.set(false);
         this.recomputeMaxConstraints();
     }
 }

@@ -221,6 +221,12 @@
                         }
                     </button>
                 }
+                @if (canAdaptExercise()) {
+                    <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-adapt-button" (click)="requestAdapt()">
+                        <fa-icon [icon]="faScrewdriverWrench" class="monaco-review-comment-button-icon" />
+                        {{ 'artemisApp.review.adaptExercise.threadAction' | artemisTranslate }}
+                    </button>
+                }
                 <div class="monaco-review-comment-resolve-controls">
                     <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
                         @if (thread().resolved) {

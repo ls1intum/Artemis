@@ -1,0 +1,17 @@
+/*
+ * The browser's own heading, and the box the rendered markdown will occupy.
+ *
+ * The heading rule is here rather than as `text-lg! font-semibold!` in the template because a class selector is
+ * (0,1,0) and beats both Bootstrap's unlayered `h2` and `global.scss`'s `body, h1..h4 { font-weight: 400 }`, which
+ * are (0,0,1). Same origin, higher specificity, no `!important` - the structural fix rather than the workaround.
+ */
+.hyperion-artifacts-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Held open so the arrival of the rendered document does not push the page around underneath a reader. */
+.hyperion-markdown-placeholder {
+    min-height: 8rem;
+}

@@ -269,6 +269,27 @@ supported for generation. Do not mix guarded and older, unguarded nodes while
 generation is enabled. Redis deployments currently cannot admit generation
 because the provider cannot attest data-member topology.
 
+### Inspect worker capacity
+
+Open **Administration → Hyperion workers** to inspect the configured worker IDs,
+core-observed heartbeat times, sandbox image digests, and active execution IDs.
+Use **Refresh** to obtain another snapshot; this page does not poll continuously
+or reserve capacity. The same administrator-only data is available at
+`GET /api/hyperion/admin/workers`. The endpoint returns 404 when whole-exercise
+generation is disabled on the serving node.
+
+| State | Meaning |
+| --- | --- |
+| Offline | No unexpired heartbeat is available. A core reservation can still exist. |
+| Not ready | The worker is reachable but has not advertised a usable generation engine. |
+| Available | The latest heartbeat is ready and no core reservation is present. Admission still requires an atomic claim. |
+| Reserved by core | Core has claimed the worker, but the latest heartbeat does not yet report an active execution. |
+| Running | The worker reports an active execution. |
+
+This view contains no prompts, generated artifacts, or credentials. It cannot
+execute commands, terminate a worker, or release an exercise mutation slot.
+Ordinary LocalCI monitoring continues to report ordinary build agents separately.
+
 ### Save, cancellation, and recovery
 
 Cancellation before persistence changes no exercise repositories or metadata.
