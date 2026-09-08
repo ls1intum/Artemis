@@ -456,9 +456,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // and that they exist - the implementation doesn't seem to update slide paths when the
         // attachment is updated
         for (Slide slide : latestSlides) {
-            // A slide image is a pure storage key: only the filename is stored, and the directory it lives in follows from the unit and the slide number.
-            assertThat(slide.getSlideImagePath()).isNotNull();
-            assertThat(slide.getSlideImagePath()).containsPattern("^.*_Slide_\\d+\\.png$");
+            // A slide image is a pure storage key: only the filename is stored, and the directory it lives in follows from the unit and the slide number. The absence of a
+            // separator is the assertion that says so; the pattern alone would still hold for the URL-shaped value the previous release stored.
+            assertThat(slide.getSlideImagePath()).isNotNull().doesNotContain("/").containsPattern("^.*_Slide_\\d+\\.png$");
         }
         // testing if bidirectional relationship is kept
         AttachmentVideoUnit attachmentVideoUnit2 = attachmentVideoUnitRepository.findById(attachmentVideoUnit1.id()).orElseThrow();
