@@ -1,3 +1,9 @@
+---
+id: upgrade-guide
+title: Upgrade Guide
+sidebar_label: Upgrade Guide
+---
+
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
@@ -82,29 +88,53 @@ To resolve this, deploy the required intermediate version first, start Artemis, 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
-### 9.9: Accounts provisioned through SAML2
+### 9.9: Accounts Provisioned Through SAML2
 
 The sign-in page asks for the identifier first and then decides, from the account's internal flag, whether to offer a password field or to send the user to the configured identity provider. Only an account marked as internal authenticates against a password stored in Artemis; every other account is sent to the identity provider.
 
-Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as internal accounts. They are therefore offered the password form instead of the identity provider, and the password they hold is a random one that was never given to the user, so they cannot sign in. Accounts provisioned from LDAP are not affected, because they have always been stored as externally managed.
+Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as internal accounts, so they are offered the password form instead of the identity provider. Accounts provisioned from LDAP are not affected, because they have always been stored as externally managed.
+
+What this means for your users depends on `info.saml2.enablePassword`:
+
+- **Unset or `false`**: the account holds a random password that was never given to the user, so the user cannot sign in at all. These accounts need the change below.
+- **`true`**: the user received a mail with a link to set an Artemis password when the account was created, so the password form still works and the user is not locked out. Clearing the internal flag on such an account removes password sign-in, the password reset function, and password-based Git access, which is exactly what that setting exists to provide. Change these accounts only for users who never set a password.
+
+#### Identifying the Affected Accounts
 
 <Callout variant={CalloutVariant.warning}>
-  Artemis cannot repair this automatically. An affected account is indistinguishable in the database from an account that is genuinely internal: both are activated, both hold a password hash, and both hold a reset key. Which accounts the identity provider manages is therefore an administrator's decision.
+  The row in `jhi_user` does not record where an account came from. An account provisioned through SAML2 and an account that is genuinely internal are both activated, both hold a password hash, and both hold a reset key. Do not decide this by email domain alone: the same domain also covers accounts that users registered themselves, accounts created by an LTI launch, and the internal administrator.
 </Callout>
 
-Clear the internal flag for the affected accounts in one of two ways:
+Artemis does record a `SAML2_ACCOUNT_CREATE` audit event whenever it provisions an account on a first SAML2 login, and that event names the login. On version 9.9 these events are stored in `jhi_persistent_audit_event`, so the affected accounts can be listed exactly:
+
+```sql
+SELECT u.login, u.email
+FROM jhi_user u
+WHERE u.is_internal = TRUE
+  AND u.login IN (SELECT d.event_data
+                  FROM jhi_persistent_audit_evt_data d
+                       JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
+                  WHERE d.name = 'user' AND e.event_type = 'SAML2_ACCOUNT_CREATE');
+```
+
+From version 10.0 on, the same events are stored in `security_audit_event` instead.
+
+If the audit log does not reach back far enough, match the accounts the identity provider manages instead, and compare with `LOWER(email)` rather than `email`, because addresses stored before version 9.9 can have mixed case.
+
+#### Clearing the Flag
 
 - **For a few accounts**, open **Administration → User management**, edit the user, and clear the **Internal** checkbox.
-- **For many accounts**, update the `is_internal` column of the `jhi_user` table. Review which accounts carry the flag first:
+- **For many accounts**, update `jhi_user.is_internal` directly. Confirm that the query above returns what you expect and that you have a backup, then run the update in a transaction:
 
   ```sql
-  SELECT login, email, is_internal FROM jhi_user WHERE is_internal = TRUE;
-  ```
-
-  Then clear it for the accounts the identity provider manages, for example by email domain:
-
-  ```sql
-  UPDATE jhi_user SET is_internal = FALSE WHERE is_internal = TRUE AND email LIKE '%@example.org';
+  BEGIN;
+  UPDATE jhi_user SET is_internal = FALSE
+  WHERE is_internal = TRUE
+    AND login IN (SELECT d.event_data
+                  FROM jhi_persistent_audit_evt_data d
+                       JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
+                  WHERE d.name = 'user' AND e.event_type = 'SAML2_ACCOUNT_CREATE');
+  COMMIT;
   ```
 
 Keep the internal administrator configured in `artemis.user-management.internal-admin.username` internal, and keep every other account that does authenticate against a password stored in Artemis internal as well. Accounts that Artemis provisions after the upgrade are stored correctly.

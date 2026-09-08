@@ -24,7 +24,7 @@ export class IrisStatusService implements OnDestroy {
     /**
      * Whether this instance does anything at all. Without the iris module the iris REST controllers are not registered, so
      * every request to them answers 404. The guard has to live here rather than at the call sites: components outside the
-     * iris route guard inject {@link IrisChatService} unconditionally, and its constructor sets the current course.
+     * iris route guard inject IrisChatService unconditionally, and its constructor sets the current course.
      */
     private readonly irisModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 

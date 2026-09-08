@@ -8,14 +8,17 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 
 describe('IrisStatusService', () => {
     let service: IrisStatusService;
     let httpMock: HttpTestingController;
 
+    let isModuleFeatureActive: ReturnType<typeof vi.fn>;
+
     /** Builds the service with the iris module feature either active or inactive, since that decides whether it does anything at all. */
     function configureWithIrisModule(active: boolean) {
-        TestBed.resetTestingModule();
+        isModuleFeatureActive = vi.fn().mockReturnValue(active);
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -23,7 +26,7 @@ describe('IrisStatusService', () => {
                 IrisStatusService,
                 { provide: WebsocketService, useValue: { connectionState: of({ connected: true, wasEverConnectedBefore: true }) } },
                 LocalStorageService,
-                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(active) } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive } },
             ],
         });
 
@@ -43,6 +46,7 @@ describe('IrisStatusService', () => {
 
         it('should be created', () => {
             expect(service).toBeTruthy();
+            expect(isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
             // No request is made until setCurrentCourse is called
         });
 
@@ -98,24 +102,44 @@ describe('IrisStatusService', () => {
         });
     });
 
+    // The heartbeat interval is created in the constructor, so the fake timers have to be installed before the service is built.
+    describe('when the iris module is active and the heartbeat interval fires', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            configureWithIrisModule(true);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should fetch the status again for the current course', () => {
+            service.setCurrentCourse(123);
+            httpMock.expectOne('api/iris/courses/123/status').flush({ active: true, rateLimitInfo: { currentMessageCount: 0, rateLimit: 100, rateLimitTimeframeHours: 24 } });
+
+            vi.advanceTimersByTime(5 * 60 * 1000);
+
+            httpMock.expectOne('api/iris/courses/123/status').flush({ active: true, rateLimitInfo: { currentMessageCount: 1, rateLimit: 100, rateLimitTimeframeHours: 24 } });
+        });
+    });
+
     describe('when the iris module is not active', () => {
         beforeEach(() => {
             configureWithIrisModule(false);
         });
 
-        // The iris REST controllers are not registered without the module, so any status request answers 404 in the
-        // browser console. Components outside the iris route guard inject IrisChatService unconditionally, and its
-        // constructor sets the current course, so the guard has to live in the service rather than at the call sites.
+        // The iris REST controllers are not registered without the module, so a status request answers 404, which the
+        // browser logs to the console. Components outside the iris route guard inject IrisChatService unconditionally,
+        // and its constructor sets the current course, so the guard has to live here rather than at the call sites.
         it('should not request the status when a course is set', () => {
             service.setCurrentCourse(123);
 
             httpMock.expectNone('api/iris/courses/123/status');
         });
 
-        it('should report iris as inactive without contacting the server', async () => {
-            service.setCurrentCourse(123);
-
-            await expect(firstValueFrom(service.getActiveStatus().pipe(take(1)))).resolves.toBe(false);
+        it('should neither start the heartbeat nor watch the websocket connection', () => {
+            expect(service.intervalId).toBeUndefined();
+            expect(service.websocketStatusSubscription).toBeUndefined();
         });
     });
 });

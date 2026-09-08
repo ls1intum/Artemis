@@ -27,7 +27,7 @@ database level.
 - For testing you can use a <a href="https://github.com/kit-sdq/Artemis-SAML2-Test-Docker">preconfigured environment</a>.
 
 If you activate the SAML2 feature, the sign-in page offers the identity provider in place of a password field.
-Users enter their username or email address first:
+Users enter their login or email address first:
 
 <Image
   src={saml2LoginIdentifierImg}
@@ -114,9 +114,9 @@ info:
     saml2:
         # Name of the button to login with SAML2
         buttonLabel: 'SAML2 Login'
-        # Name of the identity provider (e.g., University X Account). Only used for the text at login page
+        # Name of the identity provider (e.g., University X Account). No longer read: the sign-in page uses buttonLabel
         identityProviderName: 'Shibboleth Account'
-        # Hide the password login form. If true, the password login form is hidden and only the SAML2 login button is shown.
+        # No longer read. The sign-in page decides per account whether to offer a password field, from the account's internal flag
         passwordLoginDisabled: false
         # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
         # services such as Jenkins. It also allows the users to use password-based Git workflow.
