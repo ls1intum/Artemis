@@ -44,7 +44,7 @@ class GradleGenerationEngineTest {
 
     private GradleGenerationEngine engine(int retries) {
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
-        return new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, retries, "");
+        return new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, retries, Duration.ofMinutes(10), "");
     }
 
     private static GenerationAssignment assignment(Instant deadline) {
@@ -103,7 +103,7 @@ class GradleGenerationEngineTest {
             }
         });
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
-        var engine = new GradleGenerationEngine(sandbox, List.of(model), registry, 6, 0, "");
+        var engine = new GradleGenerationEngine(sandbox, List.of(model), registry, 6, 0, Duration.ofMinutes(10), "");
         var assignment = assignment(Instant.now().plusSeconds(300));
         engine.generate(assignment, () -> {
             assertThat(registry.getCurrentObservation()).isNotNull();
@@ -123,10 +123,13 @@ class GradleGenerationEngineTest {
 
     @Test
     void invalidOperatorConfigurationFailsAtStartup() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(), ObservationRegistry.NOOP, 6, 0, ""));
-        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model, model), ObservationRegistry.NOOP, 6, 0, ""));
-        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 0, 0, ""));
-        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 13, 0, ""));
-        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, -1, ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model, model), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 0, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 13, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, -1, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, 0, Duration.ZERO, ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, 0, Duration.ofSeconds(-1), ""));
     }
 }

@@ -62,6 +62,8 @@ public class GradleGenerationEngine implements GenerationEngine {
 
     private final boolean retriesDisabled;
 
+    private final Duration providerTimeout;
+
     private final AgentTranscriptWriter transcripts;
 
     private final AtomicReference<GenerationOrchestrationService> active = new AtomicReference<>();
@@ -85,15 +87,20 @@ public class GradleGenerationEngine implements GenerationEngine {
 
     public GradleGenerationEngine(InteractiveSandbox sandbox, Collection<ChatModel> models, ObservationRegistry observations,
             @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, @Value("${spring.ai.openai.max-retries:1}") int providerRetries,
+            @Value("${spring.ai.openai.chat.timeout:${spring.ai.openai.timeout:60s}}") Duration providerTimeout,
             @Value("${artemis.hyperion.agent.transcript-dir:}") String transcriptDirectory) {
         if (models.size() != 1 || maxSemanticRepairs < 1 || maxSemanticRepairs > 12 || providerRetries < 0) {
             throw new IllegalArgumentException("Configure one worker chat model, 1–12 semantic repairs and a nonnegative provider retry limit");
+        }
+        if (providerTimeout.isZero() || providerTimeout.isNegative()) {
+            throw new IllegalArgumentException("The worker provider timeout must be positive");
         }
         this.observations = observations;
         this.sandbox = sandbox;
         this.models = List.copyOf(models);
         this.maxSemanticRepairs = maxSemanticRepairs;
         this.retriesDisabled = providerRetries == 0;
+        this.providerTimeout = providerTimeout;
         this.transcripts = new AgentTranscriptWriter(transcriptDirectory);
     }
 
@@ -154,9 +161,11 @@ public class GradleGenerationEngine implements GenerationEngine {
         return true;
     }
 
-    private HyperionGenerationSettings settings(GenerationParameters parameters) {
+    HyperionGenerationSettings settings(GenerationParameters parameters) {
         var defaults = models.getFirst().getOptions();
         var builder = defaults instanceof OpenAiChatOptions openAi ? openAi.mutate() : OpenAiChatOptions.builder();
+        // Spring AI's default chat options carry 60s even when its configured HTTP client has a longer timeout.
+        builder.timeout(providerTimeout);
         if (parameters.model() != null) {
             builder.model(parameters.model());
         }
