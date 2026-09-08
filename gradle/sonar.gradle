@@ -8,8 +8,14 @@
 // badge decision is made. Nothing here feeds a README badge yet; see `.github/workflows/README.md`.
 //
 // SCOPE IS A CONTRACT WITH `.codacy.yaml`. The exclusion list below mirrors that file's repository-wide
-// `exclude_paths` floor exactly. Both tools must see the same code or the comparison is meaningless
-// and the two grades quietly measure different things. Change one, change the other.
+// `exclude_paths` floor, so neither tool grades exercise starter code, test code or internal tooling.
+// Change one, change the other, or the two grades quietly diverge.
+//
+// The two scopes are not identical, and the difference is deliberate. `.codacy.yaml` sets no
+// `include_paths`, so Codacy analyses whatever it supports across the whole repository minus that floor —
+// CI workflows, shell scripts, the ESLint rule sources. Sonar analyses the four application source roots
+// named below. The overlap is the deployed application, which is what the two grades are compared on;
+// Codacy simply also reports on the surrounding tooling.
 //
 // Analysis is CI-only (`.github/workflows/ci-sonar.yml`) and needs `SONAR_TOKEN`. Running `./gradlew
 // sonar` locally without that token fails at the upload step, which is why nothing wires `sonar` into

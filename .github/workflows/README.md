@@ -39,7 +39,9 @@ ci.yml                                                            (single entry 
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job (`needs:` every job, `if: always()`). On the run's
+`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: always()`).
+The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
+its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
 local-fix table, and a Gantt timeline (`Kesin11/actions-timeline`) covering the reusable
 children (`Build / …`, `Test / …`), so the critical-path bottleneck is visible at a glance. It
