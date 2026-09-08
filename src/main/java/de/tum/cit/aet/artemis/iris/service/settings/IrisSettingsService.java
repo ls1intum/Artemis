@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -105,12 +106,11 @@ public class IrisSettingsService {
         var current = getSettingsForCourse(courseId);
         var request = Objects.requireNonNullElse(payload, current);
         // A full PUT cannot tell "this was cleared" from "the client does not know this field": both arrive as null.
-        // Merging the persisted value is what keeps an explicit opt-out alive across a save from any of the three
-        // clients that write these settings, only one of which edits the flag.
-        if (request.legacyBuildTriggersEnabled() == null) {
-            request = IrisCourseSettings.of(request.enabled(), request.customInstructions(), request.variant(), request.supportLevel(), request.rateLimit(),
-                    request.proactiveStruggleEnabled(), current.legacyBuildTriggersEnabled());
-        }
+        // Merging the persisted value is what keeps a decision alive across a save from any of the three clients
+        // that write these settings, only one of which edits the two proactive flags.
+        request = IrisCourseSettings.of(request.enabled(), request.customInstructions(), request.variant(), request.supportLevel(), request.rateLimit(),
+                mergeOmitted(request.proactiveStruggleEnabled(), current.proactiveStruggleEnabled()),
+                mergeOmitted(request.legacyBuildTriggersEnabled(), current.legacyBuildTriggersEnabled()));
         var sanitizedRequest = sanitizePayload(request);
         var sanitizedCurrent = sanitizePayload(current);
 
@@ -128,6 +128,17 @@ public class IrisSettingsService {
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
         return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);
+    }
+
+    /**
+     * Resolves one nullable flag of an incoming payload against what is stored.
+     *
+     * @param requested the value the request carries, null if it omitted the field
+     * @param stored    the persisted value, itself null while nobody has decided
+     * @return the requested value, or the stored one where the request said nothing
+     */
+    private static @Nullable Boolean mergeOmitted(@Nullable Boolean requested, @Nullable Boolean stored) {
+        return requested != null ? requested : stored;
     }
 
     /**

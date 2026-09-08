@@ -59,9 +59,12 @@ export interface IrisCourseSettingsDTO {
     supportLevel?: IrisSupportLevel;
     rateLimit?: IrisRateLimitConfiguration;
     /**
-     * When true, Iris proactively detects struggle in this course and offers help. Off by default;
-     * a course that was never opted in loads as `false` (a row predating this field has no key, so it deserializes to
-     * off server-side). Optional so an older/omitted payload without the key is still accepted.
+     * When true, Iris proactively detects struggle in this course and offers help. Off by default, and absent
+     * means undecided rather than off: a row predating this field has no key, and a save from a client that does
+     * not edit the field omits it. The server merges an omitted value from what is stored, so neither case flips
+     * a course, and an absent value reads as OFF.
+     *
+     * Normalize it with `!!`, unlike `legacyBuildTriggersEnabled` below, where absent reads as ON.
      */
     proactiveStruggleEnabled?: boolean;
     /**

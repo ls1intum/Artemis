@@ -105,20 +105,22 @@ class IrisCourseSettingsTest {
 
     @Test
     void proactiveStruggle_defaultsOff_andRoundtripsWhenEnabled() throws JsonProcessingException {
-        assertThat(IrisCourseSettings.of(true, null, null, null, null).proactiveStruggleEnabled()).isFalse();
+        assertThat(IrisCourseSettings.of(true, null, null, null, null).proactiveStruggleEffective()).isFalse();
 
         var enabled = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, null, null, true);
         var json = objectMapper.writeValueAsString(enabled);
-        assertThat(objectMapper.readValue(json, IrisCourseSettings.class).proactiveStruggleEnabled()).isTrue();
+        assertThat(objectMapper.readValue(json, IrisCourseSettings.class).proactiveStruggleEffective()).isTrue();
     }
 
     @Test
-    void proactiveStruggle_legacyRowWithoutKey_deserializesOff() throws JsonProcessingException {
-        // A course persisted before this field existed has no proactiveStruggleEnabled key; the primitive boolean
-        // must deserialize to false so existing courses stay off until an admin opts them in. This is the
-        // actual default-off guarantee (independent of how a false is serialized on the way back out).
-        var legacyJson = "{\"enabled\":true,\"variant\":\"default\"}";
-        assertThat(objectMapper.readValue(legacyJson, IrisCourseSettings.class).proactiveStruggleEnabled()).isFalse();
+    void proactiveStruggle_absentKeyIsUndecidedAndReadsAsOff() throws JsonProcessingException {
+        // A course persisted before this field existed has no key, and so does a full PUT from one of the two
+        // clients that do not edit the flag. Both deserialize to null, which the update path merges from what is
+        // stored instead of reading as an opt-out; read on its own it stays off, which is the default.
+        var withoutKey = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(withoutKey.proactiveStruggleEnabled()).isNull();
+        assertThat(withoutKey.proactiveStruggleEffective()).isFalse();
     }
 
     @Test

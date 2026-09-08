@@ -227,7 +227,7 @@ public class IrisStruggleTriggerService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled() || !settings.proactiveStruggleEnabled()) {
+        if (!settings.enabled() || !settings.proactiveStruggleEffective()) {
             return TriggerPreparation.courseOff();
         }
         // The same per-user Iris budget every other Pyris-dispatching path checks, resolved against THIS course so a

@@ -148,12 +148,14 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void updateCourseSettings_aClientThatOmitsTheLegacyFlagLeavesItAlone() {
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), false);
+    void updateCourseSettings_aClientThatOmitsTheProactiveFlagsLeavesThemAlone() {
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, true, false), false);
 
-        // Null is "this client does not edit the field", not "turn it back on": the stored decision has to survive.
-        var saved = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, "later edit", null, null, null, false, null), false);
+        // Null is "this client does not edit the field", not "reset it": both stored decisions have to survive a
+        // save from the two clients that only ever touch `enabled`, and from a browser predating the fields.
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, "later edit", null, null, null, null, null), false);
 
+        assertThat(saved.settings().proactiveStruggleEnabled()).isTrue();
         assertThat(saved.settings().legacyBuildTriggersEnabled()).isFalse();
         assertThat(saved.settings().customInstructions()).isEqualTo("later edit");
     }
