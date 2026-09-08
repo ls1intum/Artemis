@@ -152,28 +152,30 @@ public class ExerciseReviewRepositoryService {
     }
 
     /**
-     * Validates that a repository-relative path exists as a regular file in the configured default branch of a bare repository target.
+     * Validates that a repository-relative path exists as a regular file at the requested commit, or in the configured default branch when no commit is requested.
      *
      * @param targetType             repository-backed thread target type
      * @param auxiliaryRepositoryId  auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
      * @param filePath               repository-relative file path using forward slashes
      * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
+     * @param commitSha              exact commit to inspect, or {@code null} to inspect the configured default branch
      * @return empty if valid; otherwise an error message describing why validation failed
      */
     public Optional<String> validateFileExists(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId, String filePath,
-            ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, @Nullable String commitSha) {
         LocalVCRepositoryUri repositoryUri = findConsistencyTargetRepositoryUri(targetType, auxiliaryRepositoryId, repositoryUrisByTarget);
         if (repositoryUri == null) {
             return Optional.of("repository URI for " + targetType + " is missing");
         }
 
         try (var repository = gitService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
-            ObjectId defaultBranchCommitId = repository.resolve(Constants.R_HEADS + defaultBranch);
-            if (defaultBranchCommitId == null) {
-                return Optional.of("default branch '" + defaultBranch + "' is missing in " + targetType);
+            ObjectId commitId = commitSha == null ? repository.resolve(Constants.R_HEADS + defaultBranch) : repository.resolve(commitSha + "^{commit}");
+            if (commitId == null) {
+                return Optional
+                        .of(commitSha == null ? "default branch '" + defaultBranch + "' is missing in " + targetType : "commit '" + commitSha + "' is missing in " + targetType);
             }
 
-            RevCommit commit = revWalk.parseCommit(defaultBranchCommitId);
+            RevCommit commit = revWalk.parseCommit(commitId);
             try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
                 boolean exists = treeWalk != null && treeWalk.getFileMode(0).getObjectType() == Constants.OBJ_BLOB;
                 return exists ? Optional.empty() : Optional.of("file '" + filePath + "' does not exist in " + targetType);

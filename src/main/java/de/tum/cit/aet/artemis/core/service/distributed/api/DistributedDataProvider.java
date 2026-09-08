@@ -138,6 +138,29 @@ public interface DistributedDataProvider {
     String getLocalMemberAddress();
 
     /**
+     * Returns the stable identity used to attribute ownership of distributed state to this node.
+     *
+     * <p>
+     * This is deliberately distinct from {@link #getLocalMemberAddress()}: an address may change after a reconnect,
+     * while an ownership token must remain stable for the lifetime of the middleware client/member.
+     *
+     * @return the local node identity
+     */
+    String getLocalNodeId();
+
+    /**
+     * Returns an authoritative snapshot of the data nodes currently visible to this node.
+     *
+     * <p>
+     * An empty optional means that the backend cannot prove cluster membership. Callers performing destructive
+     * owner-loss recovery must fail closed in that case. A present, empty set is an authoritative snapshot containing
+     * no data nodes.
+     *
+     * @return the stable identities of visible data nodes, or empty if topology is unknown
+     */
+    Optional<Set<String>> getDataNodeIds();
+
+    /**
      * Gets the addresses of all cluster members.
      *
      * @return a set of addresses of all cluster members, never null (returns empty set if no members or not connected)

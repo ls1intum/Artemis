@@ -96,7 +96,7 @@ class BuildJobCloneTokenAuthenticationTest {
         // The default for a caller with budget left; the tests that care set it to false explicitly
         when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
         localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
-                null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
+                null, null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
                 policyAllowingEverything(), null, null);
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
@@ -312,7 +312,7 @@ class BuildJobCloneTokenAuthenticationTest {
      */
     @Test
     void shouldDeclineWhenTheNodeHasNoLocalCi() {
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null,
+        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null, null,
                 Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything(), null, null);
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 

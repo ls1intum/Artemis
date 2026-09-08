@@ -52,6 +52,66 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
+    /**
+     * Atomically couples the metadata compare-and-set with its database-only task synchronization.
+     *
+     * @param exerciseId               the exercise to update
+     * @param targetProblemStatement   new statement
+     * @param targetTitle              new title
+     * @param expectedProblemStatement expected current statement
+     * @param expectedTitle            expected current title
+     * @param synchronizeTasks         database-only task update, run only after a matching compare-and-set
+     * @return zero on a stale expected value, otherwise one
+     */
+    @Transactional
+    default int updateProblemStatementAndTitleIfUnchanged(long exerciseId, String targetProblemStatement, String targetTitle, String expectedProblemStatement, String expectedTitle,
+            Runnable synchronizeTasks) {
+        int updated = updateProblemStatementAndTitleIfUnchanged(exerciseId, targetProblemStatement, targetTitle, expectedProblemStatement, expectedTitle);
+        if (updated == 1) {
+            synchronizeTasks.run();
+        }
+        return updated;
+    }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise pe
+            SET pe.problemStatement = :targetProblemStatement,
+                pe.title = :targetTitle
+            WHERE pe.id = :exerciseId
+                AND (
+                    (
+                        (pe.problemStatement = :expectedProblemStatement OR (:expectedProblemStatement IS NULL AND pe.problemStatement IS NULL))
+                        AND (pe.title = :expectedTitle OR (:expectedTitle IS NULL AND pe.title IS NULL))
+                    )
+                    OR (
+                        (pe.problemStatement = :targetProblemStatement OR (:targetProblemStatement IS NULL AND pe.problemStatement IS NULL))
+                        AND (pe.title = :targetTitle OR (:targetTitle IS NULL AND pe.title IS NULL))
+                    )
+                )
+            """)
+    int updateProblemStatementAndTitleIfUnchanged(@Param("exerciseId") long exerciseId, @Param("targetProblemStatement") String targetProblemStatement,
+            @Param("targetTitle") String targetTitle, @Param("expectedProblemStatement") String expectedProblemStatement, @Param("expectedTitle") String expectedTitle);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(pe) > 0 THEN TRUE ELSE FALSE END
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+            WHERE pe.id = :exerciseId
+                AND (
+                    (pe.course IS NOT NULL AND COALESCE(pe.startDate, pe.releaseDate) > CURRENT_TIMESTAMP)
+                    OR (exerciseGroup IS NOT NULL AND exam.startDate > CURRENT_TIMESTAMP)
+                )
+                AND NOT EXISTS (
+                    SELECT participation.id
+                    FROM ProgrammingExerciseStudentParticipation participation
+                    WHERE participation.exercise.id = pe.id
+                )
+            """)
+    boolean isUnreleasedAndWithoutStudentParticipations(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
 
@@ -780,6 +840,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
 
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
+
+    /**
+     * Counts the exercises already using a project key. The project key is derived from the course and exercise short names and identifies the exercise's projects and
+     * repositories instance-wide, so this is the instance-wide counterpart to the course-scoped short-name checks above.
+     *
+     * @param projectKey the project key to look for, in the upper-case form {@link ProgrammingExercise#generateAndSetProjectKey()} produces
+     * @return how many programming exercises already carry that project key
+     */
+    long countByProjectKey(String projectKey);
 
     /**
      * Finds the branch for the given exercise id.

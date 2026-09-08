@@ -11,20 +11,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /** Worker-authenticated progress or terminal data. The destination, not the payload alone, establishes sender identity. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
-        String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output, @Nullable WorkerCapacity capacity) {
+        String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output, @Nullable GenerationProgress progress,
+        @Nullable WorkerCapacity capacity) {
 
     private static final Pattern WORKER_ID = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
     private static final Pattern IMAGE_DIGEST = Pattern.compile("sha256:[a-f0-9]{64}");
-
-    public WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
-            String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
-        this(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, null);
-    }
-
-    public WorkerEvent withCapacity(WorkerCapacity snapshot) {
-        return new WorkerEvent(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, snapshot);
-    }
 
     public WorkerEvent {
         if (incarnation == null || timestamp == null || type == null) {
@@ -43,6 +35,19 @@ public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation
         if ((type != Type.HEARTBEAT && identity == null) || ((type == Type.CHECKPOINT || type == Type.FINISHED) && output == null)) {
             throw new IllegalArgumentException("Event is missing its assignment or candidate");
         }
+    }
+
+    public WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
+            String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
+        this(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, null, null);
+    }
+
+    public WorkerEvent withProgress(GenerationProgress detail) {
+        return new WorkerEvent(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, detail, capacity);
+    }
+
+    public WorkerEvent withCapacity(WorkerCapacity snapshot) {
+        return new WorkerEvent(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, progress, snapshot);
     }
 
     /** Events project onto the existing public job contract; these internal values are not public completion states. */

@@ -30,6 +30,11 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
 
     private static RedisContainer valkey;
 
+    @Override
+    protected boolean exposesAuthoritativeDataNodeTopology() {
+        return false;
+    }
+
     static boolean isDockerAvailable() {
         try {
             return DockerClientFactory.instance().isDockerAvailable();

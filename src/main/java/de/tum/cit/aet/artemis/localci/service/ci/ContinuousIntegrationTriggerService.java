@@ -32,6 +32,19 @@ public interface ContinuousIntegrationTriggerService {
     }
 
     /**
+     * Triggers a build using the operator-controlled generation network policy and without exercise-provided environment variables. CI implementations that cannot enforce this
+     * boundary must reject the request.
+     *
+     * @param participation     the participation whose build should be triggered
+     * @param commitHash        the commit hash to build
+     * @param triggeredByPushTo the repository type that triggered the build
+     * @throws ContinuousIntegrationException if the CI cannot enforce a restricted build or the build request fails
+     */
+    default void triggerRestrictedBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws ContinuousIntegrationException {
+        throw new ContinuousIntegrationException("This continuous integration service does not support restricted builds");
+    }
+
+    /**
      * triggers a build for the build plan in the given participation
      *
      * @param participation the participation with the id of the build plan that should be triggered
