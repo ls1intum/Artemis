@@ -96,6 +96,12 @@ public class SlideSplitterService {
      */
     @Async("longRunningJobExecutor")
     public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob job) {
+        // Before waiting for the lock, not only after. The wait is minutes long and this executor has two threads,
+        // shared with course and exam archiving, so a few quick re-uploads of the same file would otherwise park every
+        // thread on a job that was already superseded. The authoritative check is the one under the lock below.
+        if (isObsolete(job)) {
+            return CompletableFuture.completedFuture(null);
+        }
         DistributedLock lock = acquireSlideLock(job.attachmentVideoUnitId());
         try {
             AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId()).orElse(null);
@@ -484,11 +490,31 @@ public class SlideSplitterService {
      * @param attachmentVideoUnitId the unit whose slides are about to be written
      * @return the acquired lock, which the caller must release in a finally block
      */
-    private DistributedLock acquireSlideLock(long attachmentVideoUnitId) {
+    /**
+     * Whether this job has already been superseded, judged without holding the slide lock.
+     *
+     * @param job the slide split job
+     * @return true if the unit is gone, or its attachment is no longer the revision the job was created for
+     */
+    private boolean isObsolete(AttachmentVideoUnitSlideSplitJob job) {
+        return attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId()).map(unit -> !job.matches(unit.getAttachment())).orElse(true);
+    }
+
+    private DistributedLock acquireSlideLock(Long attachmentVideoUnitId) {
+        if (attachmentVideoUnitId == null) {
+            throw new IllegalStateException("Cannot update slides for an attachment video unit that has not been saved yet");
+        }
         DistributedLock lock = distributedDataProvider.getLock(SLIDE_LOCK_PREFIX + attachmentVideoUnitId);
         if (!lock.tryLock(SLIDE_LOCK_TIMEOUT)) {
             throw new InternalServerErrorException(
                     "Could not acquire the slide lock for attachment video unit " + attachmentVideoUnitId + " within " + SLIDE_LOCK_TIMEOUT.toSeconds() + " seconds");
+        }
+        // Checked under the lock, because the pessimistic lock this replaced also refused to touch a unit that had
+        // gone: it read the row to lock it. Without this, a unit deleted while the caller waited for the lock would
+        // still have its slide rows rewritten, and they would be orphaned the moment they were written.
+        if (!attachmentVideoUnitRepository.existsById(attachmentVideoUnitId)) {
+            lock.unlock();
+            throw new IllegalStateException("Cannot update slides for missing attachment video unit " + attachmentVideoUnitId);
         }
         return lock;
     }
