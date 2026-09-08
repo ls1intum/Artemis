@@ -687,6 +687,12 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @desc Resets the question text by using the text of the backupQuestion (which has the original text of the question)
      */
     resetQuestionText() {
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
+    }
+
+    /** Restores the text without notifying, so a full reset emits once when everything is back. */
+    private restoreQuestionText() {
         this.shortAnswerQuestion.text = this.backupQuestion.text;
         this.shortAnswerQuestion.spots = deepClone(this.backupQuestion.spots);
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
@@ -700,14 +706,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @desc Resets the whole question by using the backupQuestion (which is the original question)
      */
     resetQuestion() {
-        this.resetQuestionTitle();
+        this.shortAnswerQuestion.title = this.backupQuestion.title;
         this.shortAnswerQuestion.invalid = this.backupQuestion.invalid;
         this.shortAnswerQuestion.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.shortAnswerQuestion.scoringType = this.backupQuestion.scoringType;
         this.shortAnswerQuestion.solutions = deepClone(this.backupQuestion.solutions);
         this.shortAnswerQuestion.correctMappings = deepClone(this.backupQuestion.correctMappings);
         this.shortAnswerQuestion.spots = deepClone(this.backupQuestion.spots);
-        this.resetQuestionText();
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
     }
 
     /**

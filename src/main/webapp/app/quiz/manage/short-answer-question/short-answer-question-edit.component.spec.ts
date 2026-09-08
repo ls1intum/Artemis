@@ -597,11 +597,35 @@ describe('ShortAnswerQuestionEditComponent', () => {
         backup.explanation = 'I dont know';
         backup.hint = 'hint';
         component.backupQuestion = backup;
+        component.shortAnswerQuestion.title = 'edited title';
+        let stateAtEmit: { title?: string; text?: string } | undefined;
+        const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit').mockImplementation(() => {
+            stateAtEmit = { title: component.shortAnswerQuestion.title, text: component.shortAnswerQuestion.text };
+        });
 
         component.resetQuestion();
 
         expect(component.shortAnswerQuestion.title).toBe(backup.title);
         expect(component.shortAnswerQuestion.text).toBe(backup.text);
+        // once, and only after every field is back: the parent reads the question during this event
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(stateAtEmit).toEqual({ title: backup.title, text: backup.text });
+    });
+
+    it('should notify the parent after resetting the question text', () => {
+        const backup = new ShortAnswerQuestion();
+        backup.text = 'This is the text of a backup question';
+        backup.explanation = 'I dont know';
+        backup.hint = 'hint';
+        backup.spots = [];
+        component.backupQuestion = backup;
+        component.shortAnswerQuestion.text = 'edited text';
+        const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+
+        component.resetQuestionText();
+
+        expect(component.shortAnswerQuestion.text).toBe(backup.text);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset spot', () => {

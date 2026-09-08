@@ -382,10 +382,13 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
         component.backupQuestion = backup;
         component.question().title = 'current-title';
         component.question().text = 'current-text';
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.resetQuestion();
 
         expect(component.question().title).toBe('backup-title');
         expect(component.question().text).toBe('backup-text');
+        // without this the parent keeps the pre-reset validity and calls a restored question invalid
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });

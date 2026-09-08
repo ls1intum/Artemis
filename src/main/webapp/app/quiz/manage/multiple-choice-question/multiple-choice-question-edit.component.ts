@@ -345,5 +345,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.question().singleChoice = this.backupQuestion.singleChoice;
         this.question().invalid = this.backupQuestion.invalid;
         this.question().answerOptions = deepClone(this.backupQuestion.answerOptions);
+        this.questionUpdated.emit();
     }
 }
