@@ -603,6 +603,7 @@ public class DockerSandbox implements InteractiveSandbox {
                         latch.countDown();
                     }
                 });
+                Long exitCode;
                 try {
                     if (!latch.await(COPY_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
                         throw new SandboxUnavailableException("Timed out while copying files from sandbox session " + sessionId);
@@ -614,12 +615,11 @@ public class DockerSandbox implements InteractiveSandbox {
                         throw new SandboxUnavailableException("Sandbox copy-out archive exceeds the " + MAX_ARCHIVE_BYTES + " byte transfer limit.");
                     }
                     try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
-                        Long exitCode = inspectCommand.exec().getExitCodeLong();
-                        if (exitCode == null || exitCode != 0) {
+                        exitCode = inspectCommand.exec().getExitCodeLong();
+                        if (exitCode == null) {
                             throw new SandboxUnavailableException("Could not archive files from sandbox session " + sessionId + ": " + stderr.snapshot());
                         }
                     }
-                    return new TarArchiveInputStream(new ByteArrayInputStream(archive.toByteArray()));
                 }
                 catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -634,6 +634,11 @@ public class DockerSandbox implements InteractiveSandbox {
                 finally {
                     closeQuietly(callback);
                 }
+                // A completed read-only archive command can fail for a missing report without invalidating the workspace.
+                if (exitCode != 0) {
+                    throw new SandboxUnavailableException("Could not archive files from sandbox session " + sessionId + ": " + stderr.snapshot());
+                }
+                return new TarArchiveInputStream(new ByteArrayInputStream(archive.toByteArray()));
             }
         }
     }
