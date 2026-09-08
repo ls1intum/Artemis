@@ -85,7 +85,7 @@ public class PyrisStatusUpdateService {
      * Handle a struggle-intervention callback. Routes by the authoritative {@code job.intent()}.
      * Each mode commits on its OWN terminal frame, structurally mirroring how the {@code decide} path gates on
      * {@code action != null}: {@code confirm_close} commits when {@code resolved != null} ({@code action} stays
-     * null on that mode). A leading IN_PROGRESS frame must NOT
+     * null on that mode). A leading {@code RUNNING} frame must NOT
      * fire the handler early - doing so would remove the job, so the real terminal frame would then 403 and the
      * close / stale-check would be silently lost.
      *
@@ -131,7 +131,7 @@ public class PyrisStatusUpdateService {
         irisStruggleInterventionService.recordTokenUsage(job, statusUpdate);
         boolean close = "confirm_close".equals(job.intent());
         // Each intent recognises its terminal frame by the field its own contract fills: resolved for confirm_close
-        // (action stays null there), action for decide and for a legacy null intent. Everything the terminal frame
+        // (action stays null there), action for every other intent. Everything the terminal frame
         // then triggers - claim, handle, complete on failure, release - is the same for both, so it is written once.
         if (close ? statusUpdate.resolved() != null : statusUpdate.action() != null) {
             pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...

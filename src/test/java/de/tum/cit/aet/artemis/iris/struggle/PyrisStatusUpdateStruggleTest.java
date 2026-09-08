@@ -249,7 +249,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void confirmClose_intermediateFrame_doesNotDispatch_holdsMarker() {
-        // Terminal-frame gating fix: the confirm_close terminal frame carries resolved != null. A leading IN_PROGRESS
+        // Terminal-frame gating fix: the confirm_close terminal frame carries resolved != null. A leading RUNNING
         // frame (resolved == null) must NOT fire the handler - dispatching early would remove the job so the REAL
         // terminal frame would 403 and the close would be silently lost. Intermediate frame -> keep-alive, marker held.
         var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.RUNNING, null, List.of(), null, null, null, null, null, null);
@@ -264,7 +264,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void confirmClose_errorFrame_releasesMarkerWithoutDispatch() {
-        // A Pyris ERROR stage with no resolved field is terminal but is not a real close: release the marker (so the
+        // A Pyris FAILED run state with no resolved field is terminal but is not a real close: release the marker (so the
         // slot does not leak) without dispatching the close handler.
         var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FAILED, null, List.of(), null, null, null, null, null, null);
 

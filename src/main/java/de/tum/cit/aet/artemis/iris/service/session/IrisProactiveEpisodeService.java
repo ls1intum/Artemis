@@ -139,8 +139,9 @@ public class IrisProactiveEpisodeService {
     }
 
     /**
-     * Returns true when the episode already has a terminal outcome persisted (DISMISSED, RECOVERED, or ABANDONED).
-     * Used by the active branch to skip a late escalation that arrived after the student dismissed.
+     * Returns true when the episode already has a terminal outcome persisted. Every value of the outcome enum is
+     * terminal (DISMISSED, RECOVERED, ABANDONED, INTERRUPTED); both branches below decide on presence, not on which
+     * one it is. Used by the branches that would deliver something, to skip what arrived after the episode ended.
      *
      * <p>
      * Reads episode-wide: checks ALL rows tagged with the episodeId, not just the earliest, so the result is

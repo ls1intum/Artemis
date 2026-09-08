@@ -240,7 +240,7 @@ public class PyrisPipelineService {
      * @param courseDTO       the course DTO
      * @param chatHistory     read-only exercise-chat history (empty if no session exists yet)
      * @param exerciseId      for the single-flight release key on an ERROR stage
-     * @param intent          the slot intent ({@code decide} | {@code confirm_close})
+     * @param intent          the slot intent ({@code decide} | {@code confirm_close} | {@code help_request})
      * @param episode         the client-allocated episode block (null when not sent)
      * @param proactivityMode the presence level ({@code pull} | {@code push}), passed to Pyris as prompt tone context
      */

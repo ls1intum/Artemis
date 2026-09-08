@@ -7,9 +7,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
- * Flat one-shot Hazelcast job for a proactive struggle-intervention run. The session is NOT stored (it is
- * created only on an {@code active} outcome); the callback resolves it from {@code exerciseId} +
- * {@code userId}. {@code jobId == settings.authenticationToken == Bearer run_id}.
+ * Flat one-shot Hazelcast job for a proactive struggle-intervention run. The session is NOT stored in the job; the
+ * callback resolves it from {@code exerciseId} + {@code userId}, which creates it if the student has none yet, for
+ * an ambient offer as well as an active one. What ambient defers to the reveal is the message, not the session.
+ * {@code jobId == settings.authenticationToken == Bearer run_id}.
  * <p>
  * {@code intent} and {@code episodeId} are stamped here so the async callback can correlate the
  * Pyris response back to the client slot without the websocket event echoing them. {@code confirmReason}
@@ -19,7 +20,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param courseId        the course the run belongs to; authorizes {@link #canAccess(Course)}
  * @param exerciseId      the exercise the student is struggling on
  * @param userId          the struggling student
- * @param intent          the slot intent ({@code decide} | {@code confirm_close}); null on legacy paths
+ * @param intent          the slot intent ({@code decide} | {@code confirm_close} | {@code help_request}); null on legacy paths
  * @param episodeId       the client-allocated episode UUID for correlation; null when no episode was sent
  * @param confirmReason   the close-mode discriminator ({@code progress} | {@code parked_progress}); null unless intent is {@code confirm_close}
  * @param requestToken    the client-minted scoped-cancel UUID; null on legacy paths
