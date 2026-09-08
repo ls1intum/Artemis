@@ -88,11 +88,25 @@ sonar {
         // Generated code is analyzed (it is shipped) but excluded from the coverage ratio: the OpenAPI
         // client is regenerated from the server contract and is deliberately left untested, exactly as
         // `vitest.config.ts` already excludes it from the client coverage floor.
+        //
+        // The list mirrors that file's `coverage.exclude`, and it has to: Sonar computes the ratio over
+        // whatever it indexed, so a file the LCOV report never mentions counts as fully uncovered
+        // rather than as absent. The same reasoning excludes `packages/tum-ui/src` — it is in
+        // `sonar.sources` because the package ships, but the only LCOV report imported here covers
+        // `src/main/webapp/app/**/*.ts` (`vitest.config.ts`, `coverage.include`). TUM UI is tested by
+        // its own run (`pnpm run tum-ui:test:coverage`, `ng test tum-ui --coverage`), which neither
+        // emits LCOV nor uploads an artifact for `ci-sonar.yml` to download. Leaving it in the
+        // denominator would report a tested package as 0% covered. Drop this entry as soon as that run
+        // publishes a report the Sonar job imports.
         property "sonar.coverage.exclusions", [
             "src/main/webapp/app/openapi/**",
             "src/main/webapp/app/**/*.route.ts",
             "src/main/webapp/app/**/*.routes.ts",
             "src/main/webapp/app/**/*.model.ts",
+            "src/main/webapp/app/core/config/dayjs.ts",
+            "src/main/webapp/app/core/config/monaco.config.ts",
+            "src/main/webapp/app/core/config/prod.config.ts",
+            "packages/tum-ui/src/**",
         ].join(",")
     }
 }

@@ -85,17 +85,25 @@ export SONAR_TOKEN="paste-your-token-here"
 To inspect the configuration without contacting the service at all, dump the computed properties:
 
 ```bash
-./gradlew sonar -Dsonar.scanner.internal.dumpToFile=/tmp/sonar-props.txt -x webapp
+./gradlew compileJava sonar -Dsonar.scanner.internal.dumpToFile=/tmp/sonar-props.txt -x webapp
 grep -E '^sonar\.(sources|exclusions|java\.binaries)' /tmp/sonar-props.txt
 ```
+
+Keep `compileJava` in that command even though it dumps rather than analyzes. Without it the run
+reproduces the degraded configuration described below instead of the real one, and
+`sonar.java.binaries` — one of the properties the `grep` asks about — is simply absent.
 
 ### Two things to know before changing it
 
 **Scope is a contract with `.codacy.yaml`.** The exclusion list in `gradle/sonar.gradle` mirrors that
 file's repository-wide `exclude_paths` floor: exercise templates, test code and specs, Storybook
-stories, `supporting_scripts`, and the throwaway OIDC test provider. Both tools grade the deployed
-application and nothing else. Change one list without the other and the two grades stop measuring the
-same code, which removes the only reason to run both.
+stories, `supporting_scripts`, and the throwaway OIDC test provider. Change one list without the
+other and the two grades stop measuring the same code, which removes the only reason to run both.
+
+What is shared is that floor, not the whole scope. Sonar additionally narrows analysis to the four
+roots named in `sonar.sources`, while Codacy declares no `include_paths` and therefore also grades
+supported repository tooling that sits outside them. So the two grades are comparable on the
+application code, and Codacy's covers somewhat more than that.
 
 **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode. The Gradle
 plugin derives `sonar.java.binaries` from the main source set's output directory, but only if that

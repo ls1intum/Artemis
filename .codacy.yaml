@@ -34,8 +34,12 @@
 # This block is the floor that cannot be forgotten.
 #
 # It is also the contract that makes the Codacy and SonarQube Cloud grades comparable: the same
-# paths are excluded in `gradle/sonar.gradle`, so both tools grade the deployed application only.
-# Change one, change the other, or the two grades stop measuring the same code.
+# paths are excluded in `gradle/sonar.gradle`, so neither tool grades exercise starter code, test
+# code, stories or internal tooling. Change one, change the other, or the two grades stop measuring
+# the same code. The floor is all that is shared: Sonar narrows further to the roots it lists in
+# `sonar.sources`, whereas this file declares no `include_paths`, so Codacy also grades supported
+# repository tooling outside them. The grades are comparable on the application code, not identical
+# in scope.
 #
 # The per-engine blocks below are deliberately kept rather than folded into this list. They are
 # narrower than this floor in places (bandit's Python test-file patterns, CodeNarc's Jenkins init

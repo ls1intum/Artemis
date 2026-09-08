@@ -252,7 +252,10 @@ Three things about it are worth knowing before changing it:
 
 1. **Scope is a contract with `.codacy.yaml`.** `gradle/sonar.gradle`'s exclusion list mirrors that
    file's repository-wide `exclude_paths` floor. Change one without the other and the two grades
-   quietly stop measuring the same code, which is the entire point of running both.
+   quietly stop measuring the same code, which is the entire point of running both. The floor is the
+   shared part and not the whole scope: Sonar narrows further to the roots in `sonar.sources`, while
+   `.codacy.yaml` sets no `include_paths`, so Codacy also grades supported repository tooling outside
+   them.
 2. **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode, and the
    Gradle plugin only sets `sonar.java.binaries` if the output directory already exists. Without a
    prior compile the property is silently omitted and the Java half of the analysis degrades with no

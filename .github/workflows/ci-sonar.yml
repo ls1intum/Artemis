@@ -78,6 +78,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
 
+      # Before Setup Node.js, so that its `cache: 'pnpm'` finds the package manager it keys on.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          run_install: false
+
       # Sonar's JavaScript/TypeScript analyzer shells out to Node. The runner image ships one, but
       # pinning it here keeps the analysis reproducible when that image changes, matching how every
       # other job in this repo pins Node rather than inheriting it.
@@ -85,6 +91,14 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
+          cache: 'pnpm'
+
+      # Also REQUIRED, for the same reason `compileJava` is below. Sonar's TypeScript analyzer runs
+      # the real compiler: `tsconfig.json` resolves Angular, RxJS and the rest through
+      # `node_modules`, and on a clean checkout every one of those imports is unresolved. The scan
+      # still succeeds, silently, with the type-aware rules degraded to what syntax alone can see.
+      - name: Install client dependencies
+        run: pnpm install --frozen-lockfile
 
       # Coverage is imported from the reports the `test` job already uploaded, so no suite is re-run
       # here. Both downloads are `continue-on-error`: a missing report costs the coverage metric and
