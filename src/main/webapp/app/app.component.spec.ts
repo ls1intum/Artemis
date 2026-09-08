@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { NgClass, NgStyle } from '@angular/common';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { of } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
@@ -14,6 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { CourseNotificationPopupOverlayComponent } from 'app/notification/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
@@ -36,10 +37,20 @@ class MockThemeService {
 describe('AppComponent', () => {
     let fixture: ComponentFixture<AppComponent>;
     let comp: AppComponent;
+    let handleNavigationError: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
+        handleNavigationError = vi.fn();
         await TestBed.configureTestingModule({
-            imports: [AppComponent, RouterModule.forRoot([])],
+            imports: [
+                AppComponent,
+                RouterModule.forRoot([
+                    // A route whose lazily loaded chunk cannot be fetched, and one whose loader fails the way a
+                    // resolver surfaces a missing entity, so both NavigationError branches can be driven for real.
+                    { path: 'chunk-failure', loadComponent: () => Promise.reject(new Error('Failed to fetch dynamically imported module: /chunk-ABC123.js')) },
+                    { path: 'server-error-404', loadComponent: () => Promise.reject({ status: 404 }) },
+                ]),
+            ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
@@ -52,6 +63,7 @@ describe('AppComponent', () => {
                 },
                 { provide: SentryErrorHandler, useValue: { initSentry: vi.fn() } },
                 { provide: JhiLanguageHelper, useValue: { updateTitle: vi.fn() } },
+                { provide: LazyRouteRecoveryService, useValue: { handleNavigationError } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -103,5 +115,30 @@ describe('AppComponent', () => {
         const footerElement = fixture.debugElement.query(By.css('jhi-footer'));
 
         expect(footerElement).toBeNull();
+    });
+
+    // Driven through real navigations to the routes registered above, so the router reports the NavigationError the
+    // same way it does in the browser rather than the test pushing a synthetic event into its event stream.
+    describe('navigation errors', () => {
+        it('should hand a failed route chunk to the recovery service', async () => {
+            const router = TestBed.inject(Router);
+
+            await router.navigateByUrl('/chunk-failure').catch(() => {});
+
+            expect(handleNavigationError).toHaveBeenCalledOnce();
+            const [error, url] = handleNavigationError.mock.calls[0];
+            expect((error as Error).message).toContain('Failed to fetch dynamically imported module');
+            expect(url).toBe('/chunk-failure');
+        });
+
+        it('should still send a 404 to the not-found page rather than the recovery service', async () => {
+            const router = TestBed.inject(Router);
+            const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+            await router.navigateByUrl('/server-error-404').catch(() => {});
+
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/404']);
+            expect(handleNavigationError).not.toHaveBeenCalled();
+        });
     });
 });

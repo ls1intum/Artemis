@@ -19,6 +19,7 @@ import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/compon
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
 import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundation/util/navbar.util';
+import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
 
 @Component({
     selector: 'jhi-app',
@@ -52,6 +53,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private ltiService = inject(LtiService);
     private featureToggleService = inject(FeatureToggleService);
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
+    private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
 
     readonly globalSearchEnabled = signal(false);
     private examStartedSubscription?: Subscription;
@@ -149,9 +151,15 @@ export class AppComponent implements OnInit, OnDestroy {
                     }
                 }
             }
-            if (event instanceof NavigationError && event.error.status === 404) {
-                // noinspection JSIgnoredPromiseFromCall
-                void this.router.navigate(['/404']);
+            if (event instanceof NavigationError) {
+                if (event.error.status === 404) {
+                    // noinspection JSIgnoredPromiseFromCall
+                    void this.router.navigate(['/404']);
+                } else {
+                    // A route whose lazily loaded chunk could not be fetched fails here with no status, and callers
+                    // routinely discard the navigation promise, so without this the click silently does nothing.
+                    this.lazyRouteRecoveryService.handleNavigationError(event.error, event.url);
+                }
             }
         });
 
