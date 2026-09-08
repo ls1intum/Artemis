@@ -36,7 +36,8 @@ Users enter their login or email address first:
 />
 
 Artemis then shows a password field for an account it manages itself, and a button that starts the SAML2 login for every other account, including an identifier it has never seen.
-You can set the text of that button as you like, through `info.saml2.buttonLabel`:
+You can set the text of that button as you like, through `info.saml2.buttonLabel`.
+If OIDC is enabled as well, it takes precedence and the button starts the OIDC login instead, so this button appears only while `artemis.user-management.oidc.enabled` is false:
 
 <Image
   src={saml2LoginProviderImg}
