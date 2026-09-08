@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -60,15 +57,6 @@ public class SlideSplitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
 
-    // Package-private so the concurrency test can take the same lock instead of hardcoding its name.
-    static final String SLIDE_LOCK_PREFIX = "slide-split-attachment-video-unit-";
-
-    /**
-     * How long to wait for another node to finish its slide work on the same unit. Splitting a large deck renders every
-     * page to a PNG, so the wait has to allow for a slow document rather than only for lock hand-off.
-     */
-    private static final Duration SLIDE_LOCK_TIMEOUT = Duration.ofMinutes(5);
-
     private final SlideRepository slideRepository;
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
@@ -77,15 +65,12 @@ public class SlideSplitterService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final DistributedDataProvider distributedDataProvider;
-
     public SlideSplitterService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideUnhideService slideUnhideService,
-            ExerciseRepository exerciseRepository, DistributedDataProvider distributedDataProvider) {
+            ExerciseRepository exerciseRepository) {
         this.slideRepository = slideRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
-        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -96,45 +81,33 @@ public class SlideSplitterService {
      */
     @Async("longRunningJobExecutor")
     public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob job) {
-        // Before waiting for the lock, not only after. The wait is minutes long and this executor has two threads,
-        // shared with course and exam archiving, so a few quick re-uploads of the same file would otherwise park every
-        // thread on a job that was already superseded. The authoritative check is the one under the lock below.
-        if (isObsolete(job)) {
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId()).orElse(null);
+        if (attachmentVideoUnit == null) {
+            log.debug("Skipping slide split job for deleted AttachmentVideoUnit {}", job.attachmentVideoUnitId());
             return CompletableFuture.completedFuture(null);
         }
-        DistributedLock lock = acquireSlideLock(job.attachmentVideoUnitId());
-        try {
-            AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId()).orElse(null);
-            if (attachmentVideoUnit == null) {
-                log.debug("Skipping slide split job for deleted AttachmentVideoUnit {}", job.attachmentVideoUnitId());
-                return CompletableFuture.completedFuture(null);
-            }
-            if (!job.matches(attachmentVideoUnit.getAttachment())) {
-                log.debug("Skipping obsolete slide split job for AttachmentVideoUnit {} and attachment revision {}/{}/{}", job.attachmentVideoUnitId(), job.attachmentId(),
-                        job.attachmentVersion(), job.attachmentSha256Hash());
-                return CompletableFuture.completedFuture(null);
-            }
+        if (!job.matches(attachmentVideoUnit.getAttachment())) {
+            log.debug("Skipping obsolete slide split job for AttachmentVideoUnit {} and attachment revision {}/{}/{}", job.attachmentVideoUnitId(), job.attachmentId(),
+                    job.attachmentVersion(), job.attachmentSha256Hash());
+            return CompletableFuture.completedFuture(null);
+        }
 
-            Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
-            File file = attachmentPath.toFile();
-            try (PDDocument document = Loader.loadPDF(file)) {
-                String pdfFilename = file.getName();
-                if (job.pageOrder() == null) {
-                    splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
-                }
-                else {
-                    splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, job.hiddenPages(), job.pageOrder());
-                }
+        Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        File file = attachmentPath.toFile();
+        try (PDDocument document = Loader.loadPDF(file)) {
+            String pdfFilename = file.getName();
+            if (job.pageOrder() == null) {
+                splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
             }
-            catch (IOException e) {
-                log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
-                throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
+            else {
+                splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, job.hiddenPages(), job.pageOrder());
             }
-            return CompletableFuture.completedFuture(null);
         }
-        finally {
-            lock.unlock();
+        catch (IOException e) {
+            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
@@ -144,32 +117,26 @@ public class SlideSplitterService {
      * @param hiddenPages         the complete set of hidden slides; omitted slides are made visible
      */
     public void updateSlideVisibility(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
-        DistributedLock lock = acquireSlideLock(attachmentVideoUnit.getId());
+        SlideOperation operation = new SlideOperation();
+        Map<String, HiddenPageInfoDTO> hiddenPagesMap = hiddenPages.stream().collect(Collectors.toMap(HiddenPageInfoDTO::slideId, dto -> dto));
+        // No file is written here, but rows are: a hidden date is written per slide, and a save part-way through the
+        // list would otherwise leave the deck half hidden with none of the unhide scheduling done, so the slides that
+        // were written would stay hidden past their date. Take a restore point and undo on failure, exactly as the
+        // splitting paths do.
+        operation.recordRestorePoint(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
         try {
-            SlideOperation operation = new SlideOperation();
-            Map<String, HiddenPageInfoDTO> hiddenPagesMap = hiddenPages.stream().collect(Collectors.toMap(HiddenPageInfoDTO::slideId, dto -> dto));
-            // No file is written here, but rows are: a hidden date is written per slide, and a save part-way through
-            // the list would otherwise leave the deck half hidden with none of the unhide scheduling done, so the
-            // slides that were written would stay hidden past their date. Take a restore point and undo on failure,
-            // exactly as the splitting paths do.
-            operation.recordRestorePoint(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
-            try {
-                slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).forEach(slide -> {
-                    ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slide, hiddenPagesMap, String.valueOf(slide.getId()));
-                    Slide savedSlide = operation.save(slide);
-                    scheduleUnhideIfNeeded(operation, savedSlide, previousHiddenValue, savedSlide.getHidden());
-                });
-            }
-            catch (Throwable t) {
-                operation.compensate();
-                throw t;
-            }
-            // Outside the guarded region, for the reason given on the splitting overloads.
-            operation.succeed();
+            slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).forEach(slide -> {
+                ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slide, hiddenPagesMap, String.valueOf(slide.getId()));
+                Slide savedSlide = operation.save(slide);
+                scheduleUnhideIfNeeded(operation, savedSlide, previousHiddenValue, savedSlide.getHidden());
+            });
         }
-        finally {
-            lock.unlock();
+        catch (Throwable t) {
+            operation.compensate();
+            throw t;
         }
+        // Outside the guarded region, for the reason given on the splitting overloads.
+        operation.succeed();
     }
 
     /**
@@ -181,17 +148,11 @@ public class SlideSplitterService {
      * @param pdfFilename         The name of the PDF file.
      */
     public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename) {
-        DistributedLock lock = acquireSlideLock(attachmentVideoUnit.getId());
-        try {
-            splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
-        }
-        finally {
-            lock.unlock();
-        }
+        splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
     }
 
     /**
-     * Writes one slide image and row per page of the document. The caller holds the slide lock for this unit.
+     * Writes one slide image and row per page of the document.
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
      * @param document            The PDF document that is already loaded.
@@ -249,17 +210,11 @@ public class SlideSplitterService {
      */
     public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, List<HiddenPageInfoDTO> hiddenPages,
             List<SlideOrderDTO> pageOrder) {
-        DistributedLock lock = acquireSlideLock(attachmentVideoUnit.getId());
-        try {
-            splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
-        }
-        finally {
-            lock.unlock();
-        }
+        splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
     }
 
     /**
-     * Writes the slide images and rows for the given page order. The caller holds the slide lock for this unit.
+     * Writes the slide images and rows for the given page order.
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
      * @param document            The PDF document that is already loaded.
@@ -477,56 +432,6 @@ public class SlideSplitterService {
             ImageIO.write(bufferedImage, format, outputStream);
             return outputStream.toByteArray();
         }
-    }
-
-    /**
-     * Acquire the cluster-wide lock that serializes slide work for one attachment video unit.
-     * <p>
-     * Replaces a {@code SELECT ... FOR UPDATE} on the unit row. That lock only excluded anyone while a transaction
-     * spanned the whole operation, and this service must not declare one; a row lock without a transaction is released
-     * at once and excludes nobody. A named distributed lock gives the same mutual exclusion, holds for exactly as long
-     * as the operation, and works the same on every distributed-data backend.
-     *
-     * @param attachmentVideoUnitId the unit whose slides are about to be written
-     * @return the acquired lock, which the caller must release in a finally block
-     */
-    /**
-     * Whether this job has already been superseded, judged without holding the slide lock.
-     *
-     * @param job the slide split job
-     * @return true if the unit is gone, or its attachment is no longer the revision the job was created for
-     */
-    private boolean isObsolete(AttachmentVideoUnitSlideSplitJob job) {
-        return attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId()).map(unit -> !job.matches(unit.getAttachment())).orElse(true);
-    }
-
-    private DistributedLock acquireSlideLock(Long attachmentVideoUnitId) {
-        if (attachmentVideoUnitId == null) {
-            throw new IllegalStateException("Cannot update slides for an attachment video unit that has not been saved yet");
-        }
-        DistributedLock lock = distributedDataProvider.getLock(SLIDE_LOCK_PREFIX + attachmentVideoUnitId);
-        if (!lock.tryLock(SLIDE_LOCK_TIMEOUT)) {
-            throw new InternalServerErrorException(
-                    "Could not acquire the slide lock for attachment video unit " + attachmentVideoUnitId + " within " + SLIDE_LOCK_TIMEOUT.toSeconds() + " seconds");
-        }
-        // Checked under the lock, because the pessimistic lock this replaced also refused to touch a unit that had
-        // gone: it read the row to lock it. Without this, a unit deleted while the caller waited for the lock would
-        // still have its slide rows rewritten, and they would be orphaned the moment they were written.
-        //
-        // Anything thrown between acquiring and returning has to release the lock here, including a failure of the
-        // check itself. The caller only gets a reference on the happy path, so its finally block cannot help, and this
-        // lock has no lease to fall back on — a leak would block every later slide operation on the unit until the
-        // node restarts.
-        try {
-            if (!attachmentVideoUnitRepository.existsById(attachmentVideoUnitId)) {
-                throw new IllegalStateException("Cannot update slides for missing attachment video unit " + attachmentVideoUnitId);
-            }
-        }
-        catch (Throwable t) {
-            lock.unlock();
-            throw t;
-        }
-        return lock;
     }
 
     /**

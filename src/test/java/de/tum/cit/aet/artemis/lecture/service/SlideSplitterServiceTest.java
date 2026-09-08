@@ -19,10 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -39,8 +36,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -70,9 +65,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private AttachmentRepository attachmentRepository;
-
-    @Autowired
-    private DistributedDataProvider distributedDataProvider;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -393,42 +385,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of());
 
         assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
-    }
-
-    /**
-     * Slide work for one unit is serialized by a named distributed lock rather than by a pessimistic lock on the unit
-     * row. The row lock only excluded anyone while a transaction spanned the whole operation, and this service no
-     * longer declares one; see the transaction guidance in the developer documentation.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void updateSlideVisibilityWaitsForConcurrentSlideMutation() throws Exception {
-        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
-        ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
-        var executor = Executors.newSingleThreadExecutor();
-        DistributedLock concurrentSlideWork = distributedDataProvider.getLock(SlideSplitterService.SLIDE_LOCK_PREFIX + testAttachmentVideoUnit.getId());
-
-        Future<?> visibilityUpdate;
-        concurrentSlideWork.lock();
-        try {
-            visibilityUpdate = executor
-                    .submit(() -> slideSplitterService.updateSlideVisibility(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO(slide.getId().toString(), hiddenUntil, null))));
-            // Held by this thread, so the update cannot start; it must still be waiting rather than have completed.
-            assertThatThrownBy(() -> visibilityUpdate.get(200, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
-        }
-        finally {
-            concurrentSlideWork.unlock();
-        }
-
-        try {
-            visibilityUpdate.get(5, TimeUnit.SECONDS);
-        }
-        finally {
-            executor.shutdownNow();
-        }
-
-        Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(1, ChronoUnit.MILLIS));
     }
 
     @Test
