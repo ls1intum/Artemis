@@ -1,25 +1,9 @@
-import {
-    AfterContentInit,
-    Component,
-    DestroyRef,
-    DoCheck,
-    Injector,
-    OnInit,
-    afterNextRender,
-    computed,
-    inject,
-    input,
-    output,
-    signal,
-    viewChild,
-    viewChildren,
-} from '@angular/core';
+import { Component, DestroyRef, DoCheck, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { isEqual } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { GradingScaleAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-scale.action';
 import { GradingDescriptionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-description.action';
@@ -85,8 +69,7 @@ interface AssessmentCriteriaGenerationState {
     ],
     providers: [TumUiConfirmationService],
 })
-export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit, DoCheck {
-    private injector = inject(Injector);
+export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private readonly profileService = inject(ProfileService);
     private readonly generationService = inject(AssessmentCriteriaGenerationService);
     private readonly alertService = inject(AlertService);
@@ -95,8 +78,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private readonly destroyRef = inject(DestroyRef);
     private readonly accountService = inject(AccountService);
 
-    private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
-    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    private readonly markdownEditor = viewChild<MarkdownEditorMonacoComponent>('markdownEditor');
     /** Exercise whose assessment instructions are displayed and edited. */
     readonly exercise = input.required<Exercise>();
     /** Whether the user may edit or generate assessment criteria. */
@@ -172,14 +154,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.gradingCriterionAction,
     ];
 
-    domainActionsForGradingInstructionParsing: TextEditorDomainAction[] = [
-        this.creditsAction,
-        this.gradingScaleAction,
-        this.descriptionAction,
-        this.feedbackAction,
-        this.usageCountAction,
-    ];
-
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
@@ -187,40 +161,21 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     facArtemisIntelligence = facArtemisIntelligence;
 
     readonly editModeOptions = [
-        { value: true, labelKey: 'entity.action.edit' },
-        { value: false, labelKey: 'artemisApp.exercise.editText' },
+        { value: 'structured', labelKey: 'entity.action.edit' },
+        { value: 'text', labelKey: 'artemisApp.exercise.editText' },
     ] as const;
+
+    /** Current mode value for the Edit / Edit as Text toggle. */
+    readonly editModeValue = computed(() => (this.showEditMode() ? 'structured' : 'text'));
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
         this.backupExercise = deepClone(this.exercise());
-        const markdown = this.exercise().gradingInstructionFeedbackUsed ? this.initializeExerciseGradingInstructionText() : this.generateMarkdown();
-        this.markdownEditorText.set(markdown);
+        this.markdownEditorText.set(this.generateMarkdown());
+        // Always start in the structured field editor; edit-as-text remains available via the mode toggle.
         this.showEditMode.set(true);
-    }
-
-    ngAfterContentInit() {
-        if (this.exercise().gradingInstructionFeedbackUsed) {
-            this.initializeMarkdown();
-        }
-    }
-
-    initializeMarkdown() {
-        // Defer until after the next render so the markdown editor view children (driven by the criteria @for) exist.
-        afterNextRender(
-            () => {
-                let index = 0;
-                this.criteria().forEach((criterion) => {
-                    criterion.structuredGradingInstructions.forEach((instruction) => {
-                        this.markdownEditors().at(index)!.setMarkdown(this.generateInstructionText(instruction));
-                        index += 1;
-                    });
-                });
-            },
-            { injector: this.injector },
-        );
     }
 
     generateMarkdown(): string {
@@ -323,16 +278,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     prepareForSave(): void {
-        if (!this.editable()) {
+        if (!this.editable() || this.showEditMode()) {
             return;
         }
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor().parseMarkdown();
-        if (this.exercise().gradingInstructionFeedbackUsed) {
-            this.markdownEditors().forEach((component) => {
-                component.parseMarkdown(this.domainActionsForGradingInstructionParsing);
-            });
-        }
+        this.markdownEditor()?.parseMarkdown();
     }
 
     /**
@@ -488,14 +438,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.createSubInstructionActions(textWithDomainActions);
     }
 
-    onInstructionChange(textWithDomainActions: TextWithDomainAction[], instruction: GradingInstruction): void {
-        if (!this.editable()) {
-            return;
-        }
-        this.instructions = [instruction];
-        this.setInstructionParameters(textWithDomainActions);
-    }
-
     /**
      * @function resetInstruction
      * @desc Resets the whole instruction
@@ -529,7 +471,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
             instructions[instructionIndex] = new GradingInstruction();
         }
-        this.initializeMarkdown();
     }
 
     findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
@@ -570,14 +511,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.splice(instructionIndex, 1);
     }
 
-    addInstruction(criterion: GradingCriterion) {
-        if (!this.editable()) {
-            return;
-        }
-        this.addNewInstruction(criterion);
-        this.initializeMarkdown();
-    }
-
     /**
      * Adds a new grading instruction for the specified grading criterion.
      * @param criterion The grading criterion that contains the instruction to insert.
@@ -589,14 +522,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instruction = new GradingInstruction();
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
-    }
-
-    addGradingCriterion() {
-        if (!this.editable()) {
-            return;
-        }
-        this.addNewGradingCriterion();
-        this.initializeMarkdown();
     }
 
     addNewGradingCriterion() {
@@ -668,11 +593,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /** Sets the structured editor mode and refreshes the markdown snapshot used by the text editor. */
-    setEditMode(editMode: boolean) {
-        if (!this.editable() || this.showEditMode() === editMode) {
+    setEditMode(editMode: unknown) {
+        const next = editMode === true || editMode === 'structured';
+        if (!this.editable() || this.showEditMode() === next) {
             return;
         }
-        this.showEditMode.set(editMode);
+        this.showEditMode.set(next);
         this.markdownEditorText.set(this.generateMarkdown());
     }
 
@@ -685,7 +611,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             return;
         }
 
-        if (!this.showEditMode() || this.exercise().gradingInstructionFeedbackUsed) {
+        if (!this.showEditMode()) {
             this.prepareForSave();
             if (!this.hasValidParsedCriteria()) {
                 this.alertService.error('artemisApp.exercise.assessmentCriteriaGeneration.invalidSyntax');
@@ -760,14 +686,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     currentExercise.gradingCriteria = criteria;
                     this.criteria.set(criteria);
                     this.criteriaGenerated.emit();
-                    if (this.exercise().gradingInstructionFeedbackUsed) {
-                        this.markdownEditorText.set(this.initializeExerciseGradingInstructionText());
-                        this.initializeMarkdown();
-                    } else {
-                        this.markdownEditorText.set(this.generateMarkdown());
-                        if (!this.showEditMode()) {
-                            this.markdownEditor().setMarkdown(this.markdownEditorText());
-                        }
+                    this.markdownEditorText.set(this.generateMarkdown());
+                    if (!this.showEditMode()) {
+                        this.markdownEditor()?.setMarkdown(this.markdownEditorText());
                     }
                     this.alertService.success('artemisApp.exercise.assessmentCriteriaGeneration.success');
                 },

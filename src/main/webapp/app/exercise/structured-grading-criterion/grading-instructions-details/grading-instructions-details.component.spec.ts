@@ -190,7 +190,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(header.querySelector('[data-testid="generate-assessment-criteria"]')).not.toBeNull();
         });
 
-        it('should render the add-instruction action as a labelled icon button', () => {
+        it('should render the add-instruction action as a labelled button', () => {
             exercise.gradingCriteria = [gradingCriterion];
             fixture.detectChanges();
 
@@ -198,23 +198,52 @@ describe('GradingInstructionsDetailsComponent', () => {
             const button = buttonHost.querySelector('button') as HTMLButtonElement;
 
             expect(button.tagName).toBe('BUTTON');
-            expect(button.getAttribute('aria-label')).toBe('artemisApp.exercise.addAssessmentInstruction');
             expect(button.textContent?.trim()).toBe('artemisApp.exercise.addAssessmentInstruction');
         });
 
-        it('should not persist the display-only grading instruction placeholder while generating', () => {
+        it('should generate without parsing markdown when feedback is already used', () => {
             exercise.gradingInstructionFeedbackUsed = true;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => component.setExerciseGradingInstructionText([{ text: '  Add Assessment Instruction text here  \n', action: undefined }])),
+                parseMarkdown: vi.fn(),
             };
             Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
             generationService.generate.mockReturnValue(of([]));
 
             component.generateAssessmentCriteria();
 
-            expect(markdownEditor.parseMarkdown).toHaveBeenCalledOnce();
-            expect(exercise.gradingInstructions).toBeUndefined();
+            expect(markdownEditor.parseMarkdown).not.toHaveBeenCalled();
             expect(generationService.generate).toHaveBeenCalledWith(exercise, { exampleSolution: undefined, additionalContext: undefined });
+        });
+
+        it('should allow switching to edit-as-text when grading instruction feedback is used', () => {
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.showEditMode.set(true);
+
+            component.setEditMode(false);
+
+            expect(component.showEditMode()).toBe(false);
+        });
+
+        it('should render structured instruction fields when grading instruction feedback is used', () => {
+            exercise.gradingInstructionFeedbackUsed = true;
+            exercise.gradingCriteria = [gradingCriterion];
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.sqi-instruction__fields-row')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('.sqi-instruction--markdown')).toBeNull();
+            expect(component.showEditMode()).toBe(true);
+        });
+
+        it('should render the plain markdown editor without criterion cards in edit-as-text mode', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            fixture.detectChanges();
+            component.setEditMode('text');
+            fixture.detectChanges();
+
+            expect(component.showEditMode()).toBe(false);
+            expect(fixture.nativeElement.querySelector('jhi-markdown-editor-monaco')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('.sqi-criterion')).toBeNull();
+            expect(fixture.nativeElement.querySelector('.grading-instructions-update-border')).toBeNull();
         });
 
         it('should use the current user permissions for a new exam exercise without populated permission flags', () => {
@@ -371,28 +400,24 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(exercise.gradingInstructions).toBe('Current unsaved text');
         });
 
-        it('should keep generated criterion markup out of the general editor when grading instruction feedback is used', () => {
+        it('should refresh structured markdown snapshot after generation when grading instruction feedback is used', () => {
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => {
-                    exercise.gradingInstructions = 'General assessment instructions';
-                }),
+                parseMarkdown: vi.fn(),
                 setMarkdown: vi.fn(),
             };
             Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            exercise.gradingInstructions = 'General assessment instructions';
             exercise.gradingInstructionFeedbackUsed = true;
             generationService.generate.mockReturnValue(of([generatedCriterion]));
-            const initializeMarkdownSpy = vi.spyOn(component, 'initializeMarkdown').mockImplementation(() => undefined);
-            const generateMarkdownSpy = vi.spyOn(component, 'generateMarkdown');
 
             component.generateAssessmentCriteria();
 
-            expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
-            expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
-            expect(generateMarkdownSpy).not.toHaveBeenCalled();
-            expect(initializeMarkdownSpy).toHaveBeenCalledOnce();
+            expect(component.showEditMode()).toBe(true);
+            expect(component.markdownEditorText()).toContain('General assessment instructions');
+            expect(component.markdownEditorText()).toContain(GradingCriterionAction.IDENTIFIER);
             expect(markdownEditor.setMarkdown).not.toHaveBeenCalled();
-            expect(exercise.gradingInstructions).toBe('General assessment instructions');
+            expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
         });
 
         it('should abort when edit-as-text syntax cannot be parsed', () => {
@@ -506,27 +531,27 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.markdownEditorText()).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
         });
 
-        it('should initialize only general instructions in the main editor when grading instruction feedback is used', () => {
+        it('should initialize full markdown snapshot when grading instruction feedback is used', () => {
             exercise.gradingInstructions = 'General assessment instructions';
             exercise.gradingCriteria = [gradingCriterion];
             exercise.gradingInstructionFeedbackUsed = true;
 
             component.ngOnInit();
 
-            expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
-            expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
+            expect(component.showEditMode()).toBe(true);
+            expect(component.markdownEditorText()).toContain('General assessment instructions');
+            expect(component.markdownEditorText()).toContain(GradingCriterionAction.IDENTIFIER);
         });
 
-        it('should parse per-instruction editors with only grading instruction actions', () => {
+        it('should skip markdown parsing while in structured edit mode', () => {
             exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
             const mainEditor = { parseMarkdown: vi.fn() };
-            const instructionEditor = { parseMarkdown: vi.fn() };
             Object.defineProperty(component, 'markdownEditor', { value: () => mainEditor });
-            Object.defineProperty(component, 'markdownEditors', { value: () => [instructionEditor] });
 
             component.prepareForSave();
 
-            expect(instructionEditor.parseMarkdown).toHaveBeenCalledWith(component.domainActionsForGradingInstructionParsing);
+            expect(mainEditor.parseMarkdown).not.toHaveBeenCalled();
         });
     });
 
@@ -546,13 +571,15 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(index).toBe(0);
     });
 
-    it('should expose the grading instruction domain actions used by the template', () => {
-        expect(component.domainActionsForGradingInstructionParsing).toEqual([
+    it('should expose the grading instruction domain actions used by the text editor', () => {
+        expect(component.domainActionsForMainEditor).toEqual([
             component.creditsAction,
             component.gradingScaleAction,
             component.descriptionAction,
             component.feedbackAction,
             component.usageCountAction,
+            component.gradingInstructionAction,
+            component.gradingCriterionAction,
         ]);
     });
 
@@ -616,15 +643,13 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria[0].title).toEqual(event.target.value);
     });
 
-    it('should change grading instruction', () => {
-        const newDescription = 'new text';
-        const domainActions = [{ text: newDescription, action: new GradingDescriptionAction() }] as TextWithDomainAction[];
-
+    it('should change grading instruction fields in place', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        component.onInstructionChange(domainActions, gradingInstruction);
+        gradingInstruction.instructionDescription = 'new text';
+        component.updateGradingInstruction(gradingInstruction, gradingCriterion);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(newDescription);
+        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual('new text');
     });
 
     it('should delete a grading instruction', () => {
