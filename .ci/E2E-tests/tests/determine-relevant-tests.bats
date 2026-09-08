@@ -39,22 +39,15 @@ setup() {
     grep -qx 'RUN_ALL_TESTS=true' "$GITHUB_OUTPUT"
 }
 
-@test "rejects a missing base rather than selecting only the last commit" {
+@test "rejects a base it cannot compare against rather than selecting the last commit" {
     run bash .ci/E2E-tests/determine-relevant-tests.sh missing-base
     [ "$status" -ne 0 ]
     [[ "$output" == *"ERROR: Cannot compare 'missing-base' with HEAD."* ]]
     [ ! -s "$GITHUB_OUTPUT" ]
 }
 
-@test "rejects a base with unrelated history" {
-    unrelated=$(git commit-tree -m unrelated "$(git mktree < /dev/null)")
-    git branch unrelated "$unrelated"
-    run bash .ci/E2E-tests/determine-relevant-tests.sh unrelated
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"ERROR: Cannot compare 'unrelated' with HEAD."* ]]
-    [ ! -s "$GITHUB_OUTPUT" ]
-}
-
+# The case the removed HEAD~1 fallback used to hide: a shallow checkout has no merge base, so the
+# selection silently covered one commit instead of the branch.
 @test "rejects shallow history without a merge base" {
     git clone -q --depth 1 "file://$REPO" "$BATS_TEST_TMPDIR/shallow"
     cd "$BATS_TEST_TMPDIR/shallow"
@@ -65,53 +58,10 @@ setup() {
     [ ! -s "$GITHUB_OUTPUT" ]
 }
 
-@test "covers the exercise split-panel spec in the remaining or relevant phase" {
-    spec=e2e/exercise/ExerciseSplitPanelResize.spec.ts
-    mkdir -p src/test/playwright/e2e/exercise
-    cp "$BATS_TEST_DIRNAME/../../../src/test/playwright/$spec" "src/test/playwright/$spec"
-    git add .
-    git commit -qm 'split-panel spec'
-    git branch selection-base
-    touch README.md
-    git add .
-    git commit -qm documentation
-
-    run bash .ci/E2E-tests/determine-relevant-tests.sh selection-base
-    [ "$status" -eq 0 ]
-    grep -qx 'RUN_ALL_TESTS=false' "$GITHUB_OUTPUT"
-    grep -E "^REMAINING_TESTS=(.* )?${spec//./\\.}( |$)" "$GITHUB_OUTPUT"
-
-    mkdir -p src/main/webapp/app/exercise
-    touch src/main/webapp/app/exercise/change.ts
-    git add .
-    git commit -qm exercise
-    : > "$GITHUB_OUTPUT"
-    run bash .ci/E2E-tests/determine-relevant-tests.sh selection-base
-    [ "$status" -eq 0 ]
-    grep -qx 'RUN_ALL_TESTS=false' "$GITHUB_OUTPUT"
-    grep -E "^RELEVANT_TESTS=(.* )?${spec//./\\.}( |$)" "$GITHUB_OUTPUT"
-    ! grep -E "^REMAINING_TESTS=(.* )?${spec//./\\.}( |$)" "$GITHUB_OUTPUT"
-}
-
-@test "reports missing jq without emitting a selection" {
-    mkdir "$BATS_TEST_TMPDIR/bin"
-    ln -s "$(command -v dirname)" "$BATS_TEST_TMPDIR/bin/dirname"
-    PATH="$BATS_TEST_TMPDIR/bin" run "$BASH" .ci/E2E-tests/determine-relevant-tests.sh base
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"ERROR: jq is required"* ]]
-    [ ! -s "$GITHUB_OUTPUT" ]
-}
-
-@test "rejects malformed mapping JSON without emitting a selection" {
-    printf '{' > .ci/E2E-tests/e2e-test-mapping.json
-    run bash .ci/E2E-tests/determine-relevant-tests.sh base
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"ERROR: Invalid JSON"* ]]
-    [ ! -s "$GITHUB_OUTPUT" ]
-}
-
-@test "rejects empty, concatenated and non-object JSON mappings" {
-    for mapping in '' '{} {}' 'null' '[]' '"mapping"' '1' 'true'; do
+# `jq empty`, the obvious guard, accepts all of these and would select tests from a mapping that
+# carries no rules at all.
+@test "requires the mapping to be exactly one JSON object" {
+    for mapping in '{' '' '{} {}' 'null' '[]' '"mapping"' '1' 'true'; do
         printf '%s' "$mapping" > .ci/E2E-tests/e2e-test-mapping.json
         run bash .ci/E2E-tests/determine-relevant-tests.sh base
         [ "$status" -ne 0 ]

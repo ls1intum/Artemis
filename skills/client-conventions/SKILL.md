@@ -69,8 +69,9 @@ primitives, never `text-red-500`, never `text-danger`, never the superseded arbi
 `text-(--danger)` form.
 
 `localRules/no-raw-tailwind-color-palette` enforces the palette part across
-`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is only partly enforced**:
-`localRules/no-bootstrap-classes` covers the migrated directories listed in `eslint.config.mjs`.
+`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is
+only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated directories listed
+in `eslint.config.mjs`.
 The convention applies throughout the client even where lint does not enforce it. Add newly
 migrated directories to that list.
 

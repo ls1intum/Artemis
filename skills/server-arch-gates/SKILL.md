@@ -85,8 +85,9 @@ rationale, and `reference/gates.md` for the pattern if you do proceed.
 
 ## Adding a capability to the distributed data layer
 
-If `DistributedDataProvider` lacks what you need, add it there, implement it for each backend, and add a case to `AbstractDistributedDataTest`. That suite is what keeps
-the backends in agreement. Request entry lifetimes at the call site with
+If `DistributedDataProvider` lacks what you need, add it there, implement it for each backend, and
+add a case to `AbstractDistributedDataTest`. That suite is what keeps the backends in agreement.
+Request entry lifetimes at the call site with
 `getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a backend
 map configuration only applies to that one backend. Full guidance:
 `documentation/docs/developer/guidelines/distributed-data.mdx`.

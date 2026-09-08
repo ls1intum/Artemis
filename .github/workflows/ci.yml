@@ -152,6 +152,9 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+              # Adding a spec is what leaves the E2E mapping incomplete, so the coverage check
+              # in ci-workflows.yml has to run for it.
+              - 'src/test/playwright/**/*.spec.ts'
             has_version:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-version-consistency.yml'

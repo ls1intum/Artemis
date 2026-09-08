@@ -29,6 +29,10 @@ jobs:
                      .github/actions/resolve-artifact-run/resolve-artifact-run.sh
       - name: bats unit tests
         run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests .ci/E2E-tests/tests
+      # A spec inside a directory the mapping enumerates file by file runs in neither E2E phase
+      # until the mapping lists it, and the E2E run itself reports success either way.
+      - name: E2E selection covers every spec
+        run: .ci/E2E-tests/verify-test-determination.sh --all
 
   actionlint:
     name: actionlint
