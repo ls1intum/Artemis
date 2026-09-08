@@ -28,6 +28,7 @@ import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
@@ -135,7 +136,9 @@ public class AgentLoopRunner {
         ChatModel configuredChatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
         this.chatModel = configuredChatModel == null ? null : new HarmonyScrubbingChatModel(configuredChatModel);
         this.effectiveOptions = configuredChatModel == null ? null : configuredChatModel.getOptions();
-        this.toolCallingManager = ToolCallingManager.builder().build();
+        // Sandbox loss must reach the terminal-error branch, not become model-visible text that invites another command.
+        this.toolCallingManager = ToolCallingManager.builder()
+                .toolExecutionExceptionProcessor(DefaultToolExecutionExceptionProcessor.builder().rethrowExceptions(List.of(SandboxUnavailableException.class)).build()).build();
         this.contextWindowTokens = contextWindowTokens;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
