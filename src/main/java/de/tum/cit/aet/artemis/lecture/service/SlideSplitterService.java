@@ -274,7 +274,7 @@ public class SlideSplitterService {
             }
 
             // Clean up slides that are no longer in the page order
-            cleanupRemovedSlides(pageOrder, existingSlides);
+            cleanupRemovedSlides(operation, pageOrder, existingSlides);
             operation.succeed();
         }
         catch (IOException e) {
@@ -423,7 +423,7 @@ public class SlideSplitterService {
     /**
      * Update slides that are no longer in the page order by setting their attachmentVideoUnit to null instead of deleting them.
      */
-    private void cleanupRemovedSlides(List<SlideOrderDTO> pageOrderList, List<Slide> existingSlides) {
+    private void cleanupRemovedSlides(SlideOperation operation, List<SlideOrderDTO> pageOrderList, List<Slide> existingSlides) {
         if (pageOrderList == null || pageOrderList.isEmpty()) {
             return;
         }
@@ -436,7 +436,10 @@ public class SlideSplitterService {
             if (!slidesToDetach.isEmpty()) {
                 for (Slide slide : slidesToDetach) {
                     slide.setAttachmentVideoUnit(null);
-                    slideRepository.save(slide);
+                    // Through the operation like every other write here. These rows already exist, so nothing is
+                    // recorded as created and the restore point already covers them; routing it here keeps that true
+                    // if this ever starts writing a row of its own.
+                    operation.save(slide);
                 }
                 log.debug("Detached {} slides that are no longer in the page order by setting their attachmentVideoUnit to null", slidesToDetach.size());
             }
