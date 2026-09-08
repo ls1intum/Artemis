@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
  * It provides methods for adding, removing, and retrieving Pyris jobs.
  * The class also handles generating job ID tokens and validating tokens from request headers based on these tokens.
- * The jobs live in a distributed map obtained from {@link DistributedDataProvider}, so the backend in use is
+ * The jobs live in a distributed map obtained from {@link DistributedDataProvider}, so the provider in use is
  * whatever {@code artemis.distributed-data.provider} selects.
  */
 @Lazy
@@ -96,8 +96,8 @@ public class PyrisJobService {
      *
      * <p>
      * The entry lifetime is a crash self-heal backstop: a reservation whose run never completes (node crash) expires
-     * with the job TTL. Like the job map, the lifetime is requested here rather than configured on the backend,
-     * because a map-level TTL is not expressible on every provider.
+     * with the job TTL. Like the job map, the lifetime is requested here rather than configured on the provider,
+     * because a map-level TTL is not expressible on every one of them.
      *
      * @return the map of {@code (userId:exerciseId) -> token} reservations
      */
