@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -27,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -39,7 +43,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
+    private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
+
     private final DistributedDataProvider distributedDataProvider;
+
+    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
@@ -56,8 +64,9 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
     private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
-    public PyrisJobService(DistributedDataProvider distributedDataProvider) {
+    public PyrisJobService(DistributedDataProvider distributedDataProvider, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.distributedDataProvider = distributedDataProvider;
+        this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
     /**
@@ -239,12 +248,34 @@ public class PyrisJobService {
         var token = authHeader.substring(7);
         var job = getJob(token);
         if (job == null) {
+            job = recoverIngestionJobFromDatabase(token);
+        }
+        if (job == null) {
             throw new AccessForbiddenException("No valid token provided");
         }
         if (!jobClass.isInstance(job)) {
             throw new ConflictException("Run ID is not a " + jobClass.getSimpleName(), "Job", "invalidRunId");
         }
         return jobClass.cast(job);
+    }
+
+    /**
+     * Reconstruct a lecture ingestion job from the processing state that still carries its token.
+     * <p>
+     * The distributed job map entry expires after a TTL, but an ingestion run can legitimately outlive it.
+     * The processing state row keeps the token for as long as the job is in flight, so a late callback for a
+     * job Artemis still tracks is authenticated against the database instead of being rejected with a 403.
+     * A token that was already cleared (job superseded, recovered, or completed) stays invalid.
+     *
+     * @param token the token from the callback's Authorization header
+     * @return the reconstructed job, or null if no processing state carries this token
+     */
+    @Nullable
+    private PyrisJob recoverIngestionJobFromDatabase(String token) {
+        return processingStateCallbackApi.flatMap(api -> api.findIngestionJobIdentityByToken(token)).map(identity -> {
+            log.info("Authenticated ingestion callback for unit {} from the processing state after job map expiry", identity.lectureUnitId());
+            return (PyrisJob) new LectureIngestionWebhookJob(token, identity.courseId(), identity.lectureId(), identity.lectureUnitId());
+        }).orElse(null);
     }
 
     /**
