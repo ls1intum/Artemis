@@ -34,6 +34,12 @@ public class BuildScriptProviderService {
      */
     public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, String fileExtension) {
         List<String> fileNameComponents = new ArrayList<>();
+        // The assignment's optional build wrapper does not change how the test repository is built.
+        projectType = projectType.map(type -> switch (type) {
+            case MAVEN_MAVEN -> ProjectType.PLAIN_MAVEN;
+            case GRADLE_GRADLE -> ProjectType.PLAIN_GRADLE;
+            default -> type;
+        });
 
         if (ProjectType.MAVEN_BLACKBOX.equals(projectType.orElse(null))) {
             fileNameComponents.add("plain_" + projectType.get().name().toLowerCase(Locale.ROOT));
