@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 
@@ -20,7 +22,9 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * The URLs are relative to the {@code api/core/} request mapping of {@code de.tum.cit.aet.artemis.core.web.FileResource}, so they include the {@code files/} segment. The value
  * the JSON carries is one segment narrower, because the client's {@code addPublicFilePrefix} prepends {@code api/core/files/}; see {@link #clientPath()}.
  * <p>
- * Callers must pass a filename that has already been through {@link FileUtil#sanitizeFilename}, which is what keeps a filename from forging additional path segments.
+ * Callers pass the filename as it is stored. It is percent-encoded as a single path segment on the way into the URL, so a filename can neither forge an extra path segment
+ * nor make the URL unbuildable, whatever it contains; see {@link #uri(String, String)}. A filename written by this release has been through
+ * {@link FileUtil#sanitizeFilename} and needs no encoding at all, so for every value this application writes the encoding is a no-op.
  *
  * @see FileSystemLocation for the file system location of the same files, which is independent of these URLs
  */
@@ -81,7 +85,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "courses/" + courseId + "/icons/" + filename);
+            return uri(FILES_PREFIX + "courses/" + courseId + "/icons/", filename);
         }
 
         @Override
@@ -100,7 +104,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "users/" + userId + "/profile-pictures/" + filename);
+            return uri(FILES_PREFIX + "users/" + userId + "/profile-pictures/", filename);
         }
 
         @Override
@@ -119,7 +123,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "exam-users/" + examUserId + "/signatures/" + filename);
+            return uri(FILES_PREFIX + "exam-users/" + examUserId + "/signatures/", filename);
         }
 
         @Override
@@ -138,7 +142,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "exam-users/" + examUserId + "/" + filename);
+            return uri(FILES_PREFIX + "exam-users/" + examUserId + "/", filename);
         }
 
         @Override
@@ -157,7 +161,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/backgrounds/" + filename);
+            return uri(FILES_PREFIX + DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/backgrounds/", filename);
         }
 
         @Override
@@ -180,7 +184,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/drag-items/" + dragItemId + "/" + filename);
+            return uri(FILES_PREFIX + DRAG_AND_DROP_QUESTION_SUBPATH + questionId + "/drag-items/" + dragItemId + "/", filename);
         }
 
         @Override
@@ -199,7 +203,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "attachments/lectures/" + lectureId + "/" + filename);
+            return uri(FILES_PREFIX + "attachments/lectures/" + lectureId + "/", filename);
         }
 
         @Override
@@ -218,7 +222,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "attachments/attachment-video-units/" + attachmentVideoUnitId + "/" + filename);
+            return uri(FILES_PREFIX + "attachments/attachment-video-units/" + attachmentVideoUnitId + "/", filename);
         }
 
         @Override
@@ -237,7 +241,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/" + filename);
+            return uri(FILES_PREFIX + "attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/", filename);
         }
 
         @Override
@@ -280,7 +284,7 @@ public sealed interface PublicFileUrl {
 
         @Override
         public URI url() {
-            return uri(FILES_PREFIX + "file-upload-exercises/" + exerciseId + "/submissions/" + submissionId + "/" + filename);
+            return uri(FILES_PREFIX + "file-upload-exercises/" + exerciseId + "/submissions/" + submissionId + "/", filename);
         }
 
         @Override
@@ -290,11 +294,31 @@ public sealed interface PublicFileUrl {
     }
 
     /**
-     * The one place where the assembled URL becomes a {@link URI}, so that any future change to how a filename is encoded happens here and nowhere else.
+     * The one place where a template and a filename become a {@link URI}, so that any change to how a filename is encoded happens here and nowhere else.
      * <p>
-     * {@link URI#create} validates: a filename containing a space is rejected outright, a non-ASCII filename is passed through unencoded, and a {@code #} starts a fragment.
-     * None of the three can occur for a stored file because {@link FileUtil#sanitizeFilename} reduces every filename to {@code [A-Za-z0-9._-]} before it is written, and
-     * {@code PublicFileUrlTest} pins all three so a later change to the encoding cannot be a silent one.
+     * <b>Building a URL for a stored file is total: there is no filename this can refuse.</b> {@link URI#create} would refuse several, and every one of them can be sitting in
+     * the database today. {@link FileUtil#sanitizeFilename} reduces a filename to {@code [A-Za-z0-9._-]} before it is written, but it has only done so since 2021, and a value
+     * written before that keeps the name the uploader gave the file. A single space in such a name is enough for {@link URI#create} to throw {@link IllegalArgumentException},
+     * and this method is now on the read path of every entity that carries a file, so one such row would take down the whole response rather than one image.
+     * <p>
+     * The filename is therefore percent-encoded as a single path segment, which is total by construction: a space becomes {@code %20}, a {@code #} becomes {@code %23} instead
+     * of starting a fragment, a non-ASCII character becomes its UTF-8 escape, and a {@code /} becomes {@code %2F} rather than a second segment. The fixed part of the template
+     * is not touched, because it is written in this file and is already valid. What the client requests is decoded again by the servlet container, so the request reaches
+     * {@code FileResource} carrying the filename that is on disk.
+     * <p>
+     * The inverse lives in {@link FileSystemLocation#storedFilename}, which decodes before it stores, so a client that sends back a URL it was served stores the filename it
+     * started with rather than an escaped copy of it. {@code PublicFileUrlTest} pins each of the four cases above and the round trip.
+     *
+     * @param template the fixed part of the URL, relative to the {@code api/core/} request mapping, ending in a slash
+     * @param filename the filename to append as the last path segment
+     * @return the URL as a URI
+     */
+    private static URI uri(@NonNull String template, @NonNull String filename) {
+        return URI.create(template + UriUtils.encodePathSegment(filename, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * The variant for the one URL that carries no filename, {@link Slide}. Its template is entirely fixed, so there is nothing to encode.
      *
      * @param url the assembled URL, relative to the {@code api/core/} request mapping
      * @return the URL as a URI

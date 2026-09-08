@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 
@@ -401,7 +403,36 @@ public sealed interface FileSystemLocation {
      */
     @Nullable
     static String storedFilename(@Nullable String value) {
-        return refersToStoredFile(value) ? filenameOf(value) : value;
+        return refersToStoredFile(value) ? decodePercentEscapes(filenameOf(value)) : value;
+    }
+
+    /**
+     * Undoes the percent-encoding {@link PublicFileUrl} applies to the filename segment of a served URL.
+     * <p>
+     * The two have to be inverses of each other. A client is served the URL of a file and sends the same string back in the next update of the entity, so without this a
+     * filename that had to be escaped on the way out - anything a stored value written before filenames were sanitized may contain, a space above all - would come back escaped
+     * and be stored in that form, and the next read would escape it a second time and ask for a file that is not there.
+     * <p>
+     * It is deliberately not part of {@link #filenameOf}, which answers where a file lies on disk and is fed values that were never encoded: rows as the database holds them,
+     * and path variables the servlet container has already decoded.
+     * <p>
+     * Total, and conservative: a value with no {@code %} is returned untouched, and one whose escapes do not parse is kept verbatim rather than rejected, because a filename
+     * from before sanitization may simply contain a per cent sign.
+     *
+     * @param filename the last segment of a value, possibly percent-encoded
+     * @return the decoded filename, or the argument unchanged when it carries nothing to decode
+     */
+    @NonNull
+    private static String decodePercentEscapes(@NonNull String filename) {
+        if (filename.indexOf('%') < 0) {
+            return filename;
+        }
+        try {
+            return UriUtils.decode(filename, StandardCharsets.UTF_8);
+        }
+        catch (IllegalArgumentException exception) {
+            return filename;
+        }
     }
 
     /**
