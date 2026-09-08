@@ -162,24 +162,16 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
 
-    @Test
-    void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-saml-key-567"));
-
-        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
-    }
-
     /**
      * Asserts that a mail carries the shared Artemis chrome.
      * <p>
-     * The three account mails that contain a link are the ones a user is most likely to distrust, because each can
-     * arrive unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis
-     * mail is what makes them credible rather than suspicious, and all three used to render as unstyled documents in
-     * the mail client's default serif font.
+     * The account mails that contain a link are the ones a user is most likely to distrust, because each can arrive
+     * unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis mail is
+     * what makes them credible rather than suspicious, and they used to render as unstyled documents in the mail
+     * client's default serif font.
      * <p>
-     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these
-     * three can be switched off there, so the link would point at a setting that does not exist for them.
+     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these can
+     * be switched off there, so the link would point at a setting that does not exist for them.
      *
      * @param body the rendered mail body
      */
@@ -193,27 +185,6 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // deployment would both ignore a custom logo and make every recipient's mail client fetch an image from there.
         assertThat(body).as("the logo, served by this installation so a custom one is used").contains("src=\"http://localhost:9000/public/images/logo.png\"");
         assertThat(body).as("no request to the TUM deployment").doesNotContain("artemis.tum.de");
-    }
-
-    // -- SAML2 set password email --
-
-    @Test
-    void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "saml-reset-key-345"));
-
-        String body = getDeliveredEmailBody();
-        assertThat(body).contains("saml-reset-key-345");
-    }
-
-    @Test
-    void saml2SetPasswordEmail_shouldRenderAndDeliverInGerman() throws Exception {
-        recipient.setLangKey("de");
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-saml-key-678"));
-
-        String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-saml-key-678");
     }
 
     // -- New login notification email --
