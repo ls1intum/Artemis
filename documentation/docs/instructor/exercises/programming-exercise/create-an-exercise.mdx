@@ -12,10 +12,7 @@ import programmingOptionsOnlineIde from '../assets/programming/programming-optio
 import programmingOptionsProgrammingLanguage from '../assets/programming/programming-options-programming-language.png';
 import programmingOptionsVersionControl from '../assets/programming/programming-options-version-control.png';
 import programmingOptionsScore from '../assets/programming/programming-options-score.png';
-import programmingOptionsTimelineManual from '../assets/programming/programming-options-timeline-manual.png';
 import programmingOptionsTimelineAutomatic from '../assets/programming/programming-options-timeline-automatic.png';
-import programmingOptionsAssessment from '../assets/programming/programming-options-assessment.png';
-import programmingOptionsSca from '../assets/programming/programming-options-sca.png';
 import programmingOptionsProblemStatement from '../assets/programming/programming-options-problem-statement.png';
 import programmingOptionsInstructions from '../assets/programming/programming-options-instructions.png';
 import courseDashboardExerciseProgramming from '../assets/programming/course-dashboard-exercise-programming.png';
@@ -163,15 +160,13 @@ In advanced mode this section also offers **Linked Competencies**, which connect
 
 ## Grading
 
-<Image src={programmingOptionsScore} alt="Programming Options Score" size={ImageSize.large} caption="Score Configuration" />
+<Image src={programmingOptionsScore} alt="Programming Options Score" size={ImageSize.large} caption="Score and code quality penalty" />
 
 **Should this exercise be included in the course or exam score calculation?**
 
 - **Yes**: The exercise counts towards the score. Define **Points** and optionally **Bonus points**.
 - **Bonus**: The achieved points count as bonus only.
 - **No**: The achieved points do not count towards the score.
-
-<Image src={programmingOptionsSca} alt="Programming Options SCA" size={ImageSize.large} caption="Static Code Analysis Configuration" />
 
 **Max Static Code Analysis Penalty** appears when static code analysis is enabled. It caps how much of the exercise's points can be lost to code quality issues, as a percentage. With 10 points and a maximum penalty of 20%, at most 2 points can be deducted. Empty means 100%.
 
@@ -187,9 +182,7 @@ The policy chosen here is the initial one. Changing it later happens on the grad
 
 ### Timeline
 
-<Image src={programmingOptionsTimelineManual} alt="Programming Options Timeline Manual" size={ImageSize.large} caption="Timeline Configuration - Manual Assessment" />
-
-<Image src={programmingOptionsTimelineAutomatic} alt="Programming Options Timeline Automatic" size={ImageSize.large} caption="Timeline Configuration - Automatic Assessment" />
+<Image src={programmingOptionsTimelineAutomatic} alt="Programming Options Timeline Automatic" size={ImageSize.large} caption="Timeline and assessment options" />
 
 - **Release Date**: When the exercise becomes visible to students.
 - **Start Date**: When students can begin participating. If unset, they can start as soon as the exercise is released. Advanced mode only.
@@ -202,8 +195,6 @@ The policy chosen here is the initial one. Changing it later happens on the grad
 ### Assessment Options
 
 Shown in advanced mode only.
-
-<Image src={programmingOptionsAssessment} alt="Programming Options Assessment" size={ImageSize.large} caption="Assessment Configuration" />
 
 - **Complaint on Automatic Assessment**: Lets students complain about an automatic assessment after the due date. Requires complaints to be enabled for the course, or an exam exercise.
 - **Show Test Names to Students**: Shows the names of automated test cases. With this off, students cannot tell automatic feedback from manual feedback.
