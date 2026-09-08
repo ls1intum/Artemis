@@ -95,6 +95,16 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     @Nested
     class LlmOptInGate {
 
+        /**
+         * Restores the fixture's default decision before each test, the same guard {@code CheckHasAccessTo} carries.
+         * The preference is a persisted row shared by every test in this file, and four of the tests here change it,
+         * so without the reset the last one to run decides what the next class sees.
+         */
+        @BeforeEach
+        void resetAiSelectionDecision() {
+            userUtilService.setAiSelectionDecision(student1(), AiSelectionDecision.CLOUD_AI);
+        }
+
         @Test
         void throwsWhenUserHasNotOptedIntoLLM() {
             User user = student1();

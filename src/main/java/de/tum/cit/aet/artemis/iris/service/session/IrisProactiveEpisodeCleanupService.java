@@ -23,9 +23,11 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
  * trigger that was never closed.
  *
  * <p>
- * Gated on {@link IrisEnabled} like the repository it depends on. Spring Boot excludes {@code @Scheduled} beans from
- * the global {@code spring.main.lazy-initialization}, so this one is created eagerly on a scheduling node; without
- * the condition it would ask for a repository bean that does not exist when Iris is off and fail startup there.
+ * Gated on {@link IrisEnabled} like the repository it depends on: without the condition it would ask for a repository
+ * bean that does not exist when Iris is off and fail startup there. What instantiates it despite the {@code @Lazy}
+ * below, and so registers the schedule, is {@code DeferredEagerBeanInitializer}, which forces every lazy singleton on
+ * a core node after startup. Spring Boot's own exclusion for {@code @Scheduled} beans does not do it: that one only
+ * defeats the global {@code spring.main.lazy-initialization} flag and leaves an explicit {@code @Lazy} standing.
  *
  * <p>
  * Two kinds of row are kept. A terminal outcome is what suppresses a late message for an episode, so deleting one
