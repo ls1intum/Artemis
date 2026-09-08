@@ -10,6 +10,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
 import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -23,7 +24,7 @@ class WorkerModelConfigurationTest {
 
     @Test
     void createsTheActualProviderModelAndEngineWithoutAWebApplicationStack() {
-        new ApplicationContextRunner()
+        new ApplicationContextRunner().withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withConfiguration(AutoConfigurations.of(ObservationAutoConfiguration.class, ToolCallingAutoConfiguration.class, OpenAiChatAutoConfiguration.class))
                 .withUserConfiguration(GradleGenerationEngine.class, WorkerTelemetryConfiguration.class)
                 .withBean(ObservationHandler.class, () -> new ObservationHandler<Observation.Context>() {

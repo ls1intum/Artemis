@@ -19,6 +19,12 @@ settings. Provider credentials belong only to the worker process, never to the
 build image or assignment payload. A successful process start alone is not a
 generation smoke test.
 
+Set `spring.ai.openai.timeout` on the worker to bound each provider request;
+`spring.ai.openai.chat.timeout` overrides it for chat. The worker applies this
+deadline to its per-request chat options as well as the HTTP client. This is
+separate from the assignment's overall wall-time budget. Core-node model
+configuration is not inherited by the worker.
+
 ## Broker isolation
 
 `broker.xml` is an Apache Artemis broker configuration for one worker named
