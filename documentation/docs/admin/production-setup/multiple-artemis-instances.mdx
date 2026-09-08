@@ -509,6 +509,29 @@ It relays message between instances:
 />
 
 
+## Deploying a New Version
+
+Artemis is **not** deployed as a rolling update. A new version is deployed by stopping the cluster
+and bringing it back up in a defined order, so that no instance ever serves traffic against a schema
+it was not built for:
+
+1. Stop every Artemis instance.
+2. Start the first instance on its own, and wait until it has fully initialized. This is the instance
+   that applies the Liquibase migrations of the new version.
+3. Once the migrations have finished and the first instance is up, start the remaining instances.
+
+Starting several instances at once is what this order avoids. Liquibase takes a lock on its own
+changelog table, so a second instance starting mid-migration waits for that lock rather than
+corrupting anything, but it waits without a useful timeout and reports nothing about why. Waiting for
+the first instance is both faster and easier to diagnose.
+
+<Callout variant={CalloutVariant.info}>
+  Because the cluster is stopped for the migration, a changelog never has to be compatible with both
+  the old and the new version of the application at the same time. A migration that adds a column,
+  backfills it, and adds a constraint over it can do all three in one release.
+</Callout>
+
+
 ## Integrated Code Lifecycle
 
 The integrated code lifecycle (ICL) can integrate build agents into a multi instance server setup. In ICL, we differentiate between two types of server node: **core nodes** and **build agent nodes**.
