@@ -44,6 +44,9 @@ import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/com
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { UserService } from 'app/account/user/shared/user.service';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -66,6 +69,14 @@ describe('Course Management Update Component', () => {
     let loadImageSpy: ReturnType<typeof vi.spyOn>;
     let eventManager: EventManager;
     let navigationUtilService: ArtemisNavigationUtilService;
+    let llmModalService: LLMSelectionModalService;
+    let userService: UserService;
+    const mockLLMModalService = {
+        open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
+    };
+    const mockUserService = {
+        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
+    };
 
     beforeEach(async () => {
         course = new Course();
@@ -115,6 +126,8 @@ describe('Course Management Update Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(LoadImageService),
+                { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                { provide: UserService, useValue: mockUserService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -133,6 +146,8 @@ describe('Course Management Update Component', () => {
         accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
+        llmModalService = TestBed.inject(LLMSelectionModalService);
+        userService = TestBed.inject(UserService);
     });
 
     afterEach(() => {
@@ -799,6 +814,52 @@ describe('Course Management Update Component', () => {
             comp.changeAthenaGradingFeedback();
             expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
             expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
+        });
+    });
+
+    describe('AI Experience hint for AI feedback', () => {
+        it('should mark the AI Experience as accepted when the instructor already selected an AI option', () => {
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            comp.ngOnInit();
+
+            expect(comp.hasInstructorAcceptedAiExperience()).toBe(true);
+        });
+
+        it('should mark the AI Experience as not accepted when the instructor declined or never chose an AI option', () => {
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
+
+            comp.ngOnInit();
+
+            expect(comp.hasInstructorAcceptedAiExperience()).toBe(false);
+        });
+
+        it('should not update the AI Experience state when the hint modal is dismissed', async () => {
+            comp.hasInstructorAcceptedAiExperience.set(false);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision');
+
+            await comp.showLLMSelectionModal();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.hasInstructorAcceptedAiExperience()).toBe(false);
+        });
+
+        it('should update the AI Experience state after the instructor accepts AI usage from the hint modal', async () => {
+            comp.hasInstructorAcceptedAiExperience.set(false);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+
+            await comp.showLLMSelectionModal();
+
+            expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(comp.hasInstructorAcceptedAiExperience()).toBe(true);
         });
     });
 

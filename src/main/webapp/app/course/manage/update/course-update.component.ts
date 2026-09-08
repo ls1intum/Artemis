@@ -30,7 +30,7 @@ import {
     TumUiMessageComponent,
     TumUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPen, faPenSquare, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -54,6 +54,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { UserService } from 'app/account/user/shared/user.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -104,6 +107,8 @@ export class CourseUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly llmModalService = inject(LLMSelectionModalService);
+    private readonly userService = inject(UserService);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -115,6 +120,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faPen = faPen;
+    protected readonly faPenSquare = faPenSquare;
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
@@ -158,6 +164,7 @@ export class CourseUpdateComponent implements OnInit {
     communicationEnabled = true;
     messagingEnabled = true;
     readonly athenaFeedbackEnabled = signal(false);
+    readonly hasInstructorAcceptedAiExperience = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
@@ -241,6 +248,7 @@ export class CourseUpdateComponent implements OnInit {
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
         this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
+        this.hasInstructorAcceptedAiExperience.set(this.isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage));
 
         this.courseForm = new FormGroup(
             {
@@ -664,6 +672,27 @@ export class CourseUpdateComponent implements OnInit {
     changeAthenaFormativeFeedback() {
         this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
         this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
+    }
+
+    private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
+        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
+    }
+
+    /**
+     * Opens the AI Experience selection modal so the instructor can enable AI usage for themselves.
+     * Enabling AI feedback for a course does not use AI on the instructor's behalf, but tutors and
+     * instructors need their own AI Experience enabled to see and interact with the resulting
+     * Athena suggestions and requests.
+     */
+    async showLLMSelectionModal(): Promise<void> {
+        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
+        if (choice === LLM_MODAL_DISMISSED) {
+            return;
+        }
+        this.userService.updateLLMSelectionDecision(choice).subscribe(() => {
+            this.accountService.setUserLLMSelectionDecision(choice);
+            this.hasInstructorAcceptedAiExperience.set(this.isAcceptedLLMSelection(choice));
+        });
     }
 
     /**

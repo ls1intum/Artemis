@@ -472,6 +472,23 @@
                         <label jhiTranslate="artemisApp.course.athenaConfig.aiFeedbackEnabled.label" for="field_athenaFeedbackEnabled"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip' | artemisTranslate" />
                     </div>
+                    @if (athenaFeedbackEnabled() && !hasInstructorAcceptedAiExperience()) {
+                        <div class="nested-form-group ai-experience-hint d-flex align-items-center gap-2" id="ai-experience-hint-course-settings">
+                            <span class="text-body-secondary" jhiTranslate="artemisApp.course.athenaConfig.aiExperienceHint"></span>
+                            <button
+                                type="button"
+                                tumUiButton
+                                size="small"
+                                variant="outlined"
+                                id="enable-ai-experience-course-settings"
+                                (click)="showLLMSelectionModal()"
+                                [tumUiTooltip]="'artemisApp.course.athenaConfig.enableAiExperienceTooltip' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                                <span jhiTranslate="artemisApp.course.athenaConfig.enableAiExperience"></span>
+                            </button>
+                        </div>
+                    }
                     @if (athenaFeedbackEnabled()) {
                         <div class="nested-form-group flex items-center gap-2">
                             <tum-ui-checkbox
