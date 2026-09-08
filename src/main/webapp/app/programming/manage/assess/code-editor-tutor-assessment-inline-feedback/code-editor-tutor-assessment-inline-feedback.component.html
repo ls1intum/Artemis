@@ -1,5 +1,5 @@
 @let feedback = currentFeedback();
-<div id="code-editor-inline-feedback-{{ codeLine() }}" class="p-0 mb-0 border rounded" [style.max-width.%]="95">
+<div id="code-editor-inline-feedback-{{ codeLine() }}" [style.max-width.%]="95">
     @if (!viewOnly()) {
         <jhi-unified-feedback
             [editable]="true"
