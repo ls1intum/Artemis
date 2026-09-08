@@ -70,7 +70,9 @@ To modify a specific portion of the problem statement, select a text region in t
 
 ### Diff View
 
-All AI-generated modifications — from generation, refinement, quality fixes, and difficulty adaptation — are presented in a diff view before application. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+Every AI change to an *existing* problem statement — global refinement, targeted refinement, quality fixes and difficulty adaptation — is presented in a diff view before it is applied. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+
+Generating a first draft is the one exception: there is no previous version to compare against, so the draft goes straight into the editor. It is not saved until you save the exercise, so discarding it means leaving the page without saving.
 
 <Image src={hyperionDiffView} alt="Diff view comparing original and AI suggestion" size={ImageSize.large} caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied" />
 

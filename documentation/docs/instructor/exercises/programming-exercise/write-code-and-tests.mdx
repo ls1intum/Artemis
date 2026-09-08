@@ -639,7 +639,21 @@ Source code structure is up to students as far as you want.
 
 Source code structure quality assessment can be done manually after submission deadline. The template uses Maven to compile student code, so it can be extended with regular unit tests (e.g., [architecture tests](https://www.archunit.org/) for cyclic package dependencies) and report the results for both to the student.
 
-**Usage:** Consult [official documentation](https://www.gnu.org/software/dejagnu/manual/index.html) and initial test-repository content. DejaGnu files are in the `testsuite` directory. The `….tests` directory contains three example test execution scripts.
+**Usage:** Consult the [official documentation](https://www.gnu.org/software/dejagnu/manual/index.html) alongside the content the test repository ships with. Everything DejaGnu-related lives under `testsuite`, laid out like this:
+
+```text
+testsuite/
+├── config/default.exp              helper functions such as PROGRAM_TEST
+├── lib/<package>.exp               exercise-specific procedures
+├── testfiles/public/               input files the students' tests may read
+├── testfiles/secret/               input files only the hidden tests read
+└── <package path>.tests/           the test execution scripts
+    ├── public.exp
+    ├── secret.exp
+    └── advanced.exp
+```
+
+`<package path>` is the exercise's package name with the dots replaced by slashes, so a package of `de.tum.in.ase.pse` puts the three scripts in `testsuite/de/tum/in/ase/pse.tests/`.
 
 Example: `PROGRAM_TEST {add x} {}` puts "add x" into the program and expects no output.
 
