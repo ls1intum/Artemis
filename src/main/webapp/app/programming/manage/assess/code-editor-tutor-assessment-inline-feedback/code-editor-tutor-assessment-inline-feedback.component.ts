@@ -15,6 +15,12 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
     styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, UnifiedFeedbackComponent],
+    // Monaco anchors the widget on this component's own host element (see `elementRef` below), so the id/width it
+    // needs live on the host directly instead of behind an extra wrapping div in the template.
+    host: {
+        '[attr.id]': "'code-editor-inline-feedback-' + codeLine()",
+        '[style.max-width.%]': '95',
+    },
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;

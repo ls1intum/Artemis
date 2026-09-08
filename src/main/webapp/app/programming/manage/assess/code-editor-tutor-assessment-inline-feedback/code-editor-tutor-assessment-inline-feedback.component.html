@@ -1,53 +1,51 @@
 @let feedback = currentFeedback();
-<div id="code-editor-inline-feedback-{{ codeLine() }}" [style.max-width.%]="95">
-    @if (!viewOnly()) {
-        <jhi-unified-feedback
-            [editable]="true"
-            [readOnly]="readOnly()"
-            [feedback]="feedback"
-            [title]="isNewOrManual() ? derivedTitle() : undefined"
-            [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
-            [showReference]="false"
-            [highlightDifferences]="highlightDifferences()"
-            [(feedbackTitle)]="feedback.text"
-            [(feedbackDetail)]="feedback.detailText"
-            [(feedbackCredits)]="feedback.credits!"
-            (feedbackTitleChange)="onFieldChanged()"
-            (feedbackDetailChange)="onFieldChanged()"
-            (feedbackCreditsChange)="onFieldChanged()"
-            (onDelete)="removeFeedback()"
-            (drop)="updateFeedbackOnDrop($event)"
-            (dragover)="$event.preventDefault()"
-            (keydown)="handleKeydown($event)"
-        >
-            @if (!isNewOrManual()) {
-                <div unifiedFeedbackExtraControls class="inline-feedback-actions">
-                    <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                    </button>
-                </div>
-            }
-        </jhi-unified-feedback>
-    } @else {
-        <div class="d-flex flex-nowrap align-items-start gap-1 p-1">
-            <div class="flex-grow-1 flex-shrink-1">
-                <jhi-unified-feedback
-                    [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
-                    [points]="feedback.credits || 0"
-                    [feedback]="feedback"
-                    [showReference]="false"
-                    [scoreAccuracy]="course()?.accuracyOfScores"
-                />
-            </div>
-            @if (!readOnly()) {
-                <button type="submit" (click)="editFeedback(codeLine())" class="btn btn-primary btn-sm">
-                    <fa-icon [icon]="faPencilAlt" />
-                    <span jhiTranslate="entity.action.edit"></span>
+@if (!viewOnly()) {
+    <jhi-unified-feedback
+        [editable]="true"
+        [readOnly]="readOnly()"
+        [feedback]="feedback"
+        [title]="isNewOrManual() ? derivedTitle() : undefined"
+        [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
+        [showReference]="false"
+        [highlightDifferences]="highlightDifferences()"
+        [(feedbackTitle)]="feedback.text"
+        [(feedbackDetail)]="feedback.detailText"
+        [(feedbackCredits)]="feedback.credits!"
+        (feedbackTitleChange)="onFieldChanged()"
+        (feedbackDetailChange)="onFieldChanged()"
+        (feedbackCreditsChange)="onFieldChanged()"
+        (onDelete)="removeFeedback()"
+        (drop)="updateFeedbackOnDrop($event)"
+        (dragover)="$event.preventDefault()"
+        (keydown)="handleKeydown($event)"
+    >
+        @if (!isNewOrManual()) {
+            <div unifiedFeedbackExtraControls class="inline-feedback-actions">
+                <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
-            }
-            @if (readOnly() && feedback.isSubsequent) {
-                <fa-icon class="text-secondary mt-1" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
-            }
+            </div>
+        }
+    </jhi-unified-feedback>
+} @else {
+    <div class="d-flex flex-nowrap align-items-start gap-1 p-1">
+        <div class="flex-grow-1 flex-shrink-1">
+            <jhi-unified-feedback
+                [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
+                [points]="feedback.credits || 0"
+                [feedback]="feedback"
+                [showReference]="false"
+                [scoreAccuracy]="course()?.accuracyOfScores"
+            />
         </div>
-    }
-</div>
+        @if (!readOnly()) {
+            <button type="submit" (click)="editFeedback(codeLine())" class="btn btn-primary btn-sm">
+                <fa-icon [icon]="faPencilAlt" />
+                <span jhiTranslate="entity.action.edit"></span>
+            </button>
+        }
+        @if (readOnly() && feedback.isSubsequent) {
+            <fa-icon class="text-secondary mt-1" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
+        }
+    </div>
+}
