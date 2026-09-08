@@ -13,9 +13,10 @@ name: Sonar
 # Two entry points on purpose:
 #   workflow_call     — from ci.yml on develop pushes, after a green `test`, importing its coverage.
 #   workflow_dispatch — standalone, to get a grade on demand without waiting out a full CI run
-#                       (~2 h with the e2e tail). Defaults to no coverage import, since a manual run
-#                       has no `test` job to take artifacts from. The ratings and issue counts, which
-#                       are what the Codacy comparison turns on, do not depend on coverage.
+#                       (~2 h with the e2e tail). Analyses the ref it is dispatched on, without
+#                       coverage: a manual run has no `test` job to take artifacts from. The ratings
+#                       and issue counts, which are what the Codacy comparison turns on, do not
+#                       depend on coverage.
 on:
   workflow_call:
     inputs:
@@ -33,20 +34,13 @@ on:
       SONAR_TOKEN:
         description: 'SonarQube Cloud analysis token for the ls1intum organization.'
         required: true
+  # Deliberately without inputs. Choosing the ref to dispatch already chooses the commit, so a
+  # commit_sha input would only restate it, and a dispatched run has no `test` job whose coverage
+  # artifacts it could import. Both `inputs` are therefore undefined on this trigger, which the job
+  # below reads as "the dispatched ref, without coverage". Keeping it input-free also satisfies
+  # Checkov CKV_GHA_7, which flags dispatch inputs because they let a caller influence what a build
+  # produces — do not add one back without a reason that outweighs that.
   workflow_dispatch:
-    inputs:
-      commit_sha:
-        description: 'SHA to analyze. Defaults to the ref the workflow was dispatched on.'
-        required: false
-        type: string
-        default: ''
-      with_coverage:
-        description: >-
-          Import coverage artifacts from THIS run. A dispatched run has no `test` job, so leave this
-          off unless you have separately produced the artifacts under the expected names.
-        required: false
-        type: boolean
-        default: false
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -69,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Empty on a dispatched run, where the dispatched ref is already what we want.
+          # Undefined on a dispatched run, which declares no inputs; the dispatched ref is what we want.
           ref: ${{ inputs.commit_sha || github.sha }}
           # Sonar attributes issues to authors and separates new code from old via git history, so a
           # shallow clone degrades the analysis rather than failing it. `0` is what Sonar documents.

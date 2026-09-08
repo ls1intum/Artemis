@@ -60,15 +60,17 @@ configuration lives in `gradle/sonar.gradle`.
 ### Getting a grade on demand
 
 A full CI run takes around two hours because of the end-to-end tail. To get a grade without waiting,
-dispatch the workflow directly from the **Actions** tab:
+dispatch the workflow directly from the **Actions** tab, or from the command line by naming the ref
+you want analysed:
 
 ```bash
 gh workflow run ci-sonar.yml --ref develop
 ```
 
-A dispatched run has no `test` job to take artifacts from, so coverage import defaults to off. The
-ratings and issue counts still come back; only the coverage metric is missing. To include coverage,
-produce the reports first and pass `-f with_coverage=true`.
+The dispatch takes no inputs: the ref you name is the commit that gets analysed, and a dispatched run
+has no `test` job whose coverage artifacts it could import, so it reports no coverage. The ratings and
+issue counts still come back, which is what the comparison with Codacy turns on. For coverage, use the
+run that a push to `develop` triggers.
 
 ### Running it locally
 
