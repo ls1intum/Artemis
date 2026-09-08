@@ -73,9 +73,13 @@ public class PyrisHealthIndicator implements HealthIndicator {
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi) {
+    private final PyrisRestartWatchService restartWatchService;
+
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi,
+            PyrisRestartWatchService restartWatchService) {
         this.restTemplate = restTemplate;
         this.processingStateRecoveryApi = processingStateRecoveryApi;
+        this.restartWatchService = restartWatchService;
     }
 
     /**
@@ -118,6 +122,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
                 try {
                     PyrisHealthStatusDTO body = objectMapper.readValue(json, PyrisHealthStatusDTO.class);
                     flattenModulesInto(additionalInfo, body.modules());
+                    restartWatchService.observeBootId(body.bootId());
                     connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
                 }
                 catch (JsonProcessingException e) {
