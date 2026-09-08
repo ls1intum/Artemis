@@ -70,21 +70,21 @@ jobs, and `@Cacheable` caches, goes through `DistributedDataProvider` in
 
 **Enforced by.**
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`,
-which fails the build if a production class outside a small named set of backend adapters depends
+which fails the build if a production class outside a small named set of provider adapters depends
 on `com.hazelcast..`, `org.redisson..`, or `org.springframework.data.redis..`.
 
-**Why it is not merely stylistic.** The backend is selected by `artemis.distributed-data.provider`.
-With the Redis backend, no Hazelcast instance is created at all, so a direct Hazelcast call does not
-throw. It silently writes state nowhere.
+**Why it is not merely stylistic.** The provider is selected by `artemis.distributed-data.provider`.
+With the Redis provider, no Hazelcast instance is created at all, so a direct Hazelcast call
+does not throw. It silently writes state nowhere.
 
 **Adding a capability.** Add it to `DistributedDataProvider`, implement it for Hazelcast, Redis, and
 Local, and add a case to
 `src/test/java/de/tum/cit/aet/artemis/core/service/distributed/AbstractDistributedDataTest.java`.
-That suite is the only thing keeping the three backends in agreement.
+That suite is the only thing keeping the three providers in agreement.
 
 **Entry lifetimes.** Request them at the call site with `getExpiringMap(name, ttl)`. `getMap(name)`
-rejects a per-entry TTL on purpose: a backend map configuration only applies to that backend, so a
-TTL configured there would silently not apply under a different provider.
+rejects a per-entry TTL on purpose: a provider-level map configuration only applies to that one
+provider, so a TTL configured there would silently not apply under a different provider.
 
 Full guidance: `documentation/docs/developer/guidelines/distributed-data.mdx`.
 

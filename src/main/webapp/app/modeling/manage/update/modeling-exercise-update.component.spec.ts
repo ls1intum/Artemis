@@ -566,7 +566,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 expect(context).toContain('Example solution explanation:\nThe classes use inheritance.');
             });
 
-            it('should show backend error alert and reset saving state on save error', async () => {
+            it('should show server error alert and reset saving state on save error', async () => {
                 const error = new HttpErrorResponse({
                     error: {
                         title: 'modelingExercise.update.error',
@@ -584,7 +584,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 expect(comp.isSaving()).toBe(false);
             });
 
-            it('should show generic error alert when save error has no backend title', async () => {
+            it('should show generic error alert when save error has no server title', async () => {
                 vi.spyOn(service, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
                 const alertSpy = vi.spyOn(alertService, 'error').mockReturnValue({} as ReturnType<AlertService['error']>);
 
