@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
-import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -419,6 +419,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisSettingsService createServiceWithDefaults(int defaultLimit, int defaultTimeframeHours) {
-        return new IrisSettingsService(mock(IrisCourseSettingsRepository.class), mock(CourseRepository.class), defaultLimit, defaultTimeframeHours, new IrisProactiveProperties());
+        return new IrisSettingsService(mock(IrisCourseSettingsRepository.class), mock(CourseRepository.class), defaultLimit, defaultTimeframeHours,
+                mock(FeatureToggleService.class));
     }
 }

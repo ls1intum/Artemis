@@ -10,10 +10,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -36,26 +37,27 @@ public class IrisSettingsService {
 
     private final int configuredDefaultTimeframeHours;
 
-    private final boolean globalStruggleEnabled;
+    private final FeatureToggleService featureToggleService;
 
     public IrisSettingsService(IrisCourseSettingsRepository irisCourseSettingsRepository, CourseRepository courseRepository,
             @Value("${artemis.iris.ratelimit.default-limit:0}") int configuredDefaultRateLimit,
-            @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours, IrisProactiveProperties proactiveProperties) {
+            @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours, FeatureToggleService featureToggleService) {
         this.irisCourseSettingsRepository = irisCourseSettingsRepository;
         this.courseRepository = courseRepository;
         this.configuredDefaultRateLimit = configuredDefaultRateLimit;
         this.configuredDefaultTimeframeHours = configuredDefaultTimeframeHours;
-        // Snapshotted like the legacy switch in IrisChatSessionService, so a rebind cannot flip it mid-run.
-        this.globalStruggleEnabled = proactiveProperties.getStruggle().isEnabled();
+        this.featureToggleService = featureToggleService;
     }
 
     /**
      * The course flag decides whether a course's students get struggle detection; this decides whether anyone can.
+     * Read live rather than snapshotted: an admin turning the feature off is meant to take effect at once, on every
+     * node, without a restart.
      *
-     * @return {@code true} unless the deployment turned the mechanism off
+     * @return {@code true} unless the installation turned the mechanism off
      */
     public boolean isGlobalStruggleEnabled() {
-        return globalStruggleEnabled;
+        return featureToggleService.isFeatureEnabled(Feature.IrisProactiveStruggle);
     }
 
     /**

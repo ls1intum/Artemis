@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -8,6 +8,7 @@ import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -81,6 +82,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private featureToggleService = inject(FeatureToggleService);
     private translateService = inject(TranslateService);
 
     public courseId?: number;
@@ -602,13 +604,19 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
+     * Whether this installation serves struggle detection, from the runtime toggle an admin can flip without a
+     * restart. A signal, not a one-time read, so the switch greys out the moment that happens.
+     */
+    readonly struggleAvailable = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.IrisProactiveStruggle), { initialValue: true });
+
+    /**
      * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
      * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
      * has to stay observable, but the instructor should not discover it by reading a chat transcript.
      */
     readonly bothProactiveMechanismsActive = computed(() => {
         const currentSettings = this.settings();
-        return !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
+        return this.struggleAvailable() && !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
     });
 
     /**

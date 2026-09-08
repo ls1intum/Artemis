@@ -173,6 +173,7 @@
                                             inputId="proactiveStruggleEnabled"
                                             [ngModel]="settingsValue.proactiveStruggleEnabled"
                                             (ngModelChange)="updateProactiveStruggleEnabled($event)"
+                                            [disabled]="!struggleAvailable()"
                                             [ariaLabel]="'artemisApp.iris.settings.proactiveStruggle' | artemisTranslate"
                                         />
                                         <label for="proactiveStruggleEnabled">
@@ -180,6 +181,13 @@
                                             <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
                                         </label>
                                     </div>
+
+                                    @if (!struggleAvailable()) {
+                                        <div class="iris-info-banner mb-4" role="note">
+                                            <fa-icon [icon]="faLightbulb" />
+                                            <span jhiTranslate="artemisApp.iris.settings.proactiveStruggleUnavailable"></span>
+                                        </div>
+                                    }
 
                                     <!-- Artemis' own build-triggered proactive events (build_failed / progress_stalled) -->
                                     <div class="iris-toggle-line">

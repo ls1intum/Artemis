@@ -16,6 +16,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ActivatedRoute, Params } from '@angular/router';
 
@@ -486,6 +487,37 @@ describe('IrisSettingsUpdateComponent', () => {
 
             component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: true, proactiveStruggleEnabled: false }));
             expect(component.bothProactiveMechanismsActive()).toBe(false);
+        });
+
+        it('keeps a course that opted in visible while the switch is locked', async () => {
+            // The course keeps its decision for when the installation turns the mechanism back on, so the switch
+            // has to render checked AND disabled. Asserted on the DOM: the model alone would not catch a
+            // ControlValueAccessor that drops its value once the control is disabled.
+            vi.spyOn(TestBed.inject(FeatureToggleService), 'getFeatureToggleActive').mockReturnValue(of(false));
+            const locked = TestBed.createComponent(IrisSettingsUpdateComponent);
+            locked.detectChanges();
+            await locked.whenStable();
+
+            locked.componentInstance.settings.set(cloneWith(mockSettings, { proactiveStruggleEnabled: true }));
+            locked.detectChanges();
+            await locked.whenStable();
+            locked.detectChanges();
+
+            const toggle = locked.nativeElement.querySelector('#proactiveStruggleEnabled') as HTMLInputElement;
+            expect(toggle.checked).toBe(true);
+            expect(toggle.disabled).toBe(true);
+        });
+
+        it('reports nothing armed while the installation serves no struggle detection', () => {
+            // A course can hold proactiveStruggleEnabled true on an installation whose runtime toggle is off.
+            // Warning about two mechanisms firing at once would be wrong there: only one of them can fire.
+            vi.spyOn(TestBed.inject(FeatureToggleService), 'getFeatureToggleActive').mockReturnValue(of(false));
+            const unavailable = TestBed.createComponent(IrisSettingsUpdateComponent).componentInstance;
+
+            unavailable.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: true, proactiveStruggleEnabled: true }));
+
+            expect(unavailable.struggleAvailable()).toBe(false);
+            expect(unavailable.bothProactiveMechanismsActive()).toBe(false);
         });
     });
 

@@ -19,6 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
@@ -39,6 +41,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "struggleendpoint";
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -108,6 +113,26 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
                 HttpStatus.ACCEPTED);
         assertThat(body.accepted()).isFalse();
         assertThat(body.courseDisabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void installationDisabled_answersLikeACourseThatIsOff() throws Exception {
+        // The runtime toggle sits ahead of the course flag, so a course that opted in still gets nothing. Answered
+        // in the shape the client already knows, because for it both mean the same thing: stop asking.
+        featureToggleService.disableFeature(Feature.IrisProactiveStruggle);
+        try {
+            var body = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
+                    HttpStatus.ACCEPTED);
+
+            assertThat(body.accepted()).isFalse();
+            assertThat(body.courseDisabled()).isTrue();
+            verify(pyrisPipelineService, never()).executeStruggleInterventionPipeline(any(), any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(),
+                    any());
+        }
+        finally {
+            featureToggleService.enableFeature(Feature.IrisProactiveStruggle);
+        }
     }
 
     @Test

@@ -42,6 +42,7 @@
                 "proactiveHelp": "Proaktive Hilfe",
                 "proactiveStruggle": "Proaktive Schwierigkeitserkennung",
                 "proactiveStruggleHelp": "Wenn aktiviert, erkennt Iris in diesem Kurs von sich aus, wenn Studierende nicht weiterkommen, und bietet einen Hinweis an. Standardmäßig aus.",
+                "proactiveStruggleUnavailable": "Ein Administrator hat die proaktive Schwierigkeitserkennung für diese Artemis-Installation abgeschaltet, der Schalter wirkt daher nicht. Die Kurseinstellung bleibt erhalten und gilt wieder, sobald wieder eingeschaltet wird.",
                 "legacyBuildTriggers": "Artemis-eigene Nachrichten bei Build-Ergebnissen",
                 "legacyBuildTriggersHelp": "Artemis schickt von sich aus Iris-Nachrichten, wenn ein Build fehlschlägt oder wenn sich drei Abgaben in Folge nicht verbessern. Standardmäßig an und unabhängig von der Struggle-Detection. Für Kurse ausschalten, in denen die Struggle-Detection die build-getriebene Proaktivität allein besitzen soll, damit pro Build ein Eingriff ankommt statt zwei.",
                 "bothProactiveActiveWarning": "Beide proaktiven Mechanismen sind aktiv. Ein einzelner Build kann einen Hint der Struggle-Detection und eine Artemis-Nachricht auslösen, aus verschiedenen Pipelines und ohne Kenntnis voneinander.",
