@@ -109,3 +109,13 @@ setup() {
     [[ "$output" == *"ERROR: Invalid JSON"* ]]
     [ ! -s "$GITHUB_OUTPUT" ]
 }
+
+@test "rejects empty, concatenated and non-object JSON mappings" {
+    for mapping in '' '{} {}' 'null' '[]' '"mapping"' '1' 'true'; do
+        printf '%s' "$mapping" > .ci/E2E-tests/e2e-test-mapping.json
+        run bash .ci/E2E-tests/determine-relevant-tests.sh base
+        [ "$status" -ne 0 ]
+        [[ "$output" == *"ERROR: Invalid JSON mapping"* ]]
+        [ ! -s "$GITHUB_OUTPUT" ]
+    done
+}

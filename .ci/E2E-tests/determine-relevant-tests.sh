@@ -100,8 +100,8 @@ if [ ! -f "$MAPPING_FILE" ]; then
     exit 0
 fi
 
-if ! jq empty "$MAPPING_FILE"; then
-    echo "ERROR: Invalid JSON in $MAPPING_FILE. Fix the mapping before selecting tests." >&2
+if ! jq -es 'length == 1 and (.[0] | type == "object")' "$MAPPING_FILE" >/dev/null; then
+    echo "ERROR: Invalid JSON mapping in $MAPPING_FILE. Expected one object; fix the mapping before selecting tests." >&2
     exit 1
 fi
 

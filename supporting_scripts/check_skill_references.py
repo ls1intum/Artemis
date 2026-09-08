@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check path-shaped citations in inline code and fenced blocks under skills/.
+"""Check path-shaped citations in inline code and fenced blocks (default: skills/).
 
 Resolve repository-relative paths, skill-relative paths, root scripts prefixed with
 `./`, and source-file paths relative to the root or src/test/playwright. Tracked
