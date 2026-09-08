@@ -11,7 +11,7 @@ and the check that keeps it in place.
 <Callout variant={CalloutVariant.danger}>
   <strong>Never write "frontend" or "backend".</strong> This applies to code, comments, Javadoc, test names,
   configuration files, commit messages, pull request descriptions, and documentation.
-  <code>supporting_scripts/check_terminology.py</code> fails CI on any new occurrence.
+  <code>supporting_scripts/check_terminology.py</code> fails CI on any new occurrence outside the allowlisted exceptions below.
 </Callout>
 
 ## Why we avoid the terms frontend and backend
@@ -95,9 +95,10 @@ in the check rather than rewritten:
 Quoting one of these in prose is fine. Coining a new name of your own that contains either word is not, and the check
 cannot tell the difference, so add an allowlist entry only for a name you did not choose.
 
-An allowlisted name exempts itself, not the line it sits on. The check cuts each allowlisted occurrence out of the line
-and then matches what is left, so `const frontendUrl = resolveBackendService();` still reports `resolveBackendService`.
-Otherwise an allowlist entry would be a way to smuggle a new name past a required check.
+An allowlisted name exempts itself, not the line it sits on, and only as a whole token. The check cuts each allowlisted
+occurrence out of the line and matches what is left, so `const frontendUrl = resolveBackendService();` still reports
+`resolveBackendService`, and `backendRefsList` is still reported even though `backendRefs` is allowlisted. Otherwise an
+allowlist entry would be a way to smuggle a new name past a required check.
 
 ### When the check is genuinely wrong
 
@@ -111,6 +112,12 @@ naming.
 The marker is a plain string match, so it silences whatever else is on its line. That makes it the one part of this
 check that runs on trust: when you see a new `terminology-check: allow` in a diff, review the marker itself, not just
 the words around it.
+
+There is one thing the check knowingly cannot see: an all-lowercase `frontend` or `backend` glued to the end of a
+preceding word, as in `myfrontendUrl`. Catching it would mean matching without a word boundary, which then flags
+`callbackEndpoint`, `rollbackEndpoint`, `playback ended`, and the `feedback endpoint` this repository really contains. A
+required check that cries wolf is a check somebody switches off, so the boundary stays and that one shape is left to
+review.
 
 ## How it is enforced
 
