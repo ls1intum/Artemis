@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
@@ -61,6 +60,7 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.SecureXmlFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -875,7 +875,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             // 4- Save the result to a new XML doc
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Transformer xformer = SecureXmlFactory.transformer();
             xformer.transform(new DOMSource(doc), new StreamResult(pomFile));
 
         }
@@ -906,7 +906,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             // 4- Save the result to a new XML doc
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Transformer xformer = SecureXmlFactory.transformer();
             xformer.transform(new DOMSource(doc), new StreamResult(eclipseProjectFile));
 
         }
