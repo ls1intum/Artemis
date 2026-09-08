@@ -1059,6 +1059,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.reviewCommentManager?.clearDrafts();
     }
 
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
+    }
+
     private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
         if (!this.monacoEditor()) {
             return undefined;

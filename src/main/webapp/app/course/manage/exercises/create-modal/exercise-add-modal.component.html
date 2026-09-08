@@ -1,16 +1,33 @@
 <tum-ui-dialog [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" size="medium">
-    <div class="tab-bar mb-3">
+    <div class="tab-bar mb-3 flex-wrap">
         <button
+            type="button"
+            [attr.aria-current]="activeTab() === 'create' ? 'true' : null"
             class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
             (click)="setActiveTab('create')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
         ></button>
+        @if (generationEnabled()) {
+            <button
+                type="button"
+                class="tab-btn {{ activeTab() === 'generate' ? 'tab-btn--active' : '' }}"
+                [attr.aria-current]="activeTab() === 'generate' ? 'true' : null"
+                (click)="setActiveTab('generate')"
+            >
+                <fa-icon [icon]="facArtemisIntelligence" class="me-1" aria-hidden="true" />
+                <span jhiTranslate="artemisApp.exerciseManagement.addModal.tab.generate"></span>
+            </button>
+        }
         <button
+            type="button"
+            [attr.aria-current]="activeTab() === 'import' ? 'true' : null"
             class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}"
             (click)="setActiveTab('import')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.import"
         ></button>
         <button
+            type="button"
+            [attr.aria-current]="activeTab() === 'export' ? 'true' : null"
             class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}"
             (click)="requestExport()"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.export"
@@ -48,6 +65,24 @@
         </div>
     }
 
+    <!-- ── Generate tab ── -->
+    @if (activeTab() === 'generate' && generationEnabled()) {
+        <p class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.generateHint"></p>
+        <div class="exercise-grid">
+            <button class="exercise-card" data-testid="generate-programming-exercise" (click)="openProgrammingGeneration()" type="button">
+                <div class="card-icon-wrapper">
+                    <fa-icon [icon]="faKeyboard" />
+                </div>
+                <h6 jhiTranslate="artemisApp.exerciseManagement.type.PROGRAMMING"></h6>
+                <p jhiTranslate="artemisApp.hyperion.generation.entry.description"></p>
+                <span class="card-cta">
+                    <span jhiTranslate="artemisApp.hyperion.generation.entry.action"></span>
+                    <fa-icon [icon]="faArrowRight" class="ms-1" />
+                </span>
+            </button>
+        </div>
+    }
+
     <!-- ── Import tab ── -->
     @if (activeTab() === 'import') {
         <p class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
@@ -70,3 +105,7 @@
 
     <!-- The Export tab opens the quiz export dialog directly (see requestExport); no separate page is rendered here. -->
 </tum-ui-dialog>
+
+@if (courseId(); as id) {
+    <jhi-hyperion-brief-dialog [(visible)]="briefDialogVisible" [courseId]="id" (backRequested)="backToGenerationTypes()" (exerciseCreated)="exerciseCreated.emit($event)" />
+}

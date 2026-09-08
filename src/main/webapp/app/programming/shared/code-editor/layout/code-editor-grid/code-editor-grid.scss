@@ -11,8 +11,8 @@
 
     /* In non-assessment context (e.g., student code editor), constrain to viewport */
     &:not(.assessment-wrapper) {
-        max-height: 100vh;
-        overflow: hidden;
+        max-height: 100dvh;
+        overflow: auto;
     }
 
     .collapsed--horizontal {
@@ -30,18 +30,19 @@
     .editor-main {
         display: grid;
         grid-template-rows: auto auto;
-        height: 500px;
+        height: clamp(12rem, 55vh, 31.25rem);
         margin-bottom: 10px;
 
         &__content {
             display: flex;
             height: inherit;
-            min-width: 0; /* allow middle strip to shrink */
+            min-width: 0;
+            overflow: auto;
 
             .editor-sidebar-left {
-                flex: 0 1 auto;
+                flex: 0 0 auto;
                 display: flex;
-                width: 310px;
+                width: clamp(8rem, 20vw, 19.375rem);
 
                 > *:first-child {
                     flex: 1 1 auto;
@@ -52,7 +53,7 @@
 
         .editor-center {
             flex: 1 1 auto;
-            min-width: 0; /* let center shrink */
+            min-width: 18rem;
 
             .card {
                 height: 100%;
@@ -60,10 +61,10 @@
         }
 
         .editor-sidebar-right {
-            flex: 0 1 auto;
+            flex: 0 0 auto;
             display: flex;
             flex-flow: row nowrap;
-            width: 500px;
+            width: clamp(10rem, 32vw, 31.25rem);
 
             .instructions-wrapper__content {
                 overflow: hidden;
@@ -83,8 +84,13 @@
         flex: 1 1 auto;
         display: flex;
         flex-flow: column nowrap;
-        height: 200px;
-        overflow: auto;
+        height: clamp(8rem, 25vh, 12.5rem);
+        overflow: hidden;
+
+        /* Set by `bottomPanelSize`: a panel reporting on a long-running job needs the room a build log does not. */
+        .editor-bottom-expanded & {
+            height: clamp(18rem, 55vh, 42rem);
+        }
 
         /* Hide grip when bottom area is empty */
         .rg-bottom-bottom {
@@ -99,19 +105,13 @@
             height: inherit;
         }
 
-        /* Pin the resize grip to the panel's visible bottom edge. As a normal flex child it inherited the panel
-           height and was pushed below the scrolled-out area, where overflow:auto clipped it - leaving no grabbable
-           handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling. */
+        /* Keep the grip reachable when panel content scrolls. */
         > .rg-bottom-bottom {
             height: auto;
             position: sticky;
             bottom: 0;
+            min-height: 24px;
         }
-    }
-
-    /* In non-assessment mode, constrain the bottom section to fit in the viewport */
-    &:not(.assessment-wrapper) .editor-bottom {
-        max-height: calc(100vh - 550px);
     }
 }
 
@@ -320,6 +320,10 @@
     display: none;
 }
 
+.editor-bottom.collapsed--vertical p-tabpanels {
+    display: none;
+}
+
 /* ==========================================================================
    Resizable drag elements
    ========================================================================== */
@@ -339,12 +343,18 @@
     &:hover {
         opacity: 0.8;
     }
+
+    &:focus-visible {
+        outline: 2px solid currentcolor;
+        outline-offset: 2px;
+    }
 }
 
 /* stylelint-enable no-descending-specificity */
 
 .rg-main-bottom {
     cursor: row-resize;
+    min-height: 24px;
 }
 
 .rg-sidebar-left,
@@ -359,6 +369,7 @@
     user-select: none;
     touch-action: none;
     z-index: 3;
+    min-width: 24px;
 }
 
 .separator {

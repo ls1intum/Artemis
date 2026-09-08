@@ -330,6 +330,10 @@
     color: var(--artemis-alert-warning-color);
 }
 
+.monaco-review-comment-button-icon {
+    margin-right: 0.25rem;
+}
+
 .monaco-review-comment-resolve-controls {
     display: inline-flex;
     align-items: stretch;

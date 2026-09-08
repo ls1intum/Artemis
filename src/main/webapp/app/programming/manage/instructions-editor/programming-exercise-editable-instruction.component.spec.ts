@@ -241,7 +241,30 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
     });
 
-    it('does not emit unsaved flag during initial sync bootstrap', () => {
+    it('treats the first user edit after accepting a server baseline as unsaved', () => {
+        const hasUnsavedSpy = vi.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        comp.acceptServerBaseline({ ...exercise, problemStatement: 'generated' });
+        comp.updateProblemStatement('first user edit');
+
+        expect(comp.unsavedChangesValue()).toBe(true);
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('reloads test cases from the server when accepting a baseline for the same exercise', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const refreshTestCasesSpy = vi.spyOn(gradingService, 'refreshTestCases');
+
+        comp.acceptServerBaseline({ ...exercise, problemStatement: 'generated' });
+
+        expect(refreshTestCasesSpy).toHaveBeenCalledExactlyOnceWith(exercise.id);
+    });
+
+    it('treats a non-blank change during initial sync as unsaved', () => {
         const hasUnsavedSpy = vi.fn();
         const instructionChangeSpy = vi.fn();
         comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
@@ -254,8 +277,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.updateProblemStatement('changed-during-sync');
 
-        expect(hasUnsavedSpy).not.toHaveBeenCalled();
-        expect(comp.unsavedChangesValue()).toBe(false);
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
     });
 
@@ -276,39 +299,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         // Once the initial sync delivers the real content, it must still propagate so the parent model is restored.
         comp.updateProblemStatement('existing content restored');
         expect(instructionChangeSpy).toHaveBeenCalledExactlyOnceWith('existing content restored');
-    });
-
-    it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', () => {
-        const hasUnsavedSpy = vi.fn();
-        const instructionChangeSpy = vi.fn();
-        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
-        comp.instructionChange.subscribe(instructionChangeSpy);
-
-        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
-        setRequiredInputs(fixture, exerciseWithStatement);
-        fixture.detectChanges();
-
-        const mockEditor = editor.create();
-        setMarkdownEditorMonaco(comp, {
-            monacoEditor: () => ({
-                getModel: () => mockEditor.getModel(),
-                getEditor: () => mockEditor,
-            }),
-        } as unknown as MarkdownEditorMonacoComponent);
-
-        comp.ngAfterViewInit();
-
-        problemStatementSyncServiceMock.isAwaitingInitialSync.mockReturnValue(true);
-        comp.updateProblemStatement('changed-during-sync');
-        expect(hasUnsavedSpy).not.toHaveBeenCalled();
-
-        problemStatementSyncServiceMock.isAwaitingInitialSync.mockReturnValue(false);
-        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'changed-after-finalize' });
-        comp.updateProblemStatement('changed-after-finalize');
-
-        expect(hasUnsavedSpy).not.toHaveBeenCalled();
-        expect(comp.unsavedChangesValue()).toBe(false);
-        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
     });
 
     it('does not suppress first user edit after finalize when no bootstrap change was suppressed', () => {
@@ -361,6 +351,79 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         });
 
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
+    });
+
+    it('emits and marks a user edit after a same-content state replacement', () => {
+        const hasUnsavedSpy = vi.fn();
+        const instructionChangeSpy = vi.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'unchanged' });
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        setMarkdownEditorMonaco(comp, {
+            monacoEditor: () => ({
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent);
+        comp.ngAfterViewInit();
+        mockEditor.getModel()!.setValue('unchanged');
+
+        const replacementDoc = new Y.Doc();
+        const replacementText = replacementDoc.getText('problem-statement');
+        replacementText.insert(0, 'unchanged');
+        stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: yAwareness });
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue()).toBe(false);
+
+        comp.updateProblemStatement('genuine user edit');
+
+        expect(instructionChangeSpy).toHaveBeenCalledExactlyOnceWith('genuine user edit');
+        expect(hasUnsavedSpy).toHaveBeenCalledExactlyOnceWith(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
+    });
+
+    it('marks a different-content state replacement dirty once and suppresses only its matching echo', () => {
+        const hasUnsavedSpy = vi.fn();
+        const instructionChangeSpy = vi.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'initial' });
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        setMarkdownEditorMonaco(comp, {
+            monacoEditor: () => ({
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent);
+        comp.ngAfterViewInit();
+        mockEditor.getModel()!.setValue('initial');
+
+        const replacementDoc = new Y.Doc();
+        const replacementText = replacementDoc.getText('problem-statement');
+        replacementText.insert(0, 'remote replacement');
+        stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: yAwareness });
+
+        expect(hasUnsavedSpy).toHaveBeenCalledExactlyOnceWith(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
+
+        comp.updateProblemStatement('remote replacement');
+
+        expect(instructionChangeSpy).toHaveBeenCalledExactlyOnceWith('remote replacement');
+        expect(hasUnsavedSpy).toHaveBeenCalledTimes(1);
+        expect(comp.unsavedChangesValue()).toBe(true);
+
+        comp.updateProblemStatement('local edit after replacement');
+
+        expect(instructionChangeSpy).toHaveBeenNthCalledWith(2, 'local edit after replacement');
+        expect(hasUnsavedSpy).toHaveBeenCalledTimes(2);
+        expect(hasUnsavedSpy).toHaveBeenLastCalledWith(true);
         expect(comp.unsavedChangesValue()).toBe(true);
     });
 
@@ -537,6 +600,91 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
 
         expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+    });
+
+    it('does not persist through the save action while generation locks the editor', () => {
+        fixture.componentRef.setInput('editMode', true);
+        fixture.componentRef.setInput('isGeneratingOrRefining', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const updateProblemStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement');
+
+        comp.saveInstructions(new KeyboardEvent('ctrl+s'));
+
+        expect(updateProblemStatement).not.toHaveBeenCalled();
+        expect(debugElement.query(By.css('#save-instructions-button')).nativeElement.disabled).toBe(true);
+    });
+
+    it('makes the editor subtree inert and evicts focus while generation locks it', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const markdownEditor = debugElement.query(By.directive(MarkdownEditorMonacoComponent));
+        const toolbarButton = document.createElement('button');
+        const click = vi.fn();
+        toolbarButton.addEventListener('click', click);
+        toolbarButton.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                toolbarButton.click();
+            }
+        });
+        markdownEditor.nativeElement.append(toolbarButton);
+        toolbarButton.focus();
+
+        fixture.componentRef.setInput('isGeneratingOrRefining', true);
+        fixture.detectChanges();
+        document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+        expect(markdownEditor.attributes.inert).toBe('');
+        expect(document.activeElement).not.toBe(toolbarButton);
+        expect(click).not.toHaveBeenCalled();
+    });
+
+    it('keeps a newer edit dirty when an older save completes', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'submitted value' });
+        fixture.detectChanges();
+        const currentContent = { value: 'submitted value' };
+        setMarkdownEditorMonaco(comp, {
+            monacoEditor: () => ({ getText: () => currentContent.value }),
+        } as unknown as MarkdownEditorMonacoComponent);
+        const response = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(response);
+        const saved = vi.spyOn(comp.onProblemStatementSaved, 'emit');
+
+        comp.unsavedChanges = true;
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        currentContent.value = 'newer edit';
+        comp.updateProblemStatement('newer edit');
+        response.next(new HttpResponse({ body: exercise }));
+        response.complete();
+
+        expect(comp.unsavedChangesValue()).toBe(true);
+        expect(saved).not.toHaveBeenCalled();
+    });
+
+    it('blocks programmatic editor mutations while generation is running', () => {
+        fixture.componentRef.setInput('isGeneratingOrRefining', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const setText = vi.fn();
+        const applyRefinedContent = vi.fn();
+        const revertAll = vi.fn();
+        setMarkdownEditorMonaco(comp, {
+            applyRefinedContent,
+            revertAll,
+            monacoEditor: () => ({ setText, getText: () => 'unchanged' }),
+        } as unknown as MarkdownEditorMonacoComponent);
+        const refine = vi.spyOn(comp.onInlineRefinement, 'emit');
+
+        comp.setText('generated');
+        comp.applyRefinedContent('refined');
+        comp.revertAll();
+        comp.onInlineRefine({} as any);
+
+        expect(setText).not.toHaveBeenCalled();
+        expect(applyRefinedContent).not.toHaveBeenCalled();
+        expect(revertAll).not.toHaveBeenCalled();
+        expect(refine).not.toHaveBeenCalled();
     });
 
     it('should log an error on save', () => {

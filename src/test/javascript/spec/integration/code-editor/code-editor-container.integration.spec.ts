@@ -566,7 +566,6 @@ describe('CodeEditorContainerIntegration', () => {
             { reference: 'file:src/Test3.java_line:11' },
         ]);
         containerFixture.detectChanges();
-        container.updateFileBadges();
         expect(container.fileBadges()).toEqual({
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'src/Test2.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],

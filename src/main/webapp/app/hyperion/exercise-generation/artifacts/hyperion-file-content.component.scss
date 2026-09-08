@@ -1,0 +1,41 @@
+/*
+ * The content pane's one box.
+ *
+ * Every state - the file's text, the loading placeholders, and each of the six sentences that explain why there is
+ * no text - renders inside a box of the same minimum height, so switching files or waiting for a fetch never moves
+ * the page under a reader.
+ *
+ * Only the text state takes the code surface. `--tumaet-ui-code-background` and `--tumaet-ui-code-color` are the
+ * design system's own tokens and follow the theme; the explanations stay on the card surface, because muted body
+ * text on the code background measures 4.2:1 in light, below the 4.5:1 a sentence needs at this size.
+ */
+.hyperion-file-content-box {
+    min-height: 12rem;
+    padding: 0.75rem;
+    border: 1px solid var(--artemis-control-border);
+    border-radius: 0.375rem;
+}
+
+.hyperion-file-content-compact {
+    min-height: 7rem;
+    padding: 0.5rem;
+}
+
+.hyperion-file-content-code {
+    max-height: 28rem;
+    margin: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    background: var(--tumaet-ui-code-background);
+    color: var(--tumaet-ui-code-color);
+    font-family: var(--tumaet-ui-font-family-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    tab-size: 4;
+    white-space: pre;
+}
+
+.hyperion-file-content-code.hyperion-file-content-compact {
+    max-height: 16rem;
+    font-size: 0.75rem;
+}

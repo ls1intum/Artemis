@@ -298,7 +298,7 @@
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
                 "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
                 "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
-                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte füge zuerst Inhalt hinzu.",
                 "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
                 "tooLong": "Die Aufgabenstellung darf {{max}} Zeichen nicht überschreiten.",
                 "reviewChanges": "KI-Vorschläge prüfen",

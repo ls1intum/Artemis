@@ -206,6 +206,76 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
+    it('should offer the adapt action only for consistency threads when enabled and emit the thread id', () => {
+        const consistencyThread = {
+            id: 1,
+            resolved: false,
+            outdated: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
+                        text: 'issue',
+                    },
+                },
+            ],
+        } as any;
+        fixture.componentRef.setInput('thread', consistencyThread);
+        fixture.componentRef.setInput('showAdaptAction', true);
+        fixture.detectChanges();
+        expect(comp.canAdaptExercise()).toBe(true);
+
+        const emitted: number[] = [];
+        comp.adaptThread.subscribe((threadId) => emitted.push(threadId));
+        comp.requestAdapt();
+        expect(emitted).toEqual([1]);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
+    it('should not offer the adapt action for resolved consistency threads', () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: true,
+            outdated: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
+                        text: 'issue',
+                    },
+                },
+            ],
+        } as any);
+        fixture.componentRef.setInput('showAdaptAction', true);
+
+        fixture.detectChanges();
+
+        expect(comp.canAdaptExercise()).toBe(false);
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
+    it('should not offer the adapt action for non-consistency threads', () => {
+        fixture.componentRef.setInput('showAdaptAction', true);
+        fixture.detectChanges();
+
+        expect(comp.canAdaptExercise()).toBe(false);
+        const emitted: number[] = [];
+        comp.adaptThread.subscribe((threadId) => emitted.push(threadId));
+        comp.requestAdapt();
+        expect(emitted).toEqual([]);
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
     it('should hide the feedback action for outdated threads', () => {
         fixture.componentRef.setInput('showFeedbackAction', true);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);

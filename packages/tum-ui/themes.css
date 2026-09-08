@@ -3,6 +3,13 @@
     color-scheme: light;
 
     --tumaet-ui-spacing: 0.25rem;
+    --tumaet-ui-duration-state: 180ms;
+    --tumaet-ui-duration-pulse: 1800ms;
+    --tumaet-ui-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --tumaet-ui-easing-linear: linear;
+    --tumaet-ui-code-background: #f4f6f8;
+    --tumaet-ui-code-color: #1e293b;
+    --tumaet-ui-font-family-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
     --tumaet-ui-font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --tumaet-ui-font-size-xs: 0.75rem;
     --tumaet-ui-font-size-sm: 0.875rem;
@@ -62,6 +69,8 @@
 }
 
 [data-theme='dark'] {
+    --tumaet-ui-code-background: #20242a;
+    --tumaet-ui-code-color: #e6edf3;
     color-scheme: dark;
 
     --tumaet-ui-primary-color: #65a1d6;
