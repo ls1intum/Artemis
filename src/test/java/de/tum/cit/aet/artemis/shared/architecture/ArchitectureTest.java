@@ -250,6 +250,34 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testTransactionBoundariesOnlyInRepositories() {
+        String reason = """
+                A transaction boundary may only be declared inside a repository interface, where it lasts for one \
+                statement. Declared anywhere else it stays open for the whole call: it holds its locks across every \
+                repository call, remote request and file write inside it, blocks anyone who needs those rows for that \
+                entire span, and gives two concurrent calls enough overlapping rows to deadlock under load. A \
+                self-invoked one is worse than useless, because Spring applies the annotation through a proxy and the \
+                call therefore does nothing at all, silently.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Checked globally, not per module. AbstractModuleRepositoryArchitectureTest carries the same two rules, but
+        // only for modules that actually have a subclass — account, calendar, deimos and globalsearch have none, which
+        // left 35 services where an annotation would have passed CI unnoticed. A rule that depends on someone
+        // remembering to add a per-module test is not an enforced rule, and a module added later would inherit the
+        // same hole.
+        var repositoryInterfaces = and(INTERFACES, annotatedWith(Repository.class));
+
+        ArchRule methodBoundaries = methods().that().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(repositoryInterfaces).because(reason);
+
+        // A class-level annotation applies to every method of the class, which is the widest boundary available, and
+        // the method rule above cannot see it.
+        ArchRule classBoundaries = noClasses().that().areNotAnnotatedWith(Repository.class).should().beAnnotatedWith(simpleNameAnnotation("Transactional")).because(reason);
+
+        methodBoundaries.check(productionClasses);
+        classBoundaries.check(productionClasses);
+    }
+
+    @Test
     void testNoTransactionSynchronization() {
         String reason = """
                 A transaction synchronization callback only runs while a transaction is open, and a transaction boundary may only be \
