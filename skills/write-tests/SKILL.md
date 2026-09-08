@@ -1,12 +1,9 @@
 ---
 name: write-tests
-description: Write an Artemis server or client test that passes on the first CI run. Use when adding or changing a JUnit test under src/test/java or a Vitest spec under src/main/webapp, when a test passes locally but fails in CI, or when unsure which base class or test command to use. Covers base class selection, the admin naming rule, date comparisons, and the Vitest invocations that silently do the wrong thing.
+description: Write or debug Artemis JUnit and Vitest tests, including failures that differ between local runs and CI.
 ---
 
-# Write tests that pass first time
-
-Most of the friction in this repository's test suites comes from a handful of specific traps, not
-from testing being hard. This skill is the list.
+# Write Artemis tests
 
 ## Server tests
 
@@ -24,12 +21,11 @@ Name tests `*Test.java`. Reuse the module's base class where one exists.
 Read `reference/server.md` for base class selection, the admin naming rule that forces a different
 `@ResourceLock`, date comparison, and shared-spy flakiness.
 
-The one to know before you start: **in the admin module, naming a test `*IntegrationTest` forces it
+**In the admin module, naming a test `*IntegrationTest` forces it
 onto a batch base class carrying a shared `@ResourceLock`.** A test that mutates global state and
 needs isolation must be named `*Test` and extend `AbstractSpringIntegrationIndependentTest`
-instead. This is enforced by
-`src/test/java/de/tum/cit/aet/artemis/admin/architecture/AdminTestArchitectureTest.java`, so getting
-it wrong fails the architecture gate rather than the test.
+instead. Enforced by
+`src/test/java/de/tum/cit/aet/artemis/admin/architecture/AdminTestArchitectureTest.java`.
 
 ## Client tests
 
@@ -44,7 +40,7 @@ pnpm run test-diff                       # only specs affected by the diff
 ```
 
 **`pnpm run vitest:run -- <path>` runs the entire suite.** The path is swallowed. Use
-`pnpm exec vitest run <path>` for a single file. This wastes a lot of time before people notice.
+`pnpm exec vitest run <path>` for a single file.
 
 **Vitest is not the type check CI runs.** CI runs a stricter spec `tsc`:
 
@@ -64,5 +60,5 @@ Read `reference/client.md` for the rest: the monaco stub, zoneless test setup, `
 Keep tests deterministic. Mock external services and WebSockets. CI enforces per-module coverage
 thresholds, so a new class with no test can fail the build even when nothing is broken.
 
-For E2E tests, see `skills/e2e-pr-check/SKILL.md`. Do not add a Playwright test for something a
-unit or integration test can cover; the E2E suite is the slowest feedback loop in the project.
+For browser-level behavior, see `skills/e2e-pr-check/SKILL.md`. Prefer unit or integration tests
+when they exercise the required behavior without a browser.

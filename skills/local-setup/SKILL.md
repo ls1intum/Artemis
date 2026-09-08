@@ -1,30 +1,16 @@
 ---
 name: local-setup
-description: Get a local Artemis development environment running from a fresh clone, or fix one that has stopped working. Use when setting up the project for the first time, when the server or client will not start, when Gradle or pnpm complain about versions, or when unsure which command to run for server-only versus full-stack development. Covers prerequisites, the two run modes, test users, and mail capture.
+description: Set up or build Artemis locally, or troubleshoot application startup and development tool versions.
 ---
 
 # Get Artemis running locally
 
 ## Prerequisites
 
-| Tool   | Version          | Note                                                                  |
-| ------ | ---------------- | --------------------------------------------------------------------- |
-| JDK    | 25               | Pinned by the Gradle toolchain                                        |
-| Node   | 24.20.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
-| pnpm   | 11.25.0          | Pinned by the `packageManager` field; activate with `corepack enable` |
-| Docker | current          | Required for the database and for server tests                        |
-
-Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
-whole category of lockfile arguments.
-
-On macOS, Homebrew's `openjdk@25` is keg-only, so nothing finds it after installation. Register it
-with the system once, rather than exporting `JAVA_HOME` in every shell:
-
-```bash
-brew install openjdk@25
-sudo ln -sfn "$(brew --prefix openjdk@25)/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-25.jdk
-./gradlew --version   # confirms Gradle picks up JVM 25
-```
+Use the Java toolchain in `build.gradle`, the Node version in `gradle.properties`, and the
+`packageManager` version in `package.json`. Docker is required for the database and server tests.
+For platform-specific installation and IDE configuration, see
+`documentation/docs/developer/setup.mdx`.
 
 ## Install dependencies
 
@@ -38,90 +24,64 @@ Use `--frozen-lockfile` unless you are deliberately changing dependencies, in wh
 
 ## Two ways to run
 
-**Full stack in one command.** Slower to restart, fine for server work where the client rarely
-changes:
+**Server with bundled client:**
 
 ```bash
 ./gradlew bootRun
 ```
 
-**Server and client separately.** This is what you want for client work, because the Angular dev
-server does hot module replacement:
+**Separate Angular dev server for client HMR:**
 
 ```bash
 ./gradlew bootRun -x webapp   # terminal 1: server only
-pnpm start                    # terminal 2: Angular dev server with HMR
+pnpm start                  # terminal 2: Angular dev server
 ```
 
-The client is then on port 9000 and the server on 8080.
+Default ports are 9000 for the client and 8080 for the server; use the active environment
+configuration when it overrides them.
 
-Expect roughly thirty seconds of startup. That is the normal cold start, not a symptom. Disabling
-feature modules barely changes it, because most of it is Spring context work that lazy
-initialisation already defers.
+## Production builds
+
+```bash
+./gradlew -Pprod -Pwar clean bootWar
+./gradlew -Pprod -Pwar -Psbom clean bootWar
+```
+
+The first builds without an SBOM; the second includes server and client SBOMs. Generation is
+opt-in via `-Psbom`; release-eligible CI sets it in `.github/workflows/ci-build.yml`. Without it,
+`AdminSbomResource` returns 404 and the admin UI shows an informational banner.
+Client assets go to `build/resources/main/static`, WARs to `build/libs`.
 
 ## Test users
 
-The users you log in as locally are seeded by Liquibase, not created by a script.
-`src/main/resources/config/liquibase/e2e/users.csv` provides exactly seven, each with its login as
-the password:
-
-| Login                  | Role in the Playwright suite |
-| ---------------------- | ---------------------------- |
-| `artemis_admin`        | `admin`                      |
-| `artemis_test_user_1`  | `studentOne`                 |
-| `artemis_test_user_2`  | `studentTwo`                 |
-| `artemis_test_user_3`  | `studentThree`               |
-| `artemis_test_user_4`  | `studentFour`                |
-| `artemis_test_user_6`  | `tutor`                      |
-| `artemis_test_user_16` | `instructor`                 |
-
-The numbering is deliberately not contiguous, so do not assume `artemis_test_user_5` exists. The
-names are exported from `src/test/playwright/support/users.ts`. A database that has run the
-migrations already has these users, and `src/test/playwright/init/importUsers.spec.ts` verifies
-them rather than creating anything.
-
-`supporting_scripts/create_test_users.sh` is a different, much smaller thing: it creates three
-users, `aa01aaa` through `aa03aaa`, through the admin REST API, and it takes the server as a
-required argument:
-
-```bash
-supporting_scripts/create_test_users.sh localhost:8080
-```
-
-Called without that argument it POSTs to `http://` and silently does nothing. You do not need it
-for normal development or for Playwright.
+Playwright credentials and role mappings are defined in `src/test/playwright/support/users.ts`.
+Liquibase seeds them from `src/main/resources/config/liquibase/e2e/users.csv` when the `e2e`
+context is enabled; do not assume every migrated database contains them.
+`src/test/playwright/init/importUsers.spec.ts` verifies these users rather than creating them.
+The separate `supporting_scripts/create_test_users.sh` is not needed for Playwright.
 
 ## Seeing outgoing mail
 
-Artemis only sends mail when it is configured to. To view what it would send, run a local Mailpit
-alongside the server and point the mail configuration at it. See
-`documentation/docs/developer/mailpit-setup.mdx`.
+For local mail capture, follow `documentation/docs/developer/mailpit-setup.mdx`.
 
 ## When it will not start
 
-**"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
-an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.
+**"Unable to determine Dialect".** Check database connectivity and the active database profile.
+An `autoconfigure.exclude` override can replace the expected exclusions.
 
-**The server logs "Started ArtemisApp" but then shuts down.** A Spring Boot and Spring Cloud version
-mismatch does exactly this. The two are coupled: a Boot minor bump needs the matching Cloud release
-train. Both are pinned in `gradle.properties`.
+**Shutdown after startup.** Read the shutdown error. If it reports Spring Cloud compatibility,
+check the Boot and Cloud versions in `gradle.properties` against the supported release train.
 
-**Aggregate health reports DOWN.** This does not by itself mean the server is broken. Check the
-readiness and liveness endpoints and look for "Started ArtemisApp" in the log; a single unconfigured
-optional integration pulls the aggregate down.
+**Aggregate health reports DOWN.** Inspect individual health contributors and the readiness and
+liveness endpoints. An unavailable optional integration can make aggregate health DOWN.
 
-**Port already in use.** `./run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
-server and client. The LocalVC SSH listener on 7921 lives inside the server JVM, so it goes with it.
+**Port already in use.** Identify the listener and its owner before stopping it through the
+manager that started it. `./run-e2e-tests-local-fast.sh --stop` stops processes recorded in the
+runner's PID files and tears down its database; it is not a generic port cleanup command. Use it
+only for an E2E stack you own. The LocalVC SSH listener on 7921 lives inside the server JVM.
 
-## Running things
+## Checks
 
-```bash
-./gradlew test -x webapp        # server tests, needs Docker
-pnpm run vitest                 # client tests, watch mode
-./run-e2e-tests-local-fast.sh   # E2E, brings up everything it needs
-pnpm run lint                   # client lint
-./gradlew spotlessApply         # fix Java formatting
-```
-
-Full setup documentation, including IDE configuration and the optional integrations:
-`documentation/docs/developer/setup.mdx`.
+Use `skills/write-tests/SKILL.md` for JUnit and Vitest commands, and
+`skills/e2e-pr-check/SKILL.md` for E2E runner selection and service ownership.
+Client lint runs with `pnpm run lint`; Java formatting with `./gradlew spotlessApply`.

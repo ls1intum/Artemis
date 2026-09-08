@@ -13,6 +13,7 @@
         "e2e/exam/ExamTestRun.spec.ts",
         "e2e/exam/test-exam/",
         "e2e/exercise/ExerciseImport.spec.ts",
+        "e2e/exercise/ExerciseSplitPanelResize.spec.ts",
         "e2e/exercise/file-upload/",
         "e2e/exercise/modeling/",
         "e2e/exercise/programming/",
@@ -124,6 +125,7 @@
             ],
             "testPaths": [
                 "e2e/exercise/ExerciseImport.spec.ts",
+                "e2e/exercise/ExerciseSplitPanelResize.spec.ts",
                 "e2e/course/CourseExercise.spec.ts"
             ]
         },

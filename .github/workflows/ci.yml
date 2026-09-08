@@ -145,6 +145,7 @@ jobs:
               - 'gradlew'
               - 'gradlew.bat'
             has_workflows:
+              - '.ci/E2E-tests/**'
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
