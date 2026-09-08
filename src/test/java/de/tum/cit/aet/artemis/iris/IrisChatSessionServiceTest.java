@@ -64,6 +64,17 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
         return TEST_PREFIX;
     }
 
+    /**
+     * Restores the fixture's default decision before every test in this file, whichever nested class it sits in.
+     * The preference is one persisted row shared by all of them, and six tests spread over four nested classes
+     * change it, so a per-class guard would only protect the class that carries it and leave the class that runs
+     * next holding whatever the previous one left behind.
+     */
+    @BeforeEach
+    void resetAiSelectionDecision() {
+        userUtilService.setAiSelectionDecision(student1(), AiSelectionDecision.CLOUD_AI);
+    }
+
     private User student1() {
         return userUtilService.getUserByLogin(TEST_PREFIX + "student1");
     }
@@ -94,16 +105,6 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
      */
     @Nested
     class LlmOptInGate {
-
-        /**
-         * Restores the fixture's default decision before each test, the same guard {@code CheckHasAccessTo} carries.
-         * The preference is a persisted row shared by every test in this file, and four of the tests here change it,
-         * so without the reset the last one to run decides what the next class sees.
-         */
-        @BeforeEach
-        void resetAiSelectionDecision() {
-            userUtilService.setAiSelectionDecision(student1(), AiSelectionDecision.CLOUD_AI);
-        }
 
         @Test
         void throwsWhenUserHasNotOptedIntoLLM() {
@@ -159,15 +160,6 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
     @Nested
     class CheckHasAccessTo {
-
-        /**
-         * Restores the fixture's default decision before each test. The preference is a persisted row shared by every test
-         * in this class, so a test that changes it would otherwise leak that change into the next one.
-         */
-        @BeforeEach
-        void resetAiSelectionDecision() {
-            userUtilService.setAiSelectionDecision(student1(), AiSelectionDecision.CLOUD_AI);
-        }
 
         @ParameterizedTest
         @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
