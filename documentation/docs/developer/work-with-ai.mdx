@@ -65,7 +65,7 @@ Run from the repository root to load this checkout rather than an installed copy
 npx skills add . --agent codex --skill '*' --copy --yes
 ```
 
-This installs all seven skills from the working tree. Repeat after editing them to refresh the
+This installs every skill from the working tree. Repeat after editing them to refresh the
 installed copies. Local skill files and `skills-lock.json` are ignored by Git; edit `skills/`,
 not `.agents/skills/`. Use `npx skills list --agent codex` to check discovery.
 
@@ -137,9 +137,13 @@ of success.
    runs in the `Agent Skills` CI job. It checks recognized path-shaped tokens in inline code
    and fenced blocks, not every Markdown link or the truth of the surrounding claim. Review
    linked files and command behavior separately.
-2. **Keep the body focused.** Put substantial conditional detail in linked `reference/` files.
-3. **Explain non-obvious constraints.** Include the reason when it prevents a plausible but incorrect alternative.
-4. **Do not duplicate `AGENTS.md` or other skills.** Keep shared constraints in the entry point,
+2. **Route the new skill.** The same check requires a link from `AGENTS.md` and from the
+   [skill table](#the-skills) above, so agents reach the skill without installing anything.
+   It also rejects frontmatter that agents cannot index: the `name` must match the directory
+   and the `description` must be present.
+3. **Keep the body focused.** Put substantial conditional detail in linked `reference/` files.
+4. **Explain non-obvious constraints.** Include the reason when it prevents a plausible but incorrect alternative.
+5. **Do not duplicate `AGENTS.md` or other skills.** Keep shared constraints in the entry point,
    procedures in the matching skill, and conditional detail in linked references. Preserve
    non-obvious Artemis constraints rather than deleting them to meet a line-count target.
 

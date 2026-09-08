@@ -13,8 +13,8 @@ on:
 permissions: {}
 
 jobs:
-  skill-references:
-    name: Skill Path References
+  skill-checks:
+    name: Skill Structure and References
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -28,8 +28,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.14'
+      # The parsers decide what the check below sees, so a regression there would pass silently.
       - name: Checker self-test
         run: python supporting_scripts/check_skill_references.py --self-test
-      - name: Skill path references
+      - name: Skill frontmatter, routing and path references
         if: ${{ !cancelled() }}
         run: python supporting_scripts/check_skill_references.py

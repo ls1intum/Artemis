@@ -106,6 +106,9 @@ jobs:
               - '.github/workflows/ci-skills.yml'
               - 'skills/**'
               - 'supporting_scripts/check_skill_references.py'
+              - 'AGENTS.md'
+              - 'documentation/docs/developer/work-with-ai.mdx'
+              - '.claude-plugin/**'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
