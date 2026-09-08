@@ -6,7 +6,8 @@ description: Apply Artemis architecture rules when changing server Java code or 
 # Server architecture gates
 
 Architecture rules are enforced under `src/test/java/de/tum/cit/aet/artemis/shared/architecture/`
-and by module-scoped subclasses.
+and by module-scoped subclasses. Prefer constructor injection for Spring beans; follow
+`documentation/docs/developer/guidelines/server-development.mdx` for server coding conventions.
 
 ## Run them locally
 

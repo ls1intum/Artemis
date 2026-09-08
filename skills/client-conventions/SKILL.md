@@ -6,7 +6,7 @@ description: Apply Artemis conventions when changing Angular application or TUM 
 # Artemis client conventions
 
 Use `reference/migration-recipes.md` for migration examples. Check changes with `pnpm run lint`
-and `pnpm run prettier:check`.
+and `pnpm run prettier:check`. Prefer standalone components.
 
 ## Signals are mandatory for new code
 

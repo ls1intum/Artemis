@@ -36,7 +36,7 @@ Installation locations and invocation syntax depend on the agent.
 
 ### Claude Code
 
-Install the namespaced Claude Code plugin:
+For Claude Code, prefer the namespaced plugin over the Skills CLI:
 
 ```text
 /plugin marketplace add ls1intum/Artemis --scope local
@@ -132,7 +132,7 @@ The procedure.
 Use a short description of the task that should trigger the skill, not a contents list or promise
 of success.
 
-1. **Cite the source of repository-specific rules and commands.**
+1. **Every factual claim cites a repository path.**
    [`supporting_scripts/check_skill_references.py`](https://github.com/ls1intum/Artemis/blob/develop/supporting_scripts/check_skill_references.py)
    runs in the `Agent Skills` CI job. It checks recognized path-shaped tokens in inline code
    and fenced blocks, not every Markdown link or the truth of the surrounding claim. Review

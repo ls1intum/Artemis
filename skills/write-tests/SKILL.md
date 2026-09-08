@@ -60,5 +60,5 @@ Read `reference/client.md` for the rest: the monaco stub, zoneless test setup, `
 Keep tests deterministic. Mock external services and WebSockets. CI enforces per-module coverage
 thresholds, so a new class with no test can fail the build even when nothing is broken.
 
-For browser-level behavior, see `skills/e2e-pr-check/SKILL.md`. Prefer unit or integration tests
-when they exercise the required behavior without a browser.
+For E2E tests, see `skills/e2e-pr-check/SKILL.md`. Do not add a Playwright test for behavior
+that a unit or integration test can cover.

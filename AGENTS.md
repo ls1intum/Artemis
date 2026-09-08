@@ -25,6 +25,7 @@ When changing a convention, update its skill and supporting documentation in the
   `src/test/java`, Playwright tests in `src/test/playwright`.
 - `src/main/webapp/app/openapi/` is generated client code. Change the API source/generation input
   rather than hand-editing generated output.
+- Follow `.editorconfig`: UTF-8, LF, final newlines and two-space YAML indentation.
 - Use the Gradle wrapper and the pnpm version pinned by `package.json` (`corepack enable`).
   Runtime and build versions are maintained in `gradle.properties` and `package.json`.
 - Artemis deliberately differs from common Spring examples: transaction boundaries belong in
@@ -40,17 +41,20 @@ When changing a convention, update its skill and supporting documentation in the
 
 - User-facing documentation belongs in `documentation/docs/`, grouped by audience. Tool-local
   READMEs stay beside their tools. Do not create a top-level `docs/` directory.
-- Use Docusaurus `.mdx` pages and register new pages in the matching `documentation/sidebar-*.ts`.
-  Write in the present tense for the audience, without PR/issue history or release-relative prose.
+- Use Docusaurus `.mdx` pages with `id`, `title` and `sidebar_label` frontmatter. Register new pages
+  in the matching `documentation/sidebar-*.ts` and link them from related pages. Write in the
+  present tense for the audience, without PR/issue history or release-relative prose.
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 
 ## Commits and pull requests
 
-- Target `develop` unless working on a stack. Follow `CONTRIBUTING.md` and use
-  `.github/PULL_REQUEST_TEMPLATE.md`, including checks run and screenshots for UI changes.
+- Target `develop`; rebase to reduce noise. Follow `CONTRIBUTING.md` and the guidelines in
+  `documentation/docs/developer/guidelines/`. Use `.github/PULL_REQUEST_TEMPLATE.md`, including
+  the problem and solution, linked issue when applicable, checks run, screenshots for UI changes
+  and documentation updates when relevant.
 - PR titles use a backticked module followed by a colon, e.g. `` `Development`: Improve documentation ``.
   Allowed modules and the exact pattern are in `.github/workflows/validate-pr-title.yml`.
   Do not infer the format from squash-merge subjects, which omit the backticks.
 - Commit subjects are concise and imperative, without backticks; wrap bodies near 72 characters.
-- Run checks relevant to the change and report verification gaps.
+- Run lint and tests before submitting; report the commands run and any verification gaps.

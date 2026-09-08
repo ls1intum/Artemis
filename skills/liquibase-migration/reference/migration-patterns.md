@@ -11,19 +11,16 @@ its cleanup is specific to those relationships, not a deletion template. Delete 
 a reviewed policy for the affected records and their dependants. A missing parent alone does not
 establish that the remaining data is disposable.
 
-Choose the precondition failure behaviour according to the application's schema requirements:
+Use the repository's guarded pattern: one cleanup changeset and one constraint changeset per
+column, with `onFail="CONTINUE"` on the null-count precondition. This keeps the application
+starting if rows still prevent the constraint. `CONTINUE` leaves the changeset unrecorded and
+retries it on a later update; `MARK_RAN` would record it as executed and prevent that retry.
+Verify whether the constraint actually ran; startup success alone does not establish it.
 
-- `CONTINUE` skips the changeset without marking it executed and retries it on a later update.
-  Use it only when the application remains correct without the constraint. Verify whether it
-  actually ran; startup success does not establish the constraint.
-- `HALT` stops the update. Use it when continuing without the constraint would violate an
-  application invariant, with cleanup or backfill completed before deployment.
-- `MARK_RAN` records a skipped changeset as executed. Do not use it to defer a required constraint;
-  a later update will not retry that changeset.
-
-Keep unrelated constraint changes separate so that a precondition for one does not skip the others.
-If cleanup requires application deletion semantics, use the relevant service rather than duplicating
-partial cleanup in SQL. Do not add the constraint until both the data and write paths support it.
+Keep unrelated constraint changes separate. Leave a column nullable when its data or write paths
+are not ready, and explain the specific prerequisite in the changelog. If cleanup requires
+application deletion semantics, use the relevant service rather than duplicating partial cleanup
+in SQL. Do not make application correctness depend on a constraint that can still be deferred.
 
 ### When the entity mapping blocks it
 

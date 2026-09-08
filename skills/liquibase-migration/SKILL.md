@@ -26,9 +26,9 @@ Read the relevant pattern in `reference/migration-patterns.md`.
 **Adding a nullable column, a table, or an index.** Add a
 `<rollback>` if Liquibase cannot infer one.
 
-**Adding a NOT NULL constraint to an existing column.** Check the entity mapping and existing
-nulls before adding the constraint. Read the precondition guidance in `reference/migration-patterns.md`;
-a precondition that skips a constraint does not establish the intended schema invariant.
+**Adding a NOT NULL constraint to an existing column.** Use the guarded `onFail="CONTINUE"`
+pattern in `reference/migration-patterns.md`. Check the entity mapping and existing nulls first;
+a skipped constraint does not establish the intended schema invariant.
 
 **Dropping or renaming a column that code still reads.** Use expand and contract across two
 releases. During a rolling deployment, nodes on the old version are still running.

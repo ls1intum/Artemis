@@ -18,7 +18,7 @@ only for existing production semantics. For third-party markup and exceptions, r
 
 ## Step 1: work out which specs are affected
 
-Use CI's resolver with the branch's actual base (the parent branch for a stack):
+Use CI's resolver against `origin/develop` (or the actual PR target if it differs):
 
 ```bash
 ./.ci/E2E-tests/determine-relevant-tests.sh origin/develop
@@ -28,9 +28,10 @@ Use CI's resolver with the branch's actual base (the parent branch for a stack):
 - `RELEVANT_TESTS`: space-separated paths relative to `src/test/playwright`, including always-run specs.
 - `REMAINING_TESTS`: specs CI runs in its second phase.
 
-The resolver uses committed changes only. Inspect staged, unstaged and untracked changes separately;
-use full-suite coverage when their affected specs cannot be established. Do not create a commit
-merely to select tests. A failed base comparison must be resolved before using the selection.
+The resolver uses committed changes only: commit the intended changes before resolving. If committing
+is outside the authorized task, report that the resolver cannot cover uncommitted work; do not
+present its selection as sufficient. Inspect staged, unstaged and untracked changes for omissions.
+A failed base comparison must be resolved before using the selection.
 
 ## Step 2: choose the runner
 
@@ -47,8 +48,8 @@ node cannot reproduce cross-node failures at all:
 ./run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
-For image/container-sensitive failures or production-faithful CI reproduction, use
-`./run-e2e-tests-local-multinode.sh` instead of the host-JVM fast variant.
+Use `./run-e2e-tests-local-multinode.sh` for production-faithful CI reproduction and before
+pushing a multi-node-sensitive change. The host-JVM fast variant is for iteration.
 
 Treat a change as cluster-sensitive when it touches any of:
 
