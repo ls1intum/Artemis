@@ -2,8 +2,12 @@ package de.tum.cit.aet.artemis.core.util;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -282,6 +286,13 @@ public sealed interface PublicFileUrl {
      */
     record FileUploadSubmission(long exerciseId, long submissionId, @NonNull String filename) implements PublicFileUrl {
 
+        /**
+         * This template read backwards, anchored at both ends. It is the only inverse in this file, and it exists because
+         * {@code de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission#filePath} is the one file reference column that still stores the whole served path rather than
+         * the filename; see {@link #ofStoredValue}.
+         */
+        private static final Pattern STORED_VALUE = Pattern.compile("file-upload-exercises/(\\d++)/submissions/(\\d++)/(.++)");
+
         @Override
         public URI url() {
             return uri(FILES_PREFIX + "file-upload-exercises/" + exerciseId + "/submissions/" + submissionId + "/", filename);
@@ -290,6 +301,38 @@ public sealed interface PublicFileUrl {
         @Override
         public FilePathType filePathType() {
             return FilePathType.FILE_UPLOAD_SUBMISSION;
+        }
+
+        /**
+         * Reads a stored submission file path back into the two ids and the filename it was built from.
+         * <p>
+         * Every other file reference column holds a filename and takes its ids from the owning entity. This one holds the whole path, because a submission does not carry the id
+         * of its exercise: that is reachable only through {@code participation.exercise}, and the two places that need it most cannot count on that association. The
+         * {@code @PostRemove} callback that deletes the file runs on whatever graph the delete happened to load, and the DTO that serves the submission explicitly handles a
+         * participation that is absent or an uninitialised proxy. So the value stays self-contained, and this is how it is read: by matching the whole template rather than by
+         * indexing a segment, so that a change to the template on one side of this record cannot silently disagree with the other.
+         * <p>
+         * The filename segment is taken as it stands, not percent-decoded. What this column holds was written by {@code FileUploadSubmissionService}, which sanitizes a filename
+         * before it saves it, so nothing it writes has anything to decode; a value from before sanitization holds the name of the file on disk verbatim.
+         *
+         * @param storedValue the value the column holds, which may also be a bare filename or something that is not this shape at all
+         * @return the URL the value describes, or empty when it does not describe one
+         */
+        public static Optional<FileUploadSubmission> ofStoredValue(@Nullable String storedValue) {
+            if (storedValue == null) {
+                return Optional.empty();
+            }
+            Matcher matcher = STORED_VALUE.matcher(storedValue);
+            if (!matcher.matches()) {
+                return Optional.empty();
+            }
+            try {
+                return Optional.of(new FileUploadSubmission(Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2)), matcher.group(3)));
+            }
+            catch (NumberFormatException exception) {
+                // An id longer than a long. Nothing this application wrote, and nothing worth failing a deletion over.
+                return Optional.empty();
+            }
         }
     }
 

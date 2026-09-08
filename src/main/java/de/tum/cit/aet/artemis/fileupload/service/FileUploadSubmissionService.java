@@ -198,9 +198,11 @@ public class FileUploadSubmissionService extends SubmissionService {
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
         previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
-            final URI oldFilePath = URI.create(previousSubmission.getFilePath());
+            // Compared as strings rather than as URIs: a value stored before filenames were sanitized may contain a space, which URI.create rejects outright, and a submission
+            // is not the place to find that out.
+            final String oldFilePath = previousSubmission.getFilePath();
             // check if we already had a file associated with this submission
-            if (!oldFilePath.equals(newFilePath)) { // different name
+            if (!oldFilePath.equals(newFilePath.toString())) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
                 previousSubmission.onDelete();
             }
