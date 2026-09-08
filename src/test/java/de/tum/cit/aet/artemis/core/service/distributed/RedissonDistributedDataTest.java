@@ -49,7 +49,11 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
 
     @AfterAll
     static void afterAll() {
-        valkey.stop();
+        // JUnit runs @AfterAll even when @BeforeAll threw, and create() throws when the version property is missing.
+        // Without the guard that failure would surface as a NullPointerException here instead.
+        if (valkey != null) {
+            valkey.stop();
+        }
     }
 
     @Override
