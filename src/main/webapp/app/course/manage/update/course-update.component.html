@@ -473,8 +473,8 @@
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip' | artemisTranslate" />
                     </div>
                     @if (athenaFeedbackEnabled() && !hasInstructorAcceptedAiExperience()) {
-                        <div class="nested-form-group ai-experience-hint d-flex align-items-center gap-2" id="ai-experience-hint-course-settings">
-                            <span class="text-body-secondary" jhiTranslate="artemisApp.course.athenaConfig.aiExperienceHint"></span>
+                        <div class="nested-form-group ai-experience-hint flex items-center gap-2" id="ai-experience-hint-course-settings">
+                            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.aiExperienceHint"></span>
                             <button
                                 type="button"
                                 tumUiButton
