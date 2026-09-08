@@ -123,11 +123,6 @@ public class MailService {
         sendEmailFromTemplate(recipient, "mail/passwordResetEmail", "email.reset.title");
     }
 
-    public void sendSAML2SetPasswordMail(MailRecipientDTO recipient) {
-        log.debug("Sending SAML2 set password email to '{}'", recipient.email());
-        sendEmailFromTemplate(recipient, "mail/samlSetPasswordEmail", "email.saml.title");
-    }
-
     /**
      * Sends an email to admin users informing them that a data export has failed.
      *
