@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.dto.DragAndDropMappingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.DragItemDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuestionWithoutSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragAndDropQuestionFromEditorDTO;
 
 /**
  * The round trip that decides whether the decoupling holds.
@@ -222,6 +223,37 @@ class StoredFileReferenceTest {
 
         DragAndDropQuestion sentBack = mapper.readValue(json.toString(), DragAndDropQuestion.class);
         assertThat(sentBack.getBackgroundFilePath()).isEqualTo("background.jpg");
+    }
+
+    /**
+     * The editor takes its own route into and out of the question, so it needs its own assertion.
+     * <p>
+     * {@code DragAndDropQuestionFromEditorDTO} is built field by field rather than by serializing the entity, so it does not pick up the derived Jackson property the test above
+     * pins. Handing it the stored filename would make the editor request the background at the root of the file endpoint, and the background of an existing question would stop
+     * rendering the moment someone opened it for editing.
+     */
+    @Test
+    void theEditorIsServedTheQuestionScopedBackgroundPathAndSendsBackTheFilename() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(5L);
+        question.setBackgroundFilePath("background.jpg");
+
+        DragAndDropQuestionFromEditorDTO dto = DragAndDropQuestionFromEditorDTO.of(question);
+        assertThat(dto.backgroundFilePath()).isEqualTo("drag-and-drop/questions/5/backgrounds/background.jpg");
+
+        assertThat(dto.toDomainObject().getBackgroundFilePath()).isEqualTo("background.jpg");
+    }
+
+    /**
+     * A question that has not been inserted yet has no id to scope its URL with, so the editor is handed the filename it just uploaded and sends the same value back. That is
+     * the one case in which the served value is not a path, and it has to stay that way: the client uses it to name the file it is uploading alongside the exercise.
+     */
+    @Test
+    void theEditorKeepsTheBareFilenameWhileTheQuestionHasNoIdYet() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setBackgroundFilePath("background.jpg");
+
+        assertThat(DragAndDropQuestionFromEditorDTO.of(question).backgroundFilePath()).isEqualTo("background.jpg");
     }
 
     /**
