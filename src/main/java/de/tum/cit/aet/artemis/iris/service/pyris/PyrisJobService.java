@@ -78,7 +78,7 @@ public class PyrisJobService {
      * Lazy init: retrieves the distributed map that stores Pyris jobs.
      *
      * <p>
-     * The entry lifetime is requested here rather than configured on the backend, because a map-level TTL is not
+     * The entry lifetime is requested here rather than configured on the provider, because a map-level TTL is not
      * expressible on every provider and would silently not apply on some of them.
      *
      * @return the map containing Pyris jobs

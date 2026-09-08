@@ -13,7 +13,7 @@ export type IrisPipelineVariant = (typeof IRIS_PIPELINE_VARIANTS)[number];
 /**
  * Instructional support level for Iris at the course level.
  * Matches the server enum serialization as lowercase strings via @JsonValue
- * (see IrisSupportLevel.java). The backend defaults an absent/unknown value to MODERATE.
+ * (see IrisSupportLevel.java). The server defaults an absent/unknown value to MODERATE.
  */
 export const IRIS_SUPPORT_LEVELS = ['low', 'moderate', 'high'] as const;
 export type IrisSupportLevel = (typeof IRIS_SUPPORT_LEVELS)[number];
@@ -55,7 +55,7 @@ export interface IrisCourseSettingsDTO {
     enabled: boolean;
     customInstructions?: string;
     variant: IrisPipelineVariant;
-    // Optional: absent means "use server default" (MODERATE), mirroring the @Nullable backend field.
+    // Optional: absent means "use server default" (MODERATE), mirroring the @Nullable server field.
     supportLevel?: IrisSupportLevel;
     rateLimit?: IrisRateLimitConfiguration;
     /**

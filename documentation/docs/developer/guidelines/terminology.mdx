@@ -1,0 +1,164 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Terminology
+
+Artemis is a distributed system with an Angular client, a clustered Spring Boot server, an embedded git server, a build
+agent fleet, and several external services. Words that collapse all of that into two layers cost the reader the one
+thing they needed to know: which component is being talked about. This page defines the vocabulary Artemis uses instead,
+and the check that keeps it in place.
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Never write "frontend" or "backend".</strong> This applies to code, comments, Javadoc, test names,
+  configuration files, commit messages, pull request descriptions, and documentation.
+  <code>supporting_scripts/check_terminology.py</code> fails CI on any new occurrence outside the allowlisted exceptions below.
+</Callout>
+
+## Why we avoid the terms frontend and backend
+
+As software engineers we value precision and clarity. These two words are used too generically to carry either,
+especially outside software engineering, and they mislead about system responsibilities, architecture, and ownership.
+
+* **Too broad.** They do not say whether a web client, an API gateway, a service, or a database layer is meant.
+* **Context dependent.** One system's frontend is another system's backend, which makes a sentence unreadable without
+  knowing who wrote it.
+* **Non-technical usage.** Marketing and management use them differently, which blurs communication with engineers.
+* **Poor traceability.** In a technical discussion it stays unclear which module or component is actually meant.
+* **Difficult to translate.** Would you say *Vorderseite* and *Rückseite* in German?
+* **Unclear ownership.** "The backend is broken" does not say which component or which team is responsible.
+* **Too simple for modern systems.** Services, APIs, cloud functions, and a build agent fleet do not fit a two-layer
+  view.
+* **Technology bias.** They imply a stack (React means frontend, Spring Boot means backend), which is often wrong.
+* **They encourage silos.** Labels such as "frontend dev" and "backend dev" work against cross-functional
+  collaboration.
+* **They weaken design discussions.** They obscure interface contracts, data flow, and system boundaries, which are the
+  things worth discussing.
+* **They make documentation messy.** Generic names such as `frontend` or `backend` lose whatever meaning they had as
+  soon as the system grows.
+* **They hide scalability problems.** They leave it unclear which service or layer actually needs the optimisation.
+
+Using these terms in a technical discussion signals imprecision. Naming the component instead expresses intent and
+responsibility, and it improves architecture discussions, documentation, and code reviews alike.
+
+## Preferred alternatives
+
+| Instead of | Say | Description |
+| --- | --- | --- |
+| frontend | user interface, web app, mobile app, client | The part that interacts directly with the end user. |
+| backend | application server, `<feature>` service, data service | The part that processes data or exposes functionality. |
+| frontend team, backend team | user interface team, service team, infrastructure team | Name the actual responsibility. |
+| frontend developer, backend developer | client developer, server developer, or the feature they own | Name the work, not a stack label. |
+
+## What these map to in Artemis
+
+The rule is always the same: name the component. In this repository the components have settled names, so use them.
+
+| Context | Use |
+| --- | --- |
+| The Angular application in `src/main/webapp` | the **client**, the **web client**, or the **user interface** |
+| The Spring Boot application in `src/main/java` | the **server**, the **application server**, or the specific service (`the grading service`, `the assessment service`) |
+| A swappable distributed data implementation (Hazelcast, Redis, Local) | a **provider**, matching `DistributedDataProvider` and `artemis.distributed-data.provider` |
+| The glue that binds one such implementation | an **adapter**, or a **provider implementation** |
+| The Hazelcast and Redisson client libraries | **provider libraries** |
+| Weaviate's embedding component | the **embedding service** |
+| MySQL or PostgreSQL | the **database**, or the **dialect** where the difference is what matters |
+| The mail transport behind `MailSendingService` | the **mail transport** |
+| LocalVC, or the Jenkins connector | the **version control system**, the **CI connector** |
+
+When none of these fit, the right answer is still a name rather than a layer. If you cannot name the component, that is
+usually a sign the sentence has not decided what it is about yet.
+
+## Example sentences
+
+| Instead of | Write |
+| --- | --- |
+| "The backend needs to send data to the frontend." | "The grading service needs to expose the submission data to the course management client." |
+| "We should improve frontend performance." | "We should improve rendering performance in the user interface." |
+| "Let's deploy the backend." | "Let's deploy the assessment service to production." |
+| "The frontend consumes this DTO." | "The client consumes this DTO." |
+| "Implement it for all three backends." | "Implement it for all three providers." |
+| "This is safe on both backends." | "This is safe on both databases." |
+
+## Exceptions
+
+Third-party identifiers keep the name their owner gave them. Renaming them would break the code, so they are allowlisted
+in the check rather than rewritten:
+
+| Identifier | Owner |
+| --- | --- |
+| `frontendUrl` | Keycloak realm configuration |
+| `backendRefs` | Kubernetes Gateway API route specification |
+| `HttpXhrBackend` | Angular `@angular/common/http` |
+| `frontend_server_client` | a Dart package in the Dart exercise template lockfile |
+| `com.docker.backend` | a macOS process name |
+
+Quoting one of these in prose is fine. Coining a new name of your own that contains either word is not, and the check
+cannot tell the difference, so add an allowlist entry only for a name you did not choose.
+
+An allowlisted name exempts itself, not the line it sits on, and only as a whole token. The check cuts each allowlisted
+occurrence out of the line and matches what is left, so `const frontendUrl = resolveBackendService();` still reports
+`resolveBackendService`, and `backendRefsList` is still reported even though `backendRefs` is allowlisted. Otherwise an
+allowlist entry would be a way to smuggle a new name past a required check.
+
+### Liquibase changelogs are out of scope
+
+`src/main/resources/config/liquibase/` is not scanned at all. Liquibase stores a checksum per
+changeset, and the application refuses to start when a recorded changeset no longer matches what the
+file says, so editing a changelog that has already been merged breaks startup on every database that
+ran it, production included. A comment that says "backend" in a changeset from last spring stays as
+it is.
+
+This is a scope rule rather than an allowlist entry on purpose. If the check reported those lines,
+somebody would eventually do as it asked, and a checker must never be the reason for an unsafe edit.
+New changelogs should of course say provider, server or database like everything else. See
+[the migration guidelines](/developer/guidelines/database) and `skills/liquibase-migration/SKILL.md`.
+
+### When the check is genuinely wrong
+
+The pattern looks for "back" or "front" followed by "end", so ordinary English can trip it: *"this rolls back end users'
+saved preferences"* is flagged even though it says nothing about a client or a server. Neither escape hatch above fits,
+because `ALLOWED` is for third-party identifiers and the opt-out marker is for a line that states the rule. Reword the
+sentence instead (*"rolls back the saved preferences of end users"*), which is usually clearer anyway. If a rewording
+genuinely cannot be found, use the opt-out marker and say in the same line why the sentence is not about component
+naming.
+
+The marker is a plain string match, so it silences whatever else is on its line. That makes it the one part of this
+check that runs on trust: when you see a new `terminology-check: allow` in a diff, review the marker itself, not just
+the words around it.
+
+There is one thing the check knowingly cannot see: an all-lowercase `frontend` or `backend` glued to the end of a
+preceding word, as in `myfrontendUrl`. Catching it would mean matching without a word boundary, which then flags
+`callbackEndpoint`, `rollbackEndpoint`, `playback ended`, and the `feedback endpoint` this repository really contains. A
+required check that cries wolf is a check somebody switches off, so the boundary stays and that one shape is left to
+review.
+
+## How it is enforced
+
+`supporting_scripts/check_terminology.py` scans every tracked file for a word-initial `frontend` or `backend` in any
+spelling (`front-end`, `back end`, `FRONTEND`) as well as the camel-case forms (`prewarmBackend`, `getBackEndUrl`),
+reports every hit with its file and line, and exits non-zero. Run it before pushing:
+
+```bash
+python3 supporting_scripts/check_terminology.py
+```
+
+It scans tracked files, so a brand new file is invisible to it until you have staged it. `git add` the file first, or the
+check will pass locally and fail in CI.
+
+CI runs the same script in the `Terminology` job, which is part of the required `All required CI Passed` gate. It runs
+on every pull request rather than only on code changes, because documentation is where these words most often come
+back.
+
+The job runs `--self-test` first. Every failure mode of a grep-based check is a silent pass: without a PCRE-enabled git
+the scan errors out, finds nothing, and reports success. The self-test classifies a fixed set of strings through the
+same engine, so a checker that has stopped working fails loudly instead of waving everything through.
+
+```bash
+python3 supporting_scripts/check_terminology.py --self-test
+```
+
+## Related
+
+* [Language](/developer/guidelines/language) covers inclusive, diversity-sensitive, and appreciative language, which is
+  a separate concern from the precision this page is about. Both apply.
+* [Distributed Data](/developer/guidelines/distributed-data) is where the provider vocabulary is used in anger.
