@@ -186,7 +186,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             });
 
             const selectedFileChanged = selectedFile !== prev!.selectedFile;
-            const feedbacksChanged = prev!.hasObservedFeedbacksInput && feedbacks !== prev!.feedbacks;
+            // Compare by element identity, not array identity: a keystroke in the inline feedback editor
+            // round-trips the same feedback objects back through the parent's `onUpdateFeedback` (see
+            // updateFeedback() below), which re-wraps them in a new array every time. Treating that as a
+            // "real" change would tear down and rebuild every widget - including the focused one - per keystroke.
+            const feedbacksChanged =
+                prev!.hasObservedFeedbacksInput && (feedbacks.length !== prev!.feedbacks?.length || feedbacks.some((feedback, index) => feedback !== prev!.feedbacks?.[index]));
             const editorWasRefreshed = prev!.editorState === EditorState.REFRESHING && editorState === EditorState.CLEAN;
             const editorWasReset = prev!.commitState !== undefined && prev!.commitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED;
             const prevSelectedFile = prev!.selectedFile;
