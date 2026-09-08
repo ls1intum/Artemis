@@ -281,7 +281,7 @@ Organized by feature module:
 - Say **client** (or **web client**, **user interface**) for the Angular application, and **server** (or **application server**, or the specific service such as `the grading service`) for the Spring Boot application.
 - Say **provider** for a swappable distributed data implementation (Hazelcast, Redis, Local), and **adapter** for the glue that binds one of them. Elsewhere, name the concrete system: `the embedding service`, `the database`, `the mail transport`, `the version control system`.
 - Do not label people or teams either: prefer `client developer` / `server developer`, or better, the feature they own.
-- `supporting_scripts/check_terminology.sh` fails CI on any new occurrence. It allows a short list of third-party identifiers (Keycloak `frontendUrl`, Gateway API `backendRefs`, Angular `HttpXhrBackend`, the Dart `frontend_server_client` package, the macOS process `com.docker.backend`), which are other people's names and must not be renamed.
+- `supporting_scripts/check_terminology.py` fails CI on any new occurrence. It allows a short list of third-party identifiers (Keycloak `frontendUrl`, Gateway API `backendRefs`, Angular `HttpXhrBackend`, the Dart `frontend_server_client` package, the macOS process `com.docker.backend`), which are other people's names and must not be renamed.
 - Full rationale, mapping table, and examples: `documentation/docs/developer/guidelines/terminology.mdx`.
 
 ### General

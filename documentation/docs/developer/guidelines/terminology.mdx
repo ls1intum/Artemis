@@ -11,7 +11,7 @@ and the check that keeps it in place.
 <Callout variant={CalloutVariant.danger}>
   <strong>Never write "frontend" or "backend".</strong> This applies to code, comments, Javadoc, test names,
   configuration files, commit messages, pull request descriptions, and documentation.
-  <code>supporting_scripts/check_terminology.sh</code> fails CI on any new occurrence.
+  <code>supporting_scripts/check_terminology.py</code> fails CI on any new occurrence.
 </Callout>
 
 ## Why we avoid the terms frontend and backend
@@ -93,16 +93,33 @@ in the check rather than rewritten:
 | `com.docker.backend` | a macOS process name |
 
 Quoting one of these in prose is fine. Coining a new name of your own that contains either word is not, and the check
-does not distinguish the two, so add an allowlist entry only for a name you did not choose.
+cannot tell the difference, so add an allowlist entry only for a name you did not choose.
+
+An allowlisted name exempts itself, not the line it sits on. The check cuts each allowlisted occurrence out of the line
+and then matches what is left, so `const frontendUrl = resolveBackendService();` still reports `resolveBackendService`.
+Otherwise an allowlist entry would be a way to smuggle a new name past a required check.
+
+### When the check is genuinely wrong
+
+The pattern looks for "back" or "front" followed by "end", so ordinary English can trip it: *"this rolls back end users'
+saved preferences"* is flagged even though it says nothing about a client or a server. Neither escape hatch above fits,
+because `ALLOWED` is for third-party identifiers and the opt-out marker is for a line that states the rule. Reword the
+sentence instead (*"rolls back the saved preferences of end users"*), which is usually clearer anyway. If a rewording
+genuinely cannot be found, use the opt-out marker and say in the same line why the sentence is not about component
+naming.
+
+The marker is a plain string match, so it silences whatever else is on its line. That makes it the one part of this
+check that runs on trust: when you see a new `terminology-check: allow` in a diff, review the marker itself, not just
+the words around it.
 
 ## How it is enforced
 
-`supporting_scripts/check_terminology.sh` scans every tracked file for a word-initial `frontend` or `backend` in any
-spelling (`front-end`, `back end`, `FRONTEND`) as well as the camel-case forms (`prewarmBackend`), reports every hit
-with its file and line, and exits non-zero. Run it before pushing:
+`supporting_scripts/check_terminology.py` scans every tracked file for a word-initial `frontend` or `backend` in any
+spelling (`front-end`, `back end`, `FRONTEND`) as well as the camel-case forms (`prewarmBackend`, `getBackEndUrl`),
+reports every hit with its file and line, and exits non-zero. Run it before pushing:
 
 ```bash
-./supporting_scripts/check_terminology.sh
+python3 supporting_scripts/check_terminology.py
 ```
 
 It scans tracked files, so a brand new file is invisible to it until you have staged it. `git add` the file first, or the
@@ -117,7 +134,7 @@ the scan errors out, finds nothing, and reports success. The self-test classifie
 same engine, so a checker that has stopped working fails loudly instead of waving everything through.
 
 ```bash
-./supporting_scripts/check_terminology.sh --self-test
+python3 supporting_scripts/check_terminology.py --self-test
 ```
 
 ## Related
