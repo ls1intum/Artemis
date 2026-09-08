@@ -512,9 +512,19 @@ public class SlideSplitterService {
         // Checked under the lock, because the pessimistic lock this replaced also refused to touch a unit that had
         // gone: it read the row to lock it. Without this, a unit deleted while the caller waited for the lock would
         // still have its slide rows rewritten, and they would be orphaned the moment they were written.
-        if (!attachmentVideoUnitRepository.existsById(attachmentVideoUnitId)) {
+        //
+        // Anything thrown between acquiring and returning has to release the lock here, including a failure of the
+        // check itself. The caller only gets a reference on the happy path, so its finally block cannot help, and this
+        // lock has no lease to fall back on — a leak would block every later slide operation on the unit until the
+        // node restarts.
+        try {
+            if (!attachmentVideoUnitRepository.existsById(attachmentVideoUnitId)) {
+                throw new IllegalStateException("Cannot update slides for missing attachment video unit " + attachmentVideoUnitId);
+            }
+        }
+        catch (Throwable t) {
             lock.unlock();
-            throw new IllegalStateException("Cannot update slides for missing attachment video unit " + attachmentVideoUnitId);
+            throw t;
         }
         return lock;
     }
