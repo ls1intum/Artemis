@@ -93,6 +93,64 @@ describe('ExerciseHeaderActionsComponent', () => {
         return fixture;
     }
 
+    describe('action slots', () => {
+        it('should resolve submit as the primary action when submitting is possible', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            fixture.componentRef.setInput('onSubmitExercise', () => {});
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.primaryAction()).toBe('submit');
+        });
+
+        it('should fall back to continue when there is nothing to submit', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            fixture.componentRef.setInput('onSubmitExercise', undefined);
+            fixture.componentRef.setInput('onContinueExercise', () => {});
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.primaryAction()).toBe('continue');
+        });
+
+        it('should resolve start for an exercise the student has not begun', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.primaryAction()).toBe('start');
+        });
+
+        it('should resolve no primary action in exam mode, where starting is not offered', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined), { examMode: true });
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.primaryAction()).toBeUndefined();
+        });
+
+        it('should render the primary action in the primary slot only', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            fixture.componentRef.setInput('onSubmitExercise', () => {});
+            fixture.componentRef.setInput('actionSlot', 'primary');
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#submit-exercise')).not.toBeNull();
+        });
+
+        it('should keep the primary action out of the overflow slot', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            fixture.componentRef.setInput('onSubmitExercise', () => {});
+            fixture.componentRef.setInput('actionSlot', 'overflow');
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#submit-exercise')).toBeNull();
+        });
+
+        it('should default to the primary slot', () => {
+            const fixture = createComponent(new TextExercise(undefined, undefined));
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.actionSlot()).toBe('primary');
+        });
+    });
+
     describe('showFeedbackPopover', () => {
         it.each([
             ['PROGRAMMING', manualAssessmentProgrammingExercise(), true],

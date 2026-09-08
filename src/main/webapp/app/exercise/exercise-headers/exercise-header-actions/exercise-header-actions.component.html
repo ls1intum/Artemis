@@ -1,5 +1,5 @@
-<div class="d-flex flex-wrap align-items-center gap-1 flex-shrink-0">
-    @if (plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
+<div class="d-flex align-items-center gap-1 flex-shrink-0" [class.flex-wrap]="showsPrimary()" [class.flex-column]="showsOverflow()">
+    @if (showsOverflow() && plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
         <a class="btn btn-danger btn-sm" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
             @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
@@ -8,7 +8,7 @@
             }
         </a>
     }
-    @if (exercise().isAtLeastTutor) {
+    @if (showsOverflow() && exercise().isAtLeastTutor) {
         <div ngbDropdown class="d-inline">
             <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
                 <fa-icon [icon]="faWrench" />
@@ -28,7 +28,7 @@
             </div>
         </div>
     }
-    @if (onSubmitExercise()) {
+    @if (showsPrimary() && primaryAction() === 'submit') {
         @if (showFeedbackPopover()) {
             <span
                 [ngbPopover]="submitPopContent"
@@ -60,7 +60,7 @@
             ></button>
         }
     }
-    @if (onContinueExercise()) {
+    @if (showsPrimary() && primaryAction() === 'continue') {
         <button
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
@@ -73,7 +73,7 @@
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
             <div class="btn-group">
-                @if (isStartPracticeAvailable() && !(participationMode() === 'practice' && !submitDisabled())) {
+                @if (showsOverflow() && isStartPracticeAvailable() && !(participationMode() === 'practice' && !submitDisabled())) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
@@ -93,7 +93,7 @@
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
             <div class="d-flex flex-wrap gap-1">
-                @if (isTeamAvailable()) {
+                @if (showsOverflow() && isTeamAvailable()) {
                     <button
                         class="view-team"
                         jhi-exercise-action-button
@@ -104,7 +104,7 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                @if (isStartExerciseAvailable()) {
+                @if (isStartExerciseAvailable() && (showsPrimary() ? primaryAction() === 'start' : primaryAction() !== 'start')) {
                     <span
                         [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
                         [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
@@ -124,7 +124,7 @@
                         ></button>
                     </span>
                 }
-                @if (isStartPracticeAvailable()) {
+                @if (showsOverflow() && isStartPracticeAvailable()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise().id"
                         class="start-practice"
@@ -133,7 +133,13 @@
                         (practiceModeStarted)="receiveNewParticipation($event)"
                     />
                 }
-                @if (exercise().type === ExerciseType.PROGRAMMING && showFeedbackPopover() && activeParticipationForCode() && programmingExercise()?.allowOnlineEditor === false) {
+                @if (
+                    showsOverflow() &&
+                    exercise().type === ExerciseType.PROGRAMMING &&
+                    showFeedbackPopover() &&
+                    activeParticipationForCode() &&
+                    programmingExercise()?.allowOnlineEditor === false
+                ) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
                         [smallButtons]="smallButtons()"
@@ -141,7 +147,7 @@
                         [participationId]="activeParticipationForCode()?.id"
                     />
                 }
-                @if (shouldDisplayIDEButtons()) {
+                @if (showsOverflow() && shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
                             [loading]="isLoading()"
@@ -157,7 +163,8 @@
                 }
                 @if (
                     (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(gradedParticipation())
+                    isResumeExerciseAvailable(gradedParticipation()) &&
+                    (showsPrimary() ? primaryAction() === 'resume' : primaryAction() !== 'resume')
                 ) {
                     <button
                         [id]="'resume-exercise-' + exercise().id"
@@ -172,6 +179,7 @@
                     ></button>
                 }
                 @if (
+                    showsOverflow() &&
                     (practiceParticipation()?.initializationState === InitializationState.INACTIVE ||
                         practiceParticipation()?.initializationState === InitializationState.FINISHED) &&
                     isResumeExerciseAvailable(practiceParticipation())
@@ -194,7 +202,7 @@
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
         @default {
             <div class="btn-group gap-1">
-                @if (isTeamAvailable()) {
+                @if (showsOverflow() && isTeamAvailable()) {
                     <button
                         class="view-team"
                         jhi-exercise-action-button
@@ -205,7 +213,7 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                @if (!gradedParticipation() && isStartExerciseAvailable()) {
+                @if (!gradedParticipation() && isStartExerciseAvailable() && (showsPrimary() ? primaryAction() === 'start' : primaryAction() !== 'start')) {
                     <span
                         [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
                         [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
@@ -224,7 +232,7 @@
                         ></button>
                     </span>
                 }
-                @if (isStartPracticeAvailable() && hasUserAcceptedLLM()) {
+                @if (showsOverflow() && isStartPracticeAvailable() && hasUserAcceptedLLM()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise().id"
                         class="start-practice"
