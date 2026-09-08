@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 @Lazy
 @FeatureUsage("build-system/build-plans")
 @RestController
-@RequestMapping("api/localci/public/")
+@RequestMapping({ "api/localci/public/", LocalCILegacyRestPaths.PROGRAMMING_PUBLIC_PREFIX })
 public class PublicBuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicBuildPlanResource.class);
