@@ -23,11 +23,14 @@ export class SafeResourceUrlPipe implements PipeTransform {
      *
      * @param value The resource URL to render. A relative URL is resolved against the document base and
      *                  therefore inherits the page's scheme. Anything nullish, unparseable, or carrying a
-     *                  scheme outside {@link EMBEDDABLE_PROTOCOLS} yields an empty URL, which renders as
-     *                  an empty frame instead of executing.
+     *                  scheme outside {@link EMBEDDABLE_PROTOCOLS} yields `about:blank`, which renders as an empty
+     *                  frame and, in a form `action`, goes nowhere instead of back to the current page.
      */
     transform(value: string | undefined | null): SafeResourceUrl {
-        return this.sanitizer.bypassSecurityTrustResourceUrl(this.isEmbeddable(value) ? value! : '');
+        // 'about:blank' rather than '' for the rejected case. An empty <iframe src> resolves to about:blank by
+        // spec anyway, but one caller is a form `action`, and action="" submits to the current URL — so an empty
+        // string there would POST the LTI launch payload back at Artemis rather than going nowhere.
+        return this.sanitizer.bypassSecurityTrustResourceUrl(this.isEmbeddable(value) ? value! : 'about:blank');
     }
 
     private isEmbeddable(value: string | undefined | null): boolean {

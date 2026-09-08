@@ -19,6 +19,10 @@ export class SafeUrlPipe implements PipeTransform {
      */
     transform(value: string | undefined | null): SafeUrl {
         const sanitized = this.sanitizer.sanitize(SecurityContext.URL, value ?? null);
-        return this.sanitizer.bypassSecurityTrustUrl(sanitized ?? '');
+        // Angular rewrites a rejected URL to an inert `unsafe:` form rather than dropping it. Drop it here: trusting
+        // that string would render a visibly broken link, and it makes the rejection something a test can assert
+        // exactly instead of only matching against.
+        const rejected = sanitized === null || sanitized.startsWith('unsafe:');
+        return this.sanitizer.bypassSecurityTrustUrl(rejected ? '' : sanitized);
     }
 }

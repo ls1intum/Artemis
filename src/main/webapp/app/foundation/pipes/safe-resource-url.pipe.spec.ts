@@ -25,8 +25,8 @@ describe('SafeResourceUrlPipe', () => {
         'file:///etc/passwd',
         // A custom application scheme has no business in an embedding context either.
         'vscode://vscode.git/clone?url=x',
-    ])('yields an empty URL for the non-embeddable scheme %s', (payload) => {
-        expect(unwrap(pipe.transform(payload))).toBe('');
+    ])('yields about:blank for the non-embeddable scheme %s', (payload) => {
+        expect(unwrap(pipe.transform(payload))).toBe('about:blank');
     });
 
     it.each(['https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ', 'https://live.rbg.tum.de/w/course/1', 'http://example.org/video.mp4'])(
@@ -40,10 +40,10 @@ describe('SafeResourceUrlPipe', () => {
         expect(unwrap(pipe.transform('/api/core/files/attachments/1'))).toBe('/api/core/files/attachments/1');
     });
 
-    it('yields an empty URL for nullish and unparseable input', () => {
-        expect(unwrap(pipe.transform(undefined))).toBe('');
-        expect(unwrap(pipe.transform(null))).toBe('');
-        expect(unwrap(pipe.transform(''))).toBe('');
-        expect(unwrap(pipe.transform('http://'))).toBe('');
+    it('yields about:blank for nullish and unparseable input', () => {
+        expect(unwrap(pipe.transform(undefined))).toBe('about:blank');
+        expect(unwrap(pipe.transform(null))).toBe('about:blank');
+        expect(unwrap(pipe.transform(''))).toBe('about:blank');
+        expect(unwrap(pipe.transform('http://'))).toBe('about:blank');
     });
 });

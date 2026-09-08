@@ -15,8 +15,10 @@ describe('SafeUrlPipe', () => {
         return (safeUrl as { changingThisBreaksApplicationSecurity?: string })?.changingThisBreaksApplicationSecurity ?? '';
     }
 
-    it.each(['javascript:alert(1)', 'JavaScript:alert(1)', '  javascript:alert(1)', 'java\nscript:alert(1)'])('neutralises the script-bearing URL %s', (payload) => {
-        expect(unwrap(pipe.transform(payload))).not.toMatch(/^\s*javascript:/i);
+    // Asserted exactly, not with a negative match: `not.toMatch(/^javascript:/)` also passes for Angular's inert
+    // `unsafe:javascript:...` rewrite, so it would keep passing even if this pipe stopped sanitizing at all.
+    it.each(['javascript:alert(1)', 'JavaScript:alert(1)', '  javascript:alert(1)', 'java\nscript:alert(1)'])('rejects the script-bearing URL %s', (payload) => {
+        expect(unwrap(pipe.transform(payload))).toBe('');
     });
 
     // These are the schemes the code button's IDE deep links use; blocking them would break cloning.
