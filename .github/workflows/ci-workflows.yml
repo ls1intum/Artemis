@@ -1,20 +1,16 @@
 name: Lint Workflows
 
-# Reusable workflow called by ci.yml when files under .github/ change.
-# Runs actionlint (configured via .github/actionlint.yaml) and the node/java version
-# drift check.
-
 on:
   workflow_call: {}
 
 permissions: {}
 
 jobs:
-  # Deploy-gating logic lives in checked-in scripts (not inline YAML) so it can be linted and
-  # unit-tested. shellcheck runs strictly on them (unlike actionlint's repo-wide `-shellcheck=`,
-  # disabled for legacy inline blocks), and bats exercises the run-resolution / image-verify logic.
-  deploy-scripts:
-    name: deploy scripts (shellcheck + bats)
+  # Gating logic lives in checked-in scripts rather than inline YAML so that shellcheck can run
+  # strictly on it (actionlint's repo-wide `-shellcheck=` is disabled for the legacy inline
+  # blocks) and bats can exercise it.
+  ci-scripts:
+    name: CI scripts (shellcheck + bats)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -25,14 +21,18 @@ jobs:
         run: |
           set -Eeuo pipefail
           sudo apt-get update
-          sudo apt-get install -y bats
+          sudo apt-get install -y bats jq
       - name: shellcheck deploy action scripts
         run: |
           set -Eeuo pipefail
           shellcheck .github/actions/verify-image-build/verify-image-build.sh \
                      .github/actions/resolve-artifact-run/resolve-artifact-run.sh
       - name: bats unit tests
-        run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests
+        run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests .ci/E2E-tests/tests
+      # A spec inside a directory the mapping enumerates file by file runs in neither E2E phase
+      # until the mapping lists it, and the E2E run itself reports success either way.
+      - name: E2E selection covers every spec
+        run: .ci/E2E-tests/verify-test-determination.sh --all
 
   actionlint:
     name: actionlint
@@ -115,6 +115,10 @@ jobs:
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-skills.yml",
                   "supporting_scripts/check_skill_references.py",
+                  # Inputs the checker reads, so editing one must run the job.
+                  "AGENTS.md",
+                  "documentation/docs/developer/work-with-ai.mdx",
+                  ".claude-plugin/**",
               },
           }
 

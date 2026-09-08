@@ -1,76 +1,77 @@
 #!/usr/bin/env python3
-"""Verify that every repository path cited by an agent skill still exists.
+"""Check that the skills under skills/ are valid, routed and cite existing paths.
 
-Skills under skills/ describe procedures in terms of concrete files: base classes, ArchUnit tests,
-runner scripts, workflows. A skill that names a file which has since moved is worse than no skill,
-because it is confidently wrong and an agent will act on it. This check is what keeps that from
-happening silently.
+Four checks run together:
 
-It reads every Markdown file under skills/ and collects path-shaped tokens from two places: inline
-code spans (single backticks) and the contents of fenced code blocks, where the example commands
-live. A stale path in an example command is the one that does the most damage, so both are scanned.
-Fences may use either delimiter, and a block is closed only by its own: `--self-test` covers the
-mixed-delimiter cases, because getting that wrong stops the scan silently rather than loudly.
+* Frontmatter follows the Agent Skills specification: a `name` matching the directory
+  and a `description` within the length agents index. An invalid skill is skipped by
+  the agent instead of failing loudly, so nothing else would report it.
+* Every skill is linked from the documents agents and contributors route through, so a
+  new skill is reachable without installation and a renamed one leaves no dead link.
+* The plugin manifests parse and carry a version, which is what tells an installed copy
+  that it is out of date.
+* Path-shaped citations in inline code and fenced blocks resolve. Repository-relative
+  paths, skill-relative paths, root scripts prefixed with `./` and source-file paths
+  relative to the root or src/test/playwright are recognised. Tracked Git entries
+  identify root paths, so local build output cannot change the result.
 
-Four kinds of citation are resolved:
-
-  * repository-relative, recognised by the first segment being a tracked top-level entry
-    (`src/main/java/...`, `.github/workflows/ci.yml`);
-  * skill-relative, resolved against the directory of the citing file (`reference/gates.md`),
-    which is the citation most likely to break and the one a repo-root check cannot see;
-  * repo-root scripts written with a leading `./` (`./run-e2e-tests-local-fast.sh`);
-  * anything ending in a known source extension, tried against both the repository root and
-    src/test/playwright (Playwright spec paths are written relative to the latter). This is what
-    still reports a citation whose top-level directory has been renamed away.
-
-Tokens containing a glob character must match at least one file rather than exist literally. Tokens
-containing `<` or `>` are templates naming a shape, not a file, and are skipped. A token resolving
-outside the repository, via `..`, counts as missing rather than as present.
-
-A token needs a `/` to be considered at all. Slash-free ones are prose far more often than they are
-citations: `*Test.java` is a naming rule, `ArchitectureTest.java` is a class, `SKILL.md` is a kind
-of file, `ci.yml` is a workflow referred to by its basename. Checking them would report all of
-those as broken. The subset that could be checked safely, a bare name that is a tracked top-level
-file, is tautological: such a token is only recognised because it exists, so it can never fail.
-Cite a root file with a directory-bearing path if you want it validated.
-
-The set of known top-level entries comes from `git ls-files`, not from a directory listing, so the
-result does not depend on whether the working tree happens to hold build output.
+The path check is a heuristic, not a Markdown link or content validator: it skips
+slash-free names, URLs, absolute paths, package names and `<...>` templates. Slash-free
+names are prose more often than citations (`*Test.java` is a naming rule, `ci.yml` is a
+workflow called by its basename), and the subset that could be resolved safely is
+tautological, so checking them would only produce false reports.
 
 Usage:
-    python3 supporting_scripts/check_skill_references.py [--skills-dir skills]
+    python3 supporting_scripts/check_skill_references.py
     python3 supporting_scripts/check_skill_references.py --self-test
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
-# A citation is an inline code span. Path-shaped ones are recognised by their first segment, which
-# keeps prose such as `@Transactional` or `--specs` out of the check without a list of exceptions.
 BACKTICK = re.compile(r"`([^`\n]+)`")
 
-# Fenced blocks carry the example commands. Their content has no backticks, so they need their own
-# pass. Both fence characters are accepted, and the delimiter is captured because a block is closed
-# only by its own character: a `~~~` line inside a ``` block is content, not a terminator. Getting
-# that wrong inverts the inside/outside state for the rest of the file, which would silently skip
-# real citations and scan prose as if it were code.
 FENCE = re.compile(r"^ {0,3}(?P<delimiter>`{3,}|~{3,})(?P<info>.*)$")
 
-# Trailing punctuation that belongs to the sentence rather than to the path.
+FRONTMATTER_FIELD = re.compile(r"^(?P<key>[a-z][a-z-]*):[ \t]*(?P<value>.*)$")
+
+# https://agentskills.io/specification: 1-64 lowercase alphanumeric characters and single
+# hyphens, matching the directory name.
+SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+MAX_NAME_LENGTH = 64
+
+MAX_DESCRIPTION_LENGTH = 1024
+
+# Documents that route to a skill: AGENTS.md for agents reading the checkout, the
+# developer page for people. Both link the file directly, on GitHub or by relative path.
+ENTRY_POINT = "AGENTS.md"
+
+ROUTING_DOCUMENTS = (ENTRY_POINT, "documentation/docs/developer/work-with-ai.mdx")
+
+SKILL_LINK = re.compile(r"skills/(?P<name>[A-Za-z0-9._-]+)/SKILL\.md")
+
+# Manifests that distribute the skills as a Claude Code plugin. Nothing else parses them, and a
+# broken one only surfaces when someone tries to install.
+PLUGIN_MANIFEST = ".claude-plugin/plugin.json"
+
+MARKETPLACE_MANIFEST = ".claude-plugin/marketplace.json"
+
+SEMANTIC_VERSION = re.compile(r"^\d+\.\d+\.\d+(?:[-+].+)?$")
+
 TRAILING_PUNCTUATION = ".,:;)]}"
 
-# Shell and Markdown noise wrapped around a path inside a fenced block.
 SURROUNDING_NOISE = "\"'`(),;:"
 
 GLOB_CHARACTERS = "*?["
 
-# Extensions that make a token a file citation even when its first segment is not a tracked
-# top-level entry, which is how a reference to a renamed or deleted directory still gets reported.
+# Recognize source paths even after their top-level directory is deleted.
 FILE_SUFFIXES = (
     ".java",
     ".ts",
@@ -91,16 +92,11 @@ FILE_SUFFIXES = (
 
 
 def repository_root() -> Path:
-    """The repository root, two levels up from this script."""
     return Path(__file__).resolve().parent.parent
 
 
 def tracked_top_level_names(root: Path) -> set[str]:
-    """Top-level entries git tracks, used to recognise a repository-relative token.
-
-    Derived from the index rather than from `iterdir()` so that an untracked `build/` or
-    `node_modules/` in a developer's working tree cannot change the outcome relative to CI.
-    """
+    """Use the Git index so local build output does not affect path recognition."""
     result = subprocess.run(
         ["git", "-C", str(root), "ls-files", "-z"],
         capture_output=True,
@@ -108,6 +104,119 @@ def tracked_top_level_names(root: Path) -> set[str]:
     )
     entries = result.stdout.decode("utf-8").split("\0")
     return {entry.split("/", 1)[0] for entry in entries if entry}
+
+
+def frontmatter(text: str) -> dict[str, str] | None:
+    """The frontmatter fields, or None when the block is missing or not flat.
+
+    Only the flat `key: value` form the specification requires is read. Block scalars and
+    nested maps continue across lines, so accepting them here would record `>` as the
+    description rather than the text an agent indexes.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    fields: dict[str, str] = {}
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return fields
+        match = FRONTMATTER_FIELD.match(line)
+        if not match:
+            return None
+        value = match.group("value").strip()
+        if value[:1] in {">", "|"}:
+            return None
+        fields[match.group("key")] = value.strip("\"'")
+    return None
+
+
+def skill_errors(skills_dir: Path, root: Path) -> list[str]:
+    """Report skills whose frontmatter would stop an agent from discovering them."""
+    errors: list[str] = []
+    for directory in sorted(entry for entry in skills_dir.iterdir() if entry.is_dir()):
+        skill_file = directory / "SKILL.md"
+        if not skill_file.is_file():
+            errors.append(f"{directory.relative_to(root)}: has no SKILL.md")
+            continue
+        relative_file = skill_file.relative_to(root)
+        fields = frontmatter(skill_file.read_text(encoding="utf-8"))
+        if fields is None:
+            errors.append(
+                f"{relative_file}: frontmatter must open on the first line with --- and hold "
+                "flat 'key: value' fields"
+            )
+            continue
+        name = fields.get("name", "")
+        description = fields.get("description", "")
+        if not SKILL_NAME.match(name) or len(name) > MAX_NAME_LENGTH:
+            errors.append(
+                f"{relative_file}: name '{name}' must be 1-{MAX_NAME_LENGTH} lowercase "
+                "alphanumeric characters separated by single hyphens"
+            )
+        elif name != directory.name:
+            errors.append(
+                f"{relative_file}: name '{name}' must match the directory '{directory.name}'"
+            )
+        if not description:
+            errors.append(
+                f"{relative_file}: description is required; state the task that should trigger "
+                "the skill"
+            )
+        elif len(description) > MAX_DESCRIPTION_LENGTH:
+            errors.append(
+                f"{relative_file}: description is {len(description)} characters, over the "
+                f"{MAX_DESCRIPTION_LENGTH} an agent indexes"
+            )
+    return errors
+
+
+def routing_errors(skills_dir: Path, root: Path) -> list[str]:
+    """Report skills missing from a routing document, and links to skills that are gone."""
+    available = {
+        entry.name for entry in skills_dir.iterdir() if (entry / "SKILL.md").is_file()
+    }
+    errors: list[str] = []
+    for relative_file in ROUTING_DOCUMENTS:
+        document = root / relative_file
+        if not document.is_file():
+            errors.append(f"{relative_file}: missing; agents route to the skills through it")
+            continue
+        linked = set(SKILL_LINK.findall(document.read_text(encoding="utf-8")))
+        errors.extend(
+            f"{relative_file}: links skills/{name}/SKILL.md, which does not exist"
+            for name in sorted(linked - available)
+        )
+        errors.extend(
+            f"{relative_file}: does not link skills/{name}/SKILL.md"
+            for name in sorted(available - linked)
+        )
+    return errors
+
+
+def plugin_errors(root: Path) -> list[str]:
+    """Report plugin manifests that would break installation or hide an update.
+
+    Claude Code compares the plugin version to decide whether an installed copy is stale, so a
+    missing or unparsable version leaves users on the instructions they installed with.
+    """
+    errors: list[str] = []
+    manifests: dict[str, object] = {}
+    for relative_file in (PLUGIN_MANIFEST, MARKETPLACE_MANIFEST):
+        try:
+            text = (root / relative_file).read_text(encoding="utf-8")
+            manifests[relative_file] = json.loads(text)
+        except (OSError, json.JSONDecodeError) as error:
+            errors.append(f"{relative_file}: unreadable ({error})")
+    plugin = manifests.get(PLUGIN_MANIFEST)
+    if not isinstance(plugin, dict):
+        return errors
+    for field in ("name", "description", "version"):
+        if not plugin.get(field):
+            errors.append(f"{PLUGIN_MANIFEST}: '{field}' is required")
+    version = plugin.get("version", "")
+    if version and not SEMANTIC_VERSION.match(str(version)):
+        errors.append(f"{PLUGIN_MANIFEST}: version '{version}' is not a semantic version")
+    return errors
 
 
 def code_block_tokens(text: str) -> list[str]:
@@ -123,7 +232,6 @@ def code_block_tokens(text: str) -> list[str]:
         if match:
             delimiter = match.group("delimiter")
             if open_fence is None:
-                # An opening fence may carry an info string, as in "```bash".
                 open_fence = (delimiter[0], len(delimiter))
                 continue
             character, length = open_fence
@@ -131,7 +239,6 @@ def code_block_tokens(text: str) -> list[str]:
             if closes and not match.group("info").strip():
                 open_fence = None
                 continue
-            # A fence of the other character, or a shorter one, is ordinary content of this block.
         if open_fence is None:
             continue
         for word in line.split():
@@ -140,50 +247,36 @@ def code_block_tokens(text: str) -> list[str]:
 
 
 def is_path_shaped(token: str) -> bool:
-    """Whether the token could be a path at all, before deciding what it is relative to."""
     if not token or " " in token or "/" not in token:
         return False
-    # URLs, package names, Java FQNs, and slash commands such as `/artemis:e2e-pr-check` are not
-    # repository paths. Anything starting with "/" is absolute, so it is never repository-relative.
     if token.startswith(("http://", "https://", "/", "@")):
         return False
-    # A template such as `changelog/<timestamp>_changelog.xml` names a shape, not a file.
+    # Template paths describe naming conventions, not existing files.
     return "<" not in token and ">" not in token
 
 
 def bases_for(token: str, root: Path, skill_dir: Path, known_top_level: set[str]) -> list[Path]:
-    """The bases a token may be relative to, or an empty list when it is not a citation to check.
-
-    A token resolving under any one of them counts as present. `e2e/...` paths are the reason there
-    is more than one: the runners take them relative to the Playwright directory, not to the root.
-    """
+    """Return candidate bases; runners accept specs relative to src/test/playwright."""
     if token.startswith("./"):
         return [root]
     first = token.split("/", 1)[0]
     if first in known_top_level:
         return [root]
-    # A skill's own reference files are cited relative to the skill directory.
     if (skill_dir / first).exists():
         return [skill_dir]
-    # Names a file, but under a first segment git does not track: either a Playwright-relative spec
-    # path, or a genuinely stale citation to a directory that has been renamed or removed.
     if token.endswith(FILE_SUFFIXES):
         return [root, root / "src" / "test" / "playwright"]
     return []
 
 
 def path_exists(base: Path, token: str, root: Path) -> bool:
-    """Whether the token resolves under base, matching at least one file when it is a glob.
-
-    A token containing `..` could otherwise escape the repository and report a file outside it as
-    present, so anything resolving outside `root` counts as missing.
-    """
+    """Resolve paths and globs without accepting matches outside the repository."""
     relative = token[2:] if token.startswith("./") else token
     if any(character in relative for character in GLOB_CHARACTERS):
         try:
             matches = list(base.glob(relative))
         except (ValueError, NotImplementedError):
-            # An unsupported pattern (for example a bare trailing '**') is not a broken citation.
+            # Unsupported patterns cannot be validated.
             return True
         return any(root in match.resolve().parents for match in matches)
     candidate = (base / relative).resolve()
@@ -192,10 +285,6 @@ def path_exists(base: Path, token: str, root: Path) -> bool:
     return candidate.exists()
 
 
-# The fence state machine is the subtle part of this script: getting it wrong inverts the
-# inside/outside state for the rest of a file and silently stops checking real citations. There is
-# no pytest setup in this repository, so the regression cases live here and run in CI via
-# --self-test rather than pulling in a test framework for one script.
 SELF_TEST_DOCUMENT = """\
 ```bash
 ~~~
@@ -219,69 +308,65 @@ SELF_TEST_DOCUMENT = """\
 """
 
 SELF_TEST_EXPECTED = {
-    # A tilde line does not close a backtick block, so this stays inside and is scanned.
+    # A tilde line does not close a backtick block, and a backtick line does not close a
+    # tilde block, so both of these stay inside their fence.
     "./inside-backtick-block.sh",
-    # ...and a backtick line does not close a tilde block.
     "./inside-tilde-block.sh",
-    # A longer fence opens and closes normally.
     "./inside-four-backtick-block.sh",
     "./before-a-closing-fence.sh",
-    # "./outside-every-block.sh" is prose: absent from the expected set on purpose.
+    # "./outside-every-block.sh" is prose, so it is absent on purpose.
 }
+
+SELF_TEST_FRONTMATTER = [
+    ("---\nname: a\ndescription: Use when: X\n---\n", {"name": "a", "description": "Use when: X"}),
+    ("---\nname: 'a'\n---\n", {"name": "a"}),
+    ("---\ndescription: >-\n  folded\n---\n", None),
+    ("# Title\n---\nname: a\n---\n", None),
+]
 
 
 def self_test() -> int:
-    """Exercise the fence state machine against mixed delimiters. Returns a process exit code."""
+    """Regression cases for the two parsers, run in CI in place of a test framework.
+
+    A fence-state mistake inverts the inside/outside state for the rest of a file and stops
+    the path check silently. A frontmatter mistake records the wrong description just as
+    quietly, because the file still looks like a valid skill.
+    """
+    failures = 0
     found = {token for token in code_block_tokens(SELF_TEST_DOCUMENT) if token.startswith("./")}
-    missing = SELF_TEST_EXPECTED - found
-    unexpected = found - SELF_TEST_EXPECTED
-    for token in sorted(missing):
+    for token in sorted(SELF_TEST_EXPECTED - found):
         print(f"FAIL: {token} should have been read from inside a fence", file=sys.stderr)
-    for token in sorted(unexpected):
+        failures += 1
+    for token in sorted(found - SELF_TEST_EXPECTED):
         print(f"FAIL: {token} is outside every fence and was read anyway", file=sys.stderr)
-    if missing or unexpected:
+        failures += 1
+    for text, expected in SELF_TEST_FRONTMATTER:
+        actual = frontmatter(text)
+        if actual != expected:
+            print(
+                f"FAIL: frontmatter({text!r}) returned {actual!r}, not {expected!r}",
+                file=sys.stderr,
+            )
+            failures += 1
+    if failures:
         return 1
-    print(f"OK: fence self-test passed ({len(SELF_TEST_EXPECTED)} cases).")
+    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER)
+    print(f"OK: parser self-test passed ({cases} cases).")
     return 0
 
 
-def main() -> int:
-    """Scan the skills directory and report every cited repository path that no longer exists."""
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "--skills-dir",
-        default="skills",
-        help="Directory holding the skills (default: skills)",
-    )
-    parser.add_argument(
-        "--self-test",
-        action="store_true",
-        help="Run the fence-parsing regression cases instead of scanning the skills",
-    )
-    args = parser.parse_args()
+def path_errors(skills_dir: Path, root: Path) -> tuple[list[str], int]:
+    """Report cited paths that no longer exist, with the number of citations resolved.
 
-    if args.self_test:
-        return self_test()
-
-    root = repository_root()
-    skills_dir = (root / args.skills_dir).resolve()
-
-    if not skills_dir.is_dir():
-        print(f"ERROR: no such directory: {skills_dir}", file=sys.stderr)
-        return 1
-    if root not in skills_dir.parents and skills_dir != root:
-        print(f"ERROR: --skills-dir must be inside the repository: {skills_dir}", file=sys.stderr)
-        return 1
-
+    The entry point is scanned with the skills, because an agent acts on the paths it names
+    just as directly. The developer page is not: it shows an example skill tree whose files
+    are meant to be absent.
+    """
     known_top_level = tracked_top_level_names(root)
-    # Sets, because a path cited both in prose and in an example command is one citation, not two.
     broken: set[tuple[Path, str]] = set()
     checked: set[tuple[Path, str]] = set()
 
-    for skill_file in sorted(skills_dir.rglob("*.md")):
+    for skill_file in sorted(skills_dir.rglob("*.md")) + [root / ENTRY_POINT]:
         text = skill_file.read_text(encoding="utf-8")
         relative_file = skill_file.relative_to(root)
         inline = (raw.strip().rstrip(TRAILING_PUNCTUATION) for raw in BACKTICK.findall(text))
@@ -295,18 +380,48 @@ def main() -> int:
             if not any(path_exists(base, token, root) for base in bases):
                 broken.add((relative_file, token))
 
-    if broken:
-        print(f"{len(broken)} broken path reference(s) in {args.skills_dir}/:\n", file=sys.stderr)
-        for skill_file, token in sorted(broken):
-            print(f"  {skill_file}: {token}", file=sys.stderr)
-        print(
-            "\nA skill must not cite a path that does not exist. Update the citation, or remove it "
-            "if the thing it described is gone.",
-            file=sys.stderr,
-        )
+    errors = [
+        f"{skill_file}: cites '{token}', which does not exist"
+        for skill_file, token in sorted(broken)
+    ]
+    return errors, len(checked)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Run the parser regression cases instead of checking the skills",
+    )
+    args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
+
+    root = repository_root()
+    skills_dir = root / "skills"
+    if not skills_dir.is_dir():
+        print(f"ERROR: no such directory: {skills_dir}", file=sys.stderr)
         return 1
 
-    print(f"OK: {len(checked)} distinct path reference(s) in {args.skills_dir}/ all resolve.")
+    problems = skill_errors(skills_dir, root)
+    problems += routing_errors(skills_dir, root)
+    problems += plugin_errors(root)
+    citation_problems, checked = path_errors(skills_dir, root)
+    problems += citation_problems
+
+    if problems:
+        print(f"{len(problems)} problem(s) with the agent skills:\n", file=sys.stderr)
+        for problem in problems:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+
+    skills = sum(1 for entry in skills_dir.iterdir() if (entry / "SKILL.md").is_file())
+    print(f"OK: {skills} skills are valid, routed and packaged; {checked} cited paths resolve.")
     return 0
 
 

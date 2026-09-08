@@ -1,22 +1,12 @@
 ---
 name: client-conventions
-description: Write Angular code for Artemis that passes lint and review the first time. Use when creating or changing anything under src/main/webapp/app or packages/tum-ui, when an ESLint localRules check fails, or when migrating a component to signals. Covers signal APIs, the ngOnChanges ban, template control flow, object cloning, and the TUM UI and Tailwind styling rules.
+description: Apply Artemis conventions when changing Angular application or TUM UI code, migrating components, or fixing client lint violations.
 ---
 
 # Artemis client conventions
 
-These are enforced, not advisory. Most have a custom ESLint rule in `rules/` behind them, so
-breaking one fails Client Code Style rather than merely attracting a review comment.
-
-Verify with:
-
-```bash
-pnpm run lint
-pnpm run prettier:check
-```
-
-`reference/migration-recipes.md` has the before-and-after for each migration. Read it when changing
-existing code rather than inventing a translation.
+Use `reference/migration-recipes.md` for migration examples. Check changes with `pnpm run lint`
+and `pnpm run prettier:check`. Prefer standalone components.
 
 ## Signals are mandatory for new code
 
@@ -50,47 +40,23 @@ Use `@if`, `@for`, `@switch`. Never `*ngIf`, `*ngFor`, `*ngSwitch`.
 
 ## Copying objects
 
-Use `deepClone` from `src/main/webapp/app/foundation/util/deep-clone.util.ts`. Never object spread,
-`Object.assign`, or `structuredClone`.
+In production `src/main/webapp/app/**/*.ts`, use the wrappers in
+`src/main/webapp/app/foundation/util/deep-clone.util.ts`:
 
-**Where it is enforced: `src/main/webapp/app/**/*.ts`, spec files exempt.** That boundary is set
-twice, by the `files:` scope in `eslint.config.mjs` and again inside `rules/prefer-deep-clone.mjs`,
-which registers no visitors unless the path contains `src/main/webapp/`.
+- `deepClone(x)` detaches nested state while preserving supported prototypes.
+- `cloneWith(x, { a, b })` deep-clones the source and applies overrides by reference.
+- `hydrate(new Course(), dto)` gives a parsed DTO its prototype.
 
-**Within that scope the ban is unconditional, not a judgement call.**
-`localRules/prefer-deep-clone` flags every object spread, `Object.assign` and `structuredClone`
-there. It does not inspect what the value holds, so `{ ...{ a: 1 } }` fails lint exactly like a
-spread of a `Course`. Do not reach for a spread because the object "looks plain".
+`rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
+scope, even for plain objects; specs are exempt. `eslint.config.mjs` also restricts direct lodash
+cloning imports. Array spread and object rest remain allowed.
 
-The reasoning behind it is about entity-like values, which is where the silent corruption happens:
+Shallow copies share nested state; `structuredClone` loses custom prototypes such as `dayjs`.
+Do not clone merely to notify a signal if nested identity must survive. For that case and the
+child-input identity boundary, read the cloning section of `reference/migration-recipes.md`.
 
-- `structuredClone()` is the worst option. It does not preserve prototypes, so a cloned `dayjs`
-  date comes back as a plain object with no methods, while `dayjs.isDayjs()` still returns `true`,
-  so no guard catches it.
-- Spread and `Object.assign` copy one level. Nested objects stay shared, so a later edit mutates
-  both. A non-empty `Object.assign` target is mutated in place, which emits no signal notification
-  because a signal compares with `Object.is`.
-
-Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }`, and
-`hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server
-DTO its prototype.
-
-Reaching for lodash directly is blocked too, over the same scope: `eslint.config.mjs` forbids
-importing `cloneDeep` and `cloneDeepWith` from `lodash-es`, and the `lodash-es/cloneDeep` subpath,
-so all copying goes through the wrappers.
-
-**`packages/tum-ui` is outside both.** Neither the rule nor the lodash restriction fires there, and
-the package is standalone: it imports nothing from `app/`, so `deepClone` is not reachable from it
-either. Nothing enforces this section inside the kit. The hazards are unchanged though, so a
-component that copies a `dayjs` date or a nested object still needs a deep copy; it just has to
-bring its own rather than reach across the package boundary.
-
-**Array spread and object rest stay legal.** The rule does not touch them:
-`items.update((items) => [...items, newItem])` is the documented way to append immutably, and
-`const { a, ...rest } = post` is fine.
-
-The signal interaction is subtle and is the part people get wrong. See the cloning section of
-`reference/migration-recipes.md`.
+`packages/tum-ui` is outside these application rules and must not import `app/` utilities.
+Choose copying behavior appropriate to the package's data and identity requirements.
 
 ## Styling
 
@@ -103,11 +69,11 @@ primitives, never `text-red-500`, never `text-danger`, never the superseded arbi
 `text-(--danger)` form.
 
 `localRules/no-raw-tailwind-color-palette` enforces the palette part across
-`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is only partly enforced**:
-`localRules/no-bootstrap-classes` runs on an explicit allow-list of roughly two dozen already
-migrated directories in `eslint.config.mjs`, not on the whole client. Lint passing is therefore not
-evidence that a Bootstrap class is acceptable in an unmigrated area; the convention still applies
-everywhere, the rule has just not caught up. If you migrate a directory, add it to that list.
+`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is
+only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated directories listed
+in `eslint.config.mjs`.
+The convention applies throughout the client even where lint does not enforce it. Add newly
+migrated directories to that list.
 
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by

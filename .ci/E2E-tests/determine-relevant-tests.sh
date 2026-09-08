@@ -1,21 +1,13 @@
 #!/bin/bash
-# Script to determine which e2e tests are relevant based on changed files
-# Usage: ./determine-relevant-tests.sh <base-branch>
-# Output: Sets RELEVANT_TESTS and REMAINING_TESTS environment variables
-#
-# In GitHub Actions, this script writes to GITHUB_OUTPUT
-# For local testing, it prints the results to stdout
+# Usage: ./determine-relevant-tests.sh [base-branch]
+# Prints OUTPUT: key=value lines and appends them to GITHUB_OUTPUT when set.
 
 set -e
 
-# This script uses associative arrays and `mapfile`, both of which need bash 4+. CI runners ship
-# bash 5, but macOS still ships bash 3.2 as /bin/bash, where the script dies on `declare -A` with a
-# misleading "invalid option" error. Re-exec under a newer bash when one is on PATH (Homebrew
-# installs it as /opt/homebrew/bin/bash) so the script is usable locally, which is what the
-# e2e-pr-check agent skill and anyone debugging test selection needs.
+# Associative arrays and mapfile require Bash 4+; macOS /bin/bash is older.
 if [ -z "${DETERMINE_RELEVANT_TESTS_REEXEC:-}" ] && [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
     for candidate in "$(command -v bash || true)" /opt/homebrew/bin/bash /usr/local/bin/bash; do
-        # shellcheck disable=SC2016  # single quotes are required: the expansion must happen in the candidate shell
+        # shellcheck disable=SC2016  # Expand BASH_VERSINFO in the candidate shell.
         if [ -x "$candidate" ] && [ "$("$candidate" -c 'echo ${BASH_VERSINFO[0]}')" -ge 4 ]; then
             DETERMINE_RELEVANT_TESTS_REEXEC=1 exec "$candidate" "${BASH_SOURCE[0]}" "$@"
         fi
@@ -92,6 +84,11 @@ add_test_paths_for_module() {
     done
 }
 
+if ! command -v jq >/dev/null 2>&1; then
+    echo "ERROR: jq is required to read the E2E test mapping. Install jq and retry." >&2
+    exit 1
+fi
+
 # Verify mapping file exists
 if [ ! -f "$MAPPING_FILE" ]; then
     echo "ERROR: Mapping file not found: $MAPPING_FILE"
@@ -101,6 +98,11 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
+fi
+
+if ! jq -es 'length == 1 and (.[0] | type == "object")' "$MAPPING_FILE" >/dev/null; then
+    echo "ERROR: Invalid JSON mapping in $MAPPING_FILE. Expected one object; fix the mapping before selecting tests." >&2
+    exit 1
 fi
 
 # All e2e test directories/files (top-level)
@@ -148,7 +150,10 @@ echo ""
 
 # Get list of changed files
 cd "$REPO_ROOT"
-CHANGED_FILES=$(git diff --name-only "$BASE_BRANCH"...HEAD 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || echo "")
+if ! CHANGED_FILES=$(git diff --name-only "$BASE_BRANCH"...HEAD --); then
+    echo "ERROR: Cannot compare '$BASE_BRANCH' with HEAD. Fetch the base and sufficient history for a merge base, then retry." >&2
+    exit 1
+fi
 
 if [ -z "$CHANGED_FILES" ]; then
     echo "No changed files detected. Running all tests."

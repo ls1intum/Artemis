@@ -1,8 +1,5 @@
 # Client migration recipes
 
-Before-and-after for the conversions that come up most, with the reasoning where the mechanical
-translation is wrong.
-
 ## `@Input` to `input()`
 
 ```typescript
@@ -17,9 +14,7 @@ readonly required = input(false);
 
 Reads become calls: `this.course()` rather than `this.course`. In templates, `course()` likewise.
 
-A two-way binding becomes `model()` rather than an `input()` plus an `output()`. Using the pair
-where a `model()` is meant is a common mistake that only shows up when the parent stops receiving
-updates.
+Use `model()` for two-way component bindings.
 
 ## `@Output` to `output()`
 
@@ -69,18 +64,14 @@ ngOnChanges() {
 readonly visibleExercises = computed(() => this.exercises().filter((e) => e.visible));
 ```
 
-Reacting with a side effect is an `effect()`. Prefer `computed()` wherever the result is a value:
-an `effect()` that only assigns a field is a `computed()` written the hard way.
+Use `computed()` for derived values and `effect()` for side effects.
 
-Only `SimpleChanges.previousValue`, `isFirstChange()`, and ordering before child initialisation
-genuinely need the hook. Those need a comment and a line-level disable.
+If previous-value tracking or lifecycle ordering cannot be expressed without `ngOnChanges`,
+explain the constraint in a line-level lint suppression.
 
 ## Cloning, and how it interacts with signals
 
-The rule is `deepClone`, but the interesting part is when to copy at all.
-
-**Replacing an object in a signal.** A signal notifies only when the reference changes, so replace
-rather than mutate:
+**Replacing independent state.** With default signal equality, return a new reference:
 
 ```typescript
 const updated = deepClone(current);
@@ -90,9 +81,15 @@ return updated;
 
 The canonical example is `setImageUrl` in `src/main/webapp/app/core/auth/account.service.ts`.
 
-**When you only need the signal to emit.** Do not copy at all. Declare the signal with
-`equal: () => false` and re-set the same reference. Copying detaches the nested objects that
-children already hold, and that ends in `NG0103`.
+**Preserving nested identity.** Where existing code mutates an object in place,
+`equal: () => false` lets the parent signal notify its consumers when re-set to the same reference.
+Deep-cloning instead would detach nested associations.
+
+This does not force a child `input()` to update: Angular still compares the whole-object binding
+by identity. For a child bound to the whole object, create a new top-level reference with explicit
+field assignments while preserving required nested references; `Exam.withSameValues` and
+`StudentExam.withSameValues` are the repository examples. See the cloning section of
+`documentation/docs/developer/guidelines/client-development.mdx`.
 
 **When the state is not signal-backed.** Build the replacement explicitly, field by field, rather
 than reaching for a shallow copy.

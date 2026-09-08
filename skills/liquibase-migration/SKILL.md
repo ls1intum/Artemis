@@ -1,12 +1,9 @@
 ---
 name: liquibase-migration
-description: Write an Artemis Liquibase changelog that survives a rolling deployment on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for rolling deploys, and the local validation steps.
+description: Write Artemis database schema migrations or diagnose Liquibase changesets that fail on startup.
 ---
 
 # Write a Liquibase migration
-
-A bad changeset does not fail a test, it stops the application from starting, on every node, in
-production. Everything here exists because of that.
 
 ## The mechanics
 
@@ -22,25 +19,22 @@ Changeset ids are `<timestamp>-<sequence>-<slug>`, for example
 that has already been merged: Liquibase records a checksum and the application refuses to start
 when it changes. Write a new changeset instead.
 
-Read `reference/migration-patterns.md` for the worked patterns. The rest of this file is the
-decision procedure.
+Read the relevant pattern in `reference/migration-patterns.md`.
 
 ## Which pattern do you need?
 
-**Adding a nullable column, a table, or an index.** Straightforward. Write the changeset, add a
+**Adding a nullable column, a table, or an index.** Add a
 `<rollback>` if Liquibase cannot infer one.
 
-**Adding a NOT NULL constraint to an existing column.** Use the guarded pattern. Adding the
-constraint while a null is still present fails the changeset, and a failing changeset stops the
-application from starting. This is the single most dangerous migration in this codebase and the
-pattern is non-obvious, so read the section in `reference/migration-patterns.md` before writing it.
+**Adding a NOT NULL constraint to an existing column.** Use the guarded `onFail="CONTINUE"`
+pattern in `reference/migration-patterns.md`. Check the entity mapping and existing nulls first;
+a skipped constraint does not establish the intended schema invariant.
 
 **Dropping or renaming a column that code still reads.** Use expand and contract across two
 releases. During a rolling deployment, nodes on the old version are still running.
 
-**Anything involving a trigger or a stored routine.** Do not. This repository removed its last
-trigger when it moved to PostgreSQL and has rejected proposals to add new ones. Express the
-behaviour in the entity design or in application code instead.
+**Triggers and stored routines.** Keep this behaviour in entity design or application code;
+do not introduce database triggers or stored routines.
 
 ## Both databases
 
@@ -49,23 +43,23 @@ PostgreSQL dialect with no probing, so a MySQL deployment must override `spring.
 
 Consequences when writing a changeset:
 
-- Prefer Liquibase's own change types over `<sql>`. They generate correct SQL for both.
+- Prefer Liquibase's built-in change types over `<sql>` for dialect handling.
 - Where you must write raw SQL, check it against both dialects, or split it with a `dbms` attribute.
 - CI will not catch a MySQL-only break. If a changeset contains raw SQL, validate it locally
   against MySQL. `reference/migration-patterns.md` has the procedure.
 
 ## Verify before pushing
 
-Start the application against a database that already has data, not an empty one. An empty database
-makes every backfill and every precondition trivially pass, which is exactly the case that is never
-interesting.
+Verify migrations on a disposable database containing representative existing data, including
+rows affected by backfills and preconditions. Never use a production database for this check.
+An empty-database startup alone does not exercise these cases.
 
 ```bash
 ./gradlew bootRun -x webapp
 ```
 
-Watch the startup log for the changeset ids. A changeset skipped by a precondition logs a warning
-rather than failing, so a silent skip is easy to miss.
+Inspect the resulting schema and data, not just startup success. Check the changeset ids in
+the logs and `databasechangelog`; preconditions can skip a changeset without failing startup.
 
 ## Related
 
