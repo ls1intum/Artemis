@@ -19,4 +19,13 @@ public interface GenerationEngine {
      * @return the selected candidate, verification and accounting
      */
     GenerationOutput generate(GenerationAssignment assignment, BooleanSupplier cancelled, GenerationObserver progress, Consumer<GenerationOutput> checkpoint);
+
+    /**
+     * Requests prompt local teardown without interrupting an in-flight candidate capture.
+     *
+     * @return whether this engine owns teardown; false lets the supervisor use its emergency Docker cleanup
+     */
+    default boolean requestCancel() {
+        return false;
+    }
 }

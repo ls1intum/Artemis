@@ -1,15 +1,30 @@
 spring:
-  application:
-    name: artemis-hyperion-worker
-  main:
-    web-application-type: none
-  artemis:
-    mode: native
-    broker-url: ${HYPERION_BROKER_URL}
-    user: ${HYPERION_BROKER_USER}
-    password: ${HYPERION_BROKER_PASSWORD}
+    application:
+        name: artemis-hyperion-worker
+    main:
+        web-application-type: none
+    artemis:
+        mode: native
+        broker-url: ${HYPERION_BROKER_URL}
+        user: ${HYPERION_BROKER_USER}
+        password: ${HYPERION_BROKER_PASSWORD}
 artemis:
-  hyperion:
-    worker:
-      id: ${HYPERION_WORKER_ID}
-      image: ${HYPERION_SANDBOX_IMAGE}
+    hyperion:
+        worker:
+            id: ${HYPERION_WORKER_ID}
+            image: ${HYPERION_SANDBOX_IMAGE}
+management:
+    tracing:
+        sampling:
+            probability: 1.0
+        export:
+            otlp:
+                enabled: false
+    logging:
+        export:
+            otlp:
+                enabled: false
+    otlp:
+        metrics:
+            export:
+                enabled: false

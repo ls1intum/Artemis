@@ -13,9 +13,11 @@ Build the executable and image from the repository root:
 docker build -f docker/hyperion/worker.Dockerfile -t hyperion-worker:local .
 ```
 
-The transport executable advertises no generation capacity unless a generation
-engine is installed. A successful process start alone is not a generation smoke
-test.
+The worker runs the Java Gradle generation engine. Configure exactly one Spring AI
+OpenAI-compatible chat model through the worker's standard `spring.ai.openai.*`
+settings. Provider credentials belong only to the worker process, never to the
+build image or assignment payload. A successful process start alone is not a
+generation smoke test.
 
 ## Broker isolation
 
@@ -87,3 +89,86 @@ authorization, rollback redelivery and dead-lettering using an in-process broker
 `id`, `sleep` and `cat`; they inspect the real container restrictions, exercise
 binary copying and verify timeout/reset cleanup. They do not test LLM generation,
 core persistence or exercise quality.
+
+## Offline Java Gradle build image
+
+Build the sandbox image from the repository root:
+
+```sh
+docker build -f docker/hyperion/gradle-sandbox.Dockerfile -t hyperion-gradle-sandbox:local .
+docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}'
+```
+
+Use the emitted immutable image ID as `HYPERION_SANDBOX_IMAGE` on this host.
+For another host, publish the image through the deployment's image registry,
+preload it, and configure its registry digest. Do not use a mutable tag for worker
+admission.
+
+The image builds Artemis's canonical Gradle test harness with the trusted
+readiness fixture online at image-build time, then repeats it offline. It retains
+the canonical Teamscale plugin, wrapper, Java 17 toolchain and test dependency
+versions. The supported fixture has no static code analysis, sequential tests or
+private Maven Central mirror. A deployment with a private mirror needs its own
+qualified cache; never copy repository credentials into a sandbox image.
+
+Runtime builds execute as UID 1000 without network access. Each pristine build
+copies the public image cache to bounded private tmpfs; no writable dependency
+cache is shared with another execution. Authoring uses JUnit's `Simple`
+display-name generator so Gradle report names match the method names used in task
+bindings. The shared LocalCI report parser is not modified to rename tests.
+
+Qualify the image against actual isolated builds:
+
+```sh
+HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}') \
+  ./gradlew :hyperion-worker:test --tests '*DockerGradleBuildTest' -x webapp
+```
+
+This test builds a solution and incomplete template, parses their real reports,
+compares the verdicts and names with direct canonical LocalCI build phases, and
+checks that a subsequent solution build cannot reuse failed-template output.
+It needs Docker but no application URL or HTTP port. This is build parity, not an
+LLM-generation or exercise-quality claim.
+
+## Worker telemetry
+
+The worker emits Spring AI observations inside an assignment-scoped
+`hyperion.generation` observation. Its metadata identifies the job, execution,
+exercise and effective effort profile; credentials and the exercise brief are
+not observation tags. The worker does not inherit the core node's telemetry
+configuration or require an incoming telemetry port.
+
+Trace export is disabled by default. To use an approved OTLP collector, configure
+these Spring properties on the worker:
+
+```yaml
+management:
+    tracing:
+        export:
+            otlp:
+                enabled: true
+    opentelemetry:
+        tracing:
+            export:
+                otlp:
+                    endpoint: https://collector.example.org/v1/traces
+artemis:
+    telemetry:
+        gen-ai:
+            capture-content: false
+            max-attribute-bytes: 2000000
+```
+
+Authentication headers belong in the deployment's secret configuration, not the
+sandbox image. Trace sampling defaults to 100% for these low-volume generation
+jobs; reducing it makes traces unsuitable for exact usage reconciliation.
+Metrics and log export are independently disabled by default.
+
+Set `capture-content` to `true` only for an access-controlled collector approved
+to receive prompts, completions, reasoning and tool inputs/outputs. The filter
+omits oversized UTF-8 attributes rather than exporting invalid truncated JSON
+and marks `artemis.gen_ai.content.complete=false`. Without this opt-in, only
+metadata is added. Content capture is a worker-side setting; enabling it on the
+core does not enable it on workers. Export delivery and independent usage
+reconciliation must be checked on the deployed stack before claiming complete
+benchmark evidence.

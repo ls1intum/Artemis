@@ -88,6 +88,8 @@ public class WorkerSupervisor implements AutoCloseable {
 
         final GenerationAssignment assignment;
 
+        final GenerationEngine engine;
+
         final AtomicBoolean cancelled = new AtomicBoolean();
 
         final AtomicBoolean stopAuthoring = new AtomicBoolean();
@@ -99,8 +101,9 @@ public class WorkerSupervisor implements AutoCloseable {
 
         boolean finishing;
 
-        ActiveExecution(GenerationAssignment assignment, long renewedAt) {
+        ActiveExecution(GenerationAssignment assignment, GenerationEngine engine, long renewedAt) {
             this.assignment = assignment;
+            this.engine = engine;
             this.renewedAt = renewedAt;
         }
     }
@@ -182,7 +185,7 @@ public class WorkerSupervisor implements AutoCloseable {
             publishBestEffort(event(WorkerEvent.Type.ERROR, identity, "Generation worker is not available for this assignment.", null, null));
             return;
         }
-        ActiveExecution execution = new ActiveExecution(assignment, nanoTime.getAsLong());
+        ActiveExecution execution = new ActiveExecution(assignment, policy, nanoTime.getAsLong());
         active.put(identity.executionId(), execution);
         executor.submit(() -> execute(execution, policy));
     }
@@ -312,7 +315,11 @@ public class WorkerSupervisor implements AutoCloseable {
 
     private void cancel(ActiveExecution execution) {
         if (execution.cancelled.compareAndSet(false, true) && !execution.finishing) {
-            execution.cleanup = CompletableFuture.runAsync(() -> cancelSandboxes.accept(execution.assignment.identity()), cancellationExecutor);
+            execution.cleanup = CompletableFuture.runAsync(() -> {
+                if (!execution.engine.requestCancel()) {
+                    cancelSandboxes.accept(execution.assignment.identity());
+                }
+            }, cancellationExecutor);
         }
     }
 
