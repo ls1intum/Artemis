@@ -389,12 +389,14 @@ A transaction boundary may only be declared inside a repository, and in practice
 query that needs one. `@Transactional`, `TransactionTemplate` and `PlatformTransactionManager` are not
 allowed in services or controllers.
 
-An architecture test enforces the annotation, with no exception list: `@Transactional` on a method must be
-declared in a repository interface, and no class outside one may carry it. Programmatic transaction
-management is not yet covered by a test — a handful of services still construct a `TransactionTemplate`
-from an injected `PlatformTransactionManager`, so the rule cannot be turned on until those are gone. Treat
-that as debt to pay down rather than as permission: it is the same boundary with a different spelling, and
-it has the same consequences.
+Two architecture tests enforce this over the whole of production code, with no exception list.
+`ArchitectureTest.testTransactionBoundariesOnlyInRepositories` requires that a `@Transactional` method be
+declared in a repository interface and that no class outside one carries the annotation.
+`ArchitectureTest.testNoProgrammaticTransactionManagement` forbids production code from touching anything
+in `org.springframework.transaction` other than the annotation package, which is what closes the
+`TransactionTemplate` and `PlatformTransactionManager` spelling of the same boundary. Test code is exempt
+from the second rule: a test may legitimately open a transaction to seed data, or to hold a row lock while
+asserting that the code under test waits for it.
 
 The reason is not that transactions are slow in themselves. It is that the cost of one scales with how
 long it stays open and how much it touches, and a boundary declared high up in a service is open for the
@@ -436,6 +438,59 @@ applies to `@Async` — the method runs inline on the caller's thread — and to
 
 Keeping boundaries inside repositories avoids all of this by construction: a repository method is one
 statement, its transaction is as short as that statement, and it is always reached through the proxy.
+
+#### What to write instead
+
+Almost every boundary that looked necessary in a service turns out to be one of three patterns.
+
+**Making a check and a write atomic: put the check in the `WHERE` clause.** A boundary is often there so
+that nothing can change between reading a row and writing it. A single statement cannot be interleaved, so
+move the condition into the query and let the row count tell you whether you won:
+
+```java
+@Transactional // ok because of modifying query
+@Modifying
+@Query("""
+        UPDATE AnswerPost answerPost
+        SET answerPost.verified = TRUE, answerPost.verifiedBy = :verifier
+        WHERE answerPost.id = :answerPostId AND answerPost.verified = FALSE
+        """)
+int updateVerificationIfUnverified(@Param("answerPostId") long answerPostId, @Param("verifier") User verifier);
+```
+
+Two tutors pressing approve at the same moment both pass a preceding `isVerified()` check; only one of them
+updates a row, and the other is told the answer is already verified. `AnswerPostRepository.verifyIfUnverified`
+and `LectureUnitProcessingStateRepository.claimIdleForDispatch` are the worked examples. This also replaces
+`SELECT ... FOR UPDATE SKIP LOCKED` for claiming queued work.
+
+**Serialising two operations against each other: take a cluster mutex.** Where one operation reads state
+and then writes a value derived from it, and another changes that state, the two need to be mutually
+exclusive rather than transactional. Ask `DistributedDataProvider` for a named lock instead of holding a
+database row:
+
+```java
+DistributedLock lock = distributedDataProvider.getLock("exam-exercise-selection-" + examId);
+if (!lock.tryLock(LOCK_TIMEOUT)) {
+    throw new InternalServerErrorException(...);
+}
+try {
+    ...
+}
+finally {
+    lock.unlock();
+}
+```
+
+`ExamExerciseSelectionLockService` does this for student exam generation against exercise-group moves;
+`SlideSplitterService` does it per attachment video unit. Read the guarantees in `DistributedLock` before
+relying on one: none of the backends are consensus-backed, so this de-duplicates work rather than
+protecting an invariant on its own — keep a definitive guard in the statement as well.
+
+**Undoing work when a later step fails: compensate explicitly.** Record what an operation created and put
+it back in a `catch` block. `SlideSplitterService.SlideOperation` is the pattern: it collects the files
+written and the rows saved, and restores both if any step throws. This is also what replaces
+`TransactionSynchronizationManager`, which cannot work at all without a boundary — see
+`ArchitectureTest.testNoTransactionSynchronization`.
 
 ## Server Startup Performance
 

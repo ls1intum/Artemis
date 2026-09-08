@@ -270,11 +270,41 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule methodBoundaries = methods().that().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(repositoryInterfaces).because(reason);
 
         // A class-level annotation applies to every method of the class, which is the widest boundary available, and
-        // the method rule above cannot see it.
-        ArchRule classBoundaries = noClasses().that().areNotAnnotatedWith(Repository.class).should().beAnnotatedWith(simpleNameAnnotation("Transactional")).because(reason);
+        // the method rule above cannot see it. It has to demand the same repositoryInterfaces predicate rather than
+        // merely @Repository: five concrete classes carry that annotation without being Spring Data interfaces
+        // (CustomAuditEventRepository and the four passkey repositories), and a class-level boundary on one of those
+        // is an ordinary wide transaction with a repository's name on it.
+        ArchRule classBoundaries = noClasses().that(not(repositoryInterfaces)).should().beAnnotatedWith(simpleNameAnnotation("Transactional")).because(reason);
 
         methodBoundaries.check(productionClasses);
         classBoundaries.check(productionClasses);
+    }
+
+    @Test
+    void testNoProgrammaticTransactionManagement() {
+        String reason = """
+                A transaction boundary declared with TransactionTemplate or a PlatformTransactionManager is the same \
+                boundary @Transactional declares, only spelled in a way no annotation rule can see — which is exactly \
+                how three services kept one after the annotation was banned. It has every cost of the annotated form: \
+                the transaction stays open for the whole callback, holding its locks across every repository call and \
+                remote request inside it, and two concurrent callbacks with overlapping rows deadlock under load.
+                Do the work explicitly instead. To make a check and a write atomic, put the check into the WHERE clause \
+                of a @Modifying repository query and act on whether it updated a row — see \
+                AnswerPostRepository.verifyIfUnverified. To serialise two operations that read state and then write a \
+                value derived from it, take a cluster mutex through DistributedDataProvider.getLock — see \
+                ExamExerciseSelectionLockService. To undo work on failure, compensate in a catch block — see \
+                SlideSplitterService.SlideOperation.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Production only. A test may legitimately need a transaction of its own: to seed data an @Modifying query
+        // would have to be invented for, or to hold a row lock while asserting that the code under test waits for it.
+        // Everything in org.springframework.transaction is programmatic except the annotation package, which carries
+        // @Transactional itself and the enums it takes, and repositories are allowed to use those.
+        ArchRule noProgrammaticTransactions = noClasses().should()
+                .dependOnClassesThat(resideInAPackage("org.springframework.transaction..").and(not(resideInAPackage("org.springframework.transaction.annotation.."))))
+                .because(reason);
+
+        noProgrammaticTransactions.check(productionClasses);
     }
 
     @Test

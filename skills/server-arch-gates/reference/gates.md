@@ -10,13 +10,41 @@ check instead of the problem.
 controllers. Transaction boundaries may only be defined inside repositories, typically for
 modifying queries.
 
-**Enforced by.** `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`,
-which each module's `*RepositoryArchitectureTest` subclass runs.
+**Enforced by.** Three rules in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`, all checked over
+the whole code base rather than per module:
+
+- `testTransactionBoundariesOnlyInRepositories` — a `@Transactional` method must be declared in a
+  repository interface, and no class outside one may carry the annotation.
+- `testNoProgrammaticTransactionManagement` — production code may not touch anything in
+  `org.springframework.transaction` except the annotation package, which is what covers
+  `TransactionTemplate` and `PlatformTransactionManager`. Tests are exempt: one may legitimately
+  open a transaction to seed data, or hold a row lock while asserting the code under test waits.
+- `testNoTransactionSynchronization` — nothing anywhere may use `TransactionSynchronizationManager`
+  or a `TransactionSynchronization`. Without a boundary the callbacks never fire and nothing is
+  logged, so the code silently does not run.
+
+`AbstractModuleRepositoryArchitectureTest` carries the first rule per module as well, but only
+modules with a `*RepositoryArchitectureTest` subclass get it, which is why the global rules exist.
 
 **Consequence for you.** A REST call is not one transaction. Do not write code that assumes reads
 later in the call see writes from earlier in the call rolled into one atomic unit, and do not
 attempt to coordinate cache eviction across a request boundary that does not exist.
+
+**What to write instead.** Three patterns cover nearly every boundary that looked necessary:
+
+- To make a check and a write atomic, move the check into the `WHERE` clause of a `@Modifying`
+  query and act on the row count — `AnswerPostRepository.verifyIfUnverified`,
+  `LectureUnitProcessingStateRepository.claimIdleForDispatch`. This also replaces
+  `SELECT ... FOR UPDATE SKIP LOCKED`.
+- To serialise two operations that read state and then write a value derived from it, take a
+  cluster mutex via `DistributedDataProvider.getLock` — `ExamExerciseSelectionLockService`,
+  `SlideSplitterService`. Read the guarantees on `DistributedLock` first: no backend is
+  consensus-backed, so keep a definitive guard in the statement too.
+- To undo work when a later step fails, compensate in a `catch` block —
+  `SlideSplitterService.SlideOperation`.
+
+Full reasoning: `documentation/docs/developer/guidelines/performance.mdx` (Avoid Transactions).
 
 ## Persistence access
 

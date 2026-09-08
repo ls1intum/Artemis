@@ -30,8 +30,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -131,7 +129,7 @@ public class StudentExamService {
 
     private final StudentExamSubmitMapper studentExamSubmitMapper;
 
-    private final TransactionTemplate transactionTemplate;
+    private final ExamExerciseSelectionLockService examExerciseSelectionLockService;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
@@ -139,7 +137,7 @@ public class StudentExamService {
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager,
             WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
-            StudentExamSubmitMapper studentExamSubmitMapper, PlatformTransactionManager transactionManager) {
+            StudentExamSubmitMapper studentExamSubmitMapper, ExamExerciseSelectionLockService examExerciseSelectionLockService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -160,7 +158,7 @@ public class StudentExamService {
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.examExerciseSelectionLockService = examExerciseSelectionLockService;
     }
 
     /**
@@ -508,9 +506,9 @@ public class StudentExamService {
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
      * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      * <p>
-     * Resolution and save share the exam-row lock the random generation paths take, so a concurrent exercise-group
-     * move cannot commit between reading the exercises and persisting the selection. The participation setup runs
-     * afterwards: it only needs the persisted selection and would hold the lock for the length of the setup.
+     * Resolution and save share the exercise selection lock the random generation paths take, so a concurrent
+     * exercise-group move cannot commit between reading the exercises and persisting the selection. The participation
+     * setup runs afterwards: it only needs the persisted selection and would hold the lock for the length of the setup.
      *
      * @param exam        the exam the test run belongs to
      * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
@@ -518,8 +516,7 @@ public class StudentExamService {
      * @return the created testRun studentExam
      */
     public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
-        StudentExam testRun = transactionTemplate.execute(status -> {
-            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+        StudentExam testRun = examExerciseSelectionLockService.callUnderLock(exam.getId(), () -> {
             List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
             return generateTestRun(exam, exercises, workingTime);
         });
@@ -766,8 +763,8 @@ public class StudentExamService {
 
     /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
-     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
-     * cannot desync the selection this generates. Called when a student starts a normal or test exam.
+     * Reads the exercise groups under the exam's exercise selection lock, so a concurrent exercise-group move cannot
+     * desync the selection this generates. Called when a student starts a normal or test exam.
      *
      * @param exam    the exam to generate the student exam for
      * @param student The student for whom the StudentExam should be created.
@@ -775,8 +772,7 @@ public class StudentExamService {
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
-        StudentExam studentExam = transactionTemplate.execute(status -> {
-            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+        StudentExam studentExam = examExerciseSelectionLockService.callUnderLock(exam.getId(), () -> {
             Exam lockedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
             return studentExamRepository.createRandomStudentExams(lockedExam, Set.of(student)).getFirst();
         });
@@ -791,18 +787,17 @@ public class StudentExamService {
 
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups.
-     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
-     * cannot desync the selection this generates.
+     * Reads the exercise groups under the exam's exercise selection lock, so a concurrent exercise-group move cannot
+     * desync the selection this generates.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        return transactionTemplate.execute(status -> {
-            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+        this.invalidateExerciseStartStatus(exam.getId());
+        return examExerciseSelectionLockService.callUnderLock(exam.getId(), () -> {
             Exam lockedExam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
 
-            this.invalidateExerciseStartStatus(lockedExam.getId());
             final var existingStudentExams = studentExamRepository.findByExamId(lockedExam.getId());
             // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
             studentExamRepository.deleteAll(existingStudentExams);
@@ -815,18 +810,16 @@ public class StudentExamService {
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
-     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
-     * cannot desync the selection this generates.
+     * Reads the exercise groups under the exam's exercise selection lock, so a concurrent exercise-group move cannot
+     * desync the selection this generates.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
-        return transactionTemplate.execute(status -> {
-            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+        this.invalidateExerciseStartStatus(exam.getId());
+        return examExerciseSelectionLockService.callUnderLock(exam.getId(), () -> {
             Exam lockedExam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
-
-            this.invalidateExerciseStartStatus(lockedExam.getId());
 
             // Get all users who already have an individual exam
             Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(lockedExam.getId());
