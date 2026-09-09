@@ -1,8 +1,14 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import java.io.File;
+
 import jakarta.annotation.PostConstruct;
 
+import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.WindowCacheConfig;
+import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.SystemReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -33,5 +39,81 @@ public class JGitConfig {
         // So, we disable this performance optimization which does not negatively affect performance in our use case.
         cfg.setPackedGitMMAP(false);
         cfg.install();
+    }
+
+    /**
+     * Stops JGit consulting the machine's git configuration, and stops it re-checking those files on every operation.
+     * <p>
+     * JGit resolves three configuration files above a repository's own: the system config ({@code /etc/gitconfig}),
+     * the user config ({@code ~/.gitconfig} plus its XDG location) and its own {@code ~/.jgitconfig}. Before serving
+     * a configuration value it calls {@code SystemReader#updateAll}, which asks each of them whether it has changed -
+     * and "has it changed" begins with "does it exist".
+     * <p>
+     * On a server none of them exist, so each check is a failed {@code lstat} that the JDK turns into a
+     * {@code UnixException} and then a {@code NoSuchFileException}, both capturing a stack trace. A JFR recording of
+     * one 2000-student benchmark run counted 63,998 {@code NoSuchFileException}s on a single node, 62,308 of them
+     * from this path alone. Measured against JGit 7.7.1 in isolation, resolving a repository's configuration costs
+     * 27.6 us with the files being checked and 15.4 us without.
+     * <p>
+     * The cost is the smaller half of the reason. A server must not take its git behaviour from whatever
+     * {@code ~/.gitconfig} happens to sit in the service account's home directory: a stray {@code core.autocrlf} or
+     * {@code gc.auto} would change how student repositories are written, and could differ from one node to the next.
+     * Artemis sets everything it relies on explicitly.
+     * <p>
+     * The replacements are the configuration JGit itself returns when no system config can be located - backed by no
+     * file, never loading, never outdated - so this widens a case JGit already supports from one file to three.
+     */
+    @PostConstruct
+    public void useRepositoryGitConfigurationOnly() {
+        log.debug("Applying JGit configuration: ignore the system, user and jgit git configuration files");
+        SystemReader.setInstance(new RepositoryOnlyConfigReader(SystemReader.getInstance()));
+    }
+
+    /**
+     * Everything the platform reader does, except that the three configuration files above a repository are empty.
+     */
+    private static final class RepositoryOnlyConfigReader extends SystemReader.Delegate {
+
+        RepositoryOnlyConfigReader(SystemReader delegate) {
+            super(delegate);
+        }
+
+        @Override
+        public FileBasedConfig openUserConfig(Config parent, FS fs) {
+            return emptyConfig(parent, fs);
+        }
+
+        @Override
+        public FileBasedConfig openSystemConfig(Config parent, FS fs) {
+            return emptyConfig(parent, fs);
+        }
+
+        @Override
+        public FileBasedConfig openJGitConfig(Config parent, FS fs) {
+            return emptyConfig(parent, fs);
+        }
+
+        /**
+         * A configuration backed by no file at all.
+         *
+         * @param parent the configuration this one inherits from
+         * @param fs     the file system abstraction JGit is using
+         * @return a configuration that holds nothing, loads nothing and is never outdated
+         */
+        private static FileBasedConfig emptyConfig(Config parent, FS fs) {
+            return new FileBasedConfig(parent, (File) null, fs) {
+
+                @Override
+                public void load() {
+                    // Nothing to load: there is no file behind this configuration.
+                }
+
+                @Override
+                public boolean isOutdated() {
+                    // A file that does not exist cannot go out of date. The inherited implementation would stat it.
+                    return false;
+                }
+            };
+        }
     }
 }
