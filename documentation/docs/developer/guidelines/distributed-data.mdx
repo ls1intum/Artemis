@@ -1,7 +1,11 @@
+---
+id: distributed-data
+title: Distributed Data
+sidebar_label: Distributed Data
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-
-# Distributed Data
 
 Artemis runs as a cluster: several core nodes behind a load balancer without sticky sessions, plus build agents that pick
 up jobs from a shared queue. Everything those nodes share — the build job queue, feature toggles, scheduling messages,
