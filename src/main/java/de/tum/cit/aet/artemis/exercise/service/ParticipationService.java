@@ -784,7 +784,7 @@ public class ParticipationService {
         }
 
         if (exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exercise.getId(), student.getLogin());
+            return studentParticipationRepository.findFirstByExerciseIdAndStudentIdOrderByIdDesc(exercise.getId(), student.getId());
         }
 
         return studentParticipationRepository.findWithEagerExerciseContextByExerciseIdAndStudentId(exercise.getId(), student.getId());
