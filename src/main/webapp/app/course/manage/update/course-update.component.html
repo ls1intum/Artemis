@@ -41,7 +41,7 @@
                 </div>
             </div>
             @if (course.id) {
-                <div class="mb-3">
+                <div class="mt-3 mb-3">
                     <a
                         tumUiButton
                         size="small"
@@ -176,14 +176,14 @@
                     <label jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.testCourse.description' | artemisTranslate" />
                 </div>
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" name="gradeRelevant" id="field_gradeRelevant" formControlName="gradeRelevant" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.gradeRelevant.title" for="field_gradeRelevant"></label>
+                <div class="form-group flex items-center gap-2">
+                    <tum-ui-checkbox inputId="field_gradeRelevant" name="gradeRelevant" formControlName="gradeRelevant" />
+                    <label jhiTranslate="artemisApp.course.gradeRelevant.title" for="field_gradeRelevant"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.gradeRelevant.description' | artemisTranslate" />
                 </div>
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" name="dataRetentionHold" id="field_dataRetentionHold" formControlName="dataRetentionHold" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.dataRetentionHold.title" for="field_dataRetentionHold"></label>
+                <div class="form-group flex items-center gap-2">
+                    <tum-ui-checkbox inputId="field_dataRetentionHold" name="dataRetentionHold" formControlName="dataRetentionHold" />
+                    <label jhiTranslate="artemisApp.course.dataRetentionHold.title" for="field_dataRetentionHold"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.dataRetentionHold.description' | artemisTranslate" />
                 </div>
                 <div class="form-group">
@@ -396,20 +396,18 @@
                          Changing the settings is admin-only (server-enforced), so only admins see the controls. -->
                     @if (course.id && isAdmin()) {
                         <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
-                            <div class="form-check">
-                                <input
-                                    type="checkbox"
-                                    class="form-check-input"
+                            <div class="nested-form-group-head flex items-center gap-2">
+                                <tum-ui-checkbox
+                                    inputId="field_autoOrchestratorEnabled"
                                     name="autoOrchestratorEnabled"
-                                    id="field_autoOrchestratorEnabled"
                                     formControlName="autoOrchestratorEnabled"
-                                    (change)="changeAutoOrchestratorEnabled()"
+                                    (changed)="changeAutoOrchestratorEnabled()"
                                 />
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.autoOrchestration.label" for="field_autoOrchestratorEnabled"></label>
+                                <label jhiTranslate="artemisApp.course.autoOrchestration.label" for="field_autoOrchestratorEnabled"></label>
                                 <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.autoOrchestration.tooltip' | artemisTranslate" />
                             </div>
                             @if (courseForm.get('autoOrchestratorEnabled')?.value) {
-                                <div class="row mt-2">
+                                <div class="row">
                                     <div class="col">
                                         <label
                                             class="form-control-label"
@@ -475,14 +473,7 @@
                     @if (athenaFeedbackEnabled() && !hasInstructorAcceptedAiExperience()) {
                         <div class="nested-form-group ai-experience-hint flex items-center gap-2" id="ai-experience-hint-course-settings">
                             <span class="text-sm text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.aiExperienceHint"></span>
-                            <button
-                                type="button"
-                                tumUiButton
-                                size="small"
-                                variant="outlined"
-                                id="enable-ai-experience-course-settings"
-                                (click)="showLLMSelectionModal()"
-                            >
+                            <button type="button" tumUiButton size="small" variant="outlined" id="enable-ai-experience-course-settings" (click)="showLLMSelectionModal()">
                                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                                 <span jhiTranslate="artemisApp.course.athenaConfig.enableAiExperience"></span>
                             </button>
@@ -559,7 +550,7 @@
                 }
                 <!-- Section: Enrollment -->
                 <hr />
-                <h4 jhiTranslate="artemisApp.course.form.sections.enrollment"></h4>
+                <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.enrollment"></h4>
                 @if (ltiEnabled() && !course.enrollmentEnabled) {
                     <div class="form-group flex items-center gap-2">
                         <tum-ui-checkbox
