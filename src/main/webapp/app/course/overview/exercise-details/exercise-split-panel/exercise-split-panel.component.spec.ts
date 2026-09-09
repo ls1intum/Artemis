@@ -76,7 +76,9 @@ describe('ExerciseSplitPanelComponent', () => {
                             @if (exercise().type !== ExerciseType.QUIZ) {
                                 <ng-template jhiPanel [label]="'problemStatement'">Problem Statement</ng-template>
                             }
-                            <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details</ng-template>
+                            @if (!detailsInProblemStatement()) {
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details</ng-template>
+                            }
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
                             }
@@ -186,7 +188,7 @@ describe('ExerciseSplitPanelComponent', () => {
             return panels.map((panel: PanelDirective) => panel.label());
         }
 
-        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.QUIZ])(
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
             'should render the details panel without making it the first panel for %s',
             (type) => {
                 fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
@@ -197,6 +199,22 @@ describe('ExerciseSplitPanelComponent', () => {
                 expect(labels[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
             },
         );
+
+        it('should put the details above the tasks instead of in a tab when programming has no online editor', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as unknown as Exercise);
+            fixture.detectChanges();
+
+            expect(component.detailsInProblemStatement()).toBe(true);
+            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.details');
+        });
+
+        it('should keep the details in a tab when programming has the online editor', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
+            fixture.detectChanges();
+
+            expect(component.detailsInProblemStatement()).toBe(false);
+            expect(panelLabels()).toContain('artemisApp.courseOverview.exerciseDetails.details');
+        });
 
         it('should keep the details panel off index 0 once a participation opens the editor', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);

@@ -63,9 +63,6 @@ interface InstructorActionItem {
     translation: string;
 }
 
-export type ExerciseActionSlot = 'primary' | 'overflow';
-export type PrimaryExerciseAction = 'submit' | 'continue' | 'start' | 'resume';
-
 @Component({
     selector: 'jhi-exercise-header-actions',
     templateUrl: './exercise-header-actions.component.html',
@@ -107,37 +104,6 @@ export class ExerciseHeaderActionsComponent {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
     protected readonly InitializationState = InitializationState;
-
-    /**
-     * Which single action the title bar shows; everything else moves into the overflow menu.
-     * Named `actionSlot` rather than `slot`, because `slot` is a global HTML attribute and a static
-     * `slot="primary"` in a template would be ambiguous with native content slotting.
-     */
-    readonly actionSlot = input<ExerciseActionSlot>('primary');
-
-    protected readonly showsPrimary = computed(() => this.actionSlot() === 'primary');
-    protected readonly showsOverflow = computed(() => this.actionSlot() === 'overflow');
-
-    /** The one action the bar keeps. Everything not named here belongs in the overflow menu. */
-    readonly primaryAction = computed<PrimaryExerciseAction | undefined>(() => {
-        if (this.onSubmitExercise()) {
-            return 'submit';
-        }
-        if (this.onContinueExercise()) {
-            return 'continue';
-        }
-        if (this.isStartExerciseAvailable()) {
-            return 'start';
-        }
-        const graded = this.gradedParticipation();
-        if (
-            (graded?.initializationState === InitializationState.INACTIVE || graded?.initializationState === InitializationState.FINISHED) &&
-            this.isResumeExerciseAvailable(graded)
-        ) {
-            return 'resume';
-        }
-        return undefined;
-    });
     protected readonly ButtonType = ButtonType;
     protected readonly PlagiarismVerdict = PlagiarismVerdict;
 

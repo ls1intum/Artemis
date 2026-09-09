@@ -12,35 +12,16 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
-import { faEllipsis, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { RouterLink } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiButtonDirective, TumUiMenuComponent, TumUiMenuTriggerDirective } from '@tumaet/ui-angular';
 import { QuizExerciseCountdownComponent } from 'app/exercise/exercise-headers/quiz-countdown/quiz-exercise-countdown.component';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-header',
     templateUrl: './exercise-header.component.html',
-    imports: [
-        FaIconComponent,
-        ExerciseHeaderActionsComponent,
-        ParticipationModeToggleComponent,
-        CourseSidebarToggleButtonComponent,
-        QuizExerciseCountdownComponent,
-        TumUiButtonDirective,
-        TumUiMenuComponent,
-        TumUiMenuTriggerDirective,
-        RouterLink,
-        NgbTooltip,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaIconComponent, ExerciseHeaderActionsComponent, ParticipationModeToggleComponent, CourseSidebarToggleButtonComponent, QuizExerciseCountdownComponent],
+    styleUrl: './exercise-header.component.scss',
 })
 export class ExerciseHeaderComponent {
     protected readonly ExerciseType = ExerciseType;
-    protected readonly faEllipsis = faEllipsis;
-    protected readonly faTriangleExclamation = faTriangleExclamation;
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -145,15 +126,4 @@ export class ExerciseHeaderComponent {
             this.participationMode.set('practice');
         }
     }
-    /** The plagiarism case worth surfacing in the bar, if any. */
-    readonly plagiarismCase = computed(() => {
-        const info = this.plagiarismCaseInfo();
-        return info && info.verdict !== PlagiarismVerdict.NO_PLAGIARISM ? info : undefined;
-    });
-
-    readonly plagiarismCaseLabel = computed(() =>
-        this.plagiarismCase()?.createdByContinuousPlagiarismControl
-            ? 'artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity'
-            : 'artemisApp.plagiarism.plagiarismCases.plagiarismCase',
-    );
 }

@@ -1,6 +1,6 @@
 <!--
     The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the exercise
-    page reads like the other student pages; the information boxes live in the details panel instead.
+    page reads like the other student pages; the information boxes live with the exercise content instead.
     `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
 -->
 <div id="exercise-header" class="page-top-bar module-bg rounded-3 px-3 shell-divider-b d-flex align-items-center gap-2">
@@ -16,19 +16,6 @@
     @if (exercise().type === ExerciseType.QUIZ) {
         <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
     }
-    @if (plagiarismCase(); as plagiarismCase) {
-        <!-- Icon only: a verdict is rare and must not cost title width, but it stays in the bar rather than the
-             overflow menu because the student has to see it. The label it drops becomes the accessible name. -->
-        <a
-            data-testid="plagiarism-case-chip"
-            class="btn btn-danger btn-sm flex-shrink-0"
-            [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCase.id]"
-            [attr.aria-label]="plagiarismCaseLabel() | artemisTranslate"
-            [ngbTooltip]="plagiarismCaseLabel() | artemisTranslate"
-        >
-            <fa-icon [icon]="faTriangleExclamation" />
-        </a>
-    }
 
     <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
         <jhi-participation-mode-toggle
@@ -38,7 +25,6 @@
             [hasGraded]="showGradedMode()"
         />
         <jhi-exercise-header-actions
-            actionSlot="primary"
             [courseId]="courseId()"
             [exercise]="exercise()"
             [onSubmitExercise]="effectiveOnSubmitExercise()"
@@ -51,34 +37,5 @@
             (newParticipation)="onNewParticipation($event)"
             (participationModeChange)="participationMode.set($event)"
         />
-        <button
-            type="button"
-            tumUiButton
-            size="small"
-            data-testid="exercise-actions-overflow"
-            [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.moreActions' | artemisTranslate"
-            [tumUiMenuTrigger]="overflowMenu"
-        >
-            <fa-icon [icon]="faEllipsis" />
-        </button>
     </div>
 </div>
-
-<ng-template #overflowMenu>
-    <tum-ui-menu>
-        <jhi-exercise-header-actions
-            actionSlot="overflow"
-            [courseId]="courseId()"
-            [exercise]="exercise()"
-            [onSubmitExercise]="effectiveOnSubmitExercise()"
-            [onContinueExercise]="onContinueExercise()"
-            [onRestartPractice]="onRestartPractice()"
-            [submitDisabled]="submitDisabled()"
-            [submitLabel]="submitLabel()"
-            [plagiarismCaseInfo]="plagiarismCaseInfo()"
-            [participationMode]="participationMode()"
-            (newParticipation)="onNewParticipation($event)"
-            (participationModeChange)="participationMode.set($event)"
-        />
-    </tum-ui-menu>
-</ng-template>

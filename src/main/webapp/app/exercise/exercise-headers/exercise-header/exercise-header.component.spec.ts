@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideRouter } from '@angular/router';
@@ -135,26 +134,6 @@ describe('ExerciseHeaderComponent', () => {
             expect(fixture.nativeElement.querySelector('jhi-exercise-headers-information')).toBeNull();
         });
 
-        it('should offer an overflow menu trigger', () => {
-            expect(fixture.nativeElement.querySelector('[data-testid="exercise-actions-overflow"]')).not.toBeNull();
-        });
-
-        it('should surface a plagiarism case as a labelled chip in the bar', () => {
-            fixture.componentRef.setInput('plagiarismCaseInfo', { id: 7, verdict: PlagiarismVerdict.PLAGIARISM });
-            fixture.detectChanges();
-
-            const chip = fixture.nativeElement.querySelector('[data-testid="plagiarism-case-chip"]');
-            expect(chip).not.toBeNull();
-            expect(chip.getAttribute('aria-label')).toBeTruthy();
-        });
-
-        it('should not surface a chip when the verdict clears the student', () => {
-            fixture.componentRef.setInput('plagiarismCaseInfo', { id: 7, verdict: PlagiarismVerdict.NO_PLAGIARISM });
-            fixture.detectChanges();
-
-            expect(fixture.nativeElement.querySelector('[data-testid="plagiarism-case-chip"]')).toBeNull();
-        });
-
         it('should only render the quiz countdown for quizzes', () => {
             expect(fixture.nativeElement.querySelector('jhi-quiz-exercise-countdown')).toBeNull();
         });
@@ -180,28 +159,16 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
         }
 
-        /**
-         * The feedback button lives in the overflow menu now, and the CDK renders that into an overlay on the body
-         * rather than inside the fixture, so it has to be opened and then queried from the document.
-         */
-        function openOverflowMenu(): HTMLElement {
-            (fixture.nativeElement.querySelector('[data-testid="exercise-actions-overflow"]') as HTMLElement).click();
-            fixture.detectChanges();
-            return document.body;
-        }
-
         it('should enable the feedback button for a submitted submission', () => {
             configureProgrammingExercise(false, true, false);
 
-            const feedbackButton = openOverflowMenu().querySelector('jhi-request-feedback-button');
-            expect(feedbackButton).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
 
         it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
             configureProgrammingExercise(false, false, hasResult);
 
-            const feedbackButton = openOverflowMenu().querySelector('jhi-request-feedback-button');
-            expect(feedbackButton).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
 
         it('should hide the feedback button when the exercise has not been started', () => {
