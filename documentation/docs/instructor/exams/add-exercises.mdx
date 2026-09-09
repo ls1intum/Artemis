@@ -3,97 +3,98 @@ id: add-exercises
 title: Add Exercises to an Exam
 sidebar_label: Add Exercises
 ---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import importExam from './assets/buttons/import_exam.png';
-import editButton from './assets/buttons/edit.png';
 import exerciseVariants from './assets/exercise_variants.png';
-import importExerciseGroup from './assets/buttons/import_exercise_group.png';
-import selectExerciseGroup from './assets/buttons/select_exercise_group.png';
 import exerciseGroupImportExam from './assets/exercise_group_import_exam.png';
 import exerciseGroupImportExercises from './assets/exercise_group_import_exercises.png';
 import addExercises from './assets/add_exercises.png';
-import configureGradingButton from './assets/buttons/configure_grading.png';
 import configureGrading from './assets/configure_grading.png';
+
+An exam is built from exercise groups rather than from exercises directly. Each group is one slot on the paper, and
+each slot can hold several alternatives, so that students do not all receive the same exam.
 
 ## Exercise Groups
 
-- Artemis exam mode allows you to define multiple exercise variants so that each student can receive a unique exam. Artemis achieves this through exercise groups. Exercise groups represent an individual exercise slot for each [student exam](/instructor/exams/prepare-and-test#manage-student-exams). Within one exercise group you can define different exercises.
-- Artemis selects one exercise per exercise group randomly, to generate the individual [student exams](/instructor/exams/prepare-and-test#manage-student-exams).
-- You can distinguish between mandatory exercise groups and non-mandatory exercise groups.
-- Artemis always includes mandatory exercise groups in the individual exam of a student.
-- Non-mandatory exercise groups can be left out, if there are more exercise groups than the `number of exercises` defined in the [exam configuration](/instructor/exams/create-an-exam#create-and-configure-exam).
-- By default, every exercise group is mandatory. You can set the `mandatory` flag when you add an exercise group initially, or later by clicking <img src={editButton} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the exercise group.
+When Artemis generates the [individual exams](/instructor/exams/prepare-and-test#generate-the-individual-exams) it
+draws one exercise at random from every group. Three groups holding two exercises each therefore produce a
+three-exercise exam in eight possible combinations.
 
-<Image src={exerciseVariants} alt="Exercise Groups with different Exercise Variants" size={ImageSize.large} caption="Exercise Groups with different Exercise Variants" />
+A group is either **Mandatory** or **Optional**. Every mandatory group appears in every individual exam. Optional
+groups are only drawn on if there are more groups than the **Number of exercises in exam** set in the
+[exam configuration](/instructor/exams/create-an-exam#exam-exercises) — which is how you offer a choice of topics
+without lengthening the exam. Groups are mandatory by default; **Edit group** changes it later.
+
+<Image src={exerciseVariants} alt="Exercise groups, each holding several exercise variants" size={ImageSize.large} caption="Exercise groups with alternative exercises" />
+
+<Callout variant={CalloutVariant.info}>
+
+  For an exam where everybody writes the same paper, give each group exactly one exercise.
+
+</Callout>
 
 ### Import Exercise Groups
 
-- Artemis exam mode allows you to import one or more exercise groups from an existing exam.
-- The import process consists of two steps.
+**Import Exercise Group** copies groups out of an existing exam, in two steps.
 
-**Step 1: Select Exam**
+First choose the exam to copy from. **Select Exercise Groups** opens it.
 
-- When you click on <img src={importExerciseGroup} alt="Import Exercise Group" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, you can select one exam from which exercise group(s) should be imported.
-- To select one exam, click on <img src={selectExerciseGroup} alt="Select Exercise Group" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+<Image src={exerciseGroupImportExam} alt="Choosing the exam to import exercise groups from" size={ImageSize.large} caption="Step one: choose the source exam" />
 
-<Image src={exerciseGroupImportExam} alt="First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported" size={ImageSize.large} caption="First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported" />
+Then choose what comes across. You can deselect individual exercises, and rename both the groups and the exercises
+— including the short name of a programming exercise, which together with its title has to be unique. Importing
+into the same course therefore always needs a rename first; Artemis checks uniqueness when you start the import and
+tells you which ones clash.
 
-**Step 2: Select Exercises and Exercise Groups**
-
-- In the next step you can select or deselect exercises which should be imported alongside the exercise groups.
-- You can also change the `title` and `isMandatory` of an exercise group, as well as the `title` (and `short-name` for programming exercises) for the individual exercises.
-- The title and short name of programming exercises must be unique. If you want to import an exercise group into the same course, you must change the title and short name before you can import the exercise group.
-- After you have started the import by clicking on <img src={importExam} alt="Import Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, Artemis checks if the title and short name of the selected programming exercise(s) are unique. If they are not unique, a warning is displayed and you have to change the corresponding title and short name.
+<Image src={exerciseGroupImportExercises} alt="Choosing which exercises to import alongside the groups" size={ImageSize.large} caption="Step two: choose the exercises" />
 
 <Callout variant={CalloutVariant.info}>
-  - Further changes to the individual exercises can be made after the import by editing the respective exercise.
-  - Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups.
-</Callout>
 
-<Image src={exerciseGroupImportExercises} alt="Second step in the process to import exercise group(s). You can select or deselect individual exercises, which should be imported alongside the exercise group(s)." size={ImageSize.large} caption="Second step in the process to import exercise group(s). You can select or deselect individual exercises, which should be imported alongside the exercise group(s)." />
+  Exercises arrive with the configuration they had. The import cannot change a submission policy or turn static
+  code analysis on or off, so if you need a different setup, import that exercise into the group on its own and
+  configure it there. Everything else can be edited after the import.
+
+</Callout>
 
 ## Add Exercises
 
-- Exercise groups can contain multiple exercises. For every [student exam](/instructor/exams/prepare-and-test#manage-student-exams), Artemis will randomly select one exercise per [exercise group](#exercise-groups).
+The header of each group offers the exercise types available in your course; each type can be created from scratch
+or imported from another course.
 
-<Callout variant={CalloutVariant.info}>
-  If you want all student to have the same exam, define only one exercise per [exercise group](#exercise-groups).
-</Callout>
+<Image src={addExercises} alt="Adding an exercise to an exercise group" size={ImageSize.large} caption="Adding exercises to a group" />
 
-- To add exercises navigate to the *Exercise Groups* of the exam. On the header of each [exercise group](#exercise-groups) you will find the available exercise types. You can choose between `creating a new exercise` or `importing an existing one` from your courses.
-
-<Image src={addExercises} alt="Add different Exercises" size={ImageSize.large} caption="Add different Exercises" />
-
-- For exercise types `text` and `modeling` you can also define example submissions and example assessments to guide your assessor team.
-- Assessors will review the example submissions and assessments in order to familiarise themselves with the exercise and assessment instructions, before they can assess the real submissions.
+Text and modeling exercises can also carry example submissions with example assessments. Assessors work through
+those first, which is how a correction team arrives at the real submissions already agreed on what the exercise is
+worth.
 
 ### Programming Exercises
 
-- Programming exercises have multiple special options to adjust their behavior:
+Two settings on a programming exercise need attention in an exam.
 
-- You can check the option to `allow manual assessment`.
+**Enable manual assessment** decides whether your assessors can grade the submissions by hand at all. Leave it off
+and the [assessment](/instructor/exams/assess-an-exam) is whatever the tests produced.
 
-<Callout variant={CalloutVariant.info}>
-  If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the [assessment process](/instructor/exams/assess-an-exam#assessment).
-</Callout>
+Test visibility decides what a student learns while writing. **Configure Grading** on the exercise lets you set the
+**Weight**, **Bonus multiplier** and **Bonus points** of each test case, and its **Visibility**. In an exam the
+useful setting is **After Release Date of Results**: the test still runs and still scores, but the student sees
+neither its feedback nor its points until results are published. Artemis applies it to every test case of a
+programming exercise created inside an exam.
 
-- You can activate `Run Tests once after Due Date`. This will compile and run the test suite on all the student submissions once after the set date.
-- After you add a programming exercise you can configure the grading via <img src={configureGradingButton} alt="Configure Grading Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
-
-- In the *Configure Grading* screen, you can tweak the `weight` of the tests, the `bonus multiplier` and add `bonus points`.
-- You can hide tests so that they are not executed during the exam conduction by setting the test case visibility to `After Release Date of Results.` Students can not receive feedback from hidden tests during the exam conduction. This option is set by default when creating new programming exercises within an exam.
-
-<Callout variant={CalloutVariant.info}>
-  When importing exercises, the test case visibility of imported exercise will equal the visibility of the original exercise. You can adjust the test case visibility in the import `Assessment` section to be set to `After Release Date of Results`.
-</Callout>
+<Image src={configureGrading} alt="Configure Grading page showing test case weights and visibility" size={ImageSize.large} caption="Test case configuration for an exam exercise" />
 
 <Callout variant={CalloutVariant.info}>
-  If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the `Run Tests once after Due Date` after the exam end date to achieve this effect.
+
+  An imported exercise keeps the visibility it had in its source exercise, which is usually not what an exam wants.
+  The import form has a **Set test case visibility to After Release Date of Results** option for exactly this.
+
 </Callout>
 
-<Image src={configureGrading} alt="Configure the Grading of a Programming Exercise" size={ImageSize.large} caption="Configure the Grading of a Programming Exercise" />
-    *Configure the Grading of a Programming Exercise*
-
-- The *Configure Grading* screen also allows the configuration of submission policies.
+Hiding every test leaves the student knowing only whether their code compiled, which is often what an exam wants.
+Controlling *when* the tests run is a separate question from when their results become visible, and it depends on
+the setup: with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) you give the build
+phase that runs the tests an **After due date** inclusion condition, described under
+[Configure the Build](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional).
+With Jenkins the exercise instead offers **Rerun tests after due date**, which runs the suite once over every
+submission after the date you set.

@@ -3,78 +3,88 @@ id: grade-and-publish
 title: Grade an Exam and Publish Results
 sidebar_label: Grade and Publish
 ---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import scoresButton from './assets/buttons/scores.png';
-import gradeKeyButton from './assets/buttons/grade_key.png';
-import generateDefaultGradeKey from './assets/buttons/generate_default_grade_key.png';
-import addGradeStep from './assets/buttons/add_grade_step.png';
-import importExportButton from './assets/buttons/import_export.png';
 import gradeKeyEditor from './assets/grade_key_editor.png';
-import exportButton from './assets/buttons/export.png';
 import examStatistics from './assets/exam_statistics.png';
 import examExampleSolutionPublicationDate from './assets/exam_example_solution_publication_date.png';
 
-### Grading Key
+Points become grades through a grading key, and both become visible to students on the date you set. Neither step
+is mandatory: an exam without a grading key simply reports points.
 
-- Optionally, you can create a grading key for your exam by clicking <img src={gradeKeyButton} alt="Grade Key" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> at the top of the exam's detail page.
-- Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
-- Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
-- For an easy out-of-the-box configuration, you can click <img src={generateDefaultGradeKey} alt="Generate Default Grade Key" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and then click `Save`.
-- By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify `Maximum number of points for exam`.
-- If you would like to define custom grade steps, you can use the <img src={addGradeStep} alt="Add Grade Step" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and modify the grade step intervals.
+## Grading Key
 
-<Callout variant={CalloutVariant.info}>
-  Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
+**Grading Key** at the top of the exam's detail page turns exam scores into grades automatically, and students see
+their grade from the **Release Date of Results** onwards. It also improves the statistics, since a grade
+distribution says more than a score distribution.
+
+**Generate default grade key** followed by **Save** gives you a working key immediately. **Add grade step** builds
+one by hand instead, and **Detailed** editing mode exposes the exact bounds of each step.
+
+Grade steps are percentages of the total obtainable score by default. Set **Maximum number of points for exam** and
+Artemis shows the point equivalent of each step alongside the percentage.
+
+<Image src={gradeKeyEditor} alt="Grading key editor with the default grade steps" size={ImageSize.large} caption="The default grading key" />
+
+Two fields decide how the key behaves at the edges. **Inclusivity** settles which grade a score exactly on a
+boundary receives. **Grade Type** chooses between the two kinds of key:
+
+- **Grade** produces a final grade with names you choose. Set **First Passing Grade** so Artemis knows which steps
+  count as a pass.
+- **Bonus** produces bonus points instead, which contribute to the grade of another course or exam rather than
+  standing on their own.
+
+The import and export buttons save a key as CSV and load it into another course or exam, which is how a
+department's standard key gets reused rather than retyped.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Read the warnings at the bottom of the editor before saving. They are what tells you the key has a gap or an
+  overlap, and a key with either produces grades nobody can defend.
+
 </Callout>
-
-- `Inclusivity` field allows you to decide which grade should be assigned if the student's score is exactly equal to a boundary value between two grades.
-- There are two grade types you can use: `Grade` and `Bonus`. The `Grade` type allows you to set a final grade for the exam with custom grade step names, while the `Bonus` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
-
-<Callout variant={CalloutVariant.info}>
-  If the `Grade Type` is `Grade` you should set `First Passing Grade`.
-</Callout>
-
-- For more fine grained control, you can switch to `Detailed` editing mode and set grade step bounds manually.
-- <img src={importExportButton} alt="Import Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> buttons enable you to save the grading key as a CSV file and re-use it in other courses and exams.
-
-<Image src={gradeKeyEditor} alt="Default Grading Key" size={ImageSize.large} caption="Default Grading Key" />
 
 ## Publication of Results
 
-You can specify the moment when Artemis publishes the results of the exam, see [Create Exam](/instructor/exams/create-an-exam#create-exam). This is usually when the assessment ends, but you can specify this at any point in time. During the publication of the results, the student can view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as [TUM Online](https://campus.tum.de) as a `CSV` file, see [Exam Scores](#exam-scores).
+**Release Date of Results**, set in the
+[exam configuration](/instructor/exams/create-an-exam#exam-assessment-and-student-review), is when students can see
+their results in their summary. It is usually the end of assessment, but nothing stops you choosing another moment.
 
-### Exam Scores
+## Exam Scores
 
-- You can access the exam scores by clicking on <img src={scoresButton} alt="Scores" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This view aggregates the results of the students and combines them to provide an overview over the students' performance.
-- You can view the spread between different achieved scores, the average results per exercise, as well as the individual students' results.
-- Additionally, you can choose to modify the dataset by selecting `only include submitted exams` or `only include exercises with at least one non-empty submission`.
+**Scores** aggregates the exam: the spread of achieved scores, the average per exercise, and every individual
+result. Average, median and standard deviation are given for the exam as a whole, and students' own difficulty
+ratings per exercise are collected alongside them, which is the most useful input into next year's exam.
 
-<Callout variant={CalloutVariant.info}>
-  Unsubmitted exams are not eligible for the assessment process.
-</Callout>
+Two filters change what the figures are computed from — **only include submitted exams** and **only include
+exercises with at least one non-empty submission**. Both exist because unsubmitted exams and undrawn exercises
+distort an average badly:
 
-- Review student performance using various metrics such as average, median and standard deviation.
-- Unsubmitted exams are not eligible for assessment and thereby appear as having no score. The corresponding students are assigned with a [no-participation special grade](/instructor/assessment-grading/grading) if a grading key exists. It can happen that an exercise is not part of any [student exam](/instructor/exams/prepare-and-test#manage-student-exams). This is the case when Artemis selects a different exercise of the same exercise group for every [student exam](/instructor/exams/prepare-and-test#manage-student-exams). Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the [exam conduction](/instructor/exams/conduct-an-exam#conduction), you can gain a more realistic overview of the performance of the students.
-- Review the students perceived difficulty of every exercise to improve exams in the future.
-- The exam scores can also be exported via <img src={exportButton} alt="Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This is useful to upload the results into university systems like [TUM Online](https://campus.tum.de) as a `CSV` file.
+- An unsubmitted exam is never assessed, so it appears as no score at all. Where a grading key exists, its student
+  receives the no-participation grade described under [Grading](/instructor/assessment-grading/grading).
+- An exercise can be in no individual exam at all, if Artemis happened to draw a different exercise from its group
+  every time.
 
-- The exported `CSV` file includes the students' `name`, `username`, `email`, `registration number`, their assigned `exercises`, their `score` for every exercise, `overall exam points`, `overall exam score`, `grades` (before bonus if bonus is configured), `presentation score`, `submitted` (yes/no) and `passed` (yes/no) values.
+<Image src={examStatistics} alt="Exam scores page with distribution and per-exercise statistics" size={ImageSize.large} caption="The scores page of an exam" />
 
-- If bonus is configured, the file also contains `bonus grades` and `final grade`.
-- If there is at least one plagiarism verdict in the exam, the file also contains `plagiarism verdicts`.
-- If there is at least one plagiarism verdict in the bonus source, the file also contains `plagiarism verdicts in bonus course/exam`.
-- The exported `CSV` file also contains the aggregated statistics of the [exam conduction](/instructor/exams/conduct-an-exam#conduction) such as the `number of participations` and the `average score` per exercise.
+**Export** writes the scores as CSV, which is what goes into a university system such as
+[TUM Online](https://campus.tum.de). Each row carries the student's name, username, email and registration number,
+the exercises they were assigned, their score per exercise, overall exam points and score, grade before any bonus,
+presentation score, and whether they submitted and passed. The file also carries the aggregated per-exercise
+statistics — number of participations and average score.
 
-<Image src={examStatistics} alt="Exam Scores Page" size={ImageSize.large} caption="Exam Scores Page" />
+Three things appear only when they apply: bonus grades and the final grade when a bonus is configured, plagiarism
+verdicts when the exam has at least one, and plagiarism verdicts from the bonus source when that has one.
 
-### Exam Solutions
+## Exam Solutions
 
-Optionally, you can publish the example solutions of text, modeling, file upload and programming exercises to students with submissions after a desired date by setting `Example Solution Publication Date` of the exam to a non-empty date.
-All example solutions of these exercises are published according to this date set in the exam, as opposed to the course exercises which have their own individual example solution publication dates.
+**Example Solution Publication Date** publishes the example solutions of the text, modeling, file upload and
+programming exercises to the students who submitted. Unlike course exercises, which each carry their own date, an
+exam publishes all of its solutions together on this one.
 
-- Example solution publication date can be empty, in this case solutions are never published. This is the default value.
-- If set, example solution publication date must be the same or after the `visible from` and `end of working time` if they are set.
+Leave it empty — the default — and no solutions are ever published. If set, it must fall on or after both
+**Visible from** and **End of working time**.
 
-<Image src={examExampleSolutionPublicationDate} alt="Example Solution Publication Date" size={ImageSize.large} caption="Example Solution Publication Date" />
+<Image src={examExampleSolutionPublicationDate} alt="Example Solution Publication Date field" size={ImageSize.large} caption="Setting the example solution publication date" />

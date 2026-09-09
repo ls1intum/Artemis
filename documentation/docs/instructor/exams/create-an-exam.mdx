@@ -3,61 +3,121 @@ id: create-an-exam
 title: Create an Exam
 sidebar_label: Create an Exam
 ---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import courseManagement from './assets/buttons/course_management.png';
-import examsButton from './assets/buttons/exams.png';
-import createNewExam from './assets/buttons/create_new_exam.png';
 import examConfiguration from './assets/exam_configuration.png';
 import examConduction from './assets/exam_conduction.png';
 import examExercises from './assets/exam_exercises.png';
 import examAssessment from './assets/exam_assessment.png';
-import importExam from './assets/buttons/import_exam.png';
-import importIndividualExam from './assets/buttons/import_individual_exam.png';
 import examImportSelection from './assets/exam_import_selection.png';
 
-## Accessing the Exam Management Page
+Everything about an exam is managed from one place. Open your course, choose **Exams** in the sidebar, and you see
+every exam in the course. **Create a new exam** opens the creation form; **Import an exam** copies one you or a
+colleague has already built.
 
-- Log in to Artemis with your account credentials.
-- Click on <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
-- Click on <img src={examsButton} alt="Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> for your course. It will open the *Exam Management Screen*.
-- Here you have access to all the exams of your course. All aspects of the exam are managed from the management screen.
-- You can create an exam by clicking on <img src={createNewExam} alt="Create New Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+## Choose the Exam Mode
 
-## Create and Configure Exam
+**Mode** is the first decision, and the only one you cannot change afterwards.
 
-### Exam Mode
+An **Exam** is the end-of-semester case. You set a fixed window, every student works inside it, and you assess the
+submissions afterwards — manually, automatically, or both. Results appear on the date you choose.
 
-- Artemis supports two exam modes. The conduction of normal exams and test exams.
-- The normal exam mode is suitable for conducting end-of-semester exams. Students can view and work on the exam between the configured working time. Afterwards you can perform a manual or automated evaluation of the students' submissions. The results will be published on the specified date.
-- Test exams provide you with the possibility to provide students with a practice opportunity for the end-of-semester exam. The main difference is that you choose a working window within which students can freely start the exam. Students then have the configured working time to complete the exam. After submitting, students immediately get the automated assessment for programming and quizzes. Manual correction of the submissions is not necessary.
+A **Test Exam** is practice. Instead of one fixed window for everybody, you set a window within which each student
+may start whenever they like, and the working time then runs from their own start. Students get the automated
+assessment for programming and quiz exercises as soon as they submit, so no manual correction is needed. For a test
+exam the date fields are labelled **Start of working window** and **End of working window** rather than start and
+end of working time, because they bound when a student may begin rather than when everyone writes.
 
-### Create Exam
+## Fill In the Creation Form
 
-- When you click on <img src={createNewExam} alt="Create New Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> you are presented with the *Create Exam* view. Here you can set the basic information such as `title`, `examiner` etc.
-- You can choose between the exam and test exam mode.
-- The timeline of the exam is defined by the dates: `visible from`, `start of working time`, `end of working time`, `submission overview visible from`, `release date of results`, `begin of student review`, `end of student review`.
-- The first three dates are mandatory when you create an exam. The rest can be set when required.
-- The optional `submission overview visible from` date controls when students can see the summary (submission overview) of their submitted exam, including the exam questions, their own answers, and the PDF export. If you leave it empty, the summary is shown immediately after submission. Setting it to a later date is useful for exams written in several shifts, so that early submitters cannot download and pass on the exam content to students in later shifts. It must be after the `end of working time` and no later than the `release date of results`.
-- The `grace period` defines the amount of time the students have at their disposal to hand in their exam after the `working time` is over. This is set to 3 minutes by default.
-- Before the exam's assessment you can choose the `Number of correction rounds in exam`. If you want two tutors to assess a student's exam subsequently, set the number to two here. This enables the [second correction](/instructor/exams/assess-an-exam#assessment-with-second-correction-round).
-- You can also define the `number of exercises` in the exam. You can leave this out initially, however it must be set before you can generate the [student exams](/instructor/exams/prepare-and-test#manage-student-exams). For more information, see [Exercise Groups](/instructor/exams/add-exercises#exercise-groups).
-- Artemis will randomize the order of the exercises for each student if you activate `randomize order of exercise groups`.
-- Finally, you can fill out the exam `start text` and `end text`. Artemis will present these texts to the students during the [exam conduction](/instructor/exams/conduct-an-exam#conduction), at the *Start-* and *End* page respectively.
+The form is divided into the sections below, in this order. Only the exam title and the three conduction dates are
+mandatory; leave a date blank and that step of the exam simply does not happen, which the form says above the
+assessment dates.
 
-<Image src={examConfiguration} alt="Create and Configure" size={ImageSize.large} caption="Create and Configure the Exam" />
+### Exam Configuration
 
-<Image src={examConduction} alt="Exam Conduction" size={ImageSize.large} caption="Exam Conduction" />
+**Exam Title** names the exam everywhere it appears. **Examiner**, **Module number** and **Course name** are
+printed on the exam and on the score export, so fill them in as your examination office expects them.
 
-<Image src={examExercises} alt="Exam Exercises" size={ImageSize.large} caption="Exam Exercises" />
+**Exam with attendance check** marks the exam as one where supervisors verify who is sitting at each machine. It is
+what the [Exam Participation Checker](/instructor/exams/participation-checker) app works against.
 
-<Image src={examAssessment} alt="Exam Assessment and Student Review" size={ImageSize.large} caption="Exam Assessment and Student Review" />
+<Image src={examConfiguration} alt="Exam Configuration section of the exam creation form" size={ImageSize.large} caption="Exam Configuration" />
 
-### Import Exam
+### Exam Conduction
 
-- Instead of creating a new exam, you can import an existing exam by clicking on <img src={importExam} alt="Import Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> from any of the courses you are an instructor in.
-- Artemis displays a list of all available exams. To select one specific exam for the import, click on the <img src={importIndividualExam} alt="Import Individual Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+Three dates define when the exam happens, and all three are required:
 
-<Image src={examImportSelection} alt="List with all exams available for import" size={ImageSize.large} caption="List with all exams available for import" />
+- **Visible from** — students see the exam and can open its start page, but cannot reach the exercises yet.
+- **Start of working time** — students may begin.
+- **End of working time** — students may no longer work.
 
-- You are now presented with the *Import Exam* view. All information except for the dates are copied from the exam you selected for the import. You can find more information regarding this view at the section [create exam](#create-exam).
-- Additionally, you can select or deselect exercises which are imported alongside the exam. You can find more information regarding the exercise import in the [section regarding the exercise group import](/instructor/exams/add-exercises#import-exercise-groups).
+**Working Time (minutes)** is derived from the two working-time dates rather than entered directly; editing it
+moves the end date. **Grace period (seconds)** is the extra time students get to hand in after the working time
+ends, and defaults to 180 seconds. No new submissions are possible during the grace period — it exists so that
+pressing submit at the last second still works.
+
+<Image src={examConduction} alt="Exam Conduction section with the visible, start and end dates" size={ImageSize.large} caption="Exam Conduction" />
+
+### Exam Exercises
+
+**Maximum number of points for exam** is the total the exam is worth. **Number of exercises in exam** must equal
+the number of [exercise groups](/instructor/exams/add-exercises#exercise-groups) you intend the exam to have. You
+can leave it empty while building the exam, but it has to be set before Artemis can
+[generate the individual exams](/instructor/exams/prepare-and-test#generate-the-individual-exams).
+
+**Randomize order of exercise groups** gives each student the exercises in a different order.
+
+<Image src={examExercises} alt="Exam Exercises section with points and number of exercises" size={ImageSize.large} caption="Exam Exercises" />
+
+### Exam Assessment and Student Review
+
+**Number of correction rounds in exam** set to two lets a second tutor assess each exam after the first, which is
+described under [second correction](/instructor/exams/assess-an-exam#assessment-with-second-correction-round).
+
+**Release Date of Results** is when students see their results.
+
+**Submission Overview Visible From** controls when a student can open the summary of their own submitted exam — the
+questions, their answers, and the PDF export. Leave it empty and the summary appears immediately after submission.
+Setting it later matters for an exam written in several shifts, so that early submitters cannot pass the content on
+to a later shift. It has to fall after the end of working time and no later than the release date of results.
+
+**Begin of Student Review** and **End of Student Review** bound the window in which students may inspect their
+assessed exam and object to it. See [Student Review and Complaints](/instructor/exams/review-and-complaints).
+
+<Image src={examAssessment} alt="Exam Assessment and Student Review section" size={ImageSize.large} caption="Exam Assessment and Student Review" />
+
+### Exam Solutions
+
+**Example Solution Publication Date** is when students who participated can see the example solutions of every
+exercise in the exam. Leave it blank to publish no solutions at all.
+
+### Exam Texts
+
+**Exam start text** and **Exam end text** are shown on the start and end pages during
+[conduction](/instructor/exams/conduct-an-exam). Use the start text for the rules of the exam and the end text for
+what happens next.
+
+**Exam start confirmation text** and **Exam end confirmation text** are the declarations a student signs with their
+full name before starting and after finishing. Artemis ships defaults for both, so change them only if your
+institution requires different wording.
+
+## Import an Existing Exam
+
+**Import an exam** lists every exam from the courses where you are an instructor. Choose one and Artemis copies its
+configuration into a new exam in your course.
+
+<Image src={examImportSelection} alt="List of exams available for import" size={ImageSize.large} caption="Exams available for import" />
+
+The import form is the creation form with everything except the dates already filled in, so review it as described
+above and set the timeline for your own exam. You can also select which exercises come across with the exam; the
+[exercise group import](/instructor/exams/add-exercises#import-exercise-groups) explains what is and is not copied.
+
+<Callout variant={CalloutVariant.info}>
+
+  Dates are deliberately not copied. An imported exam has no timeline until you give it one, which is also why it
+  cannot accidentally become visible to students.
+
+</Callout>

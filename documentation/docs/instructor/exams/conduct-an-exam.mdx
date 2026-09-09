@@ -3,16 +3,38 @@ id: conduct-an-exam
 title: Conduct an Exam
 sidebar_label: Conduct an Exam
 ---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import editButton from './assets/buttons/edit.png';
 import exerciseNotification from './assets/exercise-notification.png';
 
-## Conduction
+Conduction begins at **Visible from** and ends when the last student's working time is over. Students can open the
+start page from the moment the exam is visible, and reach the exercises from **Start of working time**. Once a
+student submits, their submissions are final.
 
-The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot change the [exam configuration](/instructor/exams/create-an-exam#create-and-configure-exam) or individual [student exams](/instructor/exams/prepare-and-test#manage-student-exams). When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. After a student submits the exam, they cannot change their exercise submissions.
+<Callout variant={CalloutVariant.warning}>
 
-### Updating an Exercise during the Exam
+  From the moment the exam is visible you can no longer change its configuration or the individual exams. Anything
+  still outstanding — registrations, generated exams, prepared exercises — has to be settled before that date. See
+  [Prepare and Test an Exam](/instructor/exams/prepare-and-test).
 
-In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on <img src={editButton} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to edit the exercise. At the bottom of the exercise edit page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification.
+</Callout>
 
-<Image src={exerciseNotification} alt="Field to enter a notification text" size={ImageSize.large} caption="Field to enter a notification text" />
+There is very little to do during conduction itself, which is the point of the checklist and the test run. What you
+do need is a way to correct a mistake in an exercise while students are working on it.
+
+## Updating an Exercise during the Exam
+
+Programming, modeling, text and file upload exercises can be edited mid-exam. Open the exercise and choose **Edit**.
+At the bottom of the edit page is a field for a notification text, which Artemis shows to every student currently
+sitting the exam — so the correction reaches people who have already read the old wording.
+
+<Image src={exerciseNotification} alt="Notification text field at the bottom of the exercise edit page" size={ImageSize.large} caption="A notification shown to students during the exam" />
+
+<Callout variant={CalloutVariant.info}>
+
+  Write the notification as an instruction rather than a changelog. A student mid-exam needs to know what to do
+  now, not what the exercise used to say.
+
+</Callout>
