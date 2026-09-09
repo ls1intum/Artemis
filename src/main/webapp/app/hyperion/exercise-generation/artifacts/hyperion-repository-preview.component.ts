@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, shareReplay } from 'rxjs';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -33,6 +33,11 @@ export class HyperionRepositoryPreviewComponent {
     private readonly identity = computed(() => `${this.exercise().id}:${this.file().key}`);
     protected readonly compare = linkedSignal({ source: this.identity, computation: () => false });
     private readonly retry = signal(0);
+    private readonly readCache = computed(() => {
+        this.identity();
+        this.retry();
+        return new Map<HyperionArtifactFile['repo'], Observable<RepositoryRead>>();
+    });
     protected readonly preview = signal<Preview>({ kind: 'file', state: { kind: 'loading' } });
     protected readonly canCompare = computed(
         () =>
@@ -90,6 +95,17 @@ export class HyperionRepositoryPreviewComponent {
     }
 
     private read(repo: HyperionArtifactFile['repo'], path: string, exercise: ProgrammingExercise): Observable<RepositoryRead> {
+        const cache = this.readCache();
+        let read = cache.get(repo);
+        if (!read) {
+            // Reuse this file's read when comparison is toggled, including an in-flight request. No editor state is cached.
+            read = this.readRepository(repo, path, exercise).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+            cache.set(repo, read);
+        }
+        return read;
+    }
+
+    private readRepository(repo: HyperionArtifactFile['repo'], path: string, exercise: ProgrammingExercise): Observable<RepositoryRead> {
         let domain: DomainChange | undefined;
         if (repo === 'tests' && exercise.id !== undefined) {
             domain = [DomainType.TEST_REPOSITORY, exercise];
