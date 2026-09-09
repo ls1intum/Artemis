@@ -338,6 +338,12 @@ public class GitService extends AbstractGitService {
                 Thread.sleep(1000);
             }
             catch (InterruptedException ex) {
+                // The interrupt status is deliberately not restored here, which is what java:S2142 would ask for.
+                // CanceledException is a GitAPIException, and callers catch it per element and carry on: the
+                // plagiarism check maps over participations in a parallel stream, and a ForkJoinPool worker does not
+                // clear a leftover flag between elements the way a ThreadPoolExecutor worker does. A restored flag
+                // would make every later clone on that worker fail inside interruptible NIO and delete its working
+                // copy, turning one abandoned clone into a whole worker's worth of them.
                 throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
             }
 
