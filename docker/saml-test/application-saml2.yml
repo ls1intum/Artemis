@@ -34,5 +34,3 @@ saml2:
 
 info.saml2:
     buttonLabel: 'SAML2 Login'
-    passwordLoginDisabled: false
-    enablePassword: true

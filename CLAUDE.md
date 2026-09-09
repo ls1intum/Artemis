@@ -9,7 +9,7 @@ This file holds **facts** about the repository. **Procedures** live in [`skills/
 - `e2e-pr-check` — run only the Playwright specs a change affects, and read the result correctly
 - `ci-triage` — classify a red build before changing any code
 - `server-arch-gates` — the architectural rules a server change must satisfy, and how to check each locally
-- `liquibase-migration` — write a changelog that survives a rolling deploy on both databases
+- `liquibase-migration` — write a changelog that applies cleanly on both databases
 - `client-conventions` — Angular signal APIs, cloning, template control flow, TUM UI styling
 - `write-tests` — base class selection and the test commands that silently do the wrong thing
 - `local-setup` — fresh clone to a running server and client
@@ -141,7 +141,7 @@ Organized by feature module:
 - `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
 - `programming/` - Programming exercises (lifecycle, grading, repositories)
-- `jenkins/` - Jenkins CI backend connector
+- `jenkins/` - Jenkins CI connector
 - `localvc/` - Embedded git server (HTTP + SSH), repo URI handling, VCS access tokens
 - `localci/` - Local CI orchestration: build job queue, dispatch, result processing
 - `quiz/` - Quiz exercises
@@ -192,13 +192,18 @@ Organized by feature module:
   `instructor/`, `student/`, `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx
   location and anything written there is invisible on the documentation site. A `README.md` next to the tool it
   explains (a script directory, a docker setup) stays where it is and does not move into the site tree.
-- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
+- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter, and no H1 in the body —
+  Docusaurus renders the heading from `title`, so writing both makes the title drift. A new page is only reachable
   once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
 - Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do
   not reference pull requests, issues, or commits, and do not describe the change relative to a previous release.
 - **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
   description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
   page for its audience.
+- Full conventions — heading and anchor rules, naming controls in bold rather than backticks, screenshot and
+  screencast practice, when to split a page — live in
+  [`documentation/docs/developer/guidelines/documentation.mdx`](./documentation/docs/developer/guidelines/documentation.mdx).
+  Read it before writing or restructuring a page.
 
 ### API Specification
 
@@ -229,10 +234,10 @@ Organized by feature module:
 
 ### Distributed data (cross-node state)
 
-- **Never use Hazelcast or Redis directly.** All cross-node state — build job queue, feature toggles, scheduling messages, websocket broker status, LTI state, Pyris jobs, `@Cacheable` caches — goes through `DistributedDataProvider` (`core/service/distributed`). An ArchUnit rule (`DistributedDataProviderArchitectureTest`) fails the build if a production class outside a small, explicitly named set of backend adapters depends on `com.hazelcast..`, `org.redisson..` or `org.springframework.data.redis..`.
-- The backend is selected by `artemis.distributed-data.provider` (`Hazelcast` default, `Redis`, `Local`). With `Redis` no Hazelcast instance is created at all, so any direct usage silently loses that state instead of failing.
-- Request entry lifetimes at the call site with `getExpiringMap(name, ttl)`; a backend map configuration only applies to that backend. `getMap(name)` rejects a per-entry TTL for exactly this reason.
-- Missing capability? Add it to `DistributedDataProvider`, implement it for all three backends, and add a case to `AbstractDistributedDataTest` — that suite is what keeps the backends in agreement.
+- **Never use Hazelcast or Redis directly.** All cross-node state — build job queue, feature toggles, scheduling messages, websocket broker status, LTI state, Pyris jobs, `@Cacheable` caches — goes through `DistributedDataProvider` (`core/service/distributed`). An ArchUnit rule (`DistributedDataProviderArchitectureTest`) fails the build if a production class outside a small, explicitly named set of provider adapters depends on `com.hazelcast..`, `org.redisson..` or `org.springframework.data.redis..`.
+- The provider is selected by `artemis.distributed-data.provider` (`Hazelcast` default, `Redis`, `Local`). With `Redis` no Hazelcast instance is created at all, so any direct usage silently loses that state instead of failing.
+- Request entry lifetimes at the call site with `getExpiringMap(name, ttl)`; a provider-level map configuration only applies to that provider. `getMap(name)` rejects a per-entry TTL for exactly this reason.
+- Missing capability? Add it to `DistributedDataProvider`, implement it for all three providers, and add a case to `AbstractDistributedDataTest` — that suite is what keeps the providers in agreement.
 - Full rationale and patterns: `documentation/docs/developer/guidelines/distributed-data.mdx`.
 
 ### TypeScript/Angular
@@ -274,6 +279,15 @@ Organized by feature module:
     - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
     - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
     - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
+
+### Terminology
+
+- **Never write "frontend" or "backend".** Both are too vague to say which component is meant, they flip meaning depending on who is speaking, and they hide the boundary that actually matters. Name the component instead. This applies to code, comments, Javadoc, commit messages, pull request descriptions, and documentation. <!-- terminology-check: allow -->
+- Say **client** (or **web client**, **user interface**) for the Angular application, and **server** (or **application server**, or the specific service such as `the grading service`) for the Spring Boot application.
+- Say **provider** for a swappable distributed data implementation (Hazelcast, Redis, Local), and **adapter** for the glue that binds one of them. Elsewhere, name the concrete system: `the embedding service`, `the database`, `the mail transport`, `the version control system`.
+- Do not label people or teams either: prefer `client developer` / `server developer`, or better, the feature they own.
+- `supporting_scripts/check_terminology.py` fails CI on any new occurrence. `src/main/resources/config/liquibase/` is out of scope entirely, because a merged changeset is immutable: Liquibase stores a checksum and the application refuses to start when the file no longer matches. The check also allows a short list of third-party identifiers (Keycloak `frontendUrl`, Gateway API `backendRefs`, Angular `HttpXhrBackend`, the Dart `frontend_server_client` package, the macOS process `com.docker.backend`), which are other people's names and must not be renamed. An allowlisted name is exempt only as a whole token, so it cannot shield a coined one.
+- Full rationale, mapping table, and examples: `documentation/docs/developer/guidelines/terminology.mdx`.
 
 ### General
 

@@ -48,7 +48,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'General Guidelines',
-                    items: ['guidelines/language'],
+                    items: ['guidelines/documentation', 'guidelines/language', 'guidelines/terminology'],
                 },
             ],
         },
@@ -62,6 +62,7 @@ const sidebars: SidebarsConfig = {
         'e2e-testing-playwright',
         'e2e-testing-iris',
         'nightly-ci',
+        'code-quality-analysis',
         'spring-ai',
         'ai-pipelines',
         'deimos',
