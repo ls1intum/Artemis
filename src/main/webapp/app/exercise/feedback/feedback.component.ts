@@ -25,7 +25,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
-import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
+import { evaluateTemplateStatus, isInstructorAssessedResult, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
 import { stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
@@ -78,6 +78,7 @@ export class FeedbackComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly resultIsPreliminary = resultIsPreliminary;
+    readonly isInstructorAssessedResult = isInstructorAssessedResult;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 

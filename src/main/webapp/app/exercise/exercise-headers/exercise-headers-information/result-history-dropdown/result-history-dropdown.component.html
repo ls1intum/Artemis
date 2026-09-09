@@ -41,24 +41,30 @@
                             <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
                             <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
                         }
+                        <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
                         @if (isAthenaAIResult(result)) {
-                            <fa-icon
+                            <p-tag
                                 data-testid="ai-feedback-indicator"
-                                [icon]="faRobot"
-                                class="flex-shrink-0"
-                                role="img"
-                                [attr.aria-label]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                                severity="info"
+                                [value]="'artemisApp.result.aiFeedback' | artemisTranslate"
                                 [pTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
                             />
                         }
-                        <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
-                    </div>
-                    @if (shouldShowResultMetadata(result)) {
-                        <div class="d-flex align-items-center gap-1">
+                        @if (isInstructorAssessedResult(result)) {
+                            <p-tag
+                                data-testid="instructor-feedback-indicator"
+                                severity="secondary"
+                                [value]="'artemisApp.result.instructorFeedback' | artemisTranslate"
+                                [pTooltip]="'artemisApp.result.instructorFeedbackTooltip' | artemisTranslate"
+                            />
+                        }
+                        @if (shouldShowResultMetadata(result)) {
                             <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadge(result).severity" />
                             <span class="text-body-tertiary" style="font-size: 11px">{{ result.completionDate | artemisDate }}</span>
-                        </div>
-                    }
+                        }
+                    </div>
                 </div>
                 @if (exercise().type === ExerciseType.PROGRAMMING && shouldShowResultMetadata(result)) {
                     <p-button
