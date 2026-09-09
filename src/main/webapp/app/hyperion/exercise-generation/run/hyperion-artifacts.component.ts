@@ -15,6 +15,7 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HyperionEmptyComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-empty.component';
+import { HyperionRepositoryPreviewComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-repository-preview.component';
 import { HyperionFileContentComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-file-content.component';
 import { HyperionMarkdownComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-markdown.component';
 import { HyperionFileChangeListComponent } from 'app/hyperion/exercise-generation/run/hyperion-file-change-list.component';
@@ -40,6 +41,7 @@ export type HyperionArtifactTab = 'statement' | 'spec' | 'files';
         HyperionEmptyComponent,
         HyperionFileChangeListComponent,
         HyperionFileContentComponent,
+        HyperionRepositoryPreviewComponent,
         HyperionMarkdownComponent,
         TumUiButtonComponent,
         TumUiMessageComponent,
@@ -85,7 +87,7 @@ export class HyperionArtifactsComponent {
     protected readonly selectedFileKey = linkedSignal({ source: this.runIdentity, computation: (): string | undefined => undefined });
 
     /** A run that saved its work has no retained draft; the exercise's own statement is then the only honest source. */
-    private readonly saved = computed(() => this.savedToExercise() || this.savedProblemStatement() !== undefined);
+    protected readonly saved = computed(() => this.savedToExercise() || this.savedProblemStatement() !== undefined);
 
     /** The live exercise wins: once the draft is saved, what the instructor sees must be what is actually stored. */
     protected readonly problemStatement = computed(() => this.savedProblemStatement() ?? this.retained()?.problemStatement);
