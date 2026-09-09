@@ -8,7 +8,7 @@ import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
-import instructorEditor from '../assets/programming/instructor-editor.png';
+import instructorEditor from '../assets/programming/code-editor-instructor.png';
 import collaborativeCodeEditor from '../assets/programming/collaborative-editing-code-editor.png';
 import collaborativeMetadataModal from '../assets/programming/collaborative-editing-metadata-modal.png';
 import collaborativeProblemStatement from '../assets/programming/collaborative-editing-problem-statement.gif';
@@ -121,7 +121,7 @@ cd tests || exit 1
 
 Open **Edit in Editor** in Artemis and adapt the code in the online editor.
 
-<Image src={instructorEditor} alt="Instructor Editor" size={ImageSize.large} caption="Edit in Online Editor" />
+<Image src={instructorEditor} alt="Online editor on the template repository, with the tasks beside the code" size={ImageSize.large} caption="Editing the template repository" />
 
 You can switch between different repositories and **Submit** the code when done.
 
@@ -164,7 +164,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
     <strong>Tips and Limitations:</strong>
 
     <ul>
-        <li>Click **Submit** frequently to ensure your work is committed to the repository.</li>
+        <li>Click <strong>Submit</strong> frequently to ensure your work is committed to the repository.</li>
         <li>Avoid mixing the online editor and external Git tools at the same time — pick one workflow per editing session to reduce the chance of conflicts.</li>
         <li>Use cursor awareness to see where your collaborators are editing.</li>
         <li>Handle commit alerts promptly — save and refresh before continuing to edit.</li>
