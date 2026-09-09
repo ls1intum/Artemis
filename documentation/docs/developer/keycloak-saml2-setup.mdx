@@ -133,8 +133,6 @@ saml2:
 
 info.saml2:
     buttonLabel: 'SAML2 Login'
-    passwordLoginDisabled: false
-    enablePassword: true
 ```
 
 Replace `<ABSOLUTE_PATH>` with the actual absolute path from `realpath` in Step 2.
@@ -152,7 +150,7 @@ Replace `<ABSOLUTE_PATH>` with the actual absolute path from `realpath` in Step 
 
 ### Angular Dev Server (port 9000)
 
-When using `pnpm start` (Angular dev server on port 9000), the SAML2 paths must be proxied to the Spring Boot backend. The proxy configuration in `proxy.conf.mjs` must include `/saml2/` and `/login/saml2/` — these are already configured in the project.
+When using `pnpm start` (Angular dev server on port 9000), the SAML2 paths must be proxied to the Spring Boot server. The proxy configuration in `proxy.conf.mjs` must include `/saml2/` and `/login/saml2/` — these are already configured in the project.
 
 The Keycloak realm also needs `http://localhost:9000/login/saml2/sso/keycloak` as an allowed redirect URI. This is preconfigured in the provided `artemis-realm.json`.
 

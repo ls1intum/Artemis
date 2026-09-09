@@ -6,7 +6,8 @@ sidebar_label: Shibboleth / SAML2 Login
 
 import Image, { ImageSize } from "../../src/components/Image/Image";
 
-import saml2LoginImg from "./assets/saml2-login-registration/SAML2-Login.png";
+import saml2LoginIdentifierImg from "./assets/saml2-login-registration/SAML2-Login-Identifier.png";
+import saml2LoginProviderImg from "./assets/saml2-login-registration/SAML2-Login-Provider.png";
 import saml2WorkflowImg from "./assets/saml2-login-registration/SAML2-Workflow.png";
 import saml2FilterchainImg from "./assets/saml2-login-registration/SAML2-Filterchain.png";
 
@@ -25,13 +26,27 @@ database level.
 - If you use a **reverse proxy**, you have to redirect the following endpoints to the artemis server: **/login** and **/saml2**.
 - For testing you can use a <a href="https://github.com/kit-sdq/Artemis-SAML2-Test-Docker">preconfigured environment</a>.
 
-If you activate the SAML2 Feature an additional login button will be activated (you can set the text of the button as you like):
+If you activate the SAML2 feature, the sign-in page offers the identity provider in place of a password field.
+Users enter their login or email address first:
 
 <Image
-  src={saml2LoginImg}
-  alt={"SAML2 Login"}
-  size={ImageSize.large}
+  src={saml2LoginIdentifierImg}
+  alt={"The first step of the sign-in page, asking for a login or email address"}
+  size={ImageSize.medium}
 />
+
+Artemis then shows a password field for an account it manages itself, and a button that starts the SAML2 login for every other account, including an identifier it has never seen.
+You can set the text of that button as you like, through `info.saml2.buttonLabel`.
+If OIDC is enabled as well, it takes precedence and the button starts the OIDC login instead, so this button appears only while `artemis.user-management.oidc.enabled` is false:
+
+<Image
+  src={saml2LoginProviderImg}
+  alt={"The second step of the sign-in page, offering the configured SAML2 identity provider"}
+  size={ImageSize.medium}
+/>
+
+Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as accounts that Artemis manages itself, so they are offered the password form rather than the identity provider.
+See [Accounts provisioned through SAML2](./upgrade-guide.mdx#99-accounts-provisioned-through-saml2) for the one-time change that puts them back on the identity provider.
 
 The workflow of the SAML2 feature is shown in the following picture:
 
@@ -52,8 +67,7 @@ The new (and old) security filter chain is presented in the following figure:
 
 The feature is configured by the `application-saml2.yml` file.
 You can configure multiple identity providers.
-In addition, the SAML2 feature allows to decide whether a user can obtain a password (see `info.saml2.enablePassword`).
-This app password allows to use the connected services as VCS and CI as usual with the local user credentials.
+An account the identity provider manages is externally managed and holds no Artemis password: it authenticates against the identity provider, and uses a VCS access token or an SSH key for Git.
 
 You can see the structure of the saml2 configuration in the following:
 
@@ -100,14 +114,6 @@ info:
     saml2:
         # Name of the button to login with SAML2
         buttonLabel: 'SAML2 Login'
-        # Name of the identity provider (e.g., University X Account). Only used for the text at login page
-        identityProviderName: 'Shibboleth Account'
-        # Hide the password login form. If true, the password login form is hidden and only the SAML2 login button is shown.
-        passwordLoginDisabled: false
-        # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-        # services such as Jenkins. It also allows the users to use password-based Git workflow.
-        # It also enables the password reset function in Artemis.
-        enablePassword: true
         # If enabled, the user's first and last name will be synced to the internal artemis user on every login.
         syncUserData: false
 ```
@@ -127,9 +133,6 @@ saml2:
 info:
     saml2:
         buttonLabel: 'Shibboleth Login'
-        enablePassword: false
-        passwordLoginDisabled: true
-        identityProviderName: 'Shibboleth Account'
         syncUserData: false
 spring:
     security:

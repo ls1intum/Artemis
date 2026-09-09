@@ -111,7 +111,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // instructor can toggle resolve on someone else's answer without being allowed to rewrite its
         // content.
         // * If the resolve flag is actually changing, the request is treated primarily as a resolve
-        // operation. Sending the existing content alongside (a common frontend pattern) does not trigger
+        // operation. Sending the existing content alongside (a common client pattern) does not trigger
         // the content-edit authorization. If the request additionally carries *different* content, the
         // content edit is independently authorized — this closes the CodeRabbit-flagged corner case where
         // a single PUT that changed both fields silently dropped the content because only the resolve

@@ -219,11 +219,11 @@ public class ConsistencyCheckTestService {
     @NonNull
     private List<ConsistencyErrorDTO> getConsistencyErrorDTOS() {
         List<ConsistencyErrorDTO> expectedErrors = new ArrayList<>();
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise1), ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
         return expectedErrors;
     }
 
@@ -241,9 +241,9 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), false, false);
 
         List<ConsistencyErrorDTO> expectedErrors = new ArrayList<>();
-        expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
-        expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise), ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise), ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
+        expectedErrors.add(new ConsistencyErrorDTO(ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(exercise), ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
 
         var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(3);
