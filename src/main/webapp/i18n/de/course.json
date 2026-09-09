@@ -240,7 +240,8 @@
             "athenaConfig": {
                 "aiFeedbackEnabled": {
                     "label": "KI-gestütztes Feedback für Aufgaben aktiviert",
-                    "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden."
+                    "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden.",
+                    "moduleDisabledTooltip": "Athena ist auf dieser Artemis-Instanz nicht aktiviert. Wende dich an deine Administration, um es zu aktivieren."
                 },
                 "aiExperienceHint": "Deine KI-Erfahrung ist nicht aktiviert. Aktiviere sie, um KI-generiertes Feedback selbst zu sehen und zu nutzen.",
                 "enableAiExperience": "KI-Erfahrung aktivieren",

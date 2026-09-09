@@ -240,7 +240,8 @@
             "athenaConfig": {
                 "aiFeedbackEnabled": {
                     "label": "AI Assisted Feedback for Exercises Enabled",
-                    "tooltip": "When enabled, Athena AI feedback features can be activated for this course."
+                    "tooltip": "When enabled, Athena AI feedback features can be activated for this course.",
+                    "moduleDisabledTooltip": "Athena is not enabled on this Artemis instance. Contact your administrator to activate it."
                 },
                 "aiExperienceHint": "Your AI Experience is not enabled. Enable it to see and interact with AI-generated feedback yourself.",
                 "enableAiExperience": "Enable AI Experience",
