@@ -89,6 +89,9 @@
                         </div>
                     } @else if (showPoints()) {
                         <div class="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">{{ pointsLabel() }}</div>
+                        @if (isSubsequentFeedback()) {
+                            <fa-icon class="unified-feedback-subsequent-icon" [icon]="faExclamationTriangle" [tumUiTooltip]="subsequentFeedbackTooltip()" />
+                        }
                     }
                 </div>
             </div>

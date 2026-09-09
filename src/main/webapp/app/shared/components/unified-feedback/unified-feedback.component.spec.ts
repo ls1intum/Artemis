@@ -189,6 +189,17 @@ describe('UnifiedFeedbackComponent', () => {
         expect(pill.classList).toContain('unified-feedback-points--neutral');
     });
 
+    it('should render a subsequent-feedback indicator next to the read-only points pill when the feedback is subsequent', () => {
+        fixture.componentRef.setInput('points', -1);
+        fixture.componentRef.setInput('feedback', { isSubsequent: true } as Feedback);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-subsequent-icon')).toBeTruthy();
+
+        fixture.componentRef.setInput('feedback', { isSubsequent: false } as Feedback);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-subsequent-icon')).toBeNull();
+    });
+
     it('should wrap the type icon in a circular icon badge', () => {
         fixture.detectChanges();
         const badge = fixture.nativeElement.querySelector('.unified-feedback-icon-badge');

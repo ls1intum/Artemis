@@ -44,8 +44,5 @@
                 <span jhiTranslate="entity.action.edit"></span>
             </button>
         }
-        @if (readOnly() && feedback.isSubsequent) {
-            <fa-icon class="text-secondary mt-1" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
-        }
     </div>
 }

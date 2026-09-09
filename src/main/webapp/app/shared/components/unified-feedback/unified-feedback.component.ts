@@ -268,6 +268,11 @@ export class UnifiedFeedbackComponent {
         return !feedback || !Feedback.isNonGradedFeedbackSuggestion(feedback);
     });
 
+    /** Usage-limit-excess feedback whose credits are excluded from the total score, e.g. a subsequent SCA finding beyond the configured limit. */
+    readonly isSubsequentFeedback = computed(() => !!this.feedback()?.isSubsequent);
+
+    readonly subsequentFeedbackTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.subsequentFeedback'));
+
     protected readonly Feedback = Feedback;
     protected readonly faTimes = faTimes;
     protected readonly faTrashAlt = faTrashAlt;

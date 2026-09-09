@@ -2,11 +2,9 @@ import { Component, ElementRef, computed, inject, input, linkedSignal, output, v
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faExclamationTriangle, faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -14,7 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
     styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
-    imports: [TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, UnifiedFeedbackComponent],
+    imports: [TranslateDirective, FaIconComponent, UnifiedFeedbackComponent],
     // Monaco anchors the widget on this component's own host element (see `elementRef` below), so the id/width it
     // needs live on the host directly instead of behind an extra wrapping div in the template.
     host: {
@@ -25,7 +23,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;
     protected readonly faPencilAlt = faPencilAlt;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly Feedback = Feedback;
     protected readonly MANUAL = FeedbackType.MANUAL;
 
