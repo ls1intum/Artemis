@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
 import java.time.Instant;
-import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -11,11 +10,9 @@ public record GenerationAssignment(ExecutionIdentity identity, ExerciseBrief bri
         String imageDigest) {
 
     public GenerationAssignment {
-        Objects.requireNonNull(identity);
-        Objects.requireNonNull(brief);
-        Objects.requireNonNull(parameters);
-        Objects.requireNonNull(seed);
-        Objects.requireNonNull(authoringDeadline);
+        if (identity == null || brief == null || parameters == null || seed == null || authoringDeadline == null) {
+            throw new IllegalArgumentException("Assignment fields must be present");
+        }
         if (imageDigest == null || !imageDigest.matches("sha256:[a-f0-9]{64}")) {
             throw new IllegalArgumentException("Assignment must match an immutable worker image");
         }

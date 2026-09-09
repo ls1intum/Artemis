@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
-import java.util.Objects;
-
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,10 +12,9 @@ public record GenerationOutput(WorkspaceSnapshot candidate, VerificationResult v
     public GenerationOutput {
         // NON_EMPTY omits the empty profile; an absent wire value selects deployment defaults.
         effortProfile = effortProfile == null ? "" : effortProfile;
-        Objects.requireNonNull(candidate);
-        Objects.requireNonNull(review);
-        Objects.requireNonNull(verification);
-        Objects.requireNonNull(accountingState);
+        if (candidate == null || review == null || verification == null || accountingState == null) {
+            throw new IllegalArgumentException("Candidate, review, verification and accounting state are required");
+        }
         if (verification.mechanicallyVerified() && !candidate.sha256().equals(verifiedDigest)) {
             throw new IllegalArgumentException("Verification must refer to the exact frozen candidate");
         }
