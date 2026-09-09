@@ -26,6 +26,10 @@ public class ClassNode extends ClassPathNode {
      */
     public ClassNode(@NonNull PackageNode parent, @NonNull Class<?> containedClass, ClassInfo classInfo) {
         super(parent, getClassNameWithoutPackage(containedClass));
+        // See PackageNode: a null parent would be treated as the root instead of failing.
+        if (parent == null) {
+            throw new IllegalArgumentException("ClassNode parent must not be null");
+        }
         this.containedClass = containedClass;
         this.classInfo = classInfo;
     }

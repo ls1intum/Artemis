@@ -46,6 +46,12 @@ public class PackageNode extends ClassPathNode {
      */
     public PackageNode(@NonNull PackageNode parent, String segmentName) {
         super(parent, segmentName);
+        // ClassPathNode treats a null parent as the root, so this cannot be left to the annotation: a null would
+        // silently produce a second root-like node with the wrong name rather than failing. Only the package-private
+        // PackageNode(String) constructor, used by RootNode, may pass null.
+        if (parent == null) {
+            throw new IllegalArgumentException("PackageNode parent must not be null; only the root node has no parent");
+        }
         if (segmentName.contains(".")) {
             throw new IllegalArgumentException("PackageNode segment name must not contain '.': " + segmentName);
         }

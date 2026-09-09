@@ -1157,6 +1157,33 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertTextBlocksHaveSameContent(automaticTextBlock, automaticTextBlockFromImport);
     }
 
+    /**
+     * An instructor can create an example submission and leave it unassessed, so the source submission has no result.
+     * Copying one used to dereference that missing result and fail the whole import with a NullPointerException;
+     * ModelingExerciseImportService already guarded it, the text import did not.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importTextExerciseWithUnassessedExampleSubmissionFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise = textExerciseRepository.save(textExercise);
+        textExercise.setChannelName("testchannel" + textExercise.getId());
+
+        // Deliberately no addResultToSubmission: this is the unassessed case.
+        var exampleSubmission = participationUtilService.generateExampleSubmission("Lorem Ipsum", textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
+
+        TextExerciseResponseDTO newTextExerciseDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(),
+                ImportTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        TextExercise newTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(newTextExerciseDto.id());
+        assertThat(newTextExercise.getExampleSubmissions()).as("the example submission is imported even without a result").hasSize(1);
+        ExampleSubmission newExampleSubmission = newTextExercise.getExampleSubmissions().iterator().next();
+        assertThat(newExampleSubmission.getSubmission().getResults()).as("no result is invented for an unassessed example submission").isEmpty();
+    }
+
     private static void assertTextBlocksHaveSameContent(TextBlock manualTextBlock, TextBlock manualTextBlockFromImport) {
         assertThat(manualTextBlockFromImport.getType()).isEqualTo(manualTextBlock.getType());
         assertThat(manualTextBlockFromImport.getStartIndex()).isEqualTo(manualTextBlock.getStartIndex());

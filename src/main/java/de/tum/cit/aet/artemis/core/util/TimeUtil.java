@@ -101,6 +101,12 @@ public class TimeUtil {
      * @param newClock the new Clock instance to set
      */
     public static void setClock(@NonNull Clock newClock) {
+        // Checked rather than left to the annotation, unlike most non-null contracts in this code base. Nothing
+        // dereferences this value afterwards: ThreadLocal.set(null) succeeds and now() falls back to DEFAULT_CLOCK, so
+        // a test that passed null here would silently become time-dependent instead of failing.
+        if (newClock == null) {
+            throw new IllegalArgumentException("The clock must not be null. Use resetClock() to go back to the system clock.");
+        }
         threadLocalClock.set(newClock);
     }
 
