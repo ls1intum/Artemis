@@ -240,7 +240,7 @@ public class AutomaticAfterDueDateService {
 
         // if correctly set already then keep as is to allow client to modify the build and test date
         final ZonedDateTime currentBuildAndTestDate = exerciseWithBuildConfig.getBuildAndTestStudentSubmissionsAfterDueDate();
-        if (!forceCompute && currentBuildAndTestDate != null && !dueDate.isAfter(currentBuildAndTestDate)) {
+        if (!forceCompute && offset == null && currentBuildAndTestDate != null && !dueDate.isAfter(currentBuildAndTestDate)) {
             return currentBuildAndTestDate;
         }
 

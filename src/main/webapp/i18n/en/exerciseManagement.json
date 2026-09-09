@@ -9,7 +9,8 @@
                 "export": "Export"
             },
             "error": {
-                "onlyIndividualQuiz": "Only individual-mode quizzes can be added to an exercise group."
+                "onlyIndividualQuiz": "Only individual-mode quizzes can be added to an exercise group.",
+                "automaticTestRunAfterAssessmentDueDate": "This programming exercise cannot use the variant group's timeline. LocalCI would run its automatic tests after assessment has ended. Move the assessment due date after the automatic test run and try again."
             },
             "view": {
                 "list": "List",
