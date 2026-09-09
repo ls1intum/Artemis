@@ -321,6 +321,63 @@ class IrisStruggleInterventionPrimitivesTest {
     }
 
     @Test
+    void writeEpisodeOutcome_registered_mirrorSkipsARowDeletedUnderIt() {
+        // The mirror runs holding the EPISODE row locked, while deleteSupersededProactiveMessage holds the SESSION
+        // row, so a superseded-hint delete can take the row this projection aimed at between the read and the write.
+        // Giving up on the zero-row update would leave a surviving message of the episode without its outcome, and a
+        // dismissed hint replayed to Pyris without its dismissed tag is one the pipeline is free to repeat.
+        when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-race")).thenReturn(Optional.of(registeredEpisode("ep-race")));
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-race", USER_ID, EXERCISE_ID)).thenReturn(List.of(100L, 200L));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-race", USER_ID, EXERCISE_ID)).thenReturn(List.of());
+        when(irisMessageRepository.setProactiveOutcomeIfNull(100L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);   // deleted under us
+        when(irisMessageRepository.setProactiveOutcomeIfNull(200L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
+
+        boolean established = episodeService.writeEpisodeOutcome("ep-race", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+
+        assertThat(established).isTrue();
+        InOrder order = inOrder(irisMessageRepository);
+        order.verify(irisMessageRepository).setProactiveOutcomeIfNull(100L, IrisProactiveOutcome.DISMISSED);
+        order.verify(irisMessageRepository).setProactiveOutcomeIfNull(200L, IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    void writeEpisodeOutcome_registered_mirrorStopsAtTheRowItWrote() {
+        // One outcome row per episode: the walk exists for the deleted-row case, not to stamp every candidate.
+        when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-one")).thenReturn(Optional.of(registeredEpisode("ep-one")));
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-one", USER_ID, EXERCISE_ID)).thenReturn(List.of(100L, 200L));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-one", USER_ID, EXERCISE_ID)).thenReturn(List.of());
+        when(irisMessageRepository.setProactiveOutcomeIfNull(100L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
+
+        episodeService.writeEpisodeOutcome("ep-one", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+
+        verify(irisMessageRepository).setProactiveOutcomeIfNull(100L, IrisProactiveOutcome.DISMISSED);
+        verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(eq(200L), any());
+    }
+
+    @Test
+    void writeEpisodeOutcome_registered_mirrorWritesNothingWhenTheEpisodeAlreadyCarriesAnOutcome() {
+        // Without the episode-wide pre-check, a first row that already carries an outcome reports zero rows exactly
+        // like a deleted one, and the walk would stamp a second row.
+        when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-done")).thenReturn(Optional.of(registeredEpisode("ep-done")));
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-done", USER_ID, EXERCISE_ID)).thenReturn(List.of(100L, 200L));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-done", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED));
+
+        episodeService.writeEpisodeOutcome("ep-done", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
+
+        verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
+    }
+
+    /** A registry row that stands for the given episode and carries no outcome yet. */
+    private IrisProactiveEpisode registeredEpisode(String episodeId) {
+        var episode = new IrisProactiveEpisode();
+        episode.setId(7L);
+        episode.setUserId(USER_ID);
+        episode.setExerciseId(EXERCISE_ID);
+        episode.setEpisodeId(episodeId);
+        return episode;
+    }
+
+    @Test
     void writeEpisodeOutcome_rowExists_noOutcomeYet_setsOutcomeAndReturnsTrue() {
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // no outcome episode-wide yet

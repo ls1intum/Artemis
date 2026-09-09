@@ -424,9 +424,23 @@ public class IrisProactiveEpisodeService {
     }
 
     /**
-     * Copy the episode's standing outcome onto its first-persisted message row, so the history replayed to Pyris and
-     * the message DTO keep carrying it. Subordinate to the registry: this is a projection, not the decision, and it
+     * Copy the episode's standing outcome onto one of its message rows, so the history replayed to Pyris and the
+     * message DTO keep carrying it. Subordinate to the registry: this is a projection, not the decision, and it
      * simply does nothing while the episode has no message row yet.
+     *
+     * <p>
+     * Walks the candidates in id order instead of writing blindly to the first one. The guarded update reports
+     * whether the row it aimed at survived, and it can miss: this transaction holds the EPISODE row locked, while
+     * {@code deleteSupersededProactiveMessage} holds the SESSION row, so the two do not serialize against each
+     * other. A delete landing between the read and the write takes the row this projection was aiming at, the
+     * update then touches nothing, and a surviving message of the same episode would be replayed to Pyris without
+     * the outcome - a dismissed hint stripped of its {@code dismissed} tag, which the pipeline is then free to
+     * repeat. Trying the next surviving candidate costs one statement in the race and none otherwise.
+     *
+     * <p>
+     * The episode-wide pre-check keeps the "at most one outcome row per episode" shape: without it, a first row
+     * that already carries an outcome would report zero rows exactly like a deleted one, and the loop would stamp
+     * a second row.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the owning user
@@ -435,10 +449,14 @@ public class IrisProactiveEpisodeService {
      */
     private void mirrorOutcomeOntoMessageRow(String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
         var episodeRowIds = irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc(episodeId, userId, exerciseId);
-        if (episodeRowIds.isEmpty()) {
+        if (episodeRowIds.isEmpty() || !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty()) {
             return;
         }
-        irisMessageRepository.setProactiveOutcomeIfNull(episodeRowIds.getFirst(), outcome);
+        for (long rowId : episodeRowIds) {
+            if (irisMessageRepository.setProactiveOutcomeIfNull(rowId, outcome) == 1) {
+                return;
+            }
+        }
     }
 
     /**
