@@ -443,35 +443,16 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     }
 
     /**
-     * Copies parsed field values into the previously persisted criterion/instruction objects so
-     * unchanged rows keep their database IDs (and any feedback still linked to them).
-     *
-     * Only runs when criterion/instruction counts match at every index — insertions and deletions
-     * would shift later rows and attach the wrong IDs. Pure reordering with identical counts still
-     * rematches by position (markdown has no instruction ids); that is accepted over inventing a
-     * brittle content fingerprint.
+     * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
+     * database IDs (and feedback links). Same shape → match by position (covers in-place field
+     * edits). Shape change → match by title / instruction content fingerprint so insertions,
+     * deletions, and reorders do not wipe every ID or attach an ID to the wrong row.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
-        if (!this.hasSameCriteriaStructure(previousCriteria, parsedCriteria)) {
-            return;
-        }
-        const reconciled = parsedCriteria.map((parsedCriterion, criterionIndex) => {
-            const existingCriterion = previousCriteria[criterionIndex];
-            existingCriterion.title = parsedCriterion.title;
-            const parsedInstructions = parsedCriterion.structuredGradingInstructions ?? [];
-            const existingInstructions = existingCriterion.structuredGradingInstructions ?? [];
-            existingCriterion.structuredGradingInstructions = parsedInstructions.map((parsedInstruction, instructionIndex) => {
-                const existingInstruction = existingInstructions[instructionIndex];
-                existingInstruction.credits = parsedInstruction.credits;
-                existingInstruction.gradingScale = parsedInstruction.gradingScale;
-                existingInstruction.instructionDescription = parsedInstruction.instructionDescription;
-                existingInstruction.feedback = parsedInstruction.feedback;
-                existingInstruction.usageCount = parsedInstruction.usageCount;
-                return existingInstruction;
-            });
-            return existingCriterion;
-        });
+        const reconciled = this.hasSameCriteriaStructure(previousCriteria, parsedCriteria)
+            ? this.reconcileCriteriaByPosition(previousCriteria, parsedCriteria)
+            : this.reconcileCriteriaByContent(previousCriteria, parsedCriteria);
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
     }
@@ -481,6 +462,64 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return false;
         }
         return previous.every((criterion, index) => (criterion.structuredGradingInstructions?.length ?? 0) === (parsed[index].structuredGradingInstructions?.length ?? 0));
+    }
+
+    private reconcileCriteriaByPosition(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): GradingCriterion[] {
+        return parsedCriteria.map((parsedCriterion, criterionIndex) => {
+            const existingCriterion = previousCriteria[criterionIndex];
+            existingCriterion.title = parsedCriterion.title;
+            const parsedInstructions = parsedCriterion.structuredGradingInstructions ?? [];
+            const existingInstructions = existingCriterion.structuredGradingInstructions ?? [];
+            existingCriterion.structuredGradingInstructions = parsedInstructions.map((parsedInstruction, instructionIndex) =>
+                this.applyInstructionFields(existingInstructions[instructionIndex], parsedInstruction),
+            );
+            return existingCriterion;
+        });
+    }
+
+    private reconcileCriteriaByContent(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): GradingCriterion[] {
+        const unusedCriteria = [...previousCriteria];
+        return parsedCriteria.map((parsedCriterion) => {
+            const matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
+            if (matchIndex < 0) {
+                return parsedCriterion;
+            }
+            const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
+            existingCriterion.title = parsedCriterion.title;
+            existingCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
+                existingCriterion.structuredGradingInstructions ?? [],
+                parsedCriterion.structuredGradingInstructions ?? [],
+            );
+            return existingCriterion;
+        });
+    }
+
+    private reconcileInstructionsByContent(previousInstructions: GradingInstruction[], parsedInstructions: GradingInstruction[]): GradingInstruction[] {
+        const unusedInstructions = [...previousInstructions];
+        return parsedInstructions.map((parsedInstruction) => {
+            const fingerprint = this.instructionFingerprint(parsedInstruction);
+            const matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
+            if (matchIndex < 0) {
+                return parsedInstruction;
+            }
+            const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
+            return this.applyInstructionFields(existingInstruction, parsedInstruction);
+        });
+    }
+
+    private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {
+        existingInstruction.credits = parsedInstruction.credits;
+        existingInstruction.gradingScale = parsedInstruction.gradingScale;
+        existingInstruction.instructionDescription = parsedInstruction.instructionDescription;
+        existingInstruction.feedback = parsedInstruction.feedback;
+        existingInstruction.usageCount = parsedInstruction.usageCount;
+        return existingInstruction;
+    }
+
+    private instructionFingerprint(instruction: GradingInstruction): string {
+        return [instruction.credits ?? '', instruction.gradingScale ?? '', instruction.instructionDescription ?? '', instruction.feedback ?? '', instruction.usageCount ?? ''].join(
+            '\0',
+        );
     }
 
     /**

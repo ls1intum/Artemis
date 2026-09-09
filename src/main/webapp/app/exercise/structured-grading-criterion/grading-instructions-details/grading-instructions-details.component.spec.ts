@@ -759,7 +759,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('updated feedback');
     });
 
-    it('should not reuse persisted ids when parsed instruction structure changes', () => {
+    it('should keep persisted ids on unchanged instructions when another instruction is inserted', () => {
         exercise.gradingInstructionFeedbackUsed = true;
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
@@ -770,7 +770,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
         const instructionAction = domainActions[1].action;
-        // Insert a second instruction before the original — positional reuse would attach id 1 to the wrong row.
+        // Insert a second instruction before the original — content match must keep id 1 on the original row.
         domainActions.splice(
             1,
             0,
@@ -786,10 +786,10 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
         expect(instructions).toHaveLength(2);
-        expect(instructions[0]).not.toBe(originalInstruction);
         expect(instructions[0].id).toBeUndefined();
-        expect(instructions[1].id).toBeUndefined();
         expect(instructions[0].gradingScale).toBe('inserted');
+        expect(instructions[1]).toBe(originalInstruction);
+        expect(instructions[1].id).toBe(1);
     });
 
     it('should update properties for grading instruction', () => {
