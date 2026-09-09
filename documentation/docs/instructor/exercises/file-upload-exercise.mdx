@@ -5,13 +5,17 @@ sidebar_label: File Upload Exercise
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import creationForm from './assets/file-upload/file-upload-exercise-creation-pattern.png';
+import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
+import createFormGeneral from './assets/file-upload/create-form-general.png';
+import createFormContent from './assets/file-upload/create-form-content.png';
+import createFormGrading from './assets/file-upload/create-form-grading.png';
 import exerciseInDashboard from './assets/file-upload/course-dashboard-exercise-file-upload.png';
 import assessmentView from './assets/file-upload/file-upload-exercise-assessment.png';
+import feedbackModal from './assets/general/feedback-modal.png';
 
 A file upload exercise asks each student for a file: a scanned worksheet, a PDF report, an image of a hand-drawn
-diagram. Artemis stores what they hand in and shows it to you for grading; there is nothing to run and nothing to
-check automatically, so every submission is assessed by hand.
+diagram. Artemis stores what they hand in and hands it back to you for grading; there is nothing to run and
+nothing to check automatically, so every submission is assessed by hand.
 
 Use it when the work happens outside Artemis and only the result needs collecting. When you want the work itself to
 happen in Artemis, one of the other exercise types fits better — a
@@ -20,17 +24,39 @@ happen in Artemis, one of the other exercise types fits better — a
 
 ## Create the Exercise
 
-**Create File Upload Exercise** sits on the course's **Exercises** page in course management. The form asks for the
-same things every exercise does — title, release and due dates, points, difficulty — plus one field of its own.
+**Create** on the course's **Exercises** page in course management opens the **Manage Exercises** dialog. Its
+**Create** tab lists the exercise types; picking **File Upload** opens the creation form.
+
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
+
+The form is the same five sections for every exercise type:
+
+- **General** — the **Title**, the **Channel Name** of the communication channel Artemis opens for the exercise, and
+  the **Categories** it is filed under.
+- **Mode** — the **Difficulty**, and **Participation**, which is where an exercise is made a
+  [team exercise](/instructor/exercises/team-exercise). Participation cannot be changed once the exercise exists.
+- **Problem** — the **Problem Statement** students read, with files you can attach to it.
+- **Solution** — the **Example Solution**.
+- **Grading** — the dates and the value. **Release Date** makes the exercise visible, **Start Date** lets students
+  begin, **Due Date** stops them working, **Assessment Due Date** publishes the feedback, and **Example Solution
+  Publication Date** releases the solution; leave that last one empty and the solution stays with the tutors.
+  **Points** and **Bonus Points** set the value, **Include this exercise in the course score calculation** takes
+  **Yes**, **Bonus** or **No**, and **Assessment Instructions** are the rubric assessors work from — alongside
+  **File Pattern**, the one field specific to this exercise type.
+
+<Image src={createFormGeneral} alt="General and Mode sections of the file upload exercise form" size={ImageSize.large} caption="General and Mode" />
+
+<Image src={createFormContent} alt="Problem and Solution sections of the file upload exercise form" size={ImageSize.large} caption="Problem and Solution" />
 
 **File Pattern** lists the extensions a student may upload, comma separated and without the dots, for example
 `png, pdf`. A submission whose extension is not on the list is refused, so the list has to cover every form the
 answer may legitimately take. There is no default: an empty pattern accepts nothing.
 
-<Image src={creationForm} alt="File upload exercise creation form with the File Pattern field filled in" size={ImageSize.large} caption="Creating a file upload exercise" />
+<Image src={createFormGrading} alt="Grading section of the file upload exercise form, with the File Pattern field" size={ImageSize.large} caption="Grading, where File Pattern sits" />
 
-The exercise then appears on the course's exercise list, where **Edit** reopens the form and the title opens the
-exercise itself.
+The exercise then appears on the course's exercise list, where **Participations** lists who took part, **Scores**
+shows what they achieved, **Edit** reopens the form and **Delete** removes it. The title opens the exercise
+itself.
 
 <Image src={exerciseInDashboard} alt="Course exercise list showing the new file upload exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
 
@@ -39,12 +65,19 @@ exercise itself.
 Assessment opens once the due date has passed. From the assessment dashboard, open the exercise's own dashboard and
 start an assessment: Artemis hands you one submission at a time.
 
-Download the file the student uploaded, read it, and record what you find as feedback with points against it. There
-are no automatic results to build on, so the whole mark comes from the feedback you write.
+Artemis does not display the file: **Download Submission File** hands it over, and the badge beside it says what
+kind of file it is. Read it outside Artemis, and mark it against the rubric in the **Instructions** panel beside
+it. There are no automatic results to build on, so the whole mark comes from the feedback you write.
 [Structured grading instructions](/instructor/assessment-grading/assessment) are worth setting up first if several
 people are marking, because they keep the criteria and the points the same across assessors.
 
-<Image src={assessmentView} alt="Assessment view of a file upload submission with the feedback editor" size={ImageSize.large} caption="Assessing a file upload submission" />
+<Image src={assessmentView} alt="Assessment view of a file upload submission, with the download link and the rubric" size={ImageSize.large} caption="The submission and the rubric" />
+
+**Add new Feedback**, below the two panels, is where the points and the comment go. **Submit** publishes the
+assessment, **Save** keeps it to finish later, **Cancel** discards it and releases the lock so somebody else can
+take the submission.
+
+<Image src={feedbackModal} alt="Feedback editor with points and a comment on the submission" size={ImageSize.large} caption="Marking the submission" />
 
 ## What Students See
 

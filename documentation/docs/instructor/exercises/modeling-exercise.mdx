@@ -8,11 +8,12 @@ import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
-import createModelingExerciseForm1 from './assets/modeling/create-modeling-exercise-form-1.png';
-import createModelingExerciseForm2 from './assets/modeling/create-modeling-exercise-form-2.png';
-import createModelingExerciseForm3 from './assets/modeling/create-modeling-exercise-form-3.png';
-import createModelingExerciseFormHint from './assets/modeling/create-modeling-exercise-form-hint.png';
-import hintIcon from './assets/modeling/hint.png';
+import createFormGeneral from './assets/modeling/create-form-general.png';
+import createFormContent from './assets/modeling/create-form-content.png';
+import createFormGrading from './assets/modeling/create-form-grading.png';
+import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
+import createModelingExerciseFormHint from './assets/general/create-exercise-form-hint.png';
+import hintIcon from './assets/general/hint-icon.png';
 import classDiagramDiagramType from './assets/modeling/class-diagram-diagram-type.png';
 import exampleSubmissionForAssessmentTraining from './assets/modeling/example-submission-for-assessment-training.png';
 import useInAssessmentTraining from './assets/modeling/use-in-assessment-training.png';
@@ -51,17 +52,26 @@ comments to matching elements in others, so a large cohort costs far less than t
 
 ## Create the Exercise
 
-**Create Modeling Exercise** sits on the course's **Exercises** page in course management. The form comes in three
-parts.
+**Create Modeling Exercise** sits on the course's **Exercises** page in course management.
 
-The first part is what every exercise has — **Title**, **Categories**, **Difficulty**, and the **Mode**, individual
-or team, which cannot be changed later — plus the dates that shape its life: **Release Date** makes it visible,
-**Due Date** stops students working, and **Assessment Due Date** publishes the feedback. **Points** and **Bonus
-Points** set what it is worth, and **Inclusion in course score calculation** decides whether it counts.
+The form is the same five sections for every exercise type:
 
-**Diagram Type** is the field specific to this type, and the one to get right first.
+- **General** — the **Title**, the **Channel Name** of the communication channel Artemis opens for the exercise, and
+  the **Categories** it is filed under.
+- **Mode** — the **Difficulty**, and **Participation**, which is where an exercise is made a
+  [team exercise](/instructor/exercises/team-exercise). Participation cannot be changed once the exercise exists.
+- **Problem** — the **Problem Statement** students read, with files you can attach to it.
+- **Solution** — the **Example Solution**, and **Diagram Type**, which is the field specific to this exercise type.
+- **Grading** — the dates and the value. **Release Date** makes the exercise visible, **Start Date** lets students
+  begin, **Due Date** stops them working, **Assessment Due Date** publishes the feedback, and **Example Solution
+  Publication Date** releases the solution; leave that last one empty and the solution stays with the tutors.
+  **Points** and **Bonus Points** set the value, **Include this exercise in the course score
+  calculation** takes **Yes**, **Bonus** or **No**, and **Assessment Instructions** are the rubric assessors work from.
 
-<Image src={createModelingExerciseForm1} alt="First part of the modeling exercise form, with the diagram type" size={ImageSize.large} caption="Creating a modeling exercise: the first part of the form" />
+
+<Image src={createFormGeneral} alt="General and Mode sections of the modeling exercise form" size={ImageSize.large} caption="General and Mode" />
+
+<Image src={createFormContent} alt="Problem and Solution sections of the modeling exercise form, with the diagram type" size={ImageSize.large} caption="Problem and Solution" />
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -73,13 +83,6 @@ Points** set what it is worth, and **Inclusion in course score calculation** dec
 
 <Image src={classDiagramDiagramType} alt="The components available in a class diagram exercise" size={ImageSize.large} caption="The components a class diagram offers" />
 
-The second part carries the content and the two automation switches. **Problem Statement** is the task students
-read and **Assessment Instructions** is the rubric assessors work from. **Enable automatic assessment suggestions**
-reuses assessments from submissions already graded in this exercise; **Enable feedback suggestions from Athena**
-generates them with the Athena service instead.
-
-<Image src={createModelingExerciseForm2} alt="Second part of the form, with the problem statement and the automation switches" size={ImageSize.large} caption="The problem statement and the assessment options" />
-
 <Callout variant={CalloutVariant.info}>
 
   Most fields carry a hint. Hover the <Image src={hintIcon} alt="hint" inline /> icon beside one to read it.
@@ -88,11 +91,11 @@ generates them with the Athena service instead.
 
 <Image src={createModelingExerciseFormHint} alt="A hint shown after hovering the icon beside a field" size={ImageSize.large} caption="A field's hint" />
 
-The third part is the example solution: the diagram itself, an **Example Solution Explanation** saying why it is
-built that way, and an **Example Solution Publication Date**. Leave the date empty and the solution stays with the
-tutors rather than reaching students.
+<Image src={createFormGrading} alt="Grading section of the modeling exercise form" size={ImageSize.large} caption="Grading" />
 
-<Image src={createModelingExerciseForm3} alt="Third part of the form, with the example solution" size={ImageSize.large} caption="The example solution" />
+Two switches turn on assessment help. **Enable automatic assessment suggestions** reuses assessments from
+submissions already graded in this exercise, and **Enable feedback suggestions from Athena** generates them with the
+Athena service instead.
 
 ### Train the Assessment
 
@@ -123,17 +126,17 @@ creation form with its fields filled in, ready to adjust.
 
 ## Manage the Exercise
 
-The exercise appears on the course's exercise list, where each row offers the same actions: **Edit** reopens the
-form and the problem statement, **Scores** shows what students achieved, **Participations** lists who took part,
-**Submissions** lists what they handed in, **Example Submissions** manages the training data, and **Delete**
-removes it. The title opens the exercise itself.
+The exercise appears on the course's exercise list, where each row offers the same set of actions:
+**Participations** lists who took part, **Scores** shows what they achieved, **Example Submissions** manages the
+submissions assessors train on, **Edit** reopens the form and **Delete** removes it. Whatever does not fit on a
+narrow window moves behind the row's overflow menu. The title opens the exercise itself.
 
 <Image src={courseDashboardExerciseModeling} alt="Course exercise list with the actions available on a modeling exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
 
 ## Assess Submissions
 
 Assessment opens once the due date has passed. **Assessment** in the course navigation lists the exercises waiting
-to be marked, and **Submissions** on the modeling exercise opens its queue.
+to be marked; opening the modeling exercise there shows its own queue.
 
 <Image src={submissionsDashboard} alt="Submissions and assessments page listing the submissions to mark" size={ImageSize.large} caption="The exercise's submissions" />
 

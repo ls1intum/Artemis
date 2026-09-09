@@ -7,9 +7,10 @@ sidebar_label: Text Exercise
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import createTextExerciseForm1 from './assets/text/create-text-exercise-form-1.png';
-import createTextExerciseForm2 from './assets/text/create-text-exercise-form-2.png';
-import createTextExerciseForm3 from './assets/text/create-text-exercise-form-3.png';
+import createFormGeneral from './assets/text/create-form-general.png';
+import createFormContent from './assets/text/create-form-content.png';
+import createFormGrading from './assets/text/create-form-grading.png';
+import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
 import createExerciseFormHint from './assets/general/create-exercise-form-hint.png';
 import hintIcon from './assets/general/hint-icon.png';
 import importTextExerciseModal from './assets/text/import-text-exercise-modal.png';
@@ -24,20 +25,27 @@ passages that resemble ones already graded.
 
 ## Create the Exercise
 
-**Create Text Exercise** sits on the course's **Exercises** page in course management. The form comes in three
-parts.
+**Create** on the course's **Exercises** page in course management opens the **Manage Exercises** dialog. Its
+**Create** tab lists the exercise types; picking **Text** opens the creation form.
 
-The first part is what every exercise has: **Title**, **Categories**, **Difficulty**, and the **Mode** — individual
-or team, which cannot be changed once the exercise exists. Then the four dates that shape the exercise's life:
-**Release Date** makes it visible, **Start Date** lets students begin, **Due Date** stops them working, and
-**Assessment Due Date** publishes the feedback. **Points** and **Bonus Points** set what it is worth, and
-**Inclusion in course score calculation** decides whether it counts at all.
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
 
-**Automatic assessment suggestions enabled** turns on the [Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)
-service for this exercise, which proposes feedback for text passages based on how comparable passages were graded
-earlier in the same exercise.
+The form is the same five sections for every exercise type:
 
-<Image src={createTextExerciseForm1} alt="First part of the text exercise form, with title, dates and points" size={ImageSize.large} caption="Creating a text exercise: the first part of the form" />
+- **General** — the **Title**, the **Channel Name** of the communication channel Artemis opens for the exercise, and
+  the **Categories** it is filed under.
+- **Mode** — the **Difficulty**, and **Participation**, which is where an exercise is made a
+  [team exercise](/instructor/exercises/team-exercise). Participation cannot be changed once the exercise exists.
+- **Problem** — the **Problem Statement** students read, with files you can attach to it.
+- **Solution** — the **Example Solution**.
+- **Grading** — everything that decides what the exercise is worth and when. **Release Date** makes it visible,
+  **Start Date** lets students begin, **Due Date** stops them working, **Assessment Due Date** publishes the
+  feedback, and **Example Solution Publication Date** releases the solution; leave that last one empty and the
+  solution stays with the tutors. **Points** and **Bonus Points** set the value, **Include this exercise in the course score
+  calculation** takes **Yes**, **Bonus** or **No**, and **Assessment Instructions** are the rubric assessors work from.
+
+
+<Image src={createFormGeneral} alt="General and Mode sections of the text exercise form" size={ImageSize.large} caption="General and Mode" />
 
 <Callout variant={CalloutVariant.danger}>
 
@@ -45,11 +53,7 @@ earlier in the same exercise.
 
 </Callout>
 
-The second part carries the exercise's content: the **Problem Statement** students read, an **Example Solution**,
-and an **Example Solution Publication Date**. Leave that date empty and the example solution stays with the tutors
-rather than reaching students.
-
-<Image src={createTextExerciseForm2} alt="Second part of the form, with the problem statement and example solution" size={ImageSize.large} caption="The problem statement and the example solution" />
+<Image src={createFormContent} alt="Problem and Solution sections of the text exercise form" size={ImageSize.large} caption="Problem and Solution" />
 
 <Callout variant={CalloutVariant.info}>
 
@@ -59,28 +63,31 @@ rather than reaching students.
 
 <Image src={createExerciseFormHint} alt="A hint shown after hovering the icon beside a field" size={ImageSize.medium} caption="A field's hint" />
 
-The third part links the exercise to the rest of the course. **Linked Competencies** attaches it to the
-competencies you have defined — see [Adaptive Learning](/instructor/analytics/adaptive-learning).
+Each assessment instruction carries **Credits** worth of points, a **Scale** naming the performance level it
+represents, a **Description** saying when to apply it, and **Feedback** the student reads. **Limit** caps how often
+one instruction may contribute to a mark. Assessors apply them by dragging one onto a passage, which is what keeps
+several people marking the same way.
 
-**Assessment Instructions** are the grading rubric. Each instruction carries **Credits** worth of points, a
-**Scale** naming the performance level it represents, a **Description** saying when to apply it, and **Feedback**
-the student reads. **Limit** caps how often one instruction may contribute to a mark. Assessors apply them by
-dragging one onto a passage, which is what keeps several people marking the same way.
+<Image src={createFormGrading} alt="Grading section of the text exercise form, with the dates, points and assessment instructions" size={ImageSize.large} caption="Grading" />
 
-<Image src={createTextExerciseForm3} alt="Third part of the form, with competencies and assessment instructions" size={ImageSize.large} caption="Competencies and assessment instructions" />
+**Automatic assessment suggestions** turns on the
+[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena) service for this exercise, which proposes
+feedback for passages resembling ones already graded in it.
 
 ### Import an Existing Exercise
 
-**Import Text Exercise** copies an exercise you already have instead of starting from an empty form. Pick one from
-the list, and Artemis opens the creation form with every field filled in from it, ready to adjust.
+The **Import** tab of the same dialog copies an exercise you already have instead of starting from an empty
+form. Pick the type, then the exercise, and Artemis opens the creation form with every field filled in from it,
+ready to adjust.
 
 <Image src={importTextExerciseModal} alt="Dialog listing the text exercises available to import" size={ImageSize.medium} caption="Choosing an exercise to import" />
 
 ## Manage the Exercise
 
-The exercise appears on the course's exercise list, where each row offers the same set of actions: **Edit** reopens
-the form, **Scores** shows what students achieved, **Participations** lists who took part, **Example Submissions**
-manages the submissions assessors train on, and **Delete** removes it. The title opens the exercise itself.
+The exercise appears on the course's exercise list, where each row offers the same set of actions:
+**Participations** lists who took part, **Scores** shows what they achieved, **Example Submissions** manages the
+submissions assessors train on, **Edit** reopens the form and **Delete** removes it. Whatever does not fit on a
+narrow window moves behind the row's overflow menu. The title opens the exercise itself.
 
 <Image src={courseDashboardExerciseText} alt="Course exercise list with the actions available on a text exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
 
