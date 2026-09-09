@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { ChangeDetectorRef, Component, input } from '@angular/core';
@@ -350,6 +350,46 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.feedbackChanged).toBe(false);
         expect(comp.assessmentMode()).toBe(false);
         expect(comp.totalScore()).toBe(mockFeedbackWithReference.credits);
+    });
+
+    it('should keep feedback edited while the save is in flight', () => {
+        const savedAssessment = new Subject<Result>();
+        vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(savedAssessment);
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set({ ...exampleSubmission, usedForTutorial: false });
+        comp.selectedMode.set(ExampleSubmissionMode.READ_AND_CONFIRM);
+        comp.onReferencedFeedbackChanged([mockFeedbackWithReference]);
+
+        comp.showSubmission();
+        const feedbackEditedWhileSaving = [{ ...mockFeedbackWithReference, credits: 10 }];
+        comp.onReferencedFeedbackChanged(feedbackEditedWhileSaving);
+        savedAssessment.next({ id: 7, feedbacks: [mockFeedbackWithReference] } as Result);
+        savedAssessment.complete();
+
+        expect(comp.referencedFeedback()).toEqual(feedbackEditedWhileSaving);
+        expect(comp.feedbackChanged).toBe(true);
+        expect(comp.result()).toEqual({ id: 7, feedbacks: [mockFeedbackWithReference] });
+    });
+
+    it('should restore pruned feedback when the model change is not persisted', async () => {
+        vi.spyOn(service, 'update').mockReturnValue(throwError(() => ({ status: 500 })));
+        const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment');
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.modelingSubmission = new ModelingSubmission();
+        const result = { id: 1 } as Result;
+        comp.result.set(result);
+        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
+        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+
+        (comp as any).updateExampleModelingSubmission().subscribe({ error: () => {} });
+        await fixture.whenStable();
+
+        expect(comp.referencedFeedback()).toEqual([mockFeedbackWithReference]);
+        expect(result.feedbacks).toEqual([mockFeedbackWithReference]);
+        expect(comp.feedbackChanged).toBe(false);
+        expect(saveAssessmentSpy).not.toHaveBeenCalled();
     });
 
     it('should persist pruned feedback when switching to the assessment after a model change', async () => {

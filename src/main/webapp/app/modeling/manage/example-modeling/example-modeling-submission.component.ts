@@ -280,6 +280,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingSubmission.explanationText = this.explanationText();
         this.modelingSubmission.exampleSubmission = true;
         const result = this.result();
+        const referencedFeedbackBeforePruning = this.referencedFeedback();
+        const feedbackChangedBeforePruning = this.feedbackChanged;
         if (result) {
             const validFeedback = filterInvalidFeedback(this.referencedFeedback(), currentModel);
             if (validFeedback.length !== this.referencedFeedback().length) {
@@ -317,6 +319,12 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             }),
             catchError((error: HttpErrorResponse) => {
+                // the model change was not persisted, so the feedback pruned for the elements it deleted must not stick either
+                this.referencedFeedback.set(referencedFeedbackBeforePruning);
+                this.feedbackChanged = feedbackChangedBeforePruning;
+                if (result) {
+                    result.feedbacks = this.assessments();
+                }
                 onError(this.alertService, error);
                 throw error;
             }),
@@ -361,8 +369,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     /**
-     * @param onSuccess called only once the assessment has actually been persisted, never on validation failure or a failed save,
-     * so a caller can safely clear its own "unsaved changes" state from it.
+     * @param onSuccess called only once the assessment has actually been persisted and the feedback has not been edited since the request went out,
+     * never on validation failure or a failed save, so a caller can safely clear its own "unsaved changes" state from it.
      */
     public saveExampleAssessment(onSuccess?: () => void): void {
         if (!this.assessmentsAreValid()) {
@@ -377,6 +385,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private updateAssessmentExplanationAndExampleAssessment(onSuccess?: () => void) {
+        let sentAssessments = this.assessments();
         this.exampleSubmission().assessmentExplanation = this.assessmentExplanation();
         this.applySelectedModeToExampleSubmission();
         this.exampleSubmissionService
@@ -387,14 +396,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     this.exampleSubmission.set(exampleSubmission);
                     this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
                 }),
-                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId)),
+                concatMap(() => {
+                    sentAssessments = this.assessments();
+                    return this.modelingAssessmentService.saveExampleAssessment(sentAssessments, this.exampleSubmissionId);
+                }),
             )
             .subscribe({
-                next: (result: Result) => {
-                    this.updateAssessment(result);
-                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
-                    onSuccess?.();
-                },
+                next: (result: Result) => this.applySavedAssessment(result, sentAssessments, onSuccess),
                 error: () => {
                     this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
                 },
@@ -410,12 +418,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.updateAssessmentExplanationAndExampleAssessment(onSuccess);
             return;
         }
-        this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId).subscribe({
-            next: (result: Result) => {
-                this.updateAssessment(result);
-                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
-                onSuccess?.();
-            },
+        const sentAssessments = this.assessments();
+        this.modelingAssessmentService.saveExampleAssessment(sentAssessments, this.exampleSubmissionId).subscribe({
+            next: (result: Result) => this.applySavedAssessment(result, sentAssessments, onSuccess),
             error: () => {
                 this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
@@ -519,6 +524,20 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (result) {
             this.referencedExampleFeedback = result.feedbacks?.filter((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED) || [];
         }
+    }
+
+    /**
+     * Takes over the saved assessment, unless the user edited feedback while the request was in flight: the assessments signal then holds a newer
+     * array than the one that was sent, so the newer local feedback and the dirty flag are kept and the next save picks the edit up.
+     */
+    private applySavedAssessment(result: Result, sentAssessments: Feedback[], onSuccess?: () => void): void {
+        if (this.assessments() === sentAssessments) {
+            this.updateAssessment(result);
+            onSuccess?.();
+        } else {
+            this.result.set(result);
+        }
+        this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
     }
 
     private updateAssessment(result: Result) {
