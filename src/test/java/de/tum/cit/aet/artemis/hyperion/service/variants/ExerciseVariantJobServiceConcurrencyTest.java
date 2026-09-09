@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketServic
  * {@link de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap#lock} , making the two mutually
  * exclusive. Uses a real {@link LocalDataProviderService} (not a mock) — a mocked map would not exercise real
  * per-key locking semantics, and this bug only reproduces under genuine concurrent access to the same map entry.
- * The race is between two threads in one JVM, so the in-process provider reproduces it exactly as a clustered
- * backend would, without paying for an embedded cluster member.
+ * The race is between two threads in one JVM, so the in-process provider reproduces it exactly as a real cluster
+ * deployment would, without paying for an embedded cluster member.
  */
 class ExerciseVariantJobServiceConcurrencyTest {
 

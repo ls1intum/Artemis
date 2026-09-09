@@ -454,7 +454,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.additionalInstructions.set('');
     }
 
-    /** Starts the real backend job — intents by field presence, no title input. */
+    /** Starts the real server job — intents by field presence, no title input. */
     startGeneration(): void {
         const sourceExercise = this.sourceExercise();
         if (!sourceExercise?.id) return;
