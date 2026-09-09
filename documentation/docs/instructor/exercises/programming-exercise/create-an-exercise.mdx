@@ -8,24 +8,14 @@ import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
-import courseManagement from '../assets/general/course-management.png';
-import courseDashboard from '../assets/general/course-management-course-dashboard-exercises.png';
-import programmingOptionsNaming from '../assets/programming/programming-options-naming.png';
-import programmingOptionsAuxiliaryRepositories from '../assets/programming/programming-options-auxiliary-repositories.png';
-import programmingOptionsCategories from '../assets/programming/programming-options-categories.png';
-import programmingOptionsParticipationMode from '../assets/programming/programming-options-participation-mode.png';
-import programmingOptionsOnlineIde from '../assets/programming/programming-options-online-ide.png';
-import programmingOptionsProgrammingLanguage from '../assets/programming/programming-options-programming-language.png';
-import programmingOptionsVersionControl from '../assets/programming/programming-options-version-control.png';
-import programmingOptionsScore from '../assets/programming/programming-options-score.png';
-import programmingOptionsTimelineAutomatic from '../assets/programming/programming-options-timeline-automatic.png';
-import programmingOptionsProblemStatement from '../assets/programming/programming-options-problem-statement.png';
-import programmingOptionsInstructions from '../assets/programming/programming-options-instructions.png';
-import courseDashboardExerciseProgramming from '../assets/programming/course-dashboard-exercise-programming.png';
-import programmingExerciseImportButton from '../assets/programming/programming-exercise-import-button.png';
-import courseManagementExerciseDashboardImportModal from '../assets/programming/course-management-exercise-dashboard-import-modal.png';
-import programmingImportOptions from '../assets/programming/programming-import-options.png';
-import generateButton from '../assets/programming/generate-button.png';
+import manageExercisesDialog from '../assets/general/manage-exercises-dialog.png';
+import createFormGeneral from '../assets/programming/create-form-general.png';
+import createFormLanguage from '../assets/programming/create-form-language.png';
+import createFormProblem from '../assets/programming/create-form-problem.png';
+import createFormGrading from '../assets/programming/create-form-grading.png';
+import exerciseInList from '../assets/programming/course-dashboard-exercise-programming.png';
+import importModal from '../assets/programming/import-programming-exercise-modal.png';
+import importOptions from '../assets/programming/programming-import-options.png';
 
 This page walks through the creation form section by section, in the order the sections appear on screen. Most settings can be changed later; the few that cannot are marked, because they determine how the repositories and build plans are set up.
 
@@ -33,11 +23,11 @@ If you already have a suitable exercise in another course, [importing it](#impor
 
 ## Open the Create Dialog
 
-Open <Image src={courseManagement} alt="Course Management" inline style={{height: '2rem'}} /> and navigate to **Exercises** in your course.
+**Exercises** in your course's management navigation opens the exercise list. **Create**, in the page header,
+opens the **Manage Exercises** dialog on its **Create** tab, with one card per exercise type. The **Programming**
+card — the card itself is the button — opens the creation form.
 
-<Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
-
-Click **Create** in the page header. The **Manage Exercises** dialog opens on its **Create** tab and shows one card per exercise type. Click the **Programming** card — the card itself is the button — and Artemis opens the creation form.
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
 
 The same dialog also has **Import** and **Export** tabs, which is where [importing an exercise](#import-an-existing-exercise) starts.
 
@@ -57,18 +47,16 @@ The table below lists which settings each mode shows.
 
 | Form section | Simple mode | Advanced mode adds |
 |---|---|---|
-| Information | Title, Categories | Short Name, Channel Name, Auxiliary Repositories, Checkout Paths |
-| Mode | Difficulty | Participation Mode, Allow Offline IDE, Allow Online Editor, Allow Online IDE |
-| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Static Code Analysis, Sequential Test Runs, Build Plan |
-| Version Control | — | Allow Branching, Branch Name Pattern |
+| General | Title, Categories, Difficulty | Short Name, Channel Name, Participation Mode, Allow Offline IDE, Allow Online Editor, Allow Online IDE, Auxiliary Repositories, Checkout Paths |
+| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Static Code Analysis, Sequential Test Runs, Build Plan, Allow Branching, Branch Name Pattern |
 | Problem | Problem Statement | Linked Competencies |
 | Grading | Score inclusion, Points, Bonus Points, Release Date, Due Date, Assessment Due Date, Grading Instructions | Submission Policy, Start Date, Run Tests after Due Date, Example Solution Publication Date, Complaints on Automatic Assessment, Show Test Names, Include Tests in Example Solution, Presentation Score, Plagiarism Control |
 
-In simple mode the **Mode** and **Version Control** sections are hidden entirely, and **Difficulty** moves up into the **Information** section.
+## General
 
-## Information
+<Image src={createFormGeneral} alt="General section of the programming exercise form" size={ImageSize.large} caption="General" />
 
-<Image src={programmingOptionsNaming} alt="Programming Options Naming" size={ImageSize.large} caption="Naming Configuration" />
+### Naming
 
 - **Title**: The title of the exercise, shown to students. Can be changed after creation.
 - **Short Name**: Combined with the course short name, this identifies the exercise across Artemis, including its repository and build plan names. **Cannot be changed after creation.**
@@ -83,25 +71,17 @@ In simple mode the **Mode** and **Version Control** sections are hidden entirely
 
 ### Categories
 
-<Image src={programmingOptionsCategories} alt="Programming Options Categories" size={ImageSize.large} caption="Categories Configuration" />
-
 Define up to three categories per exercise. Categories are visible to students, so use them consistently to group related exercises.
 
 ### Auxiliary Repositories
-
-<Image src={programmingOptionsAuxiliaryRepositories} alt="Programming Options Auxiliary Repositories" size={ImageSize.large} caption="Auxiliary Repositories Configuration" />
 
 Auxiliary repositories are additional repositories beyond the template, solution and test repositories. Each one has a name, a checkout directory and a description. You can add, edit and remove them after the exercise exists as well — Artemis creates or deletes the corresponding Git repository when you save.
 
 If a checkout directory is set, the repository is checked out there during every build, which is how you provide extra resources to the tests or overwrite parts of the template.
 
-## Mode and Participation
+### Mode and Participation
 
-Shown in advanced mode only.
-
-<Image src={programmingOptionsParticipationMode} alt="Programming Options Participation Mode" size={ImageSize.large} caption="Participation Mode Configuration" />
-
-- **Difficulty**: Indicates to students how hard the exercise is. In simple mode this field appears in the **Information** section instead.
+- **Difficulty**: Indicates to students how hard the exercise is.
 - **Participation Mode**: Whether students work individually or in teams. **Cannot be changed after creation.** See [team exercises](/instructor/exercises/team-exercise).
 - **Team Size**: For team mode, the recommended team size. Instructors and tutors define the actual teams after the exercise exists.
 
@@ -111,17 +91,15 @@ Three settings control how students can work on the exercise:
 - **Allow Online Editor**: The Artemis online code editor, with a file explorer, editor and syntax highlighting, but no ability to compile or run code.
 - **Allow Online IDE**: An online coding environment based on Visual Studio Code, pre-configured for the exercise's language, which *can* compile and run code.
 
-<Image src={programmingOptionsOnlineIde} alt="Online IDE option" size={ImageSize.large} caption="Online IDE Configuration" />
-
 <Callout variant={CalloutVariant.warning}>
 
   At least one of the three must be selected. If your Artemis instance does not offer the Online IDE, the choice is between Offline IDE and Online Editor only.
 
 </Callout>
 
-## Programming Language and Project Settings
+## Language
 
-<Image src={programmingOptionsProgrammingLanguage} alt="Programming Options Programming Language" size={ImageSize.large} caption="Programming Language Configuration" />
+<Image src={createFormLanguage} alt="Language section of the programming exercise form" size={ImageSize.large} caption="Language" />
 
 - **Programming Language**: Determines which template Artemis uses. See [supported languages](/instructor/exercises/programming-exercise#supported-programming-languages).
 - **Project Type**: The project structure of the template, for example Gradle or Maven for Java. Not available for every language.
@@ -131,11 +109,9 @@ Three settings control how students can work on the exercise:
 - **Sequential Test Runs**: Runs structural tests before behavioral ones. Not compatible with static code analysis. **Cannot be changed after creation.**
 - **Customize Build Configuration**: Lets you adapt the build plan, and is adjustable after creation. Only shown with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle); Jenkins exercises use their own build plan configuration. See [Configure the Build](/instructor/exercises/programming-exercise/configure-the-build).
 
-## Version Control
+### Version Control
 
 Shown in advanced mode only.
-
-<Image src={programmingOptionsVersionControl} alt="Programming Options Version Control" size={ImageSize.large} caption="Version Control Configuration" />
 
 - **Allow Custom Branches**: Lets students push to branches other than the default one.
 - **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression, and a push is only allowed if it matches.
@@ -146,9 +122,9 @@ Shown in advanced mode only.
 
 </Callout>
 
-## Problem Statement
+## Problem
 
-<Image src={programmingOptionsProblemStatement} alt="Programming Options Problem Statement" size={ImageSize.large} caption="Problem Statement Configuration" />
+<Image src={createFormProblem} alt="Problem section of the programming exercise form" size={ImageSize.large} caption="Problem" />
 
 The problem statement is the exercise description students read. It is written in Markdown and supports interactive tasks that report which tests currently pass. Writing it is covered in [Write the Interactive Problem Statement](/instructor/exercises/programming-exercise/write-code-and-tests#write-the-interactive-problem-statement).
 
@@ -164,7 +140,7 @@ In advanced mode this section also offers **Linked Competencies**, which connect
 
 ## Grading
 
-<Image src={programmingOptionsScore} alt="Programming Options Score" size={ImageSize.large} caption="Score and code quality penalty" />
+<Image src={createFormGrading} alt="Grading section of the programming exercise form" size={ImageSize.large} caption="Grading" />
 
 **Should this exercise be included in the course or exam score calculation?**
 
@@ -185,8 +161,6 @@ Shown in advanced mode only. A submission policy limits or penalises repeated su
 The policy chosen here is the initial one. Changing it later happens on the grading page — see [Submission Policy Configuration](/instructor/exercises/programming-exercise/grade-and-verify#submission-policy-configuration).
 
 ### Timeline
-
-<Image src={programmingOptionsTimelineAutomatic} alt="Programming Options Timeline Automatic" size={ImageSize.large} caption="Timeline and assessment options" />
 
 - **Release Date**: When the exercise becomes visible to students.
 - **Start Date**: When students can begin participating. If unset, they can start as soon as the exercise is released. Advanced mode only.
@@ -214,15 +188,16 @@ Shown in advanced mode only.
 
 ### Grading Instructions
 
-<Image src={programmingOptionsInstructions} alt="Programming Options Instructions" size={ImageSize.large} caption="Grading Instructions Configuration" />
-
 Available with **Manual Assessment**. Structured criteria that tutors apply while assessing, and that can be dragged onto feedback in the online editor.
 
 ## Generate the Exercise
 
-Click <Image src={generateButton} alt="Generate" inline style={{height: '2rem'}} /> to create the exercise. If anything is still missing, the button is disabled and the footer lists what needs fixing.
+**Generate**, in the form's footer, creates the exercise. If anything is still missing the button is disabled and
+the footer lists what needs fixing.
 
-<Image src={courseDashboardExerciseProgramming} alt="Course Dashboard Exercise Programming" size={ImageSize.large} caption="Programming Exercise in Course Dashboard" />
+The exercise then appears on the course's exercise list.
+
+<Image src={exerciseInList} alt="Course exercise list with the new programming exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
 
 Artemis creates three repositories:
 
@@ -246,11 +221,12 @@ The next step is [writing the exercise code and tests](/instructor/exercises/pro
 
 Importing copies the repositories, build plans, problem statement and grading configuration from an existing exercise, so you only adjust what differs.
 
-1. Open <Image src={courseManagement} alt="Course Management" inline style={{height: '2rem'}} /> and navigate to **Exercises** in your course.
+1. Open **Exercises** in your course.
 
-2. Click **Import** in the page header. The **Manage Exercises** dialog opens on its **Import** tab; click the **Programming** card, then pick the exercise to import.
+2. **Import**, in the page header, opens the **Manage Exercises** dialog on its **Import** tab; the **Programming**
+   card leads to the list of exercises you can copy.
 
-   <Image src={courseManagementExerciseDashboardImportModal} alt="Import Modal" size={ImageSize.large} caption="Exercise Selection Modal" />
+   <Image src={importModal} alt="Dialog listing the programming exercises available to import" size={ImageSize.medium} caption="Choosing an exercise to import" />
 
    <Callout variant={CalloutVariant.info}>
 
@@ -260,11 +236,11 @@ Importing copies the repositories, build plans, problem statement and grading co
 
 3. Adjust the settings. All of them are shown, regardless of the mode you last used.
 
-   <Image src={programmingImportOptions} alt="Import Options" size={ImageSize.large} caption="Import Options" />
+   <Image src={importOptions} alt="Import options with the settings the copy can change" size={ImageSize.large} caption="Import options" />
 
    **Recreate Build Plans** creates fresh build plans instead of copying the originals. Artemis sets it automatically when the static code analysis setting differs from the imported exercise, because that option can only change when the build plans are rebuilt. The plugins, dependencies and tool configurations are then added, removed or copied to match.
 
-4. Click <Image src={programmingExerciseImportButton} alt="Import" inline style={{height: '2rem'}} /> to finish.
+4. **Import**, at the end of the form, finishes the copy.
 
    <Callout variant={CalloutVariant.info}>
 

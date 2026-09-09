@@ -22,28 +22,12 @@ import feedbackAnalysisChannel from '../assets/programming/feedback-analysis-cha
 import onlineEditorAssessment from '../assets/programming/online-editor-assessment.png';
 import onlineEditorFeedback from '../assets/programming/online-editor-feedback.png';
 import onlineEditorGeneralFeedback from '../assets/programming/online-editor-general-feedback.png';
-import onlineEditorAddFeedbackButton from '../assets/programming/online-editor-add-feedback-button.png';
-import onlineEditorCancelFeedbackButton from '../assets/programming/online-editor-cancel-feedback-button.png';
-import addNewFeedbackButton from '../assets/general/add-new-feedback-button.png';
-import submitAssessmentButton from '../assets/general/submit-assessment-button.png';
-import saveButton from '../assets/general/save-button.png';
 import submissionPolicyNoneForm from '../assets/programming/submission-policy-none-form.png';
 import submissionPolicyLockRepositoryForm from '../assets/programming/submission-policy-lock-repository-form.png';
 import submissionPolicySubmissionPenaltyForm from '../assets/programming/submission-policy-submission-penalty-form.png';
 import submissionPenaltyFeedbackElement from '../assets/programming/submission-penalty-feedback-element.png';
 import submissionPenaltyFeedbackElement2 from '../assets/programming/submission-penalty-feedback-element-2.png';
 import submissionPolicyGradingPage from '../assets/programming/submission-policy-grading-page.png';
-import edit from '../assets/programming/edit.png';
-import view from '../assets/programming/view.png';
-import gradingSave from '../assets/programming/configure-grading-save.png';
-import gradingReset from '../assets/programming/configure-grading-reset.png';
-import gradingReevaluateAll from '../assets/programming/configure-grading-reevaluate-all.png';
-import gradingTriggerAll from '../assets/programming/configure-grading-trigger-all.png';
-import reviewChangesButton from '../assets/programming/course-management-template-solution-diff-review-changes-button.png';
-import notGradedLabel from '../assets/programming/not-graded-label.png';
-import submissionPolicyUpdateButton from '../assets/programming/submission-policy-update-button.png';
-import submissionPolicyDeactivateButton from '../assets/programming/submission-policy-deactivate-button.png';
-import submissionPolicyActivateButton from '../assets/programming/submission-policy-activate-button.png';
 
 Grading decides how test results become points: which tests count, how much, and when students get to see them. Once that is set, verifying the exercise means checking that the template scores zero, the solution scores full marks, and every task is bound to a test that actually exists.
 
@@ -57,10 +41,10 @@ The grading configuration determines how test cases contribute to the overall sc
 
 <Image src={configureGradingUpdateInformation} alt="Configure Grading Update Information" size={ImageSize.large} caption="Grading Configuration Update Information" />
 
-- <Image src={gradingSave} alt="Save" inline style={{height: '2rem'}} /> **Save**: Save current grading configuration
-- <Image src={gradingReset} alt="Reset" inline style={{height: '2rem'}} /> **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, bonus points 0, and their visibility back to the exercise default — which is <strong>Always</strong> for a course exercise but <strong>After Due Date</strong> for an exam exercise, so a reset in exam mode also changes when students see feedback. For the Code Analysis Tab, the default configuration depends on the selected programming language.
-- <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '2rem'}} /> **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
-- <Image src={gradingTriggerAll} alt="Trigger All" inline style={{height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
+- **Save**: Save current grading configuration
+- **Reset**: Reset the current grading configuration of the open tab to the default values. For Test Case Tab, all test cases are set to weight 1, bonus multiplier 1, bonus points 0, and their visibility back to the exercise default — which is <strong>Always</strong> for a course exercise but <strong>After Due Date</strong> for an exam exercise, so a reset in exam mode also changes when students see feedback. For the Code Analysis Tab, the default configuration depends on the selected programming language.
+- **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
+- **Trigger All**: Trigger all build plans to create new results with updated configuration
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -231,7 +215,7 @@ With the example configuration shown above, participants can submit 5 times. Aft
 
 <Callout variant={CalloutVariant.warning}>
 
-  If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <Image src={notGradedLabel} alt="Not Graded" inline style={{height: '1.5rem'}} />.
+  If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to **Not Graded**.
 
 </Callout>
 
@@ -269,22 +253,22 @@ After generating an exercise, submission policies can be updated on the grading 
 
 #### (De)activating Submission Policies
 
-- **Active policy**: Shows <Image src={submissionPolicyDeactivateButton} alt="Deactivate" inline style={{height: '1.5rem'}} /> button
-- **Inactive policy**: Shows <Image src={submissionPolicyActivateButton} alt="Activate" inline style={{height: '1.5rem'}} /> button
+- **Active policy**: Shows **Deactivate** button
+- **Inactive policy**: Shows **Activate** button
 
-When deactivated, Artemis no longer enforces the policy. Locked repositories are unlocked. For submission penalty policies, press <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '1.5rem'}} /> to apply changes.
+When deactivated, Artemis no longer enforces the policy. Locked repositories are unlocked. For submission penalty policies, press **Re-evaluate All** to apply changes.
 
 #### Updating Submission Policies
 
-Modify configuration and press <Image src={submissionPolicyUpdateButton} alt="Update" inline style={{height: '1.5rem'}} />. The effect of the former policy is removed and the new policy is applied. For submission penalty policies, press <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '1.5rem'}} /> to update results.
+Modify configuration and press **Update**. The effect of the former policy is removed and the new policy is applied. For submission penalty policies, press **Re-evaluate All** to update results.
 
 #### Deleting Submission Policies
 
-Select **None** as policy type and press <Image src={submissionPolicyUpdateButton} alt="Update" inline style={{height: '1.5rem'}} />. Locked repositories are unlocked. For submission penalty policies, press <Image src={gradingReevaluateAll} alt="Re-evaluate All" inline style={{height: '1.5rem'}} /> to revert effects.
+Select **None** as policy type and press **Update**. Locked repositories are unlocked. For submission penalty policies, press **Re-evaluate All** to revert effects.
 
 ## Verify Exercise Configuration
 
-Open the <Image src={view} alt="View" inline style={{height: '2rem'}} /> page of the programming exercise.
+Open the **View** page of the programming exercise.
 
 <Image src={solutionTemplateResult} alt="Solution Template Result" size={ImageSize.large} caption="Template and Solution Results" />
 
@@ -304,13 +288,13 @@ Review differences between **template** and **solution** repositories to verify 
 
 <Image src={courseManagementTemplateSolutionDiff} alt="Template Solution Diff" size={ImageSize.large} caption="Template/Solution Comparison in Exercise Management" />
 
-Click the <Image src={reviewChangesButton} alt="Review Changes" inline style={{height: '2rem'}} /> button to open the comparison view.
+**Review Changes** opens the comparison view.
 
 <Image src={courseManagementTemplateSolutionDiffExample} alt="Template Solution Diff Example" size={ImageSize.large} caption="Template/Solution Comparison View" />
 
 ### Verify Problem Statement Integration
 
-Click <Image src={edit} alt="Edit" inline style={{height: '2rem'}} /> and check the analysis below the problem statement. It should read **Test cases ok.**, meaning every test named in a task exists in the test repository, every test in the repository is referenced by a task, and no test is referenced twice.
+Click **Edit** and check the analysis below the problem statement. It should read **Test cases ok.**, meaning every test named in a task exists in the test repository, every test in the repository is referenced by a task, and no test is referenced twice.
 
 If it reports issues instead, hover it to see which test names are affected. See [Check the Bindings](/instructor/exercises/programming-exercise/write-code-and-tests#check-the-bindings).
 
@@ -395,21 +379,21 @@ The online editor provides features tailored to assessment:
 4. **Instructions**: Provides structured grading criteria and problem statement, including tasks successfully solved (determined by test cases). Review test cases by clicking the passing test count next to tasks
 5. **Result**: Top right corner shows current submission result. Click to review test cases and feedback
 
-Add feedback directly in source code by hovering over a line and clicking <Image src={onlineEditorAddFeedbackButton} alt="Add Feedback" inline style={{height: '1.5rem'}} />. Alternatively, press "+" key when editor is focused to open feedback widget at cursor line.
+Add feedback directly in source code by hovering over a line and clicking **Add Feedback**. Alternatively, press "+" key when editor is focused to open feedback widget at cursor line.
 
 <Image src={onlineEditorFeedback} alt="Online Editor Feedback" size={ImageSize.large} caption="Editing Feedback in Online Editor" />
 
-After clicking <Image src={onlineEditorAddFeedbackButton} alt="Add Feedback" inline style={{height: '1.5rem'}} />:
+After clicking **Add Feedback**:
 - Enter feedback comment and score
 - Or drag structured assessment criteria from instructions to feedback area
-- Click <Image src={saveButton} alt="Save" inline style={{height: '1.5rem'}} /> to save
-- Click <Image src={onlineEditorCancelFeedbackButton} alt="Cancel" inline style={{height: '1.5rem'}} /> to discard
+- Click **Save** to save
+- Click **Cancel** to discard
 
 <Image src={onlineEditorGeneralFeedback} alt="General Feedback" size={ImageSize.large} caption="General Feedback in Online Editor" />
 
-Add general feedback (not tied to specific file/line) by scrolling to bottom and clicking <Image src={addNewFeedbackButton} alt="Add General Feedback" inline style={{height: '1.5rem'}} />.
+Add general feedback (not tied to specific file/line) by scrolling to bottom and clicking **Add General Feedback**.
 
-Save changes with <Image src={saveButton} alt="Save" inline style={{height: '1.5rem'}} /> (top right). Finalize assessment with <Image src={submitAssessmentButton} alt="Submit Assessment" inline style={{height: '2rem'}} />.
+Save changes with **Save** (top right). Finalize assessment with **Submit Assessment**.
 
 <Callout variant={CalloutVariant.info}>
 
