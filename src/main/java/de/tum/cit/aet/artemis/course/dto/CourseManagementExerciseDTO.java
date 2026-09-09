@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 /**
  * DTO-safe union of the five exercise response contracts used by course-management content endpoints.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 @JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExerciseResponseDTO.class, name = "programming"), @JsonSubTypes.Type(value = TextExerciseResponseDTO.class, name = "text"),
         @JsonSubTypes.Type(value = ModelingExerciseResponseDTO.class, name = "modeling"), @JsonSubTypes.Type(value = FileUploadExerciseDTO.class, name = "file-upload"),
         @JsonSubTypes.Type(value = QuizExerciseWithoutQuestionsDTO.class, name = "quiz") })

@@ -180,7 +180,7 @@ export function courseFromWithExercisesDTO(dto: CourseWithExercisesDTO): Course 
 
 export function courseFromWithContentDTO(dto: CourseWithContentDTO): Course {
     const course = courseFromWithExercisesDTO(dto);
-    course.lectures = (dto.lectures ?? []).map((lectureDTO) => hydrate(new Lecture(), lectureDTO));
+    course.lectures = (dto.lectures ?? []).map(lectureFromCourseManagementDTO);
     course.competencies = (dto.competencies ?? []).map(competencyFromDTO);
     course.prerequisites = (dto.prerequisites ?? []).map(prerequisiteFromDTO);
     return course;
@@ -202,7 +202,7 @@ export function courseFromDashboardDTO(dto: CourseDashboardDTO): Course {
         unenrollmentEndDate: convertDateStringFromServer(dto.unenrollmentEndDate),
     });
     course.exercises = (exercises ?? []).map(exerciseFromCourseManagementDTO);
-    course.lectures = (lectures ?? []).map((lectureDTO) => hydrate(new Lecture(), lectureDTO));
+    course.lectures = (lectures ?? []).map(lectureFromCourseManagementDTO);
     course.competencies = (competencies ?? []).map(competencyFromDTO);
     course.prerequisites = (prerequisites ?? []).map(prerequisiteFromDTO);
     course.exams = (exams ?? []).map((examDTO) =>
@@ -222,6 +222,13 @@ export function courseFromDashboardDTO(dto: CourseDashboardDTO): Course {
 
 function competencyFromDTO(dto: CourseCompetencyDashboardDTO): Competency {
     return hydrate(new Competency(), dto, { softDueDate: convertDateStringFromServer(dto.softDueDate) });
+}
+
+function lectureFromCourseManagementDTO(dto: LectureForCourseManagementDTO): Lecture {
+    return hydrate(new Lecture(), dto, {
+        startDate: convertDateStringFromServer(dto.startDate),
+        endDate: convertDateStringFromServer(dto.endDate),
+    });
 }
 
 function prerequisiteFromDTO(dto: CoursePrerequisiteDTO): Prerequisite {

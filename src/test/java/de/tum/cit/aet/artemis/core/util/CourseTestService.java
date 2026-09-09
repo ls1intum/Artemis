@@ -1009,7 +1009,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseWithoutPermission() throws Exception {
-        request.getList("/api/course/courses", HttpStatus.FORBIDDEN, CourseWithExercisesDTO.class);
+        request.getList("/api/course/courses", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
     }
 
     // Test
@@ -1022,12 +1022,11 @@ public class CourseTestService {
     // Test
     public void testGetCoursesWithPermission() throws Exception {
         List<Course> coursesCreated = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        List<CourseWithExercisesDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseWithExercisesDTO.class);
+        List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
 
         for (Course course : coursesCreated) {
-            Optional<CourseWithExercisesDTO> found = courses.stream().filter(c -> Objects.equals(c.course().id(), course.getId())).findFirst();
+            Optional<CourseManagementDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
             assertThat(found).as("Course is available").isPresent();
-            assertThat(found.orElseThrow().exercises()).hasSameSizeAs(course.getExercises());
         }
     }
 
@@ -1498,12 +1497,7 @@ public class CourseTestService {
                 }
             }
             assertThat(receivedCourse).isNotNull();
-            if (i == 0) {
-                assertThat(receivedCourse.exams()).isEmpty();
-            }
-            else {
-                assertThat(receivedCourse.exams()).isEmpty();
-            }
+            assertThat(receivedCourse.exams()).isEmpty();
         }
     }
 
@@ -3216,10 +3210,10 @@ public class CourseTestService {
         course = courseRepo.save(course);
         var courseId = course.getId();
 
-        List<CourseWithExercisesDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseWithExercisesDTO.class);
+        List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
 
-        CourseWithExercisesDTO receivedCourse = courses.stream().filter(c -> courseId.equals(c.course().id())).findFirst().orElseThrow();
-        assertThat(receivedCourse.course().onlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
+        CourseManagementDTO receivedCourse = courses.stream().filter(c -> courseId.equals(c.id())).findFirst().orElseThrow();
+        assertThat(receivedCourse.onlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
     }
 
     // Test

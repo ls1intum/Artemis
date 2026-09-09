@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
@@ -122,6 +123,7 @@ class CourseDtoSerializationTest {
 
         assertThat(json).contains("\"type\":\"programming\"");
         assertThat(json).contains("\"type\":\"text\"");
+        assertThat(Pattern.compile("\"type\"\\s*:").matcher(json).results().count()).isEqualTo(2);
 
         CourseWithExercisesDTO deserialized = objectMapper.readValue(json, CourseWithExercisesDTO.class);
         assertThat(deserialized.exercises()).hasSize(2);
