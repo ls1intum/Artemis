@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests for the lexical machinery {@link ExerciseIntegrityGate} reads Java sources with. Only the properties a caller silently depends on are pinned here —
@@ -12,6 +14,23 @@ import org.junit.jupiter.api.Test;
  * blocks that span lines, and per-element XML extraction. The gate's own rejection messages stay covered by {@link ExerciseIntegrityGateTest}.
  */
 class JavaSourceInspectorTest {
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\n", "\r", "\r\n" })
+    void stripJavaComments_preservesJavaLineTerminators(String newline) {
+        String source = "// hidden" + newline + "class Visible {} /* hidden" + newline + "hidden */";
+
+        assertThat(JavaSourceInspector.stripJavaComments(source)).isEqualTo("         " + newline + "class Visible {}          " + newline + "         ");
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "Visible")).isTrue();
+    }
+
+    @Test
+    void stripJavaComments_preservesTextBlocksAndRemovesFollowingComments() {
+        String literal = String.join("\n", "\"\"\"", "a single \" followed by // literal text", "/* also literal */", "an escaped \\\"\"\" is not the end", "\"\"\"");
+        String source = "String value = " + literal + "; // removed\n/* removed too */ class Visible {}";
+
+        assertThat(JavaSourceInspector.stripJavaComments(source)).isEqualTo("String value = " + literal + ";           \n                  class Visible {}");
+    }
 
     @Test
     void stripJavaComments_keepsSlashesInsideStringAndCharacterLiterals() {
