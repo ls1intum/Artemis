@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -341,6 +343,63 @@ class IrisStruggleInterventionServiceTriggerTest {
 
         assertThat(skipped.accepted()).isFalse();
         assertThat(skipped.courseDisabled()).isFalse();  // in-flight, NOT course-off
+    }
+
+    @Test
+    void sendToPyris_dispatchesOnlyFromInsideTheJobLock() {
+        // Mockito's default runWithJobLock returns null WITHOUT running the supplier, so a dispatch that still
+        // reached Pyris here would be sitting beside the lock rather than inside it, racing the scoped cancel.
+        var prepared = optedInTrigger();
+        var signal = struggleSignal();
+
+        service.sendToPyris(prepared, signal, Map.of());
+
+        verify(pyrisJobService).runWithJobLock(eq("tok"), any());
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void sendToPyris_cancelledBeforeDispatch_sendsNothingToPyris() {
+        // The student cancelled between the 202 and this dispatch, so scoped cancel removed the job under the same
+        // lock. Sending anyway would export the student's code and chat history for a request they revoked, and the
+        // slot cancel freed would already be open for a second run.
+        runTheJobLockInline();
+        when(pyrisJobService.getJob("tok")).thenReturn(null);
+        var prepared = optedInTrigger();
+        var signal = struggleSignal();
+
+        service.sendToPyris(prepared, signal, Map.of());
+
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void sendToPyris_stillPendingUnderTheLock_dispatchesToPyris() {
+        runTheJobLockInline();
+        when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", "ep-9", null, null, null));
+        var prepared = optedInTrigger();
+        var signal = struggleSignal();
+
+        service.sendToPyris(prepared, signal, Map.of());
+
+        verify(pyrisPipelineService).executeStruggleInterventionPipeline(eq("default"), eq("moderate"), eq("tok"), eq(user), eq(signal), any(), any(), any(), any(), eq(EX),
+                eq("decide"), any(), any());
+    }
+
+    /** Run the supplier handed to the job lock inline, the way the real per-job distributed lock does. */
+    private void runTheJobLockInline() {
+        when(pyrisJobService.runWithJobLock(anyString(), any())).thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+    }
+
+    /** A prepared trigger whose user is still opted in, so sendToPyris reaches the dispatch. */
+    private IrisStruggleTriggerService.PreparedTrigger optedInTrigger() {
+        when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
+        when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(true);
+        return new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "cool", "decide", null, null, null, null);
+    }
+
+    private PyrisStruggleSignalDTO struggleSignal() {
+        return new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
     }
 
     @Test

@@ -194,6 +194,29 @@ class IrisStruggleInterventionConfirmCloseTest {
                 argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null && Objects.equals(e.episodeId(), "ep-cc")));
     }
 
+    @Test
+    void confirmClose_forwardsPyrisRationale_onBothTheCommittedAndTheUnresolvedFrame() {
+        // The rationale never reaches the student; it rides along so the client's eval log records why a run decided
+        // as it did. It has to survive both frame shapes: the committed one built inline, and the shared unresolved
+        // one. Nothing else in this file asserts it, and every other test here passes null.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(203L));
+        when(irisMessageRepository.setProactiveOutcomeIfNull(203L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(203L);
+            return m;
+        });
+
+        service.handleConfirmClose(progressJob, closeUpdateWithRationale(true, "tests pass and the student moved on"));
+        service.handleConfirmClose(parkedJob, closeUpdateWithRationale(false, "still stuck on the same failure"));
+
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> Objects.equals(e.resolved(), true) && "tests pass and the student moved on".equals(e.rationale())));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> Objects.equals(e.resolved(), false) && "still stuck on the same failure".equals(e.rationale())));
+    }
+
     // --- confirm_close parked_progress ---
 
     @Test

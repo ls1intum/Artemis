@@ -315,6 +315,12 @@ public class IrisStruggleTriggerService {
      * Takes a snapshot that {@link #prepareTrigger} admitted, and relies on it: the gates that decide whether this
      * exercise may reach Pyris at all, the exam gate among them, are enforced there and not repeated here.
      *
+     * <p>
+     * The final dispatch is serialized against a scoped cancel by the job lock; see the comment at that call. The
+     * opt-in bail-out above deliberately stays outside it: a cancel that won the race already removed the job, so
+     * {@code getJob} returns nothing, no completion frame is emitted, and none is owed - the client stopped waiting
+     * when it cancelled. Its cleanup is token-conditional throughout and can therefore not touch a newer run.
+     *
      * @param p                the immutable trigger snapshot (ids + payload)
      * @param signal           the struggle signal from the client engine
      * @param uncommittedFiles the student's live (uncommitted) working copy
@@ -343,8 +349,22 @@ public class IrisStruggleTriggerService {
         var chatHistory = irisChatSessionRepository
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
                 .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages())).orElse(List.of());
-        pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.supportLevel(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory,
-                p.exerciseId(), p.intent(), p.episode(), p.proactivityMode());
+        // The dispatch itself runs under the job lock, on a job re-read inside it. Everything above only reads: the
+        // student can cancel this very request between the 202 and this line, and scoped cancel removes the job and
+        // frees the (user, exercise) slot under that same lock. Without the lock a cancelled run would still POST the
+        // student's code and chat history, and the freed slot would let a second run start alongside it. Under it,
+        // cancel either completes before the re-read (which then finds no job and sends nothing) or waits until the
+        // request has gone out. The lock therefore also covers what executePipeline does around the POST, including
+        // the connector-failure cleanup that releases the slot, so cancel never observes a half-torn-down dispatch.
+        pyrisJobService.runWithJobLock(p.jobToken(), () -> {
+            if (!(pyrisJobService.getJob(p.jobToken()) instanceof StruggleInterventionJob)) {
+                log.info("Struggle intervention for user {} exercise {} was cancelled before dispatch, sending nothing", p.userId(), p.exerciseId());
+                return null;
+            }
+            pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.supportLevel(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory,
+                    p.exerciseId(), p.intent(), p.episode(), p.proactivityMode());
+            return null;
+        });
     }
 
     /**
