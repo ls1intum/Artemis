@@ -123,8 +123,11 @@ export class HyperionArtifactsComponent {
         return file ? artifactContentState(file, this.contentContext()) : undefined;
     });
 
-    /** The repository the selected file lives in, opened in the code editor - when this viewer can get there at all. */
+    /** Only saved files can be opened in the live repository; retained snapshots and in-flight files are not there. */
     protected readonly selectedEditorLink = computed(() => {
+        if (!this.saved() || !this.terminal() || this.running()) {
+            return undefined;
+        }
         const file = this.selectedFile();
         return file ? this.editorLink(file.repo) : undefined;
     });
