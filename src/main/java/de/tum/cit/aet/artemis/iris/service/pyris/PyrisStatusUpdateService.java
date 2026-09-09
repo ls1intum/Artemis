@@ -90,8 +90,9 @@ public class PyrisStatusUpdateService {
      * close / stale-check would be silently lost.
      *
      * <p>
-     * On the terminal frame the job is removed FIRST (so the trailing duplicate 403s) and the in-flight marker is
-     * released only AFTER the handler returns, so a concurrent second trigger cannot race in while the bubble is being
+     * On the terminal frame the in-flight marker is re-stamped FIRST, then the job is removed (so the trailing
+     * duplicate 403s), and the marker is released only AFTER the handler returns, so a concurrent second trigger
+     * cannot race in while the bubble is being
      * materialized + persisted + pushed. A non-decision error frame (terminal stages, no terminal field)
      * releases the marker via {@code removeJobIfTerminatedElseUpdate}; an intermediate in-progress frame keeps the job
      * alive (marker held) until the terminal frame arrives.
@@ -134,12 +135,17 @@ public class PyrisStatusUpdateService {
         // (action stays null there), action for every other intent. Everything the terminal frame
         // then triggers - claim, handle, complete on failure, release - is the same for both, so it is written once.
         if (close ? statusUpdate.resolved() != null : statusUpdate.action() != null) {
-            pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
             // The marker still carries whatever is left of the TTL its last keep-alive gave it, and everything below
             // - session materialization, the persist, the push - runs while it drains. A run that reaches its
             // terminal frame late enough would hand a second trigger the slot mid-handler, which is the duplicate
             // session and bubble this marker exists to prevent. Re-stamp it for the handler's own runtime.
+            // This runs BEFORE the job is dropped because it talks to the distributed store and can therefore fail:
+            // a failure has to leave the callback retriable, not strand a run whose credential is already gone.
             pyrisJobService.refreshStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            // Drop the JOB-MAP entry so the trailing duplicate is rejected (403)... Removing it second costs nothing:
+            // a concurrent callback is serialized on the job lock and drops on the re-read above, and a concurrent
+            // trigger is held off by the marker rather than by this entry.
+            pyrisJobService.removeJob(job);
             try {
                 if (close) {
                     irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);

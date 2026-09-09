@@ -54,7 +54,8 @@ public class IrisSettingsService {
      * Read live rather than snapshotted: an admin turning the feature off is meant to take effect at once, on every
      * node, without a restart.
      *
-     * @return {@code true} unless the installation turned the mechanism off
+     * @return {@code true} by default, unless the installation turned the mechanism off; {@code false} if the
+     *         feature state is missing or cannot be read
      */
     public boolean isGlobalStruggleEnabled() {
         return featureToggleService.isFeatureEnabled(Feature.IrisProactiveStruggle);

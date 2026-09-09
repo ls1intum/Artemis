@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,7 +41,7 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
  * <p>
  * The scenarios encode the exactly-once contract:
  * <ol>
- * <li>decision callback ({@code action != null}): job removed, marker re-stamped for the handler's own runtime,
+ * <li>decision callback ({@code action != null}): marker re-stamped for the handler's own runtime, job removed,
  * decision dispatched, marker released last;</li>
  * <li>non-decision keep-alive ({@code action == null}, run state {@code RUNNING}): job updated, marker held;</li>
  * <li>non-decision terminal ({@code action == null}, run state {@code FAILED}): job removed, marker released;</li>
@@ -130,16 +131,32 @@ class PyrisStatusUpdateStruggleTest {
     }
 
     @Test
-    void decisionCallback_removesJobThenDispatchesThenReleasesMarker() {
+    void decisionCallback_refreshesMarkerThenRemovesJobThenDispatchesThenReleasesMarker() {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
         var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
-        inOrder.verify(pyrisJobService).removeJob(job);                                 // remove the JOB-MAP entry FIRST so the trailing duplicate 403s
+        // The refresh talks to the distributed store, so it goes FIRST: if it fails, the job is still in the map and
+        // Pyris can retry the callback instead of being 403'd on a credential that was already dropped.
         inOrder.verify(pyrisJobService).refreshStruggleInFlightMarker("t", 3L, 42L);    // the handler runs on a full marker TTL, not on the run's remainder
+        inOrder.verify(pyrisJobService).removeJob(job);                                 // then remove the JOB-MAP entry so the trailing duplicate 403s
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker freed only AFTER handleDecision (jobId, userId, exerciseId)
+    }
+
+    @Test
+    void decisionCallback_whenTheMarkerRefreshFails_leavesTheJobRetriable() {
+        // The re-stamp is a distributed-store call and can fail. Dropping the job first would make every Pyris retry
+        // 403 on a credential that is already gone, stranding the run, so nothing terminal happens before it succeeds.
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
+        doThrow(new CannotAcquireLockException("distributed store unavailable")).when(pyrisJobService).refreshStruggleInFlightMarker("t", 3L, 42L);
+
+        assertThatThrownBy(() -> service.handleStatusUpdate(job, update)).isInstanceOf(CannotAcquireLockException.class);
+
+        verify(pyrisJobService, never()).removeJob(job);
+        verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
+        verify(pyrisJobService, never()).releaseStruggleInFlightMarker(anyString(), anyLong(), anyLong());
     }
 
     @Test
@@ -240,8 +257,8 @@ class PyrisStatusUpdateStruggleTest {
         service.handleStatusUpdate(confirmCloseJob, update);
 
         var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
-        inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
         inOrder.verify(pyrisJobService).refreshStruggleInFlightMarker("cc", 3L, 42L);
+        inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
         inOrder.verify(irisStruggleInterventionService).handleConfirmClose(eq(confirmCloseJob), any());
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
         verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
