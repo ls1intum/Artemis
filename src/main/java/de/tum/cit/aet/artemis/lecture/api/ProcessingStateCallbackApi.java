@@ -43,13 +43,17 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
     /**
      * Handle a heartbeat from a running Iris pipeline.
      * Updates {@code lastUpdated} on the processing state so stuck detection
-     * can use "time since last callback" instead of "time since phase started".
+     * can use "time since last callback" instead of "time since phase started",
+     * and records the optionally reported stage and progress in the stage ledger.
      *
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token for validation
+     * @param stageName     name of the stage the run is currently in; may be null (older Iris versions)
+     * @param stageProgress progress counter within the stage; may be null
+     * @param stageTotal    total work items of the stage; may be null
      */
-    public void handleHeartbeat(long lectureUnitId, String jobToken) {
-        processingStateCallbackService.handleHeartbeat(lectureUnitId, jobToken);
+    public void handleHeartbeat(long lectureUnitId, String jobToken, String stageName, Integer stageProgress, Integer stageTotal) {
+        processingStateCallbackService.handleHeartbeat(lectureUnitId, jobToken, stageName, stageProgress, stageTotal);
     }
 
     /**

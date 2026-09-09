@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
@@ -90,7 +91,7 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForUpdate(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint) {
+    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForUpdate(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
         Lecture lecture = attachmentVideoUnit.getLecture();
         Course course = attachmentVideoUnit.getLecture().getCourse();
 
@@ -130,11 +131,12 @@ public class PyrisWebhookService {
 
             return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
                     PyrisLectureTranscriptionDTO.of(transcription), lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription,
-                    lectureUnitLink, videoUrl, resolved.type(), contentFingerprint);
+                    lectureUnitLink, videoUrl, resolved.type(), contentFingerprint, forceReingest);
         }
 
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
-                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type(), contentFingerprint);
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type(), contentFingerprint,
+                forceReingest);
     }
 
     /**
@@ -185,17 +187,45 @@ public class PyrisWebhookService {
      *
      * @param attachmentVideoUnit The attachmentVideoUnit that got Updated
      * @param contentFingerprint  fingerprint of the unit's source content; stamped verbatim into the vector store by Pyris
+     * @param forceReingest       true for quality re-ingestions: Iris bypasses its structural skip checks so unchanged content is genuinely re-processed
      * @return jobToken if the job was created else null
      */
-    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint) {
+    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
         if (isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
-            return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit, contentFingerprint), attachmentVideoUnit.getLecture().getCourse());
+            return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit, contentFingerprint, forceReingest),
+                    attachmentVideoUnit.getLecture().getCourse());
         }
         return null;
     }
 
-    private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
+    /**
+     * Whether an ingestion request for this unit would actually be dispatched: Iris is enabled for the
+     * course and the unit's content is eligible. The reconciler uses this to decide whether a SKIPPED
+     * unit is worth requeueing after the course's Iris settings changed.
+     *
+     * @param attachmentVideoUnit the unit to check
+     * @return true if {@link #addLectureUnitToPyrisDB} would dispatch this unit
+     */
+    public boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
         return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
+    }
+
+    /**
+     * Delete lecture units from the Pyris vector database by their identity alone.
+     * <p>
+     * Used for orphan cleanup: the ingestion census can report units whose rows still exist in the
+     * vector store although the lecture unit itself is gone from the database, so there is no entity
+     * left to build a regular deletion DTO from.
+     *
+     * @param identities course, lecture, and unit ids of the orphaned rows to delete
+     */
+    public void deleteLectureUnitsByIdentity(List<IngestionJobIdentityDTO> identities) {
+        List<PyrisLectureUnitWebhookDTO> deletionDTOs = identities.stream().map(
+                identity -> new PyrisLectureUnitWebhookDTO("", 0, null, identity.lectureUnitId(), "", identity.lectureId(), "", identity.courseId(), "", "", "", "", null, null))
+                .toList();
+        if (!deletionDTOs.isEmpty()) {
+            executeLectureDeletionWebhook(deletionDTOs);
+        }
     }
 
     /**

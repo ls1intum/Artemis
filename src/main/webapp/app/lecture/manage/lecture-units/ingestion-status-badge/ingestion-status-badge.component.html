@@ -1,0 +1,36 @@
+@if (state(); as badgeState) {
+    <div
+        class="badge ingestion-status-badge"
+        [class]="badgeClass()"
+        data-testid="ingestion-status-badge"
+        [attr.data-state]="badgeState"
+        [ngbTooltip]="tooltipKey() ? (tooltipKey()! | artemisTranslate) : undefined"
+    >
+        @switch (badgeState) {
+            @case ('queued') {
+                <fa-icon [icon]="faClock" class="me-1" />
+            }
+            @case ('done') {
+                <fa-icon [icon]="faFileLines" class="me-1" />
+            }
+            @case ('failed') {
+                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+            }
+            @case ('skipped') {
+                <fa-icon [icon]="faCircleMinus" class="me-1" />
+            }
+            @default {
+                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+            }
+        }
+        <!-- role="status" only on the phase label: it announces phase transitions (Queued -> Indexing ->
+             Verifying -> Complete) without re-reading the fast-ticking stage counter on every heartbeat. -->
+        <span role="status" [jhiTranslate]="labelKey()"></span>
+        @if (progressText(); as progress) {
+            <span class="stage-counter" data-testid="ingestion-stage-counter" aria-hidden="true">{{ progress }}</span>
+        }
+        @if (progressPercent() !== undefined) {
+            <span class="stage-underbar" [style.width.%]="progressPercent()" aria-hidden="true"></span>
+        }
+    </div>
+}

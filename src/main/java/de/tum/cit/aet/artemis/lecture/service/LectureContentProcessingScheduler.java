@@ -1,13 +1,14 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.MAX_CONCURRENT_PROCESSING;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -76,6 +77,27 @@ public class LectureContentProcessingScheduler {
      */
     private static final int ABSOLUTE_TIMEOUT_HOURS = 12;
 
+    /**
+     * Age after which a dispatch claim (IDLE row with {@code startedAt} set) whose send never
+     * happened is released back into the queue. Ten minutes is far beyond any legitimate gap
+     * between the claim commit and the webhook send.
+     */
+    private static final int CLAIM_EXPIRY_MINUTES = 10;
+
+    /**
+     * How long the stage progress counter may stand still, while heartbeats keep arriving, before
+     * the run counts as stalled (wedged mid-stage) rather than slow. Configurable via
+     * {@code artemis.iris.ingestion.stall-window}.
+     */
+    private final Duration stallWindow;
+
+    /**
+     * How long a run may sit in one stage before a slow-stage warning is logged. Purely
+     * observational: a slow run whose progress keeps moving is never killed. Configurable via
+     * {@code artemis.iris.ingestion.slow-stage-warning-after}.
+     */
+    private final Duration slowStageWarningAfter;
+
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
@@ -84,15 +106,22 @@ public class LectureContentProcessingScheduler {
 
     private final ProcessingStateCallbackService callbackService;
 
+    private final LectureIngestionReconcileService reconcileService;
+
     private final FeatureToggleService featureToggleService;
 
     public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            LectureContentProcessingService processingService, ProcessingStateCallbackService callbackService, FeatureToggleService featureToggleService) {
+            LectureContentProcessingService processingService, ProcessingStateCallbackService callbackService, LectureIngestionReconcileService reconcileService,
+            FeatureToggleService featureToggleService, @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
+            @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
         this.callbackService = callbackService;
+        this.reconcileService = reconcileService;
         this.featureToggleService = featureToggleService;
+        this.stallWindow = stallWindow;
+        this.slowStageWarningAfter = slowStageWarningAfter;
     }
 
     /**
@@ -121,12 +150,80 @@ public class LectureContentProcessingScheduler {
 
         log.debug("Checking for processing states that need attention...");
 
-        // First, handle stuck states where no callback was received recently
+        // Release dispatch claims whose send never completed (crash between claim commit and webhook)
+        int releasedClaims = processingStateRepository.releaseExpiredDispatchClaims(ZonedDateTime.now().minusMinutes(CLAIM_EXPIRY_MINUTES));
+        if (releasedClaims > 0) {
+            log.warn("dispatch-claim-expired released={} — claims older than {} minutes were requeued", releasedClaims, CLAIM_EXPIRY_MINUTES);
+        }
+
+        // Stage-level liveness: kill stalled runs (heartbeats without progress), warn about slow ones
+        detectStalledAndSlowRuns();
+
+        // Then, handle stuck states where no callback was received recently
         recoverStuckPhase(ProcessingPhase.TRANSCRIBING, NO_CALLBACK_TIMEOUT_MINUTES);
         recoverStuckPhase(ProcessingPhase.INGESTING, NO_CALLBACK_TIMEOUT_MINUTES);
 
         // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
         callbackService.dispatchPendingJobs();
+    }
+
+    /**
+     * Distinguish the three liveness states of an in-flight run:
+     * <ul>
+     * <li><b>Dead</b> — heartbeats stopped: handled by {@link #recoverStuckPhase} via the no-callback timeout.</li>
+     * <li><b>Stalled</b> — heartbeats keep arriving but the stage progress counter stopped moving for the
+     * whole stall window. The run is wedged mid-stage (hung request, blocked IO) and is treated like a
+     * stuck run: failed with retry budget, because the content itself may be the cause.</li>
+     * <li><b>Slow</b> — the progress counter keeps moving but the stage has been running longer than the
+     * warning threshold. Logged for visibility and never killed: a three-hour lecture video legitimately
+     * transcribes for a long time.</li>
+     * </ul>
+     * Only runs that report stage progress can be classified here; runs from older Iris versions fall
+     * back to the plain heartbeat timeout.
+     */
+    private void detectStalledAndSlowRuns() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<LectureUnitProcessingState> inFlightStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
+        for (LectureUnitProcessingState state : inFlightStates) {
+            if (state.getLastProgressAt() == null || state.getRetryEligibleAt() != null) {
+                continue;
+            }
+            boolean heartbeatsAlive = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES));
+            boolean progressFrozen = state.getLastProgressAt().isBefore(now.minus(stallWindow));
+            if (heartbeatsAlive && progressFrozen) {
+                failStalledState(state);
+            }
+            else if (state.getStageStartedAt() != null && state.getStageStartedAt().isBefore(now.minus(slowStageWarningAfter))) {
+                log.warn("slow-stage unit={} stage={} progress={}/{} in_stage_since={} — progress is moving, not intervening", state.getLectureUnit().getId(),
+                        state.getCurrentStage(), state.getStageProgress(), state.getStageTotal(), state.getStageStartedAt());
+            }
+        }
+    }
+
+    /**
+     * Fail a stalled run, but only after re-reading the row and re-confirming it is still in flight and
+     * still stalled. The batch read that found this candidate may be stale: a terminal success callback
+     * can land between the read and this write, and because the entity has no optimistic-lock version, an
+     * unconditional {@code save} would revert a just-completed unit to FAILED and wipe its confirmed
+     * fingerprint. Re-fetching mirrors {@link #recoverStuckState} and closes that race.
+     *
+     * @param staleState the stalled candidate from the batch read (used only for its id)
+     */
+    private void failStalledState(LectureUnitProcessingState staleState) {
+        LectureUnitProcessingState freshState = processingStateRepository.findById(staleState.getId()).orElse(null);
+        if (freshState == null || freshState.getLectureUnit() == null) {
+            return;
+        }
+        // The callback may have finished, failed, or a new run may have restarted the clock since the batch read.
+        boolean stillStalled = freshState.isProcessing() && freshState.getRetryEligibleAt() == null && freshState.getLastProgressAt() != null
+                && freshState.getLastProgressAt().isBefore(ZonedDateTime.now().minus(stallWindow));
+        if (!stillStalled) {
+            log.debug("Unit {} no longer stalled since batch read (phase {}), skipping", freshState.getLectureUnit().getId(), freshState.getPhase());
+            return;
+        }
+        log.warn("stalled-progress unit={} stage={} progress={}/{} frozen_since={} — heartbeats alive but no progress, failing the run for retry",
+                freshState.getLectureUnit().getId(), freshState.getCurrentStage(), freshState.getStageProgress(), freshState.getStageTotal(), freshState.getLastProgressAt());
+        callbackService.handleProcessingFailure(freshState);
     }
 
     /**
@@ -183,6 +280,13 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
+        // A stuck INGESTING run may have completed with only its terminal callback lost. In that case
+        // the census evidence lets us requeue without charging the retry budget, so a series of lost
+        // callbacks can never mark a fully ingested unit as permanently failed.
+        if (phase == ProcessingPhase.INGESTING && reconcileService.resolveStuckIngestionWithoutRetryPenalty(freshState)) {
+            return;
+        }
+
         // Treat stuck jobs as failures: the content itself may cause Iris to hang or crash
         // silently (e.g. malformed PDF, OOM during transcription). Incrementing retryCount
         // ensures poison-pill jobs eventually fail permanently instead of looping forever.
@@ -194,7 +298,7 @@ public class LectureContentProcessingScheduler {
      * This handles units that existed before the automated processing pipeline was deployed.
      * <p>
      * Only processes units from active, non-test courses to avoid unnecessary work.
-     * Limited by {@link #MAX_CONCURRENT_PROCESSING} to avoid overwhelming external services.
+     * Limited by the configured maximum number of concurrent jobs to avoid overwhelming external services.
      */
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void backfillUnprocessedUnits() {
@@ -211,14 +315,15 @@ public class LectureContentProcessingScheduler {
         log.debug("Checking for unprocessed lecture units to backfill...");
 
         // Check how many jobs are currently processing
+        int maxConcurrentJobs = callbackService.getMaxConcurrentJobs();
         long currentlyProcessing = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
-        if (currentlyProcessing >= MAX_CONCURRENT_PROCESSING) {
-            log.debug("Already {} units processing (max {}), skipping backfill", currentlyProcessing, MAX_CONCURRENT_PROCESSING);
+        if (currentlyProcessing >= maxConcurrentJobs) {
+            log.debug("Already {} units processing (max {}), skipping backfill", currentlyProcessing, maxConcurrentJobs);
             return;
         }
 
         // Calculate how many more jobs we can start
-        int availableSlots = (int) (MAX_CONCURRENT_PROCESSING - currentlyProcessing);
+        int availableSlots = (int) (maxConcurrentJobs - currentlyProcessing);
 
         List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, availableSlots));
 
@@ -233,11 +338,35 @@ public class LectureContentProcessingScheduler {
             try {
                 log.info("Triggering processing for legacy unit {} (lecture: {}, course: {})", unit.getId(), unit.getLecture() != null ? unit.getLecture().getId() : "unknown",
                         unit.getLecture() != null && unit.getLecture().getCourse() != null ? unit.getLecture().getCourse().getId() : "unknown");
-                processingService.triggerProcessing(unit);
+                processingService.triggerProcessingAsBacklog(unit);
             }
             catch (Exception e) {
                 log.error("Failed to trigger processing for unit {}: {}", unit.getId(), e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Periodically reconcile the vector index against the database: requeue units whose confirmed state,
+     * current content, and index stamp diverge, trigger units that never entered the pipeline, and delete
+     * orphaned index rows. Walks a budgeted slice of courses per run, so a full pass over all courses
+     * takes several runs and never floods the queue; see {@link LectureIngestionReconcileService}.
+     */
+    @Scheduled(initialDelayString = "${artemis.iris.ingestion.reconcile.initial-delay:PT15M}", fixedDelayString = "${artemis.iris.ingestion.reconcile.interval:PT1H}")
+    public void reconcileIngestionState() {
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            log.debug("LectureContentProcessing feature is disabled, skipping ingestion reconcile");
+            return;
+        }
+        if (!processingService.hasProcessingCapabilities()) {
+            log.debug("No processing services available, skipping ingestion reconcile");
+            return;
+        }
+
+        int spent = reconcileService.walkNextCourses();
+        if (spent > 0) {
+            log.info("Ingestion reconcile requeued or triggered {} units, dispatching", spent);
+            callbackService.dispatchPendingJobs();
         }
     }
 }

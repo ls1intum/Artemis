@@ -11,10 +11,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -62,8 +62,9 @@ public class ProcessingStateCallbackService {
     /**
      * Maximum number of concurrent processing jobs (TRANSCRIBING or INGESTING).
      * Prevents overwhelming Iris with too many simultaneous jobs.
+     * Configurable via {@code artemis.iris.ingestion.max-concurrent-jobs}; defaults to 2.
      */
-    static final int MAX_CONCURRENT_PROCESSING = 2;
+    private final int maxConcurrentJobs;
 
     /**
      * Lock to serialize dispatch so the count check + dispatch are atomic.
@@ -90,13 +91,24 @@ public class ProcessingStateCallbackService {
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
             AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
-            LectureUnitContentFingerprintService contentFingerprintService) {
+            LectureUnitContentFingerprintService contentFingerprintService, @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
         this.contentFingerprintService = contentFingerprintService;
+        this.maxConcurrentJobs = maxConcurrentJobs;
+    }
+
+    /**
+     * The configured maximum number of concurrent processing jobs.
+     * Exposed for the scheduler, whose backfill applies the same cap.
+     *
+     * @return the maximum number of jobs that may be TRANSCRIBING or INGESTING at once
+     */
+    int getMaxConcurrentJobs() {
+        return maxConcurrentJobs;
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -104,7 +116,12 @@ public class ProcessingStateCallbackService {
     /**
      * Dispatch pending IDLE jobs to Iris, respecting capacity limits.
      * <p>
-     * Uses PostgreSQL {@code FOR UPDATE SKIP LOCKED} to safely claim jobs in clustered deployments.
+     * Claim-commit-then-send: the repository atomically claims rows (marking {@code startedAt}) in its
+     * own committed transaction BEFORE any HTTP request leaves this node. A crash between claim and send
+     * therefore never spawns a duplicate pipeline; it merely leaves a claimed row that the scheduler's
+     * claim-expiry release requeues. This also means no database row locks are held across the calls to
+     * Pyris. Claim order implements the queue priority: fresh work first, retries second, backlog last.
+     * <p>
      * Called from three places:
      * <ol>
      * <li>{@link LectureContentProcessingService#triggerProcessing} — immediately after creating IDLE state</li>
@@ -112,55 +129,47 @@ public class ProcessingStateCallbackService {
      * <li>{@link LectureContentProcessingScheduler#processScheduledRetries} — periodic backup every 5 minutes</li>
      * </ol>
      */
-    @Transactional
     public void dispatchPendingJobs() {
         if (irisLectureApi.isEmpty()) {
             log.debug("Iris API not available, skipping dispatch");
             return;
         }
 
-        // Serialize dispatch so count + claim + dispatch are atomic.
+        // Serialize dispatch so count + claim + dispatch are atomic per node.
         // Without this lock, concurrent @Async calls can each see the same
-        // activeCount and dispatch beyond MAX_CONCURRENT_PROCESSING.
+        // activeCount and dispatch beyond the configured maximum.
         dispatchLock.lock();
         try {
             long activeCount = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
-            int availableSlots = (int) (MAX_CONCURRENT_PROCESSING - activeCount);
+            int availableSlots = (int) (maxConcurrentJobs - activeCount);
 
             if (availableSlots <= 0) {
-                log.debug("No available slots for dispatch ({} active, max {})", activeCount, MAX_CONCURRENT_PROCESSING);
+                log.debug("No available slots for dispatch ({} active, max {})", activeCount, maxConcurrentJobs);
                 return;
             }
 
-            ZonedDateTime now = ZonedDateTime.now();
-
-            // Pick up FAILED jobs that are eligible for retry (backoff expired)
-            List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, availableSlots);
-
-            for (LectureUnitProcessingState state : retryJobs) {
-                if (availableSlots <= 0) {
-                    break;
-                }
-                log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-                state.clearRetryEligibility();
-                dispatchSingleJob(state);
-                availableSlots--;
-            }
-
-            // Then pick up new IDLE jobs
-            List<LectureUnitProcessingState> idleJobs = processingStateRepository.findIdleForDispatch(now, availableSlots);
-
-            if (idleJobs.isEmpty() && retryJobs.isEmpty()) {
+            List<LectureUnitProcessingState> claimedJobs = processingStateRepository.claimJobsForDispatch(ZonedDateTime.now(), availableSlots);
+            if (claimedJobs.isEmpty()) {
                 log.debug("No jobs ready for dispatch");
                 return;
             }
+            log.info("Dispatching {} claimed jobs to Iris ({} slots available)", claimedJobs.size(), availableSlots);
 
-            if (!idleJobs.isEmpty()) {
-                log.info("Dispatching {} IDLE jobs to Iris ({} slots available)", idleJobs.size(), availableSlots);
-            }
-
-            for (LectureUnitProcessingState state : idleJobs) {
-                dispatchSingleJob(state);
+            for (LectureUnitProcessingState state : claimedJobs) {
+                if (state.getRetryCount() > 0) {
+                    log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+                }
+                // Isolate each dispatch: an unexpected failure on one claimed unit must not abort the
+                // remaining claims (which would otherwise stay claimed until the expiry sweep and starve
+                // the queue). Mirrors the per-unit guard in the backfill loop.
+                try {
+                    dispatchSingleJob(state);
+                }
+                catch (Exception e) {
+                    log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
+                            e.getMessage());
+                    handleProcessingFailure(state);
+                }
             }
         }
         finally {
@@ -196,9 +205,25 @@ public class ProcessingStateCallbackService {
             targetPhase = ProcessingPhase.INGESTING;
         }
 
+        String contentFingerprint;
         try {
-            String contentFingerprint = contentFingerprintService.computeFingerprint(attachmentUnit);
-            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint);
+            contentFingerprint = contentFingerprintService.computeFingerprint(attachmentUnit);
+        }
+        catch (RuntimeException e) {
+            // The attachment file cannot be read or its link is malformed (an unreadable file surfaces as
+            // IllegalStateException; a malformed link surfaces as IllegalArgumentException from URI.create).
+            // Either way it is a local problem Pyris cannot fix, so retrying against Iris would burn the
+            // whole retry budget without ever dispatching. Fail immediately with a specific key rather than
+            // letting the exception escape and abort the rest of the claimed batch; re-uploading resets it.
+            log.error("Cannot read attachment for unit {}, marking as FAILED without dispatch: {}", unit.getId(), e.getMessage());
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
+            processingStateRepository.save(state);
+            notifyProcessingStateChange(state, null);
+            return;
+        }
+
+        try {
+            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint, state.isForceReingest());
 
             if (jobToken == null) {
                 log.info("Processing not applicable for unit {} (course settings or content type), marking as SKIPPED", unit.getId());
@@ -258,13 +283,25 @@ public class ProcessingStateCallbackService {
             return;
         }
 
+        // Atomically claim the terminal transition: only the first callback carrying the live token
+        // clears it. Two concurrent callbacks for the same run (e.g. a success and a failure racing)
+        // would otherwise both pass the in-memory token check above and both write a terminal state.
+        if (processingStateRepository.clearIngestionJobTokenIfMatches(state.getId(), jobToken) == 0) {
+            log.info("Ignoring concurrent duplicate completion callback for unit {} (token already claimed)", lectureUnitId);
+            return;
+        }
+
         if (success) {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
+            // Save the display page numbers BEFORE the terminal state write: a crash between the two
+            // then leaves the run in flight (healed by re-dispatch, which idempotently overwrites the
+            // mapping) instead of a DONE state whose page numbers are permanently missing.
+            saveDisplayPageNumbers(state, displayPageNumbers);
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             state.setConfirmedFingerprint(state.getContentFingerprint());
+            state.setForceReingest(null);
             processingStateRepository.save(state);
-            saveDisplayPageNumbers(state, displayPageNumbers);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -349,14 +386,18 @@ public class ProcessingStateCallbackService {
     /**
      * Handle a heartbeat from a running Iris pipeline.
      * Updates {@code lastUpdated} so stuck detection can use "time since last callback"
-     * instead of "time since phase started".
+     * instead of "time since phase started", and records the optionally reported stage
+     * and progress so stalled runs (heartbeats without progress) become detectable.
      * <p>
      * Called on every non-terminal callback that does NOT carry checkpoint data.
      *
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token for validation
+     * @param stageName     name of the stage the run is currently in; may be null (older Iris versions)
+     * @param stageProgress progress counter within the stage; may be null
+     * @param stageTotal    total work items of the stage; may be null
      */
-    public void handleHeartbeat(long lectureUnitId, String jobToken) {
+    public void handleHeartbeat(long lectureUnitId, String jobToken, @Nullable String stageName, @Nullable Integer stageProgress, @Nullable Integer stageTotal) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
         if (stateOpt.isEmpty()) {
             return;
@@ -372,6 +413,7 @@ public class ProcessingStateCallbackService {
         }
 
         state.setLastUpdated(ZonedDateTime.now());
+        state.recordStageProgress(stageName, stageProgress, stageTotal);
         processingStateRepository.save(state);
     }
 

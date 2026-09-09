@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAns
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
@@ -79,6 +80,43 @@ public class PyrisConnectorService {
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+    }
+
+    /**
+     * Fetch the per-course ingestion census from Pyris: the aggregated vector index state of every
+     * lecture unit of the course, including the stamped content fingerprints.
+     * <p>
+     * The census is a read-only capability introduced together with the fingerprint stamping. An older
+     * Pyris without the endpoint answers 404; that case and every transport failure return {@code null}
+     * so callers treat the census as unavailable instead of failing their reconcile pass.
+     *
+     * @param courseId the id of the course to take the census for
+     * @return the census, or {@code null} when Pyris does not offer or cannot answer the endpoint
+     */
+    @Nullable
+    public IngestionCensusDTO getIngestionCensus(long courseId) {
+        String url = pyrisUrl + "/api/v1/courses/" + courseId + "/ingestion-census?base_url=" + URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
+        try {
+            var response = restTemplate.getForEntity(url, IngestionCensusDTO.class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+                log.warn("Ingestion census for course {} returned status {} without a usable body", courseId, response.getStatusCode());
+                return null;
+            }
+            return response.getBody();
+        }
+        catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.debug("Pyris does not offer the ingestion census endpoint (404), skipping census for course {}", courseId);
+            }
+            else {
+                log.warn("Ingestion census for course {} failed with status {}", courseId, e.getStatusCode());
+            }
+            return null;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Ingestion census for course {} failed: {}", courseId, e.getMessage());
+            return null;
+        }
     }
 
     /**

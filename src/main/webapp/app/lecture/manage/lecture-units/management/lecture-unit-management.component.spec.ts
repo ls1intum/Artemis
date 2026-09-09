@@ -20,7 +20,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -323,6 +323,69 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
         });
 
+        it('keeps a live processing update that races ahead of the initial bulk load', () => {
+            // Drive the initial bulk load through a Subject so it stays pending while a WebSocket update lands.
+            const statuses$ = new Subject<LectureUnitCombinedStatus[]>();
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(statuses$.asObservable());
+            const fixture = TestBed.createComponent(LectureUnitManagementComponent);
+            const component = fixture.componentInstance;
+            fixture.detectChanges(); // ngOnInit -> loadData -> loadAllStatuses subscribes, still pending
+
+            // A live WebSocket update arrives before the bulk REST response resolves.
+            component.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            // The initial bulk response now resolves with a stale IDLE snapshot.
+            statuses$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.IDLE, retryCount: 0 }]);
+
+            // The initial-load merge preserves the fresher live phase.
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.INGESTING);
+        });
+
+        it('lets a later refresh replace a stale live entry after the initial load', () => {
+            // The initial load already ran during setup, so a later refresh is authoritative: it must heal
+            // a live entry that went stale during a WebSocket outage rather than preserve it forever.
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]));
+
+            lectureUnitManagementComponent.loadData();
+
+            expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+        });
+
+        it('replaces authoritatively on a refresh even if the initial bulk load failed', () => {
+            // The very first bulk load errors; the initial-load window must still close so a later
+            // refresh replaces rather than merges forever.
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const fixture = TestBed.createComponent(LectureUnitManagementComponent);
+            const component = fixture.componentInstance;
+            fixture.detectChanges(); // ngOnInit -> loadData -> loadAllStatuses errors
+
+            // A live entry then goes stale during an outage.
+            component.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            // A later refresh returns the authoritative DONE and must win.
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]));
+            component.loadData();
+
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+        });
+
         it('should correctly identify processing states', () => {
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -370,6 +433,28 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(true);
+
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.SKIPPED,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.isProcessingSkipped(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(false);
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
+        });
+
+        it('should return true for hasProcessingBadge when processing was skipped', () => {
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.SKIPPED,
+                    retryCount: 0,
+                },
+            });
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return true for hasProcessingBadge when processing is in progress', () => {
@@ -403,18 +488,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return error key from processing status', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.FAILED,
-                    retryCount: 3,
-                    errorKey: 'artemisApp.attachmentVideoUnit.processing.error.youtubeLive',
-                },
-            });
-            expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.attachmentVideoUnit.processing.error.youtubeLive');
         });
 
         it('should handle error when bulk status endpoint fails', () => {

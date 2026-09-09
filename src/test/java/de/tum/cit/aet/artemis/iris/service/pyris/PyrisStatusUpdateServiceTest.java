@@ -179,7 +179,7 @@ class PyrisStatusUpdateServiceTest {
         }
         if (runState == PyrisRunState.RUNNING) {
             inOrder.verify(pyrisJobService).updateJob(job);
-            inOrder.verify(processingStateCallbackApi).handleHeartbeat(42L, "lecture-run");
+            inOrder.verify(processingStateCallbackApi).handleHeartbeat(42L, "lecture-run", null, null, null);
         }
         else {
             boolean success = runState == PyrisRunState.FINISHED;

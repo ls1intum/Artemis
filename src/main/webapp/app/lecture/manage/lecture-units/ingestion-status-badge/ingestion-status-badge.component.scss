@@ -1,0 +1,31 @@
+.ingestion-status-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+
+    .stage-counter {
+        margin-left: 0.4rem;
+        font-family: var(--bs-font-monospace, monospace);
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+        opacity: 0.85;
+    }
+
+    // Hairline progress bar along the bottom edge, fed by the live stage counter.
+    .stage-underbar {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 2px;
+        background: currentColor;
+        opacity: 0.65;
+        transition: width 0.6s ease;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ingestion-status-badge .stage-underbar {
+        transition: none;
+    }
+}

@@ -124,6 +124,61 @@ public class LectureUnitProcessingState extends DomainObject {
     @Column(name = "confirmed_fingerprint", length = 80)
     private String confirmedFingerprint;
 
+    /**
+     * Name of the pipeline stage Iris last reported for the running job (e.g. "vision", "embedding").
+     * Stage-level liveness: together with the progress columns this distinguishes a stalled run
+     * (heartbeats arrive but progress stopped) from a merely slow one.
+     */
+    @Column(name = "current_stage", length = 64)
+    private String currentStage;
+
+    /**
+     * When the currently reported stage was first observed.
+     */
+    @Column(name = "stage_started_at")
+    private ZonedDateTime stageStartedAt;
+
+    /**
+     * Progress counter within the current stage, as reported by Iris (e.g. page 41 of 180).
+     */
+    @Column(name = "stage_progress")
+    private Integer stageProgress;
+
+    /**
+     * Total work items of the current stage, as reported by Iris.
+     */
+    @Column(name = "stage_total")
+    private Integer stageTotal;
+
+    /**
+     * When the progress counter last advanced. A running job whose heartbeats keep arriving while
+     * this timestamp ages past the stall window is wedged, not slow.
+     */
+    @Column(name = "last_progress_at")
+    private ZonedDateTime lastProgressAt;
+
+    /**
+     * Dispatch queue priority: 0 (or null) for user- and content-triggered work, higher values for
+     * backfill and reconcile requeues. Lower values dispatch first.
+     */
+    @Column(name = "dispatch_priority")
+    private Integer dispatchPriority;
+
+    /**
+     * True when the next dispatch is a quality re-ingestion: Iris bypasses its structural skip
+     * checks so unchanged content is genuinely re-processed. Cleared on terminal success.
+     */
+    @Column(name = "force_reingest")
+    private Boolean forceReingest;
+
+    /**
+     * Newest ingestion pipeline version a quality requeue was already issued for.
+     * Guarantees at most one quality re-run per pipeline version, which is what makes the
+     * quality re-ingestion loop terminate.
+     */
+    @Column(name = "last_quality_pipeline_version")
+    private Integer lastQualityPipelineVersion;
+
     public LectureUnitProcessingState() {
         // Default constructor for JPA
     }
@@ -231,6 +286,88 @@ public class LectureUnitProcessingState extends DomainObject {
         this.confirmedFingerprint = confirmedFingerprint;
     }
 
+    public String getCurrentStage() {
+        return currentStage;
+    }
+
+    public ZonedDateTime getStageStartedAt() {
+        return stageStartedAt;
+    }
+
+    public Integer getStageProgress() {
+        return stageProgress;
+    }
+
+    public Integer getStageTotal() {
+        return stageTotal;
+    }
+
+    public ZonedDateTime getLastProgressAt() {
+        return lastProgressAt;
+    }
+
+    public int getDispatchPriority() {
+        return dispatchPriority != null ? dispatchPriority : 0;
+    }
+
+    public void setDispatchPriority(Integer dispatchPriority) {
+        this.dispatchPriority = dispatchPriority;
+    }
+
+    public boolean isForceReingest() {
+        return Boolean.TRUE.equals(forceReingest);
+    }
+
+    public void setForceReingest(Boolean forceReingest) {
+        this.forceReingest = forceReingest;
+    }
+
+    public Integer getLastQualityPipelineVersion() {
+        return lastQualityPipelineVersion;
+    }
+
+    public void setLastQualityPipelineVersion(Integer lastQualityPipelineVersion) {
+        this.lastQualityPipelineVersion = lastQualityPipelineVersion;
+    }
+
+    /**
+     * Record the stage and progress a heartbeat reported.
+     * Tracks stage entry and progress-advance times so stuck detection can tell a stalled run
+     * (progress frozen while heartbeats arrive) from a slow one (progress keeps moving).
+     *
+     * @param stageName     the reported stage name; null leaves the stage ledger untouched
+     * @param stageProgress the progress counter within the stage; may be null
+     * @param stageTotal    the total work items of the stage; may be null
+     */
+    public void recordStageProgress(String stageName, Integer stageProgress, Integer stageTotal) {
+        if (stageName == null) {
+            return;
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        boolean stageChanged = !stageName.equals(this.currentStage);
+        boolean progressAdvanced = stageProgress != null && !stageProgress.equals(this.stageProgress);
+        if (stageChanged) {
+            this.currentStage = stageName;
+            this.stageStartedAt = now;
+        }
+        if (stageChanged || progressAdvanced) {
+            this.lastProgressAt = now;
+        }
+        this.stageProgress = stageProgress;
+        this.stageTotal = stageTotal;
+    }
+
+    /**
+     * Clear the stage ledger, e.g. when a run leaves the in-flight phases.
+     */
+    public void clearStageProgress() {
+        this.currentStage = null;
+        this.stageStartedAt = null;
+        this.stageProgress = null;
+        this.stageTotal = null;
+        this.lastProgressAt = null;
+    }
+
     /**
      * Increment the retry count.
      */
@@ -258,6 +395,7 @@ public class LectureUnitProcessingState extends DomainObject {
         this.lastUpdated = ZonedDateTime.now();
         this.errorKey = null; // Clear error on phase transition
         this.retryEligibleAt = null; // Clear retry scheduling on phase transition
+        clearStageProgress(); // A new phase starts a fresh stage ledger
     }
 
     /**
@@ -290,6 +428,22 @@ public class LectureUnitProcessingState extends DomainObject {
      */
     public void clearRetryEligibility() {
         this.retryEligibleAt = null;
+    }
+
+    /**
+     * Put this state back into the IDLE queue for a fresh dispatch.
+     * Clears every marker of the previous run except the retry budget and the fingerprints:
+     * callers that requeue for new work reset the budget themselves, and callers that
+     * invalidate the verification evidence clear the confirmed fingerprint explicitly.
+     */
+    public void requeue() {
+        this.phase = ProcessingPhase.IDLE;
+        this.startedAt = null;
+        this.ingestionJobToken = null;
+        this.retryEligibleAt = null;
+        this.errorKey = null;
+        this.lastUpdated = ZonedDateTime.now();
+        clearStageProgress();
     }
 
     /**

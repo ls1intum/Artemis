@@ -100,8 +100,11 @@
             "awaitingProcessing": "Awaiting Processing",
             "processingTranscribing": "Transcribing",
             "processingIngesting": "Indexing",
+            "processingVerifying": "Verifying",
             "processingComplete": "Processing complete",
             "processingFailed": "Processing Failed",
+            "processingSkipped": "Not indexed",
+            "processingSkippedTooltip": "Iris is not available for this unit, so its content was not indexed. It is picked up automatically once Iris is enabled for the course.",
             "videoSlideSync": {
                 "toggle": "Synchronize slides and video"
             },
@@ -109,6 +112,7 @@
                 "cancelled": "Processing was cancelled",
                 "error": {
                     "invalidUnitType": "Invalid lecture unit type for processing",
+                    "attachmentUnreadable": "The attachment file could not be read from the server. Re-upload the file to trigger processing again.",
                     "processingFailed": "Processing failed",
                     "transcriptionFailed": "Transcription generation failed after multiple attempts",
                     "ingestionFailed": "Content indexing failed after multiple attempts",

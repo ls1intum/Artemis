@@ -100,8 +100,11 @@
             "awaitingProcessing": "Wartet auf Verarbeitung",
             "processingTranscribing": "Transkription läuft",
             "processingIngesting": "Indizierung läuft",
+            "processingVerifying": "Wird überprüft",
             "processingComplete": "Verarbeitung abgeschlossen",
             "processingFailed": "Verarbeitung fehlgeschlagen",
+            "processingSkipped": "Nicht indiziert",
+            "processingSkippedTooltip": "Iris ist für diese Einheit nicht verfügbar, daher wurde ihr Inhalt nicht indiziert. Sie wird automatisch verarbeitet, sobald Iris für den Kurs aktiviert ist.",
             "videoSlideSync": {
                 "toggle": "Folien und Video synchronisieren"
             },
@@ -109,6 +112,7 @@
                 "cancelled": "Verarbeitung wurde abgebrochen",
                 "error": {
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "attachmentUnreadable": "Die Anhangsdatei konnte nicht vom Server gelesen werden. Lade die Datei erneut hoch, um die Verarbeitung neu zu starten.",
                     "processingFailed": "Verarbeitung fehlgeschlagen",
                     "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
                     "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",

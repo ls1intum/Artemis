@@ -8,12 +8,19 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, Subscription, from } from 'rxjs';
-import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import {
+    LectureUnitCombinedStatus,
+    LectureUnitProcessingStatus,
+    LectureUnitService,
+    ProcessingPhase,
+    toProcessingStatus,
+} from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/ingestion-status-badge/ingestion-status-badge.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -38,6 +45,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrls: ['./lecture-unit-management.component.scss'],
     imports: [
         TranslateDirective,
+        IngestionStatusBadgeComponent,
         UnitCreationCardComponent,
         CdkDropList,
         CdkDrag,
@@ -63,7 +71,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faFileLines = faFileLines;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faRepeat = faRepeat;
-    protected readonly faClock = faClock;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
@@ -106,6 +113,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private resolvedLectureId: number | undefined;
     private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
     private processingStateSubscription?: Subscription;
+    private hasCompletedInitialStatusLoad = false;
 
     ngOnInit(): void {
         this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
@@ -301,26 +309,52 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 const transcriptionMap: Record<number, TranscriptionStatus> = {};
 
                 for (const status of statuses) {
-                    processingMap[status.lectureUnitId] = {
-                        lectureUnitId: status.lectureUnitId,
-                        phase: status.processingPhase,
-                        retryCount: status.retryCount,
-                        startedAt: status.startedAt,
-                        errorKey: status.processingErrorKey,
-                    };
+                    processingMap[status.lectureUnitId] = toProcessingStatus(status);
                     if (status.transcriptionStatus) {
                         transcriptionMap[status.lectureUnitId] = status.transcriptionStatus;
                     }
                 }
 
-                this.processingStatus.set(processingMap);
-                this.transcriptionStatus.set(transcriptionMap);
+                if (this.hasCompletedInitialStatusLoad) {
+                    // A later refresh (after a delete or a PDF drop) is an authoritative snapshot: let it
+                    // win so it heals any live entry that went stale during a WebSocket outage and prunes
+                    // units that no longer exist.
+                    this.processingStatus.set(processingMap);
+                    this.transcriptionStatus.set(transcriptionMap);
+                } else {
+                    // Initial load only: a live WebSocket update can arrive before this first bulk response
+                    // resolves (the STOMP client is usually already connected while the request round-trips).
+                    // During that window a live entry is strictly fresher than the request-time snapshot, so
+                    // preserve existing entries rather than clobbering a fresher phase/stage with a stale one.
+                    this.processingStatus.update((current) => this.mergePreservingLive(processingMap, current));
+                    this.transcriptionStatus.update((current) => this.mergePreservingLive(transcriptionMap, current));
+                }
+                // The initial-load window closes once the first bulk load resolves; every later load
+                // replaces authoritatively.
+                this.hasCompletedInitialStatusLoad = true;
                 this.isStatusLoading.set(false);
             },
             error: () => {
+                // The first load attempt is over even if it failed, so a later refresh must not keep
+                // merging (which would never heal a stale live entry or prune a removed unit).
+                this.hasCompletedInitialStatusLoad = true;
                 this.isStatusLoading.set(false);
             },
         });
+    }
+
+    /**
+     * Merge a REST snapshot with the current live map, letting existing (live) entries win.
+     * Used only for the initial load, where a WebSocket update may have raced ahead of the bulk response.
+     * The live entries are carried over by reference: safe because every writer replaces a per-unit
+     * value wholesale (never mutates it in place), so the merged map never aliases mutable state.
+     */
+    private mergePreservingLive<T>(snapshot: Record<number, T>, live: Record<number, T>): Record<number, T> {
+        const merged = deepClone(snapshot);
+        for (const key of Object.keys(live)) {
+            merged[Number(key)] = live[Number(key)];
+        }
+        return merged;
     }
 
     /**
@@ -333,13 +367,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.processingStateSubscription = this.websocketService.subscribe<LectureUnitCombinedStatus>(topic).subscribe((status: LectureUnitCombinedStatus) => {
             this.processingStatus.update((current) => {
                 const updated = deepClone(current);
-                updated[status.lectureUnitId] = {
-                    lectureUnitId: status.lectureUnitId,
-                    phase: status.processingPhase,
-                    retryCount: status.retryCount,
-                    startedAt: status.startedAt,
-                    errorKey: status.processingErrorKey,
-                };
+                updated[status.lectureUnitId] = toProcessingStatus(status);
                 return updated;
             });
             this.transcriptionStatus.update((current) => {
@@ -396,17 +424,23 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
     }
 
+    isProcessingSkipped(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.SKIPPED;
+    }
+
     isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
         const phase = this.processingStatus()[lectureUnit.id!]?.phase;
         return phase === ProcessingPhase.TRANSCRIBING || phase === ProcessingPhase.INGESTING;
     }
 
-    getProcessingErrorKey(lectureUnit: AttachmentVideoUnit): string | undefined {
-        return this.processingStatus()[lectureUnit.id!]?.errorKey;
-    }
-
     hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.isProcessingInProgress(lectureUnit) || this.isProcessingFailed(lectureUnit) || this.isProcessingDone(lectureUnit) || this.isAwaitingProcessing(lectureUnit);
+        return (
+            this.isProcessingInProgress(lectureUnit) ||
+            this.isProcessingFailed(lectureUnit) ||
+            this.isProcessingDone(lectureUnit) ||
+            this.isProcessingSkipped(lectureUnit) ||
+            this.isAwaitingProcessing(lectureUnit)
+        );
     }
 
     /**
@@ -478,13 +512,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 // Update status from the returned value
                 this.processingStatus.update((current) =>
                     cloneWith(current, {
-                        [status.lectureUnitId]: {
-                            lectureUnitId: status.lectureUnitId,
-                            phase: status.processingPhase,
-                            retryCount: status.retryCount,
-                            startedAt: status.startedAt,
-                            errorKey: status.processingErrorKey,
-                        },
+                        [status.lectureUnitId]: toProcessingStatus(status),
                     }),
                 );
                 // Update transcription status - clear old entry if null (e.g., transcription deleted during retry)

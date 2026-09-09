@@ -71,32 +71,7 @@
                                     }
 
                                     <!-- Processing Pipeline Status Badge -->
-                                    @if (isAwaitingProcessing(lectureUnit)) {
-                                        <div class="badge bg-secondary">
-                                            <fa-icon [icon]="faClock" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
-                                        </div>
-                                    } @else if (isProcessingTranscribing(lectureUnit)) {
-                                        <div class="badge bg-info">
-                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"></span>
-                                        </div>
-                                    } @else if (isProcessingIngesting(lectureUnit)) {
-                                        <div class="badge bg-info">
-                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"></span>
-                                        </div>
-                                    } @else if (isProcessingFailed(lectureUnit)) {
-                                        <div class="badge bg-danger" [ngbTooltip]="getProcessingErrorKey(lectureUnit) | artemisTranslate">
-                                            <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
-                                        </div>
-                                    } @else if (isProcessingDone(lectureUnit)) {
-                                        <div class="badge bg-success">
-                                            <fa-icon [icon]="faFileLines" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
-                                        </div>
-                                    }
+                                    <jhi-ingestion-status-badge [status]="processingStatus()[lectureUnit.id!]" [awaiting]="isAwaitingProcessing(lectureUnit)" />
                                 </div>
                             }
                         </div>

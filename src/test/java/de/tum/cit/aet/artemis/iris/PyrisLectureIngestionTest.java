@@ -157,7 +157,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
-            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint");
+            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.FINISHED, null,
                     lecture1.getLectureUnits().getFirst().getId(), null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -185,7 +185,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
-            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint");
+            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.RUNNING, null,
                     lecture1.getLectureUnits().getFirst().getId(), null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -227,7 +227,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
-            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint");
+            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null,
                     lecture1.getLectureUnits().getFirst().getId(), null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -290,7 +290,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(lectureUnitLink).isEqualTo(expectedUrl);
         });
 
-        pyrisWebhookService.addLectureUnitToPyrisDB(testUnit, "v1:test-fingerprint");
+        pyrisWebhookService.addLectureUnitToPyrisDB(testUnit, "v1:test-fingerprint", false);
     }
 
     @Test
@@ -309,7 +309,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
 
-        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unitWithTranscription, "v1:test-fingerprint");
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unitWithTranscription, "v1:test-fingerprint", false);
         assertThat(jobToken).isNotNull();
     }
 
@@ -376,7 +376,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         unit = attachmentVideoUnitTestRepository.save(unit);
 
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
-        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint");
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
         assertThat(jobToken).isNotNull();
 
         LectureUnitProcessingState processingState = new LectureUnitProcessingState(unit);

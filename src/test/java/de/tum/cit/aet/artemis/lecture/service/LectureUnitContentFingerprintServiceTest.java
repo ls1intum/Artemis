@@ -5,9 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -64,7 +65,7 @@ class LectureUnitContentFingerprintServiceTest {
     @Test
     void fingerprintCoversThePdfBytes() throws Exception {
         Path pdfPath = tempDir.resolve("slides.pdf");
-        Files.writeString(pdfPath, "original content");
+        FileUtils.writeStringToFile(pdfPath.toFile(), "original content", StandardCharsets.UTF_8);
         AttachmentVideoUnit unit = unitWithPdf(pdfPath);
 
         try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
@@ -72,7 +73,7 @@ class LectureUnitContentFingerprintServiceTest {
 
             String original = fingerprintService.computeFingerprint(unit);
             String unchanged = fingerprintService.computeFingerprint(unit);
-            Files.writeString(pdfPath, "changed content");
+            FileUtils.writeStringToFile(pdfPath.toFile(), "changed content", StandardCharsets.UTF_8);
             String changed = fingerprintService.computeFingerprint(unit);
 
             assertThat(original).isEqualTo(unchanged).isNotEqualTo(changed);
