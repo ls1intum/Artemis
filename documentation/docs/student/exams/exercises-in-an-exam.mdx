@@ -1,0 +1,126 @@
+---
+id: exercises-in-an-exam
+title: Exercises in an Exam
+sidebar_label: Exercises in an Exam
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import examQuizExercises from '../assets/exams/exam_quiz_exercises.png';
+import examTextExercises from '../assets/exams/exam_text_exercises.png';
+import examModelingExercises from '../assets/exams/exam_modeling_exercises.png';
+import examProgrammingExercises from '../assets/exams/exam_programming_exercises.png';
+import examCloneRepository from '../assets/exams/exam_clone_repository.png';
+import conflictState from '../assets/exams/conflict_state.png';
+import studentNotification from '../assets/exams/student-notification.png';
+import problemStatementNormalView from '../assets/exams/problem-statement-normal-view.png';
+import problemStatementDiffView from '../assets/exams/problem-statement-diff-view.png';
+import submissionPolicyLock from '../assets/exams/exam_submission_policy_lock.png';
+import submissionPolicyPenalty from '../assets/exams/exam_submission_policy_penalty.png';
+
+An exam can mix every exercise type Artemis supports. They share the navigation sidebar and the clock described
+under [Take an Exam](/student/exams/take-an-exam), and differ in how you work and how you submit.
+
+Text, modeling and programming exercises all dock the problem statement to the right — above the editor on a small
+screen. The arrow at its top corner collapses it when you want the editor to fill the space, and dragging the
+divider resizes the panes.
+
+## Quiz Exercises
+
+A quiz can contain multiple choice, short answer and drag-and-drop questions, all listed one below another. Scroll
+between them or use the question overview on the left, which jumps to a question when you select it.
+
+The overview also tells you what you have answered: each question type has its own colour, and an answered question
+is shown differently from an unanswered one, so a glance is enough to find what you have skipped.
+
+To submit, select another exercise in the navigation sidebar. Your work is also saved every 30 seconds.
+
+<Image src={examQuizExercises} alt="A quiz exercise in an exam with the question overview on the left" size={ImageSize.large} caption="A quiz exercise during an exam" />
+
+## Text Exercises
+
+You type your answer in the editor, which counts your words and characters as you go.
+
+<Image src={examTextExercises} alt="A text exercise with the editor and the problem statement" size={ImageSize.large} caption="A text exercise during an exam" />
+
+## Modeling Exercises
+
+The elements available for your diagram type sit on the right of the editor; drag them into the canvas. Selecting a
+placed element lets you set its name, attributes and methods. To connect two elements, drag from the edge of one to
+the other and Artemis draws the connection.
+
+**Help** explains the editor if you have not used it before, and the fullscreen control gives the diagram your whole
+screen.
+
+<Image src={examModelingExercises} alt="A modeling exercise with the Apollon editor" size={ImageSize.large} caption="A modeling exercise during an exam" />
+
+## Programming Exercises
+
+Depending on the exercise you may work in the browser, in your own editor, or either.
+
+In the browser you get three panes: the file browser, the code editor and the instructions. The file browser shows
+the whole project and lets you add, rename and delete files and folders — which is worth doing carefully, since
+deleting a file the tests expect will fail the build. The editor marks the line where a compilation error occurred.
+
+**Refresh** discards your unsaved editor changes and reloads the files from the last commit. Your editor changes are
+saved every 30 seconds.
+
+**Submit** sends your code to be built and tested; the result area changes from having no result to building, and
+then to the result itself. Nothing is built until you submit.
+
+<Callout variant={CalloutVariant.danger}>
+
+  A programming exercise never submits itself. If you finish the exam without choosing **Submit**, the code you
+  wrote is not graded.
+
+</Callout>
+
+<Image src={examProgrammingExercises} alt="A programming exercise with file browser, editor and instructions" size={ImageSize.large} caption="A programming exercise during an exam" />
+
+### Working in Your Own Editor
+
+**Code** gives you the repository address, over HTTPS or over SSH if you have registered a public key. Clone it,
+open the project in your editor, work, then commit and push — pushing does what **Submit** does in the browser.
+
+<Image src={examCloneRepository} alt="The Code dialog offering the clone URL" size={ImageSize.large} caption="Getting the repository address" />
+
+<Callout variant={CalloutVariant.warning}>
+
+  Use the browser editor **or** your own, not both. Editing in both places produces a merge conflict that is
+  awkward to fix under exam conditions. If one does occur, the file browser marks the conflict and offers a control
+  to resolve it, which resets your changes to the last commit — the browser editor cannot merge by hand.
+
+</Callout>
+
+<Image src={conflictState} alt="File browser showing a repository in a conflicted state" size={ImageSize.medium} caption="A merge conflict in the browser editor" />
+
+### Limited Feedback
+
+Your instructor may hide the test results during the exam. You then learn only whether your code compiled: a failed
+build means it did not, and a passing build means it compiled but says nothing about your score. Both are normal in
+an exam.
+
+### Submission Limits
+
+An exercise may carry a submission policy, which decides what repeated submissions cost you:
+
+- **None** — submit as often as you like.
+- **Lock Repository** — there is a limit, and once you pass it the repository is locked and you cannot submit again.
+- **Submission Penalty** — there is a limit, and each submission beyond it costs you points.
+
+<Image src={submissionPolicyLock} alt="Notice shown when the submission limit locks the repository" size={ImageSize.medium} caption="Reaching the limit under a Lock Repository policy" />
+
+<Image src={submissionPolicyPenalty} alt="Notice shown when further submissions carry a penalty" size={ImageSize.medium} caption="Reaching the limit under a Submission Penalty policy" />
+
+## When an Exercise Changes Mid-Exam
+
+If your instructor corrects a problem statement while you are working, you get a notification. You can then switch
+between the new statement and a view that highlights what changed, so you do not have to re-read the whole thing to
+find the correction.
+
+<Image src={studentNotification} alt="Notification that the problem statement changed" size={ImageSize.large} caption="Notification of a changed problem statement" />
+
+<Image src={problemStatementNormalView} alt="The updated problem statement" size={ImageSize.large} caption="The updated statement" />
+
+<Image src={problemStatementDiffView} alt="The updated problem statement with changes highlighted" size={ImageSize.large} caption="The same statement showing what changed" />
