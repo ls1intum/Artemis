@@ -152,8 +152,6 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
                 sidebar_label: Feature Usage Catalogue
                 ---
 
-                # Feature Usage Catalogue
-
                 The features whose usage Artemis tracks, as declared by `@FeatureUsage` on each REST controller.
 
                 **This file is generated.** Do not edit it by hand. It is checked in so that the taxonomy as a whole can be

@@ -1,0 +1,146 @@
+---
+id: prepare-and-test
+title: Prepare and Test an Exam
+sidebar_label: Prepare and Test
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import importStudentsDialog from './assets/import_students_dialog.png';
+import addStudents from './assets/add_students.png';
+import individualWorkingTime from './assets/individual_working_time.png';
+import testRunManagement from './assets/test_run_management.png';
+import createTestRunPopup from './assets/create_test_run.png';
+import testRunConduction from './assets/test_run_conduction.png';
+import examChecklist from './assets/exam_checklist.png';
+import examChecklistOverview from './assets/exam_checklist_overview.png';
+
+Between building an exam and running it there are three things to get right: the students who may sit it, the
+individual exam each of them receives, and a rehearsal to confirm the whole thing works. All of it happens on the
+exam's **Students** page, whose actions are grouped into three menus — **Students**, **Logistics** and
+**Individual exams**.
+
+## Register Students
+
+Registration alone does not let anyone sit the exam; it only records who is entitled to one. The individual exams
+come afterwards.
+
+The **Students** menu offers four ways to add people:
+
+- **Register** searches the instance for a single person by name or login.
+- **Register course students** adds everyone enrolled in the course at once.
+- **Import from CSV** adds a list. The file needs a `registrationNumber` and a `login` per row; `email`,
+  `firstname`, `lastname`, `seat` and `room` are optional, and `seat` and `room` matter only for the attendance
+  check. You can download [an example CSV file](./assets/example_import_students.csv) to start from.
+- **Export to CSV** goes the other way, and is the quickest way to hand a participant list to an examination
+  office.
+
+<Image src={importStudentsDialog} alt="Import Users dialog with a CSV file selected" size={ImageSize.large} caption="Importing students from a CSV file" />
+
+**Deregister all students** empties the registration list. Removing a student, individually or in bulk, offers to
+delete the participations and submissions belonging to their individual exam as well; without that, the work stays
+in the database and still counts in exports.
+
+<Image src={addStudents} alt="Students page listing the registered students" size={ImageSize.large} caption="The registered students of an exam" />
+
+### Rooms, Seats and Attendance
+
+The **Logistics** menu covers what an on-site exam needs beyond a list of names. **Distribute students** assigns
+rooms and seats. **Upload images** takes a PDF of participant photographs, and **Verify attendance** shows who has
+started the exam in Artemis but not yet checked in with a supervisor.
+
+<Callout variant={CalloutVariant.info}>
+
+  These three exist for the [Exam Participation Checker](/instructor/exams/participation-checker) iPad app, which
+  replaces the paper attendance list. That page explains the expected PDF layout and the app itself.
+
+</Callout>
+
+## Generate the Individual Exams
+
+A student exam is one student's copy of the exam: one exercise drawn from each
+[exercise group](/instructor/exams/add-exercises#exercise-groups), so that no two students necessarily get the same
+paper. Artemis takes the count from **Number of exercises in exam** in the
+[exam configuration](/instructor/exams/create-an-exam#exam-exercises).
+
+**Generate individual exams**, in the **Individual exams** menu, creates one for every registered student. Run it
+again and it overwrites what is there, so use **Generate missing individual exams** after adding late registrations
+— that one only fills the gaps.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Generation is locked once the exam becomes visible to students. Register everyone and generate before the
+  **Visible from** date, because after it you can no longer change who has an exam or what is in it.
+
+</Callout>
+
+The same page lists every individual exam once it has been generated. **View** opens one and shows the student,
+their working time, their participation status, their summary and their scores, along with the assessor responsible
+for each exercise. That view is also where you extend one student's working time, which is how a granted extension
+is applied.
+
+<Image src={individualWorkingTime} alt="Editing the working time of a single student" size={ImageSize.large} caption="Changing one student's working time" />
+
+## Prepare the Exercises
+
+**Prepare exercise start** creates the participation for every exercise of every individual exam, and for
+programming exercises the student repository that goes with it. On a large exam this takes a while, and the page
+reports progress while it runs.
+
+<Callout variant={CalloutVariant.danger}>
+
+  Run **Prepare exercise start** before the exam begins. Without it a student opens their exam and finds exercises
+  they cannot work on.
+
+</Callout>
+
+The **Individual exams status** indicator on the same page tells you where you stand: whether every registered
+student has an individual exam, and whether every exercise in those exams has been prepared.
+
+## Conduct a Test Run
+
+A test run is the exam as a student sees it, taken by you. It is not a student exam and never counts towards the
+exam scores, so it is the safe way to find out that an exercise is unsolvable or a working time is too short.
+
+<Image src={testRunManagement} alt="Test run management page" size={ImageSize.large} caption="Managing test runs" />
+
+**Create a test run** asks you to pick one exercise per exercise group and a working time. A test run therefore has
+as many exercises as there are exercise groups, regardless of **Number of exercises in exam**; groups with no
+exercises are skipped.
+
+<Image src={createTestRunPopup} alt="Create test run dialog with one exercise chosen per exercise group" size={ImageSize.large} caption="Choosing the exercises for a test run" />
+
+From there you work through the exam as a student would, submit, and end the run. A banner marks the whole time as
+a test run so it cannot be confused with the real thing.
+
+<Image src={testRunConduction} alt="Test run conduction, marked by a banner in the top left" size={ImageSize.large} caption="A test run in progress" />
+
+Once you have completed a run you can assess it, which exercises the correction workflow before real submissions
+arrive — only the person who created the run can assess it. Opening its **Summary** shows what a student sees after
+results are published, and you can file and answer a complaint on it, which takes the run through every stage of
+the exam described in these pages.
+
+If the course has AI feedback enabled, that same **Summary** offers a **Request AI Feedback** button. It requests AI
+feedback for every text and modeling exercise of the test run at once, exactly as students experience it in a test
+exam. A counter next to the button shows how many requests you have used for this exam.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Delete your test runs before the real conduction begins.
+
+</Callout>
+
+## Work Through the Exam Checklist
+
+The checklist sits at the top of the exam's detail page and lists every step from creation to publication, grouped
+into **Exam preparation**, **Exam conduction** and **Exam correction**. Each task shows its current state and links
+to the page where you act on it, so working down the list until nothing is flagged is the shortest reliable way to
+confirm an exam is ready.
+
+<Image src={examChecklist} alt="Preparation section of the exam checklist, each task with its state and a link to the page it is done on" size={ImageSize.large} caption="The preparation section of the exam checklist" />
+
+The exam list shows the same information in one column per exam, so you can see the preparation, conduction and
+correction state of a whole semester at a glance.
+
+<Image src={examChecklistOverview} alt="Exam list with a status column per exam" size={ImageSize.large} caption="Exam status across a course" />

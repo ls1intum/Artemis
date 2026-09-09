@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.lecture.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -38,13 +38,12 @@ public class IrisLectureUnitSyncDispatchService {
      * @param updateKind          the classified update kind
      * @return the visibility hash of the dispatched payload, or null for non-visibility updates
      */
-    public String triggerSyncForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, LectureContentUpdateKind updateKind) {
+    public String triggerSyncForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, @NonNull LectureContentUpdateKind updateKind) {
         return triggerSyncForUpdateKind(attachmentVideoUnit, updateKind, null);
     }
 
     String triggerSyncForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, LectureContentUpdateKind updateKind,
             Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
-        Objects.requireNonNull(updateKind, "updateKind");
         return switch (updateKind) {
             case NONE -> {
                 yield null;
