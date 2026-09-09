@@ -7,8 +7,6 @@ sidebar_label: Documentation
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
-# Writing Documentation
-
 This page is about the documentation site itself: where a page belongs, how to structure it, how to name what the
 reader sees on screen, and how to keep screenshots and screencasts from going stale. It applies to every page under
 `documentation/docs/`, whichever audience it is written for.
@@ -46,7 +44,7 @@ should link to each other, or one of them should not be showing that screen at a
 
 ## Frontmatter and the page title
 
-Every page carries three frontmatter keys:
+Every page carries three frontmatter keys, and **no H1 of its own**:
 
 ```yaml
 ---
@@ -57,20 +55,19 @@ sidebar_label: Exam Timeline
 ```
 
 - **`id`** is what the sidebar file and other pages refer to. Keep it equal to the filename without its extension.
-- **`title`** is the browser tab title, the search result heading, and the name the page is known by.
+- **`title`** is the browser tab title, the on-page heading, the search result heading, and the name the page is
+  known by.
 - **`sidebar_label`** is the entry in the navigation tree. It is usually shorter than the title, because the sidebar
   is narrow and the surrounding category already supplies context.
 
-The body then opens with exactly **one** H1, whose text matches `title`.
+**Do not write an H1 in the body.** Docusaurus renders one from `title` whenever the body has no top-level heading
+of its own: `DocItemContent` in `@docusaurus/theme-classic` synthesises the heading when `contentTitle` is
+undefined. Writing the title once means it cannot drift out of sync with the tab, the sidebar entry and the search
+result — which is exactly what happens when the same page states it twice.
 
-This is not a duplicate. Docusaurus renders a synthetic H1 from the frontmatter title *only* when the body has no
-top-level heading of its own (`DocItemContent` in `@docusaurus/theme-classic` checks `contentTitle`), so a page with
-a body H1 shows that one and nothing else. Writing both keeps the title visible while editing the file and lets the
-tab title, the sidebar entry and the on-page heading be chosen independently — but if they drift apart the reader
-sees one thing in the tab and another on the page, which is why they have to match.
-
-Never write a second H1. Two `<h1>` elements on one page break the document outline that screen readers and search
-engines rely on. A second top-level section is an H2.
+The body therefore opens with its first paragraph, below any component imports. Every heading you write in the body
+is an H2 or deeper. Two `<h1>` elements on one page break the document outline that screen readers and search
+engines rely on, and a body H1 next to a frontmatter title is the way that happens by accident.
 
 ## Headings and anchors
 
@@ -90,7 +87,7 @@ rewrite, for instance — choose heading text whose natural slug is the anchor y
 
 Two further rules:
 
-- Do not skip heading levels. An H4 under an H2 leaves a hole in the outline.
+- Do not skip heading levels. The body starts at H2, so an H4 directly under an H2 leaves a hole in the outline.
 - Keep heading text unique within a page. Repeated text produces `#the-heading` and `#the-heading-1`, and neither
   link tells the reader which one it goes to. Nesting a heading inside an identically named parent is the common
   version of this mistake.
