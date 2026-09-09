@@ -64,6 +64,25 @@ public class AgentSystemPromptService {
 
             """;
 
+    private static final String LEARNING_OWNERSHIP = """
+            LEARNING OWNERSHIP
+            Distinguish using an API, implementing a body, declaring a member, and creating a type. Assign only the operation the brief teaches to the learner:
+            - For API use or control flow, supply the owner class, method signatures, simple enums, initialized collections, and incidental exception classes. Leave a meaningful
+              scenario inside the supplied method, not class/constructor design or enum internals. Support code may use untaught features internally, but the learner must not
+              need to understand or author them. Avoid exposing generics to early learners when a small supplied domain API can carry the scenario.
+            - For adding methods or constructors to an existing class, retain its finished operations and omit precisely the declarations students must add. In SPEC Public API,
+              mark each such member with `/** @studentCreates */`; the owner remains `stubbed`. This SPEC-only ownership tag never appears in generated Java. Its class-body
+              TODO and task document where and what to add; reflective tests compile without the missing declaration. Do not supply those signatures as template stubs.
+            - For creating a type, including a generic class or subclass, omit that type. Merely using a collection or implementing predeclared subclass bodies does not teach
+              declaring a type parameter or an inheritance relationship. Conversely do not omit declarations when the brief asks only for body implementation.
+            - Preserve the complete objective in the solution/template delta. Optional handling must affect an observable empty/present case; requested API/formatting techniques
+              must be exemplified by the solution. Distinct stream tasks should exercise distinct transformations or terminal operations where the brief requests breadth.
+              A supplied design-pattern collaboration does not count as learner work. Provide unrelated boilerplate rather than inflating the exercise with it.
+            Keep behavior and API contracts explicit, but leave the objective's implementation reasoning to the learner. Do not turn tasks into ordered solution call sequences,
+            pseudocode, or worked code for the very scenario the learner must construct. State outcomes and constraints instead. Clear semantics are not solution spoilers.
+
+            """;
+
     private static final String SPEC_STAGE_CONTRACT = """
             THE CONTRACT — SPECIFICATION
             The instructor brief is the sole authority for requested scope, learning objective, and fixed boundaries. Make only the minimum operational choices needed to turn
@@ -122,9 +141,11 @@ public class AgentSystemPromptService {
             authorities or silently rewrite either one in the statement.
             Match Design ownership: `given`/`stubbed` declarations are present; `student-creates` types are required but absent. Never call absent APIs provided, mention
             SPEC.md/reference/internal artifacts, or change a contract boundary or quantifier.
-            Present the public API exactly once and compactly — a short signature list, a table, or the PlantUML diagram — never reproducing template code blocks, stub bodies, or
+            Present signatures exactly once and compactly — a short signature list, a table, or the PlantUML diagram — never reproducing template code blocks, stub bodies, or
             javadoc that already live in the template; the template is the API reference at the point of use. The statement explains WHAT and WHY, not a restatement of code the
-            student can already read.
+            student can already read. A diagram shows structure, not semantics: explain each supplied collaborator's purpose, meaningful state changes, return values, and pre/postconditions
+            in concise prose or a contract table. Make the scenario understandable from the statement without duplicating its full Javadoc. For omitted student-created members,
+            the statement supplies the exact signature and contract, never a stub or implementation.
             Provide representative worked examples only where they clarify important, non-obvious behaviour, as a code block, table, or precise prose. Examples must agree with the implementation and tests but must not reproduce a graded test's exact composite input. Use a smaller or materially different input that
             teaches the rule without revealing the oracle. Diagrams must be PlantUML (`@startuml` … `@enduml`); never draw ASCII-art or
             Markdown box diagrams. In the diagram, link elements to their checks with Artemis' testsColor syntax — members as
@@ -222,7 +243,7 @@ public class AgentSystemPromptService {
             Open-ended theme/formula choices are exercise design; unrelated defensive policy is not.
             Every seam Owner type is a `stubbed` or `student-creates` Design row. Stubbed owners carry their TODO; absent student-created owners do not. If a collaborator also contains
             independently actionable student work, give that work its own seam owned by the collaborator instead of reusing another owner's seam ID. Given types and all non-student-owned members of stubbed types remain identical
-            across solution and template. Only types marked `student-creates` and the minimum dependent members assigned to that same seam may
+            across solution and template. Only types marked `student-creates` and members explicitly marked `@studentCreates` in the approved API may
             be absent. A seam grades student-owned executable behavior, not the presence or exact signature of a supplied declaration or a placeholder that is meant to keep
             throwing. An ordinary abstract interface method has no student-owned body: make the interface `given` when students only implement it, or `student-creates` when the
             brief actually assigns its design; do not call that declaration `stubbed` merely to manufacture a structural seam.
@@ -353,8 +374,8 @@ public class AgentSystemPromptService {
         // GENERATE's workflow already carries the scaffold derivation rules, so repeating them dilutes it; ADAPT's surgical workflow does not restate how an existing template
         // must be preserved, so it needs the standalone block.
         String scaffoldGuidance = mode == Mode.ADAPT ? TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE : DIFF_DISCIPLINE;
-        String prompt = INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, mode) + THE_CONTRACT + scaffoldGuidance + STUDENT_FACING_STATEMENT + ARTEMIS_TASK_BINDINGS
-                + layoutAndHarnessSection(exercise, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
+        String prompt = INTRO + SECURITY_BOUNDARY + LEARNING_OWNERSHIP + workspaceSection(exercise, mode) + THE_CONTRACT + scaffoldGuidance + STUDENT_FACING_STATEMENT
+                + ARTEMIS_TASK_BINDINGS + layoutAndHarnessSection(exercise, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
         return mode == Mode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt;
     }
 
@@ -372,8 +393,8 @@ public class AgentSystemPromptService {
     public String buildStage(GenerationInput exercise, GenerationStage stage) {
         String dueDateGuidance = stage == GenerationStage.SPEC || stage == GenerationStage.TESTS ? dueDateGuidance(exercise) : "";
         String languageGuidance = stage == GenerationStage.TESTS ? JAVA_GRADLE_GUIDANCE : "";
-        return STAGE_INTRO + SECURITY_BOUNDARY + stageContract(stage) + stageWorkspaceSection(exercise, stage) + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE + stageSection(stage)
-                + dueDateGuidance + languageGuidance;
+        return STAGE_INTRO + SECURITY_BOUNDARY + LEARNING_OWNERSHIP + stageContract(stage) + stageWorkspaceSection(exercise, stage) + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
+                + stageSection(stage) + dueDateGuidance + languageGuidance;
     }
 
     private static String stageContract(GenerationStage stage) {

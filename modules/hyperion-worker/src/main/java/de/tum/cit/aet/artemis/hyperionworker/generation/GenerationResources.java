@@ -18,7 +18,7 @@ public class GenerationResources {
      * @return the Gradle teaching fixture
      */
     public static String javaGradleFixture(String source) {
-        return source.replace("@WhitelistPath(\"target\")", "@WhitelistPath(\"build\")")
+        return source.replaceAll("(?m)^[ \\t]*\\*[ \\t]*@(author|version)\\b[^\\r\\n]*\\R?", "").replace("@WhitelistPath(\"target\")", "@WhitelistPath(\"build\")")
                 .replace("@BlacklistPath(\"target/test-classes\")", "@BlacklistPath(\"build/classes/java/test\")")
                 .replace("@Public\n", "@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n@Public\n");
     }

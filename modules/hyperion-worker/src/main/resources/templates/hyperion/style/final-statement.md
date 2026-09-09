@@ -29,9 +29,9 @@ or the instructor brief ("This exercise uses a whimsical theme" is authoring com
   in a short contract section -- only where a test observes it.
 - Optional unassessed work goes in a clearly marked final part ("These are not tested").
 
-## CRITICAL POLICY: the API appears exactly once
+## Signatures once; semantics wherever they are needed
 
-Present the public API students implement against exactly ONCE and compactly: a short signature list, a
+Present the public signatures students implement against exactly ONCE and compactly: a short signature list, a
 table, or (for a multi-type design) a PlantUML diagram. Never reproduce template code blocks, stub bodies, or
 javadoc that already live in the template -- the template IS the API reference at the point of use.
 
@@ -68,3 +68,16 @@ tasks, and that is fine. The API-once form is a free choice (signature list, tab
 appears exactly once. Examples may be code, a table, or precise prose -- whichever teaches the rule best.
 Section names beyond the `#` title are yours. Derive the narrative from this exercise's accepted specification
 and verified tests, not from another exercise's wording.
+
+## A usable contract, not a solution recipe
+
+A PlantUML diagram cannot explain what an API does. Give concise semantic descriptions of supplied operations,
+state changes, return values, and relevant pre/postconditions. Explain what is already implemented and what
+must be added, then pose a coherent scenario using that support. Do not make an API-use exercise a disconnected
+list of helper methods. Keep complete member-level Javadoc in the starter; prose and diagrams complement it.
+
+For members the learner must declare, provide their exact required signatures and behavioral contracts, not
+ready-to-paste method stubs. For an API-use objective, give the scenario's starting state and desired outcome,
+not the ordered calls that solve it. Examples illustrate a distinct rule or smaller scenario, not the assigned
+solution. Avoid internal ownership tags, author tags, and prerequisite leakage. Use `field` consistently unless
+the course explicitly chooses another term.

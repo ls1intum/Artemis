@@ -72,8 +72,8 @@ class ExerciseConceptSelectorTest {
                         "Student-owned reasoning:", "Likely supplied support:")
                 .contains("selection, injection, replacement, or delegation", "students implement", "same caller goal", "overlapping valid inputs")
                 .contains("Student-owned objective is exhaustive", "every consequential behavior students implement", "not proof that students implement it")
-                .contains("concrete qualitative", "decision dependencies or data transformation", "one viable control flow", "must not require its syntax", "distinct rules",
-                        "do not count")
+                .contains("concrete qualitative", "decision dependencies, API-usage reasoning, or type-design reasoning", "one viable control flow", "must not require its syntax",
+                        "distinct rules", "do not count")
                 .contains("When the brief requests interchangeable variants", "write `Not applicable`", "must not invent strategies")
                 .contains("same caller-requested responsibility", "semantic meaning of the result", "must not change the operation")
                 .contains("do not prescribe exact class names", "method signatures", "formulas", "worked-example values")
