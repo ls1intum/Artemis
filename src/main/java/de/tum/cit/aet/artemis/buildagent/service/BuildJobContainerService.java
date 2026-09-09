@@ -438,6 +438,11 @@ public class BuildJobContainerService {
                     // future.get() throws this when the waiting thread is interrupted. The broad catch is here for the
                     // Docker client's own failures; it must not also discard a shutdown request.
                     Thread.currentThread().interrupt();
+                    // Both fallbacks below block on a Future as well, so with the flag restored they would fail
+                    // immediately and log a Docker error that never happened. Leave the container to the periodic
+                    // cleanup, which removes orphans on the next run.
+                    log.warn("Interrupted while stopping unresponsive container with id {}. Leaving it to the next cleanup run.", containerId);
+                    return;
                 }
                 Throwable cause = e.getCause();
                 // e will be ExecutionException if thrown in executor service by submitted task
