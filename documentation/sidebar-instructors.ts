@@ -26,7 +26,23 @@ const sidebars: SidebarsConfig = {
                 id: 'exercises/intro',
             },
             items: [
-                'exercises/programming-exercise',
+                {
+                    type: 'category',
+                    label: 'Programming Exercise',
+                    link: {
+                        type: 'doc',
+                        id: 'exercises/programming-exercise/index',
+                    },
+                    items: [
+                        'exercises/programming-exercise/create-an-exercise',
+                        'exercises/programming-exercise/write-code-and-tests',
+                        'exercises/programming-exercise/configure-the-build',
+                        'exercises/programming-exercise/grade-and-verify',
+                        'exercises/programming-exercise/ai-assisted-authoring',
+                        'exercises/programming-exercise/static-analysis-rules',
+                        'exercises/programming-exercise/repository-access',
+                    ],
+                },
                 'exercises/consistency-check',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
@@ -43,10 +59,7 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'lectures/index',
             },
-            items: [
-                'lectures/lectures',
-                'lectures/lecture-series',
-            ],
+            items: ['lectures/lectures', 'lectures/lecture-series'],
         },
         {
             type: 'category',
@@ -55,7 +68,16 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'exams/intro',
             },
-            items: ['exams/exam-timeline', 'exams/participation-checker'],
+            items: [
+                'exams/create-an-exam',
+                'exams/add-exercises',
+                'exams/prepare-and-test',
+                'exams/conduct-an-exam',
+                'exams/assess-an-exam',
+                'exams/grade-and-publish',
+                'exams/review-and-complaints',
+                'exams/participation-checker',
+            ],
         },
         {
             type: 'category',
@@ -64,11 +86,7 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'communication-support/index',
             },
-            items: [
-                'communication-support/communication',
-                'communication-support/faq',
-                'communication-support/tutorial-groups',
-            ],
+            items: ['communication-support/communication', 'communication-support/faq', 'communication-support/tutorial-groups'],
         },
         {
             type: 'category',
@@ -77,12 +95,7 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'assessment-grading/index',
             },
-            items: [
-                'assessment-grading/assessment',
-                'assessment-grading/grading',
-                'assessment-grading/plagiarism-check',
-                'assessment-grading/deimos',
-            ],
+            items: ['assessment-grading/assessment', 'assessment-grading/grading', 'assessment-grading/plagiarism-check', 'assessment-grading/deimos'],
         },
         {
             type: 'category',
@@ -91,10 +104,7 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'analytics/index',
             },
-            items: [
-                'analytics/learning-analytics',
-                'analytics/adaptive-learning',
-            ],
+            items: ['analytics/learning-analytics', 'analytics/adaptive-learning'],
         },
         {
             type: 'category',
@@ -103,12 +113,7 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'integrations/index',
             },
-            items: [
-                'integrations/integrated-code-lifecycle',
-                'integrations/sharing',
-                'integrations/lti-configuration',
-                'integrations/deimos',
-            ],
+            items: ['integrations/integrated-code-lifecycle', 'integrations/sharing', 'integrations/lti-configuration', 'integrations/deimos'],
         },
     ],
 };

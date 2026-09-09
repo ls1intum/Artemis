@@ -1303,10 +1303,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
 
         const gradingReason = { translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} };
-        const withInvalidGradingForm = (isLifecycleValid = true) => {
+        const withInvalidGradingForm = (isTimelineValid = true) => {
             internals(comp).exerciseGradingComponent = signal({
                 formValid: false,
-                lifecycleComponent: signal({ formValid: isLifecycleValid }),
+                // The grading component carries the timeline's status itself now, rather than a child lifecycle component.
+                timelineStatus: signal({ valid: isTimelineValid, empty: false, invalidItems: [] }),
             } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
         };
 

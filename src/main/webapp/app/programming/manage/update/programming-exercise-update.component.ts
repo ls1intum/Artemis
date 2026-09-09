@@ -933,13 +933,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.isSaving.set(true);
 
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
-
         /*
          If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
          Creating or deleting new auxiliary repositories works automatically and does not throw a warning.
@@ -1295,8 +1288,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.exerciseGradingComponent()?.formValid !== false) {
             return;
         }
-        const isLifecycleInvalid = this.exerciseGradingComponent()?.lifecycleComponent()?.formValid === false;
-        if (!isLifecycleInvalid && validationErrorReasons.some((reason) => GRADING_FIELD_REASON_KEYS.has(reason.translateKey))) {
+        // The grading component now carries the timeline's status directly, where it used to reach into a child
+        // lifecycle component for it.
+        const isTimelineInvalid = this.exerciseGradingComponent()?.timelineStatus().valid === false;
+        if (!isTimelineInvalid && validationErrorReasons.some((reason) => GRADING_FIELD_REASON_KEYS.has(reason.translateKey))) {
             return;
         }
         validationErrorReasons.push({

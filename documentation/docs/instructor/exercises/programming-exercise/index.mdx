@@ -1,0 +1,180 @@
+---
+id: index
+title: Programming Exercise
+sidebar_label: Programming Exercise
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+
+import exerciseWorkflow from '../assets/programming/ExerciseWorkflow.png';
+
+In a programming exercise, students write code in a Git repository of their own and Artemis grades it automatically by running your test cases against every push. You provide three repositories — a template students start from, a solution, and the tests — and Artemis takes care of handing out repositories, running builds, and turning test results into scores and feedback.
+
+Artemis supports a wide range of programming languages and is independent of any particular version control or continuous integration system, so you have a lot of freedom in how you set up the test environment.
+
+## Overview
+
+Conducting a programming exercise consists of the following main steps:
+
+1. `1`: **Instructor prepares exercise**: Set up repositories containing the exercise code and test cases, configure build instructions, and set up the exercise in Artemis
+2. `2`-`5`: **Students work on exercise**: Students clone repositories, solve exercises, and submit solutions
+3. `6`: **Automated testing**: The continuous integration server verifies submissions by executing test cases and provides feedback
+4. `7`: **Instructor reviews results**: Review overall results of all students and react to common errors and problems
+
+<Image src={exerciseWorkflow} alt="Exercise Workflow" size={ImageSize.large} caption="Programming Exercise Workflow (detailed student perspective shown in diagram)" />
+
+<Callout variant={CalloutVariant.info}>
+
+  The workflow diagram above shows the detailed steps from the student perspective.
+For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.
+
+</Callout>
+
+## Setting Up an Exercise
+
+Setting up a programming exercise takes you through these pages, roughly in this order:
+
+| Page | What it covers |
+|------|----------------|
+| [Create a Programming Exercise](/instructor/exercises/programming-exercise/create-an-exercise) | The creation form section by section, simple versus advanced mode, and importing an existing exercise instead |
+| [Write the Exercise Code and Tests](/instructor/exercises/programming-exercise/write-code-and-tests) | Filling the template, solution and test repositories, writing the problem statement, and writing test cases that survive contact with students |
+| [Configure the Build](/instructor/exercises/programming-exercise/configure-the-build) | Build phases, checkout paths, build duration, the container the build runs in, and static code analysis |
+| [Configure Grading and Verify the Exercise](/instructor/exercises/programming-exercise/grade-and-verify) | Test case weights and visibility, code quality penalties, submission policies, checking the exercise works, and reviewing results afterwards |
+| [AI-Assisted Exercise Authoring](/instructor/exercises/programming-exercise/ai-assisted-authoring) | Generating and refining the problem statement, generating code, and review comments between exercise authors |
+
+Two reference pages hold the lookup tables:
+
+| Reference | What it covers |
+|-----------|----------------|
+| [Static Code Analysis Default Configuration](/instructor/exercises/programming-exercise/static-analysis-rules) | Every rule active by default, per tool |
+| [Repository Access Configuration](/instructor/exercises/programming-exercise/repository-access) | Who can read and write which repository, and when |
+
+## Choose a Programming Language
+
+Artemis ships a template for each supported language, so a new exercise starts from a working build rather than an empty repository. The template determines which features are available, and a few of them cannot be turned on later, so it is worth checking the tables below before creating the exercise.
+
+### Supported Programming Languages
+
+| No. | Programming Language | Local CI | Jenkins | Build System/Notes     | Docker Image                                                                                 |
+|-----|----------------------|----------|---------|------------------------|----------------------------------------------------------------------------------------------|
+| 1   | Java                 | ✅        | ✅       | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 2   | Python               | ✅        | ✅       | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   |
+| 3   | C                    | ✅        | ✅       | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             |
+| 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     |
+| 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 6   | VHDL                 | ✅        | ❌       | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       |
+| 7   | Assembler            | ✅        | ❌       | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             |
+| 8   | Swift                | ✅        | ✅       | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
+| 9   | OCaml                | ✅        | ❌       | Dune                   | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker)                     |
+| 10  | Rust                 | ✅        | ✅       | cargo                  | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker)                       |
+| 11  | JavaScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
+| 12  | R                    | ✅        | ✅       | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             |
+| 13  | C++                  | ✅        | ✅       | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         |
+| 14  | TypeScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           |
+| 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   |
+| 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           |
+| 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       |
+| 18  | MATLAB               | ✅ \*     | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          |
+| 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       |
+| 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       |
+
+\* MATLAB only appears in the language list if your administrators have configured a license server for it.
+
+### Using a Language Without a Template
+
+The language list also offers **Other**, which creates the three repositories with no template content at all. Use it for a language Artemis has no template for, or when you want to define the whole build yourself. Artemis shows a checklist in the creation form; in full, the steps are:
+
+1. **Specify a custom Docker image** that already contains the compiler, test framework and any other dependencies your build needs. Publish it to a registry your Artemis instance can pull from, such as the GitHub Container Registry or Docker Hub. See [Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional).
+2. **Write the build script** so that it installs any exercise-specific dependencies, runs all tests, and produces **JUnit XML** result files. Artemis reads results in that format regardless of the language that produced them.
+3. **Move the XML result files into `./results/`**, which is where Artemis collects them. See [Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional).
+4. **Push the code** to the template, solution and test repositories as usual. The template and test repositories are checked out during the build; the solution repository is not.
+
+<Callout variant={CalloutVariant.info}>
+
+  Because there is no template, none of the template-dependent features apply: no static code analysis configuration, no sequential test runs, and no predefined checkout paths. Everything the build does is what your script does.
+
+</Callout>
+
+### Feature Support by Language
+
+Not all templates support the same feature set. **L** = Local CI, **J** = Jenkins.
+
+| No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis) | [Plagiarism Check](/instructor/assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
+|:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
+|  1  | Java       |                       ✅                       |                            ✅                            |                    ✅                    |               ✅               | Gradle, Maven, DejaGnu |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  2  | Python     |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  3  | C          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | FACT, GCC              |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  4  | Haskell    |                L: ✅<br />J: ❌                 |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
+|  5  | Kotlin     |                L: ❌<br />J: ✅                 |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  6  | VHDL       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  7  | Assembler  |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  8  | Swift      |                       ❌                       |                     L: ❌<br />J: ✅                      |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  9  | OCaml      |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
+| 10  | Rust       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 11  | JavaScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 12  | R          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 13  | C++        |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 14  | TypeScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 15  | C#         |                       ❌                       |                            ❌                            |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 16  | Go         |                       ❌                       |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 17  | Bash       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 18  | MATLAB     |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 19  | Ruby       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+
+<Callout variant={CalloutVariant.info}>
+
+  Only some Local CI templates support sequential test runs, and static code analysis is Local CI only for several languages. A missing tick means the template does not provide the feature out of the box, not that it is impossible — you can always extend a generated exercise yourself.
+
+</Callout>
+
+### Feature Explanations
+
+#### Sequential Test Runs
+
+Artemis can generate a build plan which first executes structural and then behavioral tests. Structural tests check that the expected classes and method signatures exist; behavioral tests check that they do the right thing. Only if the structural tests pass do the behavioral ones run, so students are not buried under failures caused by something they have not written yet.
+
+Cannot be combined with static code analysis, and cannot be changed after the exercise is created.
+
+#### Package Name
+
+For some languages — Java, Kotlin, Swift, Go and Dart — you can specify the package that the exercise template uses, which defines the package structure students must follow. This keeps submissions consistent, which matters when tests locate classes by their fully qualified name.
+
+#### Solution Repository Checkout
+
+Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.
+
+Currently supported for OCaml and Haskell only, with both continuous integration systems.
+
+#### Auxiliary Repositories
+
+Auxiliary repositories are additional repositories beyond the template, solution and test repositories. They are useful to:
+
+- provide additional resources needed during testing,
+- include libraries or dependencies,
+- overwrite template source code in testing scenarios.
+
+Each has a name, a checkout directory and a description. If a checkout directory is set, the repository is checked out there during every build. Unlike most repository settings, auxiliary repositories can be added, edited and removed after the exercise exists. See [Auxiliary Repositories](/instructor/exercises/programming-exercise/create-an-exercise#auxiliary-repositories) for how to configure them.
+
+<Callout variant={CalloutVariant.success}>
+  We encourage instructors to contribute improvements to the existing templates or to provide new templates.
+  Please contact [Stephan Krusche](https://www.professoren.tum.de/krusche-stephan) and/or create Pull Requests in the [GitHub repository](https://github.com/ls1intum/Artemis).
+</Callout>
+
+## Prevent Maven Central Rate Limits (Java and Kotlin)
+
+Java and Kotlin builds can fail with **HTTP 429 (Too Many Requests)** when Maven Central rate-limits your Artemis instance, most often during exams when many students submit at once. Artemis emails the affected course's instructors when it detects such a build, and the fix is to configure a Maven repository mirror in the exercise's test repository.
+
+The full instructions are on [Write the Exercise Code and Tests](/instructor/exercises/programming-exercise/write-code-and-tests#prevent-maven-central-rate-limits-java-and-kotlin).
+
+## Related Pages
+
+- [Consistency Check](/instructor/exercises/consistency-check) — detects mismatches between the problem statement and the three repositories before students see them
+- [Malicious Participation Analysis](/instructor/exercises/deimos) — checks programming exercise participations for suspicious activity
+- [Plagiarism Check](/instructor/assessment-grading/plagiarism-check) — compares student submissions against each other
+- [Team Exercises](/instructor/exercises/team-exercise) — how team participation works
+- [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) — running programming exercises entirely within Artemis, without external version control or CI
+- [Assessment](/instructor/assessment-grading/assessment) and [Grading](/instructor/assessment-grading/grading) — the course-wide assessment and grading concepts
+- [Programming Exercise Student Guide](/student/exercises/programming-exercise) — what your students see

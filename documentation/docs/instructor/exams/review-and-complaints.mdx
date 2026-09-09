@@ -1,0 +1,45 @@
+---
+id: review-and-complaints
+title: Student Review and Complaints
+sidebar_label: Review and Complaints
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import complaintResponse from './assets/complaint_response.png';
+
+After results are published, students get a window in which to inspect their assessed exam and object to it. The
+window is bounded by **Begin of Student Review** and **End of Student Review** in the
+[exam configuration](/instructor/exams/create-an-exam#exam-assessment-and-student-review); leave those blank and no
+review takes place.
+
+## Student Review
+
+A student opens their **Summary** and sees a complaint button on every manually assessed exercise, with a text
+field for their reasoning. What students see and do here is described in the
+[student exam guide](/student/exams).
+
+Automatically assessed exercises cannot be complained about, because there is no human judgement to dispute — with
+one exception: once an assessor has reviewed the automatic result of a programming exercise by hand, that
+assessment becomes open to complaint. This requires
+[manual assessment](/instructor/exams/add-exercises#programming-exercises) to be enabled on the exercise.
+
+<Callout variant={CalloutVariant.info}>
+
+  A mistake in a quiz or programming exercise itself is not a complaint matter. Correct the exercise and re-trigger
+  the evaluation, which updates every participant at once instead of one complaint at a time.
+
+</Callout>
+
+## Complaint Assessment
+
+Complaints arrive in the **Assessment** dashboard, below the exercise submissions, and are handled like any other
+assessment work. An assessor can accept or reject one; Artemis updates the result of an accepted complaint
+immediately, and the new figures appear on the **Scores** page, from where they can be exported
+([Exam Scores](/instructor/exams/grade-and-publish#exam-scores)).
+
+The original assessor cannot answer a complaint about their own assessment — a second assessor has to. The
+dashboard shows a progress bar for the complaint round, so you can see how many are still open.
+
+<Image src={complaintResponse} alt="An assessor responding to a complaint" size={ImageSize.large} caption="Responding to a complaint" />

@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -27,6 +28,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -224,6 +226,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    @NonNull
     public Set<Result> getResults() {
         return results;
     }
@@ -315,16 +318,19 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * <p>
      * This is where the round used to come from implicitly: the results were an ordered list and the position carried
      * the round, so adding a result to the list decided which round it belonged to. The round now lives on the result,
-     * and this is the same moment, so the behaviour is unchanged for every caller that does not set it itself.
-     * {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked for, and that takes
-     * precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * and this is the same moment. {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked
+     * for, and that takes precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * <p>
+     * The next round is the one after the highest existing round, not the number of existing results: after a result
+     * of an earlier round is deleted the two differ, and counting would hand the new result a round that is still taken.
      *
      * @param result the result to add
      */
     public void addResult(Result result) {
         if (result != null) {
             if (result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
-                result.setCorrectionRound(countCorrectionRoundResults(result));
+                result.setCorrectionRound(
+                        nextCorrectionRound(results.stream().filter(other -> other != null && other != result && !other.isAutomatic() && !other.isAthenaBased())));
             }
             // Keep both ends of the association in sync. The results are mapped on the inverse side and cascade, so
             // without this Hibernate inserts the cascaded result with an empty submission_id and only fills it in with
@@ -335,11 +341,17 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * @param resultToAdd the result that is about to be added, which must not count itself
-     * @return how many correction-round results this submission already holds
+     * The one definition of "next round", shared with the test fixtures so that the two cannot drift apart again.
+     * <p>
+     * A result without a round is deliberately treated as holding no round yet: the backfill in changeset
+     * {@code 20260825-02-backfill-result-correction-round} gave every persisted correction-round result its round, so
+     * none is expected here, and one that does show up must not shadow a round that is in use.
+     *
+     * @param existingCorrectionRoundResults the manual results the submission already holds, without the one being added
+     * @return the round after the highest one among them, or 0 if none holds a round
      */
-    private int countCorrectionRoundResults(Result resultToAdd) {
-        return (int) results.stream().filter(other -> other != null && other != resultToAdd && !other.isAutomatic() && !other.isAthenaBased()).count();
+    public static int nextCorrectionRound(Stream<Result> existingCorrectionRoundResults) {
+        return existingCorrectionRoundResults.map(Result::getCorrectionRound).filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
     }
 
     /**

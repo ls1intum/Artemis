@@ -58,7 +58,7 @@ public class LocalDataProviderService implements DistributedDataProvider {
      *
      * <p>
      * Requesting the same name once as a plain and once as a priority queue is rejected rather than silently answered
-     * with whichever kind was created first. That is the same failure the Hazelcast backend guards against: a caller
+     * with whichever kind was created first. That is the same failure the Hazelcast provider guards against: a caller
      * that believes it holds a priority queue but is handed a FIFO one dispatches in the wrong order without any signal.
      */
     @Override
