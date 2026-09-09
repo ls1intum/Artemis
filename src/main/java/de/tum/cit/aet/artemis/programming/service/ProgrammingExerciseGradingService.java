@@ -483,7 +483,12 @@ public class ProgrammingExerciseGradingService {
             // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
             // submission itself did not change.
             updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-            return Optional.of(resultRepository.save(updatedLatestSemiAutomaticResult));
+            // Saved, but the instance handed back is the one that was merged into, not save's return value: outside a
+            // transaction (the single-container path) save merges a detached result and returns a copy whose test cases
+            // are uninitialized proxies, which the broadcast that follows cannot read without a session. The original
+            // keeps the initialized test cases its rows were inserted with, and it already carries every id.
+            resultRepository.save(updatedLatestSemiAutomaticResult);
+            return Optional.of(updatedLatestSemiAutomaticResult);
         }
         return Optional.empty();
     }
