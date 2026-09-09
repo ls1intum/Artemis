@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /** Frozen candidate and trusted-supervisor verdict; only core decides whether a run may persist. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationOutput(WorkspaceSnapshot candidate, VerificationResult verification, @Nullable String verifiedDigest, SpecFidelityReport review, String terminationReason,
-        @Nullable GenerationUsage usage, AccountingState accountingState, String effortProfile) {
+        @Nullable GenerationUsage usage, AccountingState accountingState, @JsonInclude(JsonInclude.Include.ALWAYS) String effortProfile) {
 
     public GenerationOutput {
         Objects.requireNonNull(candidate);

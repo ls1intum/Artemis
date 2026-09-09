@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class WorkerMessageCodecTest {
 
@@ -16,24 +18,26 @@ class WorkerMessageCodecTest {
 
     private final WorkerMessageCodec codec = new WorkerMessageCodec();
 
-    @Test
-    void commandRoundTripPreservesEmptyFilesBinaryWrappersAndDurations() {
+    @ParameterizedTest
+    @ValueSource(strings = { "standard", "" })
+    void commandRoundTripPreservesEmptyFilesBinaryWrappersAndDurations(String effortProfile) {
         var identity = identity();
         var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { -1, 0, 42 }, false),
                 new WorkspaceFile("template/src/.gitkeep", new byte[0], false), new WorkspaceFile("tests/gradlew", new byte[] { 35, 33 }, true)));
-        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters(effortProfile, 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
         var assignment = new GenerationAssignment(identity, new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE), parameters,
                 seed, Instant.parse("2026-09-08T12:00:00Z"), IMAGE);
         var command = new WorkerCommand(1, WorkerCommand.Type.START, identity, assignment);
         assertThat(codec.decodeCommand(codec.encode(command))).isEqualTo(command);
     }
 
-    @Test
-    void outcomeRoundTripPreservesReviewSemantics() {
+    @ParameterizedTest
+    @ValueSource(strings = { "standard", "" })
+    void outcomeRoundTripPreservesReviewSemantics(String effortProfile) {
         var id = identity();
         var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of("No verified candidate")), null,
                 new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Contradiction", "Review edge cases"))), "RUN_FAILED",
-                null, GenerationOutput.AccountingState.INCOMPLETE, "standard");
+                null, GenerationOutput.AccountingState.INCOMPLETE, effortProfile);
         var event = new WorkerEvent(1, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null, null, output);
         assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
     }
