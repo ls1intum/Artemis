@@ -282,7 +282,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor()?.parseMarkdown();
+        this.markdownEditor()?.flushLiveMarkdownAndParse();
     }
 
     /**
@@ -432,10 +432,46 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.editable()) {
             return;
         }
+        const previousCriteria = this.exercise().gradingCriteria ?? [];
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
+        if (this.exercise().gradingInstructionFeedbackUsed) {
+            this.reconcileParsedCriteria(previousCriteria);
+        }
+    }
+
+    /**
+     * Copies parsed field values into the previously persisted criterion/instruction objects so
+     * unchanged rows keep their database IDs (and any feedback still linked to them).
+     */
+    private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
+        const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        const reconciled = parsedCriteria.map((parsedCriterion, criterionIndex) => {
+            const existingCriterion = previousCriteria[criterionIndex];
+            if (!existingCriterion) {
+                return parsedCriterion;
+            }
+            existingCriterion.title = parsedCriterion.title;
+            const parsedInstructions = parsedCriterion.structuredGradingInstructions ?? [];
+            const existingInstructions = existingCriterion.structuredGradingInstructions ?? [];
+            existingCriterion.structuredGradingInstructions = parsedInstructions.map((parsedInstruction, instructionIndex) => {
+                const existingInstruction = existingInstructions[instructionIndex];
+                if (!existingInstruction) {
+                    return parsedInstruction;
+                }
+                existingInstruction.credits = parsedInstruction.credits;
+                existingInstruction.gradingScale = parsedInstruction.gradingScale;
+                existingInstruction.instructionDescription = parsedInstruction.instructionDescription;
+                existingInstruction.feedback = parsedInstruction.feedback;
+                existingInstruction.usageCount = parsedInstruction.usageCount;
+                return existingInstruction;
+            });
+            return existingCriterion;
+        });
+        this.exercise().gradingCriteria = reconciled;
+        this.criteria.set(reconciled);
     }
 
     /**
@@ -598,6 +634,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.editable() || this.showEditMode() === next) {
             return;
         }
+        // Flush Monaco before destroying it when leaving text mode — textChanged is debounced (~200ms).
+        if (next) {
+            this.prepareForSave();
+        }
         this.showEditMode.set(next);
         this.markdownEditorText.set(this.generateMarkdown());
     }
@@ -718,8 +758,14 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.editable()) {
             return;
         }
-        const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
-        const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
+        if (criterionIndex < 0) {
+            return;
+        }
+        const instructionIndex = this.findInstructionIndex(instruction, this.exercise(), criterionIndex);
+        if (instructionIndex < 0) {
+            return;
+        }
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = instruction;
     }
 }

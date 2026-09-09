@@ -10,6 +10,7 @@
             optionLabel="labelKey"
             optionValue="value"
             [ngModel]="editModeValue()"
+            [ngModelOptions]="{ standalone: true }"
             (changed)="setEditMode($event)"
             [disabled]="!editable()"
             [allowEmpty]="false"
@@ -51,18 +52,19 @@
         <div class="grading-instructions-update-border">
             <!--- Edit Mode --->
             <div class="flex flex-col gap-4">
-                @for (criterion of currentExercise.gradingCriteria; track criterion) {
+                @for (criterion of currentExercise.gradingCriteria; track criterion; let criterionIndex = $index) {
                     <div class="sqi-criterion">
                         <div class="sqi-criterion__header">
                             <div class="sqi-criterion__title-block">
-                                <label class="sqi-field-label" jhiTranslate="artemisApp.exercise.assessmentCriterion" for="criterionTitle"></label>
+                                <label class="sqi-field-label" jhiTranslate="artemisApp.exercise.assessmentCriterion" [attr.for]="'criterionTitle-' + criterionIndex"></label>
                                 <input
                                     tumUiInput
                                     class="sqi-criterion__title-input"
                                     type="text"
-                                    id="criterionTitle"
-                                    name="criterionTitle"
+                                    [id]="'criterionTitle-' + criterionIndex"
+                                    [name]="'criterionTitle-' + criterionIndex"
                                     [(ngModel)]="criterion.title!"
+                                    [ngModelOptions]="{ standalone: true }"
                                     [disabled]="!editable()"
                                     (change)="onCriterionTitleChange($event, criterion)"
                                     placeholder="Criterion Title"
@@ -83,7 +85,7 @@
                         </div>
                         <div class="sqi-criterion__body">
                             <div class="sqi-criterion__instructions">
-                                @for (instruction of criterion.structuredGradingInstructions; track instruction) {
+                                @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
                                     <div class="sqi-instruction">
                                         <div class="sqi-instruction__fields-row">
                                             <div class="sqi-instruction__field sqi-instruction__field--credits">
@@ -94,6 +96,7 @@
                                                 <input
                                                     tumUiInput
                                                     [(ngModel)]="instruction.credits"
+                                                    [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
                                                     type="number"
                                                     step="0.5"
@@ -108,6 +111,7 @@
                                                 <input
                                                     tumUiInput
                                                     [(ngModel)]="instruction.gradingScale"
+                                                    [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
                                                     type="text"
                                                     [placeholder]="'artemisApp.exercise.gradingScalePlaceholder' | artemisTranslate"
@@ -122,6 +126,7 @@
                                                 <input
                                                     tumUiInput
                                                     [(ngModel)]="instruction.usageCount"
+                                                    [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
                                                     type="number"
                                                     step="1"
@@ -132,7 +137,7 @@
                                             <button
                                                 type="button"
                                                 class="instruction-delete-button sqi-instruction__delete"
-                                                id="delete-instruction-row"
+                                                [id]="'delete-instruction-row-' + criterionIndex + '-' + instructionIndex"
                                                 [disabled]="!editable()"
                                                 [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
                                                 (click)="deleteInstruction(instruction, criterion)"
@@ -152,6 +157,7 @@
                                                     tumUiTextarea
                                                     class="sqi-instruction__textarea"
                                                     [(ngModel)]="instruction.instructionDescription"
+                                                    [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
                                                     rows="3"
                                                     [placeholder]="'artemisApp.exercise.descriptionPlaceholder' | artemisTranslate"
@@ -167,6 +173,7 @@
                                                     tumUiTextarea
                                                     class="sqi-instruction__textarea"
                                                     [(ngModel)]="instruction.feedback"
+                                                    [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
                                                     rows="3"
                                                     [placeholder]="'artemisApp.exercise.feedbackPlaceholder' | artemisTranslate"
@@ -179,7 +186,7 @@
                             </div>
                             <tum-ui-button
                                 type="button"
-                                id="add-instruction-button"
+                                [id]="'add-instruction-button-' + criterionIndex"
                                 severity="secondary"
                                 variant="outlined"
                                 size="small"

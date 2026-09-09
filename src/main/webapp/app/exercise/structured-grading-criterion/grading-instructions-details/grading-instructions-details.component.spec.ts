@@ -194,7 +194,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.gradingCriteria = [gradingCriterion];
             fixture.detectChanges();
 
-            const buttonHost = fixture.nativeElement.querySelector('#add-instruction-button') as HTMLElement;
+            const buttonHost = fixture.nativeElement.querySelector('#add-instruction-button-0') as HTMLElement;
             const button = buttonHost.querySelector('button') as HTMLButtonElement;
 
             expect(button.tagName).toBe('BUTTON');
@@ -204,14 +204,14 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should generate without parsing markdown when feedback is already used', () => {
             exercise.gradingInstructionFeedbackUsed = true;
             const markdownEditor = {
-                parseMarkdown: vi.fn(),
+                flushLiveMarkdownAndParse: vi.fn(),
             };
             Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
             generationService.generate.mockReturnValue(of([]));
 
             component.generateAssessmentCriteria();
 
-            expect(markdownEditor.parseMarkdown).not.toHaveBeenCalled();
+            expect(markdownEditor.flushLiveMarkdownAndParse).not.toHaveBeenCalled();
             expect(generationService.generate).toHaveBeenCalledWith(exercise, { exampleSolution: undefined, additionalContext: undefined });
         });
 
@@ -382,7 +382,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should parse, generate, and remain in edit-as-text mode', () => {
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => {
+                flushLiveMarkdownAndParse: vi.fn(() => {
                     exercise.gradingInstructions = 'Current unsaved text';
                     exercise.gradingCriteria = [];
                 }),
@@ -394,7 +394,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             component.generateAssessmentCriteria();
 
-            expect(markdownEditor.parseMarkdown).toHaveBeenCalledOnce();
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
             expect(markdownEditor.setMarkdown).toHaveBeenCalledOnce();
             expect(component.showEditMode()).toBe(false);
             expect(exercise.gradingInstructions).toBe('Current unsaved text');
@@ -422,7 +422,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         it('should abort when edit-as-text syntax cannot be parsed', () => {
             const markdownEditor = {
-                parseMarkdown: vi.fn(() => {
+                flushLiveMarkdownAndParse: vi.fn(() => {
                     exercise.gradingCriteria = [{ title: '', structuredGradingInstructions: [] } as GradingCriterion];
                 }),
             };
@@ -546,12 +546,23 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should skip markdown parsing while in structured edit mode', () => {
             exercise.gradingInstructionFeedbackUsed = true;
             component.ngOnInit();
-            const mainEditor = { parseMarkdown: vi.fn() };
+            const mainEditor = { flushLiveMarkdownAndParse: vi.fn() };
             Object.defineProperty(component, 'markdownEditor', { value: () => mainEditor });
 
             component.prepareForSave();
 
-            expect(mainEditor.parseMarkdown).not.toHaveBeenCalled();
+            expect(mainEditor.flushLiveMarkdownAndParse).not.toHaveBeenCalled();
+        });
+
+        it('should flush the live monaco buffer before switching to structured mode', () => {
+            component.showEditMode.set(false);
+            const markdownEditor = { flushLiveMarkdownAndParse: vi.fn() };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+
+            component.setEditMode('structured');
+
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
+            expect(component.showEditMode()).toBe(true);
         });
     });
 
@@ -643,13 +654,22 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria[0].title).toEqual(event.target.value);
     });
 
-    it('should change grading instruction fields in place', () => {
+    it('should replace a grading instruction looked up by stable id', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        gradingInstruction.instructionDescription = 'new text';
-        component.updateGradingInstruction(gradingInstruction, gradingCriterion);
+        const updatedInstruction = {
+            id: gradingInstruction.id,
+            credits: gradingInstruction.credits,
+            gradingScale: gradingInstruction.gradingScale,
+            instructionDescription: 'new text',
+            feedback: gradingInstruction.feedback,
+            usageCount: gradingInstruction.usageCount,
+        } as GradingInstruction;
+
+        component.updateGradingInstruction(updatedInstruction, gradingCriterion);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual('new text');
+        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0]).toBe(updatedInstruction);
+        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toBe('new text');
     });
 
     it('should delete a grading instruction', () => {
@@ -720,6 +740,23 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria).toBeDefined();
         const gradingCriteria = exercise.gradingCriteria![0];
         expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
+    });
+
+    it('should retain persisted criterion and instruction ids when parsing text for used feedback', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriterion = gradingCriterion;
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray();
+        domainActions[5] = { text: 'updated feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(originalCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(originalInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('updated feedback');
     });
 
     it('should update properties for grading instruction', () => {
