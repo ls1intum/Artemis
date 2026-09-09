@@ -11,7 +11,7 @@
                     "intro": "AI creates a problem statement, starter code, sample solution, and tests from your description.",
                     "consequences": "Creates an unreleased draft. Allow about {{min}}–{{max}} minutes, then review it before release.",
                     "label": "What should students learn and build?",
-                    "hint": "Include any required topics, behaviour, or constraints.",
+                    "hint": "Describe the learning objective, what learners already know, what code should be provided, and what they should write themselves. Include required behaviour and constraints.",
                     "error": "Enter at least {{min}} characters.",
                     "counter": "{{count}} of {{max}} characters",
                     "draftTitle": "AI draft exercise",
@@ -182,6 +182,16 @@
                         "savedHint": "Artemis saved the run into the repositories. Open the code editor to read the file as it was stored.",
                         "notRetainedTitle": "This run kept no copy of its files",
                         "notRetainedHint": "Only the list of what it wrote survives. Run again to produce a draft you can read."
+                    },
+                    "review": {
+                        "currentContent": "Current repository contents. These may include edits made after generation; this is not a frozen run snapshot.",
+                        "compare": "Compare student work",
+                        "compareHint": "Check that the difference practises the intended skill, not unrelated boilerplate.",
+                        "direction": "Student template → reference solution. Added code is work the learner is expected to write.",
+                        "missing": "File not found in the current repository",
+                        "missingHint": "It may have been removed or renamed since this run. Open the repository to inspect its current files.",
+                        "templateMissing": "This file is absent from the template. Check that creating the type is part of the learning objective.",
+                        "solutionMissing": "This file is absent from the solution. Review whether its removal is intended."
                     }
                 },
                 "outcome": {

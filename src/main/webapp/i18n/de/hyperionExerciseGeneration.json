@@ -11,7 +11,7 @@
                     "intro": "KI erstellt aus deiner Beschreibung eine Aufgabenstellung, Startcode, Musterlösung und Tests.",
                     "consequences": "Erstellt einen unveröffentlichten Entwurf. Plane etwa {{min}}–{{max}} Minuten ein und prüfe die Aufgabe vor der Veröffentlichung.",
                     "label": "Was sollen Studierende lernen und umsetzen?",
-                    "hint": "Nenne relevante Themen, erwartetes Verhalten oder Einschränkungen.",
+                    "hint": "Beschreibe das Lernziel, die Vorkenntnisse, den bereitzustellenden Code und die Arbeit, die Lernende selbst übernehmen sollen. Nenne erforderliches Verhalten und Einschränkungen.",
                     "error": "Gib mindestens {{min}} Zeichen ein.",
                     "counter": "{{count}} von {{max}} Zeichen",
                     "draftTitle": "KI-Aufgabenentwurf",
@@ -182,6 +182,16 @@
                         "savedHint": "Artemis hat den Lauf in die Repositories gespeichert. Öffne den Code-Editor, um die Datei so zu lesen, wie sie gespeichert wurde.",
                         "notRetainedTitle": "Dieser Lauf hat keine Kopie seiner Dateien behalten",
                         "notRetainedHint": "Nur die Liste des Geschriebenen bleibt erhalten. Starte einen neuen Lauf, um einen lesbaren Entwurf zu erzeugen."
+                    },
+                    "review": {
+                        "currentContent": "Aktueller Repository-Inhalt. Er kann Änderungen nach der Generierung enthalten und ist kein eingefrorener Stand dieses Laufs.",
+                        "compare": "Studentische Arbeit vergleichen",
+                        "compareHint": "Prüfe, ob der Unterschied das Lernziel übt statt nebensächlicher Routinearbeit.",
+                        "direction": "Vorlage → Musterlösung. Hinzugefügter Code ist die Arbeit, die die Lernenden selbst schreiben sollen.",
+                        "missing": "Datei im aktuellen Repository nicht gefunden",
+                        "missingHint": "Sie wurde möglicherweise seit diesem Lauf entfernt oder umbenannt. Öffne das Repository, um die aktuellen Dateien zu prüfen.",
+                        "templateMissing": "Diese Datei fehlt in der Vorlage. Prüfe, ob das Erstellen des Typs zum Lernziel gehört.",
+                        "solutionMissing": "Diese Datei fehlt in der Musterlösung. Prüfe, ob die Entfernung beabsichtigt ist."
                     }
                 },
                 "outcome": {
