@@ -177,8 +177,10 @@ public interface ProgrammingExerciseRequestDTO {
     }
 
     /**
-     * Builds a transient plagiarism detection configuration; the shared DTO carries no {@code toEntity()} and must not
-     * be modified from this module.
+     * Builds a transient plagiarism detection configuration, preserving the id from the request.
+     *
+     * This mapper is intentionally separate from {@link PlagiarismDetectionConfigDTO#toEntity()},
+     * which omits the id for paths that must not adopt a client-supplied entity id.
      *
      * @param dto the parsed configuration (may be {@code null})
      * @return the transient configuration, or {@code null} if the input was {@code null}
