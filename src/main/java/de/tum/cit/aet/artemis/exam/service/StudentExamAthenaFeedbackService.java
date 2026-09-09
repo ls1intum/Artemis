@@ -118,7 +118,7 @@ public class StudentExamAthenaFeedbackService {
         // generating new feedback.
         List<StudentParticipation> eligibleParticipations = participations.stream()
                 .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId()))
-                .filter(this::isEligibleForAthenaFeedback).toList();
+                .filter(participation -> isEligibleForAthenaFeedback(participation, studentExam)).toList();
         if (eligibleParticipations.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
@@ -172,7 +172,7 @@ public class StudentExamAthenaFeedbackService {
      * existing Athena result, i.e. one that the corresponding feedback generator will actually process instead of
      * skipping.
      */
-    private boolean isEligibleForAthenaFeedback(StudentParticipation participation) {
+    private boolean isEligibleForAthenaFeedback(StudentParticipation participation, StudentExam studentExam) {
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
         if (latestSubmission.isEmpty()) {
             return false;
@@ -181,6 +181,11 @@ public class StudentExamAthenaFeedbackService {
         boolean nonEmptySupportedSubmission = (submission instanceof TextSubmission textSubmission && !textSubmission.isEmpty())
                 || (submission instanceof ModelingSubmission modelingSubmission && !modelingSubmission.isEmpty());
         if (!nonEmptySupportedSubmission) {
+            return false;
+        }
+        // Test-run participations are looked up by student and exercise only (repeating an exercise reuses the old
+        // participation), so a submission saved after this attempt was submitted belongs to a later attempt instead.
+        if (submission.getSubmissionDate() != null && studentExam.getSubmissionDate() != null && submission.getSubmissionDate().isAfter(studentExam.getSubmissionDate())) {
             return false;
         }
         return athenaFeedbackApi.map(api -> !api.submissionHasAthenaResult(submission)).orElse(true);

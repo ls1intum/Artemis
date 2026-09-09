@@ -523,6 +523,24 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
                 ReflectionTestUtils.setField(studentExamAthenaFeedbackService, "athenaFeedbackApi", originalAthenaFeedbackApi);
             }
         }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void requestAthenaFeedback_shouldRejectWhenParticipationWasEditedByALaterTestRun() {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            StudentExam testRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+            StudentParticipation testRunParticipation = testRun.getStudentParticipations().iterator().next();
+
+            // A later, still-unsubmitted test run over the same exercise reuses this participation (test runs are
+            // looked up by student and exercise, not by attempt) and edits it after this one was submitted.
+            addTextSubmission(testRunParticipation, "Edited by a later, still-unsubmitted test run.");
+
+            StudentExam finalTestRun = testRun;
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(finalTestRun, instructor));
+        }
     }
 
     @Nested
