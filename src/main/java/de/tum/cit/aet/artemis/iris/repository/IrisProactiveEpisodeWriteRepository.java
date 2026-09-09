@@ -178,7 +178,9 @@ public interface IrisProactiveEpisodeWriteRepository {
      * <p>
      * The lock is the authoritative terminal check. A caller's cheap pre-check reads outside any lock, so an outcome
      * can commit between it and this write; here the registry row stays locked until this transaction commits, so no
-     * outcome can be established between the check and the append. Recording the outcome in the same transaction is
+     * REGISTRY outcome can be established between the check and the append. The pre-registry path writes onto a
+     * message row instead and does not take that lock, so an outcome arriving through it can still commit alongside an
+     * append already under way. What that leaves behind is caught by the terminal check reading both records. Recording the outcome in the same transaction is
      * what makes a confirm-close row and its outcome atomic - splitting the two is what let a concurrent dismiss land
      * between a committed close row and its own outcome.
      *

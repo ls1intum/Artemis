@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.sql.SQLException;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.sql.DataSource;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
@@ -32,9 +35,11 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeWriteRepository.OutcomeWrite;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
@@ -398,6 +403,104 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-legacy", true, null), null, null, null);
 
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-legacy").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    void anOpenRegistryRowWithACommittedMessageOutcomeReadsAsTerminal() {
+        // The state the unlocked carry-over read in registration can leave behind: an outcome commits between that
+        // read and the insert, so the registry row is open while the episode's message row has already closed it.
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
+        long hintId = proactiveHint(session, "ep-diverged").getId();
+        irisMessageRepository.setProactiveOutcomeIfNull(hintId, IrisProactiveOutcome.DISMISSED);
+        openRegistryRow("ep-diverged", null);
+
+        // Asserted on the append, not on the service's terminal gate one level up: that gate is a fast path by its own
+        // javadoc, and this is the read that actually decides whether a hint reaches the student.
+        var appended = irisProactiveEpisodeRepository.appendProactiveMessageWithOutcome(session.getId(), user.getId(), exercise.getId(), "a late hint", "ep-diverged", null);
+        assertThat(appended.terminal()).as("a dismiss the registry row never learned about still ends the episode").isTrue();
+        assertThat(appended.message()).as("nothing may be appended for an episode the student has already closed").isNull();
+    }
+
+    @Test
+    void recordingAnOutcomeOnADivergedEpisodeAdoptsTheStandingOneAndLoses() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
+        long hintId = proactiveHint(session, "ep-reconcile").getId();
+        irisMessageRepository.setProactiveOutcomeIfNull(hintId, IrisProactiveOutcome.DISMISSED);
+        openRegistryRow("ep-reconcile", null);
+
+        var write = irisProactiveEpisodeRepository.recordOutcomeUnderLock("ep-reconcile", user.getId(), exercise.getId(), IrisProactiveOutcome.RECOVERED);
+
+        assertThat(write).as("first-terminal-wins is episode-wide, so the standing dismiss beats this write").isEqualTo(OutcomeWrite.LOST);
+        assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-reconcile").orElseThrow().getOutcome())
+                .as("the registry is brought in line with what already stands rather than left open").isEqualTo(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-reconcile", user.getId(), exercise.getId()))
+                .as("the message row keeps the one outcome it had, and gains no second one").containsExactly(IrisProactiveOutcome.DISMISSED);
+    }
+
+    /**
+     * A persisted proactive hint carrying the given episode id, the row an outcome can be written onto.
+     *
+     * @param session   the chat session to append to
+     * @param episodeId the episode the hint belongs to
+     * @return the saved message
+     */
+    private IrisMessage proactiveHint(IrisChatSession session, String episodeId) {
+        var hint = new IrisMessage();
+        hint.addContent(new IrisTextMessageContent("a hint that carries the episode's outcome"));
+        hint.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        hint.setProactiveEpisodeId(episodeId);
+        hint.setProactiveExerciseId(exercise.getId());
+        return irisMessageService.saveMessage(hint, session, IrisMessageSender.LLM);
+    }
+
+    @Test
+    void anAmbientOfferIsRefusedOnADivergedEpisode() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
+        irisMessageRepository.setProactiveOutcomeIfNull(proactiveHint(session, "ep-ambient-diverged").getId(), IrisProactiveOutcome.DISMISSED);
+        openRegistryRow("ep-ambient-diverged", null);
+
+        var recorded = irisProactiveEpisodeRepository.recordAmbientOfferUnderLock(user.getId(), exercise.getId(), "ep-ambient-diverged", "a hint nobody may be offered");
+
+        assertThat(recorded).as("an episode the student closed must not be offered a fresh hint").isNull();
+        assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-ambient-diverged").orElseThrow().getHintText())
+                .as("and nothing may be stored for it either").isNull();
+    }
+
+    @Test
+    void revealingAHintIsRefusedOnADivergedEpisode() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
+        irisMessageRepository.setProactiveOutcomeIfNull(proactiveHint(session, "ep-reveal-diverged").getId(), IrisProactiveOutcome.DISMISSED);
+        // With hint text, so the reveal reaches the terminal gate instead of refusing earlier for having nothing to
+        // reveal, which would pass this test for the wrong reason.
+        openRegistryRow("ep-reveal-diverged", "an offer that was made before the episode closed");
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> irisProactiveEpisodeRepository.revealAmbient(user.getId(), exercise.getId(), "ep-reveal-diverged", session.getId()))
+                .withMessageContaining("can no longer be revealed");
+    }
+
+    /**
+     * A registry row with no outcome, standing in for the one registration inserts after its carry-over read came
+     * back empty.
+     *
+     * @param episodeId the episode to register
+     */
+    private void openRegistryRow(String episodeId, @Nullable String hintText) {
+        var episode = new IrisProactiveEpisode();
+        episode.setUserId(userId());
+        episode.setExerciseId(exercise.getId());
+        episode.setEpisodeId(episodeId);
+        episode.setLastTriggeredAt(ZonedDateTime.now());
+        episode.setHintText(hintText);
+        irisProactiveEpisodeRepository.save(episode);
+        // Asserted, not assumed: without a registry row the tests below would take the unregistered fallback, which
+        // already reads the dismissed message row, and would pass without exercising the divergence at all.
+        assertThat(irisProactiveEpisodeRepository.find(userId(), exercise.getId(), episodeId)).get().extracting(IrisProactiveEpisode::getOutcome)
+                .as("the divergence under test is an OPEN registry row next to a closed message row").isNull();
     }
 
     @Test

@@ -75,13 +75,15 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
 
     @Override
     public @Nullable Boolean recordAmbientOfferUnderLock(long userId, long exerciseId, String episodeId, String hintText) {
-        var episode = lockEpisodeAndReadTerminal(episodeId, userId, exerciseId).episode();
+        var locked = lockEpisodeAndReadTerminal(episodeId, userId, exerciseId);
         // No row despite the caller's registration means retention removed it in between, which takes seven quiet days
         // and a trigger that then never refreshed it. Treat it as terminal rather than announcing a pointer at an
-        // episode nothing can resolve.
-        if (episode == null || episode.getOutcome() != null) {
+        // episode nothing can resolve. The flag rather than the row's own outcome, so a message row that closed the
+        // episode without the registry learning of it counts here too.
+        if (locked.episode() == null || locked.terminal()) {
             return null;
         }
+        var episode = locked.episode();
         if (episode.getConsumedAt() != null) {
             // The student already revealed this episode's offer, so its message exists and there is nothing fresh to
             // surface. Overwriting the text here would rewrite history the student has already seen.
@@ -110,7 +112,10 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
             return Optional.ofNullable(episode.getConsumedMessageId()).flatMap(irisMessageRepository::findById)
                     .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
         }
-        if (episode.getOutcome() != null) {
+        // The message rows too, not just this row's own outcome: an outcome that committed while registration was
+        // carrying over leaves the registry open, and revealing on the strength of that would hand the student a hint
+        // for an episode that is already closed.
+        if (episode.getOutcome() != null || !irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty()) {
             throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
         }
         if (episode.getHintText() == null) {
@@ -160,8 +165,9 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
 
     /**
      * Record the episode's terminal outcome onto the registry row the caller already holds write-locked, and mirror it
-     * onto the message row. An unregistered episode has no row to carry the outcome, so it falls back to the
-     * pre-registry write, where the message row is the only record there is.
+     * onto the message row. An open registry row whose message rows already carry an outcome is reconciled to that
+     * outcome and reports a loss, rather than writing a second one. An unregistered episode has no row to carry the
+     * outcome at all, so it falls back to the pre-registry write, where the message row is the only record there is.
      *
      * @param episode    the locked registry row, or null when the episode is not registered
      * @param episodeId  the client-allocated episode UUID
@@ -177,9 +183,21 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
             // before the registry. Writing it there keeps such an episode behaving as it always did.
             return writeLegacyEpisodeOutcome(episodeId, outcome, userId, exerciseId);
         }
-        // Under the write lock nothing else can establish an outcome between this read and the write below, so the
-        // first terminal value is decided here rather than raced for.
+        // Under the write lock nothing else can establish a REGISTRY outcome between this read and the write below, so
+        // the first terminal value is decided here rather than raced for. The message rows are a separate matter,
+        // handled right after.
         var standing = episode.getOutcome();
+        if (standing == null) {
+            // Except that the registry row can be open while a message row already carries an outcome: registration
+            // reads the message rows unlocked, so one committing in that window is never carried over. First-terminal
+            // -wins is episode-wide, not per record, so adopt what already stands and bring the registry in line with
+            // it instead of writing this caller's outcome over it. The mirror below then does nothing, because it
+            // skips an episode that already carries an outcome on any of its rows.
+            standing = irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).stream().findFirst().orElse(null);
+            if (standing != null) {
+                irisProactiveEpisodeRepository.getObject().setOutcomeIfNull(episode.getId(), standing);
+            }
+        }
         boolean wrote = standing == null;
         if (wrote) {
             irisProactiveEpisodeRepository.getObject().setOutcomeIfNull(episode.getId(), outcome);
@@ -289,8 +307,9 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
 
     /**
      * Whether the episode is terminal, decided under the episode's registry write lock so the caller can write in the
-     * same transaction without anything interleaving. Falls back to the message rows for an episode that has no
-     * registry row, which behaves exactly as this feature did before the registry existed.
+     * same transaction without anything interleaving. The message rows are consulted either way: for an episode with
+     * no registry row they are the only record there is, and for one with an open row they can still carry an outcome
+     * that registration did not see.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the owning user
@@ -300,7 +319,13 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
     private LockedEpisode lockEpisodeAndReadTerminal(String episodeId, long userId, long exerciseId) {
         var locked = irisProactiveEpisodeRepository.getObject().findForUpdate(userId, exerciseId, episodeId);
         if (locked.isPresent()) {
-            return new LockedEpisode(locked.get(), locked.get().getOutcome() != null);
+            // An open registry row does not settle it. Registration carries a pre-registry outcome over with an
+            // UNLOCKED read, so an outcome committing between that read and the insert leaves the row open while a
+            // message row already carries the episode's terminal state. Consult both and take either as terminal.
+            // The locking variant for the same reason the unregistered branch below uses it: after the lock above,
+            // a plain read would answer from a snapshot that can predate what another writer has since committed.
+            boolean terminal = locked.get().getOutcome() != null || !irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty();
+            return new LockedEpisode(locked.get(), terminal);
         }
         // The locking variant, so this branch keeps the promise the method's name makes. The registered branch above
         // decides under a write lock; reading the fallback without one would let an outcome commit between this read

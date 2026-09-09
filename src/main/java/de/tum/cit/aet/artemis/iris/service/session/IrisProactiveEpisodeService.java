@@ -81,9 +81,9 @@ public class IrisProactiveEpisodeService {
      *
      * <p>
      * This is the cheap, unlocked read: a fast path that lets a caller complete silently without opening a
-     * transaction. It is not the decision. Every path that goes on to write re-checks under the episode's registry
-     * write lock inside the same transaction as its write, which is what makes the pair atomic against a concurrent
-     * outcome.
+     * transaction. It is not the decision. Every path that goes on to write re-checks inside the same transaction as
+     * its write, holding the episode's registry row locked where there is one. An episode with no registry row has no
+     * row to lock, so that re-check is only as atomic as the guarded update it precedes.
      *
      * <p>
      * An episode with no registry row falls back to the message rows, which is exactly how this worked before the
@@ -96,12 +96,13 @@ public class IrisProactiveEpisodeService {
      */
     boolean isEpisodeTerminal(String episodeId, long userId, long exerciseId) {
         var registered = irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId);
-        if (registered.isPresent()) {
-            return registered.get().getOutcome() != null;
+        if (registered.isPresent() && registered.get().getOutcome() != null) {
+            return true;
         }
-        // Not registered: an episode from before this feature branch carried a registry, or a job still in flight
-        // from a previous deployment. Fall back to the message rows, which is exactly what this method did before,
-        // so such an episode keeps behaving as it always did instead of silently losing its terminal state.
+        // An open registry row is not on its own proof that the episode is open. Registration reads the message rows
+        // unlocked before it inserts, so an outcome committing in that window is not carried over and leaves the row
+        // open while a message row already says otherwise. Reading both and taking either as terminal is the
+        // fail-closed answer, and it is the same read an episode with no registry row has always used.
         return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
     }
 
