@@ -152,7 +152,7 @@ public interface DistributedDataProvider {
      * Returns an authoritative snapshot of the data nodes currently visible to this node.
      *
      * <p>
-     * An empty optional means that the backend cannot prove cluster membership. Callers performing destructive
+     * An empty optional means that the provider cannot prove cluster membership. Callers performing destructive
      * owner-loss recovery must fail closed in that case. A present, empty set is an authoritative snapshot containing
      * no data nodes.
      *

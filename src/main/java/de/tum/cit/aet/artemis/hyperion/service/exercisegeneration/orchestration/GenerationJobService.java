@@ -911,7 +911,7 @@ public class GenerationJobService {
 
     /**
      * Acquires the per-exercise coordination lock without a lease. Cancellation and the transition into durable
-     * persistence must remain mutually exclusive even when a backend call stalls for longer than expected; expiring
+     * persistence must remain mutually exclusive even when a provider call stalls for longer than expected; expiring
      * this lock would let an old cancellation resume after a newer caller entered the non-cancellable phase.
      */
     void lockJobSlot(String key) {

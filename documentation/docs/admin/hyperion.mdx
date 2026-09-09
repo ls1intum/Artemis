@@ -248,7 +248,7 @@ Use identical generation settings on generation-capable core nodes. The
 exercise-mutation guard also runs on `core` and `localvc` writer nodes where
 Hyperion is disabled; it does not load a model or connect to the worker broker.
 Every writer must run this version of Artemis and use the same distributed data
-backend. Writer nodes must be data members; standalone LocalVC clients are not
+provider. Writer nodes must be data members; standalone LocalVC clients are not
 supported for generation. Do not mix guarded and older, unguarded nodes while
 generation is enabled. Redis deployments currently cannot admit generation
 because the provider cannot attest data-member topology.
