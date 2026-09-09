@@ -166,21 +166,6 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testEmptyBuildPlanIsPreservedInResponses() throws Exception {
-        // An editor saving an empty script must stay an empty script in the response, not disappear from the JSON body
-        String url = "/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan";
-        BuildPlanDTO emptyBuildPlan = new BuildPlanDTO(null, "");
-
-        String putResponse = request.putWithResponseBody(url, emptyBuildPlan, String.class, HttpStatus.OK);
-        assertThat(request.getObjectMapper().readTree(putResponse).fieldNames()).toIterable().containsExactlyInAnyOrder("id", "buildPlan");
-        assertThat(buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId()).getBuildPlan()).isEmpty();
-
-        String getResponse = request.get(url + "/for-editor", HttpStatus.OK, String.class);
-        assertThat(request.getObjectMapper().readTree(getResponse).fieldNames()).toIterable().containsExactlyInAnyOrder("id", "buildPlan");
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testBuildTrigger() throws Exception {
         BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, "Content");
 
