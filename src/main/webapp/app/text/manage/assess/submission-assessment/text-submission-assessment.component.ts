@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -288,9 +288,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled));
+    // `exercise` is a plain field, not a signal, so these must stay getters: a `computed()` would only track
+    // `hasAcceptedAiUsage()` and never re-run when a new exercise is assigned in setPropertiesFromServerResponse().
+    isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
+    }
 
-    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+    requiresAiExperienceOptIn(): boolean {
+        return this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage();
+    }
 
     onOptInToAiFeedbackSuggestions(): void {
         this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());

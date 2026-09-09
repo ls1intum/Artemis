@@ -879,6 +879,16 @@ describe('TextSubmissionAssessmentComponent', () => {
             expect(component.requiresAiExperienceOptIn()).toBe(false);
         });
 
+        it('should reflect a new exercise assigned after the predicates were already read, as happens when "Assess Next" reuses the component', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(true);
+
+            component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: false } as Course }) as TextExercise;
+
+            expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
         it('should reload feedback suggestions once the assessor opts in via the hint', () => {
             const loadFeedbackSuggestionsSpy = vi.spyOn(component, 'loadFeedbackSuggestions');
             vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
