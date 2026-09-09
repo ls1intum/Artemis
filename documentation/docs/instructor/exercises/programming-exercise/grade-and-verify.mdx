@@ -1,3 +1,9 @@
+---
+id: grade-and-verify
+title: Configure Grading and Verify the Exercise
+sidebar_label: Configure Grading and Verify the Exercise
+---
+
 import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
@@ -38,8 +44,6 @@ import notGradedLabel from '../assets/programming/not-graded-label.png';
 import submissionPolicyUpdateButton from '../assets/programming/submission-policy-update-button.png';
 import submissionPolicyDeactivateButton from '../assets/programming/submission-policy-deactivate-button.png';
 import submissionPolicyActivateButton from '../assets/programming/submission-policy-activate-button.png';
-
-# Configure Grading and Verify the Exercise
 
 Grading decides how test results become points: which tests count, how much, and when students get to see them. Once that is set, verifying the exercise means checking that the template scores zero, the solution scores full marks, and every task is bound to a test that actually exists.
 
@@ -211,13 +215,13 @@ Submission policies define the effect of a submission on participant progress. A
 
 Choosing the right policy depends on the exercise and teaching style. Lock repository and submission penalty policies combat trial-and-error solving approaches.
 
-#### 1. None
+#### None
 
 No submission policy. Participants can submit as often as they want until the due date.
 
 <Image src={submissionPolicyNoneForm} alt="Submission Policy None" size={ImageSize.medium} caption="No Submission Policy" />
 
-#### 2. Lock Repository
+#### Lock Repository
 
 Participants can submit a fixed number of times. After reaching the limit, the repository is locked and further submissions are prevented.
 
@@ -237,7 +241,7 @@ With the example configuration shown above, participants can submit 5 times. Aft
 
 </Callout>
 
-#### 3. Submission Penalty
+#### Submission Penalty
 
 Participants can submit as often as they want. For each submission exceeding the limit, the penalty is deducted from the score.
 
@@ -257,7 +261,7 @@ Students receive feedback explaining the deduction:
 
 <Image src={submissionPenaltyFeedbackElement2} alt="Submission Penalty Feedback 2" size={ImageSize.large} caption="Submission Penalty Feedback Details" />
 
-### Updating Submission Policies
+### Managing Submission Policies
 
 After generating an exercise, submission policies can be updated on the grading page.
 
