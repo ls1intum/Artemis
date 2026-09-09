@@ -3146,7 +3146,7 @@ components:
           minLength: 0
         narrativeStyle:
           type: [string, 'null']
-          enum: [TECHNICAL, REALISTIC, CREATIVE, IMAGINATIVE]
+          enum: [TECHNICAL, REALISTIC, CREATIVE]
         additionalInstructions:
           type: [string, 'null']
           maxLength: 2000

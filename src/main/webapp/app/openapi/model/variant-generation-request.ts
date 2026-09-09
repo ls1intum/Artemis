@@ -28,14 +28,13 @@ export const VariantGenerationRequestTargetDifficultyEnum = {
 
 export const VariantGenerationRequestTargetDifficultyEnumValues = ['EASY', 'MEDIUM', 'HARD'] as const;
 
-export type VariantGenerationRequestNarrativeStyleEnum = 'TECHNICAL' | 'REALISTIC' | 'CREATIVE' | 'IMAGINATIVE';
+export type VariantGenerationRequestNarrativeStyleEnum = 'TECHNICAL' | 'REALISTIC' | 'CREATIVE';
 
 export const VariantGenerationRequestNarrativeStyleEnum = {
     Technical: 'TECHNICAL' as const,
     Realistic: 'REALISTIC' as const,
     Creative: 'CREATIVE' as const,
-    Imaginative: 'IMAGINATIVE' as const,
 } as const;
 
-export const VariantGenerationRequestNarrativeStyleEnumValues = ['TECHNICAL', 'REALISTIC', 'CREATIVE', 'IMAGINATIVE'] as const;
+export const VariantGenerationRequestNarrativeStyleEnumValues = ['TECHNICAL', 'REALISTIC', 'CREATIVE'] as const;
 
