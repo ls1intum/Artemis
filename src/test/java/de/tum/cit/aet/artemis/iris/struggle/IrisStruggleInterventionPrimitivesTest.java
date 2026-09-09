@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
@@ -70,9 +69,6 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Mock
     private IrisChatSessionService irisChatSessionService;
-
-    @Mock
-    private IrisMessageService irisMessageService;
 
     @Mock
     private IrisChatWebsocketService irisChatWebsocketService;
