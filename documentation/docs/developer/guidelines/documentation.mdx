@@ -171,15 +171,18 @@ import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 ```
 
 The component turns a bare id into `https://tum.live/w/artemisintro/<id>/PRES` and passes a full URL through
-unchanged, so the tree currently holds three spellings of the same thing. Which one you use does not change what
-plays: every Artemis recording is published as a single combined stream, and TUM-Live serves that stream whatever
-stream suffix the URL carries. Prefer the bare id anyway — it is the short form, it is what the component's own
-documentation shows, and it does not pin the page to a hostname.
+unchanged. Prefer the bare id: it is the short form, it is what the component's own documentation shows, and it does
+not pin the page to a hostname.
 
-Do not read an HTTP 200 from a TUM-Live URL as confirmation that a recording or a stream exists. The site answers
-200 for any id and any suffix, invented ones included. What identifies a recording is the manifest the page loads,
-whose filename carries the recording date — `artemisintro_2026_04_13_10_00COMB.mp4`, for instance. That is also the
-only way to find out how old a screencast is, since the recording date appears nowhere in the interface.
+The suffix names a view — `PRES` for the presentation, `CAM` for the camera, `COMB` for the two combined. It makes
+no difference to any recording the Artemis documentation embeds, because each of those is published with a combined
+view only and TUM-Live serves what exists. Do not read that as a reason to trust a URL you have not opened: the
+site answers HTTP 200 for any recording id and any suffix, invented ones included, so a status code says nothing
+about whether either is real.
+
+To find out how old a screencast is, open its TUM-Live page — the recording date and time sit under the title. The
+manifest the page loads carries the same date in its filename, `artemisintro_2026_04_13_10_00COMB.mp4`, which is
+the more convenient form when checking many recordings at once.
 
 **A stale screencast is worse than none.** A reader who follows a video through an interface that no longer looks
 like that loses the time twice: once watching, once working out which parts still apply. When a recording no longer
