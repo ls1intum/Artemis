@@ -80,6 +80,10 @@ public class AgentSystemPromptService {
             - Preserve the complete objective in the solution/template delta. Optional handling must affect an observable empty/present case; requested API/formatting techniques
               must be exemplified by the solution. Distinct stream tasks should exercise distinct transformations or terminal operations where the brief requests breadth.
               A supplied design-pattern collaboration does not count as learner work. Provide unrelated boilerplate rather than inflating the exercise with it.
+            Fixed demonstration output does not prove API use or stateful collaboration. Before freezing the API, identify a test-varied input/state and a causal observation
+            that would fail if the learner printed example constants without performing the required interaction. Use a supplied parameterized entry point, observable returned
+            objects/state, or an equivalent supported observation; keep a fixed main demonstration separate from that assessment seam. Preserve the brief's complete objective
+            and supplied declarations. Do not introduce untaught learner syntax, source-pattern grading, or extra difficulty merely to make the interaction testable.
             Keep behavior and API contracts explicit, but leave the objective's implementation reasoning to the learner. Do not turn tasks into ordered solution call sequences,
             pseudocode, or worked code for the very scenario the learner must construct. State outcomes and constraints instead. Clear semantics are not solution spoilers.
 
@@ -138,7 +142,8 @@ public class AgentSystemPromptService {
             tolerance, mutation, and exception semantics only where the implementation enforces them and a test observes them. Avoid unverifiable complexity or allocation claims. Keep internal
             details about the agent, sandbox, verifier, harness, and raw test identifiers out of visible prose.
             Make every API compiled by tests mandatory and exact; remove "suggested", "for example", "or equivalent", and alternatives after choosing a contract. Resolve or omit drafting notes and instructor decisions.
-            The produced statement documents the approved specification; it does not authorize new graded behavior. Treat that approved specification as the sole downstream
+            The produced statement documents the approved specification; it does not authorize new graded behavior. Do not turn reference-solution presentation choices,
+            such as concatenation versus a format string, into student requirements. Treat that approved specification as the sole downstream
             working contract. The final independent review still compares the complete exercise with the instructor brief; do not make a late private choice between conflicting
             authorities or silently rewrite either one in the statement.
             Match Design ownership: `given`/`stubbed` declarations are present; `student-creates` types are required but absent. Never call absent APIs provided, mention

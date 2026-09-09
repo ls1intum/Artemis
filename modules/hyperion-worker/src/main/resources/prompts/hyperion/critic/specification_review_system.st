@@ -156,6 +156,12 @@ studentOwnershipEvidenceIds and the Testing Strategy row that grades the objecti
 consequential behavior or collaboration is supplied; set objectiveObservable false when grading sees only leaf outputs rather than the interaction counted above;
 set difficultySufficient false when prescribed transcription and routine plumbing exhaust the student work; and set domainGrounded false when the counted behavior has
 no stated domain cause.
+For objectiveObservable, try a concrete counterfeit implementation: print only the worked-example constants without using the required API or performing the interaction.
+Identify the admitted test setup and assertion that would reject it. A fixed zero-argument main output, labels such as "before"/"after", or separately tested given
+classes do not establish calls, state changes, constructor-argument order, or retention of a returned object in the learner's path. Set objectiveObservable false when
+all declared assessment observations remain identical for this counterfeit, even if the prose says the API must be used. The same flaw can affect any stateful
+collaboration, not just an introductory API task. A coherent repair can use test-varied inputs, externally observed objects/state, or a supported interaction witness;
+it must retain prerequisite-aligned scaffolding. Do not demand source-pattern checks or rule out every behaviorally equivalent implementation.
 Independently audit scaffolding BEFORE subtracting routine work. In scaffoldingRationale name what the learner must actually declare or implement (types, inheritance,
 members, bodies, initialized support), cite the brief's prerequisites and objective, and compare them with the Design table. Set scaffoldingAligned false when the
 starter assigns untaught or out-of-objective declarations to students, or supplies the declarations they are supposed to practice. Knowing what an object/class is
