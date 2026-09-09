@@ -1,18 +1,29 @@
 /*
- * The action buttons are projected from jhi-exercise-header-actions, so reaching them means piercing encapsulation.
+ * The controls are projected from jhi-exercise-header-actions, so reaching them means piercing encapsulation.
  *
- * `title-bar-compact-controls` (which `page-top-bar` applies) centres a button's label by matching its line-height to
- * the pinned content height. That works for every control here except one: the exercise action button wraps its icon
- * and label in a `div`, and a block child gets its own line box, so the pinned line-height never reaches the label and
- * it sits high in the box and clips.
+ * `title-bar-compact-controls` (which `page-top-bar` applies) centres a label by matching line-height to the pinned
+ * content height. That is only approximate — measured in the bar it left the dropdown toggle's icon and label a pixel
+ * low — and it fails outright for the exercise action button, which wraps its icon and label in a `div`: a block child
+ * gets its own line box, so the pinned line-height never reaches the label and it sat high and clipped. Centre with
+ * flex instead, which lands both on the exact middle.
  *
- * Scoped to exactly that button on purpose. Making every `.btn` a flex container also caught the instructor dropdown
- * toggle and the items inside its menu, and both separate their icon from their label with ordinary whitespace, which
- * flex drops — the icon ended up touching the text and the menu items lost their layout. Centring only the host leaves
- * the inner div's inline layout, and its `&nbsp;`, exactly as it was.
+ * Two things flex would otherwise break, hence the extra rules:
+ *
+ * - It drops whitespace-only text nodes, and that whitespace is what separated the toggle's icon from its label. The
+ *   `gap` restores it at the 4px the space was worth. The action button is unaffected either way: its icon and label
+ *   sit inside the block `div`, spaced by a non-breaking space that is a real character and never at risk.
+ * - Bootstrap already spaces the toggle's caret with a margin of its own, which the gap would double.
+ *
+ * The menu items are excluded on purpose. They carry `.btn` too, but they are stacked block rows inside the dropdown,
+ * and centring them turned the menu into a column of centred labels.
  */
-:host ::ng-deep button[jhi-exercise-action-button] {
+:host ::ng-deep .btn:not(.dropdown-item) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.25rem;
+
+    &.dropdown-toggle::after {
+        margin-left: 0;
+    }
 }
