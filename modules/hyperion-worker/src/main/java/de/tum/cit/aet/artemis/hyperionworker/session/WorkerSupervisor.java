@@ -224,7 +224,10 @@ public class WorkerSupervisor implements AutoCloseable {
             }
         }
         synchronized (this) {
-            pendingTerminal = execution.cancelled.get() ? event(WorkerEvent.Type.CANCELLED, identity, "Generation cancelled.", null, terminal.output()) : terminal;
+            active = null;
+            // Terminal readiness describes the cleaned-up worker; pending delivery still prevents another local admission.
+            pendingTerminal = event(execution.cancelled.get() ? WorkerEvent.Type.CANCELLED : terminal.type(), identity,
+                    execution.cancelled.get() ? "Generation cancelled." : terminal.message(), null, terminal.output());
         }
         flushTerminal();
     }

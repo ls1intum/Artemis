@@ -44,7 +44,7 @@ class WorkerSupervisorTest {
             WorkerCommand command = start(worker, events);
             worker.accept(command);
             worker.accept(command);
-            take(events, WorkerEvent.Type.FINISHED);
+            assertThat(take(events, WorkerEvent.Type.FINISHED).ready()).isTrue();
             worker.accept(command);
             assertThat(calls).hasValue(1);
         }
@@ -219,14 +219,27 @@ class WorkerSupervisorTest {
             WorkerCommand command = start(worker, events);
             worker.accept(command);
             assertThat(cleanupEntered.await(5, TimeUnit.SECONDS)).isTrue();
+            worker.heartbeat();
+            assertThat(take(events, WorkerEvent.Type.HEARTBEAT).ready()).isFalse();
             worker.accept(new WorkerCommand(1, WorkerCommand.Type.CANCEL, command.identity(), null));
             releaseCleanup.countDown();
-            take(events, WorkerEvent.Type.CANCELLED);
+            assertThat(take(events, WorkerEvent.Type.CANCELLED).ready()).isTrue();
         }
         finally {
             releaseCleanup.countDown();
         }
         assertThat(cleanups).hasValue(1);
+    }
+
+    @Test
+    void terminalDoesNotAdvertiseCapacityAfterCleanupFailure() throws InterruptedException {
+        var events = new LinkedBlockingQueue<WorkerEvent>();
+        try (var worker = worker(events, (a, c, p, s) -> result(), () -> {
+            throw new IllegalStateException("Cleanup failed");
+        }, new AtomicLong())) {
+            worker.accept(start(worker, events));
+            assertThat(take(events, WorkerEvent.Type.FINISHED).ready()).isFalse();
+        }
     }
 
     @Test
