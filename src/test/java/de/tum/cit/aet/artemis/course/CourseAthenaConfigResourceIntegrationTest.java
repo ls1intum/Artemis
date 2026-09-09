@@ -2,8 +2,16 @@ package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -11,6 +19,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigUpdateDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -20,6 +29,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "athenacourseconfig";
+
+    @Autowired
+    private CourseAthenaConfigRepository courseAthenaConfigRepository;
 
     private Course course;
 
@@ -128,6 +140,35 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
         request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
         assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void ensureAthenaConfigExists_concurrentFirstUpdates_shareOneConfiguration() throws Exception {
+        // A course from before the configuration existed has a null athena_config_id, so two instructors switching a
+        // feature at the same time both reach the create path. Without the course-row lock each created its own
+        // configuration and they raced to point the course at it, leaving the loser's toggle in a row nothing
+        // references any more - answered with 200, stored nowhere the course can see.
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+
+        var barrier = new CyclicBarrier(2);
+        Callable<Long> initialize = () -> {
+            barrier.await();
+            return courseAthenaConfigRepository.ensureAthenaConfigExists(course.getId());
+        };
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            List<Future<Long>> results = executor.invokeAll(List.of(initialize, initialize));
+            long firstConfigId = results.get(0).get();
+            long secondConfigId = results.get(1).get();
+
+            assertThat(firstConfigId).isEqualTo(secondConfigId);
+            assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).contains(firstConfigId);
+        }
+        finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test

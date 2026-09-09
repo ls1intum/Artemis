@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
@@ -92,6 +92,34 @@ describe('AthenaEnabledComponent', () => {
         // read, undoing a change made elsewhere in the meantime.
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
         expect(comp.config()).toEqual(expected);
+    });
+
+    it('should keep a feature switched while the configuration was still loading', () => {
+        // The load is answered only after the instructor has already switched a feature. Applying it then would put
+        // the state the server held before the switch back on screen.
+        const load = new Subject<AthenaCourseConfigDTO>();
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(new Subject<never>().asObservable());
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+
+        comp.setEnabled('gradingFeedbackEnabled', true);
+        load.next(bothDisabled);
+
+        expect(comp.gradingEnabled()).toBe(true);
+    });
+
+    it('should only revert the feature whose save failed', () => {
+        initWith(bothDisabled);
+        const formative = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(formative.asObservable()).mockReturnValueOnce(new Subject<never>().asObservable());
+
+        comp.setEnabled('formativeFeedbackEnabled', true);
+        comp.setEnabled('gradingFeedbackEnabled', true);
+        formative.error(new HttpErrorResponse({ status: 400 }));
+
+        // Restoring the whole snapshot this switch was clicked on would also drop the grading switch made after it.
+        expect(comp.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
     });
 
     it('should not send a request when the feature already has the requested state', () => {

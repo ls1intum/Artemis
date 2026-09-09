@@ -74,7 +74,13 @@ export class AthenaEnabledComponent implements OnInit {
         const courseId = this.course()?.id;
         if (courseId) {
             this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
-                next: (config) => this.config.set(config),
+                // Applied only while nothing has been switched yet. A toggle clicked before this answers has already
+                // put the newer state here, and the load must not replace it with what the server held beforehand.
+                next: (config) => {
+                    if (this.config() === undefined) {
+                        this.config.set(config);
+                    }
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
@@ -99,20 +105,30 @@ export class AthenaEnabledComponent implements OnInit {
             return;
         }
 
+        const previous = currentConfig[feature];
         this.config.set(cloneWith(currentConfig, { [feature]: enabled }));
 
         // Only the switched feature is sent: the other one is whatever this component last read, which may be older
         // than what is stored if someone else switched it in the meantime.
         this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
-            next: (response) => {
-                if (response.body) {
-                    this.config.set(response.body);
-                }
-            },
+            // Both handlers write back this one feature only, onto whatever the current state is rather than onto the
+            // snapshot taken when it was clicked. Restoring that whole snapshot would undo a feature switched after
+            // this request went out, which is what a failure of the first of two queued switches used to do.
+            next: (response) => this.applyToFeature(feature, response.body?.[feature] ?? enabled),
             error: (error: HttpErrorResponse) => {
-                this.config.set(currentConfig);
+                this.applyToFeature(feature, previous);
                 onError(this.alertService, error);
             },
         });
+    }
+
+    /**
+     * Sets one feature to the given value, leaving the other one at whatever it currently is.
+     *
+     * @param feature the feature to set
+     * @param enabled the value to set it to
+     */
+    private applyToFeature(feature: AthenaFeature, enabled: boolean) {
+        this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [feature]: enabled }));
     }
 }

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
@@ -66,7 +65,7 @@ public class CourseAthenaConfigService {
      * @return the stored configuration
      */
     public CourseAthenaConfigDTO updateConfig(long courseId, CourseAthenaConfigUpdateDTO update) {
-        long configId = ensureConfigExists(courseId);
+        long configId = courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
 
         boolean gradingFeedbackChanged = update.gradingFeedbackEnabled() != null
                 && courseAthenaConfigRepository.updateGradingFeedbackEnabled(configId, update.gradingFeedbackEnabled()) > 0;
@@ -79,24 +78,6 @@ public class CourseAthenaConfigService {
         }
 
         return courseAthenaConfigRepository.getArbitraryValueElseThrow(courseAthenaConfigRepository.findConfigById(configId), String.valueOf(configId));
-    }
-
-    /**
-     * Returns the id of the course's Athena configuration, creating an all-disabled one if the course has none yet.
-     * <p>
-     * This is the one place that still writes through the course, and it only does so the first time a course is
-     * configured. Every later change goes to the configuration row directly.
-     *
-     * @param courseId the id of the course to configure
-     * @return the id of the course's Athena configuration
-     */
-    private long ensureConfigExists(long courseId) {
-        Course course = loadCourseWithAthenaConfig(courseId);
-        if (course.getAthenaConfig() != null) {
-            return course.getAthenaConfig().getId();
-        }
-        course.setAthenaConfig(new CourseAthenaConfig());
-        return courseRepository.save(course).getAthenaConfig().getId();
     }
 
     private Course loadCourseWithAthenaConfig(long courseId) {

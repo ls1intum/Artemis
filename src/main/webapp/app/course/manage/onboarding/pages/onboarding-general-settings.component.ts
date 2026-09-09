@@ -102,7 +102,13 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         }
         if (this.athenaEnabled) {
             this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
-                next: (config) => this.athenaConfig.set(config),
+                // Applied only while nothing has been switched yet, so a toggle clicked before this answers is not
+                // replaced by the state the server held beforehand.
+                next: (config) => {
+                    if (this.athenaConfig() === undefined) {
+                        this.athenaConfig.set(config);
+                    }
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
@@ -146,19 +152,28 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         if (!courseId || currentConfig[feature] === enabled) {
             return;
         }
+        const previous = currentConfig[feature];
         this.athenaConfig.set(cloneWith(currentConfig, { [feature]: enabled }));
-        // Only the switched feature is sent, so this cannot write back an older value of the other one.
+        // Only the switched feature is sent, so this cannot write back an older value of the other one. Both handlers
+        // then write back that one feature onto the current state rather than restoring the snapshot taken on click,
+        // which would undo a feature switched while this request was in flight.
         this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
-            next: (response) => {
-                if (response.body) {
-                    this.athenaConfig.set(response.body);
-                }
-            },
+            next: (response) => this.applyToAthenaFeature(feature, response.body?.[feature] ?? enabled),
             error: (error: HttpErrorResponse) => {
-                this.athenaConfig.set(currentConfig);
+                this.applyToAthenaFeature(feature, previous);
                 onError(this.alertService, error);
             },
         });
+    }
+
+    /**
+     * Sets one Athena feature to the given value, leaving the other one at whatever it currently is.
+     *
+     * @param feature the feature to set
+     * @param enabled the value to set it to
+     */
+    private applyToAthenaFeature(feature: AthenaFeature, enabled: boolean) {
+        this.athenaConfig.update((current) => cloneWith(current ?? { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false }, { [feature]: enabled }));
     }
 
     updateField<K extends keyof Course>(field: K, value: Course[K]) {
