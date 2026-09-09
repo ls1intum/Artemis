@@ -38,16 +38,12 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
-import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
-import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
  * This class describes a service for SAML2 authentication.
@@ -68,9 +64,6 @@ public class SAML2Service {
 
     private final AuditEventRepository auditEventRepository;
 
-    @Value("${info.saml2.enablePassword:#{null}}")
-    private Optional<Boolean> saml2EnablePassword;
-
     @Value("${info.saml2.syncUserData:#{null}}")
     private Optional<Boolean> saml2syncUserData;
 
@@ -80,13 +73,7 @@ public class SAML2Service {
 
     private final UserRepository userRepository;
 
-    private final UserService userService;
-
     private final SAML2Properties properties;
-
-    private final MailService mailService;
-
-    private final UserRecoveryKeyService userRecoveryKeyService;
 
     private final Map<String, Pattern> extractionPatterns;
 
@@ -101,15 +88,11 @@ public class SAML2Service {
      * @param userCreationService  The user creation service
      */
     public SAML2Service(final AuditEventRepository auditEventRepository, final UserRepository userRepository, final SAML2Properties properties,
-            final UserCreationService userCreationService, MailService mailService, UserService userService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            UserRecoveryKeyService userRecoveryKeyService) {
+            final UserCreationService userCreationService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.auditEventRepository = auditEventRepository;
-        this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
-        this.mailService = mailService;
-        this.userService = userService;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
 
         this.extractionPatterns = generateExtractionPatterns(properties);
@@ -136,7 +119,6 @@ public class SAML2Service {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), assertion.getAttributes());
-        log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
         // An identity provider attribute may contain an uppercase letter, and the lookup below is an exact match. Canonicalize once here so that the lookup and the account
         // createUser stores use the same value User#setLogin would persist anyway.
@@ -148,16 +130,6 @@ public class SAML2Service {
             Map<String, Object> accountCreationDetails = new HashMap<>(details);
             accountCreationDetails.put("user", user.get().getLogin());
             auditEventRepository.add(new AuditEvent(Instant.now(), SYSTEM_ACCOUNT, "SAML2_ACCOUNT_CREATE", accountCreationDetails));
-
-            if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
-                log.debug("Sending SAML2 creation mail");
-                if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(user.get(), null, userRecoveryKeyService.findResetKey(user.get().getId())));
-                }
-                else {
-                    log.error("User {} was created but could not be found in the database!", user.get());
-                }
-            }
         }
         else if (saml2syncUserData.isPresent() && Boolean.TRUE.equals(saml2syncUserData.get())) {
             syncUserDataFromSaml2(assertion, user.get());
@@ -213,8 +185,8 @@ public class SAML2Service {
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), assertion));
         newUser.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
 
-        // userService.createUser(ManagedUserVM) does create an activated User
-        // a random password is generated
+        // createUser stores an activated account. It is then marked as externally managed, which is what an account the
+        // identity provider owns must be: it authenticates against that provider, so it holds no password of its own.
         User createdUser = userCreationService.createUser(newUser);
         createdUser.setInternal(false);
         return userRepository.save(createdUser);
