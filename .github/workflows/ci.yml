@@ -588,6 +588,16 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # No `if:` at all, unlike every other area job: the terminology rule is repo-wide prose, so a
+  # documentation-only or workflow-only PR has to be checked too. A checkout and a grep, ~15s.
+  terminology:
+    name: Terminology
+    uses: ./.github/workflows/ci-terminology.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Required for internal PRs — part of the `all-required-ci-passed` gate (a test that fails all
   # its retries blocks the merge; flaky-recovered runs stay green). Depends on `build` for the
   # Docker image, not on `test`, so a flaky unit-test run never blocks it; runs only when `build`
@@ -672,6 +682,7 @@ jobs:
       - version-consistency
       - bean-instantiations
       - skills
+      - terminology
       - e2e
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
@@ -739,6 +750,7 @@ jobs:
       - version-consistency
       - bean-instantiations
       - skills
+      - terminology
       - e2e
       - codeql
       - coverage-report
