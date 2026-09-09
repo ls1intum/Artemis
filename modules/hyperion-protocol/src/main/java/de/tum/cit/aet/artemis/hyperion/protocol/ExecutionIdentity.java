@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,7 +15,8 @@ public record ExecutionIdentity(String jobId, long exerciseId, UUID executionId,
         if (workerId == null || !workerId.matches("[a-zA-Z0-9_-]{1,64}")) {
             throw new IllegalArgumentException("Worker identity must be a bounded destination-safe name");
         }
-        Objects.requireNonNull(executionId);
-        Objects.requireNonNull(workerIncarnation);
+        if (executionId == null || workerIncarnation == null) {
+            throw new IllegalArgumentException("Execution and worker incarnation identities are required");
+        }
     }
 }

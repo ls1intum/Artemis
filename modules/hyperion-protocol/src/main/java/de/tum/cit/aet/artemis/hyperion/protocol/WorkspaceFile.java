@@ -21,7 +21,9 @@ public record WorkspaceFile(String path, @JsonInclude byte[] content, boolean ex
                 throw new IllegalArgumentException("Snapshot path contains a forbidden segment");
             }
         }
-        Objects.requireNonNull(content);
+        if (content == null) {
+            throw new IllegalArgumentException("Snapshot file content is required");
+        }
         if (content.length > MAX_FILE_BYTES) {
             throw new IllegalArgumentException("Snapshot file exceeds the byte limit");
         }
