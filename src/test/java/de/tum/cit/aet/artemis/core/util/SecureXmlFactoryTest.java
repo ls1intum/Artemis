@@ -27,15 +27,6 @@ class SecureXmlFactoryTest {
     }
 
     @Test
-    void testDefaultFactoryIsUnsafeSoTheHelperIsNotRedundant() {
-        // Guards the reason this helper exists: if a future JDK shipped a factory that already forbade both, the
-        // helper would be dead weight and this test says so instead of leaving it to be rediscovered.
-        TransformerFactory unconfigured = TransformerFactory.newInstance();
-
-        assertThat(unconfigured.getAttribute(XMLConstants.ACCESS_EXTERNAL_DTD)).as("the default factory still allows an external DTD").isNotEqualTo("");
-    }
-
-    @Test
     void testTransformerCanStillTransformAnOrdinaryDocument() throws Exception {
         // The hardening must not break the export it protects.
         var transformer = SecureXmlFactory.transformer();

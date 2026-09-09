@@ -20,6 +20,13 @@ import org.jspecify.annotations.NonNull;
  * This lives in {@code core} rather than next to any one caller because the correct set of properties is not obvious
  * from the API, and getting it wrong is silent: a factory missing one of them still transforms every well-formed
  * document without complaint. Reach for this instead of {@code TransformerFactory.newInstance()}.
+ *
+ * <p>
+ * Nothing asserts that the platform default is still unsafe, deliberately. Whether it is depends on the JAXP
+ * configuration of the JVM that runs, which a deployment can harden through a configuration file or a system property,
+ * so a test of it fails on a hardened machine without anything being wrong here. If a future JDK forbids both by
+ * default this class becomes redundant rather than incorrect, and that is a decision to take when raising the JDK, not
+ * a build to break.
  */
 public final class SecureXmlFactory {
 
