@@ -26,7 +26,7 @@ public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmis
 
     public TextExerciseWithSubmissionsExportService(FileService fileService, TextSubmissionExportService textSubmissionExportService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        super(fileService, springMvcJacksonConverter, textSubmissionExportService);
+        super(springMvcJacksonConverter, textSubmissionExportService);
     }
 
     /**

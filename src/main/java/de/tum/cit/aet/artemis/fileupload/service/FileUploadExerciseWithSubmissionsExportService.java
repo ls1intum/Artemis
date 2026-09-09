@@ -25,7 +25,7 @@ public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWith
 
     public FileUploadExerciseWithSubmissionsExportService(FileService fileService, FileUploadSubmissionExportService fileUploadSubmissionExportService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        super(fileService, springMvcJacksonConverter, fileUploadSubmissionExportService);
+        super(springMvcJacksonConverter, fileUploadSubmissionExportService);
     }
 
     /**

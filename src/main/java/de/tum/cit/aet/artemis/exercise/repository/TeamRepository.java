@@ -97,6 +97,7 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
             WHERE team.exercise.id = :exerciseId
                 AND student.login = :userLogin
             """)
+    // TODO: use userId instead of userLogin
     Optional<Team> findOneByExerciseIdAndUserLogin(@Param("exerciseId") Long exerciseId, @Param("userLogin") String userLogin);
 
     @Query("""

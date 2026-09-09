@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -843,6 +845,7 @@ public class ParticipationService {
         return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
+    // TODO: move this method into a test service, because it's only used by tests
     public StudentParticipation findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(Exercise exercise, String username) {
         return findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, username)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and username " + username + "!"));
@@ -867,8 +870,7 @@ public class ParticipationService {
         // After the effective due date (respecting individual extensions), prefer the practice participation
         Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
                 student.getId(), false);
-        ZonedDateTime effectiveDueDate = gradedParticipation.map(p -> p.getIndividualDueDate() != null ? p.getIndividualDueDate() : exercise.getDueDate())
-                .orElse(exercise.getDueDate());
+        ZonedDateTime effectiveDueDate = gradedParticipation.filter(p -> p.getIndividualDueDate() != null).map(Participation::getIndividualDueDate).orElse(exercise.getDueDate());
         if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
             Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
                     student.getId(), true);
@@ -1039,7 +1041,7 @@ public class ParticipationService {
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
 
-        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, submissionCountMap)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
@@ -1080,7 +1082,7 @@ public class ParticipationService {
 
         Boolean lastResultIsManual = null;
         if (latestSubmission != null && !latestSubmission.getResults().isEmpty()) {
-            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max((r1, r2) -> Long.compare(r1.getId(), r2.getId())).orElse(null);
+            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max(Comparator.comparingLong(DomainObject::getId)).orElse(null);
             if (latestResult != null && latestResult.getAssessmentType() != null) {
                 lastResultIsManual = latestResult.getAssessmentType() != AssessmentType.AUTOMATIC && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA;
             }
@@ -1094,10 +1096,9 @@ public class ParticipationService {
         }
 
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
-        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
 
         return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
-                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, testRun, participation.getPresentationScore(),
+                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, participation.isTestRun(), participation.getPresentationScore(),
                 participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual);
     }
 
@@ -1147,7 +1148,7 @@ public class ParticipationService {
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
 
         // Step 3: Map to DTOs, preserving the ID query order
-        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
@@ -1213,7 +1214,6 @@ public class ParticipationService {
             repositoryUri = progParticipation.getRepositoryUri();
         }
 
-        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
 
         Integer testCaseCount = latestResult != null ? latestResult.getTestCaseCount() : null;
@@ -1223,8 +1223,8 @@ public class ParticipationService {
         List<CorrectionRoundResultDTO> correctionRoundResults = submissionId != null ? correctionRoundResultsBySubmissionId.getOrDefault(submissionId, List.of()) : List.of();
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
-                resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun,
-                testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
+                resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri,
+                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
     }
 
     /**

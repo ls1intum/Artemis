@@ -80,9 +80,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
+    // TODO: this method is only used in tests, move it into a test repository
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
+    // TODO: this method is only used in tests, move it into a test repository
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -105,6 +107,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
+    // TODO: this method is only used from tests, move it into a test repositoriy
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
@@ -234,6 +237,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND participation.student.login = :username
             ORDER BY participation.testRun ASC
             """)
+    // TODO: use userId instead of username
     List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @Query("""
@@ -246,6 +250,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND student.login = :username
             ORDER BY participation.testRun ASC
             """)
+    // TODO: use userId instead of username
     List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @EntityGraph(type = LOAD, attributePaths = "team.students")
@@ -295,23 +300,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-            """)
-    Set<ProgrammingExerciseStudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
             WHERE p.id IN :participationIds
             """)
     Set<ProgrammingExerciseStudentParticipation> findByIds(@Param("participationIds") Collection<Long> participationIds);
-
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.id IN :participationIds
-            """)
-    Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
 }

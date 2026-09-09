@@ -25,7 +25,7 @@ public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSu
 
     public ModelingExerciseWithSubmissionsExportService(FileService fileService, ModelingSubmissionExportService modelingSubmissionExportService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        super(fileService, springMvcJacksonConverter, modelingSubmissionExportService);
+        super(springMvcJacksonConverter, modelingSubmissionExportService);
     }
 
     /**

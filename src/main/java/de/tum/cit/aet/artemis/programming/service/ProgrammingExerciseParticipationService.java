@@ -148,6 +148,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
+    // TODO: this method is only used in tests, move it into a test service
     @NonNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation;
@@ -172,6 +173,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participations for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
+    // TODO: this method is only used in tests, move it into a test service
     @NonNull
     public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
