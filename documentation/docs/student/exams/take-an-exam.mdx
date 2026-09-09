@@ -1,0 +1,96 @@
+---
+id: take-an-exam
+title: Take an Exam
+sidebar_label: Take an Exam
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import accessExam from '../assets/exams/access_exam.png';
+import welcomePage from '../assets/exams/welcome_page.png';
+import examOverview from '../assets/exams/exam_overview.png';
+import examNavigationSidebar from '../assets/exams/exam_navigation_sidebar.png';
+import examBar from '../assets/exams/exam_bar.png';
+import examEndScreen from '../assets/exams/exam_end_screen.png';
+
+## Find Your Exam
+
+An upcoming exam appears at the top of your course overview, and you can also reach it through the course and its
+exams. It only becomes visible shortly before the working time starts, so do not worry if you cannot see it the day
+before.
+
+<Image src={accessExam} alt="An exam shown at the top of the course overview" size={ImageSize.large} caption="Reaching an exam from the course overview" />
+
+<TumLiveVideo src="52546" title="Accessing Exams in Artemis" />
+
+## The Welcome Screen
+
+The welcome screen carries everything you need to know about the exam — read it rather than skimming it, because it
+is where your instructor puts the rules that apply.
+
+To continue you tick the checkbox confirming you have read the rules, type your full name, and choose **Start
+Exam**. Your typed name is your signature; the name Artemis has on record for you is shown under the field, so
+match it.
+
+<Image src={welcomePage} alt="Exam welcome screen waiting for the exam to start" size={ImageSize.large} caption="The welcome screen before the exam begins" hideBorder={true} />
+
+If the working time has already started, the exam opens immediately. If not, you wait — never more than five
+minutes — and a message tells you how long is left.
+
+## Work Through the Exam
+
+The exercise overview lists every exercise in your exam with its title, type and points, and whether you have
+submitted anything for it yet.
+
+<Image src={examOverview} alt="Exercise overview listing the exercises of an exam" size={ImageSize.large} caption="The exercises in your exam" />
+
+The navigation sidebar on the left moves you between exercises and shows the state of each one: not yet started,
+changed but not saved, or saved and submitted. A counter at the top says how many of the total you have saved and
+submitted, which is the number to watch. You can collapse the sidebar to give the exercise more room, and still see
+each exercise's type and state.
+
+<Image src={examNavigationSidebar} alt="Exam navigation sidebar showing per-exercise status" size={ImageSize.small} caption="The navigation sidebar and its status icons" />
+
+### Saving Your Work
+
+Text, quiz and modeling exercises have a **Save** button, and selecting any exercise in the sidebar also saves and
+submits the one you are leaving. Between the two, your work is saved often without you thinking about it.
+
+The other two types need an explicit action: a file upload exercise needs **Upload**, and a programming exercise
+needs **Submit**.
+
+<Callout variant={CalloutVariant.danger}>
+
+  A programming exercise has no **Save**, and nothing auto-submits it. If you never choose **Submit**, your code is
+  not graded — see [Exercises in an Exam](/student/exams/exercises-in-an-exam#programming-exercises).
+
+</Callout>
+
+### Watching the Clock
+
+The bar across the top shows the time remaining and offers **Hand in Early**. The timer turns yellow when time is
+nearly up.
+
+<Image src={examBar} alt="Exam bar showing the remaining time and the hand in early button" size={ImageSize.large} caption="The exam bar" />
+
+## Hand In
+
+You reach the end screen either by choosing **Hand in Early** or automatically when the working time ends. If you
+handed in early and changed your mind, **Continue** takes you back to the exercises.
+
+As on the welcome screen, you confirm that you followed the rules and sign with your full name. The grace period
+your instructor configured is added to the timer here, so you have a little time after the working time ends in
+which to complete the hand-in.
+
+<Callout variant={CalloutVariant.danger}>
+
+  An exam you do not submit is not graded. Submitting is your responsibility and your instructors cannot do it for
+  you afterwards.
+
+</Callout>
+
+Once you submit, nothing in any exercise can be changed.
+
+<Image src={examEndScreen} alt="Exam end screen after handing in early" size={ImageSize.large} caption="The end screen" />

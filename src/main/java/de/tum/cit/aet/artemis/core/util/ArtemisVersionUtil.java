@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import java.util.Objects;
-
+import org.jspecify.annotations.NonNull;
 import org.semver4j.Semver;
 import org.semver4j.SemverException;
 
@@ -35,8 +34,8 @@ public final class ArtemisVersionUtil {
      * @throws NullPointerException if {@code version} is null
      * @throws SemverException      if {@code version} is not exactly two or three numeric components
      */
-    public static Semver parseForComparison(String version) {
-        String trimmed = Objects.requireNonNull(version, "version must not be null").trim();
+    public static Semver parseForComparison(@NonNull String version) {
+        String trimmed = version.trim();
         if (trimmed.matches("\\d+\\.\\d+")) {
             return new Semver(trimmed + ".0");
         }
