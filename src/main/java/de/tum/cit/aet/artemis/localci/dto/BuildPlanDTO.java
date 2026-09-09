@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
  * @param id        the id of the build plan (null in write requests)
  * @param buildPlan the build plan script
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record BuildPlanDTO(@Nullable Long id, @Nullable String buildPlan) {
 
     /**
