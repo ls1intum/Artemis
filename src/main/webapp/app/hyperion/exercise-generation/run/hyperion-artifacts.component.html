@@ -38,7 +38,7 @@
             </tum-ui-tab>
         </tum-ui-tab-list>
 
-        <tum-ui-tab-panels>
+        <tum-ui-tab-panels [padded]="false">
             <tum-ui-tab-panel value="statement" class="block pt-3" preserveContent>
                 @if (hasProblemStatement()) {
                     <jhi-hyperion-markdown [markdown]="problemStatement()" data-testid="hyperion-artifacts-statement" />

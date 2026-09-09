@@ -81,3 +81,21 @@ export const KeyboardNavigation: Story = {
         await expect(overview).toHaveFocus();
     },
 };
+
+/** Panels can align with a containing card or section rather than adding a second inset. */
+export const UnpaddedPanels: Story = {
+    render: () => ({
+        template: `
+            <tum-ui-tabs value="overview">
+                <tum-ui-tab-list aria-label="Course">
+                    <tum-ui-tab value="overview">Overview</tum-ui-tab>
+                    <tum-ui-tab value="exercises">Exercises</tum-ui-tab>
+                </tum-ui-tab-list>
+                <tum-ui-tab-panels [padded]="false">
+                    <tum-ui-tab-panel value="overview">Content aligned with its containing surface.</tum-ui-tab-panel>
+                    <tum-ui-tab-panel value="exercises">Exercise list</tum-ui-tab-panel>
+                </tum-ui-tab-panels>
+            </tum-ui-tabs>
+        `,
+    }),
+};

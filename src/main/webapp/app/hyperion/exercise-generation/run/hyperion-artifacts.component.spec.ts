@@ -91,6 +91,7 @@ describe('HyperionArtifactsComponent', () => {
             expect(query(host, 'hyperion-artifacts-tab-spec')).not.toBeNull();
             expect(query(host, 'hyperion-artifacts-tab-files')).not.toBeNull();
             expect(query(host, 'hyperion-artifacts-statement')).not.toBeNull();
+            expect(host.querySelector('tum-ui-tab-panels')?.getAttribute('data-padded')).toBe('false');
         });
 
         it('counts the files on the tab, so the count does not need the tab to be opened', () => {

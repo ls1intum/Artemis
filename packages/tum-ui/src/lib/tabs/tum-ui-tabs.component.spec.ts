@@ -19,7 +19,7 @@ import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
                 <tum-ui-tab [value]="3" [disabled]="thirdDisabled()">Three</tum-ui-tab>
                 <tum-ui-tab [value]="4" [disabled]="true">Four</tum-ui-tab>
             </tum-ui-tab-list>
-            <tum-ui-tab-panels>
+            <tum-ui-tab-panels [padded]="padded()">
                 <tum-ui-tab-panel [value]="1">Panel One</tum-ui-tab-panel>
                 <tum-ui-tab-panel [value]="2">Panel Two</tum-ui-tab-panel>
                 <tum-ui-tab-panel [value]="3">Panel Three</tum-ui-tab-panel>
@@ -32,6 +32,7 @@ import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
 class TabsHostComponent {
     readonly value = signal<number | string>(1);
     readonly thirdDisabled = signal(false);
+    readonly padded = signal(true);
     changes: (number | string | undefined)[] = [];
 
     onValueChange(next: number | string | undefined): void {
@@ -73,6 +74,19 @@ describe('TumUiTabs family', () => {
     function press(tab: HTMLElement, key: string, keyCode: number): void {
         tab.dispatchEvent(new KeyboardEvent('keydown', { key, keyCode, bubbles: true }));
     }
+
+    it('lets an already padded surface opt out without affecting its active panel', () => {
+        const container = fixture.debugElement.query(By.directive(TumUiTabPanelsComponent)).nativeElement as HTMLElement;
+        expect(container.getAttribute('data-padded')).toBe('true');
+        host.padded.set(false);
+        fixture.detectChanges();
+        expect(container.getAttribute('data-padded')).toBe('false');
+        expect(panels()[0].textContent).toContain('Panel One');
+        expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
+        host.padded.set(true);
+        fixture.detectChanges();
+        expect(container.getAttribute('data-padded')).toBe('true');
+    });
 
     it('renders the ARIA tabs structure (tablist / tab / tabpanel roles)', () => {
         expect(fixture.debugElement.query(By.css('[role="tablist"]'))).not.toBeNull();
