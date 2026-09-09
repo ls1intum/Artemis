@@ -64,9 +64,11 @@ class IrisProactiveEpisodeWriteRepositoryTest {
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        ObjectProvider<IrisProactiveEpisodeRepository> provider = mock(ObjectProvider.class);
-        lenient().when(provider.getObject()).thenReturn(irisProactiveEpisodeRepository);
-        writeRepository = new IrisProactiveEpisodeWriteRepositoryImpl(provider, irisMessageRepository, irisSessionRepository);
+        ObjectProvider<IrisProactiveEpisodeRepository> episodes = mock(ObjectProvider.class);
+        lenient().when(episodes.getObject()).thenReturn(irisProactiveEpisodeRepository);
+        ObjectProvider<IrisSessionRepository> sessions = mock(ObjectProvider.class);
+        lenient().when(sessions.getObject()).thenReturn(irisSessionRepository);
+        writeRepository = new IrisProactiveEpisodeWriteRepositoryImpl(episodes, irisMessageRepository, sessions);
     }
 
     @Test

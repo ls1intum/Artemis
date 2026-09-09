@@ -20,9 +20,12 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
  * The containing repository is injected through an {@link ObjectProvider} and resolved per call, for the same reason
  * as in {@link IrisSessionWriteRepositoryImpl}: a fragment cannot depend on the repository it is composed into
  * without forming a cycle, and the application runs with {@code spring.main.allow-circular-references: false}.
- * {@link IrisSessionRepository} is a plain dependency, and it never depends back on this one, so that direction is
- * acyclic. Calls into it go through its proxy, so its own writes keep their transaction semantics and simply join
- * the boundary opened here.
+ * {@link IrisSessionRepository} never depends back on this one, so that direction would be acyclic as a plain
+ * constructor dependency, but it is resolved per call as well. Spring Data instantiates a fragment implementation
+ * eagerly even when the repository composing it is {@code @Lazy}, so injecting the session repository directly makes
+ * building this fragment build {@link IrisSessionWriteRepositoryImpl} on top of it during startup. Calls go through
+ * the repository proxy either way, so its own writes keep their transaction semantics and simply join the boundary
+ * opened here.
  */
 public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpisodeWriteRepository {
 
@@ -32,10 +35,10 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
 
     private final IrisMessageRepository irisMessageRepository;
 
-    private final IrisSessionRepository irisSessionRepository;
+    private final ObjectProvider<IrisSessionRepository> irisSessionRepository;
 
     public IrisProactiveEpisodeWriteRepositoryImpl(ObjectProvider<IrisProactiveEpisodeRepository> irisProactiveEpisodeRepository, IrisMessageRepository irisMessageRepository,
-            IrisSessionRepository irisSessionRepository) {
+            ObjectProvider<IrisSessionRepository> irisSessionRepository) {
         this.irisProactiveEpisodeRepository = irisProactiveEpisodeRepository;
         this.irisMessageRepository = irisMessageRepository;
         this.irisSessionRepository = irisSessionRepository;
@@ -120,7 +123,7 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
         // Append through the guarded helper, which re-checks the session's exercise binding under the session write
         // lock. The ambient lock held here says nothing about the session: a run for a DIFFERENT exercise can switch
         // this same session between the caller's resolution and the write.
-        var saved = irisSessionRepository.appendProactiveMessage(sessionId, exerciseId, episode.getHintText(), episodeId);
+        var saved = irisSessionRepository.getObject().appendProactiveMessage(sessionId, exerciseId, episode.getHintText(), episodeId);
         if (saved == null) {
             // Fail the whole reveal rather than consuming the offer: rolling back leaves the offer unconsumed, so the
             // student can reveal it again once the session is back on this exercise. Thrown from inside the boundary
@@ -140,7 +143,7 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
             // Nothing was written yet, so this commits rather than rolls back, exactly as before.
             return new ProactiveAppendOutcome(true, null);
         }
-        var saved = irisSessionRepository.appendProactiveMessage(sessionId, exerciseId, text, episodeId);
+        var saved = irisSessionRepository.getObject().appendProactiveMessage(sessionId, exerciseId, text, episodeId);
         if (saved != null && locked != null && outcomeOnSuccess != null) {
             // Same transaction as the append, still under the same lock.
             var write = recordOutcomeForLockedEpisode(locked.episode(), episodeId, userId, exerciseId, outcomeOnSuccess);

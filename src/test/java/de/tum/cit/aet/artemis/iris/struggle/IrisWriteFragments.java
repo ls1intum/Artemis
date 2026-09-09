@@ -47,7 +47,7 @@ final class IrisWriteFragments {
     static void attachTo(IrisSessionRepository sessions, IrisMessageRepository messages, IrisProactiveEpisodeRepository episodes) {
         // Only the context switch writes through the chat session repository, and no caller of this helper drives one.
         var sessionFragment = new IrisSessionWriteRepositoryImpl(providerOf(sessions), mock(IrisChatSessionRepository.class), messages);
-        var episodeFragment = new IrisProactiveEpisodeWriteRepositoryImpl(providerOf(episodes), messages, sessions);
+        var episodeFragment = new IrisProactiveEpisodeWriteRepositoryImpl(providerOf(episodes), messages, providerOf(sessions));
 
         lenient().when(sessions.appendMessage(anyLong(), any(), any(IrisMessageSender.class)))
                 .thenAnswer(call -> sessionFragment.appendMessage(call.getArgument(0), call.getArgument(1), call.getArgument(2)));
