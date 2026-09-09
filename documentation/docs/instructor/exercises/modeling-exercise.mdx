@@ -16,7 +16,7 @@ import createModelingExerciseFormHint from './assets/general/create-exercise-for
 import hintIcon from './assets/general/hint-icon.png';
 import classDiagramDiagramType from './assets/modeling/class-diagram-diagram-type.png';
 import exampleSubmissionForAssessmentTraining from './assets/modeling/example-submission-for-assessment-training.png';
-import useInAssessmentTraining from './assets/modeling/use-in-assessment-training.png';
+import assessmentTrainingMode from './assets/modeling/assessment-training-mode.png';
 import importModelingExerciseModal from './assets/modeling/import-modeling-exercise-modal.png';
 import courseDashboardExerciseModeling from './assets/modeling/course-dashboard-exercise-modeling.png';
 import submissionsDashboard from './assets/modeling/submissions-dashboard.png';
@@ -52,7 +52,10 @@ comments to matching elements in others, so a large cohort costs far less than t
 
 ## Create the Exercise
 
-**Create Modeling Exercise** sits on the course's **Exercises** page in course management.
+**Create** on the course's **Exercises** page in course management opens the **Manage Exercises** dialog. Its
+**Create** tab lists the exercise types; picking **Modeling** opens the creation form.
+
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
 
 The form is the same five sections for every exercise type:
 
@@ -108,19 +111,18 @@ comes from: the submissions you grade here become the reference Artemis matches 
 promotes a real student submission instead, which is usually the better reference because it contains the mistakes
 students actually make.
 
-<Callout variant={CalloutVariant.info}>
+Every example submission carries an **Assessment Training** mode, set in the example submission editor.
+**Read and Confirm** shows the tutor the worked assessment and the explanation behind it, and asks them to confirm
+they have understood it. **Assess Correctly** hides the assessment and asks the tutor to produce it themselves,
+then tells them where they differ. Use the first for an example that teaches a principle and the second for one
+that catches a mistake assessors make.
 
-  Tick **Use in Assessment Training** while creating an example submission for it to feed the matching. An example
-  submission without that box ticked is documentation for assessors, not training data.
-
-</Callout>
-
-<Image src={useInAssessmentTraining} alt="The Use in Assessment Training option on an example submission" size={ImageSize.large} caption="Marking an example submission as training data" />
+<Image src={assessmentTrainingMode} alt="The assessment training mode of an example submission" size={ImageSize.medium} caption="Choosing how tutors work through the example" />
 
 ### Import an Existing Exercise
 
-**Import Modeling Exercise** copies an exercise you already have. Pick one from the list and Artemis opens the
-creation form with its fields filled in, ready to adjust.
+The **Import** tab of the **Manage Exercises** dialog copies an exercise you already have. Pick the type, then
+the exercise, and Artemis opens the creation form with its fields filled in, ready to adjust.
 
 <Image src={importModelingExerciseModal} alt="Dialog listing the modeling exercises available to import" size={ImageSize.large} caption="Choosing an exercise to import" />
 
