@@ -139,11 +139,19 @@ public class IrisStruggleTriggerService {
             // POST has been issued a failure on the way back cannot be told from one on the way out. Keeping the
             // charge is the same call the connector-failure path makes, and it errs towards charging for work that
             // may really have happened.
-            var reserved = pyrisJobService.getJob(p.jobToken());
-            if (reserved instanceof StruggleInterventionJob struggleJob) {
-                emitTerminalCompletion(struggleJob);
+            //
+            // The release sits in a finally because nothing observes this handler: the future it returns is
+            // discarded, so a throw from the job read above would be swallowed and the slot would stay reserved for
+            // the whole job timeout, rejecting every further trigger for this student and exercise until it expired.
+            try {
+                var reserved = pyrisJobService.getJob(p.jobToken());
+                if (reserved instanceof StruggleInterventionJob struggleJob) {
+                    emitTerminalCompletion(struggleJob);
+                }
             }
-            pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
+            finally {
+                pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
+            }
             return null;
         });
         return new StruggleTriggerOutcome(true, false, p.jobToken());

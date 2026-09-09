@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -384,6 +386,24 @@ class IrisStruggleInterventionServiceTriggerTest {
 
         verify(pyrisPipelineService).executeStruggleInterventionPipeline(eq("default"), eq("moderate"), eq("tok"), eq(user), eq(signal), any(), any(), any(), any(), eq(EX),
                 eq("decide"), any(), any());
+    }
+
+    @Test
+    void dispatchFailure_releasesTheSlotEvenWhenTheJobReadThrows() {
+        // Nothing observes the handler's future: requestStruggleIntervention discards it. A throw from the job read
+        // inside it would therefore be swallowed silently and leave the (user, exercise) slot reserved for the whole
+        // job timeout, rejecting every later trigger for this student on this exercise until it expired.
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
+        // Fails the async dispatch, so the handler under test runs...
+        when(userRepository.findByIdElseThrow(USER_ID)).thenThrow(new IllegalStateException("dispatch failed"));
+        // ...and then fails its own job read, which used to skip the release below.
+        when(pyrisJobService.getJob("tok")).thenThrow(new CannotAcquireLockException("distributed store unavailable"));
+
+        var outcome = service.requestStruggleIntervention(EX, struggleSignal(), Map.of(), null, null, null, null, null, user);
+
+        assertThat(outcome.accepted()).isTrue();
+        verify(pyrisJobService, timeout(5000)).releaseStruggleInFlightJob("tok", USER_ID, EX);
     }
 
     /** Run the supplier handed to the job lock inline, the way the real per-job distributed lock does. */
