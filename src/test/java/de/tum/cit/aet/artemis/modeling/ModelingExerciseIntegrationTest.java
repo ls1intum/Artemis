@@ -58,6 +58,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -1588,8 +1590,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         // Utility function to avoid duplication
-        Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
-                .orElseThrow();
+        Function<CourseDashboardDTO, CourseDashboardExerciseDTO> modelingExerciseGetter = c -> c.exercises().stream().filter(e -> e.overview().id().equals(classExercise.getId()))
+                .findAny().orElseThrow();
 
         classExercise.setExampleSolutionModel("<Sample solution model>");
         classExercise.setExampleSolutionExplanation("<Sample solution explanation>");
@@ -1604,16 +1606,16 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
-        Course course = courseForDashboard.course();
-        ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
+        CourseDashboardDTO dashboardCourse = courseForDashboard.course();
+        CourseDashboardExerciseDTO modelingExercise = modelingExerciseGetter.apply(dashboardCourse);
 
         if (isStudent) {
-            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+            assertThat(modelingExercise.exampleSolutionModel()).isNull();
+            assertThat(modelingExercise.exampleSolutionExplanation()).isNull();
         }
         else {
-            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+            assertThat(modelingExercise.exampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+            assertThat(modelingExercise.exampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
         }
 
         // Test example solution publication date in the past.
@@ -1622,11 +1624,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        modelingExercise = modelingExerciseGetter.apply(course);
+        dashboardCourse = courseForDashboard.course();
+        modelingExercise = modelingExerciseGetter.apply(dashboardCourse);
 
-        assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
-        assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+        assertThat(modelingExercise.exampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+        assertThat(modelingExercise.exampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
 
         // Test example solution publication date in the future.
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
@@ -1634,16 +1636,16 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        modelingExercise = modelingExerciseGetter.apply(course);
+        dashboardCourse = courseForDashboard.course();
+        modelingExercise = modelingExerciseGetter.apply(dashboardCourse);
 
         if (isStudent) {
-            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+            assertThat(modelingExercise.exampleSolutionModel()).isNull();
+            assertThat(modelingExercise.exampleSolutionExplanation()).isNull();
         }
         else {
-            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+            assertThat(modelingExercise.exampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+            assertThat(modelingExercise.exampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
         }
     }
 

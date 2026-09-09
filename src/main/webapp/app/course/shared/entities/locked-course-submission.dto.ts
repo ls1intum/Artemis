@@ -1,10 +1,10 @@
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
-import { exerciseFromCourseManagementDTO } from 'app/course/shared/entities/course-content-response.dto';
+import { createExercise } from 'app/course/shared/entities/course-content-response.dto';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -15,14 +15,14 @@ export interface LockedCourseSubmissionDTO {
     id: number;
     submissionDate?: string;
     submissionExerciseType: SubmissionExerciseType;
-    participation: CourseLockedParticipationDTO;
+    participation?: CourseLockedParticipationDTO;
     latestResult?: CourseLockedResultDTO;
 }
 
 export interface CourseLockedParticipationDTO {
     id: number;
     submissionCount?: number;
-    exercise: CourseLockedExerciseDTO;
+    exercise?: CourseLockedExerciseDTO;
 }
 
 export interface CourseLockedExerciseDTO {
@@ -41,17 +41,28 @@ export function lockedCourseSubmissionFromDTO(dto: LockedCourseSubmissionDTO): S
         id: dto.id,
         submissionDate: convertDateStringFromServer(dto.submissionDate),
         submissionExerciseType: dto.submissionExerciseType,
-        participation: lockedParticipationFromDTO(dto.participation),
+        participation: dto.participation ? lockedParticipationFromDTO(dto.participation) : undefined,
         latestResult: dto.latestResult ? lockedResultFromDTO(dto.latestResult) : undefined,
     });
     return submission;
 }
 
-function lockedParticipationFromDTO(dto: CourseLockedParticipationDTO): StudentParticipation {
+function lockedParticipationFromDTO(dto?: CourseLockedParticipationDTO): StudentParticipation | undefined {
+    if (!dto) {
+        return undefined;
+    }
     return hydrate(new StudentParticipation(), {
         id: dto.id,
         submissionCount: dto.submissionCount,
-        exercise: exerciseFromCourseManagementDTO(dto.exercise),
+        exercise: dto.exercise ? lockedExerciseFromDTO(dto.exercise) : undefined,
+    });
+}
+
+function lockedExerciseFromDTO(dto: CourseLockedExerciseDTO): Exercise {
+    const exercise = createExercise(dto.type);
+    return hydrate(exercise, {
+        id: dto.id,
+        title: dto.title,
     });
 }
 

@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
@@ -91,6 +92,8 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -2734,8 +2737,10 @@ public class ProgrammingExerciseTestService {
         }
 
         // Utility function to avoid duplication
-        Function<Course, ProgrammingExercise> programmingExerciseGetter = c -> (ProgrammingExercise) c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId()))
+        Function<CourseDashboardDTO, CourseDashboardExerciseDTO> programmingExerciseGetter = c -> c.exercises().stream().filter(e -> e.overview().id().equals(exercise.getId()))
                 .findAny().orElseThrow();
+        Predicate<CourseDashboardExerciseDTO> isExampleSolutionPublished = e -> e.exampleSolutionPublicationDate() != null
+                && e.exampleSolutionPublicationDate().isBefore(ZonedDateTime.now());
 
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);
@@ -2744,10 +2749,10 @@ public class ProgrammingExerciseTestService {
 
         CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
-        Course courseFromServer = courseForDashboardFromServer.course();
-        ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
+        CourseDashboardDTO courseFromServer = courseForDashboardFromServer.course();
+        CourseDashboardExerciseDTO programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
-        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+        assertThat(isExampleSolutionPublished.test(programmingExerciseFromApi)).isFalse();
 
         // Test example solution publication date in the past.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
@@ -2758,7 +2763,7 @@ public class ProgrammingExerciseTestService {
         courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
-        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
+        assertThat(isExampleSolutionPublished.test(programmingExerciseFromApi)).isTrue();
 
         // Test example solution publication date in the future.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
@@ -2769,7 +2774,7 @@ public class ProgrammingExerciseTestService {
         courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
-        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+        assertThat(isExampleSolutionPublished.test(programmingExerciseFromApi)).isFalse();
 
     }
 

@@ -21,9 +21,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -77,37 +79,25 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         courseRepository.save(persisted);
     }
 
-    /**
-     * {@code athenaConfig} is {@code @JsonIgnore} on {@link Course} (see {@link Course#isAthenaGradingFeedbackEnabled()}), so
-     * the flag never round-trips back onto a {@code Course} instance deserialized from a response body - only the raw JSON
-     * carries it. Returning the parsed tree instead of a {@code Course} lets callers read it directly.
-     */
-    private JsonNode updateCourse(Course courseToUpdate) throws Exception {
+    /** Sends a DTO-shaped multipart update and retains the response as JSON for focused field assertions. */
+    private JsonNode updateCourse(long courseId, Object courseToUpdate) throws Exception {
         ObjectMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
         return mapper.readTree(result.getResponse().getContentAsString());
-    }
-
-    /** See {@link #updateCourse(Course)} for why this reads the raw JSON rather than {@code Course.isAthenaGradingFeedbackEnabled()}. */
-    private boolean athenaGradingFeedbackEnabled(long courseId) throws Exception {
-        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + courseId)).andExpect(status().isOk()).andReturn();
-        return request.getObjectMapper().readTree(result.getResponse().getContentAsString()).get("athenaGradingFeedbackEnabled").asBoolean();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_enablingGradingFeedback_reschedulesExistingExercises() throws Exception {
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(athenaGradingFeedbackEnabled(course.getId())).isFalse();
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(loaded.athenaGradingFeedbackEnabled()).isFalse();
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("athenaGradingFeedbackEnabled", true);
+        copyConfigurationToUpdateRequest(update, loaded);
 
-        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(true);
-        loaded.setAthenaConfig(athenaConfig);
-
-        JsonNode updated = updateCourse(loaded);
+        JsonNode updated = updateCourse(course.getId(), update);
 
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
@@ -120,14 +110,13 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         persistCourseGradingFeedbackEnabled(true);
         reset(instanceMessageSendService);
 
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(athenaGradingFeedbackEnabled(course.getId())).isTrue();
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(loaded.athenaGradingFeedbackEnabled()).isTrue();
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("athenaGradingFeedbackEnabled", false);
+        copyConfigurationToUpdateRequest(update, loaded);
 
-        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(false);
-        loaded.setAthenaConfig(athenaConfig);
-
-        JsonNode updated = updateCourse(loaded);
+        JsonNode updated = updateCourse(course.getId(), update);
 
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isFalse();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
@@ -137,18 +126,28 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_unrelatedChange_doesNotRescheduleExercises() throws Exception {
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(athenaGradingFeedbackEnabled(course.getId())).isFalse();
-        loaded.setDescription("Unrelated description change");
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(loaded.athenaGradingFeedbackEnabled()).isFalse();
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("description", "Unrelated description change");
+        update.put("athenaGradingFeedbackEnabled", false);
+        copyConfigurationToUpdateRequest(update, loaded);
 
-        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setGradingFeedbackEnabled(false);
-        loaded.setAthenaConfig(athenaConfig);
-
-        JsonNode updated = updateCourse(loaded);
+        JsonNode updated = updateCourse(course.getId(), update);
 
         assertThat(updated.get("description").asText()).isEqualTo("Unrelated description change");
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
+    }
+
+    private static void copyConfigurationToUpdateRequest(ObjectNode update, CourseManagementDTO course) {
+        var configuration = course.courseConfiguration();
+        if (configuration != null) {
+            update.put("gradeRelevant", configuration.gradeRelevant());
+            update.put("dataRetentionHold", configuration.dataRetentionHold());
+            update.put("autoOrchestratorEnabled", configuration.autoOrchestratorEnabled());
+            update.put("debounceWindowSecondsOverride", configuration.debounceWindowSecondsOverride());
+            update.put("maxDailyOrchestrationOverride", configuration.maxDailyOrchestrationOverride());
+        }
     }
 }

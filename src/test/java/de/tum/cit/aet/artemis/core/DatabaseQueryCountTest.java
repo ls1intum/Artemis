@@ -10,6 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -62,7 +63,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         var course = courses.getFirst();
         assertThatDb(() -> {
             log.info("Start course for dashboard call for one course");
-            var userCourse = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+            var userCourse = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
         }).hasBeenCalledAtMostTimes(18);

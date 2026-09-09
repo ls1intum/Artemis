@@ -55,6 +55,8 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -1281,8 +1283,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         final FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         // Utility function to avoid duplication
-        Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()
-                .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().orElseThrow();
+        Function<CourseDashboardDTO, CourseDashboardExerciseDTO> fileUploadExerciseGetter = c -> c.exercises().stream()
+                .filter(e -> e.overview().id().equals(fileUploadExercise.getId())).findAny().orElseThrow();
 
         fileUploadExercise.setExampleSolution("Sample<br>solution");
 
@@ -1296,14 +1298,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        FileUploadExercise fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
+        CourseDashboardDTO dashboardCourse = courseForDashboard.course();
+        CourseDashboardExerciseDTO fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(dashboardCourse);
 
         if (isStudent) {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isNull();
+            assertThat(fileUploadExerciseFromApi.exampleSolution()).isNull();
         }
         else {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
+            assertThat(fileUploadExerciseFromApi.exampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
         }
 
         // Test example solution publication date in the past.
@@ -1312,10 +1314,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         courseForDashboard = request.get("/api/course/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
+        dashboardCourse = courseForDashboard.course();
+        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(dashboardCourse);
 
-        assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
+        assertThat(fileUploadExerciseFromApi.exampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
 
         // Test example solution publication date in the future.
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
@@ -1323,14 +1325,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         courseForDashboard = request.get("/api/course/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
+        dashboardCourse = courseForDashboard.course();
+        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(dashboardCourse);
 
         if (isStudent) {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isNull();
+            assertThat(fileUploadExerciseFromApi.exampleSolution()).isNull();
         }
         else {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
+            assertThat(fileUploadExerciseFromApi.exampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
         }
     }
 }

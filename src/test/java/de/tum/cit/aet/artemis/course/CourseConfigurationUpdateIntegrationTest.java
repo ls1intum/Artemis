@@ -19,9 +19,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseConfigurationResponseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -64,11 +67,10 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         courseRepository.save(course);
     }
 
-    private Course updateCourse(Course courseToUpdate) throws Exception {
+    private Course updateCourse(long courseId, Object courseToUpdate) throws Exception {
         ObjectMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
         CourseUpdateDTO response = mapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
         Course updatedCourse = response.applyTo(new Course());
@@ -79,15 +81,14 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourse_asInstructor_shouldExposePersistedDataPrivacySettings() throws Exception {
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
 
         // The settings form reads course.courseConfiguration to initialize its controls, so an absent configuration
         // would silently fall back to the defaults (grade-relevant, not held).
-        assertThat(loaded.getCourseConfiguration()).isNotNull();
-        assertThat(loaded.getCourseConfiguration().isGradeRelevant()).isFalse();
-        assertThat(loaded.getCourseConfiguration().isDataRetentionHold()).isTrue();
-        assertThat(loaded.isGradeRelevant()).isFalse();
-        assertThat(loaded.isDataRetentionHold()).isTrue();
+        assertThat(configuration).isNotNull();
+        assertThat(configuration.gradeRelevant()).isFalse();
+        assertThat(configuration.dataRetentionHold()).isTrue();
     }
 
     @Test
@@ -96,10 +97,14 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         long configurationId = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
 
         // Reopen the course the way the settings form does, then save an unrelated field.
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        loaded.setDescription("Unrelated description change");
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
+        assertThat(configuration).isNotNull();
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("description", "Unrelated description change");
+        copyConfigurationToUpdateRequest(update, configuration);
 
-        Course updated = updateCourse(loaded);
+        Course updated = updateCourse(course.getId(), update);
 
         assertThat(updated.getDescription()).isEqualTo("Unrelated description change");
         assertThat(updated.isGradeRelevant()).isFalse();
@@ -113,5 +118,13 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         assertThat(persisted.getResetWarningSentDate()).isNotNull();
         // Compared with a tolerance because the database rounds to millisecond precision.
         assertThat(persisted.getResetWarningSentDate().toInstant()).isCloseTo(warningSentDate.toInstant(), within(1, ChronoUnit.SECONDS));
+    }
+
+    private static void copyConfigurationToUpdateRequest(ObjectNode update, CourseConfigurationResponseDTO configuration) {
+        update.put("gradeRelevant", configuration.gradeRelevant());
+        update.put("dataRetentionHold", configuration.dataRetentionHold());
+        update.put("autoOrchestratorEnabled", configuration.autoOrchestratorEnabled());
+        update.put("debounceWindowSecondsOverride", configuration.debounceWindowSecondsOverride());
+        update.put("maxDailyOrchestrationOverride", configuration.maxDailyOrchestrationOverride());
     }
 }

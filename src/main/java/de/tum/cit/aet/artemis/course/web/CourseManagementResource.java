@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseExerciseDueDateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizSelectionDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithContentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithExercisesDTO;
@@ -116,11 +115,11 @@ public class CourseManagementResource {
      */
     @GetMapping("courses")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<CourseManagementDTO>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public ResponseEntity<List<CourseWithExercisesDTO>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all courses the user has access to");
         User user = userRepository.getUserWithAuthorities();
         List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
-        return ResponseEntity.ok(courses.stream().map(CourseManagementDTO::of).toList());
+        return ResponseEntity.ok(courses.stream().map(CourseWithExercisesDTO::of).toList());
     }
 
     /**

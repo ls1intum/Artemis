@@ -39,4 +39,12 @@ public record CourseDashboardExerciseDTO(@JsonUnwrapped ExerciseOverviewDTO over
                 modelingExercise == null ? null : modelingExercise.getExampleSolutionModel(), modelingExercise == null ? null : modelingExercise.getExampleSolutionExplanation(),
                 exercise.getExampleSolutionPublicationDate(), quizQuestions);
     }
+
+    public Long id() {
+        return overview != null ? overview.id() : null;
+    }
+
+    public String title() {
+        return overview != null ? overview.title() : null;
+    }
 }

@@ -67,6 +67,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -2163,8 +2165,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         // Utility function to avoid duplication
-        Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny()
-                .orElseThrow();
+        Function<CourseDashboardDTO, CourseDashboardExerciseDTO> textExerciseGetter = c -> c.exercises().stream().filter(e -> e.overview().id().equals(textExercise.getId()))
+                .findAny().orElseThrow();
 
         textExercise.setExampleSolution("Sample<br>solution");
 
@@ -2178,14 +2180,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
+        CourseDashboardDTO dashboardCourse = courseForDashboard.course();
+        CourseDashboardExerciseDTO textExerciseFromApi = textExerciseGetter.apply(dashboardCourse);
 
         if (isStudent) {
-            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
+            assertThat(textExerciseFromApi.exampleSolution()).isNull();
         }
         else {
-            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
+            assertThat(textExerciseFromApi.exampleSolution()).isEqualTo(textExercise.getExampleSolution());
         }
 
         // Test example solution publication date in the past.
@@ -2194,10 +2196,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(course);
+        dashboardCourse = courseForDashboard.course();
+        textExerciseFromApi = textExerciseGetter.apply(dashboardCourse);
 
-        assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
+        assertThat(textExerciseFromApi.exampleSolution()).isEqualTo(textExercise.getExampleSolution());
 
         // Test example solution publication date in the future.
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
@@ -2205,14 +2207,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(course);
+        dashboardCourse = courseForDashboard.course();
+        textExerciseFromApi = textExerciseGetter.apply(dashboardCourse);
 
         if (isStudent) {
-            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
+            assertThat(textExerciseFromApi.exampleSolution()).isNull();
         }
         else {
-            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
+            assertThat(textExerciseFromApi.exampleSolution()).isEqualTo(textExercise.getExampleSolution());
         }
     }
 

@@ -1,8 +1,9 @@
 import { Competency, CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { Course, Language } from 'app/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
 import { CourseManagementDTO, CoursePrerequisiteDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -109,10 +110,61 @@ export interface CourseDashboardDTO {
     timeZone?: string;
     color?: string;
     courseIcon?: string;
+    enrollmentEnabled?: boolean;
+    unenrollmentEnabled: boolean;
+    enrollmentStartDate?: string;
+    enrollmentEndDate?: string;
+    unenrollmentEndDate?: string;
+    enrollmentConfirmationMessage?: string;
+    onlineCourse: boolean;
+    courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+    courseInformationSharingMessagingCodeOfConduct?: string;
+    maxComplaints?: number;
+    maxTeamComplaints?: number;
+    maxComplaintTimeDays: number;
+    maxRequestMoreFeedbackTimeDays: number;
+    maxComplaintTextLimit: number;
+    maxComplaintResponseTextLimit: number;
+    presentationScore?: number;
+    maxPoints?: number;
+    accuracyOfScores?: number;
+    complaintsEnabled: boolean;
+    requestMoreFeedbackEnabled: boolean;
+    athenaGradingFeedbackEnabled: boolean;
+    athenaFormativeFeedbackEnabled: boolean;
+    learningPathsEnabled: boolean;
+    trainingEnabled: boolean;
     exercises?: CourseManagementExerciseDTO[];
     lectures?: LectureForCourseManagementDTO[];
     competencies?: CourseCompetencyDashboardDTO[];
     prerequisites?: CoursePrerequisiteDTO[];
+    exams?: CourseDashboardExamDTO[];
+}
+
+export interface CourseDashboardExamDTO {
+    id: number;
+    title: string;
+    testExam?: boolean;
+    examWithAttendanceCheck?: boolean;
+    visibleDate?: string;
+    startDate?: string;
+    endDate?: string;
+    publishResultsDate?: string;
+    examStudentReviewStart?: string;
+    examStudentReviewEnd?: string;
+    gracePeriod?: number;
+    workingTime?: number;
+    startText?: string;
+    endText?: string;
+    confirmationStartText?: string;
+    confirmationEndText?: string;
+    examMaxPoints?: number;
+    randomizeExerciseOrder?: boolean;
+    numberOfExercisesInExam?: number;
+    numberOfCorrectionRoundsInExam?: number;
+    channelName?: string;
+    exampleSolutionPublicationDate?: string;
+    examSummaryPublicationDate?: string;
 }
 
 export function exerciseFromCourseManagementDTO(dto: CourseManagementExerciseDTO): Exercise {
@@ -141,11 +193,30 @@ export function courseFromAssessmentDashboardDTO(dto: CourseAssessmentDashboardD
 }
 
 export function courseFromDashboardDTO(dto: CourseDashboardDTO): Course {
-    const course = hydrate(new Course(), dto);
-    course.exercises = (dto.exercises ?? []).map(exerciseFromCourseManagementDTO);
-    course.lectures = (dto.lectures ?? []).map((lectureDTO) => hydrate(new Lecture(), lectureDTO));
-    course.competencies = (dto.competencies ?? []).map(competencyFromDTO);
-    course.prerequisites = (dto.prerequisites ?? []).map(prerequisiteFromDTO);
+    const { exercises, lectures, competencies, prerequisites, exams, ...courseProps } = dto;
+    const course: Course = hydrate(new Course(), courseProps, {
+        startDate: convertDateStringFromServer(dto.startDate),
+        endDate: convertDateStringFromServer(dto.endDate),
+        enrollmentStartDate: convertDateStringFromServer(dto.enrollmentStartDate),
+        enrollmentEndDate: convertDateStringFromServer(dto.enrollmentEndDate),
+        unenrollmentEndDate: convertDateStringFromServer(dto.unenrollmentEndDate),
+    });
+    course.exercises = (exercises ?? []).map(exerciseFromCourseManagementDTO);
+    course.lectures = (lectures ?? []).map((lectureDTO) => hydrate(new Lecture(), lectureDTO));
+    course.competencies = (competencies ?? []).map(competencyFromDTO);
+    course.prerequisites = (prerequisites ?? []).map(prerequisiteFromDTO);
+    course.exams = (exams ?? []).map((examDTO) =>
+        hydrate(new Exam(), examDTO, {
+            startDate: convertDateStringFromServer(examDTO.startDate),
+            endDate: convertDateStringFromServer(examDTO.endDate),
+            visibleDate: convertDateStringFromServer(examDTO.visibleDate),
+            publishResultsDate: convertDateStringFromServer(examDTO.publishResultsDate),
+            examStudentReviewStart: convertDateStringFromServer(examDTO.examStudentReviewStart),
+            examStudentReviewEnd: convertDateStringFromServer(examDTO.examStudentReviewEnd),
+            exampleSolutionPublicationDate: convertDateStringFromServer(examDTO.exampleSolutionPublicationDate),
+            examSummaryPublicationDate: convertDateStringFromServer(examDTO.examSummaryPublicationDate),
+        }),
+    );
     return course;
 }
 
@@ -157,7 +228,7 @@ function prerequisiteFromDTO(dto: CoursePrerequisiteDTO): Prerequisite {
     return hydrate(new Prerequisite(), dto, { softDueDate: convertDateStringFromServer(dto.softDueDate) });
 }
 
-function createExercise(type: ExerciseType): Exercise {
+export function createExercise(type: ExerciseType): Exercise {
     switch (type) {
         case ExerciseType.PROGRAMMING:
             return new ProgrammingExercise(undefined, undefined);
