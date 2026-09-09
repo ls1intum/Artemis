@@ -110,11 +110,14 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void finishedResultUsesFrozenInputAndReleasesWorkerBeforeReturning() {
-        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        WorkerEvent finished = event(1, WorkerEvent.Type.FINISHED, output(true, "draft"));
+        deliveries.add(finished);
         var outcome = run(() -> false);
         assertThat(outcome.isMechanicallyVerified()).isTrue();
         assertThat(outcome.producedProblemStatement()).isEqualTo("statement");
-        verify(workers).release(claim);
+        var lifecycle = org.mockito.Mockito.inOrder(workers);
+        lifecycle.verify(workers).recordCompletion(claim, finished);
+        lifecycle.verify(workers).release(claim);
         var commands = ArgumentCaptor.forClass(WorkerCommand.class);
         verify(client, times(3)).send(commands.capture());
         assertThat(commands.getAllValues()).extracting(WorkerCommand::type).containsExactly(WorkerCommand.Type.START, WorkerCommand.Type.RENEW, WorkerCommand.Type.CANCEL);
