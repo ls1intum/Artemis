@@ -3,7 +3,7 @@
     @if (block.feedback) {
         <jhi-unified-feedback
             [attr.id]="'text-feedback-' + i"
-            [feedbackContent]="buildFeedbackTextForReview(block.feedback)"
+            [feedbackContent]="buildFeedbackTextForReview(block.feedback, false)"
             [points]="block.feedback.credits || 0"
             [feedback]="block.feedback"
             [showReference]="false"

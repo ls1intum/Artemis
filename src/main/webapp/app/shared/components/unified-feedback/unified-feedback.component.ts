@@ -218,7 +218,7 @@ export class UnifiedFeedbackComponent {
         return 'neutral';
     });
 
-    readonly displayTitle = computed(() => this.stripFeedbackSuggestionPrefix(this.feedbackTitle() ?? ''));
+    readonly displayTitle = computed(() => Feedback.stripSuggestionPrefix(this.feedbackTitle() ?? ''));
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
@@ -435,19 +435,10 @@ export class UnifiedFeedbackComponent {
         textarea.style.height = `${textarea.scrollHeight}px`;
     }
 
-    private stripFeedbackSuggestionPrefix(text: string): string {
-        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
-            if (text.startsWith(prefix)) {
-                return text.slice(prefix.length);
-            }
-        }
-        return text;
-    }
-
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
             if (Feedback.isFeedbackSuggestion(feedback)) {
-                return this.stripFeedbackSuggestionPrefix(feedback.text);
+                return Feedback.stripSuggestionPrefix(feedback.text);
             }
             // Only use feedback.text as title when detailText exists as separate content;
             // otherwise text is used as content by buildFeedbackTextForReview and would duplicate here.

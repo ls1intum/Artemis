@@ -4,6 +4,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
 import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
@@ -115,6 +116,39 @@ describe('ProgrammingFeedbackItemService', () => {
         } as FeedbackItem;
 
         expect(service.create([feedback], true)).toEqual([expected]);
+    });
+
+    it('should include the grading instruction text for an accepted AI feedback suggestion matched to a criterion', () => {
+        const gradingInstruction = {
+            feedback: 'gradingInstruction.feedback',
+        } as Partial<GradingInstruction>;
+
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}City identification is incorrect`,
+            detailText: 'The answer provided does not name the capital of France.',
+            gradingInstruction,
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.title).toBe('City identification is incorrect');
+        expect(item.text).toBe('gradingInstruction.feedback\nThe answer provided does not name the capital of France.');
+    });
+
+    it('should fall back to the detail text alone for a feedback suggestion without a matched grading instruction', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Incorrect city`,
+            detailText: 'The answer provided does not name the capital of France.',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.title).toBe('Incorrect city');
+        expect(item.text).toBe('The answer provided does not name the capital of France.');
     });
 
     it('should set automatic feedback item title according to positive', () => {

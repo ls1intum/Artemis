@@ -154,6 +154,20 @@ export class Feedback implements BaseEntity {
         return FeedbackSuggestionType.SUGGESTED;
     }
 
+    /**
+     * Strips the internal `FeedbackSuggestion:(suggested|accepted|adapted):` marker off a feedback's `text`, if
+     * present. That marker exists only to tag the suggestion state in the database `text` column without a schema
+     * change; it must never reach a tutor or a student as literal text.
+     */
+    public static stripSuggestionPrefix(text: string): string {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
+    }
+
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != undefined && that.detailText.length > 0;
     }
@@ -311,12 +325,12 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
         if (addFeedbackText && feedback.text) {
-            feedbackText = feedbackText + '\n' + feedback.text;
+            feedbackText = feedbackText + '\n' + Feedback.stripSuggestionPrefix(feedback.text);
         }
     } else if (feedback.detailText) {
         feedbackText = feedback.detailText;
     } else if (addFeedbackText && feedback.text) {
-        feedbackText = feedback.text;
+        feedbackText = Feedback.stripSuggestionPrefix(feedback.text);
     }
 
     // escape special characters like "<", ">", "&" to render them correctly
