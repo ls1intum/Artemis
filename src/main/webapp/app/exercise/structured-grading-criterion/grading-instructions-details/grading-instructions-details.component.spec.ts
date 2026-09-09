@@ -759,6 +759,39 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('updated feedback');
     });
 
+    it('should not reuse persisted ids when parsed instruction structure changes', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray();
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        const instructionAction = domainActions[1].action;
+        // Insert a second instruction before the original — positional reuse would attach id 1 to the wrong row.
+        domainActions.splice(
+            1,
+            0,
+            { text: '', action: instructionAction },
+            { text: '9', action: creditsAction },
+            { text: 'inserted', action: scaleAction },
+            { text: 'new', action: descriptionAction },
+            { text: 'new feedback', action: feedbackAction },
+            { text: '1', action: usageCountAction },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions).toHaveLength(2);
+        expect(instructions[0]).not.toBe(originalInstruction);
+        expect(instructions[0].id).toBeUndefined();
+        expect(instructions[1].id).toBeUndefined();
+        expect(instructions[0].gradingScale).toBe('inserted');
+    });
+
     it('should update properties for grading instruction', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const instruction = gradingInstruction;

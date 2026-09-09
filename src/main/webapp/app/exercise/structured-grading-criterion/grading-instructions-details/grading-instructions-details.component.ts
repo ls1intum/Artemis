@@ -445,22 +445,24 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     /**
      * Copies parsed field values into the previously persisted criterion/instruction objects so
      * unchanged rows keep their database IDs (and any feedback still linked to them).
+     *
+     * Only runs when criterion/instruction counts match at every index — insertions and deletions
+     * would shift later rows and attach the wrong IDs. Pure reordering with identical counts still
+     * rematches by position (markdown has no instruction ids); that is accepted over inventing a
+     * brittle content fingerprint.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        if (!this.hasSameCriteriaStructure(previousCriteria, parsedCriteria)) {
+            return;
+        }
         const reconciled = parsedCriteria.map((parsedCriterion, criterionIndex) => {
             const existingCriterion = previousCriteria[criterionIndex];
-            if (!existingCriterion) {
-                return parsedCriterion;
-            }
             existingCriterion.title = parsedCriterion.title;
             const parsedInstructions = parsedCriterion.structuredGradingInstructions ?? [];
             const existingInstructions = existingCriterion.structuredGradingInstructions ?? [];
             existingCriterion.structuredGradingInstructions = parsedInstructions.map((parsedInstruction, instructionIndex) => {
                 const existingInstruction = existingInstructions[instructionIndex];
-                if (!existingInstruction) {
-                    return parsedInstruction;
-                }
                 existingInstruction.credits = parsedInstruction.credits;
                 existingInstruction.gradingScale = parsedInstruction.gradingScale;
                 existingInstruction.instructionDescription = parsedInstruction.instructionDescription;
@@ -472,6 +474,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         });
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
+    }
+
+    private hasSameCriteriaStructure(previous: GradingCriterion[], parsed: GradingCriterion[]): boolean {
+        if (previous.length !== parsed.length) {
+            return false;
+        }
+        return previous.every((criterion, index) => (criterion.structuredGradingInstructions?.length ?? 0) === (parsed[index].structuredGradingInstructions?.length ?? 0));
     }
 
     /**
