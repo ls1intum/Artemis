@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperionworker.generation.verification;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -56,7 +57,7 @@ final class ProblemStatementBindingChecker {
     /** Matches a {@code [task][Title](...)} line's title. */
     private static final Pattern TASK_TITLE = Pattern.compile("\\[task\\]\\[([^\\]]+)\\]");
 
-    /** Matches every {@code testsColor(NAME)} occurrence (member and edge form); a trailing {@code ()} on the name is tolerated. */
+    /** Matches every {@code testsColor(NAME,...)} occurrence (member and edge form); a trailing {@code ()} on the name is tolerated. */
     private static final Pattern TESTS_COLOR_NAME = Pattern.compile("testsColor\\(([^)]+?)(?:\\(\\))?\\)");
 
     static boolean writesAboutStudentsInThirdPerson(String problemStatement) {
@@ -73,7 +74,8 @@ final class ProblemStatementBindingChecker {
     static List<String> unresolvedTestsColorNames(String problemStatement, List<String> actualTestNames, Set<String> seededStructuralTestNames) {
         Set<String> known = new HashSet<>(actualTestNames);
         known.addAll(seededStructuralTestNames);
-        return TESTS_COLOR_NAME.matcher(problemStatement).results().map(match -> match.group(1).strip()).distinct().filter(name -> !known.contains(name)).sorted().toList();
+        return TESTS_COLOR_NAME.matcher(problemStatement).results().flatMap(match -> Arrays.stream(match.group(1).split(","))).map(String::strip).distinct()
+                .filter(name -> !known.contains(name)).sorted().toList();
     }
 
     private static boolean hasValidDiagramSyntax(String source) {
