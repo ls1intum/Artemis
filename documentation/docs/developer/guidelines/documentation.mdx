@@ -81,9 +81,18 @@ wrong place — silently, because the anchors stay syntactically valid and the b
 moved. Let the heading say what the section is about and let the sidebar supply the ordering. Numbered *steps*
 belong in an ordered list, not in headings.
 
-**The `{#custom-id}` syntax does not work here.** MDX parses the braces as a JSX expression and the build fails with
-`Could not parse expression with acorn`. When you need a specific anchor — to keep an inbound link alive after a
-rewrite, for instance — choose heading text whose natural slug is the anchor you need.
+**To pin an anchor, put it in an MDX comment.** Sometimes a heading needs an id its own text would not produce —
+keeping an inbound link alive after a rewrite, most often. The documented Docusaurus form, `{#custom-id}`, cannot be
+used here: MDX reads the braces as a JSX expression and the build fails with `Could not parse expression with
+acorn`. Wrapping it in a comment works, and is what this repository already does:
+
+```markdown
+### Naming Conventions for GitHub Pull Requests {/* #pr-naming-conventions */}
+```
+
+That renders as `<h3 id="pr-naming-conventions">Naming Conventions for GitHub Pull Requests</h3>`. Use it to
+preserve an existing anchor, not to invent a shorter one — a heading whose id has nothing to do with its text is
+hard to find again.
 
 Two further rules:
 
