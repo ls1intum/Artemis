@@ -199,6 +199,10 @@ Organized by feature module:
 - **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
   description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
   page for its audience.
+- Full conventions — heading and anchor rules, naming controls in bold rather than backticks, screenshot and
+  screencast practice, when to split a page — live in
+  [`documentation/docs/developer/guidelines/documentation.mdx`](./documentation/docs/developer/guidelines/documentation.mdx).
+  Read it before writing or restructuring a page.
 
 ### API Specification
 
