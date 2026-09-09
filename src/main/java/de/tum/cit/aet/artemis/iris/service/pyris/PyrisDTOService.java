@@ -194,10 +194,24 @@ public class PyrisDTOService {
      * the student reacted, so the struggle gate can avoid repeating a dismissed/ignored hint. Builds
      * fresh DTOs — it never mutates the stored IrisMessage entities — and preserves id/sentAt/sender.
      *
-     * @param messages the chat-history messages, in chronological order
+     * <p>
+     * A hint that belongs to a DIFFERENT episode than the one running now is additionally marked as such. The
+     * session outlives any single bout of being stuck, and its proactive messages are never cleaned up, so without
+     * this a hint from an episode that ended days ago arrives looking exactly like one given a minute ago and the
+     * gate falls silent on a fresh struggle. The marker is ADDED, never substituted: an explicit {@code dismissed}
+     * survives it, because a rejection outlives the episode it was given in.
+     *
+     * <p>
+     * Pyris is the only reader of the distinction, and its {@code sent_at} never reaches the model (it is dropped
+     * when the history is converted to the agent's messages), so the tag text is the one channel that carries this.
+     *
+     * @param messages         the chat-history messages, in chronological order
+     * @param currentEpisodeId the episode this run belongs to, or null when the caller has none. Null marks
+     *                             NOTHING as earlier: with the episode relation unknown, keeping every hint under
+     *                             today's tags can only ever suppress a repeat, never license one.
      * @return the converted DTOs with proactive messages outcome-tagged
      */
-    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages) {
+    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages, @Nullable String currentEpisodeId) {
         // One reverse pass instead of a forward scan per proactive message: "superseded" only asks whether a LATER
         // proactive message exists, so the index of the last one answers it for every message at once.
         int lastProactiveIndex = -1;
@@ -214,24 +228,44 @@ public class PyrisDTOService {
                 out.add(PyrisMessageDTO.of(m));
             }
             else {
-                out.add(annotatedProactiveDTO(m, proactiveOutcomeTag(m, messages, i, i < lastProactiveIndex)));
+                out.add(annotatedProactiveDTO(m, proactiveOutcomeTag(m, messages, i, i < lastProactiveIndex, currentEpisodeId)));
             }
         }
         return out;
     }
 
-    /** The wire tag for a proactive message based on its persisted outcome, its neighbour, and whether a later proactive message exists. */
-    private String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded) {
+    /**
+     * The wire tag for a proactive message based on its persisted outcome, its neighbour, whether a later proactive
+     * message exists, and whether it belongs to an episode other than the one running now.
+     */
+    private String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded, @Nullable String currentEpisodeId) {
+        // "from an earlier episode" is a qualifier on the reaction, not a replacement for it. Dropping the reaction
+        // here would tell the gate that a hint the student explicitly rejected is merely old, which is the one thing
+        // it must never conclude.
+        String origin = isFromAnEarlierEpisode(m, currentEpisodeId) ? "proactive hint from an earlier episode" : "proactive hint";
         if (m.getProactiveOutcome() == IrisProactiveOutcome.DISMISSED) {
-            return "(proactive hint, dismissed) ";
+            return "(" + origin + ", dismissed) ";
         }
         // Engagement is attributed only when the IMMEDIATELY following message is a USER reply within the window:
         // if an assistant turn intervenes, a later user reply is more plausibly a response to that turn, not this hint.
         boolean replied = i + 1 < all.size() && all.get(i + 1).getSender() == IrisMessageSender.USER && isWithinEngagedWindow(m.getSentAt(), all.get(i + 1).getSentAt());
         if (m.getHelpful() != null || replied) {
-            return "(proactive hint, engaged) ";
+            return "(" + origin + ", engaged) ";
         }
-        return superseded ? "(proactive hint, ignored) " : "(proactive hint) ";
+        return superseded ? "(" + origin + ", ignored) " : "(" + origin + ") ";
+    }
+
+    /**
+     * Whether this hint was given during a different bout of being stuck than the one running now.
+     *
+     * <p>
+     * Both ids have to be known for the question to have an answer. A message from before episodes existed carries
+     * none, and a caller without one (an older client, or an id too malformed to serve as an identity) cannot say
+     * what "earlier" would even be relative to. Both answer false, which leaves the hint under the tags it has
+     * today: the fail-safe direction, since the gate then keeps treating it as a repeat.
+     */
+    private static boolean isFromAnEarlierEpisode(IrisMessage m, @Nullable String currentEpisodeId) {
+        return currentEpisodeId != null && m.getProactiveEpisodeId() != null && !currentEpisodeId.equals(m.getProactiveEpisodeId());
     }
 
     /**

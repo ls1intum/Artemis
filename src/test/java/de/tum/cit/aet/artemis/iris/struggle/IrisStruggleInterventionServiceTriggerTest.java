@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +40,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
@@ -404,6 +408,48 @@ class IrisStruggleInterventionServiceTriggerTest {
 
         assertThat(outcome.accepted()).isTrue();
         verify(pyrisJobService, timeout(5000)).releaseStruggleInFlightJob("tok", USER_ID, EX);
+    }
+
+    @Test
+    void sendToPyris_buildsTheHistoryAgainstTheRunningEpisode() {
+        // The tagger needs to know which episode is running to tell an old hint from a current one, and it is
+        // sendToPyris that knows it.
+        runTheJobLockInline();
+        when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", "ep-9", null, null, null));
+        when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
+        when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(true);
+        stubExistingChatSession();
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "cool", "decide",
+                new StruggleEpisodeDTO("ep-9", true, List.of()), null, null, null);
+
+        service.sendToPyris(prepared, struggleSignal(), Map.of());
+
+        verify(pyrisDTOService).toPyrisMessageDTOListForStruggle(any(), eq("ep-9"));
+    }
+
+    @Test
+    void sendToPyris_normalizesAnUnusableEpisodeIdBeforeComparingHistory() {
+        // A blank id is not an identity. Handing it to the tagger would make every episode-stamped hint look like it
+        // came from somewhere else, which is exactly the licence to repeat that the qualifier must not hand out.
+        runTheJobLockInline();
+        when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", null, null, null, null));
+        when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
+        when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(true);
+        stubExistingChatSession();
+        var prepared = new IrisStruggleTriggerService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "cool", "decide",
+                new StruggleEpisodeDTO("   ", true, List.of()), null, null, null);
+
+        service.sendToPyris(prepared, struggleSignal(), Map.of());
+
+        verify(pyrisDTOService).toPyrisMessageDTOListForStruggle(any(), isNull());
+    }
+
+    /** A prior exercise-chat session, so sendToPyris reaches the history mapper instead of short-circuiting to an empty list. */
+    private void stubExistingChatSession() {
+        var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        session.setMessages(new ArrayList<>());
+        when(irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(eq(EX), eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(USER_ID), any()))
+                .thenReturn(List.of(session));
     }
 
     /** Run the supplier handed to the job lock inline, the way the real per-job distributed lock does. */

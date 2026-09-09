@@ -352,11 +352,14 @@ public class IrisStruggleTriggerService {
         }
         var exercise = programmingExerciseRepository.findByIdElseThrow(p.exerciseId());
         var exerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseMetadataDTO(exercise);
+        // Normalized, not raw: an id the endpoint would refuse as an identity must not become the yardstick that
+        // decides which history hints count as belonging to another episode.
+        String currentEpisodeId = p.episode() == null ? null : StruggleEpisodeDTO.usableEpisodeId(p.episode().episodeId());
         var submissionDTO = latestSubmission(exercise, user).map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
         var courseDTO = new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember());
         var chatHistory = irisChatSessionRepository
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
-                .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages())).orElse(List.of());
+                .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages(), currentEpisodeId)).orElse(List.of());
         // The dispatch itself runs under the job lock, on a job re-read inside it. Everything above only reads: the
         // student can cancel this very request between the 202 and this line, and scoped cancel removes the job and
         // frees the (user, exercise) slot under that same lock. Without the lock a cancelled run would still POST the
