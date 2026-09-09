@@ -166,7 +166,9 @@ public class ProgrammingTriggerService {
             if (participation == null) {
                 continue;
             }
-            pauseBetweenBatches(index, participationData.participationId());
+            if (!pauseBetweenBatches(index, participationData.participationId())) {
+                break;
+            }
             triggerBuild(participation, sharedData);
             index++;
         }
@@ -205,20 +207,26 @@ public class ProgrammingTriggerService {
      *
      * @param index           how many participations of this batch were already triggered
      * @param participationId the participation that is about to be triggered, for the log message on interruption
+     * @return true if the caller may trigger the next participation, false if the thread was interrupted and the
+     *         remaining participations have to be left alone
      */
-    private void pauseBetweenBatches(int index, long participationId) {
+    private boolean pauseBetweenBatches(int index, long participationId) {
         if (index == 0 || index % externalSystemRequestBatchSize != 0) {
-            return;
+            return true;
         }
         try {
             log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
             Thread.sleep(externalSystemRequestBatchWaitingTime);
+            return true;
         }
         catch (InterruptedException ex) {
-            // This sleep paces requests to the CI system, so an interruption has to stop the caller's loop rather
-            // than be logged and forgotten.
+            // The sleep is what keeps a large trigger from filling the build queue in one go. Restoring the interrupt
+            // status makes every later sleep of this loop throw at once, so carrying on would trigger the whole
+            // remaining batch with no pacing at all, which is the opposite of what the pause is for. Stop instead and
+            // leave it to the caller to trigger the rest later.
             Thread.currentThread().interrupt();
-            log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
+            log.warn("Interrupted while pausing before triggering the build for participation {}. Not triggering the remaining participations.", participationId);
+            return false;
         }
     }
 
@@ -254,7 +262,7 @@ public class ProgrammingTriggerService {
         }
 
         var index = 0;
-        for (var participationsOfExercise : participationsByExerciseId.values()) {
+        triggering: for (var participationsOfExercise : participationsByExerciseId.values()) {
             // A participation without a submission is not triggered at all, so an exercise where nobody submitted must
             // not pay for the shared data either: resolving it reads the test repository and the build statistics.
             List<ProgrammingExerciseStudentParticipation> triggerable = participationsOfExercise.stream().filter(participation -> participation.findLatestSubmission().isPresent())
@@ -270,7 +278,9 @@ public class ProgrammingTriggerService {
             // build that never happened.
             for (var participation : triggerable) {
                 // Execute requests in batches when using an external build system.
-                pauseBetweenBatches(index, participation.getId());
+                if (!pauseBetweenBatches(index, participation.getId())) {
+                    break triggering;
+                }
                 triggerBuild(participation, sharedData);
                 index++;
             }

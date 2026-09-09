@@ -89,6 +89,10 @@ public class AutomaticProgrammingExerciseCleanupService {
         catch (Exception ex) {
             log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer", ex);
         }
+        if (Thread.currentThread().isInterrupted()) {
+            log.warn("Skipping the git working copy cleanup because the cleanup thread was interrupted.");
+            return;
+        }
         try {
             cleanupGitWorkingCopiesOnArtemisServer();
         }
@@ -303,10 +307,12 @@ public class AutomaticProgrammingExerciseCleanupService {
                     Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
-                    // This sleep paces requests to an external system inside a scheduled cleanup, so the loop has to
-                    // stop when the thread is interrupted rather than keep issuing them.
+                    // The sleep paces deletions against the external build system. Restoring the interrupt status makes
+                    // every later sleep of this loop throw at once, so carrying on would delete the rest of the batch
+                    // with no pacing at all. Stop here and leave the remaining plans to the next nightly run.
                     Thread.currentThread().interrupt();
-                    log.error("Exception encountered when pausing before cleaning up build plans", ex);
+                    log.warn("Interrupted while pausing during build plan cleanup. Stopping after {} of {} build plans.", index, actualParticipationsToClean.size());
+                    break;
                 }
             }
 
@@ -319,6 +325,6 @@ public class AutomaticProgrammingExerciseCleanupService {
 
             index++;
         }
-        log.info("{} build plans have been cleaned", actualParticipationsToClean.size());
+        log.info("{} of {} build plans have been cleaned", index, actualParticipationsToClean.size());
     }
 }
