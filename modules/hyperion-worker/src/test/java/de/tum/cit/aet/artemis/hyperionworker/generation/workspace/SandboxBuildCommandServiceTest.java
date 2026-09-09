@@ -22,6 +22,14 @@ class SandboxBuildCommandServiceTest {
     private final GenerationInput input = new GenerationInput(1, "de.example", null, false, Set.of());
 
     @Test
+    void disposableGradleCachesNeverUsePersistentDaemons() {
+        var commands = new SandboxBuildCommandService(new GenerationResources());
+
+        assertThat(commands.verifyScriptContent(input)).contains("-Dorg.gradle.daemon=false");
+        assertThat(commands.readinessVerifyScriptContent(input)).contains("-Dorg.gradle.daemon=false");
+    }
+
+    @Test
     void packagedRecipeProvidesTheActualLocalCiPhasesAndReportPaths() {
         var commands = new SandboxBuildCommandService(new GenerationResources());
         var context = commands.describeBuildContext(input);
