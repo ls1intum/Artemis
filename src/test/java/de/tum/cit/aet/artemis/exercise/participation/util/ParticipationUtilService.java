@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRe
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -101,6 +102,25 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ParticipationUtilService {
+
+    @Autowired
+    private ParticipationService participationServiceForEagerResults;
+
+    /**
+     * Finds a student's participation with its results, and fails the test if there is none.
+     * <p>
+     * Lives here rather than in {@code ParticipationService} because only tests want the throwing variant: production
+     * code handles the empty case itself.
+     *
+     * @param exercise the exercise the participation belongs to
+     * @param student  the student whose participation to find
+     * @return the participation, with submissions and results
+     * @throws EntityNotFoundException if the student has no participation in that exercise
+     */
+    public StudentParticipation findOneByExerciseAndStudentWithEagerResultsElseThrow(Exercise exercise, User student) {
+        return participationServiceForEagerResults.findOneByExerciseAndStudentAnyStateWithEagerResults(exercise, student)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and user " + student.getLogin() + "!"));
+    }
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 

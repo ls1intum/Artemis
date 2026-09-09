@@ -427,9 +427,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     List<StudentParticipation> findByTeamId(long teamId);
 
-    // TODO: use userId instead of username
     @EntityGraph(type = LOAD, attributePaths = "submissions.results")
-    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentIdAndTestRun(long exerciseId, long studentId, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = "submissions.results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamId(long exerciseId, long teamId);

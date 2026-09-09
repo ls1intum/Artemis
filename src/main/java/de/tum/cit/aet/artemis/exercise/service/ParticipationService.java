@@ -781,7 +781,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndStudentAnyState(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), student.getLogin());
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId());
             return optionalTeam.flatMap(team -> studentParticipationRepository.findOneByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
 
@@ -834,21 +834,15 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise with all its results.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username the username of the student
+     * @param student  the student whose participation to find
      * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyStateWithEagerResults(Exercise exercise, String username) {
+    public Optional<StudentParticipation> findOneByExerciseAndStudentAnyStateWithEagerResults(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId());
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerResultsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
-    }
-
-    // TODO: move this method into a test service, because it's only used by tests
-    public StudentParticipation findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(Exercise exercise, String username) {
-        return findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, username)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and username " + username + "!"));
+        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), false);
     }
 
     /**
@@ -860,7 +854,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndStudentWithEagerSubmissionsAnyState(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), student.getLogin());
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId());
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
         // If exercise is a test exam exercise we load the last participation, since there are multiple participations

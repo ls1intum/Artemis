@@ -236,8 +236,8 @@ public class IrisChatPipelineExecutionService {
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
         var participations = exercise.isTeamMode()
-                ? programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin())
-                : programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+                ? programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentIdInTeam(exercise.getId(), user.getId())
+                : programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), user.getId());
 
         if (participations.isEmpty()) {
             return Optional.empty();

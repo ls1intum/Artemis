@@ -1768,7 +1768,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
         assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
-        var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
+        var dbParticipation = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(exercise, student);
         assertThat(dbParticipation).isNotNull();
         assertThat(dbParticipation.getId()).isEqualTo(participation.getId());
     }
@@ -1871,7 +1871,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        var actualParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizExercise, TEST_PREFIX + "student1");
+        var actualParticipation = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(quizExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         actualParticipation = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(actualParticipation.getId());
         var actualResults = participationUtilService.getResultsForParticipation(actualParticipation);
 
@@ -2187,7 +2188,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class,
                     HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-            var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
+            var participationFromServer = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(quizEx,
+                    userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
             assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
             assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
         }

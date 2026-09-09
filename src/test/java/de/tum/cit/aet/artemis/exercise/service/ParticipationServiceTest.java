@@ -513,8 +513,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow_withoutAParticipation_saysWhichStudentAndExercise() {
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(programmingExercise, TEST_PREFIX + "student3"))
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(
+                () -> participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3")))
                 .withMessageContaining(String.valueOf(programmingExercise.getId())).withMessageContaining(TEST_PREFIX + "student3");
     }
 

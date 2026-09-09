@@ -80,13 +80,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
-    // TODO: this method is only used in tests, move it into a test repository
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
-
-    // TODO: this method is only used in tests, move it into a test repository
-    List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
-
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
@@ -106,10 +99,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
-
-    // TODO: this method is only used from tests, move it into a test repositoriy
-    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     @Query("""
             SELECT DISTINCT participation
@@ -234,11 +223,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
+                AND participation.student.id = :studentId
             ORDER BY participation.testRun ASC
             """)
-    // TODO: use userId instead of username
-    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT participation
@@ -247,11 +235,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN FETCH team.students student
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
-                AND student.login = :username
+                AND student.id = :studentId
             ORDER BY participation.testRun ASC
             """)
-    // TODO: use userId instead of username
-    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionByExerciseIdAndStudentIdInTeam(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
