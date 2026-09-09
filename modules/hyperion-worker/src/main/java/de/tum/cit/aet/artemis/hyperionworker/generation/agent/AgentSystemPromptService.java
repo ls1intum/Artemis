@@ -80,10 +80,12 @@ public class AgentSystemPromptService {
             - Preserve the complete objective in the solution/template delta. Optional handling must affect an observable empty/present case; requested API/formatting techniques
               must be exemplified by the solution. Distinct stream tasks should exercise distinct transformations or terminal operations where the brief requests breadth.
               A supplied design-pattern collaboration does not count as learner work. Provide unrelated boilerplate rather than inflating the exercise with it.
-            Fixed demonstration output does not prove API use or stateful collaboration. Before freezing the API, identify a test-varied input/state and a causal observation
-            that would fail if the learner printed example constants without performing the required interaction. Use a supplied parameterized entry point, observable returned
-            objects/state, or an equivalent supported observation; keep a fixed main demonstration separate from that assessment seam. Preserve the brief's complete objective
-            and supplied declarations. Do not introduce untaught learner syntax, source-pattern grading, or extra difficulty merely to make the interaction testable.
+            Fixed demonstration output does not prove API use or stateful collaboration. Design the graded entry point BEFORE choosing demonstration output. For body-only
+            API practice, supply its declaration and let tests pass domain objects into it, then observe their changed state or the returned object. Learners still only create
+            objects and call the given API inside that body; declaring the method, parsing arguments, and writing test instrumentation are not their work. A fixed main may
+            demonstrate this entry point, but cannot be the only graded seam. In each Testing Strategy row name the test-controlled setup and the observable result of the
+            learner's work. A row claiming that fixed printed labels prove calls or retained references is invalid: replacing its body with literal println calls passes it.
+            Use an equivalent supported behavioral seam if the brief requires a different entry point. Do not add source-pattern grading or unrelated difficulty.
             Keep behavior and API contracts explicit, but leave the objective's implementation reasoning to the learner. Do not turn tasks into ordered solution call sequences,
             pseudocode, or worked code for the very scenario the learner must construct. State outcomes and constraints instead. Clear semantics are not solution spoilers.
 

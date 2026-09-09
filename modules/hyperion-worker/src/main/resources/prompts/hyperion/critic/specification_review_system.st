@@ -156,12 +156,15 @@ studentOwnershipEvidenceIds and the Testing Strategy row that grades the objecti
 consequential behavior or collaboration is supplied; set objectiveObservable false when grading sees only leaf outputs rather than the interaction counted above;
 set difficultySufficient false when prescribed transcription and routine plumbing exhaust the student work; and set domainGrounded false when the counted behavior has
 no stated domain cause.
-For objectiveObservable, try a concrete counterfeit implementation: print only the worked-example constants without using the required API or performing the interaction.
-Identify the admitted test setup and assertion that would reject it. A fixed zero-argument main output, labels such as "before"/"after", or separately tested given
-classes do not establish calls, state changes, constructor-argument order, or retention of a returned object in the learner's path. Set objectiveObservable false when
-all declared assessment observations remain identical for this counterfeit, even if the prose says the API must be used. The same flaw can affect any stateful
-collaboration, not just an introductory API task. A coherent repair can use test-varied inputs, externally observed objects/state, or a supported interaction witness;
-it must retain prerequisite-aligned scaffolding. Do not demand source-pattern checks or rule out every behaviorally equivalent implementation.
+For objectiveObservable, report a counterexample trace in objectiveMechanism, not a paraphrase of the intended implementation: replace the learner body with literal
+worked-example output and no API calls, then name a declared test setup and assertion whose actual result differs from its expected result. If none exists, say so
+and set objectiveObservable=false. Do not infer unseen interaction checks from a requirement to use the API or from labels such as "before" and "after".
+Negative example: a supplied main must print "Before: A" and "After: B"; tests compare stdout, while given classes are tested separately. Two literal println calls
+pass without any interaction. objectiveObservable=false, even when the Design and Testing Strategy claim these lines prove mutation or retaining a returned object.
+Positive contrast: tests pass a domain object into a supplied learner-body entry point, invoke it, and assert that object's changed state or the identity of its returned
+object. A print-only body leaves the state unchanged and fails that assertion. The supplied declaration keeps method design out of an API-use learner's work.
+Judge only the specification's actual seam, not a repair you could invent for it. This diagnostic applies to any stateful collaboration. Do not demand source-pattern
+checks or rejection of every behaviorally equivalent implementation; test-varied inputs or another supported behavioral observation may supply the witness.
 Independently audit scaffolding BEFORE subtracting routine work. In scaffoldingRationale name what the learner must actually declare or implement (types, inheritance,
 members, bodies, initialized support), cite the brief's prerequisites and objective, and compare them with the Design table. Set scaffoldingAligned false when the
 starter assigns untaught or out-of-objective declarations to students, or supplies the declarations they are supposed to practice. Knowing what an object/class is
@@ -183,7 +186,7 @@ exceed four; RESOLVED checks do not consume that blocker budget.
 Respond with ONLY this complete JSON shape; learningFit and every array are mandatory:
 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
  "studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],
- "objectiveMechanism":"end-to-end observable mechanism by which student work exercises the requested objective","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
+ "objectiveMechanism":"counterexample trace: declared setup, learner entry point, expected versus print-only actual observation; or why no such distinction exists","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
  "scaffoldingRationale":"actual learner declarations and implementation work versus the brief prerequisites and objective","scaffoldingAligned":true,
  "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"why the brief, concept, and specification require that action"},
