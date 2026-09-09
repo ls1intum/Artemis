@@ -31,7 +31,7 @@
             canAccessParticipationsAndScores() &&
             (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments)
         ) {
-            <a [routerLink]="baseResource() + 'complaints'" class="btn btn-primary btn-sm">
+            <a [routerLink]="baseResource() + 'complaints'" class="btn btn-primary btn-sm" [attr.aria-label]="'artemisApp.exercise.complaints' | artemisTranslate">
                 <fa-icon [icon]="faFlag" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.complaints"></span>
             </a>

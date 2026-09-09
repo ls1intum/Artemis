@@ -6,7 +6,7 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, combineLatestWith } from 'rxjs';
+import { Observable, Subscription, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -64,8 +64,11 @@ export class ListOfComplaintsComponent implements OnInit {
 
     readonly loading = signal(true);
     // Cached so toggling "mine"/"all" after the first fetch is a pure client-side swap, no repeat request.
+    // Cleared whenever the route identity (course/exercise/exam/tutor/type) changes.
     private ownComplaints?: Complaint[];
     private allTutorsComplaints?: Complaint[];
+    private allScopeSubscription?: Subscription;
+    private routeIdentity?: string;
 
     /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
     readonly assessorOptions = computed(() => {
@@ -89,20 +92,42 @@ export class ListOfComplaintsComponent implements OnInit {
             const queryParams = result[1];
             const data = result[2];
 
-            this.courseId = Number(params['courseId']);
-            this.exerciseId = Number(params['exerciseId']);
-            this.examId = Number(params['examId']);
+            const courseId = Number(params['courseId']);
+            const exerciseId = Number(params['exerciseId']);
+            const examId = Number(params['examId']);
+            const tutorId = Number(queryParams['tutorId']);
+            const complaintType = data.complaintType as ComplaintType;
+            const identity = `${courseId}|${exerciseId}|${examId}|${tutorId}|${complaintType}`;
 
-            this.tutorId = Number(queryParams['tutorId']);
+            if (this.routeIdentity !== undefined && this.routeIdentity !== identity) {
+                this.resetComplaintScopeForRouteChange();
+            }
+            this.routeIdentity = identity;
+
+            this.courseId = courseId;
+            this.exerciseId = exerciseId;
+            this.examId = examId;
+            this.tutorId = tutorId;
             this.correctionRound = Number(queryParams['correctionRound']);
             if (queryParams['filterOption']) {
                 this.filterOption.set(Number(queryParams['filterOption']));
             }
 
-            this.complaintType.set(data.complaintType);
+            this.complaintType.set(complaintType);
 
             this.loadComplaints();
         });
+    }
+
+    /** Drop mine/all caches and cancel in-flight all-scope fetches so a prior route cannot update this one. */
+    private resetComplaintScopeForRouteChange(): void {
+        this.allScopeSubscription?.unsubscribe();
+        this.allScopeSubscription = undefined;
+        this.ownComplaints = undefined;
+        this.allTutorsComplaints = undefined;
+        this.allComplaintsForTutorLoaded.set(false);
+        this.isLoadingAllComplaints.set(false);
+        this.assessorFilter.set(undefined);
     }
 
     loadComplaints() {
@@ -215,11 +240,10 @@ export class ListOfComplaintsComponent implements OnInit {
     triggerAddressedComplaints() {
         this.showAddressedComplaints.update((value) => !value);
 
-        if (this.showAddressedComplaints()) {
-            this.complaintsToShow.set(this.complaints());
-        } else {
-            this.resetFilterOptions();
+        if (!this.showAddressedComplaints()) {
+            this.filterOption.set(undefined);
         }
+        this.applyComplaintFilter();
     }
 
     /**
@@ -233,6 +257,9 @@ export class ListOfComplaintsComponent implements OnInit {
         }
 
         if (!wantAll) {
+            this.allScopeSubscription?.unsubscribe();
+            this.allScopeSubscription = undefined;
+            this.isLoadingAllComplaints.set(false);
             this.assessorFilter.set(undefined);
             this.complaints.set(this.ownComplaints ?? []);
             this.allComplaintsForTutorLoaded.set(false);
@@ -249,15 +276,29 @@ export class ListOfComplaintsComponent implements OnInit {
 
         this.ownComplaints = this.complaints();
         this.isLoadingAllComplaints.set(true);
-        this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType()).subscribe({
+        this.allScopeSubscription?.unsubscribe();
+        const identity = this.routeIdentity;
+        this.allScopeSubscription = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType()).subscribe({
             next: (res) => {
+                if (identity !== this.routeIdentity) {
+                    return;
+                }
                 this.allTutorsComplaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
                 this.complaints.set(this.allTutorsComplaints);
                 this.allComplaintsForTutorLoaded.set(true);
                 this.applyComplaintFilter();
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            complete: () => this.isLoadingAllComplaints.set(false),
+            error: (error: HttpErrorResponse) => {
+                if (identity !== this.routeIdentity) {
+                    return;
+                }
+                onError(this.alertService, error);
+            },
+            complete: () => {
+                if (identity === this.routeIdentity) {
+                    this.isLoadingAllComplaints.set(false);
+                }
+            },
         });
     }
 

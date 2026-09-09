@@ -1,77 +1,81 @@
 <div class="col-12 mt-4">
-    <div class="d-flex flex-wrap align-items-center gap-3 mb-3" [hidden]="!course() || course().isAtLeastInstructor">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Complaint scope">
-            <button
-                type="button"
-                class="btn"
-                [class.btn-primary]="!allComplaintsForTutorLoaded()"
-                [class.btn-outline-primary]="allComplaintsForTutorLoaded()"
-                (click)="setComplaintScope('mine')"
-                id="button_scopeMine"
-            >
-                <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMine"></span>
-            </button>
-            <button
-                type="button"
-                class="btn"
-                [class.btn-primary]="allComplaintsForTutorLoaded()"
-                [class.btn-outline-primary]="!allComplaintsForTutorLoaded()"
-                [disabled]="isLoadingAllComplaints()"
-                (click)="setComplaintScope('all')"
-                id="button_scopeAll"
-            >
-                @if (isLoadingAllComplaints()) {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                }
-                <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAll"></span>
-            </button>
-        </div>
-
-        @if (allComplaintsForTutorLoaded() && assessorOptions().length > 1) {
-            <select
-                class="form-select form-select-sm w-auto"
-                [attr.aria-label]="'artemisApp.complaint.listOfComplaints.filterByAssessor' | artemisTranslate"
-                [ngModel]="assessorFilter()"
-                (ngModelChange)="onAssessorFilterChange($event)"
-            >
-                <option [ngValue]="undefined" jhiTranslate="artemisApp.complaint.listOfComplaints.allAssessors"></option>
-                @for (assessor of assessorOptions(); track assessor.login) {
-                    <option [ngValue]="assessor.login">{{ assessor.name || ('artemisApp.complaint.listOfComplaints.unknownAssessor' | artemisTranslate) }}</option>
-                }
-            </select>
-        }
-
-        <small class="text-muted">
-            @if (allComplaintsForTutorLoaded()) {
-                <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAllCaption"></span>
-            } @else {
-                <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMineCaption"></span>
-            }
-        </small>
-
-        @if (!loading()) {
-            <div class="form-check mb-0 ms-auto">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="showAddressedComplaint"
-                    id="field_showAddressedComplaint"
-                    [ngModel]="showAddressedComplaints()"
-                    (ngModelChange)="triggerAddressedComplaints()"
-                />
-                <label class="form-check-label" for="field_showAddressedComplaint">
-                    @if (complaintType() === ComplaintType.COMPLAINT) {
-                        <span
-                            jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '' }}AddressedComplaints"
-                        ></span>
+    @if (course() && !course().isAtLeastInstructor) {
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+            <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'artemisApp.complaint.listOfComplaints.scopeGroup' | artemisTranslate">
+                <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="!allComplaintsForTutorLoaded()"
+                    [class.btn-outline-primary]="allComplaintsForTutorLoaded()"
+                    (click)="setComplaintScope('mine')"
+                    id="button_scopeMine"
+                >
+                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMine"></span>
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="allComplaintsForTutorLoaded()"
+                    [class.btn-outline-primary]="!allComplaintsForTutorLoaded()"
+                    [disabled]="isLoadingAllComplaints()"
+                    (click)="setComplaintScope('all')"
+                    id="button_scopeAll"
+                >
+                    @if (isLoadingAllComplaints()) {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
-                    @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
-                        <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
-                    }
-                </label>
+                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAll"></span>
+                </button>
             </div>
-        }
-    </div>
+
+            @if (allComplaintsForTutorLoaded() && assessorOptions().length > 1) {
+                <select
+                    class="form-select form-select-sm w-auto"
+                    [attr.aria-label]="'artemisApp.complaint.listOfComplaints.filterByAssessor' | artemisTranslate"
+                    [ngModel]="assessorFilter()"
+                    (ngModelChange)="onAssessorFilterChange($event)"
+                >
+                    <option [ngValue]="undefined" jhiTranslate="artemisApp.complaint.listOfComplaints.allAssessors"></option>
+                    @for (assessor of assessorOptions(); track assessor.login) {
+                        <option [ngValue]="assessor.login">{{ assessor.name || ('artemisApp.complaint.listOfComplaints.unknownAssessor' | artemisTranslate) }}</option>
+                    }
+                </select>
+            }
+
+            <small class="text-muted">
+                @if (allComplaintsForTutorLoaded()) {
+                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAllCaption"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMineCaption"></span>
+                }
+            </small>
+
+            @if (!loading()) {
+                <div class="form-check mb-0 ms-auto">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="showAddressedComplaint"
+                        id="field_showAddressedComplaint"
+                        [ngModel]="showAddressedComplaints()"
+                        (ngModelChange)="triggerAddressedComplaints()"
+                    />
+                    <label class="form-check-label" for="field_showAddressedComplaint">
+                        @if (complaintType() === ComplaintType.COMPLAINT) {
+                            <span
+                                jhiTranslate="artemisApp.complaint.listOfComplaints.show{{
+                                    filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : ''
+                                }}AddressedComplaints"
+                            ></span>
+                        }
+                        @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
+                            <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
+                        }
+                    </label>
+                </div>
+            }
+        </div>
+    }
     <div class="row table-responsive pt-3">
         <table class="table" [hidden]="complaintsToShow().length === 0">
             <thead>

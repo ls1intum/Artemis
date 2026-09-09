@@ -50,6 +50,7 @@
                 "showAddressedComplaints": "Show addressed complaints",
                 "showOnlyAddressedComplaints": "Only show addressed complaints",
                 "hideAddressedComplaints": "Hide addressed complaints",
+                "scopeGroup": "Complaint scope",
                 "scopeMine": "Mine",
                 "scopeAll": "All",
                 "scopeMineCaption": "Showing complaints assigned to you.",

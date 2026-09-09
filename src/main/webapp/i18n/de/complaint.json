@@ -50,6 +50,7 @@
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
                 "showOnlyAddressedComplaints": "Ausschließlich adressierte Beschwerden anzeigen",
                 "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
+                "scopeGroup": "Beschwerdebereich",
                 "scopeMine": "Meine",
                 "scopeAll": "Alle",
                 "scopeMineCaption": "Zeigt Beschwerden, die dir zugewiesen sind.",
