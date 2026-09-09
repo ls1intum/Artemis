@@ -26,7 +26,23 @@ const sidebars: SidebarsConfig = {
                 id: 'exercises/intro',
             },
             items: [
-                'exercises/programming-exercise',
+                {
+                    type: 'category',
+                    label: 'Programming Exercise',
+                    link: {
+                        type: 'doc',
+                        id: 'exercises/programming-exercise/index',
+                    },
+                    items: [
+                        'exercises/programming-exercise/create-an-exercise',
+                        'exercises/programming-exercise/write-code-and-tests',
+                        'exercises/programming-exercise/configure-the-build',
+                        'exercises/programming-exercise/grade-and-verify',
+                        'exercises/programming-exercise/ai-assisted-authoring',
+                        'exercises/programming-exercise/static-analysis-rules',
+                        'exercises/programming-exercise/repository-access',
+                    ],
+                },
                 'exercises/consistency-check',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',

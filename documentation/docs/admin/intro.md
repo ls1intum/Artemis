@@ -4,8 +4,6 @@ title: Welcome to the Administrator Guide
 sidebar_label: Introduction
 ---
 
-# 🔐 Administrator Setup & Security Guide
-
 Welcome to the Artemis **Administrator Guide**, designed for system administrators who deploy and manage Artemis instances.
 
 This documentation covers:
