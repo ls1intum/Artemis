@@ -67,8 +67,10 @@ export class ListOfComplaintsComponent implements OnInit {
     // Cleared whenever the route identity (course/exercise/exam/tutor/type) changes.
     private ownComplaints?: Complaint[];
     private allTutorsComplaints?: Complaint[];
+    private mineScopeSubscription?: Subscription;
     private allScopeSubscription?: Subscription;
     private routeIdentity?: string;
+    private selectedComplaintScope: 'mine' | 'all' = 'mine';
 
     /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
     readonly assessorOptions = computed(() => {
@@ -119,16 +121,21 @@ export class ListOfComplaintsComponent implements OnInit {
         });
     }
 
-    /** Drop mine/all caches and cancel in-flight all-scope fetches so a prior route cannot update this one. */
-    private resetComplaintScopeForRouteChange(): void {
+    /** Drop mine/all caches and cancel in-flight fetches so a prior route cannot update this one. */
+    private resetComplaintScopeForRouteChange = (): void => {
+        this.mineScopeSubscription?.unsubscribe();
+        this.mineScopeSubscription = undefined;
         this.allScopeSubscription?.unsubscribe();
         this.allScopeSubscription = undefined;
         this.ownComplaints = undefined;
         this.allTutorsComplaints = undefined;
+        this.selectedComplaintScope = 'mine';
         this.allComplaintsForTutorLoaded.set(false);
         this.isLoadingAllComplaints.set(false);
         this.assessorFilter.set(undefined);
-    }
+        this.filterOption.set(undefined);
+        this.showAddressedComplaints.set(false);
+    };
 
     loadComplaints() {
         let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
@@ -151,21 +158,60 @@ export class ListOfComplaintsComponent implements OnInit {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
             }
         }
-        this.subscribeToComplaintResponse(complaintResponse);
+        this.mineScopeSubscription?.unsubscribe();
+        this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
         this.courseManagementService.find(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
         });
     }
 
-    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>) {
-        complaintResponse.subscribe({
+    /**
+     * Always updates the Mine/All cache for {@link scope}. Only writes the displayed list when that scope
+     * is still selected and {@link routeIdentity} still matches the request's identity.
+     */
+    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>, scope: 'mine' | 'all'): Subscription {
+        const identity = this.routeIdentity;
+        return complaintResponse.subscribe({
             next: (res) => {
-                this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
+                const complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
+                if (scope === 'mine') {
+                    this.ownComplaints = complaints;
+                } else {
+                    this.allTutorsComplaints = complaints;
+                }
+                if (identity !== this.routeIdentity || scope !== this.selectedComplaintScope) {
+                    return;
+                }
+                this.complaints.set(complaints);
+                if (scope === 'all') {
+                    this.allComplaintsForTutorLoaded.set(true);
+                }
                 this.applyComplaintFilter();
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            complete: () => this.loading.set(false),
+            error: (error: HttpErrorResponse) => {
+                if (identity !== this.routeIdentity) {
+                    return;
+                }
+                if (scope === 'all') {
+                    this.isLoadingAllComplaints.set(false);
+                    this.selectedComplaintScope = 'mine';
+                    this.assessorFilter.set(undefined);
+                    this.complaints.set(this.ownComplaints ?? []);
+                    this.applyComplaintFilter();
+                }
+                onError(this.alertService, error);
+            },
+            complete: () => {
+                if (identity !== this.routeIdentity) {
+                    return;
+                }
+                if (scope === 'all') {
+                    this.isLoadingAllComplaints.set(false);
+                } else {
+                    this.loading.set(false);
+                }
+            },
         });
     }
 
@@ -252,7 +298,7 @@ export class ListOfComplaintsComponent implements OnInit {
      */
     setComplaintScope(scope: 'mine' | 'all') {
         const wantAll = scope === 'all';
-        if (wantAll === this.allComplaintsForTutorLoaded()) {
+        if ((wantAll ? 'all' : 'mine') === this.selectedComplaintScope) {
             return;
         }
 
@@ -260,6 +306,7 @@ export class ListOfComplaintsComponent implements OnInit {
             this.allScopeSubscription?.unsubscribe();
             this.allScopeSubscription = undefined;
             this.isLoadingAllComplaints.set(false);
+            this.selectedComplaintScope = 'mine';
             this.assessorFilter.set(undefined);
             this.complaints.set(this.ownComplaints ?? []);
             this.allComplaintsForTutorLoaded.set(false);
@@ -267,6 +314,7 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
+        this.selectedComplaintScope = 'all';
         if (this.allTutorsComplaints) {
             this.complaints.set(this.allTutorsComplaints);
             this.allComplaintsForTutorLoaded.set(true);
@@ -274,32 +322,15 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        this.ownComplaints = this.complaints();
+        if (this.ownComplaints === undefined) {
+            this.ownComplaints = this.complaints();
+        }
         this.isLoadingAllComplaints.set(true);
         this.allScopeSubscription?.unsubscribe();
-        const identity = this.routeIdentity;
-        this.allScopeSubscription = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType()).subscribe({
-            next: (res) => {
-                if (identity !== this.routeIdentity) {
-                    return;
-                }
-                this.allTutorsComplaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
-                this.complaints.set(this.allTutorsComplaints);
-                this.allComplaintsForTutorLoaded.set(true);
-                this.applyComplaintFilter();
-            },
-            error: (error: HttpErrorResponse) => {
-                if (identity !== this.routeIdentity) {
-                    return;
-                }
-                onError(this.alertService, error);
-            },
-            complete: () => {
-                if (identity === this.routeIdentity) {
-                    this.isLoadingAllComplaints.set(false);
-                }
-            },
-        });
+        this.allScopeSubscription = this.subscribeToComplaintResponse(
+            this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType()),
+            'all',
+        );
     }
 
     onAssessorFilterChange(login: string | undefined) {

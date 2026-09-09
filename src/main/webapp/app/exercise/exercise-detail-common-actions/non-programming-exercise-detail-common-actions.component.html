@@ -28,6 +28,7 @@
         <!-- Complaints -->
         @if (
             course() &&
+            !isExamExercise() &&
             canAccessParticipationsAndScores() &&
             (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments)
         ) {

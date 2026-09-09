@@ -49,31 +49,28 @@
                     <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMineCaption"></span>
                 }
             </small>
-
-            @if (!loading()) {
-                <div class="form-check mb-0 ms-auto">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        name="showAddressedComplaint"
-                        id="field_showAddressedComplaint"
-                        [ngModel]="showAddressedComplaints()"
-                        (ngModelChange)="triggerAddressedComplaints()"
-                    />
-                    <label class="form-check-label" for="field_showAddressedComplaint">
-                        @if (complaintType() === ComplaintType.COMPLAINT) {
-                            <span
-                                jhiTranslate="artemisApp.complaint.listOfComplaints.show{{
-                                    filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : ''
-                                }}AddressedComplaints"
-                            ></span>
-                        }
-                        @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
-                            <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
-                        }
-                    </label>
-                </div>
-            }
+        </div>
+    }
+    @if (!loading()) {
+        <div class="form-check mb-3">
+            <input
+                type="checkbox"
+                class="form-check-input"
+                name="showAddressedComplaint"
+                id="field_showAddressedComplaint"
+                [ngModel]="showAddressedComplaints()"
+                (ngModelChange)="triggerAddressedComplaints()"
+            />
+            <label class="form-check-label" for="field_showAddressedComplaint">
+                @if (complaintType() === ComplaintType.COMPLAINT) {
+                    <span
+                        jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '' }}AddressedComplaints"
+                    ></span>
+                }
+                @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
+                    <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
+                }
+            </label>
         </div>
     }
     <div class="row table-responsive pt-3">

@@ -52,6 +52,7 @@
                         }
                         <!-- Complaints -->
                         @if (
+                            !isExamExercise() &&
                             canAccessParticipationsAndScores() &&
                             (programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise().allowComplaintsForAutomaticAssessments)
                         ) {
