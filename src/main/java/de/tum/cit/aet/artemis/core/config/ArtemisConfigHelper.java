@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERT
 import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
@@ -95,7 +96,7 @@ public class ArtemisConfigHelper {
      * @return whether core may coordinate opt-in generation using LocalVC and LocalCI
      */
     public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
-        return isHyperionEnabled(environment) && environment.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false)
+        return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
                 && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("core & localci & localvc"));
     }
 
@@ -288,6 +289,9 @@ public class ArtemisConfigHelper {
         }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isHyperionExerciseGenerationEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
         }
         if (isDeimosEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
