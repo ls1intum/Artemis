@@ -279,11 +279,22 @@ final class ApprovedStructuralContract {
     }
 
     private static String genericShape(JavaType type, JavaClass owner, Set<String> exerciseTypes) {
-        String shape = canonicalType(type, exerciseTypes, owner.getPackageName()).replace(", ", ",");
-        for (int i = 0; i < owner.getTypeParameters().size(); i++) {
-            shape = shape.replaceAll("(?<![\\w$])" + Pattern.quote(owner.getTypeParameters().get(i).getName()) + "(?![\\w$])", Matcher.quoteReplacement("$" + i));
+        // QDox resolves a source type variable named Object to java.lang.Object. Identify variables from source spelling,
+        // while retaining resolved names for imported classes; shortening names first would merge those distinct types.
+        Pattern names = Pattern.compile("[\\w$.]+");
+        Matcher source = names.matcher(type.getGenericValue());
+        Matcher resolved = names.matcher(type.getGenericCanonicalName());
+        List<String> variables = owner.getTypeParameters().stream().map(variable -> variable.getName()).toList();
+        StringBuilder shape = new StringBuilder();
+        while (resolved.find()) {
+            if (!source.find()) {
+                throw new IllegalStateException("QDox generic source and resolved type shapes differ");
+            }
+            int variable = variables.indexOf(source.group());
+            resolved.appendReplacement(shape, Matcher.quoteReplacement(variable >= 0 ? "$" + variable : resolved.group()));
         }
-        return shape;
+        resolved.appendTail(shape);
+        return canonicalTypeName(shape.toString(), exerciseTypes, owner.getPackageName()).replace(", ", ",");
     }
 
     private static Set<String> canonicalSurface(JavaClass type, Set<String> exerciseTypes, boolean template) {

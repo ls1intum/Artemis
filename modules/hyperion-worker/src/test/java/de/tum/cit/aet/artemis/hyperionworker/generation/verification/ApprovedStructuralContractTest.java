@@ -40,6 +40,25 @@ class ApprovedStructuralContractTest {
     }
 
     @Test
+    void genericVariablesRemainDistinctFromShadowedQualifiedClasses() throws Exception {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Container<Object> {
+                    public Object get();
+                    public java.lang.Object raw();
+                    public java.util.List<Object> values();
+                    public java.util.List<java.lang.Object> rawValues();
+                }
+                ```
+                """, Set.of("Container"));
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER)).get(0);
+        assertThat(oracle.at("/genericApi/signatures").toString()).contains("method:get[]:$0", "method:raw[]:Object", "method:values[]:List<$0>",
+                "method:rawValues[]:List<Object>");
+    }
+
+    @Test
     void boundedTypeParametersStillFailClosed() {
         var parsed = ApprovedStructuralContract.parse("""
                 ## Public API

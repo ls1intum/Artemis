@@ -94,6 +94,11 @@ class GenericTypeTest {
 
     private static String shape(Type type, Class<?> owner, JSONObject contract) {
         String name = type.getTypeName().replace(", ", ",");
+        // Bind type variables before shortening qualified class names, which may shadow those variables.
+        TypeVariable<?>[] variables = owner.getTypeParameters();
+        for (int i = 0; i < variables.length; i++) {
+            name = name.replaceAll("(?<![\\w$.])" + Pattern.quote(variables[i].getName()) + "(?![\\w$.])", java.util.regex.Matcher.quoteReplacement("$" + i));
+        }
         String prefix = owner.getPackageName();
         for (Object exerciseType : contract.getJSONArray("exerciseTypes")) {
             if (!prefix.isEmpty()) {
@@ -109,10 +114,6 @@ class GenericTypeTest {
             }
             matcher.appendTail(normalized);
             name = normalized.toString();
-        }
-        TypeVariable<?>[] variables = owner.getTypeParameters();
-        for (int i = 0; i < variables.length; i++) {
-            name = name.replaceAll("(?<![\\w$])" + Pattern.quote(variables[i].getName()) + "(?![\\w$])", java.util.regex.Matcher.quoteReplacement("$" + i));
         }
         return name;
     }

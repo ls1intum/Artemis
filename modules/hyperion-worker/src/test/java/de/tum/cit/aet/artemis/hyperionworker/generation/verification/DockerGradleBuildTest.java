@@ -117,6 +117,20 @@ class DockerGradleBuildTest {
         assertThat(erased.exitCode()).isNotZero();
         assertThat(erased.testFailedNames()).contains("testGenericApi[Box]");
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
+
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
+                package de.tum.cit.aet.reference;
+                public class Box<Object> {
+                    private final java.lang.Object value;
+                    public Box(java.lang.Object value) { this.value = value; }
+                    public java.lang.Object get() { return value; }
+                    public java.util.List<java.lang.Object> values() { return java.util.List.of(value); }
+                }
+                """), Map.of()));
+        var shadowed = build(session, "solution");
+        assertThat(shadowed.exitCode()).isNotZero();
+        assertThat(shadowed.testFailedNames()).contains("testGenericApi[Box]");
+        assertThat(shadowed.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
     }
 
     @Test
