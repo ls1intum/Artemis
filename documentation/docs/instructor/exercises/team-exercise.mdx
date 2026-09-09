@@ -10,9 +10,9 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import setTeamMode from './assets/team-exercises/set_team_mode.png';
 import manageTeams from './assets/team-exercises/manage_teams.png';
-import createTeamDialog from './assets/team-exercises/create_team_dialog.png';
+import teamDialog from './assets/team-exercises/team_dialog.png';
 import importStrategy from './assets/team-exercises/import_strategy.png';
-import liveModelingEditor from './assets/team-exercises/live_modeling_editor.png';
+import liveTeamEditor from './assets/team-exercises/live_team_editor.png';
 import teamOverviewPage from './assets/team-exercises/team_overview_page.png';
 
 A team exercise is one students hand in together: one participation, one submission and one result for the whole
@@ -24,73 +24,71 @@ team. Four of the exercise types support it —
 
 ## Create a Team Exercise
 
-When creating an exercise, you first need to select the mode **Team**. This is only available during the creation of the exercise, as it **cannot be changed later on**.
-The team size can also be configured, but it is just a recommendation that can be overridden when creating the actual teams.
+**Participation**, in the **Mode** section of the creation form, takes **Team** instead of **Individual**.
+**Team Size** appears beside it and takes a **Min** and a **Max**; both are a recommendation that the dialog warns
+about but lets you override when you actually build the teams.
 
-<Image src={setTeamMode} alt="Set Team Mode" size={ImageSize.large} caption="Set Team Mode in Exercise Creation" />
+<Image src={setTeamMode} alt="Mode section of the form with Participation set to Team" size={ImageSize.large} caption="Making an exercise a team exercise" />
 
 <Callout variant={CalloutVariant.danger}>
 
-  <strong>Important:</strong> The team mode can only be set during exercise creation and cannot be changed afterward.
+  **Participation** cannot be changed once the exercise exists. An exercise that should have been a team exercise
+  has to be created again.
 
 </Callout>
 
 ## Manage the Teams
 
-**Teams** on the exercise's row in the course exercise list opens team management.
+**Teams** on the exercise's row in the course exercise list opens team management: every team with its tutor and
+its members, and the three things you can do to the set as a whole.
 
-<Image src={manageTeams} alt="Manage Teams" size={ImageSize.large} caption="Team Management Interface" />
+<Image src={manageTeams} alt="Team management with two teams, their tutors and their members" size={ImageSize.large} caption="The exercise's teams" />
 
 ### Create Teams by Hand
 
-**Create Team** opens a dialog asking for the team's name, its short name and its students. A tutor can be assigned
-to the team as well, which is optional.
+**Create team** opens a dialog asking for the team's **Name**, its **Short Name** and its **Students**, searched
+for by login or name. A **Tutor** can be given as well; a team without one is still a team, but the tutor is who
+**Own teams** filters the list down to.
 
-<Image src={createTeamDialog} alt="Create Team Dialog" size={ImageSize.medium} caption="Create Team Dialog" />
+The short name identifies the team across the course, so a team of the same people on another exercise reached
+through **Import teams** keeps it.
 
 ### Edit and Delete Teams
 
-**Edit** and **Delete** on a team change or remove it.
+**Edit** on a team reopens the same dialog on it, and **Delete** removes it along with whatever it handed in.
+
+<Image src={teamDialog} alt="Team dialog with a name, a short name, a tutor and three students" size={ImageSize.medium} caption="Editing a team" />
 
 ### Export Teams
 
-**Export Teams** writes the exercise's teams to a file that another exercise can import.
-
-<Callout variant={CalloutVariant.info}>
-
-  Exporting teams is useful when you want to reuse the same team structure across multiple exercises in a course.
-
-</Callout>
+**Export teams** writes the exercise's teams to a file that another exercise can import.
 
 ### Import Teams
 
-**Import Teams** takes teams either from such a file or straight from another exercise in the course. Either way it
-asks what to do with the teams the exercise already has: replace them, or keep them and add only the new ones.
+**Import teams** takes teams either from such a file or straight from another exercise in the course. The dialog
+colours each source team by what it would collide with — nothing, a short name already in use, or a student who is
+already on another team here — and then asks for an **Import strategy**:
 
-<Image src={importStrategy} alt="Import Strategy" size={ImageSize.medium} caption="Import Strategy Options" />
+- **Purge existing** deletes every team in this exercise, and their participations with them, before importing.
+- **Create only** imports the conflict-free teams and leaves everything already here alone.
+
+<Image src={importStrategy} alt="Import teams dialog with the source teams and the import strategy" size={ImageSize.medium} caption="Importing teams from another exercise" />
 
 ## Collaboration
 
-Students on a team exercise write in a live editor that shows what their team-mates are doing, available for
-[modeling](/instructor/exercises/modeling-exercise) and [text](/instructor/exercises/text-exercise) exercises.
+A team shares one editor: what one student writes, the others see. [Text](/instructor/exercises/text-exercise) and
+[modeling](/instructor/exercises/modeling-exercise) exercises both work this way, and the text editor also lists the
+team and marks who is in the exercise at that moment.
 
-The live editors show the status of all the team members, and allow students to simultaneously edit the same exercise:
-
-<Image src={liveModelingEditor} alt="Live Modeling Editor" size={ImageSize.large} caption="Live Modeling Editor with Team Collaboration" />
-
-<Callout variant={CalloutVariant.info}>
-
-  The live editors provide real-time collaboration features, allowing team members to see each other's changes instantly.
-
-</Callout>
+<Image src={liveTeamEditor} alt="Text editor with the team listed beside the shared answer" size={ImageSize.large} caption="A team writing together" />
 
 ## Team Overview
 
-The same team can be shared for multiple exercises.
-Viewing the page for a single team allows students, tutors and instructors to get an overview of all the exercises for that team along with their current status.
-**Team** or the team's short name opens it, and students, tutors and instructors all see the same page.
+**Team**, on the exercise itself, opens the team's own page: who is on it, who its tutor is, and every exercise in
+the course the team takes part in with what it has handed in for each. Students, tutors and instructors all see the
+same page.
 
-<Image src={teamOverviewPage} alt="Team Overview Page" size={ImageSize.large} caption="Team Overview Page" />
+<Image src={teamOverviewPage} alt="Team page with the members and the exercises the team takes part in" size={ImageSize.large} caption="A team's page" />
 
 ## What Students See
 
