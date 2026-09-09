@@ -9,7 +9,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -24,8 +23,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public TextExerciseWithSubmissionsExportService(FileService fileService, TextSubmissionExportService textSubmissionExportService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public TextExerciseWithSubmissionsExportService(TextSubmissionExportService textSubmissionExportService, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         super(springMvcJacksonConverter, textSubmissionExportService);
     }
 
