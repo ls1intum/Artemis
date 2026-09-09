@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config.modules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,6 +10,7 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -88,6 +90,25 @@ class ArtemisConfigHelperTest {
     @Test
     void testDeimosProperty() {
         testProperty(artemisConfigHelper::isDeimosEnabled, Constants.DEIMOS_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testHyperionExerciseGenerationRequiresHyperionPropertyAndProfiles() {
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isTrue();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
+
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, false);
+        assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {
