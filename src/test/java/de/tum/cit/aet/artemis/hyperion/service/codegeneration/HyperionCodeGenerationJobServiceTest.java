@@ -62,8 +62,8 @@ class HyperionCodeGenerationJobServiceTest {
 
     @Test
     void init_requestsExpiringMapWithConfiguredTtl() {
-        // The lifetime is now requested from the provider rather than configured on the backend, because a map-level TTL
-        // is not expressible on every provider.
+        // The lifetime is now requested at the call site rather than configured on the provider, because a map-level
+        // TTL is not expressible on every provider.
         verify(distributedDataProvider).getExpiringMap(JOB_MAP_NAME, Duration.ofSeconds(3600));
     }
 

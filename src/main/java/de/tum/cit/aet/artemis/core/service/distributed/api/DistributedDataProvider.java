@@ -70,7 +70,7 @@ public interface DistributedDataProvider {
      * that need a different lifetime for individual entries use
      * {@link DistributedMap#put(Object, Object, java.time.Duration)}. Maps from {@link #getMap(String)} never expire and
      * reject the per-entry TTL overload, so the expiry requirement is visible at the call site rather than buried in
-     * backend configuration.
+     * provider configuration.
      *
      * @param <K>               key type
      * @param <V>               value type
@@ -93,7 +93,7 @@ public interface DistributedDataProvider {
      * Returns a topic that does not drop messages when a subscriber is briefly disconnected or slow.
      *
      * <p>
-     * {@link #getTopic(String)} is fire-and-forget on every backend, which is fine for state that self-heals on the next
+     * {@link #getTopic(String)} is fire-and-forget on every provider, which is fine for state that self-heals on the next
      * heartbeat (a pause command, a broker reconnect hint). Use a reliable topic where losing a single message has a
      * lasting effect, such as the scheduling messages: a dropped one means an exercise or quiz is never scheduled.
      *

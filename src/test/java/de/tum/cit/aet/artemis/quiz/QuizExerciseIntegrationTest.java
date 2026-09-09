@@ -1364,7 +1364,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExerciseDatesDTO updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", null, QuizExerciseDatesDTO.class,
                 OK);
 
-        long millis = ChronoUnit.MILLIS.between(Objects.requireNonNull(updatedQuizExercise.startDate()), ZonedDateTime.now());
+        var updatedStartDate = updatedQuizExercise.startDate();
+        assertThat(updatedStartDate).isNotNull();
+        long millis = ChronoUnit.MILLIS.between(updatedStartDate, ZonedDateTime.now());
         // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
         assertThat(millis).isCloseTo(0, byLessThan(2000L));
     }

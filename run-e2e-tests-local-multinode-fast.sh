@@ -34,7 +34,7 @@ set -e
 #                            Replaces the default "run everything under e2e/".
 #                            Combines with --filter. Get the paths for a branch with
 #                            .ci/E2E-tests/determine-relevant-tests.sh
-#   --middleware <name>    Distributed data backend: hazelcast (default) or redis.
+#   --middleware <name>    Distributed data provider: hazelcast (default) or redis.
 #                            Both are driven through the DistributedDataProvider
 #                            abstraction, so the same tests must pass on either.
 #                            With redis no Hazelcast instance is created at all.
@@ -303,7 +303,7 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Middleware selection
 # =============================================================================
-# The distributed data backend is chosen by a single Artemis property, read by every node from
+# The distributed data provider is chosen by a single Artemis property, read by every node from
 # docker/artemis/config/middleware-<name>.env. Everything else about the stack is identical, so a Redis run and a
 # Hazelcast run differ only in that file plus, for Redis, one extra container.
 MIDDLEWARE_SERVICES=()
@@ -532,7 +532,7 @@ launch_node() {
         source docker/artemis/config/prod-multinode-fast.env
         # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/node${n}-fast.env"
-        # Last, so the selected backend wins over anything the profile files set.
+        # Last, so the selected provider wins over anything the profile files set.
         # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/middleware-${MIDDLEWARE}.env"
         if [ "$MIDDLEWARE" = "redis" ]; then

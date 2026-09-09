@@ -42,7 +42,17 @@ export class CourseManagementExercisesPage {
      */
     private async selectExerciseTypeCard(mode: 'create' | 'import', type: string) {
         await this.page.getByTestId(`${mode}-exercise-button`).click();
+        const urlBeforeSelection = this.page.url();
         await this.page.getByTestId(`${mode}-${type}-exercise`).click();
+        if (mode === 'create') {
+            // Selecting a create card closes the dialog and navigates. Closing the dialog is not evidence that the
+            // navigation happened: a route whose lazily loaded chunk fails to fetch used to leave the page exactly
+            // here, with the click delivered, the dialog closed and nothing else. Assert the navigation started, so
+            // that case reports itself instead of surfacing as an unexplained waitForURL timeout in the caller.
+            await expect(this.page, `selecting the ${type} card closed the dialog but the page never left ${urlBeforeSelection}`).not.toHaveURL(urlBeforeSelection, {
+                timeout: 30000,
+            });
+        }
     }
 
     async clickDeleteExercise(exerciseID: number) {
