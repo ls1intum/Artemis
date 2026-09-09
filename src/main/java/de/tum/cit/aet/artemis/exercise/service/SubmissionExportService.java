@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,7 +173,7 @@ public abstract class SubmissionExportService {
      * @return paths of the exported submissions
      */
     private List<Path> exportSubmissionsFromParticipationsOptionallyZipped(Exercise exercise, List<StudentParticipation> participations, boolean enableFilterAfterDueDate,
-            @Nullable ZonedDateTime lateSubmissionFilter, boolean zipSubmissions, Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
+            @Nullable ZonedDateTime lateSubmissionFilter, boolean zipSubmissions, @NonNull Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 

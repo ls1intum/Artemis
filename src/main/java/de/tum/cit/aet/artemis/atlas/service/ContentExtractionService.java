@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,8 +122,7 @@ public class ContentExtractionService {
      * @return a DTO containing the title, learning text, and metadata
      * @throws IllegalArgumentException if the learning object type is not yet supported
      */
-    public ExtractedContentDTO extractContent(LearningObject learningObject, boolean stripFlavorText) {
-        Objects.requireNonNull(learningObject, "learningObject must not be null");
+    public ExtractedContentDTO extractContent(@NonNull LearningObject learningObject, boolean stripFlavorText) {
         return switch (learningObject) {
             case ProgrammingExercise programmingExercise -> extractFromProgrammingExercise(programmingExercise, stripFlavorText);
             case TextExercise textExercise -> extractFromTextExercise(textExercise, stripFlavorText);

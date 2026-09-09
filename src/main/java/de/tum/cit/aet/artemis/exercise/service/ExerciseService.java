@@ -441,7 +441,7 @@ public class ExerciseService {
         participantScoreRepository.saveAll(participantScoreList);
     }
 
-    public void logDeletion(Exercise exercise, Course course, User user) {
+    public void logDeletion(@NonNull Exercise exercise, @NonNull Course course, @NonNull User user) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());

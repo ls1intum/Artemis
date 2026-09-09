@@ -701,8 +701,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            var tempRepositoryPath = Objects.requireNonNull(checkoutDir, "A checkout directory is required for the selected export options")
-                    .resolve(String.valueOf(participation.getId()));
+            var tempRepositoryPath = checkoutDir.resolve(String.valueOf(participation.getId()));
             // Checkout the repository
             Repository repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
             if (repository == null) {
