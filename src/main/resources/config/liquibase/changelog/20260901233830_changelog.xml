@@ -76,7 +76,26 @@
         blocks below were each run against that data and produced identical results.
     -->
 
+    <!--
+        The two changesets that create and drop the staging table are guarded, and with onFail="MARK_RAN" rather than
+        the CONTINUE used for the constraints below. MySQL commits DDL implicitly, so a startup killed after the
+        CREATE TABLE has committed but before Liquibase has recorded the changeset leaves a table that the next startup
+        tries to create again, and a failing changeset stops the application from starting. The same applies in reverse
+        to the DROP. MARK_RAN is right here because what the precondition tests for is the end state the changeset
+        wants: the table exists, or it is gone, so there is nothing left to do and recording it as run is honest.
+        CONTINUE would retry forever against a condition that will never change.
+
+        Only these two need it. The statements between them are DML, which InnoDB rolls back with the changeset, so an
+        interrupted run leaves nothing behind to collide with. PostgreSQL makes DDL transactional too and never
+        reaches any of this.
+    -->
+
     <changeSet id="20260901233830-01-create-course-content-bounds" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tmp_course_content_bounds"/>
+            </not>
+        </preConditions>
         <comment>Staging table for the earliest and latest date each course's own content mentions.</comment>
         <createTable tableName="tmp_course_content_bounds">
             <column name="course_id" type="bigint">
@@ -404,6 +423,9 @@
     </changeSet>
 
     <changeSet id="20260901233830-05-drop-course-content-bounds" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="tmp_course_content_bounds"/>
+        </preConditions>
         <comment>The staging table has served its purpose; the constraints below do not need it.</comment>
         <dropTable tableName="tmp_course_content_bounds"/>
     </changeSet>
