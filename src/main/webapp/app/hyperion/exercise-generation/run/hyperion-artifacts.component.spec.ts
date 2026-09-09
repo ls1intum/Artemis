@@ -364,6 +364,27 @@ describe('HyperionArtifactsComponent', () => {
             return query(fixture.nativeElement, 'hyperion-file-content-open-editor') as HTMLAnchorElement | null;
         }
 
+        it.each([
+            { running: true, terminal: false },
+            { running: false, terminal: true },
+        ])('does not link unsaved files to the live repository ($running, $terminal)', ({ running, terminal }) => {
+            getRetained.mockReturnValue(of(retainedArtifacts({ files: [{ repo: 'solution', path: 'src/A.java', content: 'class A {}' }] })));
+            const host = render({
+                exerciseId: EXERCISE_ID,
+                exercise: exercise(),
+                running,
+                terminal,
+                files: [change('solution', 'solution/src/A.java')],
+            });
+
+            expect(openFirstFile(host)).toBeNull();
+            expect(query(fixture.nativeElement, 'hyperion-repository-preview')).toBeNull();
+            expect(TestBed.inject(CodeEditorRepositoryFileService).getFile).not.toHaveBeenCalled();
+            if (terminal) {
+                expect(query(fixture.nativeElement, 'hyperion-file-content-text')!.textContent).toContain('class A {}');
+            }
+        });
+
         it('addresses the test repository by name', () => {
             const host = render({ exerciseId: EXERCISE_ID, exercise: exercise(), terminal: true, savedToExercise: true, files: [change('tests', 'tests/src/ATest.java')] });
 
