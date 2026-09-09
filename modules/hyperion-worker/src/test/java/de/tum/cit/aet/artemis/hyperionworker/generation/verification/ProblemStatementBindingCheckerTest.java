@@ -17,6 +17,20 @@ import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 class ProblemStatementBindingCheckerTest {
 
     @Test
+    void diagramBindingListsResolveEachBehavioralAndStructuralTest() {
+        String statement = "<color:testsColor(testFirst,testSecond,testClass[Owner])>run()</color>";
+
+        assertThat(ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, List.of("testFirst", "testSecond"), Set.of("testClass[Owner]"))).isEmpty();
+    }
+
+    @Test
+    void diagramBindingListsStillRejectUnknownMembers() {
+        String statement = "<color:testsColor(testKnown,testMissing)>run()</color>\nOwner --> Other #testsColor(testMissing,testOther)";
+
+        assertThat(ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, List.of("testKnown"), Set.of())).containsExactly("testMissing", "testOther");
+    }
+
+    @Test
     void validatesStyledDiagramLabelsWithThePlantUmlParser() {
         assertThat(ProblemStatementBindingChecker.hasInvalidDiagramSyntax("@startuml\nclass Unclosed")).isTrue();
         assertThat(ProblemStatementBindingChecker.hasInvalidDiagramSyntax("@startuml\nenum <color:testsColor(testEnum)>Result</color> {\nOK\n}\n@enduml")).isTrue();
