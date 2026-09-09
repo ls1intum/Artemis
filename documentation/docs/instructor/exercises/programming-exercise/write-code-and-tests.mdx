@@ -1,0 +1,780 @@
+---
+id: write-code-and-tests
+title: Write the Exercise Code and Tests
+sidebar_label: Write the Exercise Code and Tests
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+
+import instructorEditor from '../assets/programming/instructor-editor.png';
+import edit from '../assets/programming/edit.png';
+import editInEditor from '../assets/programming/edit-in-editor.png';
+import submitButton from '../assets/programming/submit.png';
+import collaborativeCodeEditor from '../assets/programming/collaborative-editing-code-editor.png';
+import collaborativeMetadataModal from '../assets/programming/collaborative-editing-metadata-modal.png';
+import collaborativeProblemStatement from '../assets/programming/collaborative-editing-problem-statement.gif';
+import collaborativeNewCommitAlert from '../assets/programming/collaborative-editing-new-commit-alert.png';
+import programmingEditStatus from '../assets/programming/programming-edit-status.png';
+
+An exercise is only as good as its three repositories. The **template** is what students start from, the **solution** proves the exercise is solvable, and the **tests** decide what students are scored on. This page covers filling all three, writing the problem statement that ties tasks to those tests, and writing test cases that hold up against code you did not write.
+
+You can work either locally with Git or in the browser, and the two can be mixed freely.
+
+## Update Exercise Code in Repositories
+
+You have two alternatives to update the exercise code:
+
+**Alternative 1: Clone and Edit Locally**
+
+1. Clone the 3 repositories and adapt the code on your local computer in your preferred IDE
+2. To execute tests locally:
+   - Copy template (or solution) code into an **assignment** folder (location depends on language)
+   - Execute tests (e.g., using `mvn clean test` for Java)
+3. Commit and push your changes via Git
+
+<details>
+<summary><strong>Special Notes for Haskell</strong></summary>
+
+The build file expects the solution repository in the **solution** subdirectory and allows a **template** subdirectory for easy local testing.
+
+Convenient checkout script:
+
+```bash
+#!/bin/sh
+# Arguments:
+# $1: exercise short name
+# $2: (optional) output folder name
+
+if [ -z "$1" ]; then
+  echo "No exercise short name supplied."
+  exit 1
+fi
+
+EXERCISE="$1"
+NAME="${2:-$1}"
+
+# Adapt BASE to your repository URL
+BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
+
+git clone "$BASE-tests.git" "$NAME" && \
+  git clone "$BASE-exercise.git" "$NAME/template" && \
+  git clone "$BASE-solution.git" "$NAME/solution" && \
+  cp -R "$NAME/template" "$NAME/assignment" && \
+  rm -r "$NAME/assignment/.git/"
+```
+
+</details>
+
+<details>
+<summary><strong>Special Notes for OCaml</strong></summary>
+
+Tests expect to be in a **tests** folder next to **assignment** and **solution** folders.
+
+Convenient checkout script:
+
+```bash
+#!/bin/sh
+# Arguments:
+# $1: exercise short name
+# $2: (optional) output folder name
+
+PREFIX=  # Set your course prefix
+
+if [ -z "$1" ]; then
+  echo "No exercise short name supplied."
+  exit 1
+fi
+
+EXERCISE="$PREFIX$1"
+NAME="${2:-$1}"
+
+BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
+
+git clone "$BASE-tests.git" "$NAME/tests"
+git clone "$BASE-exercise.git" "$NAME/template"
+git clone "$BASE-solution.git" "$NAME/solution"
+
+# Hardlink assignment interfaces
+rm "$NAME/template/src/assignment.mli"
+rm "$NAME/tests/assignment/assignment.mli"
+rm "$NAME/tests/solution/solution.mli"
+ln "$NAME/solution/src/assignment.mli" "$NAME/template/src/assignment.mli"
+ln "$NAME/solution/src/assignment.mli" "$NAME/tests/assignment/assignment.mli"
+ln "$NAME/solution/src/assignment.mli" "$NAME/tests/solution/solution.mli"
+```
+
+Test script:
+
+```bash
+#!/bin/sh
+dir="$(realpath ./)"
+
+cd .. || exit 1
+rm ./assignment
+ln -s "$dir" ./assignment
+cd tests || exit 1
+./run.sh
+```
+
+</details>
+
+**Alternative 2: Edit in Browser**
+
+Open <Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} /> in Artemis and adapt the code in the online editor.
+
+<Image src={instructorEditor} alt="Instructor Editor" size={ImageSize.large} caption="Edit in Online Editor" />
+
+You can switch between different repositories and <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> the code when done.
+
+<Callout variant={CalloutVariant.info}>
+
+    The online code editor supports real-time collaborative editing. Multiple instructors or editors can edit the same
+file simultaneously with automatic conflict resolution and cursor awareness.
+
+</Callout>
+
+## Collaborative Editing
+
+Artemis supports real-time collaborative editing for programming exercises. Multiple instructors and editors can work on the same exercise simultaneously, with no additional setup required. Collaboration spans two views:
+
+- **Online Code Editor** (<Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} />) — live synchronization of code files, the file tree, and the problem statement.
+- **Edit Page** (<Image src={edit} alt="Edit" inline style={{height: '2rem'}} />) — synchronization of exercise settings and the problem statement.
+
+To start collaborating, have a second instructor or editor open the same exercise. Both users are connected automatically.
+
+**Live Code Editing:** When two or more users open the same file in the same repository, their edits are synchronized automatically. This is supported across all repository types: **Template**, **Solution**, **Tests**, and **Auxiliary**. Each collaborator's cursor and text selection are visible with a colored marker and name label.
+
+When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Submit" button) while the online code editor is open, a **new commit alert** is displayed. This advises you to save your work by clicking <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> and refresh the page to incorporate the new changes. The alert only appears for the repository that received the new commit.
+
+<Image src={collaborativeCodeEditor} alt="Two instructors editing the same file with visible cursors" size={ImageSize.large} caption="Live collaborative code editing with cursor awareness" />
+
+<Image src={collaborativeNewCommitAlert} alt="New commit alert notification" size={ImageSize.large} caption="Alert shown when an external commit is detected" />
+
+**File Tree Synchronization:** File creation, deletion, and renaming are broadcast to all connected editors immediately. If another user had a deleted or renamed file open, it is handled gracefully.
+
+**Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (<Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} />) and on the edit page (<Image src={edit} alt="Edit" inline style={{height: '2rem'}} />).
+
+<Image src={collaborativeProblemStatement} alt="Two instructors editing the problem statement simultaneously" size={ImageSize.large} caption="Live collaborative problem statement editing" />
+
+**Exercise Settings Synchronization:** On the edit page (<Image src={edit} alt="Edit" inline style={{height: '2rem'}} />), changes to exercise settings (title, points, dates, grading criteria, etc.) are synchronized to other users when saved. Non-conflicting changes are applied automatically. If both instructors modified the same fields, a merge conflict modal lets you choose which values to keep.
+
+<Image src={collaborativeMetadataModal} alt="Settings conflict resolution modal" size={ImageSize.large} caption="Resolving conflicting exercise setting changes" />
+
+<Callout variant={CalloutVariant.info}>
+
+    <strong>Tips and Limitations:</strong>
+
+    <ul>
+        <li>Click <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> frequently to ensure your work is committed to the repository.</li>
+        <li>Avoid mixing the online editor and external Git tools at the same time — pick one workflow per editing session to reduce the chance of conflicts.</li>
+        <li>Use cursor awareness to see where your collaborators are editing.</li>
+        <li>Handle commit alerts promptly — save and refresh before continuing to edit.</li>
+        <li>Unsaved/unsubmitted content is not preserved on the server. When all users close the page, unsaved content is lost. </li>
+        <li>Binary files are not synchronized through the collaborative editor.</li>
+    </ul>
+</Callout>
+
+## Review Earlier Versions of the Exercise
+
+Artemis keeps a version history for a programming exercise, so you can see how it changed over a semester and what a previous run of the course actually looked like. Open the exercise in Course Management and choose **Version History**.
+
+The timeline lists the versions on the left; selecting one shows the exercise metadata as it was at that point, including the programming-specific settings that are easy to forget you changed:
+
+- the default branch,
+- the checkout paths for the assignment, solution and tests repositories,
+- the container configuration and the Online IDE image,
+- how submissions after the due date are handled,
+- the full build plan configuration and build script.
+
+Values that were not set show as **Unset**. If a whole area is missing from a snapshot — the programming metadata, the build plan configuration or the build script — the view says so explicitly instead of showing an empty section.
+
+## Write the Interactive Problem Statement
+
+The problem statement is what students read, and it is *interactive*: when you bind a task to test cases, Artemis shows each student whether their latest submission passes that task, right inside the description. Getting these bindings right is what turns a wall of text into a checklist students can work through.
+
+Edit it either with <Image src={edit} alt="Edit" inline style={{height: '2rem'}} /> on the exercise, or with <Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} /> to have it side by side with the code. Both editors synchronise in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
+
+The problem statement is Markdown, plus the two Artemis-specific constructs below.
+
+### Tasks
+
+A task is a named step bound to one or more test cases:
+
+```markdown
+[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)
+```
+
+- The literal `[task]` marks the construct.
+- The second bracket holds the task name shown to students. It may contain anything except square brackets.
+- The parentheses hold a comma-separated list of test case names, exactly as they appear in the test repository. Whitespace after a comma is ignored.
+
+Test names may carry parameters or indices, so all of these are valid: `testName`, `testName()`, `testName(1234, 12)`, `testName(testValue)[1]`, and `Test Name`. A task with no tests at all — `[task][Read the introduction]()` — is allowed and simply renders without a status.
+
+Artemis resolves these names against the test cases reported by the **solution** build plan, so a task only lights up once the solution build has run at least once. The same names drive [task-based grading](/instructor/exercises/programming-exercise/grade-and-verify#test-case-configuration).
+
+### UML Diagrams
+
+Embed a PlantUML diagram between `@startuml` and `@enduml`. Diagrams can be interactive too: colour an element according to whether a test passes by wrapping it in `testsColor`:
+
+```text
+@startuml
+class BubbleSort {
+  <color:testsColor(testBubbleSort)>+ performSort(int[])</color>
+}
+@enduml
+```
+
+The element is drawn in the success colour once that test passes, and in the failure colour while it does not. Each element takes exactly one test case; you cannot bind several tests to a single UML element.
+
+### Check the Bindings
+
+Below the problem statement editor, Artemis continuously analyses the bindings and reports:
+
+- **Invalid test cases** — a name used in the problem statement that does not exist in the test repository, usually a typo or a renamed test.
+- **Missing test cases** — a test that exists in the test repository but is not referenced by any task, so students never see its result attributed to anything.
+- **Repeated test cases** — a test referenced by more than one task, which makes the task statuses ambiguous.
+
+<Image src={programmingEditStatus} alt="Problem statement analysis status" size={ImageSize.large} caption="Problem statement analysis below the editor" />
+
+The status reads *Test cases ok.* when none of the three apply. Artemis also warns when an exercise has more than 15 tasks, which is usually a sign the exercise should be split.
+
+<Callout variant={CalloutVariant.info}>
+
+  Artemis can draft, refine and review the problem statement for you, and can check it against the three repositories for inconsistencies. See [AI-Assisted Exercise Authoring](/instructor/exercises/programming-exercise/ai-assisted-authoring) and [Consistency Check](/instructor/exercises/consistency-check).
+
+</Callout>
+
+## Testing Frameworks by Language
+
+Write test cases in the Test repository using language-specific frameworks:
+
+| No. | Language   | Package Manager | Build System   | Testing Framework                                                                        |
+|-----|------------|-----------------|----------------|------------------------------------------------------------------------------------------|
+| 1   | Java       | Maven / Gradle  | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
+| 2   | Python     | pip             | pip            | [pytest](https://docs.pytest.org/)                                                       |
+| 3   | C          | -               | Makefile       | Python scripts / [FACT](https://fact.readthedocs.io/)                                    |
+| 4   | Haskell    | Stack           | Stack          | [Tasty](https://hackage.haskell.org/package/tasty)                                       |
+| 5   | Kotlin     | Maven           | Maven          | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares)       |
+| 6   | VHDL       | -               | Makefile       | Python scripts                                                                           |
+| 7   | Assembler  | -               | Makefile       | Python scripts                                                                           |
+| 8   | Swift      | SwiftPM         | SwiftPM        | [XCTest](https://developer.apple.com/documentation/xctest)                               |
+| 9   | OCaml      | opam            | Dune           | [OUnit2](https://gildor478.github.io/ounit/ounit2/)                                      |
+| 10  | Rust       | cargo           | cargo          | [cargo test](https://doc.rust-lang.org/book/ch11-00-testing.html)                        |
+| 11  | JavaScript | npm             | npm            | [Jest](https://jestjs.io/)                                                               |
+| 12  | R          | built-in        | -              | [testthat](https://testthat.r-lib.org/)                                                  |
+| 13  | C++        | -               | CMake          | [Catch2](https://github.com/catchorg/Catch2)                                             |
+| 14  | TypeScript | npm             | npm            | [Jest](https://jestjs.io/)                                                               |
+| 15  | C#         | NuGet           | dotnet         | [NUnit](https://nunit.org/)                                                              |
+| 16  | Go         | built-in        | built-in       | [go testing](https://pkg.go.dev/testing)                                                 |
+| 17  | Bash       | -               | -              | [Bats](https://bats-core.readthedocs.io/)                                                |
+| 18  | MATLAB     | mpminstall      | -              | [matlab.unittest](https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html) |
+| 19  | Ruby       | Gem             | Rake           | [minitest](https://docs.seattlerb.org/minitest/)                                         |
+| 20  | Dart       | pub             | built-in       | [package.test](https://dart.dev/tools/testing)                                           |
+
+Check the build plan results:
+
+- Template and solution build plans should not have **Build Failed** status
+- If the build fails, check build errors in the build plan
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.
+
+</Callout>
+
+## Testing with Ares
+
+Ares is a JUnit 5 extension for easy and secure Java testing on Artemis.
+
+Main features:
+
+- Security manager to prevent students from crashing tests or cheating
+- More robust tests and builds with limits on time, threads, and I/O
+- Support for public and hidden Artemis tests with custom due dates
+- Utilities for improved feedback (multiline error messages, exception location hints)
+- Utilities to test exercises using System.out and System.in
+
+**For more information see** [Ares GitHub](https://github.com/ls1intum/Ares)
+
+## Best Practices for Writing Test Cases
+
+The following sections describe best practices for writing test cases. Examples are specifically for Java (using Ares/JUnit5), but practices can be generalized for other languages.
+
+### General Best Practices
+
+<details>
+<summary><strong>Write Meaningful Comments for Tests</strong></summary>
+
+Comments should contain:
+- What is tested specifically
+- Which task from problem statement is addressed
+- How many points the test is worth
+- Additional necessary information
+
+Keep information consistent with Artemis settings like test case weights.
+
+```java
+/**
+ * Tests that borrow() in Book successfully sets the available attribute to false
+ * Problem Statement Task 2.1
+ * Worth 1.5 Points (Weight: 1)
+ */
+@Test
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+Better yet, use comments in display names for manual correction:
+
+```java
+@DisplayName("1.5 P | Books can be borrowed successfully")
+@Test
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Use Appropriate and Descriptive Names for Test Cases</strong></summary>
+
+Test names are used for statistics. Avoid generic names like test1, test2, test3.
+
+```java
+@Test
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+If tests are in different (nested) classes, add class name to avoid duplicates:
+
+```java
+@Test
+public void test_LinkedList_add() {
+    // Test Code
+}
+```
+
+<Callout variant={CalloutVariant.info}>
+
+  For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Use Appropriate Timeouts for Test Cases</strong></summary>
+
+For regular tests, `@StrictTimeout(1)` (1 second) is usually sufficient. For shorter timeouts:
+
+```java
+@Test
+@StrictTimeout(value = 500, unit = TimeUnit.MILLISECONDS)
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+Can also be applied to entire test class.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Remember tests run on CI servers (build agents). Tests execute slower than on local machines.
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Avoid Assert Statements</strong></summary>
+
+Use conditional `fail()` calls instead to hide confusing information from students.
+
+❌ **Not recommended:**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    invokeMethod(book, "borrow");
+    assertFalse((Boolean) invokeMethod(book, "isAvailable"),
+                "A borrowed book must be unavailable!");
+}
+```
+
+Shows: `org.opentest4j.AssertionFailedError: A borrowed book must be unavailable! ==> Expected <false> but was <true>`
+
+✅ **Recommended:**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    invokeMethod(book, "borrow");
+    if ((Boolean) invokeMethod(book, "isAvailable")) {
+        fail("A borrowed book is not available anymore!");
+    }
+}
+```
+
+Shows: `org.opentest4j.AssertionFailedError: A borrowed book is not available anymore!`
+
+</details>
+
+<details>
+<summary><strong>Write Tests Independent of Student Code</strong></summary>
+
+Students can break anything. Use reflective operations instead of direct code references.
+
+❌ **Not recommended (causes build errors):**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Book book = new Book(0, "Some title");
+    book.borrow();
+    if (book.isAvailable()) {
+        fail("A borrowed book must be unavailable!");
+    }
+}
+```
+
+✅ **Recommended (provides meaningful errors):**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    invokeMethod(book, "borrow");
+    if ((Boolean) invokeMethod(book, "isAvailable")) {
+        fail("A borrowed book must be unavailable!");
+    }
+}
+```
+
+Error message: `The class 'Book' was not found within the submission. Make sure to implement it properly.`
+
+</details>
+
+<details>
+<summary><strong>Check for Hard-Coded Student Solutions</strong></summary>
+
+Students may hardcode values to pass specific tests. Verify solutions fulfill actual requirements, especially in exams.
+
+</details>
+
+<details>
+<summary><strong>Avoid Relying on Specific Task Order</strong></summary>
+
+Tests should cover one aspect without requiring different parts to be implemented.
+
+Example: Testing `translate` and `runService` methods where `runService` calls `translate`.
+
+❌ **Not recommended (assumes translate is implemented):**
+
+```java
+@Test
+public void testRunServiceInTranslationServer() {
+    String result = translationServer.runService("French", "Dog");
+    assertEquals("Dog:French", result);
+}
+```
+
+✅ **Recommended (overrides translate to test runService independently):**
+
+```java
+@Test
+public void testRunServiceInTranslationServer() {
+    TranslationServer testServer = new TranslationServer() {
+        public String translate(String word, String language) {
+            return word + ":" + language;
+        }
+    };
+    String expected = "Dog:French";
+    String actual = testServer.runService("French", "Dog");
+    if(!expected.equals(actual)) fail("Descriptive fail message");
+}
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  Handle students making classes/methods final via problem statement or tests to avoid compilation errors.
+
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Catch Possible Student Errors</strong></summary>
+
+Handle student mistakes appropriately. For example, null returns can cause `NullPointerException`.
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    Object result = invokeMethod(book, "getTitle");
+    if (result == null) {
+        fail("getTitle() returned null!");
+    }
+    // Continue with test
+}
+```
+
+</details>
+
+### Java Best Practices
+
+<details>
+<summary><strong>Use Constant String Attributes for Base Package</strong></summary>
+
+Avoid repeating long package identifiers:
+
+```java
+private static final String BASE_PACKAGE = "de.tum.in.ase.pse.";
+
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance(BASE_PACKAGE + "Book", 0, "Some title");
+    // Test Code
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Use JUnit5 and Ares Features</strong></summary>
+
+More information: [JUnit5 Documentation](https://junit.org/junit5/docs/current/user-guide/#writing-tests) and [Ares GitHub](https://github.com/ls1intum/Ares)
+
+Useful features:
+
+- [Nested Tests](https://junit.org/junit5/docs/current/user-guide/#writing-tests-nested) to group tests
+- `@Order` to define custom test execution order
+- `assertDoesNotThrow` for exception handling with custom messages
+- `assertAll` to aggregate multiple assertion failures
+- [Dynamic Tests](https://junit.org/junit5/docs/current/user-guide/#writing-tests-dynamic-tests) for special needs
+- Custom [extensions](https://junit.org/junit5/docs/current/user-guide/#extensions)
+- [JUnit Platform Test Kit](https://junit.org/junit5/docs/current/user-guide/#testkit) for testing tests
+
+</details>
+
+<details>
+<summary><strong>Define Custom Annotations</strong></summary>
+
+Combine annotations for better readability:
+
+```java
+@Test
+@StrictTimeout(10)
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+public @interface LongTest {
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Consider Using jqwik for Property-Based Testing</strong></summary>
+
+[jqwik](https://jqwik.net) allows testing with arbitrary inputs and shrinks errors to excellent counter-examples (usually edge cases).
+
+</details>
+
+<details>
+<summary><strong>Eclipse Compiler and Best-Effort Compilation</strong></summary>
+
+Use Eclipse Java Compiler for partial, best-effort compilation. Useful for exam exercises and complicated generics.
+
+Compilation errors are transformed into errors thrown where code doesn't compile (method/class level). The body is replaced with `throw new Error("Unresolved compilation problems: ...")`.
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>Important:</strong> Only method/class bodies should fail to compile, not complete test classes. Anything outside method/nested class bodies must compile, including method signatures, return types, parameter types, and lambdas. Use nested classes for fields/methods with student class types that might not compile.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+  The Eclipse Compiler may not support the latest Java version. You can compile student code with the latest Java and test code with the previous version.
+
+</Callout>
+
+Configure it yourself by pointing the Maven compiler plugin at the Eclipse compiler, which is published as
+`org.eclipse.jdt:ecj`, via the plugin's `compilerId`. No Artemis template ships this configuration — the Java test
+templates use the standard `maven-compiler-plugin` — so this is a change you make in the test repository's `pom.xml`.
+
+</details>
+
+<details>
+<summary><strong>Common Pitfalls / Problems</strong></summary>
+
+- **Reflection API limitation**: Constant attributes (static final primitives/Strings) are inlined at compile-time, making them impossible to change at runtime
+- **Long output**: Arrays or Strings with long output may be unreadable or truncated after 5000 characters
+
+</details>
+
+## Java DejaGnu: Blackbox Testing
+
+Classical testing frameworks like JUnit allow writing whitebox tests, which enforce assumptions about code structure (class names, method names, signatures). This requires specifying all structural aspects for tests to run on student submissions. That may be okay or even desired for a beginner course.
+
+For advanced courses, this is a downside: students cannot make their own structural decisions and gain experience in this important programming aspect.
+
+[DejaGnu](https://www.gnu.org/software/dejagnu/) enables blackbox tests for command line interfaces. Tests are written in Expect Script (extension of Tcl). Expect is a Unix utility for automatic interaction with programs exposing text terminal interfaces in a robust way.
+
+Test scripts:
+- Start the program as a separate process (possibly several times)
+- Interact via textual inputs (standard input)
+- Read outputs and make assertions (exact or regex matching)
+- Decide next inputs based on output, simulating user interaction
+
+For exercises, only specify:
+- Command line interface syntax
+- Rough output format guidance
+
+Source code structure is up to students as far as you want.
+
+Source code structure quality assessment can be done manually after submission deadline. The template uses Maven to compile student code, so it can be extended with regular unit tests (e.g., [architecture tests](https://www.archunit.org/) for cyclic package dependencies) and report the results for both to the student.
+
+**Usage:** Consult the [official documentation](https://www.gnu.org/software/dejagnu/manual/index.html) alongside the content the test repository ships with. Everything DejaGnu-related lives under `testsuite`, laid out like this:
+
+```text
+testsuite/
+├── config/default.exp              helper functions such as PROGRAM_TEST
+├── lib/<package>.exp               exercise-specific procedures
+├── testfiles/public/               input files the students' tests may read
+├── testfiles/secret/               input files only the hidden tests read
+└── <package path>.tests/           the test execution scripts
+    ├── public.exp
+    ├── secret.exp
+    └── advanced.exp
+```
+
+`<package path>` is the exercise's package name with the dots replaced by slashes, so a package of `de.tum.in.ase.pse` puts the three scripts in `testsuite/de/tum/in/ase/pse.tests/`.
+
+Example: `PROGRAM_TEST {add x} {}` puts "add x" into the program and expects no output.
+
+Helper functions like `PROGRAM_TEST` are defined in `config/default.exp`.
+
+Variables in SCREAMING_SNAKE_CASE (e.g., `MAIN_CLASS`) are replaced with actual values in previous build plan steps. For example, the build plan finds the Java class with main method and replaces `MAIN_CLASS`.
+
+Best Expect documentation: [Exploring Expect](https://books.google.com.sg/books?id=t8C4pEDQ8s0C) book. The Artemis default template contains reusable helper functions in `config/default.exp` for common I/O use cases.
+
+This exercise type makes it quite easy to reuse existing exercises from the [Praktomat](https://github.com/KITPraktomatTeam/Praktomat) autograder system.
+
+## Prevent Maven Central Rate Limits (Java and Kotlin)
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>Important for Java and Kotlin exercises:</strong> Maven Central rate-limits download requests. Because all builds of an Artemis instance originate from the same IP addresses, builds can suddenly fail with <strong>HTTP 429 (Too Many Requests)</strong> errors — especially during high-load periods such as exams, when many students submit at the same time.
+We strongly recommend configuring a Maven repository mirror as the <strong>first</strong> repository in the test repository's build configuration, as described below.
+
+</Callout>
+
+Affected builds fail with errors such as:
+
+```
+Could not GET 'https://repo.maven.apache.org/maven2/de/tum/in/ase/artemis-java-test-sandbox/1.11.3/artemis-java-test-sandbox-1.11.3.pom'.
+Received status code 429 from server: Too Many Requests
+```
+
+Only **Java** and **Kotlin** exercises are affected, because their builds resolve dependencies via Maven Central. Whether you have to do anything depends on your Artemis instance: if its administrators configured a mirror centrally, every newly created Java and Kotlin exercise already resolves through it and you can skip this section. Otherwise you configure the mirror in the exercise's **test repository** yourself, as described below - which is also how you add a mirror to exercises that were created before your instance configured one.
+
+When Artemis detects a build that failed due to Maven Central rate limiting, it automatically notifies the instructors of the affected course by email (at most once per day per exercise), including a link to this section and to the online editor of the affected exercise.
+
+For Artemis instances operated by TUM, the Artemis team provides a [Reposilite](https://reposilite.com/) mirror at [https://reposilite.aet.cit.tum.de](https://reposilite.aet.cit.tum.de) that proxies and caches all required artifacts. Other institutions can operate their own mirror and configure it in the same way.
+
+### For Administrators: Configure the Mirror Once for the Whole Instance
+
+Administrators can point every newly created Java and Kotlin test repository at a mirror by setting a single property, so
+instructors do not have to touch individual exercises:
+
+```yaml
+artemis:
+    programming:
+        maven-central-mirror-url: https://reposilite.aet.cit.tum.de/releases
+```
+
+Artemis then declares this mirror as the first repository for both dependencies and plugins in the test repository of every
+Java and Kotlin exercise it creates. Leave the property unset to keep resolving from Maven Central directly. Exercises that
+already exist are not modified - use the instructions below for those.
+
+### Recommended: Add the Mirror to the Test Repository
+
+**Gradle exercises:** In the `build.gradle` file of the test repository, add the mirror as the **first** entry in the `repositories` block:
+
+```groovy
+repositories {
+    maven {
+        name "reposiliteRepositoryReleases"
+        url "https://reposilite.aet.cit.tum.de/releases"
+    }
+    mavenCentral()
+}
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>The <code>repositories</code> block does not cover Gradle plugins.</strong> The <code>plugins {"{ id '...' }"}</code> block in <code>build.gradle</code> (e.g. <code>id 'org.springframework.boot'</code>) is <strong>not</strong> resolved through <code>repositories {"{ ... }"}</code>. Gradle resolves plugins via the Gradle Plugin Portal, which falls back to Maven Central — bypassing the mirror entirely and still hitting HTTP 429 rate limits.
+
+  To route plugin resolution through the mirror as well, add a <code>pluginManagement</code> block at the <strong>top</strong> of <code>settings.gradle</code> (create the file if it does not exist yet):
+
+  ```groovy
+  pluginManagement {
+      repositories {
+          maven {
+              name "reposiliteRepositoryReleases"
+              url "https://reposilite.aet.cit.tum.de/releases"
+          }
+          gradlePluginPortal()
+      }
+  }
+  ```
+
+  As with dependencies, the mirror must be listed <strong>before</strong> <code>gradlePluginPortal()</code> so that plugins are resolved from the mirror first.
+
+</Callout>
+
+**Maven exercises:** In the `pom.xml` file of the test repository, add the mirror as the **first** entry in the `<repositories>` section (create the section if it does not exist yet):
+
+```xml
+<repositories>
+    <repository>
+        <id>reposilite-repository-releases</id>
+        <name>Reposilite Repository</name>
+        <url>https://reposilite.aet.cit.tum.de/releases</url>
+    </repository>
+</repositories>
+```
+
+Maven resolves plugins through a separate list of repositories, so add the mirror there as well:
+
+```xml
+<pluginRepositories>
+    <pluginRepository>
+        <id>reposilite-repository-releases</id>
+        <name>Reposilite Repository</name>
+        <url>https://reposilite.aet.cit.tum.de/releases</url>
+    </pluginRepository>
+</pluginRepositories>
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>The repository order matters:</strong> Repositories are queried in the order they are declared. The mirror must come <strong>before</strong> Maven Central so that all dependencies are resolved from the mirror and Maven Central is not contacted at all. If the mirror is declared after Maven Central, builds will still hit the rate limit.
+
+</Callout>
+
+### Alternative: Configure the Mirror in the Docker Image
+
+Alternatively, the mirror can be baked into the Docker image used for the build (e.g., via a Gradle init script or a Maven `settings.xml` inside the image). We mention this option for completeness, but **recommend the test repository configuration above** because it is much more flexible:
+
+- While the mirror has been stable so far, its availability cannot be guaranteed. If it ever becomes unavailable, changing a single entry in the test repository (e.g., via the online code editor) takes seconds and immediately applies to all subsequent builds.
+- Switching or rebuilding a Docker image is much slower and must be repeated for every exercise that uses the image.
