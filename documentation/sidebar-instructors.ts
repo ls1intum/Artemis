@@ -71,7 +71,16 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'exams/intro',
             },
-            items: ['exams/exam-timeline', 'exams/participation-checker'],
+            items: [
+                'exams/create-an-exam',
+                'exams/add-exercises',
+                'exams/prepare-and-test',
+                'exams/conduct-an-exam',
+                'exams/assess-an-exam',
+                'exams/grade-and-publish',
+                'exams/review-and-complaints',
+                'exams/participation-checker',
+            ],
         },
         {
             type: 'category',
