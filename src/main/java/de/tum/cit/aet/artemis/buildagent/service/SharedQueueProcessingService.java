@@ -1468,7 +1468,7 @@ public class SharedQueueProcessingService {
 
         BuildJobQueueItem requeuedBuildJob() {
             synchronized (lifecycleMonitor) {
-                return Objects.requireNonNull(requeuedBuildJob);
+                return requeuedBuildJob;
             }
         }
 
