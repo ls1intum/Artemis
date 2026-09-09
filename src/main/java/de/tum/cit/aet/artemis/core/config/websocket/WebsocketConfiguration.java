@@ -388,7 +388,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             Optional<Long> hyperionExerciseId = getExerciseIdFromHyperionStateDestination(destination);
             if (hyperionExerciseId.isPresent()) {
-                return authorizationCheckService.isAtLeastEditorInExercise(principal.getName(), hyperionExerciseId.get());
+                return userRepository.isAtLeastEditorInExercise(principal.getName(), hyperionExerciseId.get()) || hasAdministratorAccess(principal);
             }
             if (destination.equals("/topic/user-registry") || destination.equals("/topic/unresolved-user") || destination.equals("/topic/hyperion")
                     || destination.startsWith("/topic/hyperion/")) {
