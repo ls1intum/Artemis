@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -2123,7 +2122,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();
         feedback.setGradingInstruction(gradingInstruction);
-        participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
+        var latestResult = submission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        participationUtilService.addFeedbackToResult(feedback, latestResult);
 
         textExercise.setCourse(course2);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));

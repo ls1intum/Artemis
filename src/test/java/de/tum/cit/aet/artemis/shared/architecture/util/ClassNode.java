@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.shared.architecture.util;
 
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.assertj.core.util.TriFunction;
+import org.jspecify.annotations.NonNull;
 
 import io.github.classgraph.ClassInfo;
 
@@ -24,9 +24,9 @@ public class ClassNode extends ClassPathNode {
      * @param containedClass the {@link Class} object, must not be <code>null</code>.
      * @param classInfo      the {@link ClassInfo} describing this class node's class, may be <code>null</code>.
      */
-    public ClassNode(PackageNode parent, Class<?> containedClass, ClassInfo classInfo) {
-        super(Objects.requireNonNull(parent), getClassNameWithoutPackage(containedClass));
-        this.containedClass = Objects.requireNonNull(containedClass);
+    public ClassNode(@NonNull PackageNode parent, @NonNull Class<?> containedClass, ClassInfo classInfo) {
+        super(parent, getClassNameWithoutPackage(containedClass));
+        this.containedClass = containedClass;
         this.classInfo = classInfo;
     }
 

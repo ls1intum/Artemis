@@ -812,7 +812,7 @@ jobs:
               echo "|---------|---------|"
               echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
               echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
-              echo "| Java checkstyle | \`./gradlew checkstyleMain\` |"
+              echo "| Java checkstyle | \`./gradlew checkstyleMain checkstyleTest\` |"
               echo
               echo "Failed test details are in the **Test** and **E2E** checks above."
               echo "</details>"

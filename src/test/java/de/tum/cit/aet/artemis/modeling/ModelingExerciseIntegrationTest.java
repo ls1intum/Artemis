@@ -696,8 +696,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, modelingExercise.getId());
         var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
-        participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().orElseThrow(),
-                Objects.requireNonNull(submission.getLatestResult()));
+        var latestResult = submission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().orElseThrow(), latestResult);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
         modelingExercise.setCourse(course2);
@@ -1669,7 +1670,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();
         feedback.setGradingInstruction(gradingInstruction);
-        participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
+        var latestResult = submission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        participationUtilService.addFeedbackToResult(feedback, latestResult);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         modelingExercise.setCourse(course2);
         var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
