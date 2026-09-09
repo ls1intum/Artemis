@@ -1,7 +1,7 @@
 @if (display(); as display) {
     <!-- role/aria-live so the ticking value is announced rather than silently repainted. -->
-    <span data-testid="quiz-countdown" class="quiz-countdown" role="timer" aria-live="polite">
+    <span data-testid="quiz-countdown" class="quiz-countdown" [attr.data-severity]="display.severity ?? null" role="timer" aria-live="polite">
         <span class="quiz-countdown__label" [jhiTranslate]="display.labelKey"></span>
-        <span data-testid="quiz-countdown-value" class="quiz-countdown__value" [attr.data-severity]="display.severity ?? null">{{ display.value }}</span>
+        <span data-testid="quiz-countdown-value" class="quiz-countdown__value">{{ display.value }}</span>
     </span>
 }

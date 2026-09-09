@@ -35,7 +35,8 @@ describe('QuizExerciseCountdownComponent', () => {
         });
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="quiz-countdown-value"]').getAttribute('data-severity')).toBe('danger');
+        // On the box, not the number: the border and background carry the urgency too.
+        expect(fixture.nativeElement.querySelector('[data-testid="quiz-countdown"]').getAttribute('data-severity')).toBe('danger');
     });
 
     it('should show the duration before the quiz starts', () => {

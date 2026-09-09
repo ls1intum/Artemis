@@ -13,11 +13,10 @@
             {{ exercise().title }}
         </h5>
     }
-    @if (exercise().type === ExerciseType.QUIZ) {
-        <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
-    }
-
     <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+        @if (exercise().type === ExerciseType.QUIZ) {
+            <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
+        }
         <jhi-participation-mode-toggle
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"
