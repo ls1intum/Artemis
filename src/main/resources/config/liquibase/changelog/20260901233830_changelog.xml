@@ -93,6 +93,12 @@
             candidate; MIN and MAX skip nulls on every engine, so a source that has one but not the other still
             counts for the side it has. Exercises inside an exam hang off an exercise group rather than a course,
             which is why the course_id filters are there - those exercises are represented by their exam's dates.
+
+            The filter on the tutorial group branch is there for a second reason: tutorial_group.course_id is
+            nullable, in the schema and in the mapping, so a tutorial group that belongs to no course but still has
+            sessions would contribute a row keyed on null. course_id above is this table's primary key and rejects
+            that, and a failing changeset stops every instance from starting, so a single orphan row would abort the
+            whole upgrade. Every other branch already excludes its nulls.
         </comment>
         <sql><![CDATA[
             INSERT INTO tmp_course_content_bounds (course_id, content_start, content_end)
@@ -107,7 +113,7 @@
                 UNION ALL SELECT course_id, visible_date, publish_results_date FROM exam WHERE course_id IS NOT NULL
                 UNION ALL SELECT course_id, visible_date, example_solution_publication_date FROM exam WHERE course_id IS NOT NULL
                 UNION ALL SELECT course_id, visible_date, exam_summary_publication_date FROM exam WHERE course_id IS NOT NULL
-                UNION ALL SELECT tg.course_id, tgs.session_start, tgs.session_end FROM tutorial_group_session tgs JOIN tutorial_group tg ON tg.id = tgs.tutorial_group_id
+                UNION ALL SELECT tg.course_id, tgs.session_start, tgs.session_end FROM tutorial_group_session tgs JOIN tutorial_group tg ON tg.id = tgs.tutorial_group_id WHERE tg.course_id IS NOT NULL
             ) bounds
             GROUP BY course_id;
         ]]></sql>
@@ -405,7 +411,23 @@
     <!--
         Each constraint is guarded by a precondition with onFail="CONTINUE" rather than "MARK_RAN". CONTINUE does not
         record the changeset, so if a row somehow still holds a null the constraint is retried on the next start instead
-        of the column staying nullable for good.
+        of the column staying nullable for good. What CONTINUE does not do is repair the row: the backfill above is
+        recorded once it has run, so a retry re-attempts only the constraint. A null that survives the backfill
+        therefore logs a skipped changeset on every start until someone fills the column in, which is the loud outcome
+        rather than a silent one.
+
+        The backfill and these constraints deliberately sit in one release rather than being phased across two. Artemis
+        is not deployed as a rolling update: every instance is stopped, the first one applies the migrations, and the
+        rest start only once it is up, so no node on the previous version can insert a null between the backfill and
+        the constraint. See documentation/docs/admin/production-setup/multiple-artemis-instances.mdx, section
+        "Deploying a New Version".
+
+        Rollback is the part that is not free. Starting the previous version again does not revert these constraints,
+        and the previous CourseCreateDTO, CourseUpdateDTO and CourseRequestCreateDTO all accept a missing start date,
+        end date and semester, so its inserts would be refused by the columns. Reverting this release therefore means
+        rolling the changelog back as well, which Liquibase can do because addNotNullConstraint infers its own
+        rollback, or restoring the database from a backup taken before the upgrade. Reverting the application alone is
+        not enough.
     -->
     <changeSet id="20260901233830-10-course-start-date-not-null" author="krusche">
         <preConditions onFail="CONTINUE">
