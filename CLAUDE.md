@@ -9,7 +9,7 @@ This file holds **facts** about the repository. **Procedures** live in [`skills/
 - `e2e-pr-check` — run only the Playwright specs a change affects, and read the result correctly
 - `ci-triage` — classify a red build before changing any code
 - `server-arch-gates` — the architectural rules a server change must satisfy, and how to check each locally
-- `liquibase-migration` — write a changelog that survives a rolling deploy on both databases
+- `liquibase-migration` — write a changelog that applies cleanly on both databases
 - `client-conventions` — Angular signal APIs, cloning, template control flow, TUM UI styling
 - `write-tests` — base class selection and the test commands that silently do the wrong thing
 - `local-setup` — fresh clone to a running server and client
@@ -192,13 +192,18 @@ Organized by feature module:
   `instructor/`, `student/`, `developer/`, `about/`. There is no top-level `docs/` folder; that was the old Sphinx
   location and anything written there is invisible on the documentation site. A `README.md` next to the tool it
   explains (a script directory, a docker setup) stays where it is and does not move into the site tree.
-- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter. A new page is only reachable
+- Pages are Docusaurus `.mdx` files with `id`, `title` and `sidebar_label` frontmatter, and no H1 in the body —
+  Docusaurus renders the heading from `title`, so writing both makes the title drift. A new page is only reachable
   once it is listed in the matching `documentation/sidebar-*.ts`, so add it there and link it from the related pages.
 - Write for the audience of the folder, in the present tense, describing what the reader sees and does in Artemis. Do
   not reference pull requests, issues, or commits, and do not describe the change relative to a previous release.
 - **Do not commit design documents, specs, plans, or scratch notes.** Working notes belong in the pull request
   description or the issue, not in the repository. What is worth keeping goes into `documentation/docs/` as a proper
   page for its audience.
+- Full conventions — heading and anchor rules, naming controls in bold rather than backticks, screenshot and
+  screencast practice, when to split a page — live in
+  [`documentation/docs/developer/guidelines/documentation.mdx`](./documentation/docs/developer/guidelines/documentation.mdx).
+  Read it before writing or restructuring a page.
 
 ### API Specification
 
