@@ -85,24 +85,28 @@ describe('Course Management Service', () => {
         modelingExercise.dueDate = dueDate;
         modelingExercise.assessmentDueDate = assessmentDueDate;
         modelingExercise = JSON.parse(JSON.stringify(modelingExercise));
+        modelingExercise.id = exerciseId;
 
         programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.releaseDate = releaseDate;
         programmingExercise.dueDate = dueDate;
         programmingExercise.assessmentDueDate = assessmentDueDate;
         programmingExercise = JSON.parse(JSON.stringify(programmingExercise));
+        programmingExercise.id = exerciseId;
 
         textExercise = new TextExercise(course, undefined);
         textExercise.releaseDate = releaseDate;
         textExercise.dueDate = dueDate;
         textExercise.assessmentDueDate = assessmentDueDate;
         textExercise = JSON.parse(JSON.stringify(textExercise));
+        textExercise.id = exerciseId;
 
         fileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExercise.releaseDate = releaseDate;
         fileUploadExercise.dueDate = dueDate;
         fileUploadExercise.assessmentDueDate = assessmentDueDate;
         fileUploadExercise = JSON.parse(JSON.stringify(fileUploadExercise));
+        fileUploadExercise.id = exerciseId;
 
         exercises = [];
         course.exercises = exercises;
@@ -191,11 +195,11 @@ describe('Course Management Service', () => {
     it('should start exercise', () => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, false);
-        let participation: StudentParticipation | undefined;
+        let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .startExercise(exerciseId)
+            .startExercise(exerciseId, programmingExercise)
             .pipe(take(1))
             .subscribe((res) => (participation = res));
 
@@ -215,8 +219,8 @@ describe('Course Management Service', () => {
             exercise: {
                 id: exerciseId,
                 title: 'Text exercise',
-                type: ExerciseType.TEXT,
                 exerciseType: ExerciseType.TEXT,
+                teamMode: false,
             },
             submissions: [
                 {
@@ -227,10 +231,10 @@ describe('Course Management Service', () => {
                 },
             ],
         };
-        let participation: StudentParticipation | undefined;
+        let participation: StudentParticipation | null | undefined;
 
         service
-            .startExercise(exerciseId)
+            .startExercise(exerciseId, textExercise)
             .pipe(take(1))
             .subscribe((res) => (participation = res));
 
@@ -249,8 +253,8 @@ describe('Course Management Service', () => {
             exercise: {
                 id: exerciseId,
                 title: 'File upload exercise',
-                type: ExerciseType.FILE_UPLOAD,
                 exerciseType: ExerciseType.FILE_UPLOAD,
+                teamMode: false,
             },
             submissions: [
                 {
@@ -260,10 +264,10 @@ describe('Course Management Service', () => {
                 },
             ],
         };
-        let participation: StudentParticipation | undefined;
+        let participation: StudentParticipation | null | undefined;
 
         service
-            .startExercise(exerciseId)
+            .startExercise(exerciseId, fileUploadExercise)
             .pipe(take(1))
             .subscribe((res) => (participation = res));
 
@@ -276,11 +280,11 @@ describe('Course Management Service', () => {
     it.each([true, false])('should start practice', (useGradedParticipation: boolean) => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, true);
-        let participation: StudentParticipation | undefined;
+        let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .startPractice(exerciseId, useGradedParticipation)
+            .startPractice(exerciseId, useGradedParticipation, programmingExercise)
             .pipe(take(1))
             .subscribe((res) => (participation = res));
 
@@ -298,11 +302,11 @@ describe('Course Management Service', () => {
     it('should resume programming exercise', () => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, false);
-        let participation: StudentParticipation | undefined;
+        let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .resumeProgrammingExercise(exerciseId, participationId)
+            .resumeProgrammingExercise(exerciseId, participationId, programmingExercise)
             .pipe(take(1))
             .subscribe((res) => (participation = res));
 
@@ -319,7 +323,7 @@ describe('Course Management Service', () => {
 
     it('should adapt a request-feedback response', () => {
         const participationId = 12345;
-        let participation: StudentParticipation | undefined;
+        let participation: StudentParticipation | null | undefined;
 
         service
             .requestFeedback(exerciseId, participationId)
@@ -345,8 +349,8 @@ describe('Course Management Service', () => {
         exercise: {
             id: exerciseId,
             title: 'Programming exercise',
-            type: ExerciseType.PROGRAMMING,
             exerciseType: ExerciseType.PROGRAMMING,
+            teamMode: false,
             releaseDate: releaseDateString,
             dueDate: dueDateString,
             assessmentDueDate: assessmentDueDateString,

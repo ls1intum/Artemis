@@ -180,10 +180,18 @@ public class ParticipationResource {
             }
         }
 
+        // startExercise can return a merge copy; preserve a participant whose associations were loaded for this request.
         if (exercise.isTeamMode()) {
-            long teamId = participant.getId();
-            participation = studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId)
-                    .orElseThrow(() -> new EntityNotFoundException("Could not find the started participation for exercise " + exercise.getId() + " and team " + teamId + "."));
+            Long startedParticipationId = participation.getId();
+            var participationWithTeamStudents = studentParticipationRepository.findByIdWithEagerTeamStudents(startedParticipationId)
+                    .orElseThrow(() -> new EntityNotFoundException("Could not find the started participation " + startedParticipationId + "."));
+            Participant loadedParticipant = participationWithTeamStudents.getParticipant();
+            if (loadedParticipant != null) {
+                participation.setParticipant(loadedParticipant);
+            }
+        }
+        else {
+            participation.setParticipant(participant);
         }
 
         return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
@@ -280,8 +288,10 @@ public class ParticipationResource {
 
         participation = participationService.resumeProgrammingExercise(participation);
         // saveAndFlush merges this detached participation and returns another instance; preserve the eagerly loaded team students for the response DTO.
-        participation.setParticipant(participant);
-        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterResume(participation));
+        if (participant != null) {
+            participation.setParticipant(participant);
+        }
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofForCurrentUser(participation));
     }
 
     /**

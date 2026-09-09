@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  *
  * @param id                the unique identifier of the exercise
  * @param title             the exercise title, if available
- * @param type              the polymorphic exercise discriminator
  * @param exerciseType      the exercise category
+ * @param teamMode          whether students participate as a team
  * @param assessmentType    the configured assessment type, if available
  * @param releaseDate       the release date, if configured
  * @param startDate         the start date, if configured
@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * @param exerciseGroup     the minimal exam exercise-group context, if initialized
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationExerciseContextDTO(Long id, @Nullable String title, String type, ExerciseType exerciseType, @Nullable AssessmentType assessmentType,
+public record ParticipationExerciseContextDTO(Long id, @Nullable String title, ExerciseType exerciseType, boolean teamMode, @Nullable AssessmentType assessmentType,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
         @Nullable Double maxPoints, @Nullable ParticipationCourseContextDTO course, @Nullable ParticipationExerciseGroupContextDTO exerciseGroup) {
 
@@ -61,45 +61,27 @@ public record ParticipationExerciseContextDTO(Long id, @Nullable String title, S
      * @return the minimal exercise context
      */
     public static ParticipationExerciseContextDTO of(Exercise exercise) {
-        ParticipationCourseContextDTO courseDTO = mapCourse(exercise);
-        ParticipationExerciseGroupContextDTO exerciseGroupDTO = mapExerciseGroup(exercise.getExerciseGroup());
-        return new ParticipationExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getExerciseType(), exercise.getAssessmentType(),
-                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), courseDTO, exerciseGroupDTO);
-    }
-
-    @Nullable
-    private static ParticipationCourseContextDTO mapCourse(Exercise exercise) {
+        ExerciseGroup exerciseGroup = exercise.getExerciseGroup();
+        if (exerciseGroup != null && !Hibernate.isInitialized(exerciseGroup)) {
+            exerciseGroup = null;
+        }
+        Exam exam = exerciseGroup != null ? exerciseGroup.getExam() : null;
+        if (exam != null && !Hibernate.isInitialized(exam)) {
+            exam = null;
+        }
         Course course;
         if (exercise.isCourseExercise()) {
             course = exercise.getCourseViaExerciseGroupOrCourseMember();
         }
         else {
-            ExerciseGroup exerciseGroup = exercise.getExerciseGroup();
-            if (exerciseGroup == null || !Hibernate.isInitialized(exerciseGroup)) {
-                return null;
-            }
-            Exam exam = exerciseGroup.getExam();
-            if (exam == null || !Hibernate.isInitialized(exam)) {
-                return null;
-            }
-            course = exam.getCourse();
+            course = exam != null ? exam.getCourse() : null;
         }
-        return course != null && Hibernate.isInitialized(course) ? ParticipationCourseContextDTO.of(course) : null;
+        ParticipationCourseContextDTO courseDTO = course != null && Hibernate.isInitialized(course) ? ParticipationCourseContextDTO.of(course) : null;
+        ParticipationExerciseGroupContextDTO exerciseGroupDTO = exerciseGroup != null && exam != null
+                ? new ParticipationExerciseGroupContextDTO(exerciseGroup.getId(), new ParticipationExamContextDTO(exam.getId()))
+                : null;
+        return new ParticipationExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.isTeamMode(), exercise.getAssessmentType(),
+                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), courseDTO, exerciseGroupDTO);
     }
 
-    @Nullable
-    private static ParticipationExerciseGroupContextDTO mapExerciseGroup(@Nullable ExerciseGroup exerciseGroup) {
-        if (exerciseGroup == null || !Hibernate.isInitialized(exerciseGroup)) {
-            return null;
-        }
-        Exam exam = exerciseGroup.getExam();
-        if (exam == null || !Hibernate.isInitialized(exam)) {
-            return null;
-        }
-        Course course = exam.getCourse();
-        if (course == null || !Hibernate.isInitialized(course)) {
-            return null;
-        }
-        return new ParticipationExerciseGroupContextDTO(exerciseGroup.getId(), new ParticipationExamContextDTO(exam.getId()));
-    }
 }

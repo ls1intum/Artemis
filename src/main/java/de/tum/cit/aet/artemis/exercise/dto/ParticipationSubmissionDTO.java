@@ -37,16 +37,6 @@ public record ParticipationSubmissionDTO(Long id, @Nullable Boolean submitted, @
         @Nullable List<ParticipationSubmissionResultDTO> results) {
 
     /**
-     * Creates a lean response DTO from a submission without initializing lazy results.
-     *
-     * @param submission the submission to map
-     * @return the lean submission response
-     */
-    public static ParticipationSubmissionDTO of(Submission submission) {
-        return of(submission, false);
-    }
-
-    /**
      * Creates a response DTO from a submission without initializing lazy results.
      *
      * @param submission     the submission to map
@@ -55,7 +45,7 @@ public record ParticipationSubmissionDTO(Long id, @Nullable Boolean submitted, @
      */
     public static ParticipationSubmissionDTO of(Submission submission, boolean includeContent) {
         List<ParticipationSubmissionResultDTO> resultDTOs = null;
-        if (Hibernate.isInitialized(submission.getResults())) {
+        if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
             resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ParticipationSubmissionResultDTO::of).toList();
         }
         String commitHash = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.getCommitHash() : null;

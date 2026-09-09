@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -43,7 +43,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore, boolean testRun, String type, @Nullable Integer submissionCount,
         @Nullable String participantName, @Nullable String participantIdentifier, @Nullable UserPublicInfoDTO student, @Nullable ParticipationTeamDTO team,
         @Nullable ParticipationExerciseContextDTO exercise, @Nullable List<ParticipationSubmissionDTO> submissions, @Nullable String repositoryUri, @Nullable String buildPlanId,
-        @Nullable String branch) implements Serializable {
+        @Nullable String branch) {
 
     /**
      * Maps a participation for an enclosing response without exposing its participant.
@@ -77,16 +77,6 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a resumed programming participation including its visible participant and exercise context.
-     *
-     * @param participation the resumed programming participation
-     * @return the participation response
-     */
-    public static StudentParticipationDTO ofAfterResume(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, true, true, false);
-    }
-
-    /**
      * Maps a participation for latest-result polling with initialized lean submissions and results.
      *
      * @param participation the participation loaded with its latest result
@@ -116,16 +106,6 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         return of(participation, false, false, false);
     }
 
-    /**
-     * Maps a programming participation after its build plan was cleaned up.
-     *
-     * @param participation the updated programming participation
-     * @return the lean cleanup response
-     */
-    public static StudentParticipationDTO ofAfterBuildPlanCleanup(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, false, false, false);
-    }
-
     private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions) {
         return of(participation, includeParticipant, includeExercise, includeSubmissions, false);
     }
@@ -151,8 +131,9 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         }
 
         List<ParticipationSubmissionDTO> submissionDTOs = null;
-        if (includeSubmissions && Hibernate.isInitialized(participation.getSubmissions())) {
-            submissionDTOs = participation.getSubmissions().stream().map(submission -> ParticipationSubmissionDTO.of(submission, includeSubmissionContent)).toList();
+        if (includeSubmissions && participation.getSubmissions() != null && Hibernate.isInitialized(participation.getSubmissions())) {
+            submissionDTOs = participation.getSubmissions().stream().filter(Objects::nonNull).map(submission -> ParticipationSubmissionDTO.of(submission, includeSubmissionContent))
+                    .toList();
         }
 
         String repositoryUri = null;

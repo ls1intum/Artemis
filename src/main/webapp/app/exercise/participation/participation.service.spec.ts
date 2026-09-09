@@ -50,8 +50,8 @@ describe('Participation Service', () => {
             type: ParticipationType.STUDENT,
             exercise: {
                 id: 42,
-                type: ExerciseType.TEXT,
                 exerciseType: ExerciseType.TEXT,
+                teamMode: false,
                 course: {
                     id: 7,
                 },
@@ -99,8 +99,8 @@ describe('Participation Service', () => {
             type: ParticipationType.STUDENT,
             exercise: {
                 id: 42,
-                type: ExerciseType.TEXT,
                 exerciseType: ExerciseType.TEXT,
+                teamMode: false,
                 course: { id: 7 },
                 exerciseGroup: {
                     id: 8,

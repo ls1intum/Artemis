@@ -1,7 +1,7 @@
-import type { User, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { User, type UserPublicInfoDTO } from 'app/account/user/user.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import type { Course, Language } from 'app/course/shared/entities/course.model';
+import { Course, type Language } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -12,7 +12,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -63,8 +63,8 @@ export interface ParticipationCourseContextDTO {
 export interface ParticipationExerciseContextDTO {
     id: number;
     title?: string;
-    type: ExerciseType;
     exerciseType: ExerciseType;
+    teamMode: boolean;
     assessmentType?: AssessmentType;
     releaseDate?: string;
     startDate?: string;
@@ -120,7 +120,7 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     participation.submissionCount = dto.submissionCount;
     participation.participantName = dto.participantName;
     participation.participantIdentifier = dto.participantIdentifier;
-    participation.student = dto.student ? (deepClone(dto.student) as User) : undefined;
+    participation.student = dto.student ? hydrate(new User(), dto.student) : undefined;
     participation.team = dto.team ? fromParticipationTeamDTO(dto.team) : undefined;
     participation.exercise = dto.exercise ? fromParticipationExerciseContextDTO(dto.exercise) : undefined;
 
@@ -144,7 +144,7 @@ function fromParticipationTeamDTO(dto: ParticipationTeamDTO): Team {
     team.name = dto.name;
     team.shortName = dto.shortName;
     team.image = dto.image;
-    team.students = dto.students?.map((student) => deepClone(student) as User);
+    team.students = dto.students?.map((student) => hydrate(new User(), student));
     return team;
 }
 
@@ -152,14 +152,14 @@ function fromParticipationExerciseContextDTO(dto: ParticipationExerciseContextDT
     const exercise = new ParticipationExerciseContext(dto.exerciseType);
     exercise.id = dto.id;
     exercise.title = dto.title;
-    exercise.type = dto.type;
+    exercise.teamMode = dto.teamMode;
     exercise.assessmentType = dto.assessmentType;
     exercise.releaseDate = convertDateStringFromServer(dto.releaseDate);
     exercise.startDate = convertDateStringFromServer(dto.startDate);
     exercise.dueDate = convertDateStringFromServer(dto.dueDate);
     exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
     exercise.maxPoints = dto.maxPoints;
-    const course = dto.course ? deepClone(dto.course) : undefined;
+    const course = dto.course ? hydrate(new Course(), dto.course) : undefined;
     exercise.course = dto.exerciseGroup ? undefined : course;
     exercise.exerciseGroup = dto.exerciseGroup ? fromExerciseGroupDTO(dto.exerciseGroup, course) : undefined;
     return exercise;
@@ -207,6 +207,8 @@ function createSubmission(type: SubmissionExerciseType): Submission {
             return new TextSubmission();
         case SubmissionExerciseType.FILE_UPLOAD:
             return new FileUploadSubmission();
+        default:
+            throw new Error(`Unsupported submission exercise type: ${type}`);
     }
 }
 

@@ -129,7 +129,7 @@ public class ParticipationDeletionResource {
         participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationDeletionService.cleanupBuildPlan(participation);
-        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterBuildPlanCleanup(participation));
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterUpdate(participation));
     }
 
 }
