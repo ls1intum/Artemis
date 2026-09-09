@@ -203,8 +203,9 @@ final class JavaSourceInspector {
     }
 
     /**
-     * Blanks out comments while leaving string and character literals intact, so a {@code //} inside a URL literal is not mistaken for a comment and a commented-out annotation
-     * cannot spoof a gate. Every removed character becomes a space and every newline is kept, so offsets and line numbers still line up with the original source.
+     * Blanks out comments while leaving string, character, and text block literals intact, so a {@code //} inside a URL literal is not mistaken for a comment and a commented-out
+     * annotation cannot spoof a gate. Every removed character becomes a space and every line terminator is kept, so offsets and line numbers still line up with the original
+     * source.
      */
     static String stripJavaComments(String content) {
         StringBuilder stripped = new StringBuilder(content.length());
@@ -212,11 +213,12 @@ final class JavaSourceInspector {
         boolean inBlockComment = false;
         boolean inString = false;
         boolean inChar = false;
+        boolean inTextBlock = false;
         for (int i = 0; i < content.length(); i++) {
             char current = content.charAt(i);
             char next = i + 1 < content.length() ? content.charAt(i + 1) : '\0';
             if (inLineComment) {
-                if (current == '\n') {
+                if (current == '\n' || current == '\r') {
                     inLineComment = false;
                     stripped.append(current);
                 }
@@ -231,7 +233,21 @@ final class JavaSourceInspector {
                     i++;
                 }
                 else {
-                    stripped.append(current == '\n' ? '\n' : ' ');
+                    stripped.append(current == '\n' || current == '\r' ? current : ' ');
+                }
+            }
+            else if (inTextBlock) {
+                if (current == '\\' && next != '\0') {
+                    stripped.append(current).append(next);
+                    i++;
+                }
+                else if (content.startsWith("\"\"\"", i)) {
+                    stripped.append("\"\"\"");
+                    i += 2;
+                    inTextBlock = false;
+                }
+                else {
+                    stripped.append(current);
                 }
             }
             else if (inString || inChar) {
@@ -254,6 +270,11 @@ final class JavaSourceInspector {
                 inBlockComment = true;
                 stripped.append("  ");
                 i++;
+            }
+            else if (content.startsWith("\"\"\"", i)) {
+                stripped.append("\"\"\"");
+                i += 2;
+                inTextBlock = true;
             }
             else {
                 inString = current == '"';
