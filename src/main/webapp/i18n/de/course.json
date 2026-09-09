@@ -244,7 +244,6 @@
                 },
                 "aiExperienceHint": "Ihre KI-Erfahrung ist nicht aktiviert. Aktivieren Sie sie, um KI-generiertes Feedback selbst zu sehen und zu nutzen.",
                 "enableAiExperience": "KI-Erfahrung aktivieren",
-                "enableAiExperienceTooltip": "Wählen Sie Ihre KI-Erfahrung aus, um KI-generiertes Feedback selbst zu nutzen.",
                 "gradingFeedbackEnabled": {
                     "label": "Bewertungsfeedback-Vorschläge aktiviert",
                     "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für Text-, Programmier- und Modellierungsaufgaben vor."
