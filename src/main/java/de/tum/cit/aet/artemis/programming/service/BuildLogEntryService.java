@@ -312,7 +312,7 @@ public class BuildLogEntryService {
      * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
     public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
-        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
         if (!Files.exists(exerciseLogsPath)) {

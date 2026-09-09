@@ -324,7 +324,7 @@ public class GitRepositoryExportService {
      * @return the name for the exported repository, without a file extension
      */
     public String getStudentRepositoryName(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean hideStudentName) {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String repositoryName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             repositoryName += "-student-submission.git";
@@ -344,7 +344,7 @@ public class GitRepositoryExportService {
      * @return the sanitized filename for the zipped repository
      */
     public String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 

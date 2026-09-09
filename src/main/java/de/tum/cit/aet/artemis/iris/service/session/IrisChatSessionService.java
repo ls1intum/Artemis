@@ -268,7 +268,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow());
+        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
         if (!settings.enabled()) {
             return;
         }
@@ -288,7 +288,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow());
+        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
         if (!settings.enabled()) {
             return;
         }

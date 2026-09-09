@@ -98,7 +98,7 @@ public class TextPlagiarismDetectionService {
 
         // Only one plagiarism check per course allowed. Claiming happens before the try block because the finally below
         // releases the course, and a caller that was refused must not release the check somebody else is running.
-        var courseId = textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
+        var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         if (!plagiarismCacheService.tryStartPlagiarismCheck(courseId)) {
             throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
         }

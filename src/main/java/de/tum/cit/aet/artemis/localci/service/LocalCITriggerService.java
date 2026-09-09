@@ -473,7 +473,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
-        if (programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().isTestCourse()) {
+        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
             return priority + TESTCOURSE_PRIORITY_PENALTY;
         }
         return priority;

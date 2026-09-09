@@ -235,7 +235,7 @@ public abstract class ExerciseWithSubmissionsExportService {
         String cleanExerciseDetailsFileName = FileUtil.sanitizeFilename(exerciseDetailsFileName);
         var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
         // do not include duplicate information
-        exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().setExercises(null);
+        exercise.getCourseViaExerciseGroupOrCourseMember().setExercises(null);
         exercise.getCourseViaExerciseGroupOrCourseMember().setExams(null);
         // do not include related entities ids
         Optional.ofNullable(exercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
