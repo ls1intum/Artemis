@@ -90,7 +90,7 @@ public class ProcessingStateCallbackService {
     private final LectureUnitContentFingerprintService contentFingerprintService;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            AttachmentRepository attachmentRepository, @Lazy Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
             LectureUnitContentFingerprintService contentFingerprintService, @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
