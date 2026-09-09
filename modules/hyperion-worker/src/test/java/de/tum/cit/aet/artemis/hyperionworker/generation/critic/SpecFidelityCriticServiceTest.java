@@ -434,7 +434,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_acceptsGroundedLearningFitAndEmptyDefectVerdict() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -453,7 +453,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewCannotApproveANormativeTechniqueThatTheAllowedAssessmentCannotObserve() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement branching over explicit boundaries.",
                          "remainingStudentReasoning":"Students translate the exhaustive boundary partition into control flow.","domainGrounding":"The classification domain makes each branch observable.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"boundaryChecks":[],"priorFindingChecks":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -479,7 +479,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewDoesNotDemandRemovalOfADisclosedPedagogicalObjective() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through observable classifications.",
                          "remainingStudentReasoning":"Students derive the classification boundaries.","domainGrounding":"The temperature domain makes the results meaningful.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -504,7 +504,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewRejectsRelocatingARequiredOperationBoundary() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the public operation and its boundary behavior.",
                          "remainingStudentReasoning":"Students must preserve the operation boundary while implementing the behavior.","domainGrounding":"The boundary is explicitly required by the domain brief.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],
@@ -523,7 +523,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void specificationReviewCorrectsAMissingBoundaryInventory() {
         String verdict = """
-                {"learningFit":{"briefEvidenceIds":["B1"],
+                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],
                  "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the requested public operation.",
                  "remainingStudentReasoning":"Students implement the operation and its observable behavior.","domainGrounding":"The brief directly motivates the operation.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -542,7 +542,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_rejectsDefectFreeVerdictWithMiscitedEvidenceId() {
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E999"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -565,7 +565,7 @@ class SpecFidelityCriticServiceTest {
         String specification = "R1: each policy returns a fixed score.";
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"The specification claims a policy collaboration.","domainGrounding":"The brief leaves the exact domain open.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],
                           "specEvidenceIds":["E1"],"disposition":"SPEC_REPAIR",
@@ -585,7 +585,7 @@ class SpecFidelityCriticServiceTest {
         String specification = "R1: each policy returns a prescribed fixed score.";
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"Only fixed-score transcription remains after routine Strategy wiring.",
                          "domainGrounding":"The specification does not connect scores to fragment conflicts.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_SHALLOW"},
                          "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],
@@ -606,7 +606,7 @@ class SpecFidelityCriticServiceTest {
         String specification = "R1: each policy returns its prescribed fixed label.";
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"Only fixed-label transcription remains after routine Strategy wiring.",
                          "domainGrounding":"The labels are not caused by a domain interaction.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_SHALLOW"},
                          "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],
@@ -624,7 +624,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewBoundsMoreThanFourGroundedFindingsWithoutDiscardingTheReview() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"The counter work is meaningful.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"The counter work is meaningful.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[
                            {"briefEvidenceIds":["B1"],"reason":"one"},
                            {"briefEvidenceIds":["B1"],"reason":"two"}],
@@ -644,7 +644,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewIgnoresUnsolicitedConceptAlignmentWhenNoConceptWasSupplied() {
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the requested observable behavior.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the requested observable behavior.",
                          "remainingStudentReasoning":"Students must choose and implement the boundary behavior.","domainGrounding":"The behavior is grounded in the requested domain.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":null,"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"Unsolicited but irrelevant."},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[]}
@@ -663,14 +663,14 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"Students reconcile fragments through interchangeable policies.",
                                  "domainGrounding":"Radio fragments naturally require conflict policies.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                                 """),
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"Students reconcile fragments through interchangeable policies.",
                                  "domainGrounding":"Radio fragments naturally require conflict policies.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],
@@ -694,14 +694,14 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the comparison.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the comparison.",
                                  "remainingStudentReasoning":"Students place the exact boundary comparison.","domainGrounding":"The domain makes the boundary meaningful.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"The boundary behavior is preserved."},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                                 """),
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the comparison.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the comparison.",
                                  "remainingStudentReasoning":"Students place the exact boundary comparison.","domainGrounding":"The domain makes the boundary meaningful.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C2"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"The boundary behavior is preserved."},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -722,7 +722,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewAcceptsAllKnownEvidenceIdsInsteadOfTreatingCitationCountAsCorrectness() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1","E2","E3","E4","E5","E6"],"objectiveEvidenceIds":["E1","E2","E3","E4","E5","E6"],"studentOwnershipEvidenceIds":["E1","E2","E3","E4","E5","E6"],"assessmentEvidenceIds":["E1","E2","E3","E4","E5","E6"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1","E2","E3","E4","E5","E6"],"objectiveEvidenceIds":["E1","E2","E3","E4","E5","E6"],"studentOwnershipEvidenceIds":["E1","E2","E3","E4","E5","E6"],"assessmentEvidenceIds":["E1","E2","E3","E4","E5","E6"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"Only prescribed scalar adjustments remain after routine Strategy mechanics.",
                          "domainGrounding":"The themed constants do not create distinct domain policies.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_SHALLOW"},
                          "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1","C2","C3","C4"],
@@ -753,7 +753,7 @@ class SpecFidelityCriticServiceTest {
         // The prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the cited ownership preserves the requested design work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
@@ -769,7 +769,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReReviewCarriesPriorFindingsAndRequiresFreshAdjudication() {
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
                          "remainingStudentReasoning":"Students reason about equality.","domainGrounding":"The domain requires a boundary.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "priorFindingChecks":[{"findingId":"F1","disposition":"RESOLVED","specEvidenceIds":["E1"],"reason":"The current rule now assigns equality to exactly one region."}],
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -791,12 +791,12 @@ class SpecFidelityCriticServiceTest {
     @Test
     void specificationReReviewCannotSilentlyForgetAPriorFinding() {
         String cleanVerdictWithoutAdjudication = """
-                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
+                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
                  "remainingStudentReasoning":"Students reason about equality.","domainGrounding":"The domain requires a boundary.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                 """;
         String correctedVerdict = """
-                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
+                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
                  "remainingStudentReasoning":"Students reason about equality.","domainGrounding":"The domain requires a boundary.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                  "priorFindingChecks":[{"findingId":"F1","disposition":"STILL_PRESENT","specEvidenceIds":["E1"],"reason":"Equality still satisfies both rules."}],
                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -822,7 +822,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReReviewReopensARiskThatAnIntermediateRevisionResolved() {
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement nearest selection.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement nearest selection.",
                          "remainingStudentReasoning":"Students reason about numeric distance.","domainGrounding":"Floors are integer positions.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "priorFindingChecks":[{"findingId":"F1","disposition":"STILL_PRESENT","specEvidenceIds":["E1"],"reason":"The current int contract again admits extrema whose subtraction overflows before absolute value."}],
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -845,7 +845,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_returnsGroundedFindingsAsActionableFeedback() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E2"],"objectiveEvidenceIds":["E2"],"studentOwnershipEvidenceIds":["E2"],"assessmentEvidenceIds":["E2"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E2"],"objectiveEvidenceIds":["E2"],"studentOwnershipEvidenceIds":["E2"],"assessmentEvidenceIds":["E2"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the candidate does not preserve the requested interface work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_SHALLOW"},
                          "omissions":[{"briefEvidenceIds":["B1"],"reason":"the interface is supplied"}],
                          "conflicts":[],"internalConflicts":[],"exampleChecks":[],
@@ -865,7 +865,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_rejectsAnIncorrectWorkedExampleBeforeTheContractFreezes() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E5"],"objectiveEvidenceIds":["E5"],"studentOwnershipEvidenceIds":["E5"],"assessmentEvidenceIds":["E5"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E5"],"objectiveEvidenceIds":["E5"],"studentOwnershipEvidenceIds":["E5"],"assessmentEvidenceIds":["E5"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the arithmetic rule is the requested learning work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"ambiguities":[],"unsupportedConstraints":[],
                          "exampleChecks":[
@@ -890,7 +890,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_rejectsMutuallyIncompatibleRulesBeforeTheContractFreezes() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the switch policy is the relevant collaboration","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
                          "internalConflicts":[{"firstSpecEvidenceIds":["E1"],
@@ -908,7 +908,7 @@ class SpecFidelityCriticServiceTest {
     void rejectedSpecificationReviewPreservesAGroundedBlockingFindingForTheAuthor() {
         ChatResponse groundedFinding = rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
                          "remainingStudentReasoning":"Students implement the requested policy.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"reason":"The brief requires preserving state but the specification resets it."}],
                          "internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -950,7 +950,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void specificationReviewDerivesLearningFitFromOwnershipAndObservabilitySubchecks() {
         String contradictory = """
-                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E4"],"objectiveEvidenceIds":["E4","E8"],
+                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E4"],"objectiveEvidenceIds":["E4","E8"],
                  "studentOwnershipEvidenceIds":["E4"],"assessmentEvidenceIds":["E8"],
                  "objectiveMechanism":"Students implement leaf policies while the supplied context performs the collaboration.",
                  "remainingStudentReasoning":"Students transcribe two fixed calculations.","domainGrounding":"The themed calculations use domain vocabulary.",
@@ -983,7 +983,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_rejectsUndefinedProgressBeforeTheContractFreezes() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"students implement the repeated selection policy","domainGrounding":"The robot theme motivates choosing affordable moves.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"unsupportedConstraints":[],
                          "ambiguities":[{"specEvidenceIds":["E1"],"reason":"zero-cost moves permit another iteration without consuming energy, so progress and termination are undefined"}]}
@@ -999,7 +999,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_rejectsPositiveLearningFitWithoutItsMandatoryDirection() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"Students resolve the requested state transition.",
                          "domainGrounding":"No qualitative theme was requested.","sufficient":true},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
@@ -1012,7 +1012,7 @@ class SpecFidelityCriticServiceTest {
         // Evidence-ID citation is advisory, but the learningFit's own prose is mandatory.
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],
                          "remainingStudentReasoning":"Students implement three policy algorithms.","domainGrounding":"The policies follow the domain.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
@@ -1026,7 +1026,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewDoesNotAcceptAGenericReasonWithoutBothRequiredAnalyses() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "reason":"The theme and strategy types satisfy the brief.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
@@ -1038,7 +1038,7 @@ class SpecFidelityCriticServiceTest {
         // Booleans and plausible prose are self-reports, so a positive verdict must cite evidence from this prompt before it can freeze the SPEC.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the invented rule supplies depth","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
@@ -1056,7 +1056,7 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
                                  "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[],
@@ -1064,7 +1064,7 @@ class SpecFidelityCriticServiceTest {
                                 """),
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
                                  "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[]}
@@ -1084,7 +1084,7 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"The specification claims a policy collaboration.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
                                  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],
                                   "disposition":"CONCEPT_RESELECTION",
@@ -1093,7 +1093,7 @@ class SpecFidelityCriticServiceTest {
                                 """),
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"The specification claims a policy collaboration.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],
                                   "disposition":"ALIGNED",
@@ -1115,7 +1115,7 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
                                  "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
                                  "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],
@@ -1123,7 +1123,7 @@ class SpecFidelityCriticServiceTest {
                                 """),
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                                  "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                                 """));
@@ -1141,7 +1141,7 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["S1"],"objectiveMechanism":"Students implement the threshold policy.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["S1"],"objectiveMechanism":"Students implement the threshold policy.",
                                  "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],
                                  "unsupportedConstraints":[{"briefEvidenceIds":[],"specEvidenceIds":["E1"],"reason":"The exact threshold value is invented by the specification and has no support in the instructor brief."}],
@@ -1149,7 +1149,7 @@ class SpecFidelityCriticServiceTest {
                                 """),
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the threshold policy.",
+                                {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the threshold policy.",
                                  "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[],
                                  "priorFindingChecks":[{"findingId":"F1","disposition":"STILL_PRESENT","specEvidenceIds":["E1"],"reason":"The current specification still mandates the exact threshold even though the brief provides no numeric value."}]}
@@ -1171,7 +1171,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void specificationReviewCorrectsABlankFindingEntryInsteadOfSilentlyTreatingItAsNoFinding() {
         String completeLearningFit = """
-                "learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the threshold policy.",
+                "learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the threshold policy.",
                  "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"}
                 """;
         ScriptedCritic scripted = criticScripted(rawResponse("{" + completeLearningFit + """
@@ -1195,7 +1195,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService.SpecificationReview previous = new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "prior review", null, priorRisks);
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["S1"],"objectiveMechanism":"Students implement the threshold policy.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["S1"],"objectiveMechanism":"Students implement the threshold policy.",
                          "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],
                          "unsupportedConstraints":[{"specEvidenceIds":["E1"],"reason":"The exact threshold is invented and has no authority in the instructor brief."}],"boundaryChecks":[]}
@@ -1211,10 +1211,32 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewDoesNotSubtractUntaughtDeclarationsFromAnApiUseTask() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
+                 "studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],
+                 "objectiveMechanism":"The learner calls the provided API and observes state changes.",
+                 "remainingStudentReasoning":"Call ordering and keeping the returned object are meaningful.",
+                 "domainGrounding":"A receipt changes after applying tax.",
+                 "scaffoldingRationale":"Creating the entry class and main declaration adds untaught work; both must be supplied for this API-use brief.",
+                 "scaffoldingAligned":false,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,
+                 "difficultySufficient":true,"domainGrounded":true,"sufficient":false,"direction":"MISALIGNED"},
+                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                """));
+        var review = critic.reviewSpecification("Teach using a finished API inside a supplied method; class and method declarations are not prerequisites.",
+                "BookstoreCheckout is student-creates: create the class and main, then call the given receipt API; tests observe the output.", null, () -> false);
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.coherentRewriteRequired()).isTrue();
+        assertThat(review.findings()).singleElement().asString().contains("Creating the entry class and main", "untaught", "align the student-owned work");
+        assertThat(review.auditSummary()).contains("Scaffolding aligned: false");
+    }
+
+    @Test
     void specificationReview_turnsInsufficientLearningEvidenceIntoOneFocusedRepair() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"after subtracting formula transcription and routine delegation, no intermediate domain decision remains","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_SHALLOW"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
@@ -1233,7 +1255,7 @@ class SpecFidelityCriticServiceTest {
     void specificationReviewPreservesCentralReasoningWhenSupportingWorkIsTooComplex() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                        {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"The repeated supporting engine dominates the requested abstraction.",
                          "domainGrounding":"The domain interaction itself remains coherent.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_COMPLEX"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
