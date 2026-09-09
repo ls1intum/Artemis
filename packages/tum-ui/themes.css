@@ -69,10 +69,10 @@
 }
 
 [data-theme='dark'] {
-    --tumaet-ui-code-background: #20242a;
-    --tumaet-ui-code-color: #e6edf3;
     color-scheme: dark;
 
+    --tumaet-ui-code-background: #20242a;
+    --tumaet-ui-code-color: #e6edf3;
     --tumaet-ui-primary-color: #65a1d6;
     --tumaet-ui-primary-contrast-color: #16191d;
     --tumaet-ui-accent-color: #7fb1dc;
