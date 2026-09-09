@@ -1,3 +1,9 @@
+---
+id: participation-checker
+title: Exam Participation Checker
+sidebar_label: Exam Participation Checker
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -9,8 +15,6 @@ import examOverview from './assets/exam_overview.png';
 import studentListView from './assets/student_list_view.png';
 import studentListViewExportSignatures from './assets/student_list_view_export_signatures.png';
 import studentDetailView from './assets/student_detail_view.png';
-
-# Exam Participation Checker
 
 The Artemis Exam Participation Checker iPad application streamlines the process of checking student attendance during on-site exams conducted with the Artemis platform.
 The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier.
@@ -26,7 +30,7 @@ The Artemis web platform was adapted to additionally support exam management tas
 
 Using the Artemis Exam Participation Checker iPad application requires additional setup on the *Students* page before the exam.
 
-1. To upload images, click on the <img src={uploadImages} alt="Upload Images" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. An exemplary file can be found at `docs/user/exams/instructor/example_upload_images.pdf`.
+1. To upload images, click on the <img src={uploadImages} alt="Upload Images" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. You can download [an example PDF file](./assets/example_upload_images.pdf) to see the expected layout.
 2. Setting up the room and seating information via the `CSV` import. For more information, see: [register students](/instructor/exams/exam-timeline#15-register-students).
 
 <Callout variant={CalloutVariant.info}>
