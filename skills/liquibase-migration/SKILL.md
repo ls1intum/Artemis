@@ -1,6 +1,6 @@
 ---
 name: liquibase-migration
-description: Write an Artemis Liquibase changelog that applies cleanly on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for a column code still reads or writes, the rollback invariant, and the local validation steps.
+description: Write an Artemis Liquibase changelog that applies cleanly on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for a column that code still reads or writes, the rollback invariant, and the local validation steps.
 ---
 
 # Write a Liquibase migration
@@ -37,7 +37,7 @@ pattern is non-obvious, so read the section in `reference/migration-patterns.md`
 
 **Dropping or renaming a column that code still references.** Use expand and contract across two
 releases, so that rolling the application back to the previous version still finds a schema it can
-read and write. Reading is not the only way to depend on a column: one the previous version never
+read and write. Reading is not the only way to depend on a column: one that the previous version never
 selects can still appear in the `INSERT` and `UPDATE` statements it issues, and those fail just as
 hard once the column is gone or renamed.
 
@@ -60,7 +60,7 @@ The one thing that still argues for two releases is **rollback**, and it argues 
 expand and contract. Reverting to the previous WAR does not revert the schema, so the invariant to
 check is: does the new schema still accept everything the previous version reads and writes?
 
-- Dropping or renaming a column the previous version reads or writes breaks it outright. This is why
+- Dropping or renaming a column that the previous version reads or writes breaks it outright. This is why
   expand and contract survives below.
 - Adding a `NOT NULL` column without a default breaks every `INSERT` the previous version issues
   against that table, even though it never mentions the column.
