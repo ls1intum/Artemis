@@ -109,12 +109,12 @@ public class ExerciseMappingToolsService {
 
     /**
      * ThreadLocal storage for exercise mapping preview data.
-     * Used to pass preview data from tool methods to the service layer for frontend rendering.
+     * Used to pass preview data from tool methods to the service layer for rendering in the client.
      */
     private static final ThreadLocal<ExerciseCompetencyMappingDTO> exerciseMappingPreview = new ThreadLocal<>();
 
     /**
-     * ThreadLocal storage for user-selected exercise mappings (from the frontend approval payload).
+     * ThreadLocal storage for user-selected exercise mappings (from the client approval payload).
      * When set, {@link #saveExerciseCompetencyMappings} uses these instead of the LLM-provided mappings,
      * ensuring the user's checkbox selections and weight choices are respected.
      */
@@ -123,7 +123,7 @@ public class ExerciseMappingToolsService {
     /**
      * Set the user-selected mappings before delegating to the exercise mapper agent for saving.
      *
-     * @param mappings the competency mappings selected by the user in the frontend
+     * @param mappings the competency mappings selected by the user in the client
      */
     public static void setUserSelectedMappings(List<ExerciseCompetencyMappingOperation> mappings) {
         userSelectedMappings.set(mappings);
@@ -217,7 +217,7 @@ public class ExerciseMappingToolsService {
     /**
      * Generates a preview of exercise-to-competency mappings before saving.
      * Shows which competencies will be mapped to the exercise with their weights.
-     * Existing mappings are marked as alreadyMapped for frontend styling.
+     * Existing mappings are marked as alreadyMapped for styling in the client.
      *
      * @param courseId   The course ID
      * @param exerciseId The exercise ID to map
@@ -328,7 +328,7 @@ public class ExerciseMappingToolsService {
 
             Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
 
-            // If the user explicitly selected mappings via the frontend approval, use those
+            // If the user explicitly selected mappings via the client approval, use those
             // instead of the LLM-provided ones to honour checkbox and weight choices.
             List<ExerciseCompetencyMappingOperation> selected = userSelectedMappings.get();
             if (selected != null) {
@@ -410,7 +410,7 @@ public class ExerciseMappingToolsService {
 
     /**
      * Get the preview data stored in ThreadLocal.
-     * Called by the service layer to retrieve preview for frontend rendering.
+     * Called by the service layer to retrieve preview for rendering in the client.
      *
      * @return The exercise mapping preview DTO or null
      */
@@ -420,7 +420,7 @@ public class ExerciseMappingToolsService {
 
     /**
      * Clear the ThreadLocal preview data.
-     * Should be called after preview has been consumed by frontend.
+     * Should be called after preview has been consumed by the client.
      */
     public static void clearExerciseMappingPreview() {
         exerciseMappingPreview.remove();

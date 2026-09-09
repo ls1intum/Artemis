@@ -94,7 +94,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * Normalizes a CalendarEventDTO by converting all ZonedDateTime fields to UTC and truncating to milliseconds.
      * This is necessary because PostgreSQL normalizes TIMESTAMP WITH TIME ZONE to UTC on storage,
      * while H2 preserves the original zone. Normalizing both actual (from API/DB) and expected (from in-memory
-     * entities) to UTC ensures assertions work regardless of the database backend.
+     * entities) to UTC ensures assertions work regardless of the database system.
      */
     static CalendarEventDTO normalizeEvent(CalendarEventDTO dto) {
         return new CalendarEventDTO(dto.id(), dto.type(), dto.title(), normalizeTimestamp(dto.startDate()), normalizeTimestamp(dto.endDate()), dto.location(), dto.facilitator());

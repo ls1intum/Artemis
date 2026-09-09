@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Redis-protocol base service, running Valkey
 #
-# Alternative distributed data backend to the embedded Hazelcast cluster. Artemis reaches it through the
+# Alternative distributed data provider to the embedded Hazelcast cluster. Artemis reaches it through the
 # DistributedDataProvider abstraction, selected with `artemis.distributed-data.provider: Redis`, so nothing else about a
 # deployment changes when this container is used instead of Hazelcast.
 #
