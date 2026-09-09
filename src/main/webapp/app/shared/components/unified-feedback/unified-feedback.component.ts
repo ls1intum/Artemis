@@ -284,6 +284,15 @@ export class UnifiedFeedbackComponent {
     /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
     protected readonly CREDITS_STEP = 0.5;
 
+    /**
+     * The credits input's raw, not-yet-committed text, captured on a stepper button's `mousedown` (which always
+     * fires before the button steals focus and blurs the input). Without this, clicking a stepper after typing an
+     * off-grid value like `1.3` blurs the input first, which snaps it to `1.5` via {@link onCreditsChange} before
+     * the button's own `click` handler runs, and stepping from the already-snapped value overshoots. Consumed
+     * exactly once by {@link stepCredits}.
+     */
+    private pendingRawCredits: string | undefined;
+
     /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
     protected stepCreditsDisabled(): boolean {
         return this.readOnly() || !!this.feedback()?.gradingInstruction;
@@ -359,9 +368,24 @@ export class UnifiedFeedbackComponent {
         if (this.stepCreditsDisabled()) {
             return;
         }
-        const base = this.feedbackCredits() ?? 0;
+        const base = this.consumePendingRawCredits() ?? this.feedbackCredits() ?? 0;
         const snapped = (delta > 0 ? Math.floor(base / this.CREDITS_STEP) : Math.ceil(base / this.CREDITS_STEP)) * this.CREDITS_STEP;
         this.onCreditsChange(snapped + delta);
+    }
+
+    /** See {@link pendingRawCredits}. */
+    stashRawCredits(rawValue: string): void {
+        this.pendingRawCredits = rawValue;
+    }
+
+    private consumePendingRawCredits(): number | undefined {
+        const raw = this.pendingRawCredits;
+        this.pendingRawCredits = undefined;
+        if (raw === undefined || raw.trim() === '') {
+            return undefined;
+        }
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : undefined;
     }
 
     private normalizedCredits(value: number | null | undefined): number | undefined {

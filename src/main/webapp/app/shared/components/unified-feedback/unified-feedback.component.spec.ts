@@ -581,6 +581,33 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackCredits()).toBe(0.5);
     });
 
+    it('should use the raw pre-blur value when a stepper click follows an off-grid, uncommitted edit (regression test for double-snapping when the click blurs the input)', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        const incrementButton = (fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>)[1];
+
+        pointsInput.focus();
+        pointsInput.value = '1.3';
+        pointsInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Mirrors the real browser event order for a click on a button while another element is focused:
+        // mousedown fires first (where the raw value must be captured), then the button steals focus, which
+        // blurs the input and fires `change` - normalizing it to 1.5 - before the button's own `click` runs.
+        incrementButton.dispatchEvent(new Event('mousedown', { bubbles: true }));
+        pointsInput.dispatchEvent(new Event('change', { bubbles: true }));
+        incrementButton.dispatchEvent(new Event('click', { bubbles: true }));
+        fixture.detectChanges();
+
+        // Without the fix this comes out as 2: blur snaps 1.3 to 1.5, then stepping from the already-snapped
+        // value adds another whole step instead of landing on the next grid point.
+        expect(component.feedbackCredits()).toBe(1.5);
+    });
+
     it('should render the plain dismiss button when nothing would be lost', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(0);
