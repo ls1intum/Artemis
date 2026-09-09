@@ -10,7 +10,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
 @Component({
     selector: 'jhi-additional-feedback',
     templateUrl: './additional-feedback.component.html',
-    styleUrls: ['./additional-feedback.component.scss'],
     imports: [FaIconComponent, TranslateDirective, UnifiedFeedbackComponent],
 })
 export class AdditionalFeedbackComponent {

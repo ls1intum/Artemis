@@ -8,7 +8,6 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
     templateUrl: './unreferenced-feedback-detail.component.html',
-    styleUrls: ['./unreferenced-feedback-detail.component.scss'],
     imports: [UnifiedFeedbackComponent],
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {

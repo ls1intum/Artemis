@@ -276,7 +276,6 @@ export class UnifiedFeedbackComponent {
     protected readonly Feedback = Feedback;
     protected readonly faTimes = faTimes;
     protected readonly faTrashAlt = faTrashAlt;
-    protected readonly faCheck = faCheck;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faMinus = faMinus;
