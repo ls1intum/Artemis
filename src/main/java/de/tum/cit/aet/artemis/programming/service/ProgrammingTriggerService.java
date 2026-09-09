@@ -128,13 +128,7 @@ public class ProgrammingTriggerService {
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(exerciseId);
-        if (!triggerBuildForParticipationData(triggerData, programmingExercise)) {
-            // Only part of the participations were triggered. Leaving the exercise marked as changed and not announcing
-            // a completed run is what keeps the remaining participations from being forgotten: clearing the flag here
-            // would tell the next scheduled build that there is nothing left to do.
-            log.warn("The instructor build run for exercise {} stopped before every participation was triggered. The exercise stays marked as changed.", exerciseId);
-            return;
-        }
+        triggerBuildForParticipationData(triggerData, programmingExercise);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         // Deliberately by id: that call saves the exercise, and the exercise loaded above carries its auxiliary
@@ -157,11 +151,10 @@ public class ProgrammingTriggerService {
      * @param triggerData what a trigger reads off each participation of the exercise, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
      *                        repositories
-     * @return true if the whole batch was triggered, false if it stopped early because the thread was interrupted
      */
-    public boolean triggerBuildForParticipationData(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
+    public void triggerBuildForParticipationData(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
         if (triggerData.isEmpty()) {
-            return true;
+            return;
         }
         // Everything a trigger reads off the exercise rather than off the participation is resolved once for the batch:
         // the build config, the auxiliary repositories, the build statistics and the head commit of the test
@@ -173,13 +166,10 @@ public class ProgrammingTriggerService {
             if (participation == null) {
                 continue;
             }
-            if (!pauseBetweenBatches(index, participationData.participationId())) {
-                return false;
-            }
+            pauseBetweenBatches(index, participationData.participationId());
             triggerBuild(participation, sharedData);
             index++;
         }
-        return true;
     }
 
     /**
@@ -215,26 +205,23 @@ public class ProgrammingTriggerService {
      *
      * @param index           how many participations of this batch were already triggered
      * @param participationId the participation that is about to be triggered, for the log message on interruption
-     * @return true if the caller may trigger the next participation, false if the thread was interrupted and the
-     *         remaining participations have to be left alone
      */
-    private boolean pauseBetweenBatches(int index, long participationId) {
+    private void pauseBetweenBatches(int index, long participationId) {
         if (index == 0 || index % externalSystemRequestBatchSize != 0) {
-            return true;
+            return;
         }
         try {
             log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
             Thread.sleep(externalSystemRequestBatchWaitingTime);
-            return true;
         }
         catch (InterruptedException ex) {
-            // The sleep is what keeps a large trigger from filling the build queue in one go. Restoring the interrupt
-            // status makes every later sleep of this loop throw at once, so carrying on would trigger the whole
-            // remaining batch with no pacing at all, which is the opposite of what the pause is for. Stop instead and
-            // leave it to the caller to trigger the rest later.
-            Thread.currentThread().interrupt();
-            log.warn("Interrupted while pausing before triggering the build for participation {}. Not triggering the remaining participations.", participationId);
-            return false;
+            // The interrupt status is deliberately not restored, which is what java:S2142 would ask for, and the batch
+            // deliberately carries on. There is no durable retry behind this loop: the scheduled build after the due
+            // date is a one-shot task that ExerciseLifecycle only ever schedules while its timestamp is still in the
+            // future, so a run that stops half way is never recreated on startup, and the exercise's testCasesChanged
+            // flag is not consulted by that scheduler either. Stopping here would leave the remaining participations
+            // permanently unbuilt, whereas carrying on costs one lost pause.
+            log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
         }
     }
 
@@ -270,7 +257,7 @@ public class ProgrammingTriggerService {
         }
 
         var index = 0;
-        triggering: for (var participationsOfExercise : participationsByExerciseId.values()) {
+        for (var participationsOfExercise : participationsByExerciseId.values()) {
             // A participation without a submission is not triggered at all, so an exercise where nobody submitted must
             // not pay for the shared data either: resolving it reads the test repository and the build statistics.
             List<ProgrammingExerciseStudentParticipation> triggerable = participationsOfExercise.stream().filter(participation -> participation.findLatestSubmission().isPresent())
@@ -286,9 +273,7 @@ public class ProgrammingTriggerService {
             // build that never happened.
             for (var participation : triggerable) {
                 // Execute requests in batches when using an external build system.
-                if (!pauseBetweenBatches(index, participation.getId())) {
-                    break triggering;
-                }
+                pauseBetweenBatches(index, participation.getId());
                 triggerBuild(participation, sharedData);
                 index++;
             }
