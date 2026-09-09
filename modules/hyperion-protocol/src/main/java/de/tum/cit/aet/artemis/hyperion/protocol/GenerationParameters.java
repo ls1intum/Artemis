@@ -8,9 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Core-resolved run parameters. The empty effort profile selects deployment defaults and must survive a wire round trip. Provider credentials are deliberately absent. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GenerationParameters(String effortProfile, int maxTurns, long maxTokens, Duration maxDuration, int contextWindowTokens,
-        @Nullable String model, @Nullable String reasoningEffort, @Nullable Double temperature, @Nullable Double topP, @Nullable Integer maxCompletionTokens,
-        boolean stagedGeneration, String stagedContext, @Nullable String verbosity, double cachedInputTokenWeight) {
+public record GenerationParameters(String effortProfile, int maxTurns, long maxTokens, Duration maxDuration, int contextWindowTokens, @Nullable String model,
+        @Nullable String reasoningEffort, @Nullable Double temperature, @Nullable Double topP, @Nullable Integer maxCompletionTokens, boolean stagedGeneration,
+        String stagedContext, @Nullable String verbosity, double cachedInputTokenWeight) {
 
     public GenerationParameters {
         // NON_EMPTY omits the empty profile; an absent wire value selects deployment defaults.
