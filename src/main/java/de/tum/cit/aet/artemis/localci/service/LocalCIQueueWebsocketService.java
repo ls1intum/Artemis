@@ -1,10 +1,17 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -24,9 +31,28 @@ import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
+
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
     private final DistributedDataAccessService distributedDataAccessService;
+
+    /**
+     * Courses whose queued jobs changed since the last broadcast, and the same for the jobs being processed.
+     * <p>
+     * Each of these payloads is the whole collection, so broadcasting one per queue change costs a read of the whole
+     * distributed collection and a serialization of the whole list - per change, and twice over, once for the admin
+     * topic and once for the course topic. During an exam the queue changes several times a second and holds thousands
+     * of jobs, which is quadratic in the size of the exam: on a 2000 student benchmark run this was the largest single
+     * consumer of CPU on the scheduling node. What the clients render is a live view of the current state, and a view
+     * that refreshes once a second is indistinguishable from one that refreshes a hundred times a second, so the
+     * changes are collected here and {@link #broadcastPendingChanges()} sends one snapshot per interval instead.
+     */
+    private final Set<Long> coursesWithQueuedJobChanges = ConcurrentHashMap.newKeySet();
+
+    private final Set<Long> coursesWithProcessingJobChanges = ConcurrentHashMap.newKeySet();
+
+    private final AtomicBoolean buildAgentSummaryNeedsBroadcast = new AtomicBoolean();
 
     /**
      * Instantiates a new Local ci queue websocket service.
@@ -39,27 +65,55 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
-     * Sends queued jobs over websocket. This method is called when a new job is added to the queue or a job is removed from the queue.
+     * Records that the queued jobs of a course changed. The next {@link #broadcastPendingChanges()} sends the queue as
+     * it stands then, so a burst of changes costs one broadcast rather than one each.
      *
      * @param courseId the course id of the programming exercise related to the job
      */
-    void sendQueuedJobsOverWebsocket(long courseId) {
-        var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
-        var queuedJobsForCourse = queuedJobs.stream().filter(job -> job.courseId() == courseId).toList();
-        localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
-        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobsForCourse);
+    void queuedJobsChanged(long courseId) {
+        coursesWithQueuedJobChanges.add(courseId);
     }
 
     /**
-     * Sends processing jobs over websocket. This method is called when a new job is added to the processing jobs or a job is removed from the processing jobs.
+     * Records that the jobs being processed for a course changed. Collected the same way as {@link #queuedJobsChanged}.
      *
      * @param courseId the course id of the programming exercise related to the job
      */
-    void sendProcessingJobsOverWebsocket(long courseId) {
-        var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
-        var processingJobsForCourse = processingJobs.stream().filter(job -> job.courseId() == courseId).toList();
-        localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
-        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobsForCourse);
+    void processingJobsChanged(long courseId) {
+        coursesWithProcessingJobChanges.add(courseId);
+    }
+
+    /**
+     * Sends one snapshot per collection that changed since the last run. Removing a course before reading its jobs
+     * rather than after means a change that arrives while this is sending is picked up by the next run instead of
+     * being dropped; the cost of that ordering is at most one redundant broadcast.
+     */
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.build-queue-broadcast-interval-milliseconds:1000}")
+    public void broadcastPendingChanges() {
+        try {
+            for (Iterator<Long> courses = coursesWithQueuedJobChanges.iterator(); courses.hasNext();) {
+                long courseId = courses.next();
+                courses.remove();
+                var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
+                localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+                localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobs.stream().filter(job -> job.courseId() == courseId).toList());
+            }
+            for (Iterator<Long> courses = coursesWithProcessingJobChanges.iterator(); courses.hasNext();) {
+                long courseId = courses.next();
+                courses.remove();
+                var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
+                localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
+                localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
+            }
+            if (buildAgentSummaryNeedsBroadcast.getAndSet(false)) {
+                localCIWebsocketMessagingService
+                        .sendBuildAgentSummary(removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation()));
+            }
+        }
+        catch (Exception e) {
+            // A failed broadcast must not stop the scheduled task, or the queue views would freeze until the next restart
+            log.warn("Failed to broadcast the pending build queue changes", e);
+        }
     }
 
     /**
@@ -96,17 +150,16 @@ public class LocalCIQueueWebsocketService {
      * @param agentName the name of the build agent
      */
     void sendBuildAgentInformationOverWebsocket(String agentName) {
-        sendBuildAgentSummaryOverWebsocket();
+        buildAgentSummaryChanged();
         sendBuildAgentDetailsOverWebsocket(agentName);
     }
 
     /**
-     * Sends the build agent summary over websocket to update the admin build agents page.
-     * This is called when build agent information changes or when processing jobs are added/removed.
+     * Records that the build agent summary shown on the admin build agents page changed. Called both when agent
+     * information changes and on every processing job, so it is collected like the queue changes above.
      */
-    void sendBuildAgentSummaryOverWebsocket() {
-        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation());
-        localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
+    void buildAgentSummaryChanged() {
+        buildAgentSummaryNeedsBroadcast.set(true);
     }
 
     private void sendBuildAgentDetailsOverWebsocket(String agentName) {
