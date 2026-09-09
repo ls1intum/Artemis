@@ -159,8 +159,6 @@ is written, from plain technical wording to full storytelling:
 - TECHNICAL: no story — a plain, concise focus on the technical concepts.
 - REALISTIC: a short real-world scenario introduces the task (one or two framing sentences); the rest stays technical.
 - CREATIVE: a story carries the task — themed setting, named actors, story-driven examples and identifiers.
-- IMAGINATIVE: fully creative storytelling — the entire exercise (statement, examples, identifier naming where
-  natural) is told inside a rich narrative world.
 - "consistent with the source": keep the source's current narrative strength and setting (adapting names/setting
   if the domain changes). If the source has no narrative at all and a domain change needs framing, default to a
   story about a developer working in a company solving the task; otherwise keep the statement plain.

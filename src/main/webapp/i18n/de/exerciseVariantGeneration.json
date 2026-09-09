@@ -71,9 +71,7 @@
                     "REALISTIC": "Realistisch",
                     "REALISTIC_DESCRIPTION": "Ein kurzes reales Szenario führt in die Aufgabe ein — der Rest bleibt technisch.",
                     "CREATIVE": "Kreativ",
-                    "CREATIVE_DESCRIPTION": "Eine Geschichte trägt die Aufgabe — thematisches Setting, benannte Akteure, erzählerische Beispiele.",
-                    "IMAGINATIVE": "Fantasievoll",
-                    "IMAGINATIVE_DESCRIPTION": "Vollständig kreatives Storytelling — die gesamte Übung spielt in einer reichen Erzählwelt."
+                    "CREATIVE_DESCRIPTION": "Eine Geschichte trägt die Aufgabe — thematisches Setting, benannte Akteure, erzählerische Beispiele."
                 },
                 "placement": {
                     "question": "Wo soll diese Variante platziert werden?",

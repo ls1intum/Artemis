@@ -321,12 +321,12 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
 
     it('sends the selected narrative style with the request', () => {
         component.changeNarrative.set(true);
-        component.narrativeStyle.set('IMAGINATIVE');
+        component.narrativeStyle.set('CREATIVE');
 
         component.startGeneration();
 
         const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
-        expect(request.narrativeStyle).toBe('IMAGINATIVE');
+        expect(request.narrativeStyle).toBe('CREATIVE');
     });
 
     it('omits the narrative style when the card is not selected (consistent-with-source default)', () => {

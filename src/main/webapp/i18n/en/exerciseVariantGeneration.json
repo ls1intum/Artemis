@@ -71,9 +71,7 @@
                     "REALISTIC": "Realistic",
                     "REALISTIC_DESCRIPTION": "A short real-world scenario introduces the task — the rest stays technical.",
                     "CREATIVE": "Creative",
-                    "CREATIVE_DESCRIPTION": "A story carries the task — themed setting, named actors, story-driven examples.",
-                    "IMAGINATIVE": "Imaginative",
-                    "IMAGINATIVE_DESCRIPTION": "Fully creative storytelling — the entire exercise is told inside a rich narrative world."
+                    "CREATIVE_DESCRIPTION": "A story carries the task — themed setting, named actors, story-driven examples."
                 },
                 "placement": {
                     "question": "Where should this variant be placed?",

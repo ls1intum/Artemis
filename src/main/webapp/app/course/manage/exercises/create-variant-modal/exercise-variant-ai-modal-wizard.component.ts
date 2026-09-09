@@ -75,7 +75,7 @@ const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; id: string; labelKey: stri
  * Storytelling card at all means "stay consistent with the source exercise's narrative" (server-side default).
  */
 const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequestNarrativeStyleEnum; labelKey: string; descriptionKey: string }> = (
-    ['TECHNICAL', 'REALISTIC', 'CREATIVE', 'IMAGINATIVE'] as VariantGenerationRequestNarrativeStyleEnum[]
+    ['TECHNICAL', 'REALISTIC', 'CREATIVE'] as VariantGenerationRequestNarrativeStyleEnum[]
 ).map((value) => ({ value, labelKey: narrativeStyleTranslationKey(value), descriptionKey: `${narrativeStyleTranslationKey(value)}_DESCRIPTION` }));
 
 /**

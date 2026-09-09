@@ -17,8 +17,5 @@ public enum VariantNarrativeStyle {
     REALISTIC,
 
     /** A creative story carries the task: themed setting, named actors, story-driven examples. */
-    CREATIVE,
-
-    /** Fully imaginative storytelling: the entire exercise is told inside a rich narrative world. */
-    IMAGINATIVE
+    CREATIVE
 }

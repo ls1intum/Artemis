@@ -28,7 +28,6 @@ questions are written, from plain technical wording to full storytelling:
 - TECHNICAL: no story — plain, concise question wording focused on the tested concepts.
 - REALISTIC: a short real-world scenario frames the questions; the wording itself stays technical.
 - CREATIVE: a story carries the quiz — themed setting, named actors, story-driven question texts and options.
-- IMAGINATIVE: fully creative storytelling — every question is told inside a rich narrative world.
 - "consistent with the source": keep the source's current narrative strength and setting (adapting names/setting
   if the domain changes). If the source has no narrative at all and a domain change needs framing, default to a
   story about a developer working in a company; otherwise keep the wording plain.

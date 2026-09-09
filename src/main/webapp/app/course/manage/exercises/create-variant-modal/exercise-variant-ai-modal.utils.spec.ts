@@ -54,8 +54,8 @@ describe('adaptationChips', () => {
     const translate = (key: string, params?: Record<string, unknown>) => (params?.value === undefined ? key : `${key}(${params.value})`);
 
     it('should include a storytelling chip when a narrative style is requested', () => {
-        expect(adaptationChips({ narrativeStyle: 'IMAGINATIVE' }, translate)).toEqual([
-            'artemisApp.exerciseVariantGeneration.chip.story(artemisApp.exerciseVariantGeneration.wizard.narrative.IMAGINATIVE)',
+        expect(adaptationChips({ narrativeStyle: 'CREATIVE' }, translate)).toEqual([
+            'artemisApp.exerciseVariantGeneration.chip.story(artemisApp.exerciseVariantGeneration.wizard.narrative.CREATIVE)',
         ]);
     });
 
