@@ -29,7 +29,7 @@ const DocumentationLinks = {
     Assessment: 'instructor/assessment-grading/assessment',
     Statistics: 'instructor/analytics/learning-analytics',
     StudentStatistics: 'student/progress-analytics/learning-analytics',
-    SuspiciousBehavior: 'instructor/exams/exam-timeline#33-suspicious-behavior-detection',
+    SuspiciousBehavior: 'instructor/exams/assess-an-exam#suspicious-behavior-detection',
 };
 
 export type DocumentationType = keyof typeof DocumentationLinks;

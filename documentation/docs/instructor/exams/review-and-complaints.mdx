@@ -1,0 +1,40 @@
+---
+id: review-and-complaints
+title: Student Review and Complaints
+sidebar_label: Review and Complaints
+---
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import complaintResponse from './assets/complaint_response.png';
+
+## Student Review
+
+During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes [made in the assessment](/instructor/exams/assess-an-exam#assessment).
+Students can provide their reasoning through a text message to clarify their objections.
+You can set the student review period in the [exam configuration](/instructor/exams/create-an-exam#create-and-configure-exam), see [Create Exam](/instructor/exams/create-an-exam#create-exam).
+
+- Students can submit complaints about their assessment in the *Summary* page.
+- During the student review, a complaint button will appear for every manually assessed exercise.
+- Students cannot submit complaints for automatically assessed exercises like quiz and programming exercises.
+- Students will be able to submit a complaint for programming exercises, if the automatic result has been reviewed manually by an assessor.
+  This is only possible if [manual assessment](/instructor/exams/add-exercises#programming-exercises) is enabled for the programming exercise.
+- For more information on how students can participate in the student review and submit complaints, see [student summary guide](/student/exams#summary).
+
+<Callout variant={CalloutVariant.info}>
+  If you have found a mistake in the automatic assessment of quiz and programming exercises, you can edit those and re-trigger the evaluation for all participants.
+</Callout>
+
+## Complaint Assessment
+
+Artemis collects the complaints submitted by the students during the [student review](#student-review).
+You can access and review the complaints similar to the [submissions](/instructor/exams/assess-an-exam#assessment) from the *Assessment Dashboard*.
+Every assessor can evaluate a complaint about the assessment of their peers and either accept or reject the complaint.
+Artemis will automatically update the results of accepted complaints. You can view the updated scores immediately in the *Scores* page.
+There you can also export the updated data in `CSV` format, see [Exam Scores](/instructor/exams/grade-and-publish#exam-scores).
+
+- The complaints appear below the exercise submissions.
+- The original assessor of an assessment cannot respond to the complaint. A second assessor must review the complaint and respond to it.
+- Artemis tracks the progress of the complaint assessment and displays a progress bar in the *Assessment Dashboard*. This allows you to keep track of the complaint assessment and see how many open complaints are left.
+
+<Image src={complaintResponse} alt="Assessor responding to a Complaint" size={ImageSize.large} caption="Assessor responding to a Complaint" />

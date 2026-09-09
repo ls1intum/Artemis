@@ -1,0 +1,154 @@
+---
+id: assess-an-exam
+title: Assess an Exam
+sidebar_label: Assess an Exam
+---
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import examsButton from './assets/buttons/exams.png';
+import evaluateQuizzes from './assets/buttons/evaluate_quizzes.png';
+import assessUnsubmittedStudentExams from './assets/buttons/assess_unsubmitted_student_exams.png';
+import assessmentDashboard from './assets/assessment_dashboard.png';
+import exerciseDashboard from './assets/buttons/exercise_dashboard.png';
+import startNewAssessment from './assets/buttons/start_new_assessment.png';
+import programmingAssessment from './assets/programming_assessment.png';
+import setSecondCorrectionExam from './assets/set_second_correction_exam.png';
+import secondCorrectionStatus from './assets/second_correction_status.png';
+import examAssessmentDashboardSecondCorrection from './assets/exam_assessment_dashboard_second_correction.png';
+import exerciseGroupsButton from './assets/buttons/exercise_groups.png';
+import scoresButton from './assets/buttons/scores.png';
+import scoresTable from './assets/scores_table.png';
+import suspiciousBehaviorButton from './assets/buttons/suspicious_behavior.png';
+import suspiciousBehaviorExamChecklist from './assets/suspicious_behavior_exam_checklist.png';
+import analyzeSessions from './assets/buttons/analyze_sessions.png';
+import viewSessions from './assets/buttons/view_sessions.png';
+import analysisOptions from './assets/analysis_options.png';
+import suspiciousBehaviorAnalysisResults from './assets/suspicious_behavior_analysis_results.png';
+import viewPlagiarismResults from './assets/buttons/view_plagiarism_results.png';
+import viewCases from './assets/buttons/view_cases.png';
+import plagiarismCaseOverview from './assets/plagiarism_case_overview.png';
+import plagiarism from './assets/plagiarism.png';
+import checkPlagiarism from './assets/buttons/check_plagiarism.png';
+import examTimelineButton from './assets/buttons/exam_timeline.png';
+import examTimelineExample from './assets/exam_timeline_example.png';
+
+## Assessment
+
+The assessment begins as soon as the latest [student exam](/instructor/exams/prepare-and-test#manage-student-exams) working time is over.
+During this period, your team can assess the submissions of the students and provide results.
+Artemis executes the test suites for programming exercises automatically and grades these.
+You can enhance the automatic grading with a [manual review](/instructor/exams/add-exercises#programming-exercises).
+You can also trigger the automatic grading of the quiz exercises via the *Manage Student Exams Screen*.
+If you want you can also enable the [second correction](#assessment-with-second-correction-round) feature for the exam.
+
+### Assess Student Exams
+
+- Once the [exam conduction](/instructor/exams/conduct-an-exam#conduction) is over and the latest individual working time has passed, your team can begin the assessment process.
+- This is done through the *Assessment Dashboard*.
+
+<Callout variant={CalloutVariant.info}>
+  If the [exam conduction](/instructor/exams/conduct-an-exam#conduction) is not over, you will not be able to access this page.
+</Callout>
+
+- The assessment process is anonymized. Artemis omits personal student data from the assessors.
+- The *Assessment Dashboard* provides an overview over the current assessment progress per exercise. For each exercise, you can view how many submissions have already been assessed and how many are still left. The status of the student complaints is also displayed here.
+
+- Additionally, once the [exam conduction](/instructor/exams/conduct-an-exam#conduction) ends, you can click on <img src={evaluateQuizzes} alt="Evaluate Quizzes" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result.
+
+<Callout variant={CalloutVariant.info}>
+  If you do not press this button, the students quiz exercises will not be graded.
+</Callout>
+
+- After the [exam conduction](/instructor/exams/conduct-an-exam#conduction) ends, you can click on <img src={assessUnsubmittedStudentExams} alt="Assess Unsubmitted Student Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
+
+<Callout variant={CalloutVariant.info}>
+  If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
+</Callout>
+
+<Image src={assessmentDashboard} alt="Assessment Dashboard" size={ImageSize.large} caption="Assessment Dashboard (Manage Student Exams Screen)" />
+
+- To assess a submission for an exercise, you can click on <img src={exerciseDashboard} alt="Exercise Dashboard" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+- Your assessors must first complete the example submissions and assessments, if you have attached those to the exercise, see [Add Exercises](/instructor/exams/add-exercises#add-exercises).
+- If there is a submission which has not been assessed yet, you can click <img src={startNewAssessment} alt="Start New Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This will fetch a random student submission of this exercise which you can then assess.
+- Artemis grades programming exercises automatically. However, if the exercise allows a manual assessment, you can review and enhance the automatic results.
+- You can trigger Artemis to automatically grade quiz exercises via the *Manage Student Exams Screen*. Therefore, quiz exercises do not appear in the *Assessment Dashboard*.
+
+<Image src={programmingAssessment} alt="Manually Assessing a Programming Submission" size={ImageSize.large} caption="Manually Assessing a Programming Submission" />
+
+### Assessment with Second Correction Round
+
+- Set the number of correction rounds of the exam to 2.
+
+<Image src={setSecondCorrectionExam} alt="Configure exam" size={ImageSize.large} caption="Configure exam" />
+
+- When the second correction is enabled, the assessment progress can be observed in the Assessment Dashboard.
+- There you can see the state of the individual correction rounds, and the state of the complaints.
+
+<Image src={secondCorrectionStatus} alt="second correction status" size={ImageSize.large} caption="second correction status" />
+
+- You can toggle if tutors can assess specific exercises in the second round. Disabling the second correction again, does not affect already created second assessments.
+- Correction in the second round can be enabled/disabled anytime.
+
+<Image src={examAssessmentDashboardSecondCorrection} alt="Configure exam" size={ImageSize.large} caption="Configure exam" />
+
+- To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a <img src={startNewAssessment} alt="Start New Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will be visible in the second correction round.
+- The new second assessment will have all the feedback copied from the first assessment. Those can be overridden, and new feedback can be added as well. This does not override the original result, but saves a separate second result.
+- Within the second correction round review instructors and tutors can highlight which feedback was created for which correction round. This is displayed as a badge at the bottom of every feedback. This view can be enabled or disabled any time during the second correction round review by pressing the button at the top of the page. The feature is currently available for text, modeling and file-upload exercises.
+- You can access each assessment of both rounds by going to the exam's <img src={exerciseGroupsButton} alt="Exercise Groups" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> <img src={scoresButton} alt="Scores" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> of the respective exercise.
+
+<Image src={scoresTable} alt="Scores page" size={ImageSize.large} caption="Scores page" />
+
+### Suspicious Behavior Detection
+
+You can check for specific suspicious behavior in the suspicious behavior dashboard. You find the suspicious behavior as the first step in the exam correction on the exam checklist page.
+To open the suspicious behavior dashboard click on the <img src={suspiciousBehaviorButton} alt="Suspicious Behavior" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+To get a better understanding of the feature, you can watch the following video:
+
+<TumLiveVideo src="40566" title="Suspicious Behavior Detection" />
+
+<Image src={suspiciousBehaviorExamChecklist} alt="Suspicious Behavior Exam Checklist" size={ImageSize.large} caption="Suspicious Behavior Exam Checklist" />
+
+The dashboard allows to detect exam sessions that fulfill certain criteria and gives an overview of the plagiarism detection.
+An exam session is a unique combination of IP address, user agent, instance id, a session token and the browser fingerprint. It is created whenever a student enters their exam.
+You can see the available analysis options in the first screenshot below. To start the analysis, click the <img src={analyzeSessions} alt="Analyze Sessions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. When the analysis detects at least one suspicious case, the instructor can click the <img src={viewSessions} alt="View Sessions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to see the details of the suspicious exam sessions.
+The second screenshot shows an example of analysis results.
+
+<Image src={analysisOptions} alt="Suspicious Behavior Analysis Options" size={ImageSize.large} caption="Suspicious Behavior Analysis Options" />
+
+<Image src={suspiciousBehaviorAnalysisResults} alt="Suspicious Behavior Analysis Results Example" size={ImageSize.large} caption="Suspicious Behavior Analysis Results Example" />
+
+In the lower half of the dashboard the instructor can view the plagiarism detection overview. It only lists exercises that support plagiarism detection. The number of potential plagiarism results are the results returned when running the detection. The number of plagiarism results are the cases a instructor has classified and confirmed as plagiarism.
+To view the current detection results or run a detection click on the <img src={viewPlagiarismResults} alt="View Plagiarism Results" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. This navigates to the plagiarism detection page of the exercise.
+Once the instructor has confirmed at least one case, the <img src={viewCases} alt="View Cases" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button is visible at the bottom left of the table that navigates to all confirmed plagiarism cases of the exam.
+
+<Image src={plagiarismCaseOverview} alt="Plagiarism Cases Overview" size={ImageSize.large} caption="Plagiarism Cases Overview" />
+
+### Plagiarism detection
+
+- Artemis also allows you to detect plagiarism attempts.
+- Artemis conducts this by analyzing the similarities between all student submissions and flagging those which exceed a given threshold. You can compare all flagged submissions side by side and confirm plagiarism attempts.
+- Instructors can download a `CSV` report of accepted and rejected plagiarism attempts for further processing on external systems.
+- To apply the plagiarism check, you must navigate to the individual exercise. This can be done by navigating to:
+
+<img src={examsButton} alt="Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> <img src={exerciseGroupsButton} alt="Exercise Groups" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> exercise-title
+
+<Image src={plagiarism} alt="Detecting Plagiarism attempts on Modeling Exercises" size={ImageSize.large} caption="Detecting Plagiarism attempts on Modeling Exercises" />
+
+- At the bottom of the page you will find the option <img src={checkPlagiarism} alt="Check Plagiarism" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+
+### Exam Timeline
+
+- Artemis stores the current state of a submission for text, modeling, and quiz exercises every 30s or whenever the student clicks the save button.
+- As instructor, you have the possibility to view all those states as well as the submissions for file-upload or programming exercises using the exam timeline.
+- The exam timeline is available on the details page of a student exam when the student exam has been submitted by clicking on the button <img src={examTimelineButton} alt="Exam Timeline" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. If the exam has not been submitted yet, the exam timeline button is disabled and shows an explanatory tooltip.
+- The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigate between different exercises using the navigation bar below the timeline
+- For programming exercises, you can view a git diff between the currently selected submission and the previous submission or the template of this exercise.
+
+To get a better understanding of the feature, you can watch the following video:
+
+<TumLiveVideo src="40565" title="Exam Timeline" />
+
+<Image src={examTimelineExample} alt="Exam timeline" size={ImageSize.large} caption="Exam timeline" />

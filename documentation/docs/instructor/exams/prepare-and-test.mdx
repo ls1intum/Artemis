@@ -1,0 +1,131 @@
+---
+id: prepare-and-test
+title: Prepare and Test an Exam
+sidebar_label: Prepare and Test
+---
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import importStudents from './assets/buttons/import_students.png';
+import importStudentsButton from './assets/buttons/import_students_button.png';
+import importStudentsDialog from './assets/import_students_dialog.png';
+import registerCourseStudents from './assets/buttons/register_course_students.png';
+import addStudents from './assets/add_students.png';
+import generateIndividualExams from './assets/buttons/generate_individual_exams.png';
+import generateMissingExams from './assets/buttons/generate_missing_exams.png';
+import prepareExerciseStart from './assets/buttons/prepare_exercise_start.png';
+import lockRepo from './assets/buttons/lock_repo.png';
+import unlockRepo from './assets/buttons/unlock_repo.png';
+import studentExams from './assets/student_exams.png';
+import individualWorkingTime from './assets/individual_working_time.png';
+import testRunManagement from './assets/test_run_management.png';
+import createTestRun from './assets/buttons/create_test_run.png';
+import createTestRunPopup from './assets/create_test_run.png';
+import assessTestRuns from './assets/buttons/assess_test_runs.png';
+import testRunConduction from './assets/test_run_conduction.png';
+import summaryButton from './assets/buttons/summary.png';
+import examChecklist from './assets/exam_checklist.png';
+import examChecklistOverview from './assets/exam_checklist_overview.png';
+
+## Register Students
+
+- To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
+
+1. Add students manually by searching via the search bar.
+2. To import multiple students, click on the <img src={importStudents} alt="Import Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can download [an example CSV file](./assets/example_import_students.csv) to start from. To begin the import, press the <img src={importStudentsButton} alt="Import Students Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+<Image src={importStudentsDialog} alt="Import Students Dialog" size={ImageSize.large} caption="Import Students Dialog" />
+
+3. Register every student in the course by pressing the <img src={registerCourseStudents} alt="Register Course Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+<Callout variant={CalloutVariant.info}>
+  Just registering the students to the exam will not allow them to participate in the exam. First, individual [student exams](#manage-student-exams) must be generated.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  Artemis also supports validating participants signatures for on-site exams.
+  For more information, please see [Exam Participation Checker](./participation-checker.mdx).
+</Callout>
+
+- You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user's [student exam](#manage-student-exams).
+
+<Image src={addStudents} alt="Register Students Page" size={ImageSize.large} caption="Register Students Page" />
+
+## Manage Student Exams
+
+- Student exams represent the exam of a student. It consists of an individual set of exercises based on the configured [exercise groups](/instructor/exams/add-exercises#exercise-groups).
+- Student exams are managed via the *Student Exams* page.
+- Here you can have an overview of all student exams. When you press `View` on a student exam, you can view the `details of the student`, the allocated `working time`, their `participation status`, their `summary`, as well as their `scores`. Additionally, you will also be able to view which assessor is responsible for each exercise.
+
+<Callout variant={CalloutVariant.info}>
+  You can change the individual working time of students from here. The screenshot *Individual Working Time* below shows where you can do that.
+</Callout>
+
+- To generate student exams you must click on <img src={generateIndividualExams} alt="Generate Individual Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This will trigger Artemis to create a student exam for every registered user.
+- Artemis determines the number of exercises from the [exam configuration](/instructor/exams/create-an-exam#create-and-configure-exam) and randomly selects one exercise per [exercise group](/instructor/exams/add-exercises#exercise-groups).
+
+<Callout variant={CalloutVariant.info}>
+  <img src={generateIndividualExams} alt="Generate Individual Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will be locked once the exam becomes visible to the students. You cannot perform changes to student exams once the [exam conduction](/instructor/exams/conduct-an-exam#conduction) has started.
+</Callout>
+
+- If you have added more students recently, you can choose to <img src={generateMissingExams} alt="Generate Missing Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+- <img src={prepareExerciseStart} alt="Prepare Exercise Start" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the version control (VC) and continuous integration (CI) server.
+
+<Callout variant={CalloutVariant.warning}>
+  You must trigger <img src={prepareExerciseStart} alt="Prepare Exercise Start" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> before the [exam conduction](/instructor/exams/conduct-an-exam#conduction) begins.
+</Callout>
+
+- On the *Student Exams* page, you can also maintain the repositories of student exams. This functionality only affects programming exercises. You can choose to <img src={lockRepo} alt="Lock Repo" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and <img src={unlockRepo} alt="Unlock Repo" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> all student repositories.
+
+<Callout variant={CalloutVariant.info}>
+  Artemis locks and unlocks the student repositories automatically based on the individual exam start and end date. These buttons are typically not necessary unless something went wrong.
+</Callout>
+
+<Image src={studentExams} alt="Student Exam Page" size={ImageSize.large} caption="Student Exam Page" />
+
+<Image src={individualWorkingTime} alt="Individual Working Time" size={ImageSize.large} caption="Individual Working Time" />
+
+## Conducting Test Runs
+
+<Image src={testRunManagement} alt="Test Run Management" size={ImageSize.large} caption="Test Run Management" />
+
+- Test runs are designed to offer the instructors confidence that the [exam conduction](/instructor/exams/conduct-an-exam#conduction) will run smoothly. They allow you to experience the exam from the student's perspective. A test run is distinct from a [student exam](#manage-student-exams) and is not taken into consideration during the calculation of the exam scores.
+- You can manage your test runs from the *Test Run* page.
+- To create a new test run you can press <img src={createTestRun} alt="Create Test Run" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This will open a popup where you can select an exercise for each [exercise group](/instructor/exams/add-exercises#exercise-groups). You can also set the `working time`. A test run will have as many exercises as there are [exercise groups](/instructor/exams/add-exercises#exercise-groups). It does consider the `number of exercises` set in the [exam configuration](/instructor/exams/create-an-exam#create-and-configure-exam).
+
+<Callout variant={CalloutVariant.info}>
+  Exercise groups with no exercises are ignored.
+</Callout>
+
+<Image src={createTestRunPopup} alt="Create test run popup with one exercise variant selected for each exercise group." size={ImageSize.large} caption="Create test run popup with one exercise variant selected for each exercise group." />
+
+- When you start the test run, you conduct the exam similar to how a student would. You can create submissions for the different exercises and end the test run.
+- An instructor can also assess their test run submissions. To do this, you must have completed at least one test run. To navigate to the assessment screen of the test runs click <img src={assessTestRuns} alt="Assess Test Runs" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+
+<Image src={testRunConduction} alt="Test run conduction marked with the banner on the top left." size={ImageSize.large} caption="Test run conduction marked with the banner on the top left." />
+
+<Callout variant={CalloutVariant.info}>
+  Only the creator of the test run is able to assess their submissions.
+</Callout>
+
+- You can view the results of the assessment of the test run by clicking on <img src={summaryButton} alt="Summary" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published.
+- Here instructors can also use the `complaint` feature and respond to it, which takes the test run through every stage of the exam described on this page.
+
+<Callout variant={CalloutVariant.info}>
+  You should delete test runs before the actual exam conduction takes place.
+</Callout>
+
+## Exam Checklist
+
+- After you create an exam, the exam checklist appears at the top of the exam's detail page.
+- The exam checklist helps you oversee and ensure every step of the exam is executed correctly.
+- You can track the progress of the steps mentioned in this document and spot missed steps easily.
+- Each row of the checklist includes the name of the task, description and short summary where it is applicable and the page column which navigates the instructors to the relevant action.
+- Going through each task from the start until the current task and making sure the description column contains no warnings or errors can help instructors conduct the exam smoothly.
+
+<Image src={examChecklist} alt="In Progress Exam Checklist" size={ImageSize.large} caption="In Progress Exam Checklist" />
+
+- The exam list page displays a more concise overview of the exam steps in the `Exam Status` column.
+- You can glance over the preparation, conduction and correction status of the exams in the list.
+
+<Image src={examChecklistOverview} alt="Exam Status Overview" size={ImageSize.large} caption="Exam Status Overview" />
