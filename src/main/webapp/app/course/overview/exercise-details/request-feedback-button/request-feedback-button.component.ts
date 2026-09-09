@@ -209,9 +209,15 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Proceed with feedback request only when an AI option was accepted and the normal eligibility checks pass
-            if (hasAccepted && !this.isFeedbackRequestBlocked() && this.assureConditionsSatisfied()) {
-                this.processFeedbackRequest();
+            // Proceed with feedback request only when an AI option was accepted and the normal eligibility checks pass.
+            // Goes through requestFeedback() rather than assureConditionsSatisfied()/processFeedbackRequest() against
+            // this.participation directly: the click that opens the LLM selection modal also bubbles to the popover
+            // wrapper that closes it, which destroys this component while updateParticipation()'s initial load may
+            // still be in flight. ngOnDestroy() then cancels that subscription, so this.participation would stay
+            // undefined forever even though this callback (a promise continuation from showLLMSelectionModal()) still
+            // runs. requestFeedback() re-fetches the participation independently of that canceled request.
+            if (hasAccepted && !this.isFeedbackRequestBlocked()) {
+                this.requestFeedback();
             }
         });
     }

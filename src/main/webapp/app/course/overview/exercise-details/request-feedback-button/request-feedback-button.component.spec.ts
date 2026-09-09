@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
@@ -918,6 +918,37 @@ describe('RequestFeedbackButtonComponent', () => {
             await vi.advanceTimersByTimeAsync(0);
 
             expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still send the feedback request after accepting AI usage if the popover destroyed this component while the participation was still loading', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('isSubmitted', true);
+
+            // The initial participation load never completes, simulating the popover wrapper destroying this
+            // component (canceling this subscription via ngOnDestroy()) before it resolves.
+            const pendingExerciseDetails = new Subject<HttpResponse<{ exercise: Exercise }>>();
+            vi.spyOn(exerciseService, 'getExerciseDetails').mockReturnValueOnce(pendingExerciseDetails);
+
+            component.ngOnInit();
+            await vi.advanceTimersByTimeAsync(0);
+            component.ngOnDestroy();
+
+            expect(component.participation).toBeUndefined();
+
+            // The modal continuation still runs on the (logically destroyed) component instance; requestFeedback()
+            // re-fetches the participation independently of the canceled subscription above.
+            vi.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: { exercise } })));
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
     });
 
