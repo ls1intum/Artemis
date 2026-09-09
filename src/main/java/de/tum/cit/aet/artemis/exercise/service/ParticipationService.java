@@ -774,20 +774,20 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username the username of the student
+     * @param student  the student whose participation to find
      * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyState(Exercise exercise, String username) {
+    public Optional<StudentParticipation> findOneByExerciseAndStudentAnyState(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), student.getLogin());
             return optionalTeam.flatMap(team -> studentParticipationRepository.findOneByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
 
         if (exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exercise.getId(), username);
+            return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exercise.getId(), student.getLogin());
         }
 
-        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerExerciseContextByExerciseIdAndStudentId(exercise.getId(), student.getId());
     }
 
     /**
@@ -799,7 +799,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneGradedByExerciseAndParticipant(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), false);
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), false);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -818,7 +818,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOnePracticeByExerciseAndParticipant(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), true);
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), true);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -852,26 +852,26 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username the username of the student
+     * @param student  the student whose participation to find
      * @return the participation of the given student and exercise with eager submissions in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
+    public Optional<StudentParticipation> findOneByExerciseAndStudentWithEagerSubmissionsAnyState(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), student.getLogin());
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
         // If exercise is a test exam exercise we load the last participation, since there are multiple participations
         if (exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentId(exercise.getId(), student.getId());
         }
         // After the effective due date (respecting individual extensions), prefer the practice participation
-        Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
-                username, false);
+        Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                student.getId(), false);
         ZonedDateTime effectiveDueDate = gradedParticipation.map(p -> p.getIndividualDueDate() != null ? p.getIndividualDueDate() : exercise.getDueDate())
                 .orElse(exercise.getDueDate());
         if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
-            Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
-                    username, true);
+            Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                    student.getId(), true);
             if (practiceParticipation.isPresent()) {
                 return practiceParticipation;
             }
@@ -884,7 +884,7 @@ public class ParticipationService {
         // We use findLatest... to deterministically return the most recent participation when
         // multiple test runs exist for the same exercise.
         if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentId(exercise.getId(), student.getId());
         }
         return gradedParticipation;
     }

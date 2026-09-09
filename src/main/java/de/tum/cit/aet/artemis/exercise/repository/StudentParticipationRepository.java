@@ -433,29 +433,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @EntityGraph(type = LOAD, attributePaths = "submissions.results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamId(long exerciseId, long teamId);
 
-    /**
-     * Resolves a login to a user id, so the participation lookups below can select on the participation's own
-     * {@code student_id} column.
-     * <p>
-     * They used to take the login and match it on the joined user row, which Postgres cannot push into the
-     * participation scan: it read every participation of the exercise, carried each through the fetch joins at
-     * roughly 14 kB per row, and discarded all but one. On an exam with 2000 participants the plan showed
-     * "Rows Removed by Join Filter: 1999" and 6562 shared buffer hits per call, against 48 once the predicate is on
-     * the id - 7.15 ms against 1.04 ms, measured on a staging server with that data.
-     * <p>
-     * Resolving it here rather than in a subquery keeps the callers' signatures and stays within the repository
-     * conventions. The extra statement is an index lookup on a unique column.
-     *
-     * @param login the user's login
-     * @return the user's id, or empty if no such user exists
-     */
-    @Query("""
-            SELECT u.id
-            FROM User u
-            WHERE u.login = :login
-            """)
-    Optional<Long> findStudentIdByLogin(@Param("login") String login);
-
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -469,15 +446,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.student.id = :studentId
             """)
     Optional<StudentParticipation> findWithEagerExerciseContextByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
-    /**
-     * @param exerciseId the exercise to look in
-     * @param username   the student's login
-     * @return the student's participation in that exercise, if there is one
-     */
-    default Optional<StudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username) {
-        return findStudentIdByLogin(username).flatMap(studentId -> findWithEagerExerciseContextByExerciseIdAndStudentId(exerciseId, studentId));
-    }
 
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
 
@@ -495,15 +463,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    /**
-     * @param exerciseId the exercise to look in
-     * @param username   the student's login
-     * @return the student's most recently started participation in that exercise, if there is one
-     */
-    default Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username) {
-        return findStudentIdByLogin(username).flatMap(studentId -> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(exerciseId, studentId));
-    }
-
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -520,16 +479,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
             @Param("testRun") boolean testRun);
-
-    /**
-     * @param exerciseId the exercise to look in
-     * @param username   the student's login
-     * @param testRun    whether to look for the practice participation rather than the graded one
-     * @return the student's participation in that exercise, if there is one
-     */
-    default Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun) {
-        return findStudentIdByLogin(username).flatMap(studentId -> findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseId, studentId, testRun));
-    }
 
     @Query("""
             SELECT DISTINCT p

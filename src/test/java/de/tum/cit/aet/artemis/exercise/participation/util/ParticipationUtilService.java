@@ -284,7 +284,8 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                userUtilService.getUserByLogin(login).getId(), false);
         if (storedParticipation.isEmpty()) {
             User user = userUtilService.getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -292,7 +293,8 @@ public class ParticipationUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                    userUtilService.getUserByLogin(login).getId(), false);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
@@ -306,7 +308,8 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                userUtilService.getUserByLogin(login).getId(), false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = userUtilService.getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -314,7 +317,8 @@ public class ParticipationUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), userUtilService.getUserByLogin(login).getId(),
+                false);
         assertThat(storedParticipation).isPresent();
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }

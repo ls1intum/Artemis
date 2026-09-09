@@ -268,7 +268,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student1");
         Participation storedParticipation = participationRepo
-                .findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), TEST_PREFIX + "student1", false).orElseThrow();
+                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(modelingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), false)
+                .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -282,7 +283,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student2");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), TEST_PREFIX + "student2", false)
+        Participation storedParticipation = participationRepo
+                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(textExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId(), false)
                 .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
@@ -1783,7 +1785,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
         assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
-        var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
+        var participations = participationService.findOneByExerciseAndStudentAnyState(exercise, student);
         assertThat(participations).isPresent();
         assertThat(participations.get().getId()).isEqualTo(participation.getId());
     }
