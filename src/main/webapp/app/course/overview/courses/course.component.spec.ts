@@ -252,14 +252,10 @@ describe('CoursesComponent', () => {
             testExam: true,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
-        const coursesForDashboard = new CoursesForDashboardDTO();
-        const courseForDashboard1 = new CourseForDashboardDTO();
-        courseForDashboard1.course = course1;
-        const courseForDashboard2 = new CourseForDashboardDTO();
-        courseForDashboard2.course = course2;
-        const courseForDashboard6 = new CourseForDashboardDTO();
-        courseForDashboard6.course = course6;
-        coursesForDashboard.courses = [courseForDashboard1, courseForDashboard2, courseForDashboard6];
+        const courseForDashboard1 = { course: course1 } as CourseForDashboardDTO;
+        const courseForDashboard2 = { course: course2 } as CourseForDashboardDTO;
+        const courseForDashboard6 = { course: course6 } as CourseForDashboardDTO;
+        const coursesForDashboard: CoursesForDashboardDTO = { courses: [courseForDashboard1, courseForDashboard2, courseForDashboard6] };
 
         const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
         const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');

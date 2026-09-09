@@ -97,21 +97,21 @@ describe('Course Management Service', () => {
         convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
-        courseForDashboard = new CourseForDashboardDTO();
-        courseForDashboard.course = course;
         courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
-        courseForDashboard.totalScores = courseScores;
-        courseForDashboard.programmingScores = courseScores;
-        courseForDashboard.modelingScores = courseScores;
-        courseForDashboard.quizScores = courseScores;
-        courseForDashboard.textScores = courseScores;
-        courseForDashboard.fileUploadScores = courseScores;
-        participationResult = new ParticipationResultDTO();
-        participationResult.participationId = 432;
-        courseForDashboard.participationResults = [participationResult];
+        participationResult = { participationId: 432 };
+        courseForDashboard = {
+            course,
+            totalScores: courseScores,
+            programmingScores: courseScores,
+            modelingScores: courseScores,
+            quizScores: courseScores,
+            textScores: courseScores,
+            fileUploadScores: courseScores,
+            participationResults: [participationResult],
+            courseNotificationCount: 0,
+        };
 
-        coursesForDashboard = new CoursesForDashboardDTO();
-        coursesForDashboard.courses = [courseForDashboard];
+        coursesForDashboard = { courses: [courseForDashboard] };
 
         scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
         scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
@@ -780,8 +780,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
         authState.next(undefined);
 
-        const dto = new CoursesForDashboardDTO();
-        dto.courses = [];
+        const dto: CoursesForDashboardDTO = { courses: [] };
         inFlight.flush(dto);
 
         // The in-flight response must not write back into the cleared subject.

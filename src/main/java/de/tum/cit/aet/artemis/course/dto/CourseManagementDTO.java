@@ -96,7 +96,7 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
                 course.getMaxComplaintResponseTextLimit(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getComplaintsEnabled(),
                 course.getRequestMoreFeedbackEnabled(), course.isAthenaGradingFeedbackEnabled(), course.isAthenaFormativeFeedbackEnabled(), course.getLearningPathsEnabled(),
                 course.isTrainingEnabled(), course.getNumberOfStudents(), course.getNumberOfTeachingAssistants(), course.getNumberOfEditors(), course.getNumberOfInstructors(),
-                onlineConfiguration == null ? null : OnlineCourseConfigurationResponseDTO.of(onlineConfiguration),
+                onlineConfiguration != null && Hibernate.isInitialized(onlineConfiguration) ? OnlineCourseConfigurationResponseDTO.of(onlineConfiguration) : null,
                 tutorialConfiguration != null && Hibernate.isInitialized(tutorialConfiguration) ? TutorialGroupsConfigurationResponseDTO.of(tutorialConfiguration) : null,
                 configuration == null ? null : CourseConfigurationResponseDTO.of(configuration));
     }
