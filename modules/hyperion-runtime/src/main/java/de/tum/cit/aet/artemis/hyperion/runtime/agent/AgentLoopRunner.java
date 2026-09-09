@@ -137,7 +137,8 @@ public class AgentLoopRunner {
         this.chatModel = configuredChatModel == null ? null : new HarmonyScrubbingChatModel(configuredChatModel);
         this.effectiveOptions = configuredChatModel == null ? null : configuredChatModel.getOptions();
         // Sandbox loss must reach the terminal-error branch, not become model-visible text that invites another command.
-        this.toolCallingManager = ToolCallingManager.builder()
+        // This loop owns the turn budget and polls the job's time/token guards. Spring AI's independent conversation-wide limits would reject valid staged work early.
+        this.toolCallingManager = ToolCallingManager.builder().unlimitedCallsPerTool().unlimitedTotalToolCalls()
                 .toolExecutionExceptionProcessor(DefaultToolExecutionExceptionProcessor.builder().rethrowExceptions(List.of(SandboxUnavailableException.class)).build()).build();
         this.contextWindowTokens = contextWindowTokens;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
