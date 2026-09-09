@@ -66,19 +66,16 @@ public class CourseMaterialImportResource {
     }
 
     /**
-     * GET /courses/{courseId}/import-summary/{sourceCourseId} : Get summary of what can be imported from the source course.
+     * GET /courses/{courseId}/import-summary : Get summary of what can be imported from the source course.
      * This returns the counts of exercises, lectures, exams, competencies, tutorial groups, and FAQs.
      *
-     * @param courseId            the ID of the target course (for authorization)
-     * @param sourceCourseIdQuery the ID of the source course to get summary from (provided as a query parameter; preferred)
-     * @param sourceCourseIdPath  the ID of the source course to get summary from (provided as a legacy path variable; deprecated)
+     * @param courseId       the ID of the target course (for authorization)
+     * @param sourceCourseId the ID of the source course to get summary from
      * @return the ResponseEntity with status 200 (OK) and the course summary in the body
      */
-    @GetMapping({ "courses/{courseId}/import-summary", "courses/{courseId}/import-summary/{sourceCourseId}" })
+    @GetMapping("courses/{courseId}/import-summary")
     @EnforceAtLeastInstructor
-    public ResponseEntity<CourseSummaryDTO> getImportSummary(@PathVariable long courseId, @RequestParam(name = "sourceCourseId", required = false) Long sourceCourseIdQuery,
-            @PathVariable(name = "sourceCourseId", required = false) Long sourceCourseIdPath) {
-        long sourceCourseId = sourceCourseIdQuery != null ? sourceCourseIdQuery : (sourceCourseIdPath != null ? sourceCourseIdPath : -1L);
+    public ResponseEntity<CourseSummaryDTO> getImportSummary(@PathVariable long courseId, @RequestParam long sourceCourseId) {
         log.debug("REST request to get import summary for source course {}", sourceCourseId);
 
         if (courseId == sourceCourseId) {

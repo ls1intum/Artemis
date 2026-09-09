@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +16,8 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -71,12 +69,11 @@ public class QuizExerciseWithSubmissionsExportService {
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imagesToExport
-                            .add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
+                    imagesToExport.add(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path());
                 }
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imagesToExport.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
+                        imagesToExport.add(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
 
                     }
                 }

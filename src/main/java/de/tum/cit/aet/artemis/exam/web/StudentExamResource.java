@@ -424,7 +424,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction : Find a specific test run for conduction.
+     * GET /courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction : Find a specific test run for conduction.
      * This will be used for the actual conduction of the test run. The test run will be returned with the exercises
      * and with the student participation and with the submissions.
      * NOTE: when this is called it will also mark the test run as started
@@ -436,7 +436,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
-    @GetMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction", "courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction" })
+    @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
             HttpServletRequest request) {
@@ -686,14 +686,14 @@ public class StudentExamResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
+     * DELETE /courses/{courseId}/exams/{examId}/test-runs/{testRunId} : Delete a test run
      *
      * @param courseId  the id of the course
      * @param examId    the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}", "courses/{courseId}/exams/{examId}/test-run/{testRunId}" })
+    @DeleteMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);

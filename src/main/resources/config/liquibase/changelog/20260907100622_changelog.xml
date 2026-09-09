@@ -16,12 +16,23 @@
         page listed one. Dropping this column removes a reference that pointed nowhere.
 
         lecture_id was real until this release. 20260905235721_changelog.xml gave every attachment that carried one an
-        attachment video unit, and the endpoint that serves a file still lying under uploads/attachments/lecture now
-        reaches the lecture through that unit and selects on the link prefix instead. Nothing reads the column any
-        more. It is safe to drop here and not one release later, because a deployment that carries database migrations
-        is not rolling in this project: the previous version is stopped before Liquibase runs, so no node whose lecture
-        import still writes lecture_id is serving while these changesets execute. The predecessor runs first in the
-        very same execution and leaves nothing behind for the column to describe, so
+        attachment video unit, so the lecture of an attachment is now the lecture of that unit and the column says
+        nothing the rows do not already say. Nothing maps it and nothing reads it: the constraint was ON DELETE
+        RESTRICT, which is what made deleting a lecture depend on every attachment naming it being cleared first, and
+        AttachmentRepository.findAllInLecture reaches the lecture through the unit instead.
+
+        What the column did carry until now is where a file is. The files of those attachments stayed under
+        uploads/attachments/lecture/{lectureId} because a changelog cannot move a file, and since this release stores
+        only a filename in jhi_link, neither the value nor this column can be asked any more which of the two
+        attachment directories holds one. That question is answered by FileSystemLocation#ofAttachment, which derives
+        the lecture id from the unit and, when the unit directory does not hold the file, falls back to the lecture
+        directory. It is marked transitional and is retired by MigrationEntry20260907_175735, entry 1 of
+        MigrationRegistry, which moves the files.
+
+        It is safe to drop the column here and not one release later, because a deployment that carries database
+        migrations is not rolling in this project: the previous version is stopped before Liquibase runs, so no node
+        whose lecture import still writes lecture_id is serving while these changesets execute. The predecessor runs
+        first in the very same execution and leaves nothing behind for the column to describe, so
 
             SELECT COUNT(*) FROM attachment WHERE lecture_id IS NOT NULL AND attachment_unit_id IS NULL
 
@@ -34,14 +45,20 @@
         explicit rather than because the column drop needs them, and each is guarded so that a database which never had
         the index under that name skips it instead of failing.
 
-        The rollback restores lecture_id with its values rather than as an empty column, because the rollback of
-        20260905235721_changelog.xml reads attachment.lecture_id to decide which units it may delete. Restoring it is
-        what keeps that predecessor rollback working. The value is recovered from the unit that owns the attachment,
-        for exactly the rows whose link still names the lecture attachment directory: those are the rows that had a
-        lecture id and still have their file there, and they are the same set the predecessor rollback goes on to
-        consider. A row whose file was replaced through the unit editor after the migration is deliberately left with
-        a null lecture id, which is the state the predecessor rollback already excludes. exercise_id comes back empty,
-        since it never held a value.
+        This file already ran on every database that follows develop, and only its comments and the rollback of the
+        last changeset are edited here. Neither is part of a changeset checksum, which Liquibase computes from the
+        forward changes and any modifySql alone, so no recorded checksum changes and no validCheckSum is needed. The
+        rollback has to be edited all the same: it is read from this file at the moment a rollback runs, not from the
+        database, so leaving the old statement in place would leave a rollback that silently recovers nothing while
+        claiming to.
+
+        Both columns come back empty on rollback. exercise_id never held a value. lecture_id held one, and it is not
+        recoverable here: the only row-level evidence of which attachments the migration touched was that their link
+        still named the lecture attachment directory, and 20260906221008_changelog.xml reduced every link to a bare
+        filename before this file is reached. That is stated where it matters, in the comment of that changelog: the
+        rollback of 20260905235721_changelog.xml already recovers nothing for the same reason and leaves the units it
+        created in place with their attachments attached. Nothing on this release reads the column, so restoring it
+        empty leaves a working system, and rolling forward is the only path this release is deployed on.
     -->
     <changeSet id="20260907100622-1-drop-attachment-exercise-foreign-key" author="krusche">
         <preConditions onFail="MARK_RAN">
@@ -115,23 +132,11 @@
             <column name="lecture_id"/>
         </dropColumn>
         <rollback>
+            <!-- Both come back empty. See the note at the top of this file for why the lecture ids are not recoverable here. -->
             <addColumn tableName="attachment">
                 <column name="exercise_id" type="bigint"/>
                 <column name="lecture_id" type="bigint"/>
             </addColumn>
-            <!--
-                Recover the lecture id from the unit that owns the attachment, for the rows whose link still names the
-                lecture attachment directory. See the note at the top of this file for why the values have to come back
-                rather than the column alone.
-            -->
-            <sql>
-                UPDATE attachment
-                SET lecture_id = (SELECT unit.lecture_id
-                                  FROM lecture_unit unit
-                                  WHERE unit.id = attachment.attachment_unit_id)
-                WHERE attachment.attachment_unit_id IS NOT NULL
-                  AND attachment.jhi_link LIKE 'attachments/lecture/%'
-            </sql>
         </rollback>
     </changeSet>
 </databaseChangeLog>

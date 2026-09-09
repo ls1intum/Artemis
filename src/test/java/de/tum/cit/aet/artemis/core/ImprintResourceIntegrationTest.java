@@ -59,7 +59,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/core/admin/imprint-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, ImprintDTO.class);
+            request.get("/api/admin/imprint-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, ImprintDTO.class);
         }
     }
 
@@ -70,7 +70,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFileUtils.when(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)))
                     .thenThrow(new IOException());
-            request.putWithResponseBody("/api/core/admin/imprint", new ImprintDTO("text", Language.GERMAN), ImprintDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            request.putWithResponseBody("/api/admin/imprint", new ImprintDTO("text", Language.GERMAN), ImprintDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -81,7 +81,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
 
-            response = request.putWithResponseBody("/api/core/admin/imprint", new ImprintDTO("updatedText", Language.GERMAN), ImprintDTO.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/imprint", new ImprintDTO("updatedText", Language.GERMAN), ImprintDTO.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.createDirectories(any()));
             mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)));
         }
@@ -131,13 +131,13 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetImprintForUpdate_instructorAccessForbidden() throws Exception {
-        request.get("/api/core/admin/imprint-for-update?language=de", HttpStatus.FORBIDDEN, ImprintDTO.class);
+        request.get("/api/admin/imprint-for-update?language=de", HttpStatus.FORBIDDEN, ImprintDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetImprintForUpdate_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/core/admin/imprint-for-update?language=fr", HttpStatus.BAD_REQUEST, ImprintDTO.class);
+        request.get("/api/admin/imprint-for-update?language=fr", HttpStatus.BAD_REQUEST, ImprintDTO.class);
     }
 
     @Test
@@ -146,7 +146,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         ImprintDTO response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/core/admin/imprint-for-update?language=de", HttpStatus.OK, ImprintDTO.class);
+            response = request.get("/api/admin/imprint-for-update?language=de", HttpStatus.OK, ImprintDTO.class);
         }
         assertThat(response.text()).isNull();
         assertThat(response.language()).isEqualTo(Language.GERMAN);
@@ -189,7 +189,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             else {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
             }
-            response = request.get("/api/core/admin/imprint-for-update?language=" + language.getShortName(), HttpStatus.OK, ImprintDTO.class);
+            response = request.get("/api/admin/imprint-for-update?language=" + language.getShortName(), HttpStatus.OK, ImprintDTO.class);
         }
 
         assertThat(response.language()).isEqualTo(language);
@@ -204,7 +204,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateImprint_instructorAccessForbidden() throws Exception {
-        request.put("/api/core/admin/imprint", new ImprintDTO("Impressum", Language.GERMAN), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/imprint", new ImprintDTO("Impressum", Language.GERMAN), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -214,7 +214,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         ImprintDTO requestBody = new ImprintDTO("Impressum", Language.GERMAN);
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            ImprintDTO response = request.putWithResponseBody("/api/core/admin/imprint", requestBody, ImprintDTO.class, HttpStatus.OK);
+            ImprintDTO response = request.putWithResponseBody("/api/admin/imprint", requestBody, ImprintDTO.class, HttpStatus.OK);
             mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)));
             assertThat(response.language()).isEqualTo(Language.GERMAN);
             assertThat(response.text()).isEqualTo("Impressum");
@@ -227,14 +227,14 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", "test");
         requestBody.put("language", "FRENCH");
-        request.put("/api/core/admin/imprint", JsonObjectMapper.get().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/imprint", JsonObjectMapper.get().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdateImprint_blankTextBadRequest() throws Exception {
         ImprintDTO requestBody = new ImprintDTO("           ", Language.GERMAN);
-        request.put("/api/core/admin/imprint", requestBody, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/imprint", requestBody, HttpStatus.BAD_REQUEST);
     }
 
 }

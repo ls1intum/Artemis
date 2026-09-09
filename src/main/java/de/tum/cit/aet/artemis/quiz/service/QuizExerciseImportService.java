@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
@@ -197,18 +197,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
         // Copy background file
         if (original.getBackgroundFilePath() != null) {
-            URI backgroundFilePublicPath = URI.create(original.getBackgroundFilePath());
-            URI backgroundFileIntendedPath = URI.create(FileUtil.BACKGROUND_FILE_SUBPATH);
-            // Validate the path before any filesystem access to prevent path traversal
+            // Validate the value before any filesystem access to prevent path traversal
             FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
-            FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
-            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND).normalize();
+            Path oldPath = new FileSystemLocation.DragAndDropBackground(original.getBackgroundFilePath()).path().normalize();
             if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
                 throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
             }
             if (Files.exists(oldPath)) {
                 Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
-                copy.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_AND_DROP_BACKGROUND, null).toString());
+                copy.setBackgroundFilePath(newPath.getFileName().toString());
             }
             else {
                 copy.setBackgroundFilePath(original.getBackgroundFilePath());
@@ -229,9 +226,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             copy.addDropLocation(newLoc);
         }
 
-        // Copy drag items (each gets a fresh, question-scoped id); order is preserved. The id must be minted (via addDragItem) before copying the picture file, since the new
-        // picture
-        // path embeds the drag item id.
+        // Copy drag items (each gets a fresh, question-scoped id); order is preserved
         for (DragItem originalItem : original.getDragItems()) {
             DragItem newItem = new DragItem();
             newItem.setText(originalItem.getText());
@@ -249,18 +244,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
         if (source.getPictureFilePath() == null) {
             return;
         }
-        URI pictureFilePublicPath = URI.create(source.getPictureFilePath());
-        URI pictureFileIntendedPath = URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-        // Validate the path before any filesystem access to prevent path traversal
+        // Validate the value before any filesystem access to prevent path traversal
         FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
-        FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
-        Path oldPath = FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM).normalize();
+        Path oldPath = new FileSystemLocation.DragItem(source.getPictureFilePath()).path().normalize();
         if (!oldPath.startsWith(FilePathConverter.getDragItemFilePath().normalize())) {
             throw new IllegalArgumentException("Invalid drag item file path: resolved path is outside the expected directory");
         }
         if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
-            target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, target.getId()).toString());
+            target.setPictureFilePath(newPath.getFileName().toString());
         }
         else {
             target.setPictureFilePath(source.getPictureFilePath());

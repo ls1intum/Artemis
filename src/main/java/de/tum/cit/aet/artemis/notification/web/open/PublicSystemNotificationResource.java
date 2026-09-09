@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 
@@ -26,10 +25,7 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Lazy
 @FeatureUsage("system-notifications/system-notifications")
 @RestController
-// The legacy "api/core/public/" prefix is kept for backwards compatibility with deployed clients and will be removed
-// once those clients have migrated. New clients should use the "api/notification/public/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/public/", NotificationLegacyRestPaths.CORE_PUBLIC_PREFIX })
+@RequestMapping("api/notification/public/")
 public class PublicSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicSystemNotificationResource.class);

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
+
 /**
  * DTO for representing archived courses from previous semesters.
  *
@@ -15,4 +17,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForArchiveDTO(long id, String title, String semester, String color, String icon, boolean testCourse, boolean canManage) {
+
+    /**
+     * The icon comes out of the column as a filename, so it is turned into the path the client requests it under. The conversion is idempotent, so a caller passing an already
+     * served path is fine too.
+     */
+    public CourseForArchiveDTO {
+        icon = ServedFileUrl.courseIcon(id, icon);
+    }
 }

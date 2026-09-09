@@ -108,7 +108,7 @@ def add_participation(session: Session, exercise_id: int, client_url: str) -> Di
 def commit(session: Session, participation_id: int, client_url: str, commits_per_student: int) -> None:
     """Commit the participation to the repository multiple times."""
     for _ in range(commits_per_student):
-        url: str = f"{client_url}/programming/repository/{participation_id}/commit"
+        url: str = f"{client_url}/programming/participations/{participation_id}/repository/commit"
         headers: Dict[str, str] = {"Content-Type": "application/json"}
 
         response = session.post(url, headers=headers)

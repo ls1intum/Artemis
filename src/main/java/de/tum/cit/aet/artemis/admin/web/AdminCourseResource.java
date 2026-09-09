@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -186,7 +187,7 @@ public class AdminCourseResource {
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+            createdCourse.setCourseIcon(savePath.getFileName().toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -239,7 +240,7 @@ public class AdminCourseResource {
         courseDeletionService.delete(courseId);
 
         if (courseIcon != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(courseIcon), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(courseIcon).path(), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, courseTitle)).build();
     }

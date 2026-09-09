@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.Set;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.Transient;
 
@@ -20,13 +18,12 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
@@ -82,12 +79,40 @@ public class DragAndDropQuestion extends QuizQuestion {
         return max + 1;
     }
 
+    /**
+     * The filename of the background image, which is the whole of what is stored.
+     * <p>
+     * The quiz create and update requests reuse this field to name a file that is being uploaded alongside the exercise, so the service layer has to see the value as it stands
+     * and not a URL built around it. The URL the client is served is {@link #servedBackgroundFilePath()}.
+     *
+     * @return the stored filename of the background image
+     */
+    @JsonIgnore
     public String getBackgroundFilePath() {
         return backgroundFilePath;
     }
 
+    /**
+     * The path the background image is served under, relative to {@code api/core/files/}.
+     * <p>
+     * This is the value the client receives under the name {@code backgroundFilePath}. It cannot be built before the question has been inserted, because the URL is scoped by the
+     * question id; until then the stored filename is handed out, which is also what the client sends while it is uploading a new image.
+     *
+     * @return the served path of the background image
+     */
+    @JsonProperty("backgroundFilePath")
+    public String servedBackgroundFilePath() {
+        return ServedFileUrl.dragAndDropBackground(getId(), backgroundFilePath);
+    }
+
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param backgroundFilePath the filename of the background image, or the URL it is served under
+     */
+    @JsonProperty("backgroundFilePath")
     public void setBackgroundFilePath(String backgroundFilePath) {
-        this.backgroundFilePath = backgroundFilePath;
+        this.backgroundFilePath = FileSystemLocation.storedFilename(backgroundFilePath);
     }
 
     public List<DropLocation> getDropLocations() {
@@ -311,18 +336,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     /**
-     * This method is called after the entity is saved for the first time. We replace the placeholder in the backgroundFilePath with the id of the entity because we don't know it
-     * before creation.
-     */
-    @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-    }
-
-    /**
      * This method is called when deleting the entity. It makes sure that the corresponding background file is deleted as well. Drag item picture files are deleted explicitly by
      * the
      * service layer (see {@code QuizExerciseService}) since drag items are no longer JPA entities with a {@code @PostRemove} callback.
@@ -332,10 +345,10 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND), 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path(), 0);
             }
         }
-        catch (FilePathParsingException e) {
+        catch (IllegalArgumentException e) {
             // if the file path is invalid, we don't need to delete it
             log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", backgroundFilePath, getId());
         }

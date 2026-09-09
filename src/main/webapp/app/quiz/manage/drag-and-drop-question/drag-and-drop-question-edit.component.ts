@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -269,12 +270,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                 const item = question.dragItems[dragItem];
                 const path = item.pictureFilePath;
                 if (path && !this.filePreviewPaths().has(path)) {
-                    // Map the saved image to its question-scoped file URL. Drag item ids are only unique within their question, so the flat legacy image URL no longer exists; the
-                    // stored pictureFilePath keeps the old shape, so rebuild the URL from the question and drag item ids (mirrors jhi-drag-item's imageSrc).
-                    const previewPath =
-                        question.id !== undefined && item.id !== undefined
-                            ? `drag-and-drop/questions/${question.id}/drag-items/${item.id}/${path.substring(path.lastIndexOf('/') + 1)}`
-                            : path;
+                    // Map the stored filename to the question-scoped path that serves it. A drag item id is only unique within its question, so the picture cannot be
+                    // addressed without the question id.
+                    const previewPath = question.id !== undefined && item.id !== undefined ? dragItemPicturePath(question.id, item.id, path) : path;
                     this.filePreviewPaths.update((map) => new Map(map).set(path, previewPath));
                 }
             }

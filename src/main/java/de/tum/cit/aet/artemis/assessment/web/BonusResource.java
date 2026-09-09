@@ -94,7 +94,7 @@ public class BonusResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/bonus : Find bonus model for exam (where Bonus.bonusToGradingScale corresponds to the exam)
+     * GET /courses/{courseId}/exams/{examId}/bonuses : Find bonus model for exam (where Bonus.bonusToGradingScale corresponds to the exam)
      * Sets Bonus.bonusStrategy from the bonus strategy set on the exam's grading scale.
      *
      * @param courseId                the course to which the exam belongs
@@ -102,7 +102,7 @@ public class BonusResource {
      * @param includeSourceGradeSteps flag to determine if the GradeSteps for the source grading scale should be included in the response. Default is false.
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
-    @GetMapping({ "courses/{courseId}/exams/{examId}/bonuses", "courses/{courseId}/exams/{examId}/bonus" })
+    @GetMapping("courses/{courseId}/exams/{examId}/bonuses")
     @EnforceAtLeastStudent
     public ResponseEntity<BonusResponseDTO> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(required = false) boolean includeSourceGradeSteps) {
@@ -131,7 +131,7 @@ public class BonusResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/bonus/calculate-raw: Endpoint to test different bonus strategies with user-defined student points.
+     * GET /courses/{courseId}/exams/{examId}/bonuses/calculate-raw: Endpoint to test different bonus strategies with user-defined student points.
      * Applies bonus from sourceGradingScale to bonusToGradingScale grade steps.
      *
      * @param courseId             the course to which the exam belongs
@@ -143,7 +143,7 @@ public class BonusResource {
      * @param sourcePoints         points achieved by the student at the source grading scale's course or exam
      * @return final grade and points with bonus
      */
-    @GetMapping({ "courses/{courseId}/exams/{examId}/bonuses/calculate-raw", "courses/{courseId}/exams/{examId}/bonus/calculate-raw" })
+    @GetMapping("courses/{courseId}/exams/{examId}/bonuses/calculate-raw")
     @EnforceAdmin
     // TODO: Remove the manual configuration once the endpoint gets it's final pre-authorization when the feature releases.
     @ManualConfig
@@ -164,7 +164,7 @@ public class BonusResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/bonus : Create bonus for an exam
+     * POST /courses/{courseId}/exams/{examId}/bonuses : Create bonus for an exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the bonus belongs
@@ -172,7 +172,7 @@ public class BonusResource {
      * @return ResponseEntity with status 201 (Created) with body the new bonus if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PostMapping({ "courses/{courseId}/exams/{examId}/bonuses", "courses/{courseId}/exams/{examId}/bonus" })
+    @PostMapping("courses/{courseId}/exams/{examId}/bonuses")
     @EnforceAtLeastInstructor
     public ResponseEntity<BonusResponseDTO> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody BonusRequestDTO bonusDTO)
             throws URISyntaxException {
@@ -207,12 +207,12 @@ public class BonusResource {
         Bonus savedBonus = bonusService.saveBonus(bonus, true);
         gradingScaleRepository.save(bonusToGradingScale);
 
-        return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
+        return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(BonusResponseDTO.of(savedBonus, false));
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update updatedBonus applying to exam
+     * PUT /courses/{courseId}/exams/{examId}/bonuses/{bonusId} : Update updatedBonus applying to exam
      *
      * @param courseId     the course to which the exam belongs
      * @param examId       the exam to which the updatedBonus belongs
@@ -220,7 +220,7 @@ public class BonusResource {
      * @param bonusId      the id of the updatedBonus to update
      * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PutMapping({ "courses/{courseId}/exams/{examId}/bonuses/{bonusId}", "courses/{courseId}/exams/{examId}/bonus/{bonusId}" })
+    @PutMapping("courses/{courseId}/exams/{examId}/bonuses/{bonusId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<BonusResponseDTO> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId,
             @RequestBody BonusRequestDTO updatedBonus) {
@@ -279,14 +279,14 @@ public class BonusResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/bonus : Delete bonus applying to exam
+     * DELETE /courses/{courseId}/exams/{examId}/bonuses/{bonusId} : Delete bonus applying to exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the bonus belongs
      * @param bonusId  the id of the bonus to delete
      * @return ResponseEntity with status 200 (Ok) if the bonus is successfully deleted and 400 (Bad request) otherwise
      */
-    @DeleteMapping({ "courses/{courseId}/exams/{examId}/bonuses/{bonusId}", "courses/{courseId}/exams/{examId}/bonus/{bonusId}" })
+    @DeleteMapping("courses/{courseId}/exams/{examId}/bonuses/{bonusId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus: {}", bonusId);

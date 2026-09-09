@@ -126,7 +126,7 @@ export class FileService {
      * @param lectureId the id of the lecture
      */
     downloadMergedFile(lectureId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/attachments/lecture/${lectureId}/merge-pdf`, {
+        return this.http.get(`${this.resourceUrl}/attachments/lectures/${lectureId}/merge-pdf`, {
             observe: 'response',
             responseType: 'blob',
         });
@@ -166,9 +166,11 @@ export class FileService {
     /**
      * Returns the student version of the given link.
      *
-     * A file that still lies under the lecture attachment path is served by a route that takes no student segment, and
-     * it has no student version to begin with, so its own link is what a student downloads. Attachment video units
-     * created for an attachment that used to hang off a lecture directly keep such a link until their file is replaced.
+     * The lecture attachment route takes no student segment, so a link naming it is what a student downloads as it is.
+     * The server no longer hands out such a link for an attachment video unit: it serves every unit's attachment under
+     * the unit and resolves where the file actually lies on its side, see Attachment.fileLocation. The check is here
+     * for a link a client was handed before the upgrade and still holds, the same reason the legacy request paths stay
+     * mapped, see CoreLegacyFileRestPaths.
      *
      * @param link the file link
      */

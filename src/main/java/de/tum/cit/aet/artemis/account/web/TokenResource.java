@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -32,7 +31,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @FeatureUsage("account/access-tokens")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/account/")
 public class TokenResource {
 
     private final JWTCookieService jwtCookieService;

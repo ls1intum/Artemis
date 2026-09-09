@@ -29,11 +29,19 @@ public final class AccountLegacyRestPaths {
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_ACCOUNT_PREFIX = "api/core/account/";
 
-    /** Legacy class-level prefix used by AdminUserResource (admin user management). */
+    /**
+     * Legacy class-level prefix used by AdminUserResource (admin user management). Still called by
+     * artemis-android, which creates users through {@code POST api/core/admin/users}. Successor:
+     * {@code "api/account/admin/"}. Removable once artemis-android#694 has shipped.
+     */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_ADMIN_PREFIX = "api/core/admin/";
 
-    /** Legacy class-level prefix used by PasskeyResource. */
+    /**
+     * Legacy class-level prefix used by PasskeyResource. Still called by artemis-android, which reads
+     * the current user's passkeys through {@code GET api/core/passkey/user}. Successor:
+     * {@code "api/account/passkeys/"}. Removable once artemis-android#694 has shipped.
+     */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_PASSKEY_PREFIX = "api/core/passkey/";
 

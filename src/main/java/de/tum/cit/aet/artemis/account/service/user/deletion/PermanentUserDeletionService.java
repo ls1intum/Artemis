@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.account.service.user.deletion;
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -25,10 +24,9 @@ import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 
 /**
  * Physically deletes a user after applying the plan that was previewed. Business-domain cleanup is deliberately
@@ -172,7 +170,7 @@ public class PermanentUserDeletionService {
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
         if (imageUrl != null) {
-            filesToDelete.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE));
+            filesToDelete.add(new FileSystemLocation.ProfilePicture(imageUrl).path());
         }
         filesToDelete.addAll(userOwnedContentDeletionService.deleteDataExports(userId));
         boolean forced = mode == UserDeletionMode.ADMIN_FORCED;

@@ -114,7 +114,7 @@ describe('AttachmentVideoUnitService', () => {
                 attachment: {
                     id: 1,
                     name: 'Unit1',
-                    link: '/api/lecture/files/attachments/attachment-unit/235/Unit_1_.pdf',
+                    link: 'attachments/attachment-video-units/235/Unit_1_.pdf',
                     version: 1,
                     attachmentType: 'FILE',
                 },

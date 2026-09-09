@@ -155,8 +155,8 @@ describe('AttachmentVideoUnitComponent', () => {
     it('should preserve regenerated student-version paths when downloading', () => {
         const downloadFileSpy = vi.spyOn(fileService, 'downloadFile');
         const downloadFileByAttachmentNameSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
-        const firstStudentVersion = 'attachments/attachment-unit/1/student/StudentVersionSlides_first.pdf';
-        const secondStudentVersion = 'attachments/attachment-unit/1/student/StudentVersionSlides_second.pdf';
+        const firstStudentVersion = 'attachments/attachment-video-units/1/student/StudentVersionSlides_first.pdf';
+        const secondStudentVersion = 'attachments/attachment-video-units/1/student/StudentVersionSlides_second.pdf';
 
         fixture.componentRef.setInput('lectureUnit', {
             ...attachmentVideoUnit,

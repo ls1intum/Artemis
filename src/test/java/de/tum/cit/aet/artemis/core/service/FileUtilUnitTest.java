@@ -16,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
@@ -173,60 +172,6 @@ class FileUtilUnitTest {
         }
 
         assertThat(Files.readString(target)).isEqualTo("original");
-    }
-
-    @Test
-    void validPathShouldPass() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
-    }
-
-    @Test
-    void invalidPathShouldThrow() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds");
-
-        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid path");
-    }
-
-    @Test
-    void pathWithPathTraversalShouldThrow() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/../../exam-users/1/PictureFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop/drag-items");
-
-        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid path");
-    }
-
-    @Test
-    void validPathWithRedundantElementsShouldPass() {
-        URI path = URI.create("/api/core/../core/uploads/./images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
-    }
-
-    @Test
-    void subPathLongerThanPathShouldThrow() {
-        URI path = URI.create("/api/core/uploads");
-        URI subPath = URI.create("/api/core/uploads/images");
-        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid path");
-    }
-
-    @Test
-    void pathAndSubPathEqualShouldPass() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
-    }
-
-    @Test
-    void rootPathShouldPass() {
-        URI path = URI.create("/api");
-        URI subPath = URI.create("/");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
     }
 
     @Test

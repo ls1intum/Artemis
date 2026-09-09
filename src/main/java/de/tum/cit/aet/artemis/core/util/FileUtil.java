@@ -57,9 +57,39 @@ public class FileUtil {
 
     public static final String DEFAULT_FILE_SUBPATH = "temp/";
 
-    public static final String BACKGROUND_FILE_SUBPATH = "drag-and-drop/backgrounds/";
-
-    public static final String PICTURE_FILE_SUBPATH = "drag-and-drop/drag-items/";
+    /**
+     * The width of a column that stores a filename this class generates in full, rather than one that carries the name the user gave the uploaded file.
+     * <p>
+     * A column that stores a file reference used to be sized after the URL the file was served under, which is what made a REST rename a schema change. Now that a column holds
+     * nothing but a filename, the width follows from {@link #generateFilename} instead, and for the types below that arithmetic is closed:
+     *
+     * <pre>
+     * generateTargetFilenameBase(type)  at most 22   "DragAndDropBackground_", the longest prefix
+     * ZonedDateTime timestamp                   23   fixed width, "2026-09-07T12-34-56-789"
+     * separator                                  1   "_"
+     * UUID prefix                                8
+     * separator                                  1   "."
+     * file extension                    at most  9   "pages-tef", the longest allowed extension
+     *                                          ----
+     *                                            64
+     * </pre>
+     *
+     * The two columns declared with this width, {@code exam_user.signing_image_path} and {@code exam_user.student_image_path}, are well below that ceiling: a signature reaches
+     * 60 and a photo 55. The remaining 36 characters are headroom, so a longer type prefix or a newly allowed extension does not need a migration;
+     * {@code StoredFileReferenceTest} fails first if one ever would. Its check covers every file path type rather than those two, because the prefixes come from one switch and
+     * a new longest entry in it is what would break the sum.
+     * <p>
+     * This does <b>not</b> bound the other file reference columns, and none of them is narrowed to it. Four are written with {@code keepFilename} set, so their value embeds the
+     * name the user gave the uploaded file: {@code attachment.jhi_link}, {@code attachment.student_version}, {@code quiz_question.background_file_path} and
+     * {@code slide.slide_image_path}. Nothing in this application bounds that name, so their width is a cap on how long a file may be named rather than a number derived from
+     * the code. The remaining two, {@code course.course_icon} and {@code jhi_user.image_url}, do hold a generated name and would fit, but narrowing a column is a migration of
+     * its own and is not part of this change; they keep the width they have.
+     * <p>
+     * The Liquibase column definitions state the same number literally, in
+     * {@code src/main/resources/config/liquibase/changelog/00000000000000_initial_schema.xml}, where both {@code exam_user} columns have been {@code varchar(100)} since the
+     * schema was created.
+     */
+    public static final int GENERATED_FILENAME_MAX_LENGTH = 100;
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
@@ -72,9 +102,12 @@ public class FileUtil {
      * The global list of file extensions that are allowed to be uploaded.
      * Extensions must be lower-case without leading dots.
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     * <p>
+     * Package-private rather than private because the longest entry is one of the terms of {@link #GENERATED_FILENAME_MAX_LENGTH}, and {@code StoredFileReferenceTest} reads it
+     * to check that sum rather than restating it.
      */
-    private static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc",
-            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
+    static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
+            "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
     private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
 
@@ -260,26 +293,6 @@ public class FileUtil {
             }
         }
         return null;
-    }
-
-    /**
-     * Checks whether the path starts with the provided sub-path.
-     *
-     * @param path    URI to check if it starts with the sub-pat
-     * @param subPath sub-path URI to search for
-     * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
-     */
-    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NonNull URI path, @NonNull URI subPath) {
-        // Removes redundant elements (e.g. ../ or ./) from the path and sub-path
-        URI normalisedPath = path.normalize();
-        URI normalisedSubPath = subPath.normalize();
-        // Indicates whether the path starts with the subPath
-        boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
-        // Throws a IllegalArgumentException in case the normalisedPath does not start with the normalisedSubPath
-        if (!normalisedPathStartsWithNormalisedSubPath) {
-            throw new IllegalArgumentException(
-                    "Invalid path: '%s'. Normalized to: '%s'. Expected to start with: '%s' (normalized from '%s').".formatted(path, normalisedPath, normalisedSubPath, subPath));
-        }
     }
 
     /**

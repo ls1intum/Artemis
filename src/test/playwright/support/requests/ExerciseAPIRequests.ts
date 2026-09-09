@@ -222,12 +222,12 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Submits the example submission to the specified repository.
+     * Submits the example submission to the participation's repository.
      *
-     * @param repositoryId - The repository ID. The repository ID is equal to the participation ID.
+     * @param participationId - The ID of the participation whose repository is written to.
      * @param submission - The example submission to be submitted.
      */
-    async makeProgrammingExerciseSubmission(repositoryId: number, submission: ProgrammingExerciseSubmission) {
+    async makeProgrammingExerciseSubmission(participationId: number, submission: ProgrammingExerciseSubmission) {
         const data = await Promise.all(
             submission.files.map(async (file) => {
                 let fileName = file.name;
@@ -240,11 +240,11 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
+        await this.page.request.put(`api/programming/participations/${participationId}/repository/files?commit=yes`, { data });
     }
 
-    async createProgrammingExerciseFile(repositoryId: number, filename: string) {
-        return await this.page.request.post(`api/programming/repository/${repositoryId}/file?file=${filename}`);
+    async createProgrammingExerciseFile(participationId: number, filename: string) {
+        return await this.page.request.post(`api/programming/participations/${participationId}/repository/file?file=${filename}`);
     }
 
     /**

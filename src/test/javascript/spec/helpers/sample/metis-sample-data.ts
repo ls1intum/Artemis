@@ -16,8 +16,8 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
-export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
-export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
+export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'Metis-Slide-1.png' } as Slide;
+export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'attachments/lectures/1/Metis-Attachment.pdf' } as Attachment;
 export const metisAttachmentUnit = {
     id: 1,
     name: 'Metis Attachment Unit',

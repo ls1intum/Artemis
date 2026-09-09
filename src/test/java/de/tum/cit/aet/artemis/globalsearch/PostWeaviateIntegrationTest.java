@@ -262,7 +262,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertPostExistsInWeaviate(weaviateService, post.getId());
 
             long postId = post.getId();
-            request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
             assertPostNotInWeaviate(weaviateService, postId);
         }

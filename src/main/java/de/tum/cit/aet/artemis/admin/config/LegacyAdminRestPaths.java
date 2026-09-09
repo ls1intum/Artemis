@@ -10,21 +10,14 @@ package de.tum.cit.aet.artemis.admin.config;
  */
 public final class LegacyAdminRestPaths {
 
-    /** Legacy class-level prefix used by most admin resources. */
+    /**
+     * Legacy class-level prefix used by AdminCourseResource. Still called by artemis-android, which
+     * creates courses through {@code POST api/core/admin/courses}. Successor: {@code "api/admin/"}.
+     * Removable once artemis-android#694 has shipped; every other admin resource has already dropped
+     * this alias.
+     */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_ADMIN_PREFIX = "api/core/admin/";
-
-    /** Legacy class-level prefix used by AdminCleanupResource. */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_ADMIN_CLEANUP_PREFIX = "api/core/admin/cleanup/";
-
-    /** Legacy class-level prefix used by AdminMetricsResource. */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_ADMIN_METRICS_PREFIX = "api/core/admin/metrics/";
-
-    /** Legacy class-level prefix used by AdminWebsocketResource. */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_ADMIN_WEBSOCKET_PREFIX = "api/core/admin/websocket/";
 
     private LegacyAdminRestPaths() {
         // utility class

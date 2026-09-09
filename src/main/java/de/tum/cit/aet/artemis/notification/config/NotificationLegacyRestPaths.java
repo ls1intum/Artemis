@@ -31,16 +31,13 @@ public final class NotificationLegacyRestPaths {
      * {@code api/notification/courses/...} (e.g. {@code api/notification/courses/info},
      * {@code api/notification/courses/{courseId}/settings}) while the legacy
      * {@code api/communication/notification/...} paths are unchanged.
+     * <p>
+     * Still called by artemis-android, which reads {@code GET api/communication/notification/info} and
+     * the per-course settings and presets under the same prefix. Removable once artemis-android#694 has
+     * shipped.
      */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String COMMUNICATION_NOTIFICATION_PREFIX = "api/communication/notification/";
-
-    /**
-     * Legacy class-level prefix from when {@code PublicSystemNotificationResource} lived in the core
-     * module. The notification module's successor is {@code "api/notification/public/"}.
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    public static final String CORE_PUBLIC_PREFIX = "api/core/public/";
 
     private NotificationLegacyRestPaths() {
         // utility class

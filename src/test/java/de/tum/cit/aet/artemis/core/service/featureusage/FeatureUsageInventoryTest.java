@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.service.featureusage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
@@ -101,13 +104,50 @@ class FeatureUsageInventoryTest extends AbstractSpringIntegrationIndependentTest
         assertThat(writtenFeatures()).extracting(TrackedFeature::getFeatureLabel).contains("configuration/re-evaluate-results");
     }
 
+    /**
+     * Some controllers map a canonical prefix plus one or more deprecated ones; if both were registered, the same feature would be split across two rows and neither would show
+     * its real usage.
+     * <p>
+     * The legacy paths are read off the controllers rather than listed here. A hand-written list is wrong twice over: it goes stale the moment an alias is added or retired,
+     * which is how {@code api/core/admin/} came to be guarded while {@code api/core/passkey/} never was, and it cannot express the aliases whose prefix is also somebody else's
+     * canonical prefix, as {@code api/core/} is for the course module and for {@code FileResource} at the same time.
+     */
     @Test
     void shouldNotCountAControllerWithALegacyAliasTwice() {
         featureUsageRegistry.registerEndpoints(requestMappingHandlerMapping);
 
-        // Some controllers map a canonical prefix plus a deprecated one; if both were registered, the same feature would be
-        // split across two rows and neither would show its real usage
-        assertThat(writtenFeatures()).extracting(TrackedFeature::getIdentifier).doesNotHaveDuplicates().noneMatch(identifier -> identifier.contains("api/core/admin/"));
+        Set<String> legacyPaths = legacyAliasPaths();
+        assertThat(legacyPaths).as("the endpoints reachable under a legacy class level prefix").isNotEmpty();
+        assertThat(writtenFeatures()).extracting(TrackedFeature::getIdentifier).doesNotHaveDuplicates()
+                .noneMatch(identifier -> legacyPaths.contains(identifier.substring(identifier.indexOf(' ') + 1)));
+    }
+
+    /**
+     * Every path that is only reachable because its controller declares a legacy alias next to its canonical prefix.
+     * <p>
+     * {@code FeatureUsageRegistry#canonicalPath} treats the first entry of a class level {@code @RequestMapping} as the canonical one, so this is the complement: the patterns
+     * of a multi-entry mapping that do not sit under the first entry. Those are exactly the identifiers the inventory must never register.
+     *
+     * @return the legacy paths, without a leading slash, in the spelling the inventory would store them under
+     */
+    private Set<String> legacyAliasPaths() {
+        Set<String> legacyPaths = new HashSet<>();
+        requestMappingHandlerMapping.getHandlerMethods().forEach((mapping, handlerMethod) -> {
+            RequestMapping classMapping = handlerMethod.getBeanType().getAnnotation(RequestMapping.class);
+            if (classMapping == null || classMapping.value().length < 2) {
+                return;
+            }
+            String canonicalPrefix = withLeadingSlash(classMapping.value()[0]);
+            List<String> aliases = Arrays.stream(classMapping.value()).skip(1).map(FeatureUsageInventoryTest::withLeadingSlash).toList();
+            mapping.getPatternValues().stream().filter(pattern -> !withLeadingSlash(pattern).startsWith(canonicalPrefix))
+                    .filter(pattern -> aliases.stream().anyMatch(alias -> withLeadingSlash(pattern).startsWith(alias)))
+                    .forEach(pattern -> legacyPaths.add(withLeadingSlash(pattern).substring(1)));
+        });
+        return legacyPaths;
+    }
+
+    private static String withLeadingSlash(String path) {
+        return path.startsWith("/") ? path : "/" + path;
     }
 
     @Test

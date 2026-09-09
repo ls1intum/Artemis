@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
 import de.tum.cit.aet.artemis.admin.service.StatisticsService;
@@ -31,7 +30,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @FeatureUsage("monitoring/usage-statistics")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminStatisticsResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminStatisticsResource.class);

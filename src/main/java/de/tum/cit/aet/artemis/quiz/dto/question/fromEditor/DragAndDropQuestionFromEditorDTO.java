@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param points             the points for the question
  * @param scoringType        the scoring type
  * @param randomizeOrder     whether to randomize drag item order
- * @param backgroundFilePath the background image file path
+ * @param backgroundFilePath the path the background image is served under, relative to {@code api/core/files/}, or the bare filename while the question has no id yet
  * @param dropLocations      the list of drop locations
  * @param dragItems          the list of drag items
  * @param correctMappings    the list of correct mappings
@@ -47,6 +47,10 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
 
     /**
      * Creates a DragAndDropQuestionFromEditorDTO from the given DragAndDropQuestion domain object.
+     * <p>
+     * The background is taken from {@link DragAndDropQuestion#servedBackgroundFilePath()} rather than from the stored filename, so the editor receives the same value the
+     * question serves everywhere else. The client appends what it receives to {@code api/core/files/}, so handing it the bare filename would ask for the image at the root of
+     * the file endpoint and the background of an existing question would not render while it is being edited.
      *
      * @param question the question to convert
      * @return the corresponding DTO
@@ -56,11 +60,14 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         List<DragItemFromEditorDTO> itemDTOs = question.getDragItems().stream().map(DragItemFromEditorDTO::of).toList();
         List<DragAndDropMappingFromEditorDTO> mappingDTOs = question.getCorrectMappings().stream().map(DragAndDropMappingFromEditorDTO::of).toList();
         return new DragAndDropQuestionFromEditorDTO(question.getId(), question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
-                question.getScoringType(), question.isRandomizeOrder(), question.getBackgroundFilePath(), locationDTOs, itemDTOs, mappingDTOs);
+                question.getScoringType(), question.isRandomizeOrder(), question.servedBackgroundFilePath(), locationDTOs, itemDTOs, mappingDTOs);
     }
 
     /**
      * Creates a new DragAndDropQuestion domain object from this DTO.
+     * <p>
+     * The background goes back through {@link DragAndDropQuestion#setBackgroundFilePath}, which reduces a served URL to the filename again, so the round trip through the editor
+     * stores what was already stored.
      *
      * @return a new DragAndDropQuestion domain object
      */

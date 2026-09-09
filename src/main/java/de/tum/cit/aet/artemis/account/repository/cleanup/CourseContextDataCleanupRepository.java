@@ -183,7 +183,7 @@ public interface CourseContextDataCleanupRepository extends ArtemisJpaRepository
      * @return one entry per registration, either path possibly absent
      */
     @Query("""
-            SELECT examUser.signingImagePath AS signingImagePath, examUser.studentImagePath AS studentImagePath
+            SELECT examUser.id AS id, examUser.signingImagePath AS signingImagePath, examUser.studentImagePath AS studentImagePath
             FROM ExamUser examUser
             WHERE examUser.user.id = :userId
             """)
