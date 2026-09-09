@@ -209,14 +209,15 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Proceed with feedback request only when an AI option was accepted and the normal eligibility checks pass.
             // Goes through requestFeedback() rather than assureConditionsSatisfied()/processFeedbackRequest() against
             // this.participation directly: the click that opens the LLM selection modal also bubbles to the popover
             // wrapper that closes it, which destroys this component while updateParticipation()'s initial load may
-            // still be in flight. ngOnDestroy() then cancels that subscription, so this.participation would stay
-            // undefined forever even though this callback (a promise continuation from showLLMSelectionModal()) still
-            // runs. requestFeedback() re-fetches the participation independently of that canceled request.
-            if (hasAccepted && !this.isFeedbackRequestBlocked()) {
+            // still be in flight, canceling it in ngOnDestroy(). requestFeedback() re-fetches the participation
+            // independently and re-derives the pending/limit checks from it, rather than from
+            // isFeedbackGenerationInProgress()/isFeedbackLimitReached() here, which would otherwise see whatever
+            // defaults that canceled load left them at. isSubmitted() stays safe to read: it's an input the parent
+            // keeps current independently of this component's own participation fetch.
+            if (hasAccepted && this.isSubmitted()) {
                 this.requestFeedback();
             }
         });
@@ -273,7 +274,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                 const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
                 const participation = this.selectParticipation(participations, participationId);
-                if (!this.assureConditionsSatisfied(participation)) {
+                if (this.isFeedbackRequestBlockedForParticipation(participation) || !this.assureConditionsSatisfied(participation)) {
                     return;
                 }
                 this.processFeedbackRequest(participation);
@@ -282,6 +283,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
             },
         });
+    }
+
+    // Same pending-request/request-limit checks as isFeedbackRequestBlocked(), but derived from the given
+    // participation directly rather than from this component's own (possibly stale, see acceptLLMUsage()) signals.
+    private isFeedbackRequestBlockedForParticipation(participation?: StudentParticipation): boolean {
+        const pendingAthenaResult = getAllResultsOfAllSubmissions(participation?.submissions).find(isPendingAthenaFeedbackResult);
+        return !!pendingAthenaResult || countSuccessfulAthenaFeedbackRequests(participation) >= this.feedbackRequestLimit;
     }
 
     private processFeedbackRequest(participation = this.participation) {

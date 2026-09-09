@@ -950,6 +950,54 @@ describe('RequestFeedbackButtonComponent', () => {
 
             expect(requestSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
+
+        it('should not send the feedback request after such a teardown race if the freshly fetched participation already reached the feedback limit', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('isSubmitted', true);
+
+            // Same canceled-initial-load setup as above: the popover destroys this component before its participation
+            // load resolves, leaving currentFeedbackRequestCount()/isFeedbackLimitReached() at their reset defaults.
+            const pendingExerciseDetails = new Subject<HttpResponse<{ exercise: Exercise }>>();
+            vi.spyOn(exerciseService, 'getExerciseDetails').mockReturnValueOnce(pendingExerciseDetails);
+
+            component.ngOnInit();
+            await vi.advanceTimersByTimeAsync(0);
+            component.ngOnDestroy();
+
+            expect(component.isFeedbackLimitReached()).toBe(false);
+
+            // The participation requestFeedback() re-fetches independently already reached the limit, even though
+            // the canceled load above left this component's own currentFeedbackRequestCount() signal at 0.
+            const limitReachedParticipation: StudentParticipation = {
+                id: participation.id,
+                submissions: [
+                    {
+                        id: 1,
+                        submitted: true,
+                        results: Array.from({ length: DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT }, (_, index) => ({
+                            id: index + 1,
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            successful: true,
+                        })) as Result[],
+                    },
+                ],
+                testRun: false,
+            } as StudentParticipation;
+            vi.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(
+                of(new HttpResponse({ body: { exercise: { ...exercise, studentParticipations: [limitReachedParticipation] } } })),
+            );
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should return early from ngOnInit if exercise has no id', async () => {
