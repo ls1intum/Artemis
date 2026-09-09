@@ -30,6 +30,7 @@ import jakarta.persistence.SecondaryTable;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -206,6 +207,7 @@ public class ProgrammingExercise extends Exercise {
         return testRepositoryUri;
     }
 
+    @NonNull
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }

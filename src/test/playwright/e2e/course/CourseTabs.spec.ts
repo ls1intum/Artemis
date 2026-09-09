@@ -79,7 +79,7 @@ async function expectLoadsOnceAndRefreshesOnReselect(page: Page, courseId: numbe
 
 /** A sidebar entry of a tab's own inner sidebar (lectures, exams, exercises and tutorial groups all use these cards). */
 function sidebarCard(page: Page, title: string) {
-    return page.locator('#test-sidebar-card-title', { hasText: title });
+    return page.getByTestId('sidebar-card-title').filter({ hasText: title });
 }
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {

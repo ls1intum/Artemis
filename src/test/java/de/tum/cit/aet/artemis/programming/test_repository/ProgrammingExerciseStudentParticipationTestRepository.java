@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.programming.test_repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +25,32 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 @Repository
 @Primary
 public interface ProgrammingExerciseStudentParticipationTestRepository extends ProgrammingExerciseStudentParticipationRepository {
+
+    /**
+     * Only tests look a participation up by the student's login: the server always has the student's id by the time it
+     * needs one, and selecting on the joined user row makes the database read every participation of the exercise.
+     *
+     * @param exerciseId the exercise the participation belongs to
+     * @param username   the student's login
+     * @return the student's participation, with its submissions
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    /**
+     * @param exerciseId the exercise the participations belong to
+     * @param username   the student's login
+     * @return every participation the student has in that exercise, graded and practice
+     */
+    List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    /**
+     * @param exerciseId the exercise the participation belongs to
+     * @param teamId     the team the participation belongs to
+     * @return the team's participation, with its members
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     /**
      * updates the build plan id of all programming exercise student participations

@@ -88,7 +88,7 @@ public class IrisLectureUnitSyncEventListener {
             try {
                 var snapshot = new LectureContentUpdateSnapshot(unit.getId(), null, null, null, null, null, null, null, unit.resolveReleaseDate(),
                         SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(unit.getId())));
-                syncService.markVisibilityDirtyAfterCommit(snapshot);
+                syncService.markVisibilityDirty(snapshot);
             }
             catch (Exception e) {
                 log.warn("Could not initialize Iris lecture unit sync state {}", unit.getId(), e);
