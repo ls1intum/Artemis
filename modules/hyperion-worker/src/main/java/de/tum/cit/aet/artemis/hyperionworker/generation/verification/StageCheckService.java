@@ -231,7 +231,14 @@ public class StageCheckService {
                     + "Use signatures only; do not replace them with prose or include private implementation details.");
         }
 
-        List<String> impossibleTemplateDependencies = templateTypesDependingOnStudentCreatedTypes(spec, designRows);
+        Set<String> memberOwners = structuralContract.contract().studentCreatedMemberOwners();
+        List<String> givenMemberOwners = designRows.stream().filter(row -> "given".equals(row.status()) && memberOwners.contains(row.type())).map(DesignRow::type).toList();
+        if (!givenMemberOwners.isEmpty()) {
+            return StageCheckResult.failed("Given types cannot contain @studentCreates members: " + givenMemberOwners
+                    + ". Mark the existing owner stubbed and assign its new declarations to a Testing Strategy seam.");
+        }
+        Set<String> templateTypes = designRows.stream().filter(row -> !"student-creates".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
+        List<String> impossibleTemplateDependencies = structuralContract.contract().templateDependencies(templateTypes, studentCreatedTypes);
         if (!impossibleTemplateDependencies.isEmpty()) {
             return StageCheckResult.failed("These given or stubbed Java types have Public API signatures that reference a student-created type absent from the template: "
                     + impossibleTemplateDependencies
@@ -441,46 +448,6 @@ public class StageCheckService {
      */
     static List<String> specStubbedTypes(String spec) {
         return designTableRows(spec).stream().filter(row -> "stubbed".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
-    }
-
-    private static List<String> templateTypesDependingOnStudentCreatedTypes(String spec, List<DesignRow> designRows) {
-        Set<String> templateTypes = designRows.stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(DesignRow::type)
-                .collect(Collectors.toSet());
-        Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
-        List<String> conflicts = new ArrayList<>();
-        boolean inPublicApi = false;
-        @Nullable
-        String currentOwner = null;
-        for (String line : spec.lines().map(String::strip).toList()) {
-            if (line.equals("## Public API")) {
-                inPublicApi = true;
-                continue;
-            }
-            if (inPublicApi && line.startsWith("## ")) {
-                break;
-            }
-            if (!inPublicApi) {
-                continue;
-            }
-            if (line.startsWith("### ")) {
-                String heading = line.substring(4).replace("`", "").strip();
-                currentOwner = templateTypes.stream().filter(type -> containsTypeName(heading, type)).findFirst().orElse(null);
-                continue;
-            }
-            if (currentOwner == null) {
-                continue;
-            }
-            for (String studentCreatedType : studentCreatedTypes) {
-                if (containsTypeName(line, studentCreatedType)) {
-                    conflicts.add(currentOwner + "->" + studentCreatedType);
-                }
-            }
-        }
-        return conflicts.stream().distinct().toList();
-    }
-
-    private static boolean containsTypeName(String text, String type) {
-        return Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(type) + "(?![A-Za-z0-9_])").matcher(text).find();
     }
 
     /** Whether a '## Design' row's type name is a bare identifier the later gates can look for; {@code Stack<T>}, a qualified name or two types in one cell is not. */

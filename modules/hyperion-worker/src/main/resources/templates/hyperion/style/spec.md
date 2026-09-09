@@ -108,7 +108,7 @@ Reconcile that ownership with compilation before approving the design. Every tes
 as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
 omitted `student-creates` type in a template signature: the template would not compile. Make the dependent type
 student-created too, or omit only the student-owned dependent members. Given types and all non-student-owned members of stubbed types stay identical in both
-repositories. Only types marked `student-creates` and the minimum dependent members assigned to the same seam
+repositories. Only types marked `student-creates` and members explicitly marked `@studentCreates` in the Public API
 are absent from the template. Never make a shared API accept the real interface in the solution and `Object` in
 the template.
 
@@ -168,3 +168,20 @@ do not collapse a pattern exercise into one class.
 
 Follow the section contracts above directly. Do not infer requirements, APIs, or a design from another
 exercise.
+
+## Member-level ownership and prerequisite fit
+
+When the brief teaches adding operations to an existing class, mark just those constructor/method declarations
+in the Public API with `/** @studentCreates */`. Keep the owner `stubbed`, preserve its finished members, and
+assign the added members to that owner's Testing Strategy seam. They are absent from the compiling starter
+and graded reflectively. Never apply this tag to a `given` owner or copy it into exercise source. A marked
+constructor may leave the starter with Java's implicit no-argument constructor. Do not omit unmarked members.
+
+For API use, control flow, or implementation-only tasks, provide the class and method declarations instead.
+Supply incidental enums, initialized collections, exception classes, and domain holders when declaring them
+is outside the prerequisites. A request to create generic types requires learner-owned type parameters, not
+merely a generic library field. A request to create subclasses requires a learner-authored type/relationship,
+not merely method bodies in a supplied hierarchy. The smallest student diff must still exercise every requested
+competency; keep unrelated plumbing provided. Where the brief asks for breadth, choose complementary operations
+rather than near-identical repetitions. Do not infer teaching sequence from sheet numbers; use the brief's
+explicit prerequisites and learning objectives.

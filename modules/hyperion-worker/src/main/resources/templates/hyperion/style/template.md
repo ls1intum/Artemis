@@ -18,7 +18,7 @@ above the placeholder throw — never between the javadoc and the signature, nev
 the signature. Every unfinished member of a stubbed owner carries its seam ID; the same ID may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
 
-The sole exception is a stubbed owner's own seam whose members cannot be declared without an omitted student-created type. Keep that owner as an empty compile-safe class and put
+The exception is a stubbed owner whose approved Public API marks a member `/** @studentCreates */`, either because declaring it is the learning objective or because its signature needs an absent type. Keep that owner as an empty compile-safe class and put
 exactly one owner-seam TODO in its class body where students add the members. Never restore the missing type, use `Object`, edit the specification, or reuse the absent type's seam.
 
 ## Types students must create
@@ -28,7 +28,7 @@ keep the template compiling without it. Its statement task and reflective/struct
 anchors; do not attach that seam ID to unrelated collaborator code merely because the type has no template file.
 
 When a provided context will eventually refer to an omitted student-created interface, keep the context class
-but omit the student-owned field and methods whose signatures need that interface. Do not ship an empty interface merely to make those signatures compile, and do not
+but omit only the student-owned members explicitly marked `@studentCreates` in the approved contract. Do not ship an empty interface merely to make those signatures compile, and do not
 weaken only the template API to `Object`; use the class-body owner-seam TODO above, and let tests inspect the completed API reflectively.
 
 ## Data-holder plumbing
@@ -49,3 +49,20 @@ The placeholder (`throw new UnsupportedOperationException("Not implemented")` is
 the language's idiom; a returned placeholder value is acceptable only if every test rejects it. TODO wording
 mirrors this exercise's tasks. How much is stubbed versus given follows the design's template-status
 column, not a fixed ratio.
+
+## Teaching-quality defaults
+
+Keep prerequisite scaffolding complete: initialize supplied collections, implement routine data holders, and
+provide simple enums and exception types when their declaration is not the objective. Do not make students
+write inheritance syntax or generic declarations before the brief says they have learned them. Provided code
+may hide such mechanisms behind a small documented domain API; avoid needless wrapper hierarchies.
+
+Document existing class invariants and each operation's preconditions, postconditions, and state changes in
+ordinary language. Describe only guarantees the approved contract actually makes. Prefer `field` consistently
+(`field (attribute)` once if useful); follow explicit course terminology. Never add author/version tags or
+fabricated attribution. An entry point, when present, demonstrates a useful supported scenario in the solution;
+do not ship an empty `main` as if it were a working demo, or solve the learner-owned scenario in the starter.
+
+Ownership tags are specification metadata, not Java annotations or student Javadoc. For a member students
+create, put its contract in the statement and a concise insertion TODO in the existing class. The solution
+adds its documented declaration; documentation of already supplied members stays unchanged.

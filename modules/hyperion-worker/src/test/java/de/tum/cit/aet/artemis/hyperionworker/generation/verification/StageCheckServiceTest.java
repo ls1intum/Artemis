@@ -854,6 +854,15 @@ class StageCheckServiceTest {
                 """;
 
         @Test
+        void memberCreationIsApprovedOnlyForAStudentOwnedExistingClass() {
+            sandbox.spec = VALID_SPEC.replace("| 3 | yes |", "| 3 | no |").replace("public int calculate(int input);", "/** @studentCreates */ public int calculate(int input);");
+            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
+
+            sandbox.spec = sandbox.spec.replace("| computes the result | stubbed |", "| computes the result | given |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("Given types cannot contain @studentCreates members");
+        }
+
+        @Test
         void namesTheReflectionConsequenceOfStudentCreatedOwnershipWhenTheContractIsFrozen() {
             // Learning this only from downstream "cannot find symbol" errors cycles the repair budget between re-adding the type and the ownership gate rejecting it.
             exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames());

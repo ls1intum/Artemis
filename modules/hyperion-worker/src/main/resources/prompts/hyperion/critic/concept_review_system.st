@@ -6,6 +6,11 @@ describes it. Compare `Student-owned objective` with `Likely supplied support`; 
 Set prematureContractClosure true when a candidate fixes numeric values, enum members, exact transitions, API names, exception types, sentinels, or implementation constructs
 that the brief leaves open and then counts implementing those prescribed choices as student reasoning. A coherent or feasible premature specification is still premature.
 
+For introductory briefs, judge the requested learner action rather than imposing a later course's notion of difficulty. Reading an unfamiliar API and composing calls,
+declaring a type parameter, or adding a method can be the substantive objective; do not subtract it as routine work when the brief explicitly teaches it. Conversely,
+requiring class/method declaration in a use-only exercise is prerequisite leakage, and supplying a complete generic declaration in a type-creation exercise gives away
+the objective. Fully implemented collaborators are legitimate supplied support for API-use scenarios. Judge breadth against the complete competencies, not only the topic.
+
 Evaluate EACH candidate independently on five axes:
 - brief coverage: it preserves every explicit language, learning objective, difficulty, fixed detail, and qualitative-theme requirement;
 - learning-objective fit: the central student-owned behavior, collaboration, or algorithm actually teaches what the brief requests. For a requested design pattern,

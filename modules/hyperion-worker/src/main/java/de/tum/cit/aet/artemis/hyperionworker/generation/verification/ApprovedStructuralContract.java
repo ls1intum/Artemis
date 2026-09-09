@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.JavaProjectBuilder;
+import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaConstructor;
 import com.thoughtworks.qdox.model.JavaField;
@@ -80,14 +81,17 @@ final class ApprovedStructuralContract {
                 errors.add(expectedType + " must be declared public because students create it as a top-level graded type");
             }
             List<String> unsupportedTypeModifiers = type.getModifiers().stream().filter(modifier -> Set.of("final", "sealed", "non-sealed").contains(modifier)).toList();
-            if (structurallyGradedTypes.contains(expectedType) && (type.isRecord() || !unsupportedTypeModifiers.isEmpty() || !type.getTypeParameters().isEmpty())) {
+            boolean structuralOwner = structurallyGradedTypes.contains(expectedType) || type.getMethods().stream().anyMatch(ApprovedStructuralContract::studentCreates)
+                    || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates);
+            boolean boundedParameters = type.getTypeParameters().stream().anyMatch(parameter -> parameter.getBounds() != null && !parameter.getBounds().isEmpty());
+            if (structuralOwner && (type.isRecord() || !unsupportedTypeModifiers.isEmpty() || boundedParameters)) {
                 errors.add(expectedType
-                        + " uses a record, generic type declaration, or final/sealed type modifier that the structural grader cannot enforce exactly. Use a public class, "
-                        + "interface, or enum with an explicit non-generic contract.");
+                        + " uses a record, bounded type parameter, or final/sealed type modifier that the structural grader cannot enforce exactly. Use a public class, "
+                        + "interface, or enum with an explicit contract; unbounded class type parameters are supported.");
             }
             boolean unsupportedExecutable = type.getMethods().stream().anyMatch(method -> method.isVarArgs() || !method.getTypeParameters().isEmpty())
                     || type.getConstructors().stream().anyMatch(constructor -> constructor.isVarArgs() || !constructor.getTypeParameters().isEmpty());
-            if (structurallyGradedTypes.contains(expectedType) && unsupportedExecutable) {
+            if (structuralOwner && unsupportedExecutable) {
                 errors.add(expectedType + " uses a varargs or generic method/constructor that the structural grader cannot enforce exactly. Use explicit parameter types.");
             }
             List<String> privateMembers = new ArrayList<>();
@@ -117,7 +121,7 @@ final class ApprovedStructuralContract {
     String toOracle(String packageName, ObjectMapper mapper, Set<String> includedTypes) {
         ArrayNode oracle = mapper.createArrayNode();
         types.values().stream().filter(type -> includedTypes.contains(type.getSimpleName())).sorted((left, right) -> left.getSimpleName().compareTo(right.getSimpleName()))
-                .forEach(type -> oracle.add(toJson(type, packageName, mapper)));
+                .forEach(type -> oracle.add(toJson(type, packageName, mapper, types.keySet())));
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(oracle);
         }
@@ -132,6 +136,30 @@ final class ApprovedStructuralContract {
 
     Set<String> typeNames() {
         return types.keySet();
+    }
+
+    Set<String> studentCreatedMemberOwners() {
+        return types.values().stream()
+                .filter(type -> type.getMethods().stream().anyMatch(ApprovedStructuralContract::studentCreates)
+                        || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates))
+                .map(JavaClass::getSimpleName).collect(java.util.stream.Collectors.toSet());
+    }
+
+    List<String> templateDependencies(Set<String> templateTypes, Set<String> absentTypes) {
+        List<String> conflicts = new ArrayList<>();
+        for (String owner : templateTypes) {
+            for (String absent : absentTypes) {
+                Pattern name = Pattern.compile("(?<![\\w$])" + Pattern.quote(absent) + "(?![\\w$])");
+                if (canonicalSurface(types.get(owner), types.keySet(), true).stream().anyMatch(part -> name.matcher(part).find())) {
+                    conflicts.add(owner + "->" + absent);
+                }
+            }
+        }
+        return List.copyOf(conflicts);
+    }
+
+    private static boolean studentCreates(JavaAnnotatedElement member) {
+        return member.getTagByName("studentCreates") != null;
     }
 
     List<String> solutionSurfaceReasons(Map<String, String> solutionFiles) {
@@ -176,8 +204,8 @@ final class ApprovedStructuralContract {
             if (actual == null) {
                 continue; // The existing ownership gate reports a missing solution type more directly.
             }
-            Set<String> expectedSurface = canonicalSurface(expected.getValue(), types.keySet());
-            Set<String> actualSurface = canonicalSurface(actual, types.keySet());
+            Set<String> expectedSurface = canonicalSurface(expected.getValue(), types.keySet(), "template".equals(repository));
+            Set<String> actualSurface = canonicalSurface(actual, types.keySet(), false);
             Set<String> missing = new LinkedHashSet<>(expectedSurface);
             missing.removeAll(actualSurface);
             Set<String> extra = new LinkedHashSet<>(actualSurface);
@@ -190,7 +218,7 @@ final class ApprovedStructuralContract {
         return List.copyOf(reasons);
     }
 
-    private static ObjectNode toJson(JavaClass type, String packageName, ObjectMapper mapper) {
+    private static ObjectNode toJson(JavaClass type, String packageName, ObjectMapper mapper, Set<String> exerciseTypes) {
         ObjectNode entry = mapper.createObjectNode();
         ObjectNode classNode = mapper.createObjectNode();
         classNode.put("name", type.getSimpleName());
@@ -206,6 +234,9 @@ final class ApprovedStructuralContract {
             classNode.set("interfaces", mapper.valueToTree(type.getInterfaces().stream().map(JavaClass::getSimpleName).sorted().toList()));
         }
         entry.set("class", classNode);
+        if (!type.getTypeParameters().isEmpty()) {
+            entry.set("genericApi", genericApi(type, exerciseTypes, mapper));
+        }
 
         ArrayNode methods = mapper.createArrayNode();
         type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).forEach(method -> methods.add(methodJson(method, mapper)));
@@ -228,14 +259,41 @@ final class ApprovedStructuralContract {
         return entry;
     }
 
-    private static Set<String> canonicalSurface(JavaClass type, Set<String> exerciseTypes) {
+    private static ObjectNode genericApi(JavaClass type, Set<String> exerciseTypes, ObjectMapper mapper) {
+        ObjectNode contract = mapper.createObjectNode();
+        contract.put("parameterCount", type.getTypeParameters().size());
+        contract.set("exerciseTypes", mapper.valueToTree(exerciseTypes.stream().sorted().toList()));
+        List<String> signatures = new ArrayList<>();
+        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).map(method -> "method:" + method.getName()
+                + genericParameters(method.getParameters(), type, exerciseTypes) + ":" + genericShape(method.getReturnType(), type, exerciseTypes)).forEach(signatures::add);
+        type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(constructor -> "constructor:" + genericParameters(constructor.getParameters(), type, exerciseTypes)).forEach(signatures::add);
+        type.getFields().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(field -> "field:" + field.getName() + ":" + genericShape(field.getType(), type, exerciseTypes)).forEach(signatures::add);
+        contract.set("signatures", mapper.valueToTree(signatures));
+        return contract;
+    }
+
+    private static List<String> genericParameters(List<JavaParameter> parameters, JavaClass owner, Set<String> exerciseTypes) {
+        return parameters.stream().map(parameter -> genericShape(parameter.getType(), owner, exerciseTypes)).toList();
+    }
+
+    private static String genericShape(JavaType type, JavaClass owner, Set<String> exerciseTypes) {
+        String shape = canonicalType(type, exerciseTypes, owner.getPackageName()).replace(", ", ",");
+        for (int i = 0; i < owner.getTypeParameters().size(); i++) {
+            shape = shape.replaceAll("(?<![\\w$])" + Pattern.quote(owner.getTypeParameters().get(i).getName()) + "(?![\\w$])", Matcher.quoteReplacement("$" + i));
+        }
+        return shape;
+    }
+
+    private static Set<String> canonicalSurface(JavaClass type, Set<String> exerciseTypes, boolean template) {
         String exercisePackage = type.getPackageName();
         Set<String> surface = new LinkedHashSet<>();
         surface.add("type:" + typeKind(type) + ":modifiers=" + type.getModifiers().stream().sorted().toList() + ":parameters="
                 + type.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":extends="
                 + superclass(type) + ":implements="
                 + type.getInterfaces().stream().map(interfaceType -> canonicalType(interfaceType, exerciseTypes, exercisePackage)).sorted().toList());
-        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible)
+        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).filter(method -> !template || !studentCreates(method))
                 .map(method -> "method:" + relevantModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()) + ":"
                         + method.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":"
                         + canonicalType(method.getReturnType(), exerciseTypes, exercisePackage) + ":" + method.getName()
@@ -246,7 +304,8 @@ final class ApprovedStructuralContract {
                 .map(field -> "field:" + relevantModifiers(field.getModifiers(), field.getDeclaringClass().isInterface(), false, field.isStatic()) + ":"
                         + canonicalType(field.getType(), exerciseTypes, exercisePackage) + ":" + field.getName())
                 .forEach(surface::add);
-        List<JavaConstructor> visibleConstructors = type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible).toList();
+        List<JavaConstructor> visibleConstructors = type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .filter(constructor -> !template || !studentCreates(constructor)).toList();
         visibleConstructors.stream()
                 .map(constructor -> "constructor:" + relevantModifiers(constructor.getModifiers(), false, false, false)
                         + constructor.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList()
@@ -327,8 +386,8 @@ final class ApprovedStructuralContract {
         ObjectNode node = mapper.createObjectNode();
         node.put("name", method.getName());
         node.set("modifiers", mapper.valueToTree(effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic())));
-        putParameters(node, method.getParameters(), mapper);
-        node.put("returnType", simpleErasedType(method.getReturnType()));
+        putParameters(node, method.getParameters(), method.getDeclaringClass(), mapper);
+        node.put("returnType", simpleErasedType(method.getReturnType(), method.getDeclaringClass()));
         return node;
     }
 
@@ -336,20 +395,20 @@ final class ApprovedStructuralContract {
         ObjectNode node = mapper.createObjectNode();
         node.put("name", field.getName());
         node.set("modifiers", mapper.valueToTree(effectiveFieldModifiers(field)));
-        node.put("type", simpleErasedType(field.getType()));
+        node.put("type", simpleErasedType(field.getType(), field.getDeclaringClass()));
         return node;
     }
 
     private static ObjectNode constructorJson(JavaConstructor constructor, ObjectMapper mapper) {
         ObjectNode node = mapper.createObjectNode();
         node.set("modifiers", mapper.valueToTree(new ArrayList<>(constructor.getModifiers())));
-        putParameters(node, constructor.getParameters(), mapper);
+        putParameters(node, constructor.getParameters(), constructor.getDeclaringClass(), mapper);
         return node;
     }
 
-    private static void putParameters(ObjectNode node, List<JavaParameter> parameters, ObjectMapper mapper) {
+    private static void putParameters(ObjectNode node, List<JavaParameter> parameters, JavaClass owner, ObjectMapper mapper) {
         if (!parameters.isEmpty()) {
-            node.set("parameters", mapper.valueToTree(parameters.stream().map(parameter -> simpleErasedType(parameter.getType())).toList()));
+            node.set("parameters", mapper.valueToTree(parameters.stream().map(parameter -> simpleErasedType(parameter.getType(), owner)).toList()));
         }
     }
 
@@ -357,11 +416,14 @@ final class ApprovedStructuralContract {
      * Ares's structural oracle schema uses erased simple Java names (for example {@code List}, not {@code java.util.List<String>}). Exact source-surface comparison separately
      * uses resolved canonical generic names; conflating the two representations makes ordinary imported collection APIs impossible to satisfy.
      */
-    private static String simpleErasedType(JavaType type) {
+    private static String simpleErasedType(JavaType type, JavaClass owner) {
         String name = type.getFullyQualifiedName();
         int array = name.indexOf('[');
         String suffix = array < 0 ? "" : name.substring(array);
         String component = array < 0 ? name : name.substring(0, array);
+        if (owner.getTypeParameters().stream().anyMatch(parameter -> parameter.getName().equals(component))) {
+            return "Object" + suffix;
+        }
         int packageSeparator = component.lastIndexOf('.');
         return (packageSeparator < 0 ? component : component.substring(packageSeparator + 1)) + suffix;
     }

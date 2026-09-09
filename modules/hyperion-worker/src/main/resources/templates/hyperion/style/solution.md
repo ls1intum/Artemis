@@ -30,3 +30,18 @@ contradicted rule), fix the test or the example — never bend the solution to m
 Internal structure (helper methods, iteration style, data structures) is free as long as the public API
 matches the design and the diff stays task-shaped. Other languages follow their own idiom for the same
 rules.
+
+## Model the practices being taught
+
+Use descriptive domain identifiers, parameterized collections rather than raw types, and existing domain
+objects rather than parallel primitive representations. Prefer final fields for stable dependencies and
+immutable values where appropriate; keep genuinely changing state mutable. Parameters may be final when it
+clarifies intent, never as unrelated graded work. Use format strings when formatting is an objective or they
+make structured output clearer; do not replace simple readable concatenation mechanically.
+
+Given support should be safe within its documented contract: initialize owned state, preserve established
+invariants, and do not accidentally expose mutable internals. Do not add new student-graded validation,
+exception, or immutability obligations under the guise of defensive programming. Express existing guarantees
+in Javadoc without algorithm spoilers. Use the same terminology and documentation in both repositories.
+Omit author/version tags. Document newly added student-created members in the solution; these have no template
+counterpart, unlike documentation of supplied members, which remains byte-identical.

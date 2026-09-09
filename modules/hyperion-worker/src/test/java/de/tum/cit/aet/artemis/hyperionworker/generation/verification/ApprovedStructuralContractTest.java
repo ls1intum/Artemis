@@ -16,6 +16,78 @@ class ApprovedStructuralContractTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @Test
+    void unboundedGenericClassSeedsErasedAresSignaturesAndAnIndependentGenericContract() throws Exception {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Container<T> {
+                    public Container(T value) { ... }
+                    public T get();
+                    public java.util.List<T> values();
+                    public void replace(T[] values);
+                }
+                ```
+                """, Set.of("Container"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER)).get(0);
+        assertThat(oracle.at("/genericApi/parameterCount").asInt()).isEqualTo(1);
+        assertThat(oracle.at("/genericApi/signatures").toString()).contains("method:get[]:$0", "method:values[]:List<$0>", "method:replace[$0[]]:void", "constructor:[$0]");
+        assertThat(oracle.at("/methods/0/returnType").asText()).isEqualTo("Object");
+        assertThat(oracle.at("/methods/2/parameters/0").asText()).isEqualTo("Object[]");
+        assertThat(oracle.at("/constructors/0/parameters/0").asText()).isEqualTo("Object");
+    }
+
+    @Test
+    void boundedTypeParametersStillFailClosed() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Container<T extends Number> {}
+                ```
+                """, Set.of("Container"));
+        assertThat(parsed.errors()).anyMatch(reason -> reason.contains("bounded type parameter"));
+    }
+
+    @Test
+    void methodCreationLeavesExistingClassAndOperationsInTheStarter() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Palette {
+                    public int size();
+                    /** @studentCreates */
+                    public void add(String color);
+                }
+                ```
+                """, Set.of("Palette"), Set.of());
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } }"), Set.of("Palette"))).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } public void add(String color) {} }"),
+                Set.of("Palette"))).anyMatch(reason -> reason.contains("extra") && reason.contains("add"));
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette {}"), Set.of("Palette")))
+                .anyMatch(reason -> reason.contains("missing") && reason.contains("size"));
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } }")))
+                .anyMatch(reason -> reason.contains("missing") && reason.contains("add"));
+    }
+
+    @Test
+    void constructorCreationPreservesTheStartersImplicitConstructor() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Palette {
+                    /** @studentCreates */
+                    public Palette(int capacity) { ... }
+                }
+                ```
+                """, Set.of("Palette"), Set.of());
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette {}"), Set.of("Palette"))).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Palette.java", "public class Palette { public Palette(int capacity) {} }"))).isEmpty();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "private final int code; Mode(int code) { this.code = code; } public int code() { return code; }",
             "private Mode(int code) {} public int code() { return 1; }", "private int helper() { return 1; } Mode(int code) {} public int code() { return helper(); }" })
