@@ -25,6 +25,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -75,6 +77,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.google.common.util.concurrent.Striped;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -106,6 +110,8 @@ public class GitService extends AbstractGitService {
 
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
+
+    private final Striped<Lock> checkoutLocks = Striped.lazyWeakLock(256);
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
@@ -280,6 +286,28 @@ public class GitService extends AbstractGitService {
      */
     public Repository getOrCheckoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess) throws GitAPIException, GitException, InvalidPathException {
+        // Repository GETs also pull. Serialize preparation of each local working copy, otherwise overlapping reads can
+        // race JGit's index lock and the failed-pull cleanup can delete the other reader's checkout.
+        Lock lock = checkoutLocks.get(localPath.toAbsolutePath().normalize());
+        try {
+            if (!lock.tryLock(JGIT_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)) {
+                throw new GitException("The local repository is still being prepared");
+            }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CanceledException("Waiting for the local repository got interrupted");
+        }
+        try {
+            return prepareRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess);
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
+    private Repository prepareRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+            boolean writeAccess) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
