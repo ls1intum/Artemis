@@ -27,7 +27,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -77,8 +79,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.google.common.util.concurrent.Striped;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -111,7 +111,7 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    private final Striped<Lock> checkoutLocks = Striped.lazyWeakLock(256);
+    private final Lock[] checkoutLocks = IntStream.range(0, 256).mapToObj(_ -> new ReentrantLock()).toArray(Lock[]::new);
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
@@ -288,7 +288,7 @@ public class GitService extends AbstractGitService {
             boolean writeAccess) throws GitAPIException, GitException, InvalidPathException {
         // Repository GETs also pull. Serialize preparation of each local working copy, otherwise overlapping reads can
         // race JGit's index lock and the failed-pull cleanup can delete the other reader's checkout.
-        Lock lock = checkoutLocks.get(localPath.toAbsolutePath().normalize());
+        Lock lock = checkoutLocks[Math.floorMod(localPath.toAbsolutePath().normalize().hashCode(), checkoutLocks.length)];
         try {
             if (!lock.tryLock(JGIT_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)) {
                 throw new GitException("The local repository is still being prepared");
