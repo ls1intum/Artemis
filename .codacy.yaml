@@ -49,10 +49,13 @@ exclude_paths:
   - "src/main/resources/templates/**"
   - "src/main/resources/templates/**/*"
   # Test code and test resources: hardcoded test credentials, non-literal fs/regexp in helpers and
-  # sample payloads are intentional fixtures, not defects.
+  # sample payloads are intentional fixtures, not defects. Both spec extensions are named: the ESLint
+  # rule tests in rules/ are .spec.mjs and sit outside every directory excluded here, so without the
+  # second pattern their regex-heavy fixtures are still graded as application code.
   - "src/test/**"
   - "src/test/**/*"
   - "**/*.spec.ts"
+  - "**/*.spec.mjs"
   # Storybook stories and the Angular wrapper decorators: static examples that trip the
   # html-in-template-string rule through Storybook's rendering API.
   - "**/*.stories.ts"
@@ -71,6 +74,7 @@ engines:
       - "src/test/**"
       - "src/test/**/*"
       - "**/*.spec.ts"
+      - "**/*.spec.mjs"
       - "**/*.stories.ts"
       - "packages/tum-ui/.storybook/story-decorators.ts"
       - "src/main/resources/templates/**"

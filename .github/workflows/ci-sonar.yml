@@ -100,6 +100,16 @@ jobs:
       - name: Install client dependencies
         run: pnpm install --frozen-lockfile
 
+      # And this is required for the same reason again. `tsconfig.json` maps `@tumaet/ui-angular` to
+      # `packages/tum-ui/dist`, which is a build output: it is not tracked and `pnpm install` does not
+      # create it. Without it every one of the ~240 application imports of the alias is unresolved,
+      # which is the same silent degradation as the missing `node_modules`. Only the library build is
+      # run, not the full `prebuild`: the rest of that script writes an angular.json file replacement
+      # no source imports and runs a vite version check that would fail this job for a reason
+      # unrelated to the scan.
+      - name: Build the TUM UI package the client imports
+        run: pnpm run tum-ui:build
+
       # Coverage is imported from the reports the `test` job already uploaded, so no suite is re-run
       # here. Both downloads are `continue-on-error`: a missing report costs the coverage metric and
       # nothing else, and must not lose us the ratings that are the point of this job.
