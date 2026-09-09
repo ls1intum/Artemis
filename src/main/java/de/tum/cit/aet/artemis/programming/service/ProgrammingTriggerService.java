@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -341,7 +342,7 @@ public class ProgrammingTriggerService {
         return continuousIntegrationTriggerService.get().prepareSharedTriggerData(exercise.get());
     }
 
-    public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
+    public void logTriggerInstructorBuild(@NonNull User user, @NonNull Exercise exercise, @NonNull Course course) {
         var auditEvent = new AuditEvent(user.getLogin(), TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} triggered an instructor build for all participations in exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
