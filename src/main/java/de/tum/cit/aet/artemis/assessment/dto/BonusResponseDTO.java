@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,8 +24,7 @@ public record BonusResponseDTO(Long id, double weight, BonusStrategy bonusStrate
      * @param includeSourceGradeSteps whether the grade steps of the source grading scale should be serialized
      * @return a DTO representation of the bonus
      */
-    public static BonusResponseDTO of(Bonus bonus, boolean includeSourceGradeSteps) {
-        Objects.requireNonNull(bonus, "bonus must exist");
+    public static BonusResponseDTO of(@NonNull Bonus bonus, boolean includeSourceGradeSteps) {
 
         GradingScaleForBonusDTO source = bonus.getSourceGradingScale() == null ? null : GradingScaleForBonusDTO.of(bonus.getSourceGradingScale(), includeSourceGradeSteps);
         GradingScaleForBonusDTO bonusTo = bonus.getBonusToGradingScale() == null ? null : GradingScaleForBonusDTO.of(bonus.getBonusToGradingScale(), false);

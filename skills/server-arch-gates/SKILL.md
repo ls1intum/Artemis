@@ -47,8 +47,12 @@ it rather than guessing; several of these rules forbid something that looks comp
 
 **No transaction boundaries in services or controllers.** `@Transactional`,
 `TransactionTemplate`, and `PlatformTransactionManager` belong in repositories, typically on
-modifying queries. Enforced by `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`.
+modifying queries, and `TransactionSynchronizationManager` is banned outright. Enforced globally by
+`testTransactionBoundariesOnlyInRepositories`, `testNoProgrammaticTransactionManagement` and
+`testNoTransactionSynchronization` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`. The replacements
+are a check in the `WHERE` clause of a `@Modifying` query, or explicit compensation in a `catch`
+block.
 
 **No direct persistence access.** No injected `EntityManager` or `EntityManagerFactory`, and no
 `JdbcClient`, `JdbcTemplate`, or `DataSource`. Write the statement as a `@Query` on a repository,

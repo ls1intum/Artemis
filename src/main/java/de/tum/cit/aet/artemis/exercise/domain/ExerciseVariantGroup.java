@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -16,6 +15,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -82,8 +82,8 @@ public class ExerciseVariantGroup extends DomainObject {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = Objects.requireNonNull(title, "title must not be null").strip();
+    public void setTitle(@NonNull String title) {
+        this.title = title.strip();
     }
 
     @Nullable
