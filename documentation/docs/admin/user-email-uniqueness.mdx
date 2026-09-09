@@ -6,10 +6,8 @@ sidebar_label: User Email Uniqueness
 
 # Resolving Duplicate User Email Addresses
 
-Artemis is preparing to enforce one case-insensitively unique email address per user account. During the preparation phase, Artemis rejects new conflicts and sends a weekly
-warning to `info.contact` when legacy conflicts remain. A future release will add the database constraint and will not start until all conflicts are resolved.
-
-The warning email intentionally contains only numeric user IDs. Names, logins, and email addresses must be inspected locally to limit personal data in email systems.
+Artemis enforces one case-insensitively unique email address per user account. Before upgrading to the release that introduces the database constraint, administrators must
+resolve all legacy conflicts. The database migration stops with an actionable error when conflicts remain instead of changing account ownership automatically.
 
 ## Find affected accounts
 
@@ -79,13 +77,13 @@ Configure `saml2.username-pattern` from a stable, persistent, and globally uniqu
 institution-controlled immutable identifier is preferable. Do not derive usernames from first and last names. With multiple IdPs, ensure the resulting usernames cannot
 overlap across providers.
 
-Before enabling the future constraint, check these IdP cases:
+Before upgrading to the release containing the database constraint, check these IdP cases:
 
 - If an IdP identifier changed for the same person, update the existing Artemis login through user administration or restore the stable IdP identifier. Do not allow the next
   login to create a second Artemis account.
 - If an email was recycled for a different person, remove or replace it on the former Artemis account before provisioning the new person.
 - If distinct federated identities intentionally share a mailbox, provide unique personal addresses or omit the email attribute for accounts that do not require email-based
-  workflows. Blank SAML2 email attributes are stored as `NULL` during the preparation phase.
+  workflows. Blank SAML2 email attributes are stored as `NULL`.
 - If multiple IdPs are configured, coordinate identifier and email ownership across all of them. Artemis currently records an account as external but does not persist which
   IdP created it, so provider attribution must be established from the IdP and operational records.
 
@@ -100,5 +98,4 @@ warning naming the setting. Point the setting at an unused address if the intern
 
 ## Verify readiness
 
-The installation is ready for the implementation phase when the detection query returns no rows. Keep the weekly report enabled until the release containing the database
-constraint has been deployed successfully.
+The database migration can complete when the detection query returns no rows. Run it immediately before the upgrade to catch conflicts introduced since the previous review.
