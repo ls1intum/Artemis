@@ -40,10 +40,11 @@ public class HyperionWebsocketService {
             log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
         }
         catch (InterruptedException | ExecutionException e) {
-            if (e instanceof InterruptedException) {
-                // Swallowing the exception must not also swallow the interruption.
-                Thread.currentThread().interrupt();
-            }
+            // The interrupt status is deliberately not restored, which is what java:S2142 would ask for. A code
+            // generation job sends many messages through this method on one thread and finishes with a terminal done
+            // or error event. CompletableFuture.get() throws as soon as the flag is set, so restoring it would fail
+            // every later send of that job, including the terminal one, and the client's job view would stay "in
+            // progress" until the page is reloaded.
             log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
         }
     }

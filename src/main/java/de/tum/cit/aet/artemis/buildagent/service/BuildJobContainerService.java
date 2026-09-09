@@ -412,9 +412,8 @@ public class BuildJobContainerService {
      * {@link DockerClient#stopContainerCmd(String)}, {@link DockerClient#killContainerCmd(String)} and {@link DockerClient#removeContainerCmd(String)} to stop, kill or remove the
      * container.
      * <p>
-     * Gives up without trying the kill and remove fallbacks when the thread is interrupted, since both wait on a
-     * {@link Future} that fails immediately on an interrupted thread. The container is then left to the periodic
-     * cleanup.
+     * Runs to the end even when the calling thread has been interrupted, because it is reached during cancellation and
+     * stopping the container is exactly the work that still has to happen.
      *
      * @param containerId The ID of the container to stop or kill.
      */
@@ -438,16 +437,12 @@ public class BuildJobContainerService {
                 future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
             }
             catch (Exception e) {
-                if (e instanceof InterruptedException) {
-                    // future.get() throws this when the waiting thread is interrupted. The broad catch is here for the
-                    // Docker client's own failures; it must not also discard a shutdown request.
-                    Thread.currentThread().interrupt();
-                    // Both fallbacks below block on a Future as well, so with the flag restored they would fail
-                    // immediately and log a Docker error that never happened. Leave the container to the periodic
-                    // cleanup, which removes orphans on the next run.
-                    log.warn("Interrupted while stopping unresponsive container with id {}. Leaving it to the next cleanup run.", containerId);
-                    return;
-                }
+                // The interrupt status is deliberately left cleared here, which is what java:S2142 would ask to
+                // restore. This method is reached during cancellation from callers that have already restored the flag
+                // themselves - BuildJobManagementService.awaitTermination and the pause grace period in
+                // SharedQueueProcessingService both do - and every Docker call below waits on a Future, which fails
+                // immediately while the flag is set. Restoring it would abandon a running container per cancelled job
+                // and leave the students' build scripts burning CPU until the hourly container cleanup reaps them.
                 Throwable cause = e.getCause();
                 // e will be ExecutionException if thrown in executor service by submitted task
                 // We are interested in the underlying cause in this case
@@ -501,10 +496,10 @@ public class BuildJobContainerService {
             killFuture.get(10, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
         }
         catch (Exception e) {
-            if (e instanceof InterruptedException) {
-                // See stopContainer: killFuture.get() throws this on interruption.
-                Thread.currentThread().interrupt();
-            }
+            // Not restoring the interrupt status is deliberate; see stopUnresponsiveContainer. Restoring it here would
+            // additionally make the enclosing try-with-resources close the executor with shutdownNow() instead of
+            // shutdown(), which drains the work queue and so drops a kill or remove task still queued behind a
+            // wedged stop.
             log.error("Failed to kill container with id {}.", containerId, e);
         }
     }
@@ -525,10 +520,7 @@ public class BuildJobContainerService {
             removeFuture.get(10, TimeUnit.SECONDS); // Wait for the remove command to complete with a timeout
         }
         catch (Exception e) {
-            if (e instanceof InterruptedException) {
-                // See stopContainer: removeFuture.get() throws this on interruption.
-                Thread.currentThread().interrupt();
-            }
+            // Not restoring the interrupt status is deliberate; see killContainer.
             log.error("Failed to remove container with id {}", containerId, e);
         }
     }

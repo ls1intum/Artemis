@@ -128,7 +128,13 @@ public class ProgrammingTriggerService {
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(exerciseId);
-        triggerBuildForParticipationData(triggerData, programmingExercise);
+        if (!triggerBuildForParticipationData(triggerData, programmingExercise)) {
+            // Only part of the participations were triggered. Leaving the exercise marked as changed and not announcing
+            // a completed run is what keeps the remaining participations from being forgotten: clearing the flag here
+            // would tell the next scheduled build that there is nothing left to do.
+            log.warn("The instructor build run for exercise {} stopped before every participation was triggered. The exercise stays marked as changed.", exerciseId);
+            return;
+        }
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         // Deliberately by id: that call saves the exercise, and the exercise loaded above carries its auxiliary
@@ -151,10 +157,11 @@ public class ProgrammingTriggerService {
      * @param triggerData what a trigger reads off each participation of the exercise, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
      *                        repositories
+     * @return true if the whole batch was triggered, false if it stopped early because the thread was interrupted
      */
-    public void triggerBuildForParticipationData(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
+    public boolean triggerBuildForParticipationData(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
         if (triggerData.isEmpty()) {
-            return;
+            return true;
         }
         // Everything a trigger reads off the exercise rather than off the participation is resolved once for the batch:
         // the build config, the auxiliary repositories, the build statistics and the head commit of the test
@@ -167,11 +174,12 @@ public class ProgrammingTriggerService {
                 continue;
             }
             if (!pauseBetweenBatches(index, participationData.participationId())) {
-                break;
+                return false;
             }
             triggerBuild(participation, sharedData);
             index++;
         }
+        return true;
     }
 
     /**
