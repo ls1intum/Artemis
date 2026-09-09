@@ -75,15 +75,13 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
 
     @Override
     public @Nullable Boolean recordAmbientOfferUnderLock(long userId, long exerciseId, String episodeId, String hintText) {
-        var locked = lockEpisodeAndReadTerminal(episodeId, userId, exerciseId);
+        var episode = lockEpisode(episodeId, userId, exerciseId);
         // No row despite the caller's registration means retention removed it in between, which takes seven quiet days
         // and a trigger that then never refreshed it. Treat it as terminal rather than announcing a pointer at an
-        // episode nothing can resolve. The flag rather than the row's own outcome, so a message row that closed the
-        // episode without the registry learning of it counts here too.
-        if (locked.episode() == null || locked.terminal()) {
+        // episode nothing can resolve. Nothing is appended here, so this check needs no session lock ahead of it.
+        if (episode == null || isTerminal(episode, episodeId, userId, exerciseId)) {
             return null;
         }
-        var episode = locked.episode();
         if (episode.getConsumedAt() != null) {
             // The student already revealed this episode's offer, so its message exists and there is nothing fresh to
             // surface. Overwriting the text here would rewrite history the student has already seen.
@@ -112,16 +110,23 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
             return Optional.ofNullable(episode.getConsumedMessageId()).flatMap(irisMessageRepository::findById)
                     .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
         }
-        // The message rows too, not just this row's own outcome: an outcome that committed while registration was
-        // carrying over leaves the registry open, and revealing on the strength of that would hand the student a hint
-        // for an episode that is already closed.
-        if (episode.getOutcome() != null || !irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty()) {
+        if (episode.getOutcome() != null) {
+            throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
+        }
+        // The message rows have to be consulted too, because an outcome that committed while registration was
+        // carrying over leaves the registry row open. Under the session lock and after it, for the reasons
+        // isTerminal gives: this read must not take a message lock ahead of the session lock, and it must open its
+        // view once the append's mutex is held.
+        irisSessionRepository.getObject().findByIdWithWriteLockElseThrow(sessionId);
+        if (isTerminal(null, episodeId, userId, exerciseId)) {
             throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
         }
         if (episode.getHintText() == null) {
             // Registered, but nothing was ever offered for it: an active decision, a silent run, or a trigger whose
             // callback never arrived. There is no server-authored text to persist and the caller's copy must never be
-            // trusted, so this is the same refusal as an unknown episode.
+            // trusted, so this is the same refusal as an unknown episode. Below the terminal check, because an
+            // episode can be both: a closed one that never carried an offer is reported as closed, which is the
+            // answer that tells the client to stop asking.
             throw new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision");
         }
 
@@ -143,20 +148,25 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
     @Override
     public ProactiveAppendOutcome appendProactiveMessageWithOutcome(long sessionId, long userId, long exerciseId, String text, @Nullable String episodeId,
             @Nullable IrisProactiveOutcome outcomeOnSuccess) {
-        var locked = episodeId == null ? null : lockEpisodeAndReadTerminal(episodeId, userId, exerciseId);
-        if (locked != null && locked.terminal()) {
-            // Nothing was written yet, so this commits rather than rolls back, exactly as before.
-            return new ProactiveAppendOutcome(true, null);
+        var episode = episodeId == null ? null : lockEpisode(episodeId, userId, exerciseId);
+        if (episodeId != null) {
+            // Take the session write lock BEFORE deciding, so the decision and the append it guards are one unit and
+            // so the terminal read below runs on a view opened after that mutex was won. The append re-takes this
+            // lock, which is re-entrant for the holder.
+            irisSessionRepository.getObject().findByIdWithWriteLockElseThrow(sessionId);
+            if (isTerminal(episode, episodeId, userId, exerciseId)) {
+                // Nothing was written yet, so this commits rather than rolls back.
+                return new ProactiveAppendOutcome(true, null);
+            }
         }
         var saved = irisSessionRepository.getObject().appendProactiveMessage(sessionId, exerciseId, text, episodeId);
-        if (saved != null && locked != null && outcomeOnSuccess != null) {
+        if (saved != null && episodeId != null && outcomeOnSuccess != null) {
             // Same transaction as the append, still under the same lock.
-            var write = recordOutcomeForLockedEpisode(locked.episode(), episodeId, userId, exerciseId, outcomeOnSuccess);
+            var write = recordOutcomeForLockedEpisode(episode, episodeId, userId, exerciseId, outcomeOnSuccess);
             if (write != OutcomeWrite.APPLIED) {
-                // An unregistered episode has no registry row to lock. Its fallback check is a locking read, but one
-                // that can only lock rows that ALREADY carry an outcome, so a dismiss setting one on a still-null row
-                // can still commit between it and this write. The guarded UPDATE inside the write is what actually
-                // detects that, and the only honest answer once it does is to take the append back.
+                // The terminal check above reads the message rows without locking them, so a dismiss can commit
+                // between it and this write. The guarded UPDATE inside the write is what actually detects that, and
+                // the only honest answer once it does is to take the append back.
                 throw new IrisEpisodeWentTerminalException(episodeId);
             }
         }
@@ -306,43 +316,46 @@ public class IrisProactiveEpisodeWriteRepositoryImpl implements IrisProactiveEpi
     }
 
     /**
-     * Whether the episode is terminal, decided under the episode's registry write lock so the caller can write in the
-     * same transaction without anything interleaving. The message rows are consulted either way: for an episode with
-     * no registry row they are the only record there is, and for one with an open row they can still carry an outcome
-     * that registration did not see.
+     * The episode's registry row under this transaction's write lock, or null when it has none. Deciding whether the
+     * episode is terminal is deliberately a separate step: it reads the message rows too, and that read has to happen
+     * after the session lock, which is a caller's business rather than this one's.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the owning user
      * @param exerciseId the exercise the episode belongs to
-     * @return the locked row (or null when unregistered) and whether a terminal outcome stands
+     * @return the locked registry row, or null when the episode is not registered
      */
-    private LockedEpisode lockEpisodeAndReadTerminal(String episodeId, long userId, long exerciseId) {
-        var locked = irisProactiveEpisodeRepository.getObject().findForUpdate(userId, exerciseId, episodeId);
-        if (locked.isPresent()) {
-            // An open registry row does not settle it. Registration carries a pre-registry outcome over with an
-            // UNLOCKED read, so an outcome committing between that read and the insert leaves the row open while a
-            // message row already carries the episode's terminal state. Consult both and take either as terminal.
-            // The locking variant for the same reason the unregistered branch below uses it: after the lock above,
-            // a plain read would answer from a snapshot that can predate what another writer has since committed.
-            boolean terminal = locked.get().getOutcome() != null || !irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty();
-            return new LockedEpisode(locked.get(), terminal);
-        }
-        // The locking variant, so this branch keeps the promise the method's name makes. The registered branch above
-        // decides under a write lock; reading the fallback without one would let an outcome commit between this read
-        // and the caller's write. On MySQL it matters a second time: a plain read here would open the transaction's
-        // repeatable-read view before the session row is locked further down the call, so the message list the append
-        // later merges could predate a row another writer committed while we waited for that lock.
-        return new LockedEpisode(null, !irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty());
+    private @Nullable IrisProactiveEpisode lockEpisode(String episodeId, long userId, long exerciseId) {
+        return irisProactiveEpisodeRepository.getObject().findForUpdate(userId, exerciseId, episodeId).orElse(null);
     }
 
     /**
-     * The episode's row under this transaction's write lock, plus whether it is terminal. The two travel together
-     * because every caller that finds it non-terminal goes on to write to that same row, and looking it up again would
-     * both cost a round-trip and risk mutating a different instance than the one the lock attached to.
+     * Whether a terminal outcome stands for the episode, on the registry row or on any of its message rows.
      *
-     * @param episode  the locked row, or null when the episode is not registered
-     * @param terminal whether a terminal outcome stands for the episode
+     * <p>
+     * An open registry row does not settle it on its own: registration carries a pre-registry outcome over with an
+     * unlocked read, so an outcome committing between that read and the insert leaves the row open while a message
+     * row already carries the episode's terminal state. Either record closes the episode.
+     *
+     * <p>
+     * The message read is deliberately NOT a locking one, and every caller that goes on to append calls this AFTER
+     * taking the session write lock. Both halves of that matter on MySQL. A locking read here would scan the
+     * {@code (episode, exercise)} index and, under REPEATABLE READ, hold locks on the rows it scanned even where the
+     * unindexed outcome predicate rejects them - message rows locked before the session row, while
+     * {@link IrisSessionWriteRepository#deleteSupersededProactiveMessageAndCompact} takes the session row first and
+     * the message row second. That is a deadlock, and neither side retries. Reading plainly takes no message lock at
+     * all. Running after the session lock is what keeps the plain read current enough: it opens this transaction's
+     * repeatable-read view once the append's mutex is already held, so it sees everything committed before the append
+     * could begin. An outcome committing after that is the in-flight overlap this feature accepts.
+     *
+     * @param episode    the locked registry row, or null when the episode is not registered
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the owning user
+     * @param exerciseId the exercise the episode belongs to
+     * @return whether a terminal outcome stands for the episode
      */
-    private record LockedEpisode(@Nullable IrisProactiveEpisode episode, boolean terminal) {
+    private boolean isTerminal(@Nullable IrisProactiveEpisode episode, String episodeId, long userId, long exerciseId) {
+        return (episode != null && episode.getOutcome() != null) || !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
     }
+
 }

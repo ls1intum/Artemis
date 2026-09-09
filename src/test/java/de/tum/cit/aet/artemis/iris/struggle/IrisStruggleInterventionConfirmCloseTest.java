@@ -177,11 +177,12 @@ class IrisStruggleInterventionConfirmCloseTest {
     }
 
     @Test
-    void confirmClose_unregisteredEpisode_decidesTerminalWithTheLockingReadBeforeAppending() {
+    void confirmClose_unregisteredEpisode_decidesTerminalUnderTheSessionLockBeforeAppending() {
         // The registered branch decides under the episode's registry write lock. An unregistered episode has no such
-        // row, and its fallback onto the message rows has to be a locking read as well: a plain one would let an
-        // outcome commit between the check and the append it guards, and on MySQL it would additionally open the
-        // transaction's repeatable-read view before the session row is locked further down.
+        // row and falls back to its message rows, read plainly and only once the session write lock is held: locking
+        // those rows first is the order that deadlocks with the superseded-message delete, and taking the session
+        // lock first is also what keeps the plain read current enough to see every outcome committed before the
+        // append could begin.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
@@ -191,8 +192,9 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         service.handleConfirmClose(progressJob, closeUpdate(true, "Closing", "Done", null));
 
-        InOrder order = inOrder(irisMessageRepository, irisSessionRepository);
-        order.verify(irisMessageRepository).findEpisodeOutcomesForUpdate("ep-cc", 3L, 42L);
+        InOrder order = inOrder(irisSessionRepository, irisMessageRepository);
+        order.verify(irisSessionRepository).findByIdWithWriteLockElseThrow(session.getId());
+        order.verify(irisMessageRepository).findEpisodeOutcomes("ep-cc", 3L, 42L);
         order.verify(irisSessionRepository).saveAndFlush(any(IrisSession.class));
     }
 

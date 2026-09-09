@@ -27,11 +27,15 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
  * {@code iris_message.proactive_outcome} is only a mirror of it, kept for the history replayed to Pyris.
  *
  * <p>
- * Lock order is not uniform and must not be made uniform. A registered episode is locked first
- * ({@link IrisProactiveEpisodeRepository#findForUpdate}) and its session second. An episode with no registry row has
- * no such row to lock, so its fallback locks the message rows
- * ({@link IrisMessageRepository#findEpisodeOutcomesForUpdate}) and then the session. The two orders never meet,
- * because an episode is either registered or it is not.
+ * Lock order runs episode, then session, then message rows, and it has to. A registered episode is locked first
+ * ({@link IrisProactiveEpisodeRepository#findForUpdate}); an unregistered one has no row to lock and starts at the
+ * session. No operation that goes on to append reads or writes a message row before the session row is held,
+ * because
+ * {@link IrisSessionWriteRepository#deleteSupersededProactiveMessageAndCompact} takes the session first and the
+ * message row second, and the opposite order deadlocks against it on InnoDB: a locking read over the
+ * {@code (episode, exercise)} index holds every row it scanned under REPEATABLE READ, including the ones the
+ * unindexed outcome predicate rejects. That is why the terminal check reads the message rows plainly and only once
+ * the session lock is held.
  */
 @Lazy
 @Repository

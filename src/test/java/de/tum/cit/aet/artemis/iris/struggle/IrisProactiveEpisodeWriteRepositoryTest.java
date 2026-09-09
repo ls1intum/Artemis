@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
@@ -73,20 +75,25 @@ class IrisProactiveEpisodeWriteRepositoryTest {
 
     @Test
     void appendWithOutcome_whenAForeignOutcomeWonUnderTheLock_takesTheAppendBack() {
-        // The unregistered episode's terminal check is a locking read that can only lock rows which ALREADY carry an
-        // outcome, so a dismiss setting one on a still-null row commits between the check and this write. The locking
-        // read therefore reports the episode open, and the plain read inside the outcome write sees the winner.
+        // The terminal check reads the message rows without locking them, so a dismiss can still commit between it
+        // and the write it guards. The guarded UPDATE is what detects that: it reports zero rows, and the locking
+        // re-read behind it names the outcome that won.
         when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-lost")).thenReturn(Optional.empty());
-        when(irisMessageRepository.findEpisodeOutcomesForUpdate("ep-lost", USER_ID, EXERCISE_ID)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeOutcomes("ep-lost", USER_ID, EXERCISE_ID)).thenReturn(List.of());
         when(irisSessionRepository.appendProactiveMessage(SESSION_ID, EXERCISE_ID, "Closing.", "ep-lost")).thenReturn(new IrisMessage());
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-lost", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-lost", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.RECOVERED)).thenReturn(0);
+        when(irisMessageRepository.findEpisodeOutcomesForUpdate("ep-lost", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
 
         assertThatExceptionOfType(IrisEpisodeWentTerminalException.class)
                 .isThrownBy(() -> writeRepository.appendProactiveMessageWithOutcome(SESSION_ID, USER_ID, EXERCISE_ID, "Closing.", "ep-lost", IrisProactiveOutcome.RECOVERED));
 
-        // The append is undone by the rollback the throw triggers, so nothing may be stamped alongside it either.
-        verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
+        // The session write lock is taken before the episode's message rows are read, never the other way round: the
+        // superseded-message delete holds the session row and then takes the message row, and the opposite order
+        // deadlocks against it on InnoDB.
+        InOrder order = inOrder(irisSessionRepository, irisMessageRepository);
+        order.verify(irisSessionRepository).findByIdWithWriteLockElseThrow(SESSION_ID);
+        order.verify(irisMessageRepository).findEpisodeOutcomes("ep-lost", USER_ID, EXERCISE_ID);
     }
 
     @Test
