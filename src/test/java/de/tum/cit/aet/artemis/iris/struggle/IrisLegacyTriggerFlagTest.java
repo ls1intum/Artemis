@@ -150,7 +150,11 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // Restore what was actually configured, not a hardcoded true: the property default may change, and a
         // profile could set it differently, in which case writing true would silently alter the shared context
         // for every later test in the slice.
-        ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", previousLegacyBuildTriggersEnabled);
+        // Nothing to restore when setup failed before the capture. JUnit runs this method anyway, and the field is a
+        // primitive boolean, so writing the still-null holder would throw and bury the setup failure it came from.
+        if (previousLegacyBuildTriggersEnabled != null) {
+            ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", previousLegacyBuildTriggersEnabled);
+        }
     }
 
     private Result createFailingSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {
