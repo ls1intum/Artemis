@@ -11,6 +11,7 @@ import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise
 import { ExerciseGenerationRetainedArtifacts } from 'app/openapi/model/exercise-generation-retained-artifacts';
 import { ExerciseGenerationFileChange, HyperionFileChangeAction, HyperionFileChangeRepo } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Course } from 'app/course/shared/entities/course.model';
 
 const EXERCISE_ID = 42;
@@ -49,6 +50,7 @@ describe('HyperionArtifactsComponent', () => {
             imports: [HyperionArtifactsComponent],
             providers: [
                 provideRouter([]),
+                { provide: CodeEditorRepositoryFileService, useValue: { getFile: vi.fn().mockReturnValue(of({ fileContent: 'saved source' })) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: HyperionExerciseGenerationApi, useValue: { getRetainedGenerationArtifacts: getRetained } },
             ],

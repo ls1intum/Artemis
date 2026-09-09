@@ -67,12 +67,16 @@
                             <jhi-hyperion-file-change-list [files]="artifacts()" [running]="running()" [selectedKey]="selectedFileKey()" (fileSelected)="selectFile($event)" />
                         </div>
                         <div class="min-w-0 lg:col-span-2">
-                            <jhi-hyperion-file-content
-                                [file]="selectedFile()"
-                                [state]="contentState()"
-                                [editorLink]="selectedEditorLink()"
-                                (retryRequested)="retryRetainedArtifacts()"
-                            />
+                            @if (saved() && terminal() && !running() && exercise() && selectedFile() && selectedEditorLink()) {
+                                <jhi-hyperion-repository-preview [file]="selectedFile()!" [exercise]="exercise()!" [editorLink]="selectedEditorLink()" />
+                            } @else {
+                                <jhi-hyperion-file-content
+                                    [file]="selectedFile()"
+                                    [state]="contentState()"
+                                    [editorLink]="selectedEditorLink()"
+                                    (retryRequested)="retryRetainedArtifacts()"
+                                />
+                            }
                         </div>
                     </div>
                 } @else {
