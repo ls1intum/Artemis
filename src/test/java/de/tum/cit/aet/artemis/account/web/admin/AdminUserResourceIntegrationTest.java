@@ -1130,9 +1130,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         @WithMockUser(username = "admin", roles = "ADMIN")
         void updateUserAllowsItsOwnEmailInADifferentCase() throws Exception {
             String email = TEST_PREFIX + "own-address@test.de";
-            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "own-address");
-            user.setEmail(email);
-            user = userTestRepository.save(user);
+            User user = userUtilService.createAndSaveUserWithEmail(TEST_PREFIX + "own-address", email);
 
             ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());
             update.setId(user.getId());
@@ -1149,9 +1147,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void updateUserRejectsAnEmailHeldByAnotherAccount() throws Exception {
-            User holder = userUtilService.createAndSaveUser(TEST_PREFIX + "address-holder");
-            holder.setEmail(TEST_PREFIX + "taken-address@test.de");
-            userTestRepository.save(holder);
+            User holder = userUtilService.createAndSaveUserWithEmail(TEST_PREFIX + "address-holder", TEST_PREFIX + "taken-address@test.de");
             User user = userUtilService.createAndSaveUser(TEST_PREFIX + "address-taker");
 
             ManagedUserVM update = userUtilService.createManagedUserVM(user.getLogin());

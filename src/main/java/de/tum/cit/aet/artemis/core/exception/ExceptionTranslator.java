@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,12 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     private static final String MESSAGE_KEY = "message";
 
     private static final String PATH_KEY = "path";
+
+    /**
+     * The unique index on {@code jhi_user(email)}, created by
+     * {@code src/main/resources/config/liquibase/changelog/20260830233350_changelog.xml}.
+     */
+    private static final String UNIQUE_USER_EMAIL_INDEX = "jhi_user_email";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -120,6 +127,47 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         ProblemDetail detail = problem.getBody();
         postProcess(detail, request);
         return ResponseEntity.status(problem.getStatusCode()).headers(headers).body(detail);
+    }
+
+    /**
+     * Turns a violation of the unique user email index into the same response the availability check produces.
+     * <p>
+     * The check in {@code UserCreationService} reads before it writes, so two requests claiming the same address can
+     * both pass it and only the second one fails, in the database. Without this the generic handler would answer that
+     * loser with a 500 for what is an ordinary, entirely expected conflict the client already knows how to display.
+     * The violation can also surface at commit rather than at the {@code save} call, which is the other reason this
+     * sits here rather than around any single repository call.
+     * <p>
+     * Only this one index is translated. Every other integrity violation keeps falling through to
+     * {@link #handleGenericException}, because mapping them all to a client error would hide genuine bugs behind a
+     * plausible-looking 400.
+     *
+     * @param ex      the integrity violation the database raised
+     * @param request the current web request
+     * @return the duplicate-email response for this index, and the generic response for anything else
+     */
+    @ExceptionHandler
+    public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(DataIntegrityViolationException ex, NativeWebRequest request) {
+        if (violatesUniqueUserEmailIndex(ex)) {
+            log.warn("Rejected a user write that would have duplicated an email address: {}", ExceptionUtils.getRootCauseMessage(ex));
+            return handleEmailAlreadyUsedException(new EmailAlreadyUsedException(), request);
+        }
+        return handleGenericException(ex, request);
+    }
+
+    /**
+     * Whether an integrity violation comes from the unique index on {@code jhi_user(email)}.
+     * <p>
+     * Matched on the index name over the whole cause chain rather than on a message the driver formats, because the two
+     * supported databases word it differently — PostgreSQL reports {@code violates unique constraint "jhi_user_email"}
+     * and MySQL {@code Duplicate entry '…' for key 'jhi_user.jhi_user_email'} — and the index name is the part both of
+     * them carry.
+     *
+     * @param ex the integrity violation the database raised
+     * @return true if the violated index is the unique user email index
+     */
+    private static boolean violatesUniqueUserEmailIndex(DataIntegrityViolationException ex) {
+        return ExceptionUtils.getThrowableList(ex).stream().map(Throwable::getMessage).anyMatch(message -> Strings.CI.contains(message, UNIQUE_USER_EMAIL_INDEX));
     }
 
     /**
