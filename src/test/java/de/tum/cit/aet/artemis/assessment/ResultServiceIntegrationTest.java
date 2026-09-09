@@ -236,27 +236,44 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result entityResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId());
         programmingFeedbackSynthesizerService.attachSynthesizedFeedback(entityResult);
         Map<Long, Set<String>> entityKeysById = new HashMap<>();
+        Map<Long, Set<String>> entityTestCaseKeysById = new HashMap<>();
         for (Feedback feedback : entityResult.getFeedbacks()) {
             JsonNode entityJson = request.getObjectMapper().valueToTree(feedback.result(null));
-            Set<String> keys = new HashSet<>();
-            entityJson.fieldNames().forEachRemaining(keys::add);
-            entityKeysById.put(feedback.getId(), keys);
+            entityKeysById.put(feedback.getId(), keysOf(entityJson));
+            if (entityJson.has("testCase")) {
+                entityTestCaseKeysById.put(feedback.getId(), keysOf(entityJson.get("testCase")));
+            }
         }
         assertThat(entityKeysById).hasSize(3);
+        // the nested test case was serialized with all its scalars, only "tasks" and "exercise" were ignored on the entity
+        assertThat(entityTestCaseKeysById).hasSize(1);
 
         String url = "/api/assessment/participations/" + programmingExerciseStudentParticipation.getId() + "/results/" + result.getId() + "/details";
         JsonNode dtoJson = request.getObjectMapper().readTree(request.get(url, HttpStatus.OK, String.class));
         assertThat(dtoJson).hasSize(3);
         for (JsonNode feedbackJson : dtoJson) {
-            Set<String> keys = new HashSet<>();
-            feedbackJson.fieldNames().forEachRemaining(keys::add);
             long id = feedbackJson.get("id").asLong();
-            assertThat(keys).as("keys of feedback %d", id).containsAll(entityKeysById.get(id));
+            assertThat(keysOf(feedbackJson)).as("keys of feedback %d", id).containsAll(entityKeysById.get(id));
+            if (entityTestCaseKeysById.containsKey(id)) {
+                assertThat(keysOf(feedbackJson.get("testCase"))).as("test case keys of feedback %d", id).containsAll(entityTestCaseKeysById.get(id));
+            }
         }
         JsonNode testCaseJson = dtoJson.findValue("testCase");
         assertThat(testCaseJson).isNotNull();
         assertThat(testCaseJson.get("id").asLong()).isEqualTo(testCase.getId());
         assertThat(testCaseJson.get("testName").asText()).isEqualTo("goldenTest");
+        assertThat(testCaseJson.get("weight").asDouble()).isEqualTo(testCase.getWeight());
+        assertThat(testCaseJson.get("active").asBoolean()).isEqualTo(testCase.isActive());
+        assertThat(testCaseJson.get("visibility").asText()).isEqualTo(testCase.getVisibility().name());
+        assertThat(testCaseJson.get("bonusMultiplier").asDouble()).isEqualTo(testCase.getBonusMultiplier());
+        assertThat(testCaseJson.get("bonusPoints").asDouble()).isEqualTo(testCase.getBonusPoints());
+        assertThat(testCaseJson.get("type").asText()).isEqualTo(testCase.getType().name());
+    }
+
+    private static Set<String> keysOf(JsonNode node) {
+        Set<String> keys = new HashSet<>();
+        node.fieldNames().forEachRemaining(keys::add);
+        return keys;
     }
 
     @Test

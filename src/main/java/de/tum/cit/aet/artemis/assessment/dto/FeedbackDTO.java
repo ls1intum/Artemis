@@ -8,6 +8,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 
 /**
  * DTO containing {@link Feedback} information.
@@ -18,14 +19,23 @@ public record FeedbackDTO(Long id, String text, String detailText, boolean hasLo
         Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase) implements Serializable {
 
     /**
-     * The test case an automatic programming feedback belongs to. Only the id and the name are carried: the client renders
-     * the test name and matches feedback to tasks by the id.
+     * The test case an automatic programming feedback belongs to. The components are every scalar property
+     * {@link ProgrammingExerciseTestCase} serialized at this position before the migration: the entity carried
+     * {@code @JsonIgnoreProperties({ "tasks", "exercise" })}, so only those two associations were left out.
+     * The Artemis client reads the id and the name, the route is also served to the SCORPIO extension.
      *
-     * @param id       the id of the test case
-     * @param testName the name of the test case
+     * @param id              the id of the test case
+     * @param testName        the name of the test case
+     * @param weight          the weight of the test case
+     * @param active          whether the test case counts towards the score
+     * @param visibility      when the test case is shown to students
+     * @param bonusMultiplier the bonus multiplier of the test case
+     * @param bonusPoints     the bonus points of the test case
+     * @param type            the type of the test case
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TestCaseDTO(Long id, String testName) implements Serializable {
+    public record TestCaseDTO(Long id, String testName, Double weight, Boolean active, Visibility visibility, Double bonusMultiplier, Double bonusPoints,
+            ProgrammingExerciseTestCaseType type) implements Serializable {
 
         /**
          * Converts a test case into a TestCaseDTO.
@@ -37,7 +47,8 @@ public record FeedbackDTO(Long id, String text, String detailText, boolean hasLo
             if (testCase == null) {
                 return null;
             }
-            return new TestCaseDTO(testCase.getId(), testCase.getTestName());
+            return new TestCaseDTO(testCase.getId(), testCase.getTestName(), testCase.getWeight(), testCase.isActive(), testCase.getVisibility(), testCase.getBonusMultiplier(),
+                    testCase.getBonusPoints(), testCase.getType());
         }
     }
 
