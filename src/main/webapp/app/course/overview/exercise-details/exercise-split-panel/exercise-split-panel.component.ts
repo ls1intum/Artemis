@@ -181,15 +181,15 @@ export class ExerciseSplitPanelComponent {
     /**
      * Whether the details belong above the tasks rather than in a tab of their own.
      *
-     * True only for a programming exercise without the online editor, which is the one case that never gains an editor
-     * panel: the left pane stays the problem statement for the whole life of the exercise, so there is no relayout to
-     * protect against and the tab would cost a click for nothing. Every other type gets an editor once it starts, so
-     * its details stay in the tab and do not move when the student presses Start.
+     * True for every programming exercise, with or without the online editor. Its problem statement always leads with
+     * the task list, which is what the student reads the points and the due date against, so the details belong at the
+     * top of it rather than a click away — and putting them there means both kinds of programming exercise read the
+     * same, whether the left pane holds the editor or the problem statement itself.
+     *
+     * The other types keep the tab. A quiz has no problem statement panel at all, and the rest gain an editor once the
+     * student starts, so a tab is the one place their details can sit without moving on Start.
      */
-    readonly detailsInProblemStatement = computed(() => {
-        const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && !(exercise as ProgrammingExercise).allowOnlineEditor;
-    });
+    readonly detailsInProblemStatement = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
 
     readonly showEditorPanel = computed(() => {
         const type = this.exercise().type;

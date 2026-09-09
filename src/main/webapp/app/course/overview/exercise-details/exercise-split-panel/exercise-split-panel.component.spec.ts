@@ -208,12 +208,12 @@ describe('ExerciseSplitPanelComponent', () => {
             expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.details');
         });
 
-        it('should keep the details in a tab when programming has the online editor', () => {
+        it('should put the details above the tasks for programming with the online editor too', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
             fixture.detectChanges();
 
-            expect(component.detailsInProblemStatement()).toBe(false);
-            expect(panelLabels()).toContain('artemisApp.courseOverview.exerciseDetails.details');
+            expect(component.detailsInProblemStatement()).toBe(true);
+            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.details');
         });
 
         it('should keep the details panel off index 0 once a participation opens the editor', () => {
