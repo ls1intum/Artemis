@@ -79,8 +79,9 @@ class SpecificationReviewCritic {
 
     private record SpecificationLearningFitItem(@Nullable List<String> briefEvidenceIds, @Nullable List<String> specEvidenceIds, @Nullable List<String> objectiveEvidenceIds,
             @Nullable List<String> studentOwnershipEvidenceIds, @Nullable List<String> assessmentEvidenceIds, @Nullable String objectiveMechanism,
-            @Nullable String remainingStudentReasoning, @Nullable String domainGrounding, @Nullable Boolean learnerOwnsObjectiveMechanism, @Nullable Boolean objectiveObservable,
-            @Nullable Boolean difficultySufficient, @Nullable Boolean domainGrounded, @Nullable Boolean sufficient, @Nullable SpecificationLearningFitDirection direction) {
+            @Nullable String remainingStudentReasoning, @Nullable String domainGrounding, @Nullable String scaffoldingRationale, @Nullable Boolean scaffoldingAligned,
+            @Nullable Boolean learnerOwnsObjectiveMechanism, @Nullable Boolean objectiveObservable, @Nullable Boolean difficultySufficient, @Nullable Boolean domainGrounded,
+            @Nullable Boolean sufficient, @Nullable SpecificationLearningFitDirection direction) {
     }
 
     private enum SpecificationLearningFitDirection {
@@ -599,6 +600,7 @@ class SpecificationReviewCritic {
         List<SpecificationExampleCheckItem> checkedExamples = exampleChecks == null ? List.of() : exampleChecks;
         long consistentExamples = checkedExamples.stream().filter(item -> Boolean.TRUE.equals(item.consistent())).count();
         String summary = "Learning fit: " + learningFit.direction() + ". Learner owns objective mechanism: " + learningFit.learnerOwnsObjectiveMechanism()
+                + ". Scaffolding aligned: " + learningFit.scaffoldingAligned() + ". Scaffolding rationale: " + truncateLearningEvidence(learningFit.scaffoldingRationale().strip())
                 + ". Objective observable end to end: " + learningFit.objectiveObservable() + ". Objective mechanism: "
                 + truncateLearningEvidence(learningFit.objectiveMechanism().strip()) + "\nRemaining student reasoning: "
                 + truncateLearningEvidence(learningFit.remainingStudentReasoning().strip()) + "\nDomain grounding: "
@@ -623,8 +625,8 @@ class SpecificationReviewCritic {
         String diagnosis = "Learning fit — brief says \"" + truncate(evidence.brief().resolve(learningFit.briefEvidenceIds())) + "\"; SPEC evidence says \""
                 + evidence.specification().resolve(learningFit.specEvidenceIds()) + "\"; objective evidence says \""
                 + evidence.specification().resolve(learningFit.objectiveEvidenceIds()) + "\": Objective mechanism: "
-                + truncateLearningEvidence(learningFit.objectiveMechanism().strip()) + " After routine work is removed: "
-                + truncateLearningEvidence(learningFit.remainingStudentReasoning().strip()) + " Domain grounding: "
+                + truncateLearningEvidence(learningFit.objectiveMechanism().strip()) + " Scaffolding: " + truncateLearningEvidence(learningFit.scaffoldingRationale().strip())
+                + " After routine work is removed: " + truncateLearningEvidence(learningFit.remainingStudentReasoning().strip()) + " Domain grounding: "
                 + truncateLearningEvidence(learningFit.domainGrounding().strip()) + " Repair: ";
         return diagnosis + switch (learningFit.direction()) {
             case TOO_SHALLOW ->
@@ -650,13 +652,17 @@ class SpecificationReviewCritic {
         if (item.domainGrounding() == null || item.domainGrounding().isBlank()) {
             return "domainGrounding is mandatory.";
         }
-        if (item.learnerOwnsObjectiveMechanism() == null || item.objectiveObservable() == null || item.difficultySufficient() == null || item.domainGrounded() == null
-                || item.sufficient() == null) {
-            return "all five learning-fit booleans are mandatory.";
+        if (item.scaffoldingRationale() == null || item.scaffoldingRationale().isBlank()) {
+            return "scaffoldingRationale is mandatory.";
         }
-        boolean derivedSufficient = item.learnerOwnsObjectiveMechanism() && item.objectiveObservable() && item.difficultySufficient() && item.domainGrounded();
+        if (item.scaffoldingAligned() == null || item.learnerOwnsObjectiveMechanism() == null || item.objectiveObservable() == null || item.difficultySufficient() == null
+                || item.domainGrounded() == null || item.sufficient() == null) {
+            return "all six learning-fit booleans are mandatory.";
+        }
+        boolean derivedSufficient = item.scaffoldingAligned() && item.learnerOwnsObjectiveMechanism() && item.objectiveObservable() && item.difficultySufficient()
+                && item.domainGrounded();
         if (item.sufficient() != derivedSufficient) {
-            return "sufficient must equal learnerOwnsObjectiveMechanism && objectiveObservable && difficultySufficient && domainGrounded.";
+            return "sufficient must equal scaffoldingAligned && learnerOwnsObjectiveMechanism && objectiveObservable && difficultySufficient && domainGrounded.";
         }
         if (item.direction() == null) {
             return "direction is mandatory.";

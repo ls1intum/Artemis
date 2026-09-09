@@ -151,11 +151,18 @@ interaction can genuinely carry the requested learning level. Do not invent vali
 complexity. If the selected concept's claimed difficulty disappears under contract closure, use CONCEPT_RESELECTION rather than escalating the specification with an
 incidental algorithm.
 
-The learningFit status is derived from four focused judgments, not a free overall score. Cite the relevant non-given Design row in
+The learningFit status is derived from five focused judgments, not a free overall score. Cite the relevant non-given Design row in
 studentOwnershipEvidenceIds and the Testing Strategy row that grades the objective path in assessmentEvidenceIds. Set learnerOwnsObjectiveMechanism false when the
 consequential behavior or collaboration is supplied; set objectiveObservable false when grading sees only leaf outputs rather than the interaction counted above;
 set difficultySufficient false when prescribed transcription and routine plumbing exhaust the student work; and set domainGrounded false when the counted behavior has
-no stated domain cause. `sufficient` is true exactly when all four booleans are true. Set learningFit.direction to `SUFFICIENT` exactly when sufficient=true. Otherwise
+no stated domain cause.
+Independently audit scaffolding BEFORE subtracting routine work. In scaffoldingRationale name what the learner must actually declare or implement (types, inheritance,
+members, bodies, initialized support), cite the brief's prerequisites and objective, and compare them with the Design table. Set scaffoldingAligned false when the
+starter assigns untaught or out-of-objective declarations to students, or supplies the declarations they are supposed to practice. Knowing what an object/class is
+is not evidence that a second-week API-use learner can declare a class and main method. For API-use/body-only work the entry class and method must be supplied
+(stubbed), even though an experienced programmer considers them boilerplate. Conversely, a method-declaration task needs those members absent. Do not subtract
+this mismatch and then approve the remaining API calls. A contradictory claim that only a method body changes cannot override a student-creates ownership row.
+`sufficient` is true exactly when all five focused booleans are true. Set learningFit.direction to `SUFFICIENT` exactly when sufficient=true. Otherwise
 choose `TOO_SHALLOW`, `TOO_COMPLEX`, or `MISALIGNED` from the cited diagnosis; do not give generic advice that simultaneously asks the author to deepen and simplify the
 work. The runner turns this direction into bounded repair guidance.
 
@@ -171,6 +178,7 @@ Respond with ONLY this complete JSON shape; learningFit and every array are mand
 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
  "studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],
  "objectiveMechanism":"end-to-end observable mechanism by which student work exercises the requested objective","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
+ "scaffoldingRationale":"actual learner declarations and implementation work versus the brief prerequisites and objective","scaffoldingAligned":true,
  "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"why the brief, concept, and specification require that action"},
  "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"legal calls that establish the boundary state","observedOperation":"public operation where the outcome occurs","reachable":true,"timingPreserved":true,"reason":"concrete trace from setup to observed outcome"}],
