@@ -459,7 +459,7 @@
                         </div>
                     }
                 </jhi-feature-overlay>
-                @if (isAtLeastInstructor()) {
+                @if (isAtLeastInstructor() && isAthenaEnabled()) {
                     <div class="nested-form-group-head flex items-center gap-2">
                         <tum-ui-checkbox
                             inputId="field_athenaFeedbackEnabled"

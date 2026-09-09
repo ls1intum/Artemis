@@ -242,7 +242,7 @@
                     "label": "KI-gestütztes Feedback für Aufgaben aktiviert",
                     "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden."
                 },
-                "aiExperienceHint": "Ihre KI-Erfahrung ist nicht aktiviert. Aktivieren Sie sie, um KI-generiertes Feedback selbst zu sehen und zu nutzen.",
+                "aiExperienceHint": "Deine KI-Erfahrung ist nicht aktiviert. Aktiviere sie, um KI-generiertes Feedback selbst zu sehen und zu nutzen.",
                 "enableAiExperience": "KI-Erfahrung aktivieren",
                 "gradingFeedbackEnabled": {
                     "label": "Bewertungsfeedback-Vorschläge aktiviert",
