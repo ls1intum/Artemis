@@ -66,6 +66,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -130,10 +131,16 @@ import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForEnrollmentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForQuizSelectionDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseMemberDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithOrganizationsDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -610,12 +617,12 @@ public class CourseTestService {
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         course.setMaxRequestMoreFeedbackTimeDays(7);
         result = request.performMvcRequest(buildUpdateCourse(getFromRepo.getId(), course)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
-        assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
-        assertThat(updatedCourse.getCourseInformationSharingConfiguration()).as("information sharing config value updated successfully")
+        CourseUpdateDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        assertThat(updatedCourse.maxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
+        assertThat(updatedCourse.maxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
+        assertThat(updatedCourse.courseInformationSharingConfiguration()).as("information sharing config value updated successfully")
                 .isEqualTo(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-        assertThat(updatedCourse.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isTrue();
+        assertThat(updatedCourse.maxRequestMoreFeedbackTimeDays()).as("Course has right requestMoreFeedbackEnabled Value").isPositive();
     }
 
     // Test
@@ -907,11 +914,11 @@ public class CourseTestService {
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
         MvcResult result = request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        assertThat(updatedCourse.getShortName()).as("short name was changed correctly").isEqualTo(course.getShortName());
-        assertThat(updatedCourse.getTitle()).as("title was changed correctly").isEqualTo(course.getTitle());
-        assertThat(updatedCourse.getStartDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
-        assertThat(updatedCourse.getEndDate()).as("end date was changed correctly").isEqualTo(course.getEndDate());
+        CourseUpdateDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        assertThat(updatedCourse.shortName()).as("short name was changed correctly").isEqualTo(course.getShortName());
+        assertThat(updatedCourse.title()).as("title was changed correctly").isEqualTo(course.getTitle());
+        assertThat(updatedCourse.startDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
+        assertThat(updatedCourse.endDate()).as("end date was changed correctly").isEqualTo(course.getEndDate());
     }
 
     // Test
@@ -1026,18 +1033,14 @@ public class CourseTestService {
         Course activeCourse = coursesCreated.getFirst();
         Course inactiveCourse = coursesCreated.get(1);
 
-        List<Course> courses = request.getList("/api/course/courses/courses-with-quiz", HttpStatus.OK, Course.class);
+        List<CourseForQuizSelectionDTO> courses = request.getList("/api/course/courses/courses-with-quiz", HttpStatus.OK, CourseForQuizSelectionDTO.class);
 
-        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), inactiveCourse.getId())).toList()).as("Inactive course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.id(), inactiveCourse.getId())).toList()).as("Inactive course was filtered out").isEmpty();
 
-        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), activeCourse.getId())).findFirst();
+        Optional<CourseForQuizSelectionDTO> optionalCourse = courses.stream().filter(c -> Objects.equals(c.id(), activeCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
-        Course activeCourseNotFiltered = optionalCourse.orElseThrow();
-
-        for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
-            assertThat(exercise.getGradingInstructions()).as("Grading instructions are filtered out").isNull();
-            assertThat(exercise.getProblemStatement()).as("Problem statements are filtered out").isNull();
-        }
+        CourseForQuizSelectionDTO activeCourseNotFiltered = optionalCourse.orElseThrow();
+        assertThat(activeCourseNotFiltered.exercises()).isNotEmpty();
     }
 
     // Test
@@ -1402,7 +1405,7 @@ public class CourseTestService {
         Course course = createCourseWithEnrollmentEnabled(true);
         // remove student from course so that they are not already enrolled (UCR-based unenrollment)
         unenrollStudent1FromAllCourses();
-        request.get("/api/course/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, Course.class);
+        request.get("/api/course/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, CourseForEnrollmentDTO.class);
     }
 
     // Test
@@ -1642,14 +1645,12 @@ public class CourseTestService {
         Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
 
-        List<Course> coursesForNotifications = request.getList("/api/course/courses/for-notifications", HttpStatus.OK, Course.class);
+        List<CourseWithIdDTO> coursesForNotifications = request.getList("/api/course/courses/for-notifications", HttpStatus.OK, CourseWithIdDTO.class);
 
-        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePastId)).toList()).as("Past inactive course was filtered out").isEmpty();
-        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFutureId)).toList()).as("Future inactive course was filtered out")
-                .isEmpty();
+        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.id(), courseNotActivePastId)).toList()).as("Past inactive course was filtered out").isEmpty();
+        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.id(), courseNotActiveFutureId)).toList()).as("Future inactive course was filtered out").isEmpty();
 
-        optionalCourse = coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();
-        assertThat(optionalCourse).as("Active course was not filtered").isPresent();
+        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.id(), finalCourseActive.getId())).findFirst()).as("Active course was not filtered").isPresent();
     }
 
     // Test
@@ -1671,9 +1672,11 @@ public class CourseTestService {
     public void testGetCourseWithOrganizations() throws Exception {
         Course courseWithOrganization = courseUtilService.createCourseWithOrganizations();
         userUtilService.enrollPrefixedUsersInCourse(courseWithOrganization, userPrefix);
-        Course course = request.get("/api/course/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
-        assertThat(course.getOrganizations()).isEqualTo(courseWithOrganization.getOrganizations());
-        assertThat(course.getOrganizations()).isNotEmpty();
+        CourseWithOrganizationsDTO response = request.get("/api/course/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK,
+                CourseWithOrganizationsDTO.class);
+        assertThat(response.organizations()).extracting(OrganizationDTO::id)
+                .containsExactlyInAnyOrderElementsOf(courseWithOrganization.getOrganizations().stream().map(Organization::getId).toList());
+        assertThat(response.organizations()).isNotEmpty();
     }
 
     // Test
@@ -1705,10 +1708,10 @@ public class CourseTestService {
         courseRepo.save(courseEnrollmentNotActivePast);
         courseRepo.save(courseEnrollmentNotActiveFuture);
 
-        List<Course> courses = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, Course.class);
-        assertThat(courses).as("Only active course is returned").contains(courseEnrollmentActiveEnrollmentEnabled);
-        assertThat(courses).as("Inactive courses are not returned").doesNotContain(courseEnrollmentActiveEnrollmentDisabled, courseEnrollmentNotActivePast,
-                courseEnrollmentNotActiveFuture);
+        List<CourseForEnrollmentDTO> courses = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, CourseForEnrollmentDTO.class);
+        assertThat(courses).extracting(CourseForEnrollmentDTO::id).as("Only active course is returned").contains(courseEnrollmentActiveEnrollmentEnabled.getId());
+        assertThat(courses).extracting(CourseForEnrollmentDTO::id).as("Inactive courses are not returned").doesNotContain(courseEnrollmentActiveEnrollmentDisabled.getId(),
+                courseEnrollmentNotActivePast.getId(), courseEnrollmentNotActiveFuture.getId());
     }
 
     // Test
@@ -2155,15 +2158,15 @@ public class CourseTestService {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         // Get all students for course
-        List<User> students = request.getList("/api/course/courses/" + course.getId() + "/students", HttpStatus.OK, User.class);
+        List<CourseMemberDTO> students = request.getList("/api/course/courses/" + course.getId() + "/students", HttpStatus.OK, CourseMemberDTO.class);
         assertThat(students).as("All students in course found").hasSize(NUMBER_OF_STUDENTS);
 
         // Get all tutors for course
-        List<User> tutors = request.getList("/api/course/courses/" + course.getId() + "/tutors", HttpStatus.OK, User.class);
+        List<CourseMemberDTO> tutors = request.getList("/api/course/courses/" + course.getId() + "/tutors", HttpStatus.OK, CourseMemberDTO.class);
         assertThat(tutors).as("All tutors in course found").hasSize(NUMBER_OF_TUTORS);
 
         // Get all instructors for course
-        List<User> instructors = request.getList("/api/course/courses/" + course.getId() + "/instructors", HttpStatus.OK, User.class);
+        List<CourseMemberDTO> instructors = request.getList("/api/course/courses/" + course.getId() + "/instructors", HttpStatus.OK, CourseMemberDTO.class);
         assertThat(instructors).as("All instructors in course found").hasSize(NUMBER_OF_INSTRUCTORS);
     }
 
@@ -2177,22 +2180,22 @@ public class CourseTestService {
         parameters.add("nameOfUser", "student1");
 
         // users must not be able to find themselves
-        List<User> student1 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        List<CourseMemberDTO> student1 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(student1).as("User could not find themself").hasSize(0);
 
         // find another student for course
         parameters.set("nameOfUser", "student2");
-        List<User> student2 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        List<CourseMemberDTO> student2 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(student2).as("Another student in course found").hasSize(1);
 
         // find a tutor for course
         parameters.set("nameOfUser", "tutor1");
-        List<User> tutor = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        List<CourseMemberDTO> tutor = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(tutor).as("A tutors in course found").hasSize(1);
 
         // find an instructors for course
         parameters.set("nameOfUser", "instructor");
-        List<User> instructor = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        List<CourseMemberDTO> instructor = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(instructor).as("An instructors in course found").hasSize(1);
     }
 
@@ -2214,7 +2217,7 @@ public class CourseTestService {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         // Get all editors for course
-        List<User> editors = request.getList("/api/course/courses/" + course.getId() + "/editors", HttpStatus.OK, User.class);
+        List<CourseMemberDTO> editors = request.getList("/api/course/courses/" + course.getId() + "/editors", HttpStatus.OK, CourseMemberDTO.class);
         assertThat(editors).as("All editors in course found").hasSize(NUMBER_OF_EDITORS);
     }
 
@@ -2906,15 +2909,15 @@ public class CourseTestService {
         var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
         userUtilService.unenrollUserFromCourse(instructor, nonInstructorsCourse);
 
-        var courses = request.getList("/api/course/courses/course-management-overview", HttpStatus.OK, Course.class);
+        var courses = request.getList("/api/course/courses/course-management-overview", HttpStatus.OK, CourseManagementOverviewDTO.class);
 
-        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), nonInstructorsCourse.getId())).toList()).as("Non instructors course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.id(), nonInstructorsCourse.getId())).toList()).as("Non instructors course was filtered out").isEmpty();
 
-        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), instructorsCourse.getId())).findFirst();
+        Optional<CourseManagementOverviewDTO> optionalCourse = courses.stream().filter(c -> Objects.equals(c.id(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Instructors course is returned").isPresent();
-        Course returnedCourse = optionalCourse.orElseThrow();
+        CourseManagementOverviewDTO returnedCourse = optionalCourse.orElseThrow();
 
-        assertThat(returnedCourse.getId()).isEqualTo(instructorsCourse.getId());
+        assertThat(returnedCourse.id()).isEqualTo(instructorsCourse.getId());
     }
 
     public void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
@@ -3198,10 +3201,11 @@ public class CourseTestService {
 
         createdCourse.setOnlineCourse(true);
         result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        Course persistedCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
 
-        assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
-        assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
+        assertThat(persistedCourse.getOnlineCourseConfiguration()).isNotNull();
+        assertThat(persistedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(persistedCourse.getShortName());
     }
 
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
@@ -3228,9 +3232,9 @@ public class CourseTestService {
         course.setOnlineCourse(true);
 
         result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
 
-        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
+        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
         OnlineCourseConfiguration ocConfiguration = actualCourse.getOnlineCourseConfiguration();
 
         assertThat(ocConfiguration).isNotNull();
@@ -3248,9 +3252,9 @@ public class CourseTestService {
 
         createdCourse.setOnlineCourse(false);
         result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
 
-        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
         assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
     }
 
@@ -3479,8 +3483,8 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
 
         MvcResult result = request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
+        CourseUpdateDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        assertThat(updatedCourse.learningPathsEnabled()).isTrue();
         final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
     }

@@ -36,6 +36,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
@@ -155,10 +156,13 @@ describe('Course Management Service', () => {
         courseManagementService
             .update(1, { ...course }, courseImage)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
+            .subscribe((res) => {
+                expect(res.body?.id).toBe(course.id);
+                expect(res.body?.title).toBe(course.title);
+            });
 
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
-        req.flush(returnedFromService);
+        req.flush(toCourseUpdateDTO(course));
     });
 
     it('should update online course configuration', () => {
@@ -279,12 +283,12 @@ describe('Course Management Service', () => {
 
     it('should find course with organizations', () => {
         course.organizations = [new Organization()];
-        returnedFromService = { ...course };
         courseManagementService
             .findWithOrganizations(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
+            .subscribe((res) => expect(res.body?.organizations).toEqual(course.organizations));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/with-organizations` });
+        req.flush({ course: returnedFromService, organizations: course.organizations });
     });
 
     it('should find all courses for dashboard', () => {
@@ -373,12 +377,13 @@ describe('Course Management Service', () => {
     });
 
     it('should find all courses to register', () => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [{ ...course, prerequisites: [] }];
         courseManagementService
             .findAllForRegistration()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
+            .subscribe((res) => expect(res.body?.[0].id).toBe(course.id));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-enrollment` });
+        req.flush(returnedFromService);
     });
 
     it('should find course with interesting exercises', () => {
@@ -574,8 +579,9 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch the limited course representation used by registration fallback', () => {
-        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-enrollment`, returnedFromService, course);
+        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body?.id).toBe(course.id));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-enrollment` });
+        req.flush({ ...returnedFromService, prerequisites: [] });
     });
 
     it('should fetch the course archive summaries without requesting full courses', () => {
@@ -698,6 +704,19 @@ describe('Course Management Service', () => {
         const request = httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/available-tabs' });
         expect(request.request.params.keys()).toEqual([]);
         request.flush(tabs);
+    });
+
+    it('should map notification course ids without processing them as complete courses', () => {
+        const setTitleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        let responseCourses: Course[] | null | undefined;
+
+        courseManagementService.findAllForNotifications().subscribe((response) => (responseCourses = response.body));
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/for-notifications' }).flush([{ id: 7 }]);
+
+        expect(responseCourses).toHaveLength(1);
+        expect(responseCourses?.[0]).toBeInstanceOf(Course);
+        expect(responseCourses?.[0]?.id).toBe(7);
+        expect(setTitleSpy).not.toHaveBeenCalled();
     });
 });
 

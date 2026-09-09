@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -36,7 +37,10 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
-        return mapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO response = mapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        Course updatedCourse = response.applyTo(new Course());
+        updatedCourse.setId(response.id());
+        return updatedCourse;
     }
 
     @Test

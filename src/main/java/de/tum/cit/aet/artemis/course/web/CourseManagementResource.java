@@ -36,6 +36,9 @@ import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForQuizSelectionDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithOrganizationsDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseForUserGroupService;
 import de.tum.cit.aet.artemis.course.service.CourseLoadService;
@@ -137,13 +140,14 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Course>> getCoursesWithQuizExercises() {
+    public ResponseEntity<List<CourseForQuizSelectionDTO>> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithAuthorities();
         if (authCheckService.isCurrentUserAdminAccessEnabled()) {
-            return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
+            return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises().stream().map(CourseForQuizSelectionDTO::of).toList());
         }
         else {
-            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(user.getId()));
+            return ResponseEntity
+                    .ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(user.getId()).stream().map(CourseForQuizSelectionDTO::of).toList());
         }
     }
 
@@ -155,8 +159,8 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return ResponseEntity.ok(courseOverviewService.getAllCoursesForManagementOverview(onlyActive));
+    public ResponseEntity<List<CourseManagementOverviewDTO>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return ResponseEntity.ok(courseOverviewService.getAllCoursesForManagementOverview(onlyActive).stream().map(CourseManagementOverviewDTO::of).toList());
     }
 
     /**
@@ -216,11 +220,11 @@ public class CourseManagementResource {
      */
     @GetMapping("courses/{courseId}/with-organizations")
     @EnforceAtLeastTutor
-    public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) {
+    public ResponseEntity<CourseWithOrganizationsDTO> getCourseWithOrganizations(@PathVariable Long courseId) {
         log.debug("REST request to get a course with its organizations : {}", courseId);
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseWithOrganizationsDTO.of(course));
     }
 
     /**
