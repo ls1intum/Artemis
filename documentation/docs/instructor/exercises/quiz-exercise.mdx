@@ -9,52 +9,37 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
-import courseManagement from './assets/general/course-management.png';
-import courseDashboard from './assets/quiz/course-dashboard.png';
-import createQuizButton from './assets/quiz/create-quiz-button.png';
 import createAQuizForm from './assets/quiz/create-a-quiz-form.png';
 import multipleChoiceQuestion from './assets/quiz/multiple-choice-question.png';
 import dragAndDropQuestion from './assets/quiz/drag-and-drop-question.png';
 import apollonDiagrams from './assets/quiz/apollon-diagrams.png';
-import createANewApollonDiagram from './assets/quiz/create-a-new-apollon-diagram.png';
 import apollonForm from './assets/quiz/Apollon-form.png';
 import apollonEditor from './assets/quiz/apollon-editor.png';
 import shortAnswerQuestion from './assets/quiz/short-answer-question.png';
 import existingQuestion from './assets/quiz/existing-question.png';
-import addSelectedQuestionsButton from './assets/quiz/add-selected-questions-button.png';
 import footer from './assets/quiz/footer.png';
-import importQuizButton from './assets/quiz/import-quiz-button.png';
 import importListQuizzes from './assets/quiz/import-list-quizzes.png';
-import importButton from './assets/quiz/import-button.png';
-import exportQuizButton from './assets/quiz/export-quiz-button.png';
 import exportQuizzesList from './assets/quiz/export-quizzes-list.png';
-import exportButton from './assets/quiz/export-button.png';
-import createDragAndDropQuizButton from './assets/quiz/create-drag-and-drop-quiz.png';
 import aiGenerationModal from './assets/quiz/ai-generation-modal.png';
 import aiRefinementPanel from './assets/quiz/ai-refinement-panel.png';
 import aiBulkRefinement from './assets/quiz/ai-bulk-refinement.png';
 
-## Overview
+A quiz exercise is marked the moment it closes: every question type Artemis offers has a machine-checkable
+answer, so students see their score without waiting for anybody to read their work. That makes quizzes the one
+exercise type that scales to any cohort size at no marking cost, and the one where the wording of a question has to
+carry all the precision, because no assessor is there to interpret a near-miss.
 
-Instructors and editors can create, import, and export quiz exercises. Quiz exercises support four types of questions:
+Four question types are available:
 
-- **Multiple-Choice Questions**: Questions with multiple answer options where one or more can be correct
-- **Drag-and-Drop Questions**: Questions where students drag items onto a background image
-- **Apollon Drag-and-Drop Questions**: Questions where students drag items onto a UML diagram created with the [Apollon editor](https://github.com/ls1intum/Apollon) inside Artemis
-- **Short-Answer Questions**: Questions where students fill in text answers
+- **Multiple choice** — several options, one or more of them correct.
+- **Drag and drop** — students drag items onto a background image.
+- **Apollon drag and drop** — the same, onto a UML diagram built in the [Apollon editor](https://github.com/ls1intum/Apollon).
+- **Short answer** — students type into gaps in a text.
 
-## Setup
+## Create the Exercise
 
-The following sections describe the process of creating and managing quiz exercises.
-
-- On the Artemis home page, click on the Course Management button <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
-- Navigate into **Exercises** of a specific course by clicking on the exercise button
-
-<Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management Dashboard" />
-
-## Create Quiz Exercise
-
-In the quiz exercises section, click on the <img src={createQuizButton} alt="Create Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to open the quiz creation form.
+**Create Quiz** sits in the quiz section of the course's **Exercises** page in course management, and opens the quiz
+creation form.
 
 <Image src={createAQuizForm} alt="Create a Quiz Form" size={ImageSize.large} caption="Quiz Creation Form" />
 
@@ -166,11 +151,11 @@ This kind of question is composed of a problem statement, a background image, an
 
 ### Add Apollon Drag-and-Drop Question
 
-In the quiz edit view click the button <img src={createDragAndDropQuizButton} alt="Create Drag and Drop Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
+**Create Drag and Drop Model Quiz**, in the quiz edit view, lists the Apollon diagrams available to build a question on.
 
 <Image src={apollonDiagrams} alt="Apollon Diagrams" size={ImageSize.large} caption="Apollon Diagrams Overview" />
 
-Clicking on the creation of a new Apollon Diagram button <img src={createANewApollonDiagram} alt="Create a New Apollon Diagram" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the following form:
+**Create new Apollon diagram** opens the form for a new one:
 
 <Image src={apollonForm} alt="Apollon Form" size={ImageSize.medium} caption="Apollon Diagram Creation Form" />
 
@@ -235,34 +220,30 @@ This option allows to import existing questions from other quiz exercises, cours
 
 <Image src={existingQuestion} alt="Existing Question" size={ImageSize.large} caption="Import Existing Questions" />
 
-- At the end of the list, click the <img src={addSelectedQuestionsButton} alt="Add Selected Questions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to import all selected questions
+**Add Selected Questions**, at the end of the list, brings every question you ticked into the quiz.
 
-### Footer
+### Errors and Warnings
 
-On the creation quiz page there is a footer with the following fields:
+The footer of the creation form collects everything that would stop the quiz working: errors that prevent saving,
+and warnings about questions that will save but probably do not do what you meant.
 
-<Image src={footer} alt="Footer" size={ImageSize.medium} caption="Quiz Creation Form Footer" />
-
-- Error messages
-- Warning messages
+<Image src={footer} alt="Footer of the quiz creation form showing errors and warnings" size={ImageSize.medium} caption="Errors and warnings on the creation form" />
 
 ### Import a Quiz
 
-In the quiz exercises section, click on the <img src={importQuizButton} alt="Import Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
-
-The list of existing quizzes will appear.
+**Import Quiz**, in the quiz section of the exercise page, lists the quizzes available to copy.
 
 <Image src={importListQuizzes} alt="Import List Quizzes" size={ImageSize.medium} caption="Quiz Import List" />
 
-- Clicking the <img src={importButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in the create new quiz exercise section
+**Import** on one of them opens the quiz editor with its questions already in place, where every setting can be changed exactly as when creating a quiz from scratch.
 
 ### Export a Quiz
 
-In the quiz exercises section, click on the <img src={exportQuizButton} alt="Export Quiz Exercises" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and the list of quizzes will be shown.
+**Export Quiz Exercises**, in the same section, lists the quizzes of the course.
 
 <Image src={exportQuizzesList} alt="Export Quizzes List" size={ImageSize.medium} caption="Quiz Export List" />
 
-The <img src={exportButton} alt="Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will download the quiz in a JSON file
+**Export** downloads the quiz as a JSON file.
 
 <Callout variant={CalloutVariant.info}>
 
