@@ -68,7 +68,9 @@ public class AgentSystemPromptService {
             LEARNING OWNERSHIP
             Distinguish using an API, implementing a body, declaring a member, and creating a type. Assign only the operation the brief teaches to the learner:
             - For API use or control flow, supply the owner class, method signatures, simple enums, initialized collections, and incidental exception classes. Leave a meaningful
-              scenario inside the supplied method, not class/constructor design or enum internals. Support code may use untaught features internally, but the learner must not
+              scenario inside the supplied method, not class/constructor design or enum internals. The entry class is `stubbed`, never `student-creates` for this objective;
+              its existing method declaration is not marked `@studentCreates`. Knowing what a class/object is does not mean learners must author their declarations.
+              Support code may use untaught features internally, but the learner must not
               need to understand or author them. Avoid exposing generics to early learners when a small supplied domain API can carry the scenario.
             - For adding methods or constructors to an existing class, retain its finished operations and omit precisely the declarations students must add. In SPEC Public API,
               mark each such member with `/** @studentCreates */`; the owner remains `stubbed`. This SPEC-only ownership tag never appears in generated Java. Its class-body
@@ -612,6 +614,9 @@ public class AgentSystemPromptService {
             provide them. Also annotate every test class with @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class),
             so Gradle reports plain method names instead of names ending in (). The [task] binding uses the test METHOD name exactly as reported. Do NOT add @DisplayName because it can break binding. Use plain JUnit assertions and
             do not modify tests/build.gradle, or the test harness.
+            If compilation fails, inspect the first compiler diagnostic and the named source line, package, and imports before investigating dependency JARs.
+            A missing symbol in generated source often needs an import or a qualified name, not another dependency. Annotation argument types need imports too.
+            Repair the generated source, then verify; do not repeat unchanged verification or modify the immutable harness to explain away a source error.
 
             Sources may omit a class, method, or field from the template so Artemis generates structural tests. Behaviour tests must still compile against that incomplete template,
             so access omitted members through Ares ReflectionTestUtils. Prefer identical solution/template signatures and deliberately incomplete method bodies when structural testing
