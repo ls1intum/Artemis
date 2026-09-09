@@ -621,6 +621,25 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleSubmission_withoutSubmission_badRequest() throws Exception {
+        ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true, true));
+        stored.setAssessmentExplanation("Explanation of the assessment");
+        exampleSubmissionRepository.save(stored);
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", stored.getId());
+        body.put("usedForTutorial", false);
+
+        request.put("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body, HttpStatus.BAD_REQUEST);
+
+        ExampleSubmission reloaded = exampleSubmissionRepository.findById(stored.getId()).orElseThrow();
+        assertThat(reloaded.getAssessmentExplanation()).isEqualTo("Explanation of the assessment");
+        assertThat(reloaded.isUsedForTutorial()).isTrue();
+        assertThat(((TextSubmission) reloaded.getSubmission()).getText()).isEqualTo("Text. Submission.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleSubmission_unsupportedExerciseType_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, null, null, null, null);
         ObjectMapper mapper = request.getObjectMapper();

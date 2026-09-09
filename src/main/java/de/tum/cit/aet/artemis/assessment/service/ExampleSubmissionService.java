@@ -108,10 +108,6 @@ public class ExampleSubmissionService {
     }
 
     private static Submission newSubmissionFor(Exercise exercise, ExampleSubmissionRequestDTO.SubmissionRequestDTO content) {
-        if (content == null) {
-            // save() rejects the missing submission with the error the client already knows
-            return null;
-        }
         Submission submission = switch (exercise) {
             case TextExercise ignored -> new TextSubmission();
             case ModelingExercise ignored -> new ModelingSubmission();
@@ -122,9 +118,6 @@ public class ExampleSubmissionService {
     }
 
     private static void applyContent(Submission submission, ExampleSubmissionRequestDTO.SubmissionRequestDTO content) {
-        if (content == null) {
-            return;
-        }
         switch (submission) {
             case TextSubmission textSubmission -> textSubmission.setText(content.text());
             case ModelingSubmission modelingSubmission -> {

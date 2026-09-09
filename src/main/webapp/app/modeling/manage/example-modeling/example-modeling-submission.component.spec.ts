@@ -371,7 +371,7 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.result()).toEqual({ id: 7, feedbacks: [mockFeedbackWithReference] });
     });
 
-    it('should restore pruned feedback when the model change is not persisted', async () => {
+    it('should not prune feedback when the model change is not persisted', async () => {
         vi.spyOn(service, 'update').mockReturnValue(throwError(() => ({ status: 500 })));
         const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment');
         comp.exercise.set(exercise);
@@ -392,7 +392,7 @@ describe('Example Modeling Submission Component', () => {
         expect(saveAssessmentSpy).not.toHaveBeenCalled();
     });
 
-    it('should not roll the pruning back over feedback edited while the model update is in flight', async () => {
+    it('should keep feedback edited while the model update is in flight', async () => {
         const updateResponse = new Subject<HttpResponse<ExampleSubmission>>();
         vi.spyOn(service, 'update').mockReturnValue(updateResponse);
         comp.exercise.set(exercise);
@@ -411,6 +411,27 @@ describe('Example Modeling Submission Component', () => {
 
         expect(comp.referencedFeedback()).toEqual(feedbackEditedWhileSaving);
         expect(comp.feedbackChanged).toBe(true);
+    });
+
+    it('should not prune feedback when an unrelated edit lands while the model update fails', async () => {
+        const updateResponse = new Subject<HttpResponse<ExampleSubmission>>();
+        vi.spyOn(service, 'update').mockReturnValue(updateResponse);
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.modelingSubmission = new ModelingSubmission();
+        comp.result.set({ id: 1 } as Result);
+        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
+        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+
+        (comp as any).updateExampleModelingSubmission().subscribe({ error: () => {} });
+        // the concurrent edit touches other feedback than the pruned one
+        comp.onUnReferencedFeedbackChanged([mockFeedbackWithoutReference]);
+        updateResponse.error({ status: 500 });
+        await fixture.whenStable();
+
+        expect(comp.referencedFeedback()).toEqual([mockFeedbackWithReference]);
+        expect(comp.unreferencedFeedback()).toEqual([mockFeedbackWithoutReference]);
     });
 
     it('should persist pruned feedback when switching to the assessment after a model change', async () => {

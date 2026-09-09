@@ -93,7 +93,7 @@ public class ExampleSubmissionResource {
         if (exampleSubmission.id() != null) {
             throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        Exercise exercise = checkExerciseAccess(exerciseId, exampleSubmission);
+        Exercise exercise = checkRequestAndExerciseAccess(exerciseId, exampleSubmission);
         return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmissionService.create(exercise, exampleSubmission)));
     }
 
@@ -113,7 +113,7 @@ public class ExampleSubmissionResource {
         if (exampleSubmission.id() == null) {
             return createExampleSubmission(exerciseId, exampleSubmission);
         }
-        checkExerciseAccess(exerciseId, exampleSubmission);
+        checkRequestAndExerciseAccess(exerciseId, exampleSubmission);
         ExampleSubmission existingExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.id());
         if (!existingExampleSubmission.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
@@ -122,12 +122,17 @@ public class ExampleSubmissionResource {
     }
 
     /**
-     * Resolves the exercise of the path, checks that the current user is at least an editor of it and that the exercise the client attached to the body (if any) is the same
-     * one.
+     * Resolves the exercise of the path, checks that the current user is at least an editor of it, that the body carries the submission an example submission is about, and
+     * that the exercise the client attached to the body (if any) is the same one.
      */
-    private Exercise checkExerciseAccess(Long exerciseId, ExampleSubmissionRequestDTO exampleSubmission) {
+    private Exercise checkRequestAndExerciseAccess(Long exerciseId, ExampleSubmissionRequestDTO exampleSubmission) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        if (exampleSubmission.submission() == null) {
+            // An example submission is the submission it shows. Without one the request says nothing, so it is answered
+            // instead of writing the metadata it does carry over the stored example submission.
+            throw new BadRequestAlertException("An example submission must reference a submission", ENTITY_NAME, "submissionMissing");
+        }
         if (exampleSubmission.exercise() != null && !exerciseId.equals(exampleSubmission.exercise().id())) {
             throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
         }

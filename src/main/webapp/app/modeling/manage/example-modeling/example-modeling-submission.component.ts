@@ -280,21 +280,11 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingSubmission.explanationText = this.explanationText();
         this.modelingSubmission.exampleSubmission = true;
         const result = this.result();
-        const referencedFeedbackBeforePruning = this.referencedFeedback();
-        const feedbackChangedBeforePruning = this.feedbackChanged;
         if (result) {
-            const validFeedback = filterInvalidFeedback(this.referencedFeedback(), currentModel);
-            if (validFeedback.length !== this.referencedFeedback().length) {
-                // Feedback of deleted elements is dropped here but only persisted through the assessment endpoint;
-                // the submission endpoint does not touch the assessment.
-                this.feedbackChanged = true;
-            }
-            this.referencedFeedback.set(validFeedback);
             result.feedbacks = this.assessments();
             setLatestSubmissionResult(this.modelingSubmission, result);
             delete result.submission;
         }
-        const sentAssessments = this.assessments();
 
         const exampleSubmission = this.exampleSubmission();
         exampleSubmission.submission = this.modelingSubmission;
@@ -316,23 +306,30 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     }
                 }
                 this.isNewSubmission.set(false);
+                if (result) {
+                    this.pruneFeedbackOfDeletedElements(currentModel);
+                }
 
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             }),
             catchError((error: HttpErrorResponse) => {
-                // the model change was not persisted, so the feedback pruned for the elements it deleted must not stick either,
-                // unless the user edited feedback while the request was in flight: the newer feedback then wins over the rollback
-                if (this.assessments() === sentAssessments) {
-                    this.referencedFeedback.set(referencedFeedbackBeforePruning);
-                    this.feedbackChanged = feedbackChangedBeforePruning;
-                    if (result) {
-                        result.feedbacks = this.assessments();
-                    }
-                }
                 onError(this.alertService, error);
                 throw error;
             }),
         );
+    }
+
+    /**
+     * Drops the feedback of model elements the saved model no longer contains. The submission endpoint does not touch the assessment, so this only marks the
+     * assessment dirty and the pruning is persisted through the assessment endpoint. It runs on the saved model, never on a model change the server rejected.
+     */
+    private pruneFeedbackOfDeletedElements(savedModel: UMLModel | undefined) {
+        const validFeedback = filterInvalidFeedback(this.referencedFeedback(), savedModel);
+        if (validFeedback.length === this.referencedFeedback().length) {
+            return;
+        }
+        this.referencedFeedback.set(validFeedback);
+        this.feedbackChanged = true;
     }
 
     onReferencedFeedbackChanged(referencedFeedback: Feedback[]) {
