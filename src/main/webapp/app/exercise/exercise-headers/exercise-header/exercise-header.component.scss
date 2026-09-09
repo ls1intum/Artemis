@@ -21,9 +21,18 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
 
     &.dropdown-toggle::after {
         margin-left: 0;
+    }
+
+    /*
+     * The action button's icon and label sit inside the block `div`, where the gap above cannot reach them: their
+     * spacing is the non-breaking space between them, worth about 4px. Top it up so both buttons in the bar put the
+     * same distance between icon and label.
+     */
+    > div > fa-icon {
+        margin-right: 0.25rem;
     }
 }
