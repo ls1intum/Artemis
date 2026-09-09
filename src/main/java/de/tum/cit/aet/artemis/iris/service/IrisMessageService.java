@@ -51,8 +51,11 @@ public class IrisMessageService {
         // Reload immediately before the cascade, rather than trusting an already-initialized collection.
         // saveAndFlush below merges the whole session aggregate, so a stale messages list is written back over the
         // committed rows: a column another transaction has set in the meantime (proactiveOutcome) is reset to its
-        // stale value, and because the collection declares orphanRemoval, a row missing from the stale list is
-        // deleted outright. Saving the message on its own instead is not an option: @OrderColumn on
+        // stale value, and the appended message is given the list position that a row missing from the stale list
+        // already holds, so the collection comes back with two entries on one index. Hibernate does not delete the
+        // missing row itself - orphan detection walks the collection's loaded snapshot, which never held it - but a
+        // list that cannot be read back by position is just as lost. Saving the message on its own instead is not an
+        // option: @OrderColumn on
         // IrisSession#messages is maintained from the owner side, so a standalone insert leaves iris_message_order
         // null and the next read fails with "Illegal null value for list index".
         //

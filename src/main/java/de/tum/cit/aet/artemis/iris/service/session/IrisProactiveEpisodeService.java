@@ -298,7 +298,12 @@ public class IrisProactiveEpisodeService {
         if (locked.isPresent()) {
             return new LockedEpisode(locked.get(), locked.get().getOutcome() != null);
         }
-        return new LockedEpisode(null, !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty());
+        // The locking variant, so this branch keeps the promise the method's name makes. The registered branch above
+        // decides under a write lock; reading the fallback without one would let an outcome commit between this read
+        // and the caller's write. On MySQL it matters a second time: a plain read here would open the transaction's
+        // repeatable-read view before the session row is locked further down the call, so the message list the
+        // append later merges could predate a row another writer committed while we waited for that lock.
+        return new LockedEpisode(null, !irisMessageRepository.findEpisodeOutcomesForUpdate(episodeId, userId, exerciseId).isEmpty());
     }
 
     /**

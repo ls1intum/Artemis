@@ -159,6 +159,30 @@ class IrisStruggleInterventionConfirmCloseTest {
     }
 
     @Test
+    void confirmClose_unregisteredEpisode_decidesTerminalWithTheLockingReadBeforeAppending() {
+        // The registered branch decides under the episode's registry write lock. An unregistered episode has no such
+        // row, and its fallback onto the message rows has to be a locking read as well: a plain one would let an
+        // outcome commit between the check and the append it guards, and on MySQL it would additionally open the
+        // transaction's repeatable-read view before the session row is locked further down.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(204L));
+        when(irisMessageRepository.setProactiveOutcomeIfNull(204L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(204L);
+            return m;
+        });
+
+        service.handleConfirmClose(progressJob, closeUpdate(true, "Closing", "Done", null));
+
+        InOrder order = inOrder(irisMessageRepository, irisMessageService);
+        order.verify(irisMessageRepository).findEpisodeOutcomesForUpdate("ep-cc", 3L, 42L);
+        order.verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
+    }
+
+    @Test
     void confirmClose_progress_resolved_true_missingFields_usesDefaults() {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);

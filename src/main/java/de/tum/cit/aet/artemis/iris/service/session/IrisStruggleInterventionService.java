@@ -682,8 +682,9 @@ public class IrisStruggleInterventionService {
                         // concurrent dismiss land between a committed close row and its own outcome.
                         var write = irisProactiveEpisodeService.recordOutcomeUnderLockInCurrentTransaction(locked.episode(), episodeId, user.getId(), exerciseId, outcomeOnSuccess);
                         if (write != IrisProactiveEpisodeService.OutcomeWrite.APPLIED) {
-                            // An unregistered episode has no registry row to lock, so the terminal check above is a
-                            // snapshot read and a dismiss can still commit between it and this write. The guarded
+                            // An unregistered episode has no registry row to lock. Its fallback check is a locking
+                            // read, but one that can only lock rows that ALREADY carry an outcome, so a dismiss
+                            // setting one on a still-null row can still commit between it and this write. The guarded
                             // UPDATE inside the write is what actually detects that, and the only honest answer once
                             // it does is to take the append back: a closing row committed under a foreign terminal
                             // outcome would carry none of its own, and the caller would broadcast resolved=true for
