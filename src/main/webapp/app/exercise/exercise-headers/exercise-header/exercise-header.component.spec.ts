@@ -162,13 +162,18 @@ describe('ExerciseHeaderComponent', () => {
         it('should enable the feedback button for a submitted submission', () => {
             configureProgrammingExercise(false, true, false);
 
-            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            // isSubmitted is what the button enables itself on, so asserting its presence alone would pass either way.
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
         });
 
         it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
             configureProgrammingExercise(false, false, hasResult);
 
-            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
         it('should hide the feedback button when the exercise has not been started', () => {
