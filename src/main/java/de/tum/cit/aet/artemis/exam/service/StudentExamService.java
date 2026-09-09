@@ -601,8 +601,25 @@ public class StudentExamService {
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      */
     private void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations, boolean failFast) {
-        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), studentExam.getUser(), studentExam.getExercises(), studentExam.isTestExam(), generatedParticipations,
-                failFast);
+        User student = studentExam.getUser();
+        List<Exercise> exercises = studentExam.getExercises();
+        // A single student exam is a handful of exercises, so asking per exercise is cheap here. The bulk preparation in
+        // startExercises asks for a whole cohort at once instead.
+        Set<Long> startedExerciseIds = studentExam.isTestExam() ? Set.of()
+                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student)).map(Exercise::getId).collect(Collectors.toSet());
+        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), startedExerciseIds, generatedParticipations, failFast);
+    }
+
+    /**
+     * Whether the student already has a participation for the exercise that reached {@link InitializationState#INITIALIZED}.
+     *
+     * @param exerciseId the id of the exercise
+     * @param student    the student
+     * @return true if such a participation exists
+     */
+    private boolean hasInitializedParticipation(long exerciseId, User student) {
+        return studentParticipationRepository.findByExerciseIdAndStudentId(exerciseId, student.getId()).stream().anyMatch(
+                participation -> participation.getInitializationState() != null && participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
     }
 
     /**
@@ -615,22 +632,17 @@ public class StudentExamService {
      * @param student                 the student to create the participations for
      * @param exercises               the exercises of that student exam
      * @param testExam                whether the student exam belongs to a test exam, in which case a new participation is always created
+     * @param startedExerciseIds      the ids of those exercises the student already has a fully initialized participation for
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      * @param failFast                whether to rethrow the first failure instead of continuing with the next exercise
      */
-    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam,
+    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, Set<Long> startedExerciseIds,
             List<StudentParticipation> generatedParticipations, boolean failFast) {
         for (Exercise exercise : exercises) {
             // Stands in only if no caller context reached this thread; a real user's identity is kept.
             SecurityUtils.setAuthorizationObject();
-            // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
-            // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
-            // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
-            // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
-            var studentParticipations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (testExam || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
-                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+            if (testExam || !startedExerciseIds.contains(exercise.getId())) {
                 try {
                     // Load lazy property
                     if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
@@ -690,6 +702,8 @@ public class StudentExamService {
         var exerciseStartData = studentExamIds == null ? studentExamRepository.findExerciseStartDataByExamId(examId)
                 : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
         var exercisesById = loadExercisesForPreparation(exerciseStartData);
+        // Which students are already set up, asked once per exercise rather than once per student and exercise
+        var startedStudentIdsByExerciseId = testExam ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
         // LinkedHashMap so the student exams are prepared in the order the query returned them
         var rowsByStudentExamId = exerciseStartData.stream().collect(Collectors.groupingBy(StudentExamExerciseStartDTO::studentExamId, LinkedHashMap::new, Collectors.toList()));
         int studentExamCount = rowsByStudentExamId.size();
@@ -711,8 +725,11 @@ public class StudentExamService {
                 var student = new User(rows.getFirst().userId());
                 student.setLogin(rows.getFirst().userLogin());
                 var exercises = rows.stream().map(row -> exercisesById.get(row.exerciseId())).filter(Objects::nonNull).toList();
+                var startedExerciseIds = exercises.stream().filter(exercise -> startedStudentIdsByExerciseId.getOrDefault(exercise.getId(), Set.of()).contains(student.getId()))
+                        .map(Exercise::getId).collect(Collectors.toSet());
                 return CompletableFuture
-                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, generatedParticipations, true), threadPool)
+                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, startedExerciseIds, generatedParticipations, true),
+                                threadPool)
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
@@ -755,6 +772,22 @@ public class StudentExamService {
             log.error("Exercises {} are referenced by student exams but no longer exist, their participations are not prepared", exerciseIds);
         }
         return exercisesById;
+    }
+
+    /**
+     * Reads which students already have a fully initialized participation, one query per exercise instead of one per
+     * student and exercise, and ids instead of whole participation rows.
+     *
+     * @param exerciseIds the ids of the exercises of the exam
+     * @return the ids of the students already set up, by exercise id
+     */
+    private Map<Long, Set<Long>> loadStartedStudentIds(Set<Long> exerciseIds) {
+        var startedStates = InitializationState.statesThatCompleted(InitializationState.INITIALIZED);
+        Map<Long, Set<Long>> startedStudentIdsByExerciseId = new HashMap<>();
+        for (Long exerciseId : exerciseIds) {
+            startedStudentIdsByExerciseId.put(exerciseId, studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseId(exerciseId, startedStates));
+        }
+        return startedStudentIdsByExerciseId;
     }
 
     private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
