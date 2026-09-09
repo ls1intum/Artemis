@@ -10,7 +10,9 @@ import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
 import manageExercisesDialog from '../assets/general/manage-exercises-dialog.png';
 import createFormGeneral from '../assets/programming/create-form-general.png';
+import createFormMode from '../assets/programming/create-form-mode.png';
 import createFormLanguage from '../assets/programming/create-form-language.png';
+import createFormVersionControl from '../assets/programming/create-form-version-control.png';
 import createFormProblem from '../assets/programming/create-form-problem.png';
 import createFormGrading from '../assets/programming/create-form-grading.png';
 import exerciseInList from '../assets/programming/course-dashboard-exercise-programming.png';
@@ -47,8 +49,10 @@ The table below lists which settings each mode shows.
 
 | Form section | Simple mode | Advanced mode adds |
 |---|---|---|
-| General | Title, Categories, Difficulty | Short Name, Channel Name, Participation Mode, Allow Offline IDE, Allow Online Editor, Allow Online IDE, Auxiliary Repositories, Checkout Paths |
-| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Static Code Analysis, Sequential Test Runs, Build Plan, Allow Branching, Branch Name Pattern |
+| General | Title, Categories, Difficulty | Short Name, Channel Name, Auxiliary Repositories, Checkout Paths |
+| Mode | — | Participation Mode, Team Size, Allow Offline IDE, Allow Online Editor, Allow Online IDE |
+| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Static Code Analysis, Sequential Test Runs, Build Plan |
+| Version Control | — | Allow Custom Branches, Branch Name Pattern |
 | Problem | Problem Statement | Linked Competencies |
 | Grading | Score inclusion, Points, Bonus Points, Release Date, Due Date, Assessment Due Date, Grading Instructions | Submission Policy, Start Date, Run Tests after Due Date, Example Solution Publication Date, Complaints on Automatic Assessment, Show Test Names, Include Tests in Example Solution, Presentation Score, Plagiarism Control |
 
@@ -79,7 +83,12 @@ Auxiliary repositories are additional repositories beyond the template, solution
 
 If a checkout directory is set, the repository is checked out there during every build, which is how you provide extra resources to the tests or overwrite parts of the template.
 
-### Mode and Participation
+## Mode
+
+Shown in advanced mode only; in simple mode **Difficulty** sits in **General** instead and the rest takes its
+defaults.
+
+<Image src={createFormMode} alt="Mode section of the programming exercise form" size={ImageSize.large} caption="Mode" />
 
 - **Difficulty**: Indicates to students how hard the exercise is.
 - **Participation Mode**: Whether students work individually or in teams. **Cannot be changed after creation.** See [team exercises](/instructor/exercises/team-exercise).
@@ -109,9 +118,11 @@ Three settings control how students can work on the exercise:
 - **Sequential Test Runs**: Runs structural tests before behavioral ones. Not compatible with static code analysis. **Cannot be changed after creation.**
 - **Customize Build Configuration**: Lets you adapt the build plan, and is adjustable after creation. Only shown with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle); Jenkins exercises use their own build plan configuration. See [Configure the Build](/instructor/exercises/programming-exercise/configure-the-build).
 
-### Version Control
+## Version Control
 
 Shown in advanced mode only.
+
+<Image src={createFormVersionControl} alt="Version Control section of the programming exercise form" size={ImageSize.large} caption="Version Control" />
 
 - **Allow Custom Branches**: Lets students push to branches other than the default one.
 - **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression, and a push is only allowed if it matches.
