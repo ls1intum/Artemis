@@ -74,9 +74,9 @@ describe('ExerciseSplitPanelComponent', () => {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
                             @if (exercise().type !== ExerciseType.QUIZ) {
-                                <ng-template jhiPanel [label]="'problemStatement'">Problem Statement</ng-template>
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details + Problem Statement</ng-template>
                             }
-                            @if (!detailsInProblemStatement()) {
+                            @if (exercise().type === ExerciseType.QUIZ) {
                                 <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'">Details</ng-template>
                             }
                             @if (showIris()) {
@@ -178,52 +178,39 @@ describe('ExerciseSplitPanelComponent', () => {
 
     describe('exercise details panel', () => {
         /**
-         * The details panel must never be panels()[0], because ResizablePanelsComponent makes the first panel the
-         * left pane and the rest the right-hand tabs. What guarantees that is showEditorPanel(): quiz always has an
-         * editor panel, every other type always has a problem statement panel. That logic is what these assert; the
-         * spec's overridden template mirrors the real panel order so the list under test matches production.
+         * Every type shows its details in one panel labelled "Exercise Details": for a quiz that panel holds only the
+         * details, for every other type it also holds the problem statement. It must never be panels()[0], because
+         * ResizablePanelsComponent makes the first panel the left pane and the rest the right-hand tabs.
          */
         function panelLabels(): string[] {
             const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance.panels();
             return panels.map((panel: PanelDirective) => panel.label());
         }
 
-        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
-            'should render the details panel without making it the first panel for %s',
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.QUIZ])(
+            'should render exactly one details panel for %s',
             (type) => {
                 fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
                 fixture.detectChanges();
 
                 const labels = panelLabels();
-                expect(labels).toContain('artemisApp.courseOverview.exerciseDetails.details');
-                expect(labels[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
+                expect(labels.filter((label) => label === 'artemisApp.courseOverview.exerciseDetails.details')).toHaveLength(1);
             },
         );
 
-        it('should put the details above the tasks instead of in a tab when programming has no online editor', () => {
-            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as unknown as Exercise);
-            fixture.detectChanges();
-
-            expect(component.detailsInProblemStatement()).toBe(true);
-            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.details');
-        });
-
-        it('should put the details above the tasks for programming with the online editor too', () => {
-            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
-            fixture.detectChanges();
-
-            expect(component.detailsInProblemStatement()).toBe(true);
-            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.details');
-        });
-
-        it('should keep the details panel off index 0 once a participation opens the editor', () => {
+        it('should never make the details panel the left pane', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
             fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
             fixture.detectChanges();
 
-            const labels = panelLabels();
-            expect(labels[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
-            expect(labels).toContain('artemisApp.courseOverview.exerciseDetails.details');
+            expect(panelLabels()[0]).not.toBe('artemisApp.courseOverview.exerciseDetails.details');
+        });
+
+        it('should no longer label a panel problem statement', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+            fixture.detectChanges();
+
+            expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.problemStatement');
         });
     });
 

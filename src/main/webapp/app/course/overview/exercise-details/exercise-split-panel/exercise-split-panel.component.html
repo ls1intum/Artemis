@@ -15,24 +15,22 @@
     }
 
     @if (exercise().type !== ExerciseType.QUIZ) {
-        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.problemStatement'" [icon]="faAlignLeft">
-            @if (detailsInProblemStatement()) {
-                <!-- A programming exercise without the online editor never gets an editor panel, so there is no
-                     relayout to protect against and no reason to spend a tab: the details sit above the tasks. -->
-                <div class="mb-3">
-                    <jhi-exercise-headers-information
-                        [exercise]="exercise()"
-                        [studentParticipation]="studentParticipation()"
-                        [submissionPolicy]="submissionPolicy()"
-                        [course]="exercise().course"
-                        [isPractice]="participationMode() === 'practice'"
-                        [athenaEnabled]="athenaEnabled()"
-                        [quizLiveStatus]="quizLiveStatus()"
-                        [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
-                        (viewingSubmissionChange)="isViewingSubmission.set($event)"
-                    />
-                </div>
-            }
+        <!-- The exercise's details and its problem statement are one panel: the dates and points are what the student
+             reads the tasks against, so they lead the panel rather than sitting a tab away. -->
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo">
+            <div class="mb-3">
+                <jhi-exercise-headers-information
+                    [exercise]="exercise()"
+                    [studentParticipation]="studentParticipation()"
+                    [submissionPolicy]="submissionPolicy()"
+                    [course]="exercise().course"
+                    [isPractice]="participationMode() === 'practice'"
+                    [athenaEnabled]="athenaEnabled()"
+                    [quizLiveStatus]="quizLiveStatus()"
+                    [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
+                    (viewingSubmissionChange)="isViewingSubmission.set($event)"
+                />
+            </div>
             <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()" />
             @if (exercise().type === ExerciseType.PROGRAMMING && exercise().studentParticipations && exercise().studentParticipations!.length) {
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
@@ -110,10 +108,9 @@
         </ng-template>
     }
 
-    @if (!detailsInProblemStatement()) {
-        <!-- Present before and after the participation starts, so the details never move under the student when they
-             press Start. Never first: panels()[0] becomes the left pane, and quiz always has an editor panel while
-             every other type always has a problem statement panel. -->
+    @if (exercise().type === ExerciseType.QUIZ) {
+        <!-- A quiz has no problem statement panel to lead, so its details get one of their own. It is never first:
+             a quiz always has an editor panel, and panels()[0] becomes the left pane. -->
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo">
             <jhi-exercise-headers-information
                 [exercise]="exercise()"

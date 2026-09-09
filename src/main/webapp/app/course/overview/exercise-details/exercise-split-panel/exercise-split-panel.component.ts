@@ -4,7 +4,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { faAlignLeft, faCircleInfo, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseSubmission, isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -109,7 +109,6 @@ export class ExerciseSplitPanelComponent {
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faAlignLeft = faAlignLeft;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly getIcon = getIcon;
     protected readonly ExerciseType = ExerciseType;
@@ -177,19 +176,6 @@ export class ExerciseSplitPanelComponent {
         const exercise = this.exercise();
         return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
     });
-
-    /**
-     * Whether the details belong above the tasks rather than in a tab of their own.
-     *
-     * True for every programming exercise, with or without the online editor. Its problem statement always leads with
-     * the task list, which is what the student reads the points and the due date against, so the details belong at the
-     * top of it rather than a click away — and putting them there means both kinds of programming exercise read the
-     * same, whether the left pane holds the editor or the problem statement itself.
-     *
-     * The other types keep the tab. A quiz has no problem statement panel at all, and the rest gain an editor once the
-     * student starts, so a tab is the one place their details can sit without moving on Start.
-     */
-    readonly detailsInProblemStatement = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
 
     readonly showEditorPanel = computed(() => {
         const type = this.exercise().type;
