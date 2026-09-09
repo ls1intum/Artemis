@@ -331,7 +331,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
     }
 
     /**
-     * A value that only survives a round trip if the backend honours the object's own serialization hooks.
+     * A value that only survives a round trip if the provider honours the object's own serialization hooks.
      *
      * <p>
      * {@code derived} is transient and rebuilt in {@code readObject}, which is a stand-in for the far less obvious case
@@ -361,7 +361,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testValueWithCustomSerializationSurvivesARoundTrip() {
-        // Every backend must serialize the way Hazelcast does, because Hazelcast is the default and everything stored
+        // Every provider must serialize the way Hazelcast does, because Hazelcast is the default and everything stored
         // has to be java.io.Serializable for it. A reflective codec that ignores readObject silently returns a
         // half-built object instead, which is how a Redis deployment answered 500 for every read of a user's saved
         // posts while Hazelcast was fine.
@@ -371,7 +371,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         CustomSerializedValue roundTripped = map.get("key");
         assertThat(roundTripped).isNotNull();
         assertThat(roundTripped.stored).isEqualTo("value");
-        assertThat(roundTripped.derived).as("the backend must honour readObject rather than copying fields reflectively").isEqualTo("VALUE");
+        assertThat(roundTripped.derived).as("the provider must honour readObject rather than copying fields reflectively").isEqualTo("VALUE");
 
         map.clear();
     }
@@ -382,7 +382,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         map.put("present", "value");
 
         // An absent key must be left out rather than mapped to null: a caller iterating the result would otherwise see a
-        // null value on one backend and no entry at all on another.
+        // null value on one provider and no entry at all on another.
         var values = map.getAll(Set.of("present", "absent"));
         assertThat(values).containsExactly(Map.entry("present", "value"));
 
@@ -410,7 +410,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
     @Test
     void testSpringCacheValueLoaderRunsOnceAndIsThenServedFromTheCache() {
         // The loader path is what @Cacheable(sync = true) uses. It has to hold the map's per-key lock so that a slow
-        // loader runs once for the cluster rather than once per node, which means a backend whose lock is not reentrant
+        // loader runs once for the cluster rather than once per node, which means a provider whose lock is not reentrant
         // for the same thread would deadlock here rather than fail an assertion.
         Cache cache = springCacheManager().getCache("springCacheValueLoaderTest");
         AtomicInteger loaderInvocations = new AtomicInteger();
@@ -430,8 +430,8 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testSpringCacheStoresNullValues() {
-        // Several @Cacheable methods have no "unless = #result == null" guard and rely on a cached null, while the
-        // backends reject a null value outright. A cached null must therefore read back as a present, null-valued entry.
+        // Several @Cacheable methods have no "unless = #result == null" guard and rely on a cached null, while the distributed
+        // providers reject a null value outright. A cached null must therefore read back as a present, null-valued entry.
         Cache cache = springCacheManager().getCache("springCacheNullValueTest");
         cache.put("nullKey", null);
 
@@ -545,10 +545,10 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
     }
 
     /**
-     * Whether this backend can order an arbitrarily named priority queue by the items' natural ordering.
+     * Whether this provider can order an arbitrarily named priority queue by the items' natural ordering.
      *
      * <p>
-     * The Hazelcast backend cannot: its ordering comes from a comparator statically bound to a single configured queue
+     * The Hazelcast provider cannot: its ordering comes from a comparator statically bound to a single configured queue
      * name, so it overrides this to {@code false} and asserts the fail-fast behaviour separately.
      *
      * @return true if any queue name can be used as a priority queue
@@ -559,7 +559,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testPriorityQueuePollsInPriorityOrder() {
-        assumeTrue(supportsPriorityQueueForArbitraryNames(), "backend does not support priority ordering for arbitrary queue names");
+        assumeTrue(supportsPriorityQueueForArbitraryNames(), "provider does not support priority ordering for arbitrary queue names");
         DistributedQueue<BuildJobQueueItem> queue = getDistributedDataProvider().getPriorityQueue("testPriorityOrderQueue");
         queue.clear();
 
@@ -576,7 +576,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testPriorityQueueGetAllIsInPriorityOrder() {
-        assumeTrue(supportsPriorityQueueForArbitraryNames(), "backend does not support priority ordering for arbitrary queue names");
+        assumeTrue(supportsPriorityQueueForArbitraryNames(), "provider does not support priority ordering for arbitrary queue names");
         DistributedQueue<BuildJobQueueItem> queue = getDistributedDataProvider().getPriorityQueue("testPriorityGetAllQueue");
         queue.clear();
 
@@ -845,24 +845,24 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testExpiringMapRejectsNonPositiveDefaultTimeToLive() {
-        // A zero or negative lifetime means "never expires" on the backends, which would turn an expiring map into a
+        // A zero or negative lifetime means "never expires" on the providers, which would turn an expiring map into a
         // permanent one without any signal at the call site.
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> getDistributedDataProvider().getExpiringMap("zeroTtlMapTest", Duration.ZERO));
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> getDistributedDataProvider().getExpiringMap("negativeTtlMapTest", Duration.ofSeconds(-1)));
     }
 
     /**
-     * The observed client addresses back the build agent origin check, so the two ways a backend can answer must stay
+     * The observed client addresses back the build agent origin check, so the two ways a provider can answer must stay
      * distinguishable and must agree with the name view.
      * <p>
      * An empty {@link Optional} means "this deployment cannot observe client connections" and lets every agent clone
-     * unconstrained; a present map means the backend answered and an absent client really is gone. A backend that
+     * unconstrained; a present map means the provider answered and an absent client really is gone. A provider that
      * returned an empty map for a failed query would silently drop every registered address instead, so the contract
      * asserted here is that the value is never null, that every reported name is usable as a map key, and that every
      * reported address parses as a single host - the registry compares them with {@link IpAddresses#sameHost}, which
      * matches nothing at all for a value that does not.
      * <p>
-     * The names must also be a subset of {@link DistributedDataProvider#getConnectedClientNames()}. A backend that
+     * The names must also be a subset of {@link DistributedDataProvider#getConnectedClientNames()}. A provider that
      * answered the two questions from different sources would make the same client look present to one caller and gone
      * to the other, which is exactly the disagreement the origin check cannot survive.
      */
@@ -891,7 +891,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
      * path the clone takes. Hazelcast clients connect to the cluster members, which are those nodes; Redis is a
      * separate service, and the addresses genuinely differ - with Redis in a container and the nodes on the host, one
      * side sees the docker bridge gateway and the other loopback. Enforcing that comparison refused every clone in a
-     * multi-node run, so the answer is asserted per backend rather than assumed.
+     * multi-node run, so the answer is asserted per provider rather than assumed.
      */
     @Test
     void testClientAddressesAreOnlyUsableForAuthorizationWhereClientsReachCoreNodes() {
@@ -899,7 +899,7 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
     }
 
     /**
-     * @return whether this backend's clients connect to a core node rather than to a separate middleware service
+     * @return whether this provider's clients connect to a core node rather than to a separate middleware service
      */
     protected abstract boolean clientsReachCoreNodesDirectly();
 
