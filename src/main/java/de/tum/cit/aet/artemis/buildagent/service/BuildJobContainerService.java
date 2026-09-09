@@ -434,6 +434,11 @@ public class BuildJobContainerService {
                 future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
             }
             catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                    // future.get() throws this when the waiting thread is interrupted. The broad catch is here for the
+                    // Docker client's own failures; it must not also discard a shutdown request.
+                    Thread.currentThread().interrupt();
+                }
                 Throwable cause = e.getCause();
                 // e will be ExecutionException if thrown in executor service by submitted task
                 // We are interested in the underlying cause in this case
@@ -487,6 +492,10 @@ public class BuildJobContainerService {
             killFuture.get(10, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
         }
         catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                // See stopContainer: killFuture.get() throws this on interruption.
+                Thread.currentThread().interrupt();
+            }
             log.error("Failed to kill container with id {}.", containerId, e);
         }
     }
@@ -507,6 +516,10 @@ public class BuildJobContainerService {
             removeFuture.get(10, TimeUnit.SECONDS); // Wait for the remove command to complete with a timeout
         }
         catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                // See stopContainer: removeFuture.get() throws this on interruption.
+                Thread.currentThread().interrupt();
+            }
             log.error("Failed to remove container with id {}", containerId, e);
         }
     }

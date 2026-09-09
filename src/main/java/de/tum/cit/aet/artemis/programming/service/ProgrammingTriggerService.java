@@ -215,6 +215,9 @@ public class ProgrammingTriggerService {
             Thread.sleep(externalSystemRequestBatchWaitingTime);
         }
         catch (InterruptedException ex) {
+            // This sleep paces requests to the CI system, so an interruption has to stop the caller's loop rather
+            // than be logged and forgotten.
+            Thread.currentThread().interrupt();
             log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
         }
     }

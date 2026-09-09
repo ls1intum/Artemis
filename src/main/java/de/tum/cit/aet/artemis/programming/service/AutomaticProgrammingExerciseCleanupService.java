@@ -303,6 +303,9 @@ public class AutomaticProgrammingExerciseCleanupService {
                     Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
+                    // This sleep paces requests to an external system inside a scheduled cleanup, so the loop has to
+                    // stop when the thread is interrupted rather than keep issuing them.
+                    Thread.currentThread().interrupt();
                     log.error("Exception encountered when pausing before cleaning up build plans", ex);
                 }
             }

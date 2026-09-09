@@ -338,6 +338,9 @@ public class GitService extends AbstractGitService {
                 Thread.sleep(1000);
             }
             catch (InterruptedException ex) {
+                // CanceledException does not carry the interruption, and this runs on request and scheduler threads
+                // that have to notice a shutdown.
+                Thread.currentThread().interrupt();
                 throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
             }
 

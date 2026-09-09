@@ -40,6 +40,10 @@ public class HyperionWebsocketService {
             log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
         }
         catch (InterruptedException | ExecutionException e) {
+            if (e instanceof InterruptedException) {
+                // Swallowing the exception must not also swallow the interruption.
+                Thread.currentThread().interrupt();
+            }
             log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
         }
     }
