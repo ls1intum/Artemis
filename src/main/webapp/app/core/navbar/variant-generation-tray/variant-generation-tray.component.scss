@@ -92,13 +92,10 @@
 }
 
 .variant-tray-entry {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    position: relative;
     border: 1px solid var(--p-content-border-color);
     border-radius: 0.6rem;
     padding: 0.65rem 0.8rem;
-    cursor: pointer;
     transition: all 0.15s ease;
 
     // The whole card is clickable (it opens the job in the wizard), so its hover carries the primary accent.
@@ -109,6 +106,27 @@
 
     &--attention {
         border-color: color-mix(in srgb, var(--warning) 50%, transparent);
+    }
+
+    // Activation target: everything except the cancel button, which is its sibling (see __cancel) rather than a
+    // descendant — a role="button" element must not contain another interactive control.
+    &__target {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        cursor: pointer;
+
+        // Room for the absolutely positioned cancel button, so the title never runs under it.
+        &--with-cancel {
+            padding-right: 5.5rem;
+        }
+    }
+
+    // Pinned to the card's own top-right corner, where it sat when it was still part of the title row.
+    &__cancel {
+        position: absolute;
+        top: 0.65rem;
+        right: 0.8rem;
     }
 
     // Secondary accent like the modal's flow card (variant-flow-card__arrow / __title--target).

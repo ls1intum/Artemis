@@ -155,7 +155,7 @@ describe('VariantGenerationTrayComponent', () => {
     });
 
     it('opens an entry on Space without scrolling the page behind the tray', () => {
-        // The entry is a div with role="button" (it hosts the cancel button, so it cannot be a real button).
+        // The entry's activation target is a div with role="button", not a native button.
         // That contract requires Space to activate it, and Space must not also scroll the page.
         const event = { preventDefault: vi.fn() } as unknown as Event;
 
