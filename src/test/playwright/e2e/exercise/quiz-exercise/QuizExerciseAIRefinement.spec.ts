@@ -28,7 +28,7 @@ async function enableHyperion(page: import('@playwright/test').Page) {
 test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
     // Block the Angular service worker: the production WAR registers ngsw-worker.js, which handles fetches before
     // Playwright's page.route can intercept them (default serviceWorkers: 'allow'), so the mocked Hyperion responses
-    // below would be silently bypassed and the request would reach the real (non-existent) backend endpoint instead.
+    // below would be silently bypassed and the request would reach the real (non-existent) server endpoint instead.
     test.use({ serviceWorkers: 'block' });
 
     let quizExercise: QuizExercise;
@@ -141,7 +141,7 @@ test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
 
         // No reasoning card shown; error alert appears
         await expect(panel.locator('.refinement-explanation-card')).not.toBeVisible({ timeout: 5000 });
-        await expect(page.locator('.alert-inner.danger')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toBeVisible({ timeout: 10000 });
     });
 
     test('Global bulk refinement FAB is visible when MC questions exist', async ({ page }) => {

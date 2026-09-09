@@ -29,7 +29,12 @@ set -e
 # Options:
 #   --stop                 Tear everything down (host JVMs + infra containers)
 #   --filter <pattern>     Run only tests matching the pattern (e.g., "Quiz")
-#   --middleware <name>    Distributed data backend: hazelcast (default) or redis.
+#   --specs "<paths>"      Run only these spec paths, relative to src/test/playwright
+#                            (e.g., "e2e/exam/ExamResults.spec.ts e2e/lecture/").
+#                            Replaces the default "run everything under e2e/".
+#                            Combines with --filter. Get the paths for a branch with
+#                            .ci/E2E-tests/determine-relevant-tests.sh
+#   --middleware <name>    Distributed data provider: hazelcast (default) or redis.
 #                            Both are driven through the DistributedDataProvider
 #                            abstraction, so the same tests must pass on either.
 #                            With redis no Hazelcast instance is created at all.
@@ -52,6 +57,7 @@ SKIP_BUILD=false
 SKIP_UP=false
 DEBUG=false
 TEST_FILTER=""
+TEST_SPECS=""
 # Hazelcast stays the default: it is what production runs today. Redis is the supported alternative and has to pass the
 # same suite, which is the whole point of the DistributedDataProvider abstraction.
 MIDDLEWARE="hazelcast"
@@ -86,7 +92,17 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -40 "$0" | tail -36; exit 0 ;;
+        --specs)
+            if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
+                echo -e "${RED}ERROR: --specs requires a non-empty list of spec paths${NC}"
+                echo "Usage: --specs \"<paths>\""
+                echo "Example: --specs \"e2e/exam/ExamResults.spec.ts e2e/lecture/\""
+                exit 1
+            fi
+            TEST_SPECS="$2"
+            shift 2
+            ;;
+        --help) head -45 "$0" | tail -41; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -272,6 +288,11 @@ fi
 
 if [ "$REUSE_RUNNING_NODES" = true ]; then
     echo -e "${GREEN}All three nodes answer /management/health/readiness — keeping the running stack (--skip-up).${NC}"
+    # A running JVM keeps the configuration it started with, so the flush interval set in launch_node
+    # cannot reach a node that is being reused. A node this script started already has it; one left
+    # over from before this setting existed, or started another way, still flushes every five minutes
+    # and will fail the two feature usage specs. Relaunch (--stop, or drop --skip-up) if they fail here.
+    echo -e "${YELLOW}Reused nodes keep their original feature usage flush interval; relaunch if FeatureUsage specs fail.${NC}"
 else
     for port in "${ALL_PORTS[@]}"; do
         check_port_available "$port" "Artemis host JVM"
@@ -282,7 +303,7 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Middleware selection
 # =============================================================================
-# The distributed data backend is chosen by a single Artemis property, read by every node from
+# The distributed data provider is chosen by a single Artemis property, read by every node from
 # docker/artemis/config/middleware-<name>.env. Everything else about the stack is identical, so a Redis run and a
 # Hazelcast run differ only in that file plus, for Redis, one extra container.
 MIDDLEWARE_SERVICES=()
@@ -511,7 +532,7 @@ launch_node() {
         source docker/artemis/config/prod-multinode-fast.env
         # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/node${n}-fast.env"
-        # Last, so the selected backend wins over anything the profile files set.
+        # Last, so the selected provider wins over anything the profile files set.
         # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/middleware-${MIDDLEWARE}.env"
         if [ "$MIDDLEWARE" = "redis" ]; then
@@ -535,6 +556,11 @@ launch_node() {
         export ARTEMIS_SUBMISSIONEXPORTPATH="$ARTEMIS_DATA_DIR/exports"
         export ARTEMIS_LEGALPATH="$ARTEMIS_DATA_DIR/legal"
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
+        # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts and
+        # FeatureUsageGit.spec.ts assert that a counter reaches the database within the test window.
+        # Matches run-e2e-tests-local-fast.sh and docker/artemis/config/playwright.env, which the
+        # containerised stacks read instead. Without it both specs fail here and pass everywhere else.
+        export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
         export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
         # Run the JVM in UTC to match production servers (which run UTC) and the app's own
@@ -721,7 +747,16 @@ pnpm run playwright:setup-local 2>/dev/null
 rm -f test-reports/results*.xml
 rm -rf test-reports/monocart-report*/
 
-BASE_ARGS=(e2e)
+# Positional args are the spec paths Playwright runs. Default to the whole e2e/ tree;
+# --specs narrows it to an explicit set (word-split on purpose, the option is documented
+# as a space-separated list). --grep filters by test title and composes with either.
+BASE_ARGS=()
+if [ -n "$TEST_SPECS" ]; then
+    # shellcheck disable=SC2206  # deliberate word splitting: --specs is a space-separated list
+    BASE_ARGS=($TEST_SPECS)
+else
+    BASE_ARGS=(e2e)
+fi
 if [ -n "$TEST_FILTER" ]; then
     BASE_ARGS+=(--grep "$TEST_FILTER")
 fi

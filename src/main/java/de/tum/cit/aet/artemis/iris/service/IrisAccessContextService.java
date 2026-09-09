@@ -18,9 +18,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDT
 /**
  * Resolves the {@link PyrisAccessContextDTO} for a user: the course IDs they can access, grouped by role, so Pyris can apply them as opaque access filters during global search.
  * <p>
- * Admins receive a present context with {@code unrestricted = true} (Pyris skips course scoping and visibility filtering for them) instead of a {@code null} context, which now
- * means
- * "apply the safe-default visibility filter". Non-admins receive their role-grouped course IDs with {@code unrestricted = false}.
+ * An administrator receives a present context with {@code unrestricted = true} (Pyris skips course scoping and visibility filtering for them) instead of a {@code null} context,
+ * which now means "apply the safe-default visibility filter". Everyone else receives their role-grouped course IDs with {@code unrestricted = false}.
  */
 @Lazy
 @Service
@@ -40,11 +39,14 @@ public class IrisAccessContextService {
      * Resolves the courses the given user can access, grouped by role, into an access context for Pyris.
      *
      * @param user the requesting user (loaded with authorities, see {@code UserRepository#getUserWithAuthorities})
-     * @return an access context with role-based course ID sets; admins get a present context with {@code unrestricted = true}
+     * @return an access context with role-based course ID sets; an elevated administrator gets a present context with {@code unrestricted = true}
      */
     public PyrisAccessContextDTO resolveAccessContext(User user) {
-        if (authCheckService.isAdmin(user)) {
-            // Admin: present context with unrestricted=true (NOT null; a null context now means the safe-default filter).
+        // Request-bound elevation rather than account classification: an unrestricted context lets Pyris search every
+        // course, which is the global administrator override, and an administrator only holds that while their request
+        // satisfies the configured passkey requirement. Every caller passes the current user, so this decides for them.
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
+            // Present context with unrestricted=true (NOT null; a null context now means the safe-default filter).
             return new PyrisAccessContextDTO(List.of(), List.of(), List.of(), List.of(), List.of(), ZonedDateTime.now(), true);
         }
         var courses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);

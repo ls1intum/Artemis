@@ -10,7 +10,7 @@ export class ExamResultsPage {
     }
 
     async checkGradeSummary(gradeSummary: any) {
-        const examSummary = this.page.locator('#exam-summary-result-overview .exam-points-summary-container');
+        const examSummary = this.page.locator('[data-testid="exam-summary-result-overview"] .exam-points-summary-container');
         // Wait for the summary container to be visible before checking rows
         await expect(examSummary).toBeVisible({ timeout: 30000 });
         for (const exercise of gradeSummary.studentExam.exercises) {
@@ -100,7 +100,7 @@ export class ExamResultsPage {
     /** Referenced modeling feedback: one row per assessed element, naming the element it belongs to. */
     async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
         const exercise = getExercise(this.page, exerciseId);
-        const componentFeedbacks = exercise.locator('#component-feedback-table');
+        const componentFeedbacks = exercise.locator('[data-testid="component-feedback-table"]');
         const feedbackElement = componentFeedbacks
             .locator('.unified-feedback, .feedback-row')
             .filter({ has: this.page.locator('.unified-feedback-reference-text, .feedback-row__name', { hasText: element }) })

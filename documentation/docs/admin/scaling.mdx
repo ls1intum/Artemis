@@ -1,7 +1,7 @@
 ---
 id: scaling
 title: Scaling Artemis
-sidebar_label: Scaling & Sizing
+sidebar_label: 'Scaling & Sizing'
 description: "How to size an Artemis installation: how many servers, how much CPU and memory, when to add nodes, and what the measurements show."
 ---
 
@@ -10,8 +10,6 @@ import { CalloutVariant } from "../../src/components/Callout/Callout.types";
 import Image, { ImageSize } from "../../src/components/Image/Image";
 
 import deploymentSingleMulti from "./assets/scaling/deployment_single_multi.png";
-
-# Scaling Artemis
 
 This is the reference for capacity planning and hardware requirements in an Artemis deployment. It
 answers the four questions that come up before an installation exists, and again before the first large
@@ -324,6 +322,8 @@ Results from other institutions are very welcome.
   build agents, coordination, WebSockets, the shared file system and nginx
 - [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) covers the
   built-in version control and build system
+- [LocalCI Build Runners](/admin/production-setup/build-runners) explains how a build agent executes a
+  build, and how to choose between the Docker and Kubernetes runners
 - [Jenkins and LocalVC Setup](/admin/jenkins-localvc) covers the external CI alternative and its build
   agents
 - [Additional Production Setup Tips](/admin/production-setup/additional-tips) collects systemd units,

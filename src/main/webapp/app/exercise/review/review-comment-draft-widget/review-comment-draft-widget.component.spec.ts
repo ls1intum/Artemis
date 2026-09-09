@@ -136,7 +136,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
         );
     });
 
-    it('should keep draft open when backend confirmation is missing', () => {
+    it('should keep draft open when server confirmation is missing', () => {
         const submitSpy = vi.fn();
         comp.onSubmitted.subscribe(submitSpy);
         fixture.componentRef.setInput('targetType', CommentThreadLocationType.TEMPLATE_REPO);

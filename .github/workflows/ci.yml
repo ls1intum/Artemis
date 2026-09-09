@@ -49,6 +49,7 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_ui: ${{ steps.decide.outputs.has_tum_ui }}
     steps:
       - uses: actions/checkout@v6
@@ -100,6 +101,11 @@ jobs:
               - 'src/main/resources/**'
               - 'build.gradle'
               - 'gradle/**'
+            has_skills:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-skills.yml'
+              - 'skills/**'
+              - 'supporting_scripts/check_skill_references.py'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
@@ -166,11 +172,12 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_SKILLS: ${{ steps.area.outputs.has_skills }}
           F_TUM_UI: ${{ steps.area.outputs.has_tum_ui }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_tum_ui; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_ui; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -183,6 +190,7 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
+              echo "has_skills=${F_SKILLS:-false}"
               echo "has_tum_ui=${F_TUM_UI:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
@@ -540,6 +548,30 @@ jobs:
           fi
           exit 0
 
+  # SonarQube Cloud analysis, running alongside Codacy so the two code-quality grades can be compared
+  # on the same code before either is trusted with a README badge. Scope is pinned to Codacy's in
+  # `gradle/sonar.gradle`; see README.md ("The code quality analyses").
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED, for the same reason `coverage-badge`
+  # above is: coverage imported from a partially failed run is artificially low, and unlike a badge
+  # this would persist into Sonar's own history as a real dip. Skipping instead leaves the last
+  # analysis standing. `ci-sonar.yml` is separately dispatchable for an on-demand grade.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating — the called job is
+  # `continue-on-error`, so a Sonar outage or an expired token cannot turn develop red.
+  sonar:
+    name: Sonar
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    uses: ./.github/workflows/ci-sonar.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.sha }}
+      with_coverage: true
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   translation:
     name: Check Translation Keys
     needs: detect-changes
@@ -563,6 +595,28 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has_beans == 'true'
     uses: ./.github/workflows/ci-bean-instantiations.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Not folded into `quality`: that job is gated on `build_relevant`, which is false when every
+  # changed file is markdown. A PR editing only skills/ would then skip the check that guards it.
+  skills:
+    name: Agent Skills
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_skills == 'true'
+    uses: ./.github/workflows/ci-skills.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # No `if:` at all, unlike every other area job: the terminology rule is repo-wide prose, so a
+  # documentation-only or workflow-only PR has to be checked too. A checkout and a grep, ~15s.
+  terminology:
+    name: Terminology
+    uses: ./.github/workflows/ci-terminology.yml
     permissions:
       contents: read
     with:
@@ -651,6 +705,8 @@ jobs:
       - workflows
       - version-consistency
       - bean-instantiations
+      - skills
+      - terminology
       - e2e
     runs-on: ubuntu-latest
     permissions: {}  # reads only the `needs` context; no checkout, no token scope
@@ -717,6 +773,8 @@ jobs:
       - translation
       - version-consistency
       - bean-instantiations
+      - skills
+      - terminology
       - e2e
       - codeql
       - coverage-report

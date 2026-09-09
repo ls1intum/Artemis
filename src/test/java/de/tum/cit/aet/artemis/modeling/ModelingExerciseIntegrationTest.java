@@ -1283,6 +1283,30 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(2));
+        modelingExercise.setAssessmentDueDate(baseTime.plusHours(4));
+        modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        modelingExercise.setExampleSolutionPublicationDate(modelingExercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        modelingExercise.setAssessmentDueDate(null);
+
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(3));
+        modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        modelingExercise.setExampleSolutionPublicationDate(modelingExercise.getDueDate());
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
         modelingExercise.setReleaseDate(baseTime.plusHours(3));
         modelingExercise.setDueDate(null);
         modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
@@ -1297,26 +1321,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         final Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         modelingExercise.setId(null);
-        modelingExercise.setAssessmentDueDate(null);
+        modelingExercise.setAssessmentDueDate(baseTime.plusHours(3));
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         modelingExercise.setReleaseDate(baseTime.plusHours(1));
         modelingExercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
         var result = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class,
-                HttpStatus.CREATED);
-        assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
-
-        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        modelingExercise.setReleaseDate(baseTime.plusHours(1));
-        modelingExercise.setDueDate(baseTime.plusHours(3));
-        exampleSolutionPublicationDate = baseTime.plusHours(2);
-        modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
-
-        result = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class,
                 HttpStatus.CREATED);
         assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
@@ -1721,11 +1734,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Build the exam-edit request the way the client does (from the flattened response): courseId absent, exerciseGroupId present.
         UpdateModelingExerciseDTO editDto = new UpdateModelingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(),
                 response.problemStatement(), response.categories(), response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(),
-                response.allowComplaintsForAutomaticAssessments(), response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(),
-                response.feedbackSuggestionModule(), response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
-                response.exampleSolutionPublicationDate(), response.diagramType(), response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(),
-                response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(),
-                response.competencyLinks());
+                response.allowComplaintsForAutomaticAssessments(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(),
+                response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), response.diagramType(),
+                response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(), response.exerciseGroupId(), response.mode(),
+                response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(), response.competencyLinks());
 
         ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -114,15 +114,39 @@ describe('IdeSettingsComponent', () => {
         expect(component.remainingProgrammingLanguages()).toContain(programmingLanguage);
     });
 
-    it('should check if the IDE is assigned to a programming language', () => {
+    it('should resolve a selection made by deep link, because option objects are separate instances', () => {
         const programmingLanguage = ProgrammingLanguage.JAVA;
-        const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-        const idePreferences = new Map([[programmingLanguage, ide]]);
-        component.programmingLanguageToIde.set(idePreferences);
+        const saved = { name: 'IntelliJ', deepLink: 'jetbrains://idea/checkout/git?checkout.repo={cloneUrl}' };
+        component.PREDEFINED_IDE.set([{ name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }, saved]);
+        mockIdeSettingsService.saveIdePreference.mockClear();
+        mockIdeSettingsService.saveIdePreference.mockReturnValue(of(saved));
 
-        expect(component.programmingLanguageToIde().get(programmingLanguage)).toBe(ide);
-        const result = component.isIdeOfProgrammingLanguage(programmingLanguage, ide);
+        component.changeIdeByDeepLink(programmingLanguage, saved.deepLink);
 
-        expect(result).toBe(true);
+        expect(mockIdeSettingsService.saveIdePreference).toHaveBeenCalledExactlyOnceWith(programmingLanguage, saved);
+        expect(component.programmingLanguageToIde().get(programmingLanguage)).toBe(saved);
+    });
+
+    it('should ignore a deep link that matches no known IDE', () => {
+        mockIdeSettingsService.saveIdePreference.mockClear();
+
+        component.changeIdeByDeepLink(ProgrammingLanguage.JAVA, 'unknown://nothing');
+
+        expect(mockIdeSettingsService.saveIdePreference).not.toHaveBeenCalled();
+    });
+
+    it('should restore the saved selection when the save fails', () => {
+        const programmingLanguage = ProgrammingLanguage.JAVA;
+        const saved = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+        component.programmingLanguageToIde.set(new Map([[programmingLanguage, saved]]));
+        const before = component.programmingLanguageToIde();
+        mockIdeSettingsService.saveIdePreference.mockClear();
+        mockIdeSettingsService.saveIdePreference.mockReturnValue(throwError(() => new Error('save failed')));
+
+        component.changeIde(programmingLanguage, { name: 'CLion', deepLink: 'jetbrains://clion/checkout/git?checkout.repo={cloneUrl}' });
+
+        // The control is fed a one-way value, so the map must change for the selection to snap back.
+        expect(component.programmingLanguageToIde()).not.toBe(before);
+        expect(component.programmingLanguageToIde().get(programmingLanguage)).toBe(saved);
     });
 });

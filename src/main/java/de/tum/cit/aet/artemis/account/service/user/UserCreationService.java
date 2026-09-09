@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -267,7 +268,7 @@ public class UserCreationService {
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
         updateEmailIfChanged(user, updatedUserDTO.getEmail());
-        user.setLogin(updatedUserDTO.getLogin().toLowerCase());
+        user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
 

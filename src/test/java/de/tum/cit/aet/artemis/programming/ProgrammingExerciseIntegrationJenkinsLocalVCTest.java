@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
@@ -150,7 +150,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            jenkinsRequestMockProvider.mockDeleteBuildPlanNotFound(projectKey, projectKey + "-" + planName.toUpperCase());
+            jenkinsRequestMockProvider.mockDeleteBuildPlanNotFound(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT));
         }
 
         jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
@@ -170,7 +170,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            jenkinsRequestMockProvider.mockDeleteBuildPlanFailWithException(projectKey, projectKey + "-" + planName.toUpperCase());
+            jenkinsRequestMockProvider.mockDeleteBuildPlanFailWithException(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT));
         }
 
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
@@ -692,11 +692,10 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     // TODO: enable or remove the test
     @Disabled
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @CsvSource({ "false, false", "true, false", "false, true", })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExercise_scaChanged_badRequest(recreateBuildPlan, updateTemplate);
+    void importProgrammingExercise_scaChanged_badRequest() throws Exception {
+        programmingExerciseIntegrationTestService.importProgrammingExercise_scaChanged_badRequest();
     }
 
     @Test

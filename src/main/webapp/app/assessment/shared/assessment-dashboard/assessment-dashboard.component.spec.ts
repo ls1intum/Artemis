@@ -15,6 +15,7 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -100,7 +101,11 @@ describe('AssessmentDashboardComponent', () => {
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
     } as FileUploadExercise;
 
-    const course = { id: 10, exercises: [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, modelingExercise, textExercise, modelingExercise] } as Course;
+    const course = {
+        id: 10,
+        isAtLeastInstructor: true,
+        exercises: [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, modelingExercise, textExercise, modelingExercise],
+    } as Course;
     const exercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, fileUploadExercise, modelingExercise, textExercise];
     const exerciseGroup1 = { id: 141, exercises: [programmingExercise, modelingExercise] } as ExerciseGroup;
     const exerciseGroup2 = { id: 142, exercises: [textExercise, fileUploadExercise] } as ExerciseGroup;
@@ -164,6 +169,8 @@ describe('AssessmentDashboardComponent', () => {
                 getCourseWithInterestingExercisesForTutorsStub = vi
                     .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
                     .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
+                const accountService = TestBed.inject(AccountService);
+                vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
                 getStatsForTutorsStub = vi
                     .spyOn(courseManagementService, 'getStatsForTutors')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
@@ -476,5 +483,25 @@ describe('AssessmentDashboardComponent', () => {
 
             expect(triggerSpy).not.toHaveBeenCalled();
         });
+    });
+
+    it('should show waiting notice and not load dashboard when tutor accesses running exam', () => {
+        const activatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = {
+            paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
+            url: [{ path: 'course-management' }, { path: '10' }, { path: 'assessment-dashboard' }] as any,
+        } as any;
+
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(
+            of({ body: { latestIndividualEndDate: dayjs().add(2, 'hours') } as ExamInformationDTO }) as Observable<HttpResponse<ExamInformationDTO>>,
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.examNotFinished()).toBe(true);
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).not.toHaveBeenCalled();
+        expect(fixture.debugElement.nativeElement.querySelector('#assessment-not-possible-yet')).not.toBeNull();
     });
 });

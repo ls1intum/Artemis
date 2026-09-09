@@ -1,12 +1,15 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -322,7 +325,7 @@ public class ProgrammingExercise extends Exercise {
      */
     public String generateRepositoryName(String repositoryName) {
         generateAndSetProjectKey();
-        return this.projectKey.toLowerCase() + "-" + repositoryName;
+        return this.projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryName;
     }
 
     /**
@@ -356,7 +359,7 @@ public class ProgrammingExercise extends Exercise {
 
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
     }
 
     @Override
@@ -633,7 +636,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Check if manual results are allowed for the exercise
+     * Check if manual results are allowed for the exercise.
      * <p>
      * For exam exercises only the configuration is checked here. The point in time from which on assessment is possible
      * depends on the individual student exams and is enforced by
@@ -655,11 +658,6 @@ public class ProgrammingExercise extends Exercise {
             return false;
         }
         if (isExamExercise()) {
-            return true;
-        }
-        // The relevantDueDate check below keeps us from assessing feedback requests,
-        // as their relevantDueDate is before the due date
-        if (getAllowFeedbackRequests()) {
             return true;
         }
 
@@ -746,25 +744,22 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    /**
-     * Validates settings for exercises, where allowFeedbackRequests is set
-     */
-    public void validateSettingsForFeedbackRequest() {
-        if (!this.getAllowFeedbackRequests()) {
-            return;
-        }
+    @Override
+    public void validateDates() {
+        super.validateDates();
 
-        if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
+        if (!validateBuildAndTestStudentSubmissionsAfterDueDate()) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
+    }
 
-        if (this.getDueDate() == null) {
-            throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
+    private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
+        ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
         }
-
-        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
-            throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
-        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
     }
 
     /**

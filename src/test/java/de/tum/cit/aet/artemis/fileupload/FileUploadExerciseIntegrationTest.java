@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -118,10 +119,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Long exerciseGroupId = exercise.isExamExercise() ? exercise.getExerciseGroup().getId() : null;
         return new FileUploadExerciseInputDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getMode(),
-                teamConfig, exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
-                fileUploadExercise.getExampleSolution(), fileUploadExercise.getFilePattern(), courseId, exerciseGroupId, criteria, competencyLinks, plagiarismConfig);
+                teamConfig, exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), fileUploadExercise.getExampleSolution(), fileUploadExercise.getFilePattern(), courseId, exerciseGroupId, criteria,
+                competencyLinks, plagiarismConfig);
     }
 
     private static boolean initialized(Object association) {
@@ -206,7 +207,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.id()).isNotNull();
-        assertThat(receivedFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(receivedFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase(Locale.ROOT).replaceAll("\\s+", ""));
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(receivedFileUploadExercise.course().id()).as("courseId was set correctly").isEqualTo(course.getId());
@@ -275,7 +276,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.id()).isNotNull();
-        assertThat(createdFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
+        assertThat(createdFileUploadExercise.filePattern()).isEqualTo(creationFilePattern.toLowerCase(Locale.ROOT).replaceAll("\\s+", ""));
         assertThat(createdFileUploadExercise.course()).as("course was not set for exam exercise").isNull();
         assertThat(createdFileUploadExercise.exerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(createdFileUploadExercise.exerciseGroup().id()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
@@ -682,10 +683,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     private UpdateFileUploadExerciseDTO createDtoWithTargetIds(UpdateFileUploadExerciseDTO original, Long courseId, Long exerciseGroupId) {
         return new UpdateFileUploadExerciseDTO(original.id(), original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
                 original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
-                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
-                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
-                original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), courseId, exerciseGroupId, original.gradingCriteria(),
-                original.competencyLinks());
+                original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.gradingInstructions(), original.releaseDate(), original.startDate(),
+                original.dueDate(), original.assessmentDueDate(), original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), courseId,
+                exerciseGroupId, original.gradingCriteria(), original.competencyLinks());
     }
 
     @Test
@@ -933,10 +933,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         UpdateFileUploadExerciseDTO original = UpdateFileUploadExerciseDTO.of(exercise);
         return new UpdateFileUploadExerciseDTO(customId, original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
                 original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
-                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
-                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
-                original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), original.courseId(), original.exerciseGroupId(),
-                original.gradingCriteria(), original.competencyLinks());
+                original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.gradingInstructions(), original.releaseDate(), original.startDate(),
+                original.dueDate(), original.assessmentDueDate(), original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(),
+                original.courseId(), original.exerciseGroupId(), original.gradingCriteria(), original.competencyLinks());
     }
 
     private void assertErrorKey(MockHttpServletResponse response, String expectedErrorKey) throws Exception {
@@ -959,6 +958,30 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
+        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
+        fileUploadExercise.setDueDate(baseTime.plusHours(2));
+        fileUploadExercise.setAssessmentDueDate(baseTime.plusHours(4));
+        fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setExampleSolutionPublicationDate(fileUploadExercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setAssessmentDueDate(null);
+
+        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
+        fileUploadExercise.setDueDate(baseTime.plusHours(3));
+        fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setExampleSolutionPublicationDate(fileUploadExercise.getDueDate());
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
         fileUploadExercise.setReleaseDate(baseTime.plusHours(3));
         fileUploadExercise.setDueDate(null);
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
@@ -973,12 +996,12 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         final Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         fileUploadExercise.setId(null);
-        fileUploadExercise.setAssessmentDueDate(null);
+        fileUploadExercise.setAssessmentDueDate(baseTime.plusHours(3));
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
         fileUploadExercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
         fileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 4));
@@ -986,16 +1009,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         // The response DTO is reloaded from the database, which stores timestamps with millisecond precision, so the
         // sub-millisecond part of the in-memory value does not survive the round trip.
         assertThat(result.exampleSolutionPublicationDate()).isCloseTo(exampleSolutionPublicationDate, within(1, ChronoUnit.MILLIS));
-
-        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
-        fileUploadExercise.setDueDate(baseTime.plusHours(3));
-        exampleSolutionPublicationDate = baseTime.plusHours(2);
-        fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        fileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.CREATED);
-        assertThat(result.exampleSolutionPublicationDate()).isCloseTo(exampleSolutionPublicationDate, within(1, ChronoUnit.MILLIS));
-
     }
 
     @Test
@@ -1119,6 +1132,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();
+        ZonedDateTime releaseDate = ZonedDateTime.now().plusDays(1);
+        expectedFileUploadExercise.setReleaseDate(releaseDate);
+        expectedFileUploadExercise.setDueDate(releaseDate.plusDays(1));
+        expectedFileUploadExercise.setAssessmentDueDate(releaseDate.plusDays(2));
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);

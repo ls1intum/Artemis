@@ -6,7 +6,7 @@
         </tum-ui-button>
     </div>
     <div class="overflow-x-auto">
-        <table tumUiTable [striped]="true" id="healthCheck" aria-describedby="health-page-heading">
+        <table tumUiTable [striped]="true" data-testid="healthCheck" aria-describedby="health-page-heading">
             <thead>
                 <tr>
                     <!-- w-full on the first column collapses the other two to their content width. -->
@@ -57,7 +57,7 @@
                             </td>
                         </tr>
                     }
-                    <tr id="websocketConnection">
+                    <tr data-testid="websocketConnection">
                         <td>Websocket Connection (Client -&gt; Server)</td>
                         <td data-testid="status-cell">
                             <tum-ui-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">

@@ -9,6 +9,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -268,5 +269,54 @@ describe('ExerciseHeadersInformationComponent', () => {
 
         titles = component.informationBoxItems().map((item) => item.title);
         expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+    });
+
+    describe('AI feedback quota box', () => {
+        const athenaCourse = { athenaFormativeFeedbackEnabled: true } as Course;
+
+        it('should show the AI feedback item for a text exercise when Athena and the course flag are enabled', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.TEXT });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
+        });
+
+        it('should show the AI feedback item for a programming exercise with semi-automatic assessment', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
+        });
+
+        it('should not show the AI feedback item for a programming exercise without semi-automatic assessment', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
+        });
+
+        it('should not show the AI feedback item for a file-upload exercise even when Athena is enabled course-wide', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.FILE_UPLOAD });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
+        });
+
+        it('should not show the AI feedback item for a quiz exercise even when Athena is enabled course-wide', () => {
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ });
+            fixture.componentRef.setInput('course', athenaCourse);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
+        });
     });
 });

@@ -6,12 +6,24 @@ import java.time.Duration
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
 
-    // Hard backstop against a hung test/deadlock (suite normally finishes in ~30 min). On timeout the
-    // build fails as `failure`, not the opaque `cancelled` a GitHub job-timeout produces, so the merge
-    // gate shows a real failure. A global JUnit per-method timeout is deliberately NOT used:
-    // SAME_THREAD cannot interrupt a deadlock, and SEPARATE_THREAD breaks the ~288 tests relying on the
-    // thread-bound Spring SecurityContext (@WithMockUser).
-    timeout = Duration.ofMinutes(55)
+    // Hard backstop against a hung test/deadlock. On timeout the build fails as `failure`, not the
+    // opaque `cancelled` a GitHub job-timeout produces, so the merge gate shows a real failure. A global
+    // JUnit per-method timeout is deliberately NOT used: SAME_THREAD cannot interrupt a deadlock, and
+    // SEPARATE_THREAD breaks the ~288 tests relying on the thread-bound Spring SecurityContext
+    // (@WithMockUser).
+    //
+    // 70 minutes rather than the 55 this was set to when the hang ladder was introduced. The median run
+    // is ~30 min, but wall time roughly doubles on a loaded runner. Measured on 2026-09-04: green runs
+    // of 29, 29, 30, 30, 31, 33, 45, 48 and 51 minutes, and four runs killed here at 57 to 58 minutes
+    // with zero test failures, each still completing tests seconds before the kill. 55 sat about six
+    // minutes above the legitimate maximum run_with_hang_dump.sh already documents ("40-49 min on a
+    // loaded runner"), so a load spike failed the build instead of a defect.
+    //
+    // This does not weaken hang detection, because this timer never told a hang from a slow run.
+    // run_with_hang_dump.sh does, by watching for output silence, and still dumps threads from about
+    // minute 45. What is left for this bound to catch is a hang that keeps producing output, and it
+    // stays under the job's own 80-minute cap so that case still fails as a Gradle failure.
+    timeout = Duration.ofMinutes(70)
 
     jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
     // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.
@@ -86,29 +98,32 @@ tasks.withType(Test).configureEach {
         info.exceptionFormat = debug.exceptionFormat
     }
 
-    afterTest { descriptor, result ->
-        if (result.resultType == TestResult.ResultType.FAILURE) {
-            var failedTest = "${descriptor.className}::${descriptor.name}"
-            logger.debug("Adding " + failedTest + " to failedTests...")
-            failedTests << [failedTest]
-        }
-    }
-
-    afterSuite { suite, result ->
-        if (!suite.parent) { // will match the outermost suite
-            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-            def startItem = "|  ", endItem = "  |"
-            def repeatLength = startItem.length() + output.length() + endItem.length()
-            println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
-            // logs each failed test
-            if (!failedTests.empty) {
-                logger.lifecycle("Failed tests:")
-                failedTests.each { failedTest ->
-                    println("${failedTest}")
+    addTestListener([
+        beforeTest: { descriptor -> },
+        beforeSuite: { suite -> },
+        afterTest: { descriptor, result ->
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                var failedTest = "${descriptor.className}::${descriptor.name}"
+                logger.debug("Adding " + failedTest + " to failedTests...")
+                failedTests << failedTest
+            }
+        },
+        afterSuite: { suite, result ->
+            if (!suite.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = "|  ", endItem = "  |"
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+                // logs each failed test
+                if (!failedTests.empty) {
+                    logger.lifecycle("Failed tests:")
+                    failedTests.each { failedTest ->
+                        println("${failedTest}")
+                    }
                 }
             }
-        }
-    }
+        },
+    ] as TestListener)
 }
 
 // Allow using in jacoco.gradle
@@ -119,6 +134,10 @@ ext {
     includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
 
     runAllTests = includedTags.size() == 0 && includedModules.size() == 0
+    // One shard of a full run: a JUnit tag expression naming the bucket(s) this invocation is responsible for.
+    // Unlike includeTags it does not change what a full run means - the same suites and files are excluded - it only
+    // narrows a full run to part of it, so that the shards of one build together cover exactly what one build covers.
+    testBucket = System.getProperty("artemis.test.bucket")
     BasePath = "de/tum/cit/aet/artemis"
 }
 
@@ -126,11 +145,16 @@ ext {
 // Execute the test cases: ./gradlew test
 // Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
 // Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
+// Execute one shard of a full run: ./gradlew test -Dartemis.test.bucket="BucketIndependent" (see .github/workflows/ci-test.yml)
 test {
     if (runAllTests) {
         // Default per-PR run: exclude long-running nightly suites. Opt in via -DincludeTags="nightly-lti".
         useJUnitPlatform() {
             excludeTags "nightly-lti"
+            // Sharded run: the same full run, restricted to the buckets this shard owns.
+            if (testBucket) {
+                includeTags testBucket
+            }
         }
         exclude "**/*IT*", "**/*IntTest*"
     } else if (includedModules.size() == 0) {
