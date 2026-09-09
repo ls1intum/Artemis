@@ -6,9 +6,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-/** Core-resolved run parameters. Provider endpoints and credentials are deliberately absent. */
+/** Core-resolved run parameters. The empty effort profile selects deployment defaults and must survive serialization. Provider credentials are deliberately absent. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GenerationParameters(String effortProfile, int maxTurns, long maxTokens, Duration maxDuration, int contextWindowTokens, @Nullable String model,
+public record GenerationParameters(@JsonInclude(JsonInclude.Include.ALWAYS) String effortProfile, int maxTurns, long maxTokens, Duration maxDuration, int contextWindowTokens, @Nullable String model,
         @Nullable String reasoningEffort, @Nullable Double temperature, @Nullable Double topP, @Nullable Integer maxCompletionTokens, boolean stagedGeneration,
         String stagedContext) {
 
