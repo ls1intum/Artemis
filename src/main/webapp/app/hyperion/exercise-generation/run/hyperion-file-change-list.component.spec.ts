@@ -98,14 +98,15 @@ describe('HyperionFileChangeListComponent', () => {
     });
 
     describe('rows', () => {
-        it('clips the directory but never the file name', () => {
+        it('shows the wrapping file name before its clipped directory', () => {
             const row = rows(render(THREE_REPOS))[0];
 
             const parts = row.querySelectorAll('span span');
-            expect(parts[0].className).toContain('truncate');
-            expect(parts[0].textContent).toBe('src/de/tum/');
-            expect(parts[1].className).not.toContain('truncate');
-            expect(parts[1].textContent).toBe('Loan.java');
+            expect(parts[1].className).toContain('truncate');
+            expect(parts[1].textContent).toBe('src/de/tum/');
+            expect(parts[0].className).toContain('break-all');
+            expect(parts[0].className).not.toContain('truncate');
+            expect(parts[0].textContent).toBe('Loan.java');
         });
 
         it('labels each row with what happened to the file', () => {

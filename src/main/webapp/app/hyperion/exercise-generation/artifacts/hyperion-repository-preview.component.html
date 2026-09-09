@@ -32,7 +32,7 @@
             @if (view.solutionMissing) {
                 <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.review.solutionMissing"></p>
             }
-            <jhi-git-diff-file [diffInformation]="view.diff" />
+            <jhi-git-diff-file [diffInformation]="view.diff" [allowSplitView]="false" />
         }
     }
 </div>

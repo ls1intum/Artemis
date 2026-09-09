@@ -48,14 +48,15 @@
 }
 
 <ng-template #rowContent let-row>
-    <!-- The directory may be clipped at any width; the file name never is, because the name is the identity. -->
-    <span class="flex min-w-0 flex-auto items-baseline">
-        <span class="min-w-0 truncate text-muted-color">{{ row.directory }}</span>
-        <span class="shrink-0 font-medium">{{ row.name }}</span>
+    <span class="flex min-w-0 flex-auto flex-col">
+        <span class="font-medium break-all">{{ row.name }}</span>
+        @if (density() !== 'compact' && row.directory) {
+            <span class="truncate text-xs text-muted-color">{{ row.directory }}</span>
+        }
+        @if (row.recencyLabelKey) {
+            <span class="text-xs text-muted-color" [jhiTranslate]="row.recencyLabelKey"></span>
+        }
     </span>
-    @if (row.recencyLabelKey) {
-        <span class="shrink-0 text-sm text-muted-color" [jhiTranslate]="row.recencyLabelKey"></span>
-    }
     @if (row.actionLabelKey) {
         <tum-ui-tag class="shrink-0" severity="secondary" [value]="row.actionLabelKey | artemisTranslate" />
     }

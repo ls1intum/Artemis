@@ -40,6 +40,22 @@ describe('HyperionRepositoryPreviewComponent', () => {
         expect(fixture.componentInstance['preview']()).toEqual({ kind: 'file', state: { kind: 'text', content: 'public class Box {}', lineCount: 1 } });
     });
 
+    it('reuses the selected repository request when comparison is toggled before it completes', () => {
+        const pending = new Subject<{ fileContent: string }>();
+        getFile.mockImplementation((_path: string, domain: DomainChange) => (domain[1].id === 12 ? pending : of({ fileContent: 'starter' })));
+        fixture.detectChanges();
+        fixture.componentInstance['compare'].set(true);
+        fixture.detectChanges();
+        expect(getFile).toHaveBeenCalledTimes(2);
+        pending.next({ fileContent: 'solution' });
+        pending.complete();
+        expect(fixture.componentInstance['preview']().kind).toBe('comparison');
+        fixture.componentInstance['compare'].set(false);
+        fixture.detectChanges();
+        expect(getFile).toHaveBeenCalledTimes(2);
+        expect(fixture.componentInstance['preview']()).toEqual({ kind: 'file', state: { kind: 'text', content: 'solution', lineCount: 1 } });
+    });
+
     it('compares starter to solution and treats only an actual 404 as a missing student-created type', () => {
         getFile.mockImplementation((_path: string, domain: DomainChange) =>
             domain[1].id === 11 ? throwError(() => new HttpErrorResponse({ status: 404 })) : of({ fileContent: 'public class Box {}' }),
