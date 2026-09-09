@@ -48,7 +48,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'General Guidelines',
-                    items: ['guidelines/language', 'guidelines/terminology'],
+                    items: ['guidelines/documentation', 'guidelines/language', 'guidelines/terminology'],
                 },
             ],
         },
