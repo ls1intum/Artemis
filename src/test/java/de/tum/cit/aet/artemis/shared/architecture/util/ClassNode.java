@@ -24,7 +24,7 @@ public class ClassNode extends ClassPathNode {
      * @param containedClass the {@link Class} object, must not be <code>null</code>.
      * @param classInfo      the {@link ClassInfo} describing this class node's class, may be <code>null</code>.
      */
-    public ClassNode(@NonNull PackageNode parent, @NonNull Class<?> containedClass, ClassInfo classInfo) {
+    public ClassNode(PackageNode parent, @NonNull Class<?> containedClass, ClassInfo classInfo) {
         super(parent, getClassNameWithoutPackage(containedClass));
         // See PackageNode: a null parent would be treated as the root instead of failing.
         if (parent == null) {

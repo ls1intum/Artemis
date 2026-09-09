@@ -11,7 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.assertj.core.util.TriFunction;
-import org.jspecify.annotations.NonNull;
 
 import io.github.classgraph.ClassInfo;
 
@@ -44,7 +43,7 @@ public class PackageNode extends ClassPathNode {
      * @param parent      this nodes parent package, must not be <code>null</code>
      * @param segmentName this nodes segment name. Must not be <code>null</code>, contain '<code>.</code>' or be blank.
      */
-    public PackageNode(@NonNull PackageNode parent, String segmentName) {
+    public PackageNode(PackageNode parent, String segmentName) {
         super(parent, segmentName);
         // ClassPathNode treats a null parent as the root, so this cannot be left to the annotation: a null would
         // silently produce a second root-like node with the wrong name rather than failing. Only the package-private
