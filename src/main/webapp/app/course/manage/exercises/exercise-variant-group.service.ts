@@ -8,7 +8,7 @@ import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/cours
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
-/** Server representation of an exercise variant group (mirrors the backend {@code ExerciseVariantGroupDTO}). */
+/** Server representation of an exercise variant group (mirrors the server-side {@code ExerciseVariantGroupDTO}). */
 export interface ExerciseVariantGroupDTO {
     id?: number;
     title?: string;
@@ -21,7 +21,7 @@ export interface ExerciseVariantGroupDTO {
     exerciseIds?: number[];
 }
 
-/** Lightweight preview payload for a group member (mirrors the backend {@code ExerciseProblemStatementDTO}). */
+/** Lightweight preview payload for a group member (mirrors the server-side {@code ExerciseProblemStatementDTO}). */
 export interface ExerciseProblemStatementDTO {
     exerciseId: number;
     problemStatement?: string;
