@@ -44,12 +44,22 @@ tell a student what rule failed and why; the message is part of the pedagogy.
 
 ## Harness conventions (Java/Ares)
 
-Test classes follow the seeded harness: class-level `@Public`, `@WhitelistPath("build")`,
+Use `org.junit.jupiter.api.Test` and `de.tum.in.test.api.jupiter.Public`. The path and timeout annotations
+come from `de.tum.in.test.api`: `WhitelistPath`, `BlacklistPath`, and `StrictTimeout`. Use JUnit
+`DisplayNameGeneration` with `DisplayNameGenerator.Simple.class` so reports retain method names.
+Start with these supported imports and build the first exercise-specific test; inspect dependency
+internals only to resolve a concrete compiler diagnostic, not as a prerequisite to authoring.
+
+`AFTER_DUE_DATE` is Artemis visibility metadata in `test-plan.json`, not an Ares `@Hidden` or
+`@Deadline` annotation. Use the same executable test annotations for visible and after-due-date
+witnesses; both must run during verification and normal grading. Artemis controls feedback visibility.
+
+Test classes follow the harness: class-level `@Public`, `@WhitelistPath("build")`,
 `@BlacklistPath("build/classes/java/test")`; each test carries `@StrictTimeout`. No `@DisplayName` — Artemis
 binds the reported method name, so the method name itself is the task-binding target. Structural checks use
 the seeded `testClass[X]` / `testMethods[X]` / `testAttributes[X]` / `testConstructors[X]` names verbatim;
 never invent structural names. For a type that exists only in the solution, reach it reflectively (the
-seeded `reference/tests` shows the working pattern with `ReflectionTestUtils`) so the same test still
+explicit declared-signature pattern above uses `ReflectionTestUtils`) so the same test still
 compiles against the template.
 
 ## No theatre
