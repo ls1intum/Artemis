@@ -651,7 +651,7 @@
                     </div>
                 }
             </div>
-            <div class="mt-3 d-flex">
+            <div class="mt-3 d-flex gap-2">
                 <button type="button" id="cancel-save" tumUiButton severity="secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
@@ -663,7 +663,7 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl" />
                 }
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" tumUiButton class="ml-2" [disabled]="courseForm.invalid || isSaving() || !isValidConfiguration">
+                    <button type="submit" id="save-entity" tumUiButton [disabled]="courseForm.invalid || isSaving() || !isValidConfiguration">
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                 </ng-template>
