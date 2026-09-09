@@ -339,6 +339,7 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should show submission', () => {
+        vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of({ feedbacks: [mockFeedbackWithReference] } as Result));
         const feedbacks = [mockFeedbackWithReference];
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
