@@ -9,9 +9,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /** Frozen candidate and trusted-supervisor verdict; only core decides whether a run may persist. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationOutput(WorkspaceSnapshot candidate, VerificationResult verification, @Nullable String verifiedDigest, SpecFidelityReport review, String terminationReason,
-        @Nullable GenerationUsage usage, AccountingState accountingState, @JsonInclude(JsonInclude.Include.ALWAYS) String effortProfile) {
+        @Nullable GenerationUsage usage, AccountingState accountingState, String effortProfile) {
 
     public GenerationOutput {
+        // NON_EMPTY omits the empty profile; an absent wire value selects deployment defaults.
+        effortProfile = effortProfile == null ? "" : effortProfile;
         Objects.requireNonNull(candidate);
         Objects.requireNonNull(review);
         Objects.requireNonNull(verification);
@@ -19,8 +21,7 @@ public record GenerationOutput(WorkspaceSnapshot candidate, VerificationResult v
         if (verification.mechanicallyVerified() && !candidate.sha256().equals(verifiedDigest)) {
             throw new IllegalArgumentException("Verification must refer to the exact frozen candidate");
         }
-        if (terminationReason == null || terminationReason.length() > 128 || effortProfile == null || effortProfile.length() > 64
-                || (accountingState == AccountingState.COMPLETE && usage == null)) {
+        if (terminationReason == null || terminationReason.length() > 128 || effortProfile.length() > 64 || (accountingState == AccountingState.COMPLETE && usage == null)) {
             throw new IllegalArgumentException("Invalid generation outcome or accounting seal");
         }
     }
