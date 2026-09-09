@@ -104,7 +104,7 @@ class VariantPlacementServiceNewGroupTest {
 
         verify(exerciseVariantGroupService).assignToGroup(variant, createdGroup);
         verify(exerciseVariantGroupService, never()).assignToGroup(source, createdGroup);
-        verify(exerciseVariantGroupService, never()).adoptMissingDatesFromExercise(createdGroup, source);
+        verify(exerciseVariantGroupService, never()).seedGroupDatesFromExercise(createdGroup, source);
         verify(exerciseVariantGroupRepository, never()).delete(any());
         assertThat(warnings).singleElement().asString().contains("its source exercise was not added").contains("started or ended");
     }
@@ -129,7 +129,7 @@ class VariantPlacementServiceNewGroupTest {
         placementService.place(variant, SOURCE_ID, newGroupRequest());
 
         InOrder inOrder = inOrder(exerciseVariantGroupService);
-        inOrder.verify(exerciseVariantGroupService).adoptMissingDatesFromExercise(createdGroup, source);
+        inOrder.verify(exerciseVariantGroupService).seedGroupDatesFromExercise(createdGroup, source);
         inOrder.verify(exerciseVariantGroupService).assignToGroup(variant, createdGroup);
         inOrder.verify(exerciseVariantGroupService).assignToGroup(source, createdGroup);
     }

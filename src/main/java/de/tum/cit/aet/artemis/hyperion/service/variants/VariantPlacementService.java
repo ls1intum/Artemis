@@ -114,7 +114,7 @@ public class VariantPlacementService {
                     // is adopted from the source, not the clone. Seeded onto the still-empty group instead of by
                     // letting the source join first: source membership is persisted and stamps the group's timeline
                     // onto the instructor's own exercise, which a failed variant placement would then have to undo.
-                    exerciseVariantGroupService.adoptMissingDatesFromExercise(group, source);
+                    exerciseVariantGroupService.seedGroupDatesFromExercise(group, source);
                 }
                 try {
                     exerciseVariantGroupService.assignToGroup(variant, group);
