@@ -145,6 +145,7 @@ public class GenerationOrchestrationService {
                         latest.set(event.output());
                     }
                     if (event.type() == WorkerEvent.Type.FINISHED || event.type() == WorkerEvent.Type.CANCELLED || event.type() == WorkerEvent.Type.ERROR) {
+                        workers.recordCompletion(claim, event);
                         terminal.set(event);
                     }
                     processed.add(event.sequence());

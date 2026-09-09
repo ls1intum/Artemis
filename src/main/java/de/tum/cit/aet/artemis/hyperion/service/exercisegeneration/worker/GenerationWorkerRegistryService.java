@@ -84,8 +84,27 @@ public class GenerationWorkerRegistryService {
         if (!destinationWorker.equals(event.workerId()) || event.type() != WorkerEvent.Type.HEARTBEAT) {
             throw new IllegalArgumentException("Worker identity does not match its authenticated destination");
         }
-        Presence updated = new Presence(event.incarnation(), event.sequence(), Instant.now(), event.imageDigest(), event.ready(),
-                event.identity() == null ? null : event.identity().executionId());
+        updatePresence(destinationWorker, event, event.identity() == null ? null : event.identity().executionId());
+    }
+
+    /**
+     * Records post-cleanup capacity before the exact execution releases its claim, without waiting for another heartbeat.
+     *
+     * @param claim still-owned execution claim
+     * @param event authenticated terminal event for that claim
+     */
+    public void recordCompletion(Claim claim, WorkerEvent event) {
+        if (!claim.identity().equals(event.identity()) || !claim.imageDigest().equals(event.imageDigest())
+                || (event.type() != WorkerEvent.Type.FINISHED && event.type() != WorkerEvent.Type.CANCELLED && event.type() != WorkerEvent.Type.ERROR)) {
+            throw new IllegalArgumentException("Completion does not match the claimed execution and image");
+        }
+        if (claim.identity().executionId().equals(leases.get(claim.identity().workerId()))) {
+            updatePresence(claim.identity().workerId(), event, null);
+        }
+    }
+
+    private void updatePresence(String destinationWorker, WorkerEvent event, @Nullable UUID activeExecution) {
+        Presence updated = new Presence(event.incarnation(), event.sequence(), Instant.now(), event.imageDigest(), event.ready(), activeExecution);
         for (int attempt = 0; attempt < 3; attempt++) {
             Presence current = presence.get(destinationWorker);
             if (current == null) {

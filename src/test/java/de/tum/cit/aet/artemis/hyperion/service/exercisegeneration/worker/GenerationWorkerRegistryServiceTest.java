@@ -71,6 +71,64 @@ class GenerationWorkerRegistryServiceTest {
         assertThat(registry.reachableWorkers()).isZero();
     }
 
+    @Test
+    void completedWorkerCanBeClaimedAgainWithoutWaitingForHeartbeat() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true));
+        var claim = registry.claim("first", 1);
+        WorkerEvent busy = new WorkerEvent(1, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.HEARTBEAT, claim.identity(), false, claim.imageDigest(), null, null, null);
+        registry.recordPresence("worker", busy);
+
+        registry.recordCompletion(claim, completion(claim, 3, true));
+        assertThat(registry.availableWorkers()).isZero();
+        registry.release(claim);
+        registry.recordPresence("worker", busy);
+
+        assertThat(registry.availableWorkers()).isEqualTo(1);
+        assertThat(registry.claim("second", 2).identity().executionId()).isNotEqualTo(claim.identity().executionId());
+    }
+
+    @Test
+    void completionCannotRestoreCapacityWhenCleanupFailedOrWorkerIsDraining() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true));
+        var claim = registry.claim("first", 1);
+        registry.recordCompletion(claim, completion(claim, 2, false));
+        registry.release(claim);
+        assertThat(registry.availableWorkers()).isZero();
+        assertThatThrownBy(() -> registry.claim("second", 2)).isInstanceOf(ServiceUnavailableAlertException.class);
+    }
+
+    @Test
+    void staleCompletionCannotClearReplacementWorkerActivity() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true));
+        var old = registry.claim("old", 1);
+        registry.release(old);
+        var replacement = registry.claim("replacement", 2);
+        registry.recordPresence("worker", new WorkerEvent(1, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.HEARTBEAT, replacement.identity(), false,
+                replacement.imageDigest(), null, null, null));
+
+        registry.recordCompletion(old, completion(old, 3, true));
+
+        assertThat(registry.renew(replacement)).isTrue();
+        registry.release(replacement);
+        assertThat(registry.availableWorkers()).isZero();
+    }
+
+    @Test
+    void completionRequiresTerminalEvidenceForTheExactClaim() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true));
+        var claim = registry.claim("first", 1);
+        assertThatThrownBy(() -> registry.recordCompletion(claim, heartbeat(incarnation, 2, true))).isInstanceOf(IllegalArgumentException.class);
+        registry.release(claim);
+        var replacement = registry.claim("replacement", 2);
+        assertThatThrownBy(() -> registry.recordCompletion(replacement, completion(claim, 3, true))).isInstanceOf(IllegalArgumentException.class);
+        assertThat(registry.renew(replacement)).isTrue();
+    }
+
+    private WorkerEvent completion(GenerationWorkerRegistryService.Claim claim, long sequence, boolean ready) {
+        return new WorkerEvent(1, "worker", incarnation, sequence, Instant.now(), WorkerEvent.Type.ERROR, claim.identity(), ready, claim.imageDigest(), "Generation failed", null,
+                null);
+    }
+
     private WorkerEvent heartbeat(UUID workerIncarnation, long sequence, boolean ready) {
         return new WorkerEvent(1, "worker", workerIncarnation, sequence, Instant.now(), WorkerEvent.Type.HEARTBEAT, null, ready, "sha256:" + "a".repeat(64), null, null, null);
     }
