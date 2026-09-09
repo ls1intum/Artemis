@@ -67,7 +67,7 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 `DistributedDataProvider` in
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
-The backend is configurable, so direct usage does not fail loudly, it silently loses the state.
+The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection
@@ -91,9 +91,9 @@ rationale, and `reference/gates.md` for the pattern if you do proceed.
 
 ## Adding a capability to the distributed data layer
 
-If `DistributedDataProvider` lacks what you need, add it there, implement it for all three backends
+If `DistributedDataProvider` lacks what you need, add it there, implement it for all three providers
 (Hazelcast, Redis, Local), and add a case to `AbstractDistributedDataTest`. That suite is what keeps
-the backends in agreement. Request entry lifetimes at the call site with
-`getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a backend
-map configuration only applies to that one backend. Full guidance:
+the providers in agreement. Request entry lifetimes at the call site with
+`getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a provider
+map configuration only applies to that one provider. Full guidance:
 `documentation/docs/developer/guidelines/distributed-data.mdx`.

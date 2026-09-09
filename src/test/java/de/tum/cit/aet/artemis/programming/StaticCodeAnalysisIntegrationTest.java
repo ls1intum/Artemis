@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisCategoryDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
@@ -58,6 +61,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         return endpoint.replace("{exerciseId}", String.valueOf(exercise.getId()));
     }
 
+    private static List<StaticCodeAnalysisCategoryDTO> toDTOs(Collection<StaticCodeAnalysisCategory> categories) {
+        return categories.stream().map(StaticCodeAnalysisCategoryDTO::of).toList();
+    }
+
     @Test
     void testCreateDefaultCategories_noConfigurationAvailable() {
         // Haskell does not have a default configuration at the time of creation of this test
@@ -71,10 +78,24 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStaticCodeAnalysisCategories() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
-        var categories = request.get(endpoint, HttpStatus.OK, new TypeReference<Set<StaticCodeAnalysisCategory>>() {
+        var categories = assertThatDb(() -> request.get(endpoint, HttpStatus.OK, new TypeReference<List<StaticCodeAnalysisCategoryDTO>>() {
+        })).hasBeenCalledAtMostTimes(10);
+        assertThat(categories).containsExactlyInAnyOrderElementsOf(toDTOs(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStaticCodeAnalysisCategories_wireShape() throws Exception {
+        var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
+        var rawCategories = objectMapper.<List<Map<String, Object>>>readValue(request.get(endpoint, HttpStatus.OK, String.class), new TypeReference<>() {
         });
-        assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
-                .containsExactlyInAnyOrderElementsOf(categories);
+
+        assertThat(rawCategories).isNotEmpty();
+        // the exercise back-reference the entity used to drag along is gone; nothing else changed
+        assertThat(rawCategories).allSatisfy(category -> {
+            assertThat(category).containsKeys("id", "name", "state");
+            assertThat(category.keySet()).isSubsetOf("id", "name", "state", "penalty", "maxPenalty");
+        });
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -144,15 +165,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         categoryIterator.remove();
 
         var responseCategories = request.patchWithResponseBody(endpoint, programmingExSCAEnabled.getStaticCodeAnalysisCategories(),
-                new TypeReference<List<StaticCodeAnalysisCategory>>() {
+                new TypeReference<List<StaticCodeAnalysisCategoryDTO>>() {
                 }, HttpStatus.OK);
         var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExSCAEnabled.getId());
 
         // The removed category should not be deleted
         programmingExSCAEnabled.getStaticCodeAnalysisCategories().add(removedCategory);
-        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(savedCategories);
-        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
-                .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
+        assertThat(responseCategories).containsExactlyInAnyOrderElementsOf(toDTOs(savedCategories));
+        assertThat(responseCategories).containsExactlyInAnyOrderElementsOf(toDTOs(programmingExSCAEnabled.getStaticCodeAnalysisCategories()));
         assertThat(savedCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
     }
@@ -195,14 +215,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
         // Perform the request and assert that the original state was restored
         final var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", exercise);
-        final var categoriesResponse = request.patchWithResponseBody(endpoint, "{}", new TypeReference<Set<StaticCodeAnalysisCategory>>() {
+        final var categoriesResponse = request.patchWithResponseBody(endpoint, "{}", new TypeReference<List<StaticCodeAnalysisCategoryDTO>>() {
         }, HttpStatus.OK);
         final Set<StaticCodeAnalysisCategory> categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
         ProgrammingExercise finalExercise = exercise;
         final Set<StaticCodeAnalysisCategory> expectedCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).stream()
                 .map(c -> c.toStaticCodeAnalysisCategory(finalExercise)).collect(Collectors.toSet());
 
-        assertThat(categoriesResponse).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(categoriesInDB);
+        assertThat(categoriesResponse).containsExactlyInAnyOrderElementsOf(toDTOs(categoriesInDB));
         assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(originalCategories);
         assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(expectedCategories);
     }
@@ -325,14 +345,21 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
         programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).orElseThrow();
 
+        var oldTargetCategoryIds = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()).stream().map(StaticCodeAnalysisCategory::getId)
+                .toList();
+
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
-        var newCategories = request.patchWithResponseBodyList(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, StaticCodeAnalysisCategory.class, HttpStatus.OK);
+        var newCategories = request.patchWithResponseBodyList(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, StaticCodeAnalysisCategoryDTO.class, HttpStatus.OK);
 
-        assertThat(newCategories).hasSameSizeAs(categories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id").containsAll(categories);
-        assertThat(newCategories).allSatisfy(category -> assertThat(category.getExercise().getId()).isEqualTo(programmingExerciseSCAEnabled.getId()));
+        // the response is mapped from the saved copies, so every returned category carries a freshly generated id
+        assertThat(newCategories).hasSameSizeAs(categories).allSatisfy(category -> assertThat(category.id()).isNotNull());
+        assertThat(newCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id").containsExactlyInAnyOrderElementsOf(toDTOs(categories));
 
+        // the previous configuration of the target exercise was replaced, not extended
         var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
-        assertThat(savedCategories).hasSameSizeAs(newCategories).containsAll(newCategories);
+        assertThat(toDTOs(savedCategories)).containsExactlyInAnyOrderElementsOf(newCategories);
+        assertThat(savedCategories).extracting(StaticCodeAnalysisCategory::getId).doesNotContainAnyElementsOf(oldTargetCategoryIds);
+        assertThat(savedCategories).allSatisfy(category -> assertThat(category.getExercise().getId()).isEqualTo(programmingExerciseSCAEnabled.getId()));
     }
 
     @Test
