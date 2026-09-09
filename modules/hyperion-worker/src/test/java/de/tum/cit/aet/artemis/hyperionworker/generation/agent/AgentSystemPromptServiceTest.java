@@ -28,7 +28,7 @@ class AgentSystemPromptServiceTest {
 
         assertThat(prompt)
                 .contains("tests/test/<package path>", "tests/build.gradle", "DisplayNameGenerator.Simple.class", "@WhitelistPath(\"build\")",
-                        "@BlacklistPath(\"build/classes/java/test\")", "SECURITY BOUNDARY", "./gradlew", "Fixed demonstration output does not prove API use")
+                        "@BlacklistPath(\"build/classes/java/test\")", "SECURITY BOUNDARY", "./gradlew", "Design the graded entry point BEFORE choosing demonstration output")
                 .doesNotContain("Maven", "mvn ");
         if (mode == Mode.ADAPT) {
             assertThat(prompt).contains("Edit only exercise-specific test sources required by the feedback; preserve all others.");
@@ -43,7 +43,7 @@ class AgentSystemPromptServiceTest {
     void stagedPromptsExposeOnlyTheRelevantBuildGuidance(GenerationStage stage) {
         String prompt = prompts.buildStage(input(false), stage);
 
-        assertThat(prompt).contains("SECURITY BOUNDARY", "Fixed demonstration output does not prove API use").doesNotContain("Maven", "mvn ");
+        assertThat(prompt).contains("SECURITY BOUNDARY", "Design the graded entry point BEFORE choosing demonstration output").doesNotContain("Maven", "mvn ");
         if (stage == GenerationStage.TESTS) {
             assertThat(prompt).contains("DisplayNameGenerator.Simple.class", "tests/build.gradle");
         }
