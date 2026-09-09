@@ -379,8 +379,9 @@ public class LectureService {
                         attachmentVideoUnit.getVideoSource(), videoSourceType, youtubeVideoId, null);
             }
             case ExerciseUnit exerciseUnit -> {
+                ExerciseOverviewDTO exerciseOverview = Optional.ofNullable(exerciseUnit.getExercise()).map(ExerciseOverviewDTO::of).orElse(null);
                 return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,
-                        visibleToStudents, competencyLinks, ExerciseOverviewDTO.of(exerciseUnit.getExercise()), null);
+                        visibleToStudents, competencyLinks, exerciseOverview, null);
             }
             case TextUnit textUnit -> {
                 return new LectureDetailsDTO.TextUnitDTO(textUnit.getId(), lectureReference, textUnit.getName(), textUnit.getReleaseDate(), completed, visibleToStudents,
