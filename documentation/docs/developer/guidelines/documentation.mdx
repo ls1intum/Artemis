@@ -161,9 +161,16 @@ import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 <TumLiveVideo src="67223" title="Quiz Training Mode Tutorial" height={400} />
 ```
 
-The component expands a bare id to the presentation stream. A full URL is passed through unchanged, so it plays the
-default stream instead — which means two embeds of the same recording behave differently depending on which form the
-author happened to use. Use the bare id.
+The component turns a bare id into `https://tum.live/w/artemisintro/<id>/PRES` and passes a full URL through
+unchanged, so the tree currently holds three spellings of the same thing. Which one you use does not change what
+plays: every Artemis recording is published as a single combined stream, and TUM-Live serves that stream whatever
+stream suffix the URL carries. Prefer the bare id anyway — it is the short form, it is what the component's own
+documentation shows, and it does not pin the page to a hostname.
+
+Do not read an HTTP 200 from a TUM-Live URL as confirmation that a recording or a stream exists. The site answers
+200 for any id and any suffix, invented ones included. What identifies a recording is the manifest the page loads,
+whose filename carries the recording date — `artemisintro_2026_04_13_10_00COMB.mp4`, for instance. That is also the
+only way to find out how old a screencast is, since the recording date appears nowhere in the interface.
 
 **A stale screencast is worse than none.** A reader who follows a video through an interface that no longer looks
 like that loses the time twice: once watching, once working out which parts still apply. When a recording no longer
