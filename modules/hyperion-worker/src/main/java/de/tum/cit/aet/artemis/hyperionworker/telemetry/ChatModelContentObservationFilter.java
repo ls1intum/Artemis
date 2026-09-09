@@ -194,7 +194,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
         return part;
     }
 
-    /** The span identifier an operator sees in the trace backend. */
+    /** The span identifier an operator sees in the trace viewer. */
     private static String spanName(ChatModelObservationContext context) {
         String contextualName = context.getContextualName();
         return StringUtils.hasText(contextualName) ? contextualName : String.valueOf(context.getName());
