@@ -411,6 +411,10 @@ public class BuildJobContainerService {
      * Adding a file "stop_container.txt" like in {@link #stopContainer(String)} might not work for unresponsive containers, thus we use
      * {@link DockerClient#stopContainerCmd(String)}, {@link DockerClient#killContainerCmd(String)} and {@link DockerClient#removeContainerCmd(String)} to stop, kill or remove the
      * container.
+     * <p>
+     * Gives up without trying the kill and remove fallbacks when the thread is interrupted, since both wait on a
+     * {@link Future} that fails immediately on an interrupted thread. The container is then left to the periodic
+     * cleanup.
      *
      * @param containerId The ID of the container to stop or kill.
      */

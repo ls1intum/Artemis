@@ -72,6 +72,10 @@ public class AutomaticProgrammingExerciseCleanupService {
     /**
      * cleans up old build plans on the continuous integration server and old local git repositories on the Artemis server at 3:00:00 am in the night in form of a repeating "cron"
      * job
+     * <p>
+     * Each phase logs and swallows its own failures so that one failing phase does not skip the other. An interrupted
+     * thread is the exception: the git working copy phase does not start, because an interruption means the node is
+     * shutting down.
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-cleanup-time:0 0 3 * * *}") // execute this every night at 3:00:00 am
     public void cleanup() {
@@ -293,6 +297,14 @@ public class AutomaticProgrammingExerciseCleanupService {
         return false;
     }
 
+    /**
+     * Deletes the build plans of the given participations on the external build system, at most 5000 per run and
+     * pausing between batches so the deletions do not arrive all at once.
+     * <p>
+     * Stops early when the thread is interrupted during such a pause, leaving the remaining plans to the next run.
+     *
+     * @param participationsWithBuildPlanToDelete the participations whose build plans should be deleted
+     */
     private void deleteBuildPlans(Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete) {
         // Limit to 5000 deletions per night
         List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(5000).toList();
