@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatib
  *
  * <p>
  * Every value Artemis puts into the distributed store already has to be {@link java.io.Serializable}, because Hazelcast
- * is the default backend and serializes that way. Redisson defaults to Kryo, which does not read the object's own
+ * is the default provider and serializes that way. Redisson defaults to Kryo, which does not read the object's own
  * {@code writeObject}: it walks the fields reflectively instead. For most values the two agree, which is exactly what
  * makes the difference dangerous — it only shows up on the values where they do not.
  *
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatib
  * <p>
  * The cost is that JDK serialization is slower and more verbose than Kryo. It falls only on deployments that select
  * Redis, and the Redis structures are dominated by round-trip and lock cost rather than by encoding (see the priority
- * queue benchmark). Correctness across backends is worth more here than the encoding difference.
+ * queue benchmark). Correctness across providers is worth more here than the encoding difference.
  *
  * <p>
  * Only <em>map values</em> change format, and old ones stay readable. {@link BackwardCompatibleSerializationCodec}

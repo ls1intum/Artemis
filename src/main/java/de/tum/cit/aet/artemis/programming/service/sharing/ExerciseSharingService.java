@@ -42,11 +42,13 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 
@@ -164,24 +166,29 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Parses the {@code Exercise-Details*} entry from a basket ZIP and returns it as a {@link ProgrammingExercise}.
+     * Parses the {@code Exercise-Details*} entry from a basket ZIP and returns it as an
+     * {@link ImportProgrammingExerciseRequestDTO}.
      * <p>
-     * Unknown JSON properties are ignored; the returned entity has {@code id = null}.
+     * The details object backs the whole create form in the client and is posted straight back to
+     * {@code sharing/setup-import}, which is why the request record is also the response shape here. Unknown JSON
+     * properties are ignored — exported archives carry fields the current model no longer has. The {@code id} is
+     * stripped, because the exercise is created anew in this Artemis instance.
      * </p>
      *
      * @param sharingInfo basket reference
      * @return the parsed exercise details
      * @throws EntityNotFoundException if the details entry is missing or cannot be parsed
      */
-    public ProgrammingExercise getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
+    public ImportProgrammingExerciseRequestDTO getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
         Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
 
         try {
             String exerciseDetailString = getEntryFromBasket(pattern, sharingInfo)
                     .orElseThrow(() -> new EntityNotFoundException("Could not retrieve exercise details from imported exercise"));
-            ProgrammingExercise exerciseDetails = objectMapper.readValue(exerciseDetailString, ProgrammingExercise.class);
-            exerciseDetails.setId(null);
-            return exerciseDetails;
+            // Remove the id on the JSON tree: the record is immutable, and the exported id belongs to the source instance.
+            ObjectNode exerciseDetailNode = (ObjectNode) objectMapper.readTree(exerciseDetailString);
+            exerciseDetailNode.remove("id");
+            return objectMapper.treeToValue(exerciseDetailNode, ImportProgrammingExerciseRequestDTO.class);
         }
         catch (Exception e) {
             String errorMessage = e.getMessage();
