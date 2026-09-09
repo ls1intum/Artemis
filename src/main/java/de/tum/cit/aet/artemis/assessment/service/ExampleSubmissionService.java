@@ -97,7 +97,13 @@ public class ExampleSubmissionService {
     }
 
     private static void applyMetadata(ExampleSubmission exampleSubmission, ExampleSubmissionRequestDTO request) {
-        exampleSubmission.setUsedForTutorial(request.usedForTutorial());
+        // null means "keep the default"; on create there is nothing to keep, so it means "not used for tutorial".
+        if (request.usedForTutorial() != null) {
+            exampleSubmission.setUsedForTutorial(request.usedForTutorial());
+        }
+        else if (exampleSubmission.getId() == null) {
+            exampleSubmission.setUsedForTutorial(Boolean.FALSE);
+        }
         exampleSubmission.setAssessmentExplanation(request.assessmentExplanation());
     }
 
