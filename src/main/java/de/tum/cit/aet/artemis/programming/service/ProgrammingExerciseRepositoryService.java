@@ -18,6 +18,7 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -430,7 +431,7 @@ public class ProgrammingExerciseRepositoryService {
         commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
     }
 
-    private static Path getRepoAbsoluteLocalPath(final Repository repository) {
+    private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
         return repository.getLocalPath().toAbsolutePath();
     }
 
