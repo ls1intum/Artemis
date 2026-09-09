@@ -1,13 +1,9 @@
-.layout-table {
-    margin: 1px;
+/* jhiMarkdown wraps its output in a <p>; zero margins so grid rows stay baseline-aligned. */
+.sgi-item__markdown ::ng-deep p {
+    margin: 0;
+}
 
-    .td-score,
-    .td-usage-count {
-        width: 4%;
-    }
-
-    .td-usage-count {
-        position: relative;
-        white-space: nowrap;
-    }
+/* Native button resets can zero border-radius; keep the arm control aligned with the stepper pill. */
+.sgi-item__control {
+    border-radius: var(--tumaet-ui-radius-md, 0.375rem);
 }

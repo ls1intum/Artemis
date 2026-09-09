@@ -9,6 +9,7 @@
             "feedback": "Feedback",
             "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
+            "feedbackHeaderPlaceholder": "Optionaler Titel...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
                 "default": "Vorschlag",
@@ -63,6 +64,7 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
+                "tutorCommentLabel": "Kommentar von Tutor:in",
                 "feedbackSuggestion": "Feedback-Vorschlag:",
                 "accept": "Annehmen",
                 "discard": "Verwerfen",
@@ -76,7 +78,16 @@
                 "deductions": "Abzüge",
                 "finalScore": "Gesamt",
                 "pointsShort": "{{points}} Pkt.",
-                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt."
+                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
+                "criteria": "Anweisung",
+                "instruction": "Anweisung",
+                "feedbackHeader": "Titel",
+                "decreasePoints": "Punkte verringern",
+                "increasePoints": "Punkte erhöhen",
+                "feedbackUsage": {
+                    "limited": "Du hast dieses Feedback {{used}} von {{limit}} erlaubten Malen verwendet.",
+                    "unlimited": "Du hast dieses Feedback {{used}} Mal verwendet. Dieses Feedback hat keine Nutzungsbegrenzung."
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {
@@ -88,7 +99,8 @@
                 "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
                 "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
-                "removeAssessmentInstructionLink": "Möchtest du den Link zum Bewertungsanweisung entfernen?"
+                "removeAssessmentInstructionLink": "Möchtest du den Link zur Bewertungsanweisung entfernen?",
+                "incompleteFeedback": "Gib für jeden Feedback-Eintrag einen Text ein, bevor du speicherst oder absendest."
             },
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",

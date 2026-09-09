@@ -355,13 +355,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
         comp.unreferencedFeedback.set([{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }]);
-        comp.referencedFeedback = [
+        comp.referencedFeedback.set([
             {
                 text: 'referenced test',
                 detailText: 'some detail',
                 reference: 'file:src/Test.java_line:1',
             },
-        ];
+        ]);
         const feedbackSuggestionsStub = vi.spyOn(internals(comp).athenaService, 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
@@ -478,7 +478,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.exercise().maxPoints = 10;
         comp.exercise().bonusPoints = 10;
         comp.automaticFeedback.set([]);
-        comp.referencedFeedback = [];
+        comp.referencedFeedback.set([]);
         comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
@@ -497,7 +497,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.exercise().maxPoints = 10;
         comp.exercise().bonusPoints = 0;
         comp.automaticFeedback.set([]);
-        comp.referencedFeedback = [];
+        comp.referencedFeedback.set([]);
         comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
@@ -514,7 +514,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.exercise().maxPoints = 10;
         comp.exercise().bonusPoints = 0;
         comp.automaticFeedback.set([]);
-        comp.referencedFeedback = [];
+        comp.referencedFeedback.set([]);
         comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
@@ -531,7 +531,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.exercise().maxPoints = 10;
         comp.exercise().bonusPoints = 0;
         comp.automaticFeedback.set([]);
-        comp.referencedFeedback = [];
+        comp.referencedFeedback.set([]);
         comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
@@ -562,7 +562,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 credits: 0,
             },
         ]);
-        comp.referencedFeedback = [
+        comp.referencedFeedback.set([
             {
                 type: FeedbackType.MANUAL,
                 text: 'manual feedback',
@@ -570,7 +570,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 credits: 2,
                 reference: 'file:1_line:1',
             },
-        ];
+        ]);
         comp.unreferencedFeedback.set([
             {
                 type: FeedbackType.MANUAL_UNREFERENCED,
@@ -706,7 +706,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         await flushMicrotasks();
 
         // The editor state holds the up-to-date feedbacks the tutor just edited...
-        comp.referencedFeedback = [{ detailText: 'REF', credits: 1, reference: 'file:1', type: FeedbackType.MANUAL } as Feedback];
+        comp.referencedFeedback.set([{ detailText: 'REF', credits: 1, reference: 'file:1', type: FeedbackType.MANUAL } as Feedback]);
         comp.unreferencedFeedback.set([{ detailText: 'UNREF', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback]);
         comp.automaticFeedback.set([{ detailText: 'AUTO', credits: 0, type: FeedbackType.AUTOMATIC } as Feedback]);
         // ...while the manual result still carries a stale feedback list that must NOT be the one sent to the server.
@@ -863,7 +863,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         (totalScoreBeforeAssessment: number, assessmentAfterComplaint: AssessmentAfterComplaint, newFeedback: Feedback[], needsConfirmation: boolean) => {
             comp.exercise.set({ maxPoints: 2 } as ProgrammingExercise);
             comp.totalScoreBeforeAssessment = totalScoreBeforeAssessment;
-            comp.referencedFeedback = [];
+            comp.referencedFeedback.set([]);
             comp.automaticFeedback.set([]);
             comp.unreferencedFeedback.set(newFeedback);
             vi.spyOn(window, 'confirm').mockReturnValue(false);
@@ -887,7 +887,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const validateFeedbackStub = vi.spyOn(comp, 'validateFeedback');
         validateFeedbackStub.mockReturnValue(undefined);
         comp.onUpdateFeedback(feedbacks);
-        expect(comp.referencedFeedback).toEqual([
+        expect(comp.referencedFeedback()).toEqual([
             { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL },
             { reference: 'file:src/Test.java_line:2', type: FeedbackType.MANUAL },
         ]);
@@ -1021,5 +1021,60 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(comp.assessmentNotPossibleYet()).toBeUndefined();
             expect(comp.submission()).toEqual(submission);
         });
+    });
+
+    it('should rebuild allAssessmentFeedbacks so in-place instruction link changes refresh usage state', () => {
+        const instruction = {
+            id: 9,
+            credits: 1,
+            feedback: 'ok',
+            gradingScale: 'good',
+            instructionDescription: 'desc',
+            usageCount: 0,
+        };
+        const feedback = {
+            detailText: 'line note',
+            credits: 1,
+            reference: 'file:src/Main.java_line:0',
+            type: FeedbackType.MANUAL,
+        } as Feedback;
+        comp.referencedFeedback.set([feedback]);
+
+        const beforeLink = comp.allAssessmentFeedbacks();
+        expect(beforeLink.some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+        expect(comp.allAssessmentFeedbacks()).not.toBe(beforeLink);
+
+        // Inline link mutates the existing feedback instance (same as drop / link-icon unlink).
+        feedback.gradingInstruction = instruction;
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(true);
+
+        feedback.gradingInstruction = undefined;
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+    });
+
+    it('should include pending inline instruction links in allAssessmentFeedbacks', () => {
+        const instruction = {
+            id: 9,
+            credits: 1,
+            feedback: 'ok',
+            gradingScale: 'good',
+            instructionDescription: 'desc',
+            usageCount: 1,
+        };
+        const pending = {
+            detailText: 'draft',
+            credits: 1,
+            reference: 'file:src/Main.java_line:3',
+            gradingInstruction: instruction,
+        } as Feedback;
+
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+
+        comp.onPendingFeedbackChange([pending]);
+        expect(comp.pendingReferencedFeedback()).toEqual([pending]);
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(true);
+
+        comp.onPendingFeedbackChange([]);
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
     });
 });

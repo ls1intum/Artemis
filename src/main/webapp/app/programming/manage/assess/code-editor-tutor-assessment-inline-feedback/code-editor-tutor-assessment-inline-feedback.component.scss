@@ -1,0 +1,194 @@
+/* A block host makes the widget fill the width Monaco assigns it and gives the linked view zone an exact height to
+   observe. The :not() keeps the global `.monaco-hidden-element { display: none }` rule winning while the widget is
+   still parked outside the editor, independently of stylesheet order. */
+:host(:not(.monaco-hidden-element)) {
+    display: block;
+
+    /* Breathing room between the code line the feedback belongs to and the widget itself. */
+    padding-block: 0.5rem;
+}
+
+/* The widget is the feedback card of the assessment editor, narrowed to fit next to the code: the tum-ui-card brings
+   the surface and radius, the tone accent (awarded / deducted / neutral) is a stripe on the leading edge. */
+.inline-feedback {
+    position: relative;
+    max-width: 95%;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 1.25rem;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 4px;
+        background-color: var(--secondary);
+    }
+
+    &[data-tone='positive']::before {
+        background-color: var(--success);
+    }
+
+    &[data-tone='negative']::before {
+        background-color: var(--danger);
+    }
+
+    /* Tighter than the card default: the widget shares its space with the code around it. */
+    ::ng-deep .tum-ui-card-body {
+        padding: 0.75rem;
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 0.5rem;
+        overflow-wrap: anywhere;
+    }
+
+    &__badges {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        flex-wrap: wrap;
+    }
+
+    /* Points leading, actions (edit / delete) trailing. */
+    &__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 0;
+        gap: 0.5rem;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        gap: 0.375rem;
+        flex-wrap: wrap;
+    }
+
+    &__delete {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+
+        ::ng-deep fa-icon:not(.text-danger) {
+            color: var(--danger);
+        }
+    }
+
+    /* Half-point stepper: two flush addon buttons around the native number field. */
+    &__stepper {
+        width: auto;
+    }
+
+    &__points-input {
+        width: 4.5rem;
+        text-align: center;
+        font-weight: 600;
+        border-radius: 0;
+
+        /* The +/- buttons replace the browser spinner, which would otherwise crowd the centered value. */
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+            appearance: none;
+            margin: 0;
+        }
+
+        appearance: textfield;
+    }
+
+    &__step {
+        /* Fill the addon so the whole segment is the hit target; matches the addon's own padding exactly. */
+        margin: calc(-1 * var(--spacing) * 2);
+        padding: calc(var(--spacing) * 2);
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    &__editor {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 0.5rem;
+    }
+
+    &__section {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 0.25rem;
+    }
+
+    &__title {
+        margin: 0;
+        min-width: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--body-color);
+        white-space: pre-wrap;
+    }
+
+    &__label {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--body-color);
+    }
+
+    /* No user-resize handle: a dragged-open textarea would keep the code editor's line widget that tall. */
+    &__textarea {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        resize: none;
+    }
+
+    &__divider {
+        margin: 0;
+        border: none;
+        border-top: 1px solid var(--border-color);
+    }
+
+    /* The instructor-authored grading scale of the linked instruction: muted guidance text. */
+    &__scale {
+        margin: 0;
+        min-width: 0;
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: var(--secondary);
+        white-space: pre-wrap;
+    }
+
+    /* The read-only feedback text of the linked grading instruction, shown above the tutor's own comment. */
+    &__instruction-feedback {
+        margin: 0;
+        min-width: 0;
+        font-size: 0.875rem;
+        font-weight: 800;
+        color: var(--secondary);
+        white-space: pre-wrap;
+    }
+
+    &__text {
+        margin: 0;
+        min-width: 0;
+        color: var(--body-color);
+    }
+
+    &__footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.375rem;
+    }
+}

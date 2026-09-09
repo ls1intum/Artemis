@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, ElementRef, HostBinding, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostBinding, computed, inject, input, output, viewChild } from '@angular/core';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -17,6 +18,7 @@ import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedbac
 import { FormsModule } from '@angular/forms';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
@@ -36,11 +38,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FormsModule,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
+        TumUiButtonDirective,
     ],
 })
 export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     readonly FeedbackType = FeedbackType;
@@ -48,6 +52,8 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     textBlock = input<TextBlock>(new TextBlock());
     feedback = input<Feedback>(new Feedback());
     feedbackChange = output<Feedback>();
+    /** Shows the apply-armed-instruction control while an instruction is armed. */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && this.selectionService.hasArmedInstruction());
     onClose = output<void>();
     onFocus = output<void>();
     textareaRef = viewChild.required<ElementRef>('detailText');
@@ -171,6 +177,19 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
         feedbackValue.correctionStatus = undefined;
 
+        this.didChange();
+    }
+
+    /** Applies a previously armed instruction to this feedback. */
+    applyArmedInstruction(): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        const feedbackValue = this.feedback();
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedbackValue)) {
+            return;
+        }
+        feedbackValue.correctionStatus = undefined;
         this.didChange();
     }
 }

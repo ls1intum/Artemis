@@ -37,6 +37,7 @@ import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submissi
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
@@ -47,7 +48,6 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -148,18 +148,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly isAtLeastEditor = signal(false);
 
     readonly unreferencedFeedback = signal<Feedback[]>([]);
-    // Not template-read — only used in component code, may stay plain.
-    referencedFeedback: Feedback[] = [];
+    // The inline feedback placed in the code. Signal-backed because the grading instruction panel counts these
+    // feedbacks towards the usage limit of their instruction and has to follow every edit.
+    readonly referencedFeedback = signal<Feedback[]>([]);
+    /**
+     * Unsaved new inline drafts that already link a grading instruction. Counted toward usage limits before save.
+     */
+    readonly pendingReferencedFeedback = signal<Feedback[]>([]);
     readonly automaticFeedback = signal<Feedback[]>([]);
     // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
-    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    /**
+     * Full assessment feedback for the unreferenced-feedback score summary and instruction usage counts.
+     * Fresh array each call so in-place nested edits (e.g. inline instruction link/unlink) still notify consumers.
+     * Includes {@link pendingReferencedFeedback} so finite usage limits cannot be bypassed before save.
+     */
     allAssessmentFeedbacks(): Feedback[] {
-        return [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        return [...this.referencedFeedback(), ...this.pendingReferencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
     }
-
     readonly getTotalMaxPoints = getTotalMaxPoints;
 
     isFirstAssessment = false;
@@ -381,7 +389,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
-            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
+            const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
             this.feedbackSuggestions.set(
                 feedbackSuggestions.filter((suggestion) =>
                     allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
@@ -650,9 +658,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
         this.validateFeedback();
         this.hasPendingChanges = true;
+    }
+
+    /**
+     * Unsaved new inline drafts with a grading instruction link. Included in {@link allAssessmentFeedbacks} for usage limits.
+     */
+    onPendingFeedbackChange(feedbacks: Feedback[]) {
+        this.pendingReferencedFeedback.set(feedbacks);
     }
 
     /**
@@ -699,7 +714,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.assessmentsAreValid.set(true);
             return;
         }
-        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback());
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
@@ -766,7 +781,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
 
         this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
+        this.pendingReferencedFeedback.set([]);
         this.onFeedbackLoaded.emit();
     }
 
@@ -774,7 +790,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!assessmentAfterComplaint.complaintResponse.complaint?.accepted) {
             return true;
         }
-        const allNewFeedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        const allNewFeedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const newTotalScore = this.calculateTotalScoreOfFeedbacks(allNewFeedbacks);
         if (this.totalScoreBeforeAssessment >= newTotalScore) {
             return window.confirm(this.acceptComplaintWithoutMoreScoreText);
@@ -783,7 +799,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private setFeedbacksForManualResult() {
-        this.manualResult()!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        this.manualResult()!.feedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
     }
 
     private setAttributesForManualResult(totalScore: number) {
@@ -806,7 +822,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScore() {
-        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        const feedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const totalScore = this.calculateTotalScoreOfFeedbacks(feedbacks);
         // Set attributes of manual result
         this.setAttributesForManualResult(totalScore);

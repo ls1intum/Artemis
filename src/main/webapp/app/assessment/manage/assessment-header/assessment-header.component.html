@@ -108,30 +108,23 @@
             <br />
             <div class="d-flex flex-wrap flex-lg-nowrap">
                 @if (!result()?.completionDate) {
-                    <button
-                        class="btn m-1 btn-primary"
-                        (click)="save.emit()"
-                        [disabled]="saveDisabled"
-                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
-                    >
-                        @if (saveBusy()) {
-                            <fa-icon [icon]="faSpinner" animation="spin" />
-                        }
-                        <fa-icon [icon]="faSave" />
-                        <span jhiTranslate="entity.action.save"></span>
-                    </button>
-                    <button
-                        id="submit"
-                        class="btn m-1 btn-success"
-                        (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()"
-                        [disabled]="submitDisabled"
-                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
-                    >
-                        @if (submitBusy()) {
-                            <fa-icon [icon]="faSpinner" animation="spin" />
-                        }
-                        <span jhiTranslate="entity.action.submit"></span>
-                    </button>
+                    <span class="inline-block m-1" [attr.tabindex]="saveDisabled ? 0 : null" [ngbTooltip]="saveTooltip" container="body">
+                        <button class="btn btn-primary" (click)="save.emit()" [disabled]="saveDisabled">
+                            @if (saveBusy()) {
+                                <fa-icon [icon]="faSpinner" animation="spin" />
+                            }
+                            <fa-icon [icon]="faSave" />
+                            <span jhiTranslate="entity.action.save"></span>
+                        </button>
+                    </span>
+                    <span class="inline-block m-1" [attr.tabindex]="submitDisabled ? 0 : null" [ngbTooltip]="submitTooltip" container="body">
+                        <button id="submit" class="btn btn-success" (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()" [disabled]="submitDisabled">
+                            @if (submitBusy()) {
+                                <fa-icon [icon]="faSpinner" animation="spin" />
+                            }
+                            <span jhiTranslate="entity.action.submit"></span>
+                        </button>
+                    </span>
                     @if (!isTestRun()) {
                         <button
                             id="cancel"

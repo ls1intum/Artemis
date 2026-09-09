@@ -135,6 +135,7 @@
                                                         [(ngModel)]="instruction.gradingScale"
                                                         [disabled]="!editable()"
                                                         type="text"
+                                                        [placeholder]="'artemisApp.exercise.gradingScalePlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
                                                     />
                                                 </td>
@@ -145,6 +146,7 @@
                                                         [disabled]="!editable()"
                                                         type="text"
                                                         rows="2"
+                                                        [placeholder]="'artemisApp.exercise.descriptionPlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
                                                     ></textarea>
                                                 </td>
@@ -155,6 +157,7 @@
                                                         [disabled]="!editable()"
                                                         type="text"
                                                         rows="2"
+                                                        [placeholder]="'artemisApp.exercise.feedbackPlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
                                                     ></textarea>
                                                 </td>

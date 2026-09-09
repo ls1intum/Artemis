@@ -1,24 +1,42 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
-import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
+import { faCrosshairs, faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
+/** One instruction prepared for display so the template reads properties instead of calling formatting/state methods. */
+export interface SortedGradingInstruction {
+    instruction: GradingInstruction;
+    useCount: number;
+    usageLimit: number;
+    isDraggable: boolean;
+    showUsageStepper: boolean;
+    canDecrementApplication: boolean;
+    canIncrementApplication: boolean;
+    isLockedByReferencedFeedback: boolean;
+    isApplied: boolean;
+    pointsSeverity: TumUiTagSeverity;
+    pointsLabel: string;
+    scaleElementId: string | undefined;
+    descriptionElementId: string;
+    accessibleNameIds: string;
+}
+
 /** A criterion prepared for display: alphabetically sorted instructions plus its live "applied" counter. */
 export interface SortedGradingCriterion {
     title: string;
-    instructions: GradingInstruction[];
+    instructions: SortedGradingInstruction[];
 }
 
 @Component({
@@ -26,18 +44,20 @@ export interface SortedGradingCriterion {
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
     imports: [
-        FaIconComponent,
         TranslateDirective,
         ExpandableSectionComponent,
-        NgbTooltip,
         HelpIconComponent,
         MarkdownDirective,
+        FaIconComponent,
         TumUiCheckboxComponent,
         TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiMessageComponent,
+        TumUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, OnDestroy {
     private readonly selectionService = inject(GradingInstructionSelectionService);
     private readonly deleteDialogService = inject(DeleteDialogService);
 
@@ -46,8 +66,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly allowDrop = signal<boolean>(undefined!);
     // Icons
     faInfoCircle = faInfoCircle;
-    faExpand = faExpand;
-    faCompress = faCompress;
+    faMinus = faMinus;
+    faPlus = faPlus;
+    faCrosshairs = faCrosshairs;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
@@ -58,9 +79,31 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly sortedCriteria = computed<SortedGradingCriterion[]>(() =>
         [...(this.criteria() ?? [])]
             .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-            .map((criterion) => ({
+            .map((criterion, criterionIndex) => ({
                 title: criterion.title,
-                instructions: [...(criterion.structuredGradingInstructions ?? [])].sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? '')),
+                instructions: [...(criterion.structuredGradingInstructions ?? [])]
+                    .sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? ''))
+                    .map((instruction, instructionIndex) => {
+                        const prefix = `criterion-${criterionIndex}-instruction-${instructionIndex}`;
+                        const scaleElementId = instruction.gradingScale ? `${prefix}-scale` : undefined;
+                        const descriptionElementId = `${prefix}-desc`;
+                        return {
+                            instruction,
+                            useCount: this.selectionService.applicationCount(instruction),
+                            usageLimit: instruction.usageCount ?? 0,
+                            isDraggable: this.isDraggable(instruction),
+                            showUsageStepper: this.showUsageStepper(instruction),
+                            canDecrementApplication: this.canDecrementApplication(instruction),
+                            canIncrementApplication: this.canIncrementApplication(instruction),
+                            isLockedByReferencedFeedback: this.isLockedByReferencedFeedback(instruction),
+                            isApplied: this.isApplied(instruction),
+                            pointsSeverity: pointsSeverity(instruction.credits),
+                            pointsLabel: pointsLabel(instruction.credits),
+                            scaleElementId,
+                            descriptionElementId,
+                            accessibleNameIds: [scaleElementId, descriptionElementId].filter((id): id is string => id !== undefined).join(' '),
+                        };
+                    }),
             })),
     );
 
@@ -68,7 +111,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     readonly appliedCountPerCriterion = computed(() => {
         const applied = this.selectionService.appliedInstructionIds();
-        return this.sortedCriteria().map((criterion) => criterion.instructions.filter((instruction) => instruction.id !== undefined && applied.has(instruction.id)).length);
+        return this.sortedCriteria().map((criterion) => criterion.instructions.filter(({ instruction }) => instruction.id !== undefined && applied.has(instruction.id)).length);
     });
 
     /**
@@ -76,6 +119,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      */
     ngOnInit(): void {
         this.allowDrop.set(!this.readonly());
+    }
+
+    ngOnDestroy(): void {
+        this.selectionService.clearArmedInstruction();
     }
 
     collapseAll() {
@@ -135,8 +182,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         this.deleteDialogService.openDeleteDialog({
-            deleteQuestion: 'artemisApp.feedback.delete.question',
-            translateValues: { text: '' },
+            deleteQuestion: 'artemisApp.feedback.delete.allInstances',
+            translateValues: {},
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,
             requireConfirmationOnlyForAdditionalChecks: false,
@@ -144,32 +191,62 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         });
     }
 
-    /**
-     * Set the tooltip of the draggable grading instruction to be equal to the feedback detail text
-     * @param {GradingInstruction} instr - the instruction object from which the feedback detail text is retrieved
-     */
-    setTooltip(instr: GradingInstruction) {
-        return 'Feedback: ' + instr.feedback;
+    /** One more application, while a finite usage limit (if any) still has room. */
+    incrementApplication(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canIncrementApplication(instruction)) {
+            return;
+        }
+        this.selectionService.addApplication(instruction);
+    }
+
+    /** One fewer application owned by the feedback list. Referenced-only applications stay put. */
+    decrementApplication(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canDecrementApplication(instruction)) {
+            return;
+        }
+        this.selectionService.removeOneApplication(instruction);
+    }
+
+    canIncrementApplication(instruction: GradingInstruction): boolean {
+        return this.isDraggable(instruction);
+    }
+
+    canDecrementApplication(instruction: GradingInstruction): boolean {
+        return this.selectionService.isRemovable(instruction);
     }
 
     /**
-     * Set the color of the draggable grading instruction based on the credits of the instruction
-     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
+     * {@link GradingInstruction.usageCount} of 1 is a single application. Zero/unset means unlimited, and any higher
+     * value is a finite multi-use limit — both need the stepper once applied.
      */
-    setInstrColour(instr: GradingInstruction) {
-        let colour;
-        if (instr.credits === 0) {
-            colour = 'var(--sgi-assessment-layout-zero-background)';
-        } else if (instr.credits < 0) {
-            colour = 'var(--sgi-assessment-layout-negative-background)';
-        } else {
-            colour = 'var(--sgi-assessment-layout-positive-background)';
-        }
-        return colour;
+    isMultiUse(instruction: GradingInstruction): boolean {
+        return (instruction.usageCount ?? 0) !== 1;
     }
-    setScore(nr: number) {
-        return nr + 'P';
+
+    /** Multi-use instructions always expose the counter; single-use stays checkbox-only. */
+    showUsageStepper(instruction: GradingInstruction): boolean {
+        return this.isMultiUse(instruction);
     }
+
+    /** Tag severity of an instruction's point pill (green awarded / red deducted / neutral zero). */
+    pointsSeverity(credits: number): TumUiTagSeverity {
+        return pointsSeverity(credits);
+    }
+
+    /** Signed, compact label of an instruction's point pill, e.g. `+10`, `-5`. */
+    pointsLabel(credits: number): string {
+        return pointsLabel(credits);
+    }
+
+    /** Number of feedback entries currently linked to this instruction in the open assessment. */
+    instructionUseCount(instruction: GradingInstruction): number {
+        return this.selectionService.applicationCount(instruction);
+    }
+
     /**
      * Connects the SGI with the Feedback of a Submission Element in assessment detail
      * @param {Event} event - The drag event
@@ -184,6 +261,35 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }
+
+    /**
+     * Keyboard stand-in for drag-and-drop when there is no checkbox host: Enter/Space on the card arms the instruction.
+     * Selectable cards use {@link armInstruction} on their dedicated button instead (nested controls forbid role=button).
+     */
+    onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
+        if (this.selectable() || !this.isDraggable(instruction)) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        event.preventDefault();
+        this.selectionService.armInstruction(instruction);
+    }
+
+    /**
+     * Selectable-branch stand-in for drag-and-drop: arms the instruction for the next referenced feedback target.
+     * Checkboxes stay the path for the unreferenced feedback list; existing target consumers still apply the armed instruction.
+     */
+    armInstruction(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.isDraggable(instruction)) {
+            return;
+        }
+        this.selectionService.armInstruction(instruction);
+    }
+
     /**
      * disables drag if on readOnly mode
      */

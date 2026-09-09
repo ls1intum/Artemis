@@ -21,6 +21,9 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { provideHttpClient } from '@angular/common/http';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -57,18 +60,13 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.disableDrag()).toBe(false);
     });
 
-    it('should set display elements', () => {
-        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 1 } as GradingInstruction;
-
-        expect(comp.setScore(gradingInstruction.credits)).toBe('1P');
-        expect(comp.setTooltip(gradingInstruction)).toBe('Feedback: feedback');
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
-        gradingInstruction.credits = 0;
-        fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
-        gradingInstruction.credits = -1;
-        fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+    it('should format the point pill of an instruction', () => {
+        expect(comp.pointsLabel(1)).toBe('+1');
+        expect(comp.pointsSeverity(1)).toBe('success');
+        expect(comp.pointsLabel(0)).toBe('0');
+        expect(comp.pointsSeverity(0)).toBe('secondary');
+        expect(comp.pointsLabel(-1)).toBe('-1');
+        expect(comp.pointsSeverity(-1)).toBe('danger');
     });
 
     it('should expand and collapse all criteria', () => {
@@ -116,7 +114,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.componentRef.setInput('criteria', [documentation, camera]);
 
         expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Camera', 'Documentation']);
-        expect(comp.sortedCriteria()[1].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
+        expect(comp.sortedCriteria()[1].instructions.map(({ instruction }) => instruction.instructionDescription)).toEqual([
             'All methods have proper JavaDoc.',
             'Not all methods have proper JavaDoc.',
         ]);
@@ -142,6 +140,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 appliedInstructionCounts: appliedCounts,
                 removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
             TestBed.inject(GradingInstructionSelectionService).register(host);
@@ -173,9 +172,38 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
         }
 
-        it('should render a checkbox instead of the usage count', () => {
+        it('should render a usage stepper for multi-use instructions and hide it for single-use ones', () => {
+            // Default: unset usageCount means unlimited multi-use.
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+            expect(fixture.nativeElement.querySelectorAll('[role="group"] button')).toHaveLength(2);
+            expect(fixture.nativeElement.querySelector('[role="group"] span')?.textContent?.trim()).toBe('0 / ∞');
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
+
+            instruction.usageCount = 1;
+            const clonedCriterion = deepClone(criterion);
+            clonedCriterion.structuredGradingInstructions = [instruction];
+            fixture.componentRef.setInput('criteria', [clonedCriterion]);
+            fixture.detectChanges();
+
+            expect(comp.showUsageStepper(instruction)).toBe(false);
+            expect(fixture.nativeElement.querySelector('[role="group"]')).toBeNull();
+        });
+
+        it('should keep single-use instructions checkbox-only even when applied', () => {
+            instruction.usageCount = 1;
+            setApplicationCount(1);
+
+            expect(comp.showUsageStepper(instruction)).toBe(false);
+            expect(fixture.nativeElement.querySelector('[role="group"]')).toBeNull();
+            expect(checkboxInput().checked).toBe(true);
+        });
+
+        it('should update the usage counter from linked feedback', () => {
+            instruction.usageCount = 2;
+            setApplicationCount(2);
+
+            expect(comp.instructionUseCount(instruction)).toBe(2);
+            expect(fixture.nativeElement.querySelector('[role="group"] span')?.textContent?.trim()).toBe('2 / 2');
         });
 
         it('should count the applied instructions of the criterion', () => {
@@ -207,7 +235,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(openDeleteDialogSpy).toHaveBeenCalledOnce();
             const dialogData: DeleteDialogData = openDeleteDialogSpy.mock.calls[0][0];
-            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.question');
+            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.allInstances');
 
             // Simulate the tutor confirming in the dialog.
             triggerDeleteDialogDelete(dialogData.delete, {});
@@ -306,6 +334,97 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(host.applyInstruction).not.toHaveBeenCalled();
         });
+
+        it('should increment and decrement the application count from the usage stepper', () => {
+            instruction.usageCount = 2;
+            setApplicationCount(1);
+
+            const [decrementButton, incrementButton] = fixture.nativeElement.querySelectorAll('[role="group"] button') as HTMLButtonElement[];
+            expect(decrementButton.disabled).toBe(false);
+            expect(incrementButton.disabled).toBe(false);
+
+            incrementButton.click();
+            expect(host.applyInstruction).toHaveBeenCalledWith(instruction);
+
+            decrementButton.click();
+            expect(host.unapplyOneInstruction).toHaveBeenCalledWith(instruction);
+        });
+
+        it('should disable the usage stepper at the empty and exhausted bounds', () => {
+            instruction.usageCount = 2;
+
+            expect(comp.canDecrementApplication(instruction)).toBe(false);
+            expect(comp.canIncrementApplication(instruction)).toBe(true);
+
+            setApplicationCount(2);
+            expect(comp.canDecrementApplication(instruction)).toBe(true);
+            expect(comp.canIncrementApplication(instruction)).toBe(false);
+
+            notRemovableIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            expect(comp.canDecrementApplication(instruction)).toBe(false);
+        });
+    });
+
+    it('should arm the instruction on Enter/Space when no editable feedback list is mounted', () => {
+        fixture.componentRef.setInput('readonly', false);
+        fixture.componentRef.setInput('criteria', undefined);
+        fixture.detectChanges();
+        const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        const armSpy = vi.spyOn(selectionService, 'armInstruction');
+
+        expect(comp.selectable()).toBe(false);
+        comp.onInstructionKeydown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent, instruction);
+
+        expect(armSpy).toHaveBeenCalledExactlyOnceWith(instruction);
+    });
+
+    it('should arm from a dedicated button while a feedback list host is registered', () => {
+        fixture.componentRef.setInput('readonly', false);
+        fixture.componentRef.setInput('criteria', [
+            {
+                id: 1,
+                title: 'Documentation',
+                structuredGradingInstructions: [{ id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction],
+            } as GradingCriterion,
+        ]);
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const host: GradingInstructionSelectionHost = {
+            appliedInstructionIds: signal(new Set()),
+            appliedInstructionCounts: signal(new Map()),
+            removableInstructionIds: signal(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        };
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.register(host);
+        fixture.detectChanges();
+
+        const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
+        const card = fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement as HTMLElement;
+        expect(comp.selectable()).toBe(true);
+        expect(card.getAttribute('tabindex')).toBeNull();
+        expect(card.getAttribute('role')).toBeNull();
+        expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+
+        const armButton = fixture.debugElement.query(By.css('#criterion-0-instruction-0-arm')).nativeElement as HTMLButtonElement;
+        expect(armButton.tagName).toBe('BUTTON');
+        armButton.click();
+
+        expect(selectionService.hasArmedInstruction()).toBe(true);
+        expect(host.applyInstruction).not.toHaveBeenCalled();
+
+        // Existing referenced-target consumers still apply the armed instruction.
+        const referencedFeedback = { credits: 0, reference: 'file:Main.java_line:3' } as Feedback;
+        expect(TestBed.inject(StructuredGradingCriterionService).applyArmedInstructionToFeedback(referencedFeedback)).toBe(true);
+        expect(referencedFeedback.gradingInstruction).toEqual(instruction);
+        expect(referencedFeedback.credits).toBe(4);
+        expect(selectionService.hasArmedInstruction()).toBe(false);
+        expect(host.applyInstruction).not.toHaveBeenCalled();
     });
 
     it('should keep the usage count when no editable feedback list is mounted', () => {
@@ -323,5 +442,17 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.selectable()).toBe(false);
         expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).toBeNull();
         expect(fixture.debugElement.query(By.css('jhi-help-icon'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('aria-labelledby')).toBe('criterion-0-instruction-0-desc');
+        expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0-desc'))).not.toBeNull();
+    });
+
+    it('should clear an armed instruction when the layout is destroyed', () => {
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.armInstruction({ id: 1, credits: 1 } as GradingInstruction);
+        expect(selectionService.hasArmedInstruction()).toBe(true);
+
+        fixture.destroy();
+
+        expect(selectionService.hasArmedInstruction()).toBe(false);
     });
 });
