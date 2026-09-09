@@ -66,14 +66,14 @@ public class ExerciseVariantGenerationPipelineService {
     /** Re-prompts for malformed planner output before FAILED. */
     private static final int MAX_PLANNING_RETRIES = 2;
 
+    /** A heavy programming round measured ~900k tokens; this leaves headroom. */
+    private static final long TOKEN_BUDGET_PER_ATTEMPT = 2_000_000;
+
     /**
-     * Token budget for the TRANSFORMING/REPAIRING sequence, tracked via LLMTokenUsageService and checked BETWEEN
-     * rounds. Not a hard cap: the figure a round reports is a lower bound (see
-     * {@code VariantAgentLoopService.extractTotalTokens} — Spring AI's internal tool loop reports usage for its
-     * final exchange only). What actually bounds a job is the per-round tool-call budget of each toolset, whose
-     * hard stop ends the round's internal loop outright once it is exceeded, times {@link #MAX_VERIFY_ATTEMPTS}.
+     * Runaway backstop for the TRANSFORMING/REPAIRING sequence, checked between rounds. Derived from the attempts
+     * so the repair loop is never cut short by it.
      */
-    private static final long TOKEN_BUDGET = 500_000;
+    private static final long TOKEN_BUDGET = MAX_VERIFY_ATTEMPTS * TOKEN_BUDGET_PER_ATTEMPT;
 
     /** Bound for the cause-chain walk in {@link #leftoverExerciseId}; the real chain is three deep at most. */
     private static final int MAX_CAUSE_CHAIN_DEPTH = 10;
