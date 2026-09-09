@@ -236,8 +236,9 @@ public class PyrisJobService {
     /**
      * Cluster-atomically reserve the single-flight slot for {@code (userId, exerciseId)} and mint a struggle
      * job. Returns the new token, or empty if a run is already in flight for that pair. The reservation
-     * TTL matches the job TTL, so a crashed run self-heals. If writing the job map fails, the reservation is rolled
-     * back (token-conditional) so the slot is never leaked.
+     * TTL matches the job TTL, so a crashed run self-heals. If any write in the sequence fails, a rollback of both
+     * the job and the reservation is attempted (token-conditional). A rollback that fails too leaves the TTL as the
+     * backstop it already is for a crashed node.
      *
      * @param courseId        the course the run belongs to
      * @param userId          the struggling student
@@ -253,28 +254,63 @@ public class PyrisJobService {
             @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
         var token = generateJobIdToken();
         var key = struggleInFlightKey(userId, exerciseId);
-        String existing = getStruggleInFlightMap().putIfAbsent(key, token, Duration.ofSeconds(jobTimeout));
-        if (existing != null) {
-            return Optional.empty();
-        }
+        var job = new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode);
+        // Everything from the reservation to the re-stamp is undone as one unit. Nothing here hands the token out,
+        // so a caller that catches the failure cannot release what a partial write left behind: the pair would stay
+        // blocked for a whole jobTimeout with no run to show for it. The reservation write is inside the boundary
+        // too, because a provider can apply it and still fail the call.
         try {
+            String existing = getStruggleInFlightMap().putIfAbsent(key, token, Duration.ofSeconds(jobTimeout));
+            if (existing != null) {
+                return Optional.empty();
+            }
             // Shares the job map with every other pipeline. A build that does not know this record never reads one,
             // because the map is only ever read by token (getJob, never iterated) and a struggle token only ever
             // reaches the struggle callback path, which such a build does not serve. That is what keeps the entry
             // harmless next to older ones, not what makes the release compatible: this record is one of the two
             // reasons DistributedDataSchema.VERSION was raised to 2, so an older build reads the previous namespace
             // rather than this one.
-            getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode));
+            getPyrisJobMap().put(token, job);
+            // The marker was written before the job, so it would also expire before it, and the run would outlive the
+            // reservation that protects it. Re-stamp it now that the job stands, keeping the marker's lifetime the
+            // longer of the two - the same ordering every keep-alive callback follows.
+            refreshStruggleInFlightMarker(token, userId, exerciseId);
         }
         catch (RuntimeException e) {
-            getStruggleInFlightMap().remove(key, token); // roll back OUR reservation only (token-conditional)
+            undoReservation(token, job, key, e);
             throw e;
         }
-        // The marker was written before the job, so it would also expire before it, and the run would outlive the
-        // reservation that protects it. Re-stamp it now that the job stands, keeping the marker's lifetime the
-        // longer of the two - the same ordering every keep-alive callback follows.
-        refreshStruggleInFlightMarker(token, userId, exerciseId);
         return Optional.of(token);
+    }
+
+    /**
+     * Undo a half-written struggle reservation, keeping the failure that caused it as the one that escapes.
+     *
+     * <p>
+     * Both removals are conditional on what THIS call wrote, so neither can touch a newer run that has since taken
+     * the pair, and both are noops for the write that never landed. They are attempted independently: a provider
+     * that fails the first would otherwise leave the second undone, which is the leak this exists to prevent.
+     * Cleanup failures are recorded on the carrier rather than thrown, so the caller still sees the original cause -
+     * the same shape {@code IrisStruggleTriggerService#undoAdmission} uses one level up.
+     *
+     * @param token   the token this call minted
+     * @param job     the job this call wrote, or would have written
+     * @param key     the in-flight key of the reserved pair
+     * @param carrier the failure being unwound, which collects any cleanup failure as a suppressed cause
+     */
+    private void undoReservation(String token, StruggleInterventionJob job, String key, RuntimeException carrier) {
+        try {
+            getPyrisJobMap().remove(token, job);
+        }
+        catch (RuntimeException removeJobFailure) {
+            carrier.addSuppressed(removeJobFailure);
+        }
+        try {
+            getStruggleInFlightMap().remove(key, token);
+        }
+        catch (RuntimeException removeMarkerFailure) {
+            carrier.addSuppressed(removeMarkerFailure);
+        }
     }
 
     /**
@@ -304,6 +340,13 @@ public class PyrisJobService {
      * <p>
      * The re-put is conditional on the stored value still being THIS token, so a refresh arriving late cannot
      * resurrect a reservation that has already been released and retaken by a newer run.
+     *
+     * <p>
+     * A refresh that finds no marker of its own is therefore a silent noop, which the reservation path accepts. The
+     * only normal application path that can clear a marker in the microseconds between minting it and re-stamping it
+     * is a scoped cancel carrying the same client-minted {@code requestToken}, and that cancel is meant to win:
+     * reporting it from here would turn a run the student cancelled into a failed request. Anything else that could
+     * empty the marker in that window is external state loss, not a caller.
      *
      * @param token      the reserving job token
      * @param userId     the struggling student
