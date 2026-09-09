@@ -1,13 +1,12 @@
 ---
 id: work-with-ai
 title: Work with AI
+sidebar_label: Work with AI
 description: Install and use the Artemis agent skills, which teach an AI coding agent how this repository actually works.
 ---
 
 import Callout from '../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
-
-# Work with AI
 
 Artemis ships a set of **agent skills**: packaged procedures that teach an AI coding agent how this
 repository actually works. Which Playwright specs a change needs. Why a build went red. Which
@@ -114,8 +113,10 @@ conflicting pull request starts no CI at all, which looks exactly like a dropped
 services, no direct `EntityManager` or JDBC, all cross-node state through `DistributedDataProvider`,
 no Hibernate second-level cache, and the counted gates that sit at their limit.
 
-**`liquibase-migration`** covers the guarded pattern for adding a NOT NULL constraint, expand and
-contract for rolling deployments, and why triggers are not an option here.
+**`liquibase-migration`** covers how migrations are deployed (the cluster is stopped, the first
+instance migrates, the rest follow), the guarded pattern for adding a NOT NULL constraint, expand and
+contract for a column the previous version still reads or writes, the rollback invariant that a new
+required column or a tightened constraint also breaks, and why triggers are not an option here.
 
 **`client-conventions`** covers signal APIs, the `ngOnChanges` ban, `@if` and `@for`, `deepClone`
 rather than spread or `structuredClone`, and TUM UI with semantic colour tokens.
