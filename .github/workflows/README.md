@@ -24,6 +24,8 @@ ci.yml                                                            (single entry 
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
+├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
+├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:

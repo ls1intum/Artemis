@@ -2596,7 +2596,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
      * {@code submissionPolicy} feeds the remaining-submissions indicator
      * ({@code ProgrammingSubmissionPolicyStatusComponent} reads {@code active}, {@code submissionLimit}, {@code type}
      * and {@code exceedingPenalty}). {@code prepareStudentExamForConduction} loads the policy onto the exercise, so
-     * dropping it from the projection means the backend keeps enforcing a limit the student cannot see. Non-default
+     * dropping it from the projection means the server keeps enforcing a limit the student cannot see. Non-default
      * values throughout, so a projection that emitted the field but not its contents still fails.
      */
     @Test
