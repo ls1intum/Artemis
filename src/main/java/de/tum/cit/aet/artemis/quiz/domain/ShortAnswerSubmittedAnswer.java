@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
@@ -50,7 +53,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
      * @param question the owning question (may be null)
      * @return the wire-shaped submitted text
      */
-    private ShortAnswerSubmittedText wrap(ShortAnswerTextSelection entry, ShortAnswerQuestion question) {
+    private ShortAnswerSubmittedText wrap(@NonNull ShortAnswerTextSelection entry, @Nullable ShortAnswerQuestion question) {
         ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText(entry);
         submittedText.setSubmittedAnswer(this);
         ShortAnswerSpot spot = question != null ? question.findSpotById(entry.getSpotId()) : null;

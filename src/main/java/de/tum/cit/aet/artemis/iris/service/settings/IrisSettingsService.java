@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -67,8 +68,7 @@ public class IrisSettingsService {
      * @param course the course
      * @return settings DTO (defaults if no custom settings exist)
      */
-    public IrisCourseSettings getSettingsForCourse(Course course) {
-        Objects.requireNonNull(course, "course must not be null");
+    public IrisCourseSettings getSettingsForCourse(@NonNull Course course) {
         return getSettingsForCourse(course.getId());
     }
 
@@ -180,8 +180,7 @@ public class IrisSettingsService {
      * @param course the course entity
      * @return {@code true} if enabled
      */
-    public boolean isEnabledForCourse(Course course) {
-        Objects.requireNonNull(course, "course must not be null");
+    public boolean isEnabledForCourse(@NonNull Course course) {
         return isEnabledForCourse(course.getId());
     }
 
@@ -283,8 +282,7 @@ public class IrisSettingsService {
         return rateLimit;
     }
 
-    private IrisRateLimitConfiguration resolveEffectiveRateLimit(IrisCourseSettings settings, IrisRateLimitConfiguration defaults) {
-        Objects.requireNonNull(settings, "settings must not be null");
+    private IrisRateLimitConfiguration resolveEffectiveRateLimit(@NonNull IrisCourseSettings settings, IrisRateLimitConfiguration defaults) {
         defaults = Objects.requireNonNullElse(defaults, IrisRateLimitConfiguration.empty());
 
         // null rateLimit = no override, use defaults

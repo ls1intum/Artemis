@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +116,7 @@ public class PyrisDTOService {
      * @param uncommittedFiles the uncommitted files from the client
      * @return the converted PyrisSubmissionDTO
      */
-    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
+    public PyrisSubmissionDTO toPyrisSubmissionDTO(@NonNull ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
         var participation = (ProgrammingExerciseParticipation) submission.getParticipation();

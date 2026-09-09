@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.repository.base;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
 
@@ -14,6 +15,13 @@ import org.springframework.data.repository.NoRepositoryBean;
  * are implemented by the repository base class. Without this, Spring Data tries to
  * derive queries from method names like {@code getValueElseThrow}, resulting in
  * {@code PropertyReferenceException}.
+ *
+ * <p>
+ * Every {@code ...ElseThrow} method here is annotated {@link NonNull}. That is not decoration: callers see this
+ * interface rather than {@link RepositoryImpl}, which already carries the annotations, so without them every
+ * dereference of a value fetched through one of these methods looks nullable to a static analyser. SonarQube reported
+ * dozens of null dereferences for exactly that reason, all of them on paths where the method throws
+ * {@code EntityNotFoundException} instead of returning null.
  *
  * @param <T>  the type of the entity
  * @param <ID> the type of the entity's identifier
@@ -28,6 +36,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
+    @NonNull
     <U extends T> U getValueElseThrow(Optional<U> optional);
 
     /**
@@ -38,6 +47,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param id       the id of the entity to find
      * @return the entity if it exists
      */
+    @NonNull
     <U extends T> U getValueElseThrow(Optional<U> optional, ID id);
 
     /**
@@ -47,6 +57,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
+    @NonNull
     <U> U getArbitraryValueElseThrow(Optional<U> optional);
 
     /**
@@ -57,6 +68,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param id       the id of the entity to find in string representation
      * @return the entity if it exists
      */
+    @NonNull
     <U> U getArbitraryValueElseThrow(Optional<U> optional, String id);
 
     /**
@@ -65,6 +77,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param id the id of the entity to find
      * @return the entity with the given id
      */
+    @NonNull
     T findByIdElseThrow(ID id);
 
     /**
@@ -91,6 +104,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param id            the id of the entity to find
      * @return the entity with the given id
      */
+    @NonNull
     T findOneByIdElseThrow(Specification<T> specification, ID id);
 
     /**
@@ -100,6 +114,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
      * @return the entity that corresponds to spec and has the given id
      */
+    @NonNull
     T findOneByIdOrElseThrow(Specification<T> spec, ID id);
 
     /**
@@ -108,6 +123,7 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @param spec the specification to apply
      * @return the entity that satisfies the given specification
      */
+    @NonNull
     T findOneBySpecOrElseThrow(Specification<T> spec);
 
     /**
