@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { DatePicker } from 'primeng/datepicker';
 import { vi } from 'vitest';
 
-import { TimelineComponent, TimelineItem, TimelineValidationMode } from './timeline.component';
+import { TimelineComponent, TimelineItem } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -52,7 +52,7 @@ describe('ExerciseTimeline', () => {
             internalDate: dueDate.toDate(),
             hasInvalidDateOrder: true,
             isInputRequiredButUndefined: false,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
         });
         expect(internalTimelineItems[2]).toMatchObject({
             kind: 'required',
@@ -64,63 +64,13 @@ describe('ExerciseTimeline', () => {
         });
     });
 
-    it('should display a reactive warning without invalidating the timeline', () => {
-        const warningStringKey = signal<string | undefined>('timeline.warning');
-        const timelineItem: TimelineItem = {
-            kind: 'required',
-            labelStringKey: 'release',
-            date: signal(dayjs('2026-01-01T10:00:00Z')),
-            warningStringKey,
-        };
-        fixture.componentRef.setInput('timelineItems', [timelineItem]);
-        fixture.detectChanges();
+    it('should disable individual items', () => {
+        fixture.componentRef.setInput('timelineItems', [
+            { kind: 'optional', labelStringKey: 'release', date: signal(undefined), disabled: true },
+            { kind: 'optional', labelStringKey: 'due', date: signal(undefined) },
+        ] satisfies TimelineItem[]);
 
-        expect(component.internalTimelineItems()[0]).toMatchObject({
-            hasWarning: true,
-            tooltip: 'timeline.warning',
-        });
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
-
-        const datePicker = fixture.debugElement.query(By.directive(DatePicker)).componentInstance as DatePicker;
-        expect(datePicker.inputStyle?.['border-color']).toBe('var(--warning)');
-        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon.warning')).not.toBeNull();
-
-        warningStringKey.set(undefined);
-        fixture.detectChanges();
-
-        expect(component.internalTimelineItems()[0]).toMatchObject({
-            hasWarning: false,
-            tooltip: undefined,
-        });
-        expect(datePicker.inputStyle?.['border-color']).toBeUndefined();
-        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).toBeNull();
-    });
-
-    it('should let a validation error supersede a warning', () => {
-        const timelineItems: TimelineItem[] = [
-            { kind: 'required', labelStringKey: 'release', date: signal(dayjs('2026-01-10T10:00:00Z')) },
-            {
-                kind: 'required',
-                labelStringKey: 'due',
-                date: signal(dayjs('2026-01-05T10:00:00Z')),
-                warningStringKey: signal('timeline.warning'),
-            },
-        ];
-        fixture.componentRef.setInput('timelineItems', timelineItems);
-        fixture.detectChanges();
-
-        expect(component.internalTimelineItems()[1]).toMatchObject({
-            hasInvalidDateOrder: true,
-            hasWarning: false,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
-        });
-        expect(component.timelineStatus().valid).toBe(false);
-
-        const secondRow = fixture.nativeElement.querySelectorAll('.timeline-item-row')[1] as HTMLElement;
-        const infoIcon = secondRow.querySelector('.timeline-datepicker-info-icon') as HTMLElement;
-        const secondDatePicker = fixture.debugElement.queryAll(By.directive(DatePicker))[1].componentInstance as DatePicker;
-        expect(secondDatePicker.inputStyle?.['border-color']).toBeUndefined();
-        expect(infoIcon.classList.contains('warning')).toBe(false);
+        expect(component.internalTimelineItems().map((item) => item.isDisabled)).toEqual([true, false]);
     });
 
     it('should expose and emit timeline status changes', () => {
@@ -144,68 +94,18 @@ describe('ExerciseTimeline', () => {
         expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
     });
 
-    it('should require another timeline item only when the dependent date is set', () => {
-        const dueDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(undefined) };
-        const assessmentDateItem: TimelineItem = {
-            kind: 'optional',
-            labelStringKey: 'assessment',
-            date: signal(undefined),
-            otherRequiredItem: dueDateItem,
-        };
-        fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
-
-        expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: false,
-            tooltip: undefined,
-        });
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
-
-        assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
-
-        expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: true,
-            tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
-        });
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
-    });
-
-    it('should only check ordering against the items in orderCheckAgainst when provided', () => {
-        const buildItems = (withOrderCheckAgainst: boolean): TimelineItem[] => {
-            const releaseItem: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T10:00:00Z')) };
-            const dueItem: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(dayjs('2026-01-10T10:00:00Z')) };
-            const exampleSolutionItem: TimelineItem = {
-                kind: 'optional',
-                labelStringKey: 'exampleSolution',
-                date: signal(dayjs('2026-01-05T10:00:00Z')),
-                orderCheckAgainst: withOrderCheckAgainst ? [releaseItem] : undefined,
-            };
-            return [releaseItem, dueItem, exampleSolutionItem];
-        };
-
-        // Between release (Jan 1) and due (Jan 10): fails the default "all previous items" check (it's before dueItem)...
-        fixture.componentRef.setInput('timelineItems', buildItems(false));
-        expect(component.internalTimelineItems()[2]).toMatchObject({ hasInvalidDateOrder: true });
-
-        // ...but is valid once the check is restricted to just [releaseItem] via orderCheckAgainst.
-        fixture.componentRef.setInput('timelineItems', buildItems(true));
-        expect(component.internalTimelineItems()[2]).toMatchObject({ hasInvalidDateOrder: false });
-    });
-
-    it('should allow equal dates by default and reject them in sequentially strict mode', () => {
+    it('should reject equal dates', () => {
         const date = dayjs('2026-01-01T10:00:00Z');
         const timelineItems: TimelineItem[] = [
-            { kind: 'required', labelStringKey: 'release', date: signal(date) },
-            { kind: 'required', labelStringKey: 'due', date: signal(date) },
+            { kind: 'optional', labelStringKey: 'release', date: signal(date) },
+            { kind: 'optional', labelStringKey: 'start', date: signal(date) },
         ];
         fixture.componentRef.setInput('timelineItems', timelineItems);
 
-        expect(component.internalTimelineItems()[1].hasInvalidDateOrder).toBe(false);
-        expect(component.timelineStatus().valid).toBe(true);
-
-        fixture.componentRef.setInput('validationMode', TimelineValidationMode.SEQUENTIALLY_STRICT);
-
-        expect(component.internalTimelineItems()[1].hasInvalidDateOrder).toBe(true);
-        expect(component.internalTimelineItems()[1].tooltip).toBe('artemisApp.exercise.timelineDateStrictOrderTooltip');
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            hasInvalidDateOrder: true,
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
+        });
         expect(component.timelineStatus().valid).toBe(false);
     });
 
@@ -336,5 +236,111 @@ describe('ExerciseTimeline', () => {
 
         expect(input.value).toBe('07.06.2026 17:24');
         expect(item.date()?.isSame(dayjs('2026-06-07T17:24:00'))).toBe(true);
+    });
+
+    it('should display a reactive warning without invalidating the timeline', () => {
+        const warningStringKey = signal<string | undefined>('timeline.warning');
+        const timelineItem: TimelineItem = {
+            kind: 'required',
+            labelStringKey: 'release',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            warningStringKey,
+        };
+        fixture.componentRef.setInput('timelineItems', [timelineItem]);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasWarning: true,
+            tooltip: 'timeline.warning',
+        });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
+
+        const datePicker = fixture.debugElement.query(By.directive(DatePicker)).componentInstance as DatePicker;
+        expect(datePicker.inputStyle?.['border-color']).toBe('var(--warning)');
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon.warning')).not.toBeNull();
+
+        warningStringKey.set(undefined);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasWarning: false,
+            tooltip: undefined,
+        });
+        expect(datePicker.inputStyle?.['border-color']).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).toBeNull();
+    });
+
+    it('should let a validation error supersede a warning', () => {
+        const timelineItems: TimelineItem[] = [
+            { kind: 'required', labelStringKey: 'release', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            {
+                kind: 'required',
+                labelStringKey: 'due',
+                date: signal(dayjs('2026-01-05T10:00:00Z')),
+                warningStringKey: signal('timeline.warning'),
+            },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            hasInvalidDateOrder: true,
+            hasWarning: false,
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
+        });
+        expect(component.timelineStatus().valid).toBe(false);
+
+        const secondRow = fixture.nativeElement.querySelectorAll('.timeline-item-row')[1] as HTMLElement;
+        const infoIcon = secondRow.querySelector('.timeline-datepicker-info-icon') as HTMLElement;
+        const secondDatePicker = fixture.debugElement.queryAll(By.directive(DatePicker))[1].componentInstance as DatePicker;
+        expect(secondDatePicker.inputStyle?.['border-color']).toBeUndefined();
+        expect(infoIcon.classList.contains('warning')).toBe(false);
+    });
+
+    it('should display a reactive external error and invalidate the timeline', () => {
+        const errorStringKey = signal<string | undefined>('timeline.externalError');
+        const timelineItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'release',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            errorStringKey,
+        };
+        fixture.componentRef.setInput('timelineItems', [timelineItem]);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasExternalError: true,
+            tooltip: 'timeline.externalError',
+        });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).not.toBeNull();
+
+        errorStringKey.set(undefined);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasExternalError: false,
+            tooltip: undefined,
+        });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
+    });
+
+    it('should let an internal validation error supersede an external error', () => {
+        const timelineItems: TimelineItem[] = [
+            { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            {
+                kind: 'optional',
+                labelStringKey: 'due',
+                date: signal(dayjs('2026-01-05T10:00:00Z')),
+                errorStringKey: signal('timeline.externalError'),
+            },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            hasInvalidDateOrder: true,
+            hasExternalError: true,
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
+        });
     });
 });

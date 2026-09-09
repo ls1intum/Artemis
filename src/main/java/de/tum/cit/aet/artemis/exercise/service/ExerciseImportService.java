@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,6 @@ public abstract class ExerciseImportService {
         newExercise.setStudentParticipations(new HashSet<>());
         newExercise.setTutorParticipations(new HashSet<>());
         newExercise.setExampleSubmissions(new HashSet<>());
-        newExercise.setAttachments(new HashSet<>());
         newExercise.setPlagiarismCases(new HashSet<>());
         // teams has orphanRemoval enabled; a client-supplied or source-derived entity may still reference the source's
         // teams, which would fail to persist under a new owner. An imported exercise starts without teams.
@@ -192,7 +192,7 @@ public abstract class ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
-    protected Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    protected Result copyExampleResult(@NonNull Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());
