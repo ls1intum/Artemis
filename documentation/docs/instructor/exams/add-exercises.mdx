@@ -1,0 +1,107 @@
+---
+id: add-exercises
+title: Add Exercises to an Exam
+sidebar_label: Add Exercises
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import exerciseVariants from './assets/exercise_variants.png';
+import exerciseGroupImportExam from './assets/exercise_group_import_exam.png';
+import exerciseGroupImportExercises from './assets/exercise_group_import_exercises.png';
+import addExercises from './assets/add_exercises.png';
+import configureGrading from './assets/configure_grading.png';
+
+An exam is built from exercise groups rather than from exercises directly. Each group is one slot on the paper, and
+each slot can hold several alternatives, so that students do not all receive the same exam.
+
+## Exercise Groups
+
+When Artemis generates the [individual exams](/instructor/exams/prepare-and-test#generate-the-individual-exams) it
+draws one exercise at random from every group. Three groups holding two exercises each therefore produce a
+three-exercise exam in eight possible combinations.
+
+A group is either **Mandatory** or **Optional**. Every mandatory group appears in every individual exam. Optional
+groups are only drawn on if there are more groups than the **Number of exercises in exam** set in the
+[exam configuration](/instructor/exams/create-an-exam#exam-exercises) — which is how you offer a choice of topics
+without lengthening the exam. Groups are mandatory by default; **Edit group** changes it later.
+
+<Image src={exerciseVariants} alt="Exercise groups, each holding several exercise variants" size={ImageSize.large} caption="Exercise groups with alternative exercises" />
+
+Each group lists its exercises as rows. Drag a row's handle to reorder it within the group or move it into another
+group, and use the row's overflow menu (**…**) for the remaining actions, including
+[generating a variant with AI](/instructor/exercises/variant-generation).
+
+<Callout variant={CalloutVariant.info}>
+
+  For an exam where everybody writes the same paper, give each group exactly one exercise.
+
+</Callout>
+
+### Import Exercise Groups
+
+**Import Exercise Group** copies groups out of an existing exam, in two steps.
+
+First choose the exam to copy from. **Select Exercise Groups** opens it.
+
+<Image src={exerciseGroupImportExam} alt="Choosing the exam to import exercise groups from" size={ImageSize.large} caption="Step one: choose the source exam" />
+
+Then choose what comes across. You can deselect individual exercises, and rename both the groups and the exercises
+— including the short name of a programming exercise, which together with its title has to be unique. Importing
+into the same course therefore always needs a rename first; Artemis checks uniqueness when you start the import and
+tells you which ones clash.
+
+<Image src={exerciseGroupImportExercises} alt="Choosing which exercises to import alongside the groups" size={ImageSize.large} caption="Step two: choose the exercises" />
+
+<Callout variant={CalloutVariant.info}>
+
+  Exercises arrive with the configuration they had. The import cannot change a submission policy or turn static
+  code analysis on or off, so if you need a different setup, import that exercise into the group on its own and
+  configure it there. Everything else can be edited after the import.
+
+</Callout>
+
+## Add Exercises
+
+**Add Exercise** at the foot of a group opens **Manage Exercises**. Its **Create** tab offers the five exercise
+types — **Programming**, **Quiz**, **Modeling**, **Text** and **File Upload** — and takes you to the creation form
+for the one you pick. Its **Import** tab offers the same five types and copies an existing exercise into the group;
+its search covers the courses and exams you hold at least editor rights in, and matches on exercise title, course
+title or exercise id.
+
+<Image src={addExercises} alt="Manage Exercises dialog offering the five exercise types" size={ImageSize.large} caption="Adding an exercise to a group" />
+
+Text and modeling exercises can also carry example submissions with example assessments. Assessors work through
+those first, which is how a correction team arrives at the real submissions already agreed on what the exercise is
+worth.
+
+### Programming Exercises
+
+Two settings on a programming exercise need attention in an exam.
+
+**Enable manual assessment** decides whether your assessors can grade the submissions by hand at all. Leave it off
+and the [assessment](/instructor/exams/assess-an-exam) is whatever the tests produced.
+
+Test visibility decides what a student learns while writing. **Configure Grading** on the exercise lets you set the
+**Weight**, **Bonus multiplier** and **Bonus points** of each test case, and its **Visibility**. In an exam the
+useful setting is **After Release Date of Results**: the test still runs and still scores, but the student sees
+neither its feedback nor its points until results are published. Artemis applies it to every test case of a
+programming exercise created inside an exam.
+
+<Image src={configureGrading} alt="Configure Grading page showing test case weights and visibility" size={ImageSize.large} caption="Test case configuration for an exam exercise" />
+
+<Callout variant={CalloutVariant.info}>
+
+  An imported exercise keeps the visibility it had in its source exercise, which is usually not what an exam wants.
+  The import form has a **Set test case visibility to After Release Date of Results** option for exactly this.
+
+</Callout>
+
+Hiding every test leaves the student knowing only whether their code compiled, which is often what an exam wants.
+Controlling *when* the tests run is a separate question from when their results become visible, and it depends on
+the setup: with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) you give the build
+phase that runs the tests an **After due date** inclusion condition, described under
+[Configure the Build](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional).
+With Jenkins the exercise instead offers **Rerun tests after due date**, which runs the suite once over every
+submission after the date you set.

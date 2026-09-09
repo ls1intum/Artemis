@@ -1,0 +1,116 @@
+---
+id: after-the-exam
+title: After the Exam
+sidebar_label: After the Exam
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import examSummary from '../assets/exams/exam_summary.png';
+import complaint from '../assets/exams/complaint.png';
+import examExampleSolutions from '../assets/exams/exam_example_solutions.png';
+import examExampleSolutionProgramming from '../assets/exams/exam_example_solution_programming.png';
+import examExampleSolutionModeling from '../assets/exams/exam_example_solution_modeling.png';
+import studentGrade from '../assets/exams/student_grade.png';
+import studentGradeWithBonus from '../assets/exams/student_grade_with_bonus.png';
+import studentGradeKey from '../assets/exams/student_grade_key.png';
+
+## Your Summary
+
+Handing in takes you to your summary, and it stays available afterwards — reach it the way you reached the exam, or
+pick the exam from the course sidebar once it is over.
+
+The summary collects everything you submitted. For a programming exercise it also records the commit hash and the
+repository address, so you can go back and read your own code. **Export PDF** saves the whole thing, which is worth
+doing for your own records.
+
+<Image src={examSummary} alt="Exam summary before results are published" size={ImageSize.large} caption="Your summary before results are published" />
+
+<Callout variant={CalloutVariant.info}>
+
+  Your instructor may set a date before which the summary is not available. This is normal for exams written in
+  several shifts, so that the content does not reach a later shift.
+
+</Callout>
+
+## Results and Complaints
+
+When results are published, your score appears in the same summary.
+
+If you think a manually assessed exercise was marked wrongly, and you are inside the review window your instructor
+set, **Complain** lets you say why. A different assessor from the one who marked your work reviews the complaint and
+answers it, and the answer appears in your summary. A successful complaint updates your result automatically.
+
+Automatically assessed exercises cannot be complained about, unless an assessor has reviewed the automatic result by
+hand — then that review is open to complaint like any other.
+
+<Image src={complaint} alt="Complaining about the assessment of a text exercise" size={ImageSize.large} caption="Filing a complaint" />
+
+A later **Export PDF** includes your score, your complaints and the responses to them.
+
+<TumLiveVideo src="53405" title="Participating in Exams in Artemis" />
+
+## AI Feedback in Test Exams
+
+A **test exam** is a practice run, so it is the one place in exam mode where you can ask for AI feedback on your
+answers. Once you have submitted a test exam, its summary offers **Request AI Feedback**. One request covers all
+text and modeling exercises of that exam at once, and the results appear in the summary itself a short while later
+— you do not have to navigate anywhere.
+
+The button shows how many requests you have used out of your limit, and turns into **AI Feedback Requested** — with
+a spinner — as soon as Artemis accepts the request, until the feedback is ready. The first time you use it, Artemis
+asks you to agree to sending your submission to an external AI service.
+
+<Callout variant={CalloutVariant.info}>
+
+  The action appears only for submitted test exams, only while your Artemis instance runs the Athena service, and
+  only if at least one exercise in the exam is configured for AI feedback. Real exams never offer it.
+
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+
+  AI feedback in a test exam is preliminary and never a grade. It exists to help you prepare, not to predict your
+  result in the real exam.
+
+</Callout>
+
+## Example Solutions
+
+If your instructor set a publication date for them, example solutions appear after that date for text, modeling,
+file upload and programming exercises.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Example solutions are only available if you submitted your exam.
+
+</Callout>
+
+<Image src={examExampleSolutions} alt="Example solutions listed in the exam summary" size={ImageSize.large} caption="Example solutions in the summary" />
+
+For a programming exercise, **Download Example Solution** downloads the solution repository.
+
+<Image src={examExampleSolutionProgramming} alt="Downloading the example solution of a programming exercise" size={ImageSize.large} caption="The example solution of a programming exercise" />
+
+For the other types, **Show Example Solution** displays it below the exercise.
+
+<Image src={examExampleSolutionModeling} alt="Example solution shown below a modeling exercise" size={ImageSize.medium} caption="The example solution of a modeling exercise" />
+
+## Grades
+
+Your summary shows the points you achieved and the maximum available for each exercise. If your instructor defined
+a grading key, it also shows your grade — passing grades in green, failing grades in red.
+
+<Image src={studentGrade} alt="Exam grade shown in the summary" size={ImageSize.large} caption="Your grade in the summary" />
+
+Where a bonus is configured, your final grade with the bonus applied appears below your grade before the bonus.
+
+<Image src={studentGradeWithBonus} alt="Exam grade with a bonus applied" size={ImageSize.large} caption="A grade with a bonus applied" />
+
+**Grading Key** shows every grade step with its exact boundaries. The brackets say whether a boundary belongs to
+the step: a square bracket includes it, a parenthesis excludes it. So a step written `[80 - 85)` means 80% earns
+that grade and 85% earns the next one up.
+
+<Image src={studentGradeKey} alt="Grading key showing every grade step and its boundaries" size={ImageSize.medium} caption="The grading key for a student who scored 135 of 150 points" />

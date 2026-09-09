@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
 
 /**
- * Covers the precedence rules of the provider rename, since getting them wrong would silently change which backend a
+ * Covers the precedence rules of the provider rename, since getting them wrong would silently change which provider a
  * deployment uses.
  */
 class DistributedDataProviderResolverTest {
