@@ -43,17 +43,19 @@
                         ></a>
                     </li>
                 }
-                <li tumUiListItem>
-                    <a
-                        tumUiListItemAction
-                        routerLink="profile"
-                        routerLinkActive
-                        #profileLink="routerLinkActive"
-                        [active]="profileLink.isActive"
-                        jhiTranslate="artemisApp.userSettings.learnerProfile"
-                    ></a>
-                </li>
-                @if (isScienceEnabled()) {
+                @if (isLearnerProfileEnabled()) {
+                    <li tumUiListItem>
+                        <a
+                            tumUiListItemAction
+                            routerLink="profile"
+                            routerLinkActive
+                            #profileLink="routerLinkActive"
+                            [active]="profileLink.isActive"
+                            jhiTranslate="artemisApp.userSettings.learnerProfile"
+                        ></a>
+                    </li>
+                }
+                @if (isAtlasEnabled()) {
                     <li tumUiListItem>
                         <a
                             tumUiListItemAction

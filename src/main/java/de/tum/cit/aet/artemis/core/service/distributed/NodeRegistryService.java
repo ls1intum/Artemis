@@ -23,14 +23,14 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
- * Tracks which Artemis nodes are currently alive, independently of the distributed data backend.
+ * Tracks which Artemis nodes are currently alive, independently of the distributed data provider.
  *
  * <p>
- * <strong>Why this is not a provider method.</strong> The two backends answer "who is alive" in incompatible ways:
+ * <strong>Why this is not a {@link DistributedDataProvider} method.</strong> The two providers answer "who is alive" in incompatible ways:
  * Hazelcast reports cluster members (which excludes build agents, since they connect as clients), while the Redis
  * provider infers it from {@code CLIENT LIST} filtered on a name prefix, which is fragile and returns only the clients of
  * a single node in Redis Cluster mode. Building the registry on an expiring map plus a heartbeat instead gives one
- * definition of liveness that behaves identically everywhere, and it needs no backend-specific code at all.
+ * definition of liveness that behaves identically everywhere, and it needs no provider-specific code at all.
  *
  * <p>
  * <strong>Liveness definition.</strong> A node republishes its entry every {@link #HEARTBEAT_INTERVAL_SECONDS} seconds

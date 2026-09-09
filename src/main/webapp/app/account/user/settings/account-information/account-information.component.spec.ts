@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -11,7 +11,10 @@ import { AccountInformationComponent } from 'app/account/user/settings/account-i
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
@@ -19,12 +22,9 @@ describe('AccountInformationComponent', () => {
 
     let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: ReturnType<typeof vi.fn> };
     let userSettingsServiceMock: { updateProfilePicture: ReturnType<typeof vi.fn>; removeProfilePicture: ReturnType<typeof vi.fn> };
-    let dialogServiceMock: { open: ReturnType<typeof vi.fn> };
     let alertServiceMock: { addAlert: ReturnType<typeof vi.fn> };
-    let dialogCloseSubject: Subject<string | undefined>;
 
     beforeEach(async () => {
-        dialogCloseSubject = new Subject<string | undefined>();
         accountServiceMock = {
             userIdentity: signal<User | undefined>({ id: 99, internal: true } as User),
             setImageUrl: vi.fn(),
@@ -32,11 +32,6 @@ describe('AccountInformationComponent', () => {
         userSettingsServiceMock = {
             updateProfilePicture: vi.fn(),
             removeProfilePicture: vi.fn(),
-        };
-        dialogServiceMock = {
-            open: vi.fn().mockReturnValue({
-                onClose: dialogCloseSubject.asObservable(),
-            } as Partial<DynamicDialogRef>),
         };
         alertServiceMock = {
             addAlert: vi.fn(),
@@ -46,12 +41,13 @@ describe('AccountInformationComponent', () => {
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: UserSettingsService, useValue: userSettingsServiceMock },
-                { provide: DialogService, useValue: dialogServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideRouter([]),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(AccountInformationComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
     });
@@ -64,12 +60,21 @@ describe('AccountInformationComponent', () => {
         expect(comp.currentUser()).toEqual({ id: 99, internal: true });
     });
 
-    it('should open image cropper modal when setting user image', () => {
-        const event = { currentTarget: { files: [new File([''], 'test.jpg', { type: 'image/jpeg' })], value: '' } } as unknown as Event;
+    it('should show the image cropper when setting user image', () => {
+        const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
+        const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
 
         comp.setUserImage(event);
 
-        expect(dialogServiceMock.open).toHaveBeenCalled();
+        expect(comp.imageToCrop()).toBe(file);
+    });
+
+    it('should configure a small cropper dialog with the profile picture title', () => {
+        fixture.detectChanges();
+
+        const dialog = fixture.debugElement.query(By.directive(TumUiDialogComponent)).componentInstance as TumUiDialogComponent;
+        expect(dialog.header()).toBe('artemisApp.userSettings.accountInformationPage.profilePicture');
+        expect(dialog.size()).toBe('small');
     });
 
     it('should call removeProfilePicture and setImageUrl when deleting user image', () => {
@@ -95,8 +100,8 @@ describe('AccountInformationComponent', () => {
 
         comp.setUserImage(event);
 
-        // Emit the dialog result via the subject
-        dialogCloseSubject.next('data:image/jpeg;base64,dGVzdA==');
+        comp.onImageCropped('data:image/jpeg;base64,dGVzdA==');
+        expect(comp.imageToCrop()).toBeUndefined();
 
         expect(userSettingsServiceMock.updateProfilePicture).toHaveBeenCalled();
         expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith('new-image-url');
@@ -112,7 +117,7 @@ describe('AccountInformationComponent', () => {
         comp.setUserImage(event);
 
         // Emit the dialog result via the subject
-        dialogCloseSubject.next('data:image/jpeg;base64,dGVzdA==');
+        comp.onImageCropped('data:image/jpeg;base64,dGVzdA==');
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Upload failed' }));
     });

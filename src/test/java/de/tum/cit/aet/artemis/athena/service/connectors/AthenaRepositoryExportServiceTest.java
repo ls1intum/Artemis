@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service.connectors;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -13,11 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
@@ -52,9 +52,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
     @Autowired
-    private AthenaModuleService athenaModuleService;
-
-    @Autowired
     private LocalVCRepositoryTestService localVCRepositoryTestService;
 
     @BeforeEach
@@ -74,8 +71,15 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
@@ -101,8 +105,15 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportAllValidInstructorRepositoryTypes() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
@@ -123,7 +134,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     void shouldThrowServiceUnavailableWhenFeedbackSuggestionsNotEnabled() {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(null);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         assertThatExceptionOfType(ServiceUnavailableException.class).as("Should throw ServiceUnavailableException when feedback suggestions are not enabled")
@@ -134,7 +144,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     void shouldThrowBadRequestAlertExceptionForInvalidRepositoryType() {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         var invalidRepositoryTypes = Set.of(RepositoryType.USER, RepositoryType.AUXILIARY);
@@ -144,15 +153,5 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
                     .withMessageContaining("Invalid instructor repository type")
                     .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("invalid.instructor.repository.type"));
         }
-    }
-
-    @Test
-    void shouldThrowBadRequestAlertExceptionWhenFeedbackSuggestionModuleIsNull() {
-        var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(null);
-
-        assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException when feedback suggestion module is null")
-                .isThrownBy(() -> athenaModuleService.getAthenaModuleUrl(programmingExercise))
-                .withMessageContaining("Exercise does not have a feedback suggestion module configured");
     }
 }

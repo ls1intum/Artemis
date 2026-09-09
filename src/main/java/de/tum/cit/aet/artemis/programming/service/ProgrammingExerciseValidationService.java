@@ -133,7 +133,6 @@ public class ProgrammingExerciseValidationService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
         // Check the build config field lengths before the configuration is parsed
         validateBuildConfigSize(programmingExercise);
