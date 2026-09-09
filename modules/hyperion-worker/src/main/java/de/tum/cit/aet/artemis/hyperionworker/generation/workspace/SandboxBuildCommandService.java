@@ -124,8 +124,9 @@ public class SandboxBuildCommandService {
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
         String isolatedPhaseSection = buildIsolatedGradlePhaseSection(recipe);
+        // Each lane replaces the disposable Gradle cache. A persistent daemon would retain its deleted JARs in bounded tmpfs.
         String javaSecurityManagerAllow = "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\n"
-                + "export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\"";
+                + "export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow -Dorg.gradle.daemon=false\"";
         // The assignment build checks out no sibling solution/, so the solution placeholder collapses to the assignment directory.
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
         String solutionPlaceholderValue = "assignment";

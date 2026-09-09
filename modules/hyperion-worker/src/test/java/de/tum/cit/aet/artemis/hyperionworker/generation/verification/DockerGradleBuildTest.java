@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperionworker.generation.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -64,6 +65,23 @@ class DockerGradleBuildTest {
     void cleanup() throws IOException {
         sandbox.destroyActiveSessions();
         docker.close();
+    }
+
+    @Test
+    void verificationDoesNotLeaveADaemonHoldingTheDisposableGradleCache() throws IOException {
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommandService.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+
+        assertThat(build(session, "solution").exitCode()).isZero();
+
+        // A daemon can keep deleted JARs mapped when the next lane replaces the cache, exhausting bounded tmpfs.
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            var processes = sandbox.exec(session, Duration.ofSeconds(5), "sh", "-c", "ps -eo args | grep '[o]rg.gradle.launcher.daemon.bootstrap.GradleDaemon' || true");
+            assertThat(processes.timedOut()).isFalse();
+            assertThat(processes.combinedOutput()).isBlank();
+        });
     }
 
     @Test
