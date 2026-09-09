@@ -794,6 +794,14 @@ public class StudentExamService {
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
+     * <p>
+     * <b>Not serialised against a concurrent generation.</b> The exam-row lock this and the other generation paths used
+     * to take is gone with the transaction that held it, so two simultaneous calls can both read the same user as
+     * missing and both create a student exam for them; there is no unique constraint on {@code (exam_id, user_id)} to
+     * catch it, and a portable one cannot be added because a test run is a second student exam for the same pair. The
+     * same removal also means the exercise groups are no longer re-read under a lock, so a concurrent exercise-group
+     * move can desync the selection. Restoring both means a repository-owned boundary that locks the exam row, which is
+     * recorded as a follow-up rather than reintroduced here.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users

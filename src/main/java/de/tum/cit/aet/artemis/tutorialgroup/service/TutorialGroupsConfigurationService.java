@@ -48,10 +48,17 @@ public class TutorialGroupsConfigurationService {
      * session it builds. Generating first would attach the new sessions to free periods that are about to be removed.
      * <p>
      * This runs without a transaction spanning the calls, in line with the rule that transaction boundaries belong in
-     * repositories. The consequence is bounded and recoverable rather than corrupting: a failure after the deletes
-     * leaves the course with no tutorial group sessions until the operation runs again, and running it again produces
-     * exactly the same result, because it derives everything from the schedules. Anything that has to be read before
-     * the deletes is therefore read up front, which keeps that window down to the generation itself.
+     * repositories. The consequence is bounded rather than corrupting: a failure after the deletes leaves the course
+     * with no tutorial group sessions, and because everything is derived from the schedules, running this again
+     * produces exactly the same result. Anything that has to be read before the deletes is therefore read up front,
+     * which keeps that window down to the generation itself.
+     * <p>
+     * <b>Being idempotent is not the same as recovering by itself.</b> The time zone is already committed by the time
+     * this runs, so the caller that detects the change will not detect it again: re-sending the same course no longer
+     * reaches this method, and the sessions stay missing until something else triggers a regeneration. Restoring them
+     * means changing the time zone to another value and back, which does reach this method. Closing the window
+     * properly needs the delete and the regeneration under one repository-owned transaction; that is recorded as a
+     * follow-up rather than done here, because it is a different change from removing the boundaries.
      *
      * @param course affected course
      */
