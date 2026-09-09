@@ -75,7 +75,7 @@ describe('AthenaEnabledComponent', () => {
 
         comp.setEnabled('gradingFeedbackEnabled', true);
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, expected);
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { gradingFeedbackEnabled: true });
         expect(comp.gradingEnabled()).toBe(true);
     });
 
@@ -88,7 +88,9 @@ describe('AthenaEnabledComponent', () => {
 
         comp.setEnabled(feature, true);
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, expected);
+        // Only the switched feature is sent: restating the other one would write back the value this component last
+        // read, undoing a change made elsewhere in the meantime.
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
         expect(comp.config()).toEqual(expected);
     });
 
@@ -139,6 +141,6 @@ describe('AthenaEnabledComponent', () => {
 
         fixture.nativeElement.querySelector('[data-testid="athena-formative-feedback-enable"]').click();
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true });
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { formativeFeedbackEnabled: true });
     });
 });

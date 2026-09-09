@@ -36,11 +36,21 @@ describe('AthenaCourseConfigService', () => {
         let received: AthenaCourseConfigDTO | undefined;
         service.updateCourseConfig(42, config).subscribe((response) => (received = response.body ?? undefined));
 
-        const request = httpMock.expectOne({ method: 'PUT', url: 'api/course/courses/42/athena-configuration' });
+        const request = httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' });
         expect(request.request.body).toEqual(config);
         request.flush(config);
 
         expect(received).toEqual(config);
+    });
+
+    it('should send only the features it is given', () => {
+        service.updateCourseConfig(42, { formativeFeedbackEnabled: true }).subscribe();
+
+        const request = httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' });
+        // The feature that was not switched is absent rather than restated, so the server leaves it alone instead of
+        // writing back whatever this client last saw for it.
+        expect(request.request.body).toEqual({ formativeFeedbackEnabled: true });
+        request.flush(config);
     });
 
     it('should send updates of the same course one after the other', () => {
@@ -50,13 +60,13 @@ describe('AthenaCourseConfigService', () => {
         service.updateCourseConfig(42, config).subscribe((response) => received.push(response.body!));
         service.updateCourseConfig(42, second).subscribe((response) => received.push(response.body!));
 
-        // The second update waits: it is only sent once the first one has answered, so the server cannot store the
-        // older snapshot last and the responses arrive in the order the instructor switched the features.
-        const first = httpMock.expectOne({ method: 'PUT', url: 'api/course/courses/42/athena-configuration' });
+        // The second update waits: it is only sent once the first one has answered, so two clicks on the same feature
+        // reach the server in the order they were made and the responses arrive in that order too.
+        const first = httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' });
         expect(first.request.body).toEqual(config);
         first.flush(config);
 
-        const next = httpMock.expectOne({ method: 'PUT', url: 'api/course/courses/42/athena-configuration' });
+        const next = httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' });
         expect(next.request.body).toEqual(second);
         next.flush(second);
 
@@ -71,9 +81,9 @@ describe('AthenaCourseConfigService', () => {
         service.updateCourseConfig(42, config).subscribe({ error: (failure) => (error = failure) });
         service.updateCourseConfig(42, second).subscribe((response) => (received = response.body ?? undefined));
 
-        httpMock.expectOne({ method: 'PUT', url: 'api/course/courses/42/athena-configuration' }).flush('error', { status: 500, statusText: 'Server Error' });
+        httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' }).flush('error', { status: 500, statusText: 'Server Error' });
 
-        const next = httpMock.expectOne({ method: 'PUT', url: 'api/course/courses/42/athena-configuration' });
+        const next = httpMock.expectOne({ method: 'PATCH', url: 'api/course/courses/42/athena-configuration' });
         expect(next.request.body).toEqual(second);
         next.flush(second);
 
@@ -85,7 +95,7 @@ describe('AthenaCourseConfigService', () => {
         service.updateCourseConfig(42, config).subscribe();
         service.updateCourseConfig(43, config).subscribe();
 
-        const requests = httpMock.match({ method: 'PUT' });
+        const requests = httpMock.match({ method: 'PATCH' });
         expect(requests).toHaveLength(2);
         requests.forEach((request) => request.flush(config));
     });

@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
+import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { ComponentRef } from '@angular/core';
@@ -28,7 +29,13 @@ describe('ControlCenterComponent', () => {
         })
             .overrideComponent(ControlCenterComponent, {
                 set: {
-                    imports: [MockDirective(TranslateDirective), MockComponent(IrisLogoComponent), MockComponent(IrisEnabledComponent), MockComponent(AthenaEnabledComponent)],
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(IrisLogoComponent),
+                        MockComponent(IrisEnabledComponent),
+                        MockComponent(AthenaLogoComponent),
+                        MockComponent(AthenaEnabledComponent),
+                    ],
                 },
             })
             .compileComponents();

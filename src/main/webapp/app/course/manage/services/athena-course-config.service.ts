@@ -11,6 +11,13 @@ export interface AthenaCourseConfigDTO {
 }
 
 /**
+ * A change to the course-level Athena configuration: only the features being switched, everything left out stays as it
+ * is. Restating the other feature would send whatever this client last saw for it, undoing a change made elsewhere in
+ * the meantime.
+ */
+export type AthenaCourseConfigUpdate = Partial<AthenaCourseConfigDTO>;
+
+/**
  * Reads and writes the course-level Athena configuration.
  *
  * The toggles live on the course overview and in the onboarding wizard and save immediately, so they use this
@@ -26,9 +33,10 @@ export class AthenaCourseConfigService {
     /**
      * The last update queued per course, while that course has one in flight.
      *
-     * Every update writes a complete configuration, so two of them racing would let the older snapshot be stored last
-     * and silently undo the newer switch. Queueing them per course keeps the write order the instructor's click order,
-     * and lets the responses arrive in that order too, so the state a toggle ends up showing is the one on the server.
+     * Each update names only the feature it switches, so the server can no longer store a stale value for the other
+     * one. Queueing the requests of a course on top of that keeps two clicks on the same feature in the instructor's
+     * click order, and lets their responses arrive in that order too, so the state a toggle ends up showing is the one
+     * on the server.
      */
     private readonly queuedUpdates = new Map<number, Observable<unknown>>();
 
@@ -42,20 +50,20 @@ export class AthenaCourseConfigService {
     }
 
     /**
-     * Update the Athena configuration of a course.
+     * Change the Athena configuration of a course.
      *
      * @param courseId the id of the course
-     * @param config the configuration to store
+     * @param update the features to switch; a feature left out is not changed
      */
-    updateCourseConfig(courseId: number, config: AthenaCourseConfigDTO): Observable<HttpResponse<AthenaCourseConfigDTO>> {
-        const request = this.http.put<AthenaCourseConfigDTO>(`${this.resourceUrl}/${courseId}/athena-configuration`, config, { observe: 'response' });
+    updateCourseConfig(courseId: number, update: AthenaCourseConfigUpdate): Observable<HttpResponse<AthenaCourseConfigDTO>> {
+        const request = this.http.patch<AthenaCourseConfigDTO>(`${this.resourceUrl}/${courseId}/athena-configuration`, update, { observe: 'response' });
         const predecessor = this.queuedUpdates.get(courseId);
 
         // Boxed because the entry this call puts in the map only exists once the pipe below has been built, while the
         // pipe already has to know which entry to remove again.
         const entry: { queued?: Observable<unknown> } = {};
 
-        const update = (predecessor ? predecessor.pipe(concatMap(() => request)) : request).pipe(
+        const pending = (predecessor ? predecessor.pipe(concatMap(() => request)) : request).pipe(
             finalize(() => {
                 // Only the last update of a course empties its queue; a newer one has already replaced this entry.
                 if (this.queuedUpdates.get(courseId) === entry.queued) {
@@ -68,9 +76,9 @@ export class AthenaCourseConfigService {
         );
 
         // A rejected update must not cancel the ones behind it, so the successor waits on a chain that only completes.
-        entry.queued = update.pipe(catchError(() => of(undefined)));
+        entry.queued = pending.pipe(catchError(() => of(undefined)));
         this.queuedUpdates.set(courseId, entry.queued);
 
-        return update;
+        return pending;
     }
 }

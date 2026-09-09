@@ -118,9 +118,9 @@
                     <div class="mb-3">
                         <strong [jhiTranslate]="labelKey + '.label'"></strong>
                         @if (feature.enabled()) {
-                            <p class="text-muted small mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
                         } @else {
-                            <p class="text-muted small mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
                         }
                         <jhi-enabled-toggle
                             class="max-w-fit"

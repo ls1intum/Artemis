@@ -146,9 +146,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         if (!courseId || currentConfig[feature] === enabled) {
             return;
         }
-        const newConfig = cloneWith(currentConfig, { [feature]: enabled });
-        this.athenaConfig.set(newConfig);
-        this.athenaCourseConfigService.updateCourseConfig(courseId, newConfig).subscribe({
+        this.athenaConfig.set(cloneWith(currentConfig, { [feature]: enabled }));
+        // Only the switched feature is sent, so this cannot write back an older value of the other one.
+        this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.athenaConfig.set(response.body);

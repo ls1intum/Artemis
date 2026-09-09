@@ -181,7 +181,8 @@ describe('OnboardingGeneralSettingsComponent', () => {
 
             comp.setAthenaFeatureEnabled('formativeFeedbackEnabled', true);
 
-            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(1, expected);
+            // Only the switched feature is sent, so the grading flag cannot be written back from a stale local value.
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(1, { formativeFeedbackEnabled: true });
             expect(comp.isAthenaFormativeEnabled()).toBe(true);
             expect(comp.isAthenaGradingEnabled()).toBe(false);
         });

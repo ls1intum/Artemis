@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.course.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 
@@ -14,8 +16,9 @@ import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
  * @param gradingFeedbackEnabled   whether Athena suggests feedback to tutors while they assess
  * @param formativeFeedbackEnabled whether students may request preliminary Athena feedback before the due date
  */
-// Deliberately not @JsonInclude(NON_EMPTY): that drops false booleans from the payload, leaving the client unable to
-// tell a disabled feature from an absent field.
+// @JsonInclude (ALWAYS) rather than the usual NON_EMPTY: NON_EMPTY drops a false primitive from the payload, which
+// would leave the client unable to tell a disabled feature from a field the server did not send.
+@JsonInclude
 public record CourseAthenaConfigDTO(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled) {
 
     /**

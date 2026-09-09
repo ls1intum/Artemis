@@ -99,10 +99,11 @@ export class AthenaEnabledComponent implements OnInit {
             return;
         }
 
-        const newConfig = cloneWith(currentConfig, { [feature]: enabled });
-        this.config.set(newConfig);
+        this.config.set(cloneWith(currentConfig, { [feature]: enabled }));
 
-        this.athenaCourseConfigService.updateCourseConfig(courseId, newConfig).subscribe({
+        // Only the switched feature is sent: the other one is whatever this component last read, which may be older
+        // than what is stored if someone else switched it in the meantime.
+        this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.config.set(response.body);
