@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
-import java.util.Objects;
-
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,8 +11,9 @@ public record WorkerCommand(int protocolVersion, Type type, ExecutionIdentity id
     public static final int PROTOCOL_VERSION = 1;
 
     public WorkerCommand {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(identity);
+        if (type == null || identity == null) {
+            throw new IllegalArgumentException("Worker commands require a type and identity");
+        }
         if (protocolVersion != PROTOCOL_VERSION || (type == Type.START && (assignment == null || !identity.equals(assignment.identity())))
                 || (type != Type.START && assignment != null)) {
             throw new IllegalArgumentException("Incompatible or inconsistent worker command");

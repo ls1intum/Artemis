@@ -150,7 +150,7 @@ public class WorkerSupervisor implements AutoCloseable {
             }
             return;
         }
-        GenerationAssignment assignment = java.util.Objects.requireNonNull(command.assignment());
+        GenerationAssignment assignment = command.assignment();
         admitted.values().removeIf(deadline -> !deadline.isAfter(Instant.now()));
         if (!assignment.authoringDeadline().isAfter(Instant.now()) || admitted.containsKey(identity.executionId())) {
             return;

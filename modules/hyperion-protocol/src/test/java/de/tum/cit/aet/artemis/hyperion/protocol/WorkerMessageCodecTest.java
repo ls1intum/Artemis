@@ -13,6 +13,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
+
 class WorkerMessageCodecTest {
 
     private static final String IMAGE = "sha256:" + "a".repeat(64);
@@ -56,6 +59,29 @@ class WorkerMessageCodecTest {
     void rejectsUnsupportedProtocolVersionsBeforeDispatch() {
         String command = codec.encode(new WorkerCommand(1, WorkerCommand.Type.CANCEL, identity(), null));
         assertThatThrownBy(() -> codec.decodeCommand(command.replace("\"protocolVersion\":1", "\"protocolVersion\":2"))).isInstanceOf(RuntimeException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "type", "identity" })
+    void rejectsMissingAndNullCommandAuthority(String field) {
+        var mapper = new JsonMapper();
+        var command = (ObjectNode) mapper.readTree(codec.encode(new WorkerCommand(1, WorkerCommand.Type.CANCEL, identity(), null)));
+        command.putNull(field);
+        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+        command.remove(field);
+        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "executionId", "workerIncarnation" })
+    void rejectsMissingAndNullExecutionAuthority(String field) {
+        var mapper = new JsonMapper();
+        var command = (ObjectNode) mapper.readTree(codec.encode(new WorkerCommand(1, WorkerCommand.Type.CANCEL, identity(), null)));
+        var identity = (ObjectNode) command.get("identity");
+        identity.putNull(field);
+        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+        identity.remove(field);
+        assertThatThrownBy(() -> codec.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
     }
 
     private static ExecutionIdentity identity() {

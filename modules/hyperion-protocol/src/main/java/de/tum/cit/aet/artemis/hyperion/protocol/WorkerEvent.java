@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
@@ -14,9 +13,9 @@ public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation
         String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
 
     public WorkerEvent {
-        Objects.requireNonNull(incarnation);
-        Objects.requireNonNull(timestamp);
-        Objects.requireNonNull(type);
+        if (incarnation == null || timestamp == null || type == null) {
+            throw new IllegalArgumentException("Worker events require an incarnation, timestamp and type");
+        }
         if (protocolVersion != WorkerCommand.PROTOCOL_VERSION || workerId == null || !workerId.matches("[a-zA-Z0-9_-]{1,64}") || sequence <= 0 || imageDigest == null
                 || !imageDigest.matches("sha256:[a-f0-9]{64}") || (message != null && message.length() > 8_192)) {
             throw new IllegalArgumentException("Invalid worker event");
