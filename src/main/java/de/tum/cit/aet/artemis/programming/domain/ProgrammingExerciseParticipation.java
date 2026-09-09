@@ -55,6 +55,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     /**
      * @return the repository uri of the programming exercise participation wrapped in an object
      */
+    @Nullable
     @JsonIgnore
     default LocalVCRepositoryUri getVcsRepositoryUri() {
         var repoUri = getRepositoryUri();

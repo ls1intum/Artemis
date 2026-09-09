@@ -1,3 +1,9 @@
+---
+id: exam-timeline
+title: Timeline of an Artemis Online Exam
+sidebar_label: Timeline of an Artemis Online Exam
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -77,8 +83,6 @@ import exportButton from './assets/buttons/export.png';
 import examStatistics from './assets/exam_statistics.png';
 import examExampleSolutionPublicationDate from './assets/exam_example_solution_publication_date.png';
 import complaintResponse from './assets/complaint_response.png';
-
-# Timeline of an Artemis Online Exam
 
 <Image src={timeline} alt="Timeline of an Artemis Exam" size={ImageSize.large} caption="Timeline of an Artemis Online Exam" />
 
@@ -219,7 +223,7 @@ During the exam creation and configuration, you can create your exam and configu
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
 1. Add students manually by searching via the search bar.
-2. To import multiple students, click on the <img src={importStudents} alt="Import Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can find an example file at `docs/user/exams/instructor/example_import_students.csv`. To begin the import, press the <img src={importStudentsButton} alt="Import Students Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+2. To import multiple students, click on the <img src={importStudents} alt="Import Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can download [an example CSV file](./assets/example_import_students.csv) to start from. To begin the import, press the <img src={importStudentsButton} alt="Import Students Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
 <Image src={importStudentsDialog} alt="Import Students Dialog" size={ImageSize.large} caption="Import Students Dialog" />
 
@@ -296,7 +300,7 @@ During the exam creation and configuration, you can create your exam and configu
 </Callout>
 
 - You can view the results of the assessment of the test run by clicking on <img src={summaryButton} alt="Summary" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published.
-- Here instructors can also use the `complaint` feature and respond to it to conclude the full [exam timeline](#).
+- Here instructors can also use the `complaint` feature and respond to it, which takes the test run through every stage of the exam described on this page.
 
 <Callout variant={CalloutVariant.info}>
   You should delete test runs before the actual exam conduction takes place.
@@ -400,7 +404,7 @@ To open the suspicious behavior dashboard click on the <img src={suspiciousBehav
 
 To get a better understanding of the feature, you can watch the following video:
 
-<TumLiveVideo src="https://tum.live/w/artemisintro/40566" title="Suspicious Behavior Detection" />
+<TumLiveVideo src="40566" title="Suspicious Behavior Detection" />
 
 <Image src={suspiciousBehaviorExamChecklist} alt="Suspicious Behavior Exam Checklist" size={ImageSize.large} caption="Suspicious Behavior Exam Checklist" />
 
@@ -442,7 +446,7 @@ Once the instructor has confirmed at least one case, the <img src={viewCases} al
 
 To get a better understanding of the feature, you can watch the following video:
 
-<TumLiveVideo src="https://tum.live/w/artemisintro/40565" title="Exam Timeline" />
+<TumLiveVideo src="40565" title="Exam Timeline" />
 
 <Image src={examTimelineExample} alt="Exam timeline" size={ImageSize.large} caption="Exam timeline" />
 

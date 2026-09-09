@@ -81,9 +81,18 @@ wrong place — silently, because the anchors stay syntactically valid and the b
 moved. Let the heading say what the section is about and let the sidebar supply the ordering. Numbered *steps*
 belong in an ordered list, not in headings.
 
-**The `{#custom-id}` syntax does not work here.** MDX parses the braces as a JSX expression and the build fails with
-`Could not parse expression with acorn`. When you need a specific anchor — to keep an inbound link alive after a
-rewrite, for instance — choose heading text whose natural slug is the anchor you need.
+**To pin an anchor, put it in an MDX comment.** Sometimes a heading needs an id its own text would not produce —
+keeping an inbound link alive after a rewrite, most often. The documented Docusaurus form, `{#custom-id}`, cannot be
+used here: MDX reads the braces as a JSX expression and the build fails with `Could not parse expression with
+acorn`. Wrapping it in a comment works, and is what this repository already does:
+
+```markdown
+### Naming Conventions for GitHub Pull Requests {/* #pr-naming-conventions */}
+```
+
+That renders as `<h3 id="pr-naming-conventions">Naming Conventions for GitHub Pull Requests</h3>`. Use it to
+preserve an existing anchor, not to invent a shorter one — a heading whose id has nothing to do with its text is
+hard to find again.
 
 Two further rules:
 
@@ -161,9 +170,19 @@ import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 <TumLiveVideo src="67223" title="Quiz Training Mode Tutorial" height={400} />
 ```
 
-The component expands a bare id to the presentation stream. A full URL is passed through unchanged, so it plays the
-default stream instead — which means two embeds of the same recording behave differently depending on which form the
-author happened to use. Use the bare id.
+The component turns a bare id into `https://tum.live/w/artemisintro/<id>/PRES` and passes a full URL through
+unchanged. Prefer the bare id: it is the short form, it is what the component's own documentation shows, and it does
+not pin the page to a hostname.
+
+The suffix names a view — `PRES` for the presentation, `CAM` for the camera, `COMB` for the two combined. It makes
+no difference to any recording the Artemis documentation embeds, because each of those is published with a combined
+view only and TUM-Live serves what exists. Do not read that as a reason to trust a URL you have not opened: the
+site answers HTTP 200 for any recording id and any suffix, invented ones included, so a status code says nothing
+about whether either is real.
+
+To find out how old a screencast is, open its TUM-Live page — the recording date and time sit under the title. The
+manifest the page loads carries the same date in its filename, `artemisintro_2026_04_13_10_00COMB.mp4`, which is
+the more convenient form when checking many recordings at once.
 
 **A stale screencast is worse than none.** A reader who follows a video through an interface that no longer looks
 like that loses the time twice: once watching, once working out which parts still apply. When a recording no longer

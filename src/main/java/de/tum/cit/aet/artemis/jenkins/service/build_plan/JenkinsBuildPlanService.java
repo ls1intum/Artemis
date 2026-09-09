@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -167,7 +168,7 @@ public class JenkinsBuildPlanService {
      * @param newRepoUri      the repository uri that will replace the old url
      * @param existingRepoUri the old repository uri that will be replaced
      */
-    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUri, String existingRepoUri) {
+    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, @NonNull String newRepoUri, String existingRepoUri) {
         newRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUri);
         existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
