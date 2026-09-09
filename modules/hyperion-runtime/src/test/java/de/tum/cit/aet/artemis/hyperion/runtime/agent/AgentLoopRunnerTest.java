@@ -11,8 +11,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
@@ -24,6 +28,29 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.tool.annotation.Tool;
 
 class AgentLoopRunnerTest {
+
+    @ParameterizedTest
+    @CsvSource({ "41, 1", "40, 4" })
+    void validToolsRemainAvailableThroughoutTheConfiguredTurnBudget(int toolTurns, int callsPerTurn) {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > toolTurns) {
+                return text("finished");
+            }
+            var toolCalls = IntStream.range(0, callsPerTurn).mapToObj(index -> new AssistantMessage.ToolCall(current + "-" + index, "function", "write", "{}")).toList();
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(toolCalls).build())));
+        });
+        var settings = new HyperionGenerationSettings("smoke", "Smoke", 60, Duration.ofMinutes(90), 3_000_000, true, "CONTINUOUS", 200_000, null, false, false);
+        RecordingTools tools = new RecordingTools();
+
+        var result = runner(model).forSettings(settings).run("system", "brief", tools, settings.maxTurns(), () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.turns()).isEqualTo(toolTurns + 1);
+        assertThat(tools.actions).hasSize(toolTurns * callsPerTurn).containsOnly("write");
+    }
 
     @Test
     void naturalCompletionPreservesConversationAndAccountsForCall() {
