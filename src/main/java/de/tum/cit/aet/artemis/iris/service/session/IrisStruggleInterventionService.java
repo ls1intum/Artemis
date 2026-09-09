@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -13,8 +12,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -24,18 +21,15 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisEpisodeWentTerminalException;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
@@ -65,36 +59,29 @@ public class IrisStruggleInterventionService {
 
     private final IrisChatSessionService irisChatSessionService;
 
-    private final IrisMessageService irisMessageService;
-
     private final IrisChatWebsocketService irisChatWebsocketService;
 
-    private final IrisMessageRepository irisMessageRepository;
-
     private final IrisSessionRepository irisSessionRepository;
+
+    private final IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
     private final IrisProactiveEpisodeService irisProactiveEpisodeService;
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final TransactionTemplate transactionTemplate;
-
     private final IrisProactiveProperties proactiveProperties;
 
-    public IrisStruggleInterventionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisMessageService irisMessageService,
-            IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository, PlatformTransactionManager transactionManager,
-            IrisSessionRepository irisSessionRepository, IrisProactiveEpisodeService irisProactiveEpisodeService, LLMTokenUsageService llmTokenUsageService,
-            IrisProactiveProperties proactiveProperties) {
+    public IrisStruggleInterventionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisChatWebsocketService irisChatWebsocketService,
+            IrisSessionRepository irisSessionRepository, IrisProactiveEpisodeRepository irisProactiveEpisodeRepository, IrisProactiveEpisodeService irisProactiveEpisodeService,
+            LLMTokenUsageService llmTokenUsageService, IrisProactiveProperties proactiveProperties) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
-        this.irisMessageService = irisMessageService;
         this.irisChatWebsocketService = irisChatWebsocketService;
-        this.irisMessageRepository = irisMessageRepository;
         this.irisSessionRepository = irisSessionRepository;
+        this.irisProactiveEpisodeRepository = irisProactiveEpisodeRepository;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.proactiveProperties = proactiveProperties;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -342,65 +329,6 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * The transactional core of {@link #revealAmbient}: take the offered decision under a write lock, persist the
-     * message carrying the server-authored text, and mark the decision consumed. All three commit together, so a
-     * failure anywhere leaves neither a message nor a consumed decision behind.
-     *
-     * <p>
-     * The pessimistic lock is what makes the unconsumed-check and the claim indivisible. Without it two concurrent
-     * reveals of the same offer could both read it as unconsumed and both insert a message; the guarded update alone
-     * would then leave the loser's row orphaned.
-     *
-     * @param user       the student performing the reveal
-     * @param exerciseId the programming exercise id (session scope)
-     * @param episodeId  the client-allocated episode UUID to stamp on the row
-     * @return the persisted message as a DTO
-     */
-    private IrisMessageResponseDTO revealAmbientInTransaction(User user, long exerciseId, String episodeId, IrisChatSession session) {
-        // One lock, one row. The episode's write lock is both the terminal gate and the offer's mutex: before the
-        // registry the reveal had no terminal check at all, and while the offer lived in its own table its lock said
-        // nothing about the episode, so the two had to be taken in a fixed order. Now they are the same lock.
-        var episode = irisProactiveEpisodeService.lockOfferForRevealInCurrentTransaction(user.getId(), exerciseId, episodeId)
-                .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
-        if (episode.getConsumedAt() != null) {
-            // Already revealed. Return that reveal's row so a replay is idempotent rather than a second insert;
-            // if the row is gone (superseded and deleted), the offer is spent and there is nothing to surface.
-            //
-            // FIRST, ahead of the terminal and the no-offer refusals below, because a revealed hint normally goes on
-            // to acquire a terminal outcome: the student reads it and dismisses it. Checking the outcome first turns
-            // every replay after that dismiss into a 409 for a message the student is still looking at, which is
-            // exactly the idempotency this branch exists to provide. A terminal outcome ends the episode; it does not
-            // un-deliver a row already written.
-            return Optional.ofNullable(episode.getConsumedMessageId()).flatMap(irisMessageRepository::findById).map(IrisMessageResponseDTO::of)
-                    .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
-        }
-        if (episode.getOutcome() != null) {
-            throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
-        }
-        if (episode.getHintText() == null) {
-            // Registered, but nothing was ever offered for it: an active decision, a silent run, or a trigger whose
-            // callback never arrived. There is no server-authored text to persist and the caller's copy must never be
-            // trusted, so this is the same refusal as an unknown episode.
-            throw new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision");
-        }
-
-        // Append through the guarded helper, which re-checks the session's exercise binding under the session write
-        // lock. The ambient-decision lock held here says nothing about the session: a run for a DIFFERENT exercise can
-        // switch this same session between resolveProactiveSession above and the write, and the reveal would then
-        // persist the hint into that other exercise's history.
-        var saved = saveProactiveMessage(session, exerciseId, episode.getHintText(), episodeId);
-        if (saved == null) {
-            // Fail the whole reveal rather than consuming the offer: rolling back leaves the decision unconsumed, so
-            // the student can reveal it again once the session is back on this exercise.
-            throw new ConflictException("Cannot persist reveal: the chat session moved to another exercise", "IrisMessage", "revealSessionConflict");
-        }
-
-        // The locked entity is managed, so consuming it is part of this transaction's flush.
-        irisProactiveEpisodeService.consumeOfferInCurrentTransaction(episode, saved.getId());
-        return IrisMessageResponseDTO.of(saved);
-    }
-
-    /**
      * Record what the struggle pipeline spent on this callback, so the run shows up in admin token accounting like
      * every other Iris pipeline. Without it the proactive path was the one pipeline whose LLM cost was invisible:
      * the callback carried {@code tokens} and nothing read them.
@@ -491,9 +419,9 @@ public class IrisStruggleInterventionService {
             throw new ConflictException("Cannot persist reveal: the exercise-chat session could not be resolved", "IrisMessage", "revealSessionConflict");
         }
         // The insert and the claim have to commit together, otherwise a crash between them persists a message that no
-        // decision records as consumed, and the offer could be revealed a second time. TransactionTemplate rather than
-        // @Transactional on this method: a same-class helper would be self-invoked and bypass the proxy.
-        return transactionTemplate.execute(status -> revealAmbientInTransaction(user, exerciseId, episodeId, session));
+        // decision records as consumed, and the offer could be revealed a second time. That unit is a repository
+        // operation; the refusals it raises are thrown from inside it, so each one takes the append back with it.
+        return IrisMessageResponseDTO.of(irisProactiveEpisodeRepository.revealAmbient(user.getId(), exerciseId, episodeId, session.getId()));
     }
 
     /**
@@ -524,25 +452,9 @@ public class IrisStruggleInterventionService {
         // The delete itself stays one guarded statement, but it cannot stand alone: it does not go through the
         // collection that owns iris_message_order, so removing anything but the last message leaves a hole in the
         // list indices and the next load of the session materialises a null element on it. Reading the index,
-        // deleting and closing the gap therefore happen in ONE transaction, under the session's write lock, which
-        // is the same lock every append takes (see IrisMessageService#saveMessage) so the two cannot interleave.
-        transactionTemplate.executeWithoutResult(status -> {
-            var sessionId = irisMessageRepository.findOwnedSessionId(messageId, user.getId());
-            if (sessionId.isEmpty()) {
-                // Missing row, or another user's: nothing to delete and nothing to lock. Same silent noop as before.
-                return;
-            }
-            irisSessionRepository.findByIdWithWriteLockElseThrow(sessionId.get());
-            // Read the index BEFORE the row is gone; after the delete there is nothing left to read it from.
-            var removedIndex = irisMessageRepository.findListIndex(messageId);
-            int deleted = irisMessageRepository.deleteSupersededProactiveMessage(messageId, user.getId());
-            if (deleted == 0) {
-                // The row failed one of the delete's own guards (wrong origin, or an outcome landed on it): it is
-                // still there, its index is still valid, and compacting would corrupt the list.
-                return;
-            }
-            removedIndex.ifPresent(index -> irisMessageRepository.compactMessageOrderAfter(sessionId.get(), index));
-        });
+        // deleting and closing the gap therefore happen in ONE transaction, under the session's write lock, which is
+        // the same lock every append takes.
+        irisSessionRepository.deleteSupersededProactiveMessageAndCompact(messageId, user.getId());
     }
 
     /**
@@ -568,49 +480,6 @@ public class IrisStruggleInterventionService {
             return null;
         }
         return session;
-    }
-
-    /**
-     * Build and persist a single origin-tagged proactive message into the given session. Does NOT push over the
-     * socket. Callers handle retry and event emission.
-     *
-     * @param session   the resolved exercise-chat session
-     * @param result    the proactive message text returned by the gate
-     * @param episodeId the client-allocated episode UUID; set on the message when non-null (written by the active
-     *                      decision, used by the reveal and outcome paths to locate the canonical row)
-     * @return the saved IrisMessage (id assigned)
-     */
-    private @Nullable IrisMessage saveProactiveMessage(IrisChatSession session, long exerciseId, String result, @Nullable String episodeId) {
-        return transactionTemplate.execute(status -> {
-            // Re-check the exercise binding under the session write lock, immediately before writing. Single-flight is
-            // keyed by (user, exercise), so this student can have a second run in flight for a DIFFERENT exercise, and
-            // both resolve the SAME session: a session is born a COURSE_CHAT and only ever points at an exercise
-            // through a context switch. Run B can therefore switch the session to its own exercise between the moment
-            // resolveProactiveSession validated it for A and the moment A appends. Without this check A's hint would
-            // be persisted into B's exercise history and replayed to Pyris under the wrong exercise.
-            if (!(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId()) instanceof IrisChatSession locked)) {
-                return null;
-            }
-            irisSessionRepository.flush();
-            irisSessionRepository.refresh(locked);
-            if (locked.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(locked.getEntityId(), exerciseId)) {
-                log.info("Dropping proactive message: session {} moved to mode={} entity={} before the append for exercise {}", locked.getId(), locked.getMode(),
-                        locked.getEntityId(), exerciseId);
-                return null;
-            }
-
-            var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(result));
-            message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-            // Stamp the exercise the message was decided for, not the one the session happens to point at later: the
-            // session's entityId moves with every context switch, so it cannot tell an episode's rows apart once the
-            // student navigates away. Episode lookups filter on this column.
-            message.setProactiveExerciseId(exerciseId);
-            if (episodeId != null) {
-                message.setProactiveEpisodeId(episodeId);
-            }
-            return irisMessageService.saveMessage(message, locked, IrisMessageSender.LLM);
-        });
     }
 
     /**
@@ -667,36 +536,17 @@ public class IrisStruggleInterventionService {
         int maxAttempts = proactiveProperties.getPersistMaxAttempts();
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             try {
-                var appended = transactionTemplate.execute(status -> {
-                    // The authoritative terminal check. The cheap one the callers run first is only a fast path: it
-                    // reads outside any lock, so an outcome can commit between it and this write. Here the episode's
-                    // registry row is write-locked and stays locked until this transaction commits, so no outcome can
-                    // be established between the check and the append.
-                    var locked = episodeId == null ? null : irisProactiveEpisodeService.lockEpisodeAndReadTerminalInCurrentTransaction(episodeId, user.getId(), exerciseId);
-                    if (locked != null && locked.terminal()) {
-                        return ProactiveAppend.alreadyTerminal();
-                    }
-                    var saved = saveProactiveMessage(session, exerciseId, result, episodeId);
-                    if (saved != null && locked != null && outcomeOnSuccess != null) {
-                        // Same transaction as the append, still under the same lock. Splitting the two is what let a
-                        // concurrent dismiss land between a committed close row and its own outcome.
-                        var write = irisProactiveEpisodeService.recordOutcomeUnderLockInCurrentTransaction(locked.episode(), episodeId, user.getId(), exerciseId, outcomeOnSuccess);
-                        if (write != IrisProactiveEpisodeService.OutcomeWrite.APPLIED) {
-                            // An unregistered episode has no registry row to lock. Its fallback check is a locking
-                            // read, but one that can only lock rows that ALREADY carry an outcome, so a dismiss
-                            // setting one on a still-null row can still commit between it and this write. The guarded
-                            // UPDATE inside the write is what actually detects that, and the only honest answer once
-                            // it does is to take the append back: a closing row committed under a foreign terminal
-                            // outcome would carry none of its own, and the caller would broadcast resolved=true for
-                            // an episode the student had already ended differently. Rolling back drops the row that
-                            // was inserted a few statements ago and leaves the episode exactly as the winner left it.
-                            status.setRollbackOnly();
-                            return ProactiveAppend.alreadyTerminal();
-                        }
-                    }
-                    return ProactiveAppend.of(saved);
-                });
-                return appended == null ? ProactiveAppend.of(null) : appended;
+                // One repository transaction: it takes the episode's registry lock, re-checks the terminal state
+                // under it, appends, and records the outcome without ever letting go of that lock. The lock is what
+                // the cheap pre-check in the callers cannot give: that one reads outside any lock, so an outcome can
+                // commit between it and this write.
+                var appended = irisProactiveEpisodeRepository.appendProactiveMessageWithOutcome(session.getId(), user.getId(), exerciseId, result, episodeId, outcomeOnSuccess);
+                return appended.terminal() ? ProactiveAppend.alreadyTerminal() : ProactiveAppend.of(appended.message());
+            }
+            catch (IrisEpisodeWentTerminalException terminal) {
+                // The append was rolled back because a foreign terminal outcome won under the lock. Not a persistence
+                // failure and not retryable: the episode has ended, and it did not end this call's way.
+                return ProactiveAppend.alreadyTerminal();
             }
             catch (TransientDataAccessException ex) {
                 // The retry wraps the WHOLE transaction, never an operation inside one: a failed statement marks its

@@ -21,8 +21,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,7 +32,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -43,8 +40,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisContextSwitchMarker;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -118,8 +113,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
-    private final TransactionTemplate transactionTemplate;
-
     /**
      * Instance-wide kill switch for Artemis' own build-triggered proactive events. Deliberately kept alongside the
      * per-course setting: this one is checked before any result, course or DB access, so it can stop the whole
@@ -134,7 +127,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
             IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService,
-            PlatformTransactionManager transactionManager, IrisProactiveProperties proactiveProperties) {
+            IrisProactiveProperties proactiveProperties) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
@@ -149,7 +142,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
         // Snapshot at construction, as before: the guard at the trigger path reads a field, not a live bean, so a
         // rebind cannot flip the switch under a run that already passed it.
         this.globalLegacyBuildTriggersEnabled = proactiveProperties.isLegacyBuildTriggers();
@@ -459,43 +451,12 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         // Depends only on the target and the user, never on the session's current state, so it stays outside the lock.
         var resolved = resolveAndAuthorize(newMode, newEntityId, user);
 
-        // Append the marker and update the context fields under ONE session write lock. saveMessage takes that lock
-        // itself, but if it were the only holder it would release it on its own commit, and the save below would then
-        // cascade-merge the session - whose messages list is the one saveMessage handed back - after a concurrent
-        // append may already have committed. orphanRemoval would delete that new row. Taking the lock here keeps it
-        // held until this transaction commits, so nothing can interleave between the two writes.
-        IrisMessage savedMarker = transactionTemplate.execute(status -> {
-            if (!(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId()) instanceof IrisChatSession locked)) {
-                throw new IllegalStateException("Context can only be switched on a chat session, but session " + session.getId() + " is not one");
-            }
-            // Taking the lock does not refresh an entity the persistence context already manages, and a caller can
-            // hand us one it loaded earlier. Without the refresh the state we decide on could be the one that was
-            // read before the lock existed. Flush first so the refresh cannot discard changes a caller made but has
-            // not written yet. This holds whether or not the caller runs it inside a transaction, because either way
-            // the entity can reach here pre-loaded.
-            irisSessionRepository.flush();
-            irisSessionRepository.refresh(locked);
-            // Everything describing the transition comes from the LOCKED session, not from the caller's copy. A
-            // concurrent switch that took the lock first has already moved the session on, so a decision made before
-            // the lock would either record a previous mode that never was, or append a second marker for a switch
-            // that already happened.
-            if (locked.getMode() == newMode && locked.getEntityId() == newEntityId) {
-                return null;   // the other switch picked the same target; there is no transition left to record
-            }
-            if (resolved.course().getId() != locked.getCourseId()) {
-                throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
-            }
-
-            var marker = IrisContextSwitchMarker.forSwitch(locked.getMode(), newMode, newEntityId, resolved.entityName());
-            IrisMessage markerMessage = new IrisMessage();
-            markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
-            IrisMessage saved = irisMessageService.saveMessage(markerMessage, locked, IrisMessageSender.CTXSWAP);
-
-            locked.setMode(newMode);
-            locked.setEntityId(newEntityId);
-            irisChatSessionRepository.save(locked);
-            return saved;
-        });
+        // Append the marker and update the context fields under ONE session write lock, which is a repository
+        // operation: the append takes that lock itself, but if it were the only holder it would release it on its own
+        // commit, and the context update would then cascade-merge a message list a concurrent append may already have
+        // added to. orphanRemoval would delete that new row. The marker is built there too, because it records the
+        // mode the session is moving away from and that is only known once the session is locked and refreshed.
+        IrisMessage savedMarker = irisSessionRepository.switchContextAndAppendMarker(session.getId(), newMode, newEntityId, resolved.course().getId(), resolved.entityName());
 
         if (savedMarker == null) {
             // Lost the race to an identical switch. The session already carries the target context, so mirror it and

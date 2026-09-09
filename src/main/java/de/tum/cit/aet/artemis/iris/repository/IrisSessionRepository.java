@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 @Lazy
 @Repository
 @Conditional(IrisEnabled.class)
-public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession, Long> {
+public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession, Long>, IrisSessionWriteRepository {
 
     @Query("""
             SELECT s

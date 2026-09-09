@@ -30,7 +30,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.CannotAcquireLockException;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
@@ -105,9 +104,6 @@ class IrisStruggleInterventionServiceTriggerTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Mock
-    private PlatformTransactionManager transactionManager;
-
-    @Mock
     private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
     @Mock
@@ -142,7 +138,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         user.setLogin("student1");
         // The episode service is the real one on the same mocked repositories: prepareTrigger registers the episode
         // through it, and these tests assert on that registration.
-        var episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
+        var episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository);
         service = new IrisStruggleTriggerService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisChatWebsocketService, userAiPreferenceService, episodeService,
                 irisRateLimitService);
@@ -260,7 +256,7 @@ class IrisStruggleInterventionServiceTriggerTest {
     void episodeRegistrationFails_refundsTheCooldownAndReleasesTheSlot() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
-        when(transactionManager.getTransaction(any())).thenThrow(new IllegalStateException("db down"));
+        doThrow(new IllegalStateException("db down")).when(irisProactiveEpisodeRepository).registerOrTouchInNewTransaction(anyLong(), anyLong(), any());
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null));
@@ -286,7 +282,7 @@ class IrisStruggleInterventionServiceTriggerTest {
     void episodeRegistrationFails_releasesTheSharedSlotBeforeHandingBackTheCharge() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
-        when(transactionManager.getTransaction(any())).thenThrow(new IllegalStateException("db down"));
+        doThrow(new IllegalStateException("db down")).when(irisProactiveEpisodeRepository).registerOrTouchInNewTransaction(anyLong(), anyLong(), any());
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null));
@@ -302,7 +298,7 @@ class IrisStruggleInterventionServiceTriggerTest {
     void episodeRegistrationFails_stillReleasesTheSlotWhenTheRefundThrows() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
-        when(transactionManager.getTransaction(any())).thenThrow(new IllegalStateException("db down"));
+        doThrow(new IllegalStateException("db down")).when(irisProactiveEpisodeRepository).registerOrTouchInNewTransaction(anyLong(), anyLong(), any());
         doThrow(new IllegalStateException("map down")).when(pyrisJobService).refundStruggleCooldown(any(), anyLong(), anyLong(), any());
 
         // The registration failure is the real error and must survive; a failing refund must not replace it, nor

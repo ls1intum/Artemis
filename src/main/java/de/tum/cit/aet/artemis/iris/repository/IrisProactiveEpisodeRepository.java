@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 @Conditional(IrisEnabled.class)
 @Lazy
 @Repository
-public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<IrisProactiveEpisode, Long> {
+public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<IrisProactiveEpisode, Long>, IrisProactiveEpisodeWriteRepository {
 
     /**
      * The episode, without locking it. For read-only checks that do not go on to write anything.

@@ -110,6 +110,25 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         setProactiveStruggleFor(course, true);
     }
 
+    @Test
+    void registerEpisode_commitsEvenWhenTheCallersTransactionRollsBack() {
+        // The registration is annotated REQUIRES_NEW on the repository fragment interface, and everything the
+        // duplicate handling does depends on that annotation actually taking effect: the catch for a unique-key
+        // violation sits outside the registration's transaction, and would only ever see an
+        // UnexpectedRollbackException at the caller's commit if the two shared one. Spring Data's own transaction
+        // interceptor is what reads that annotation off a custom fragment, so this asserts the wiring rather than
+        // trusting it: register from inside a transaction that then rolls back, and the row must still be there.
+        long userId = userId();
+        long exerciseId = exercise.getId();
+        var template = new TransactionTemplate(transactionManager);
+        template.executeWithoutResult(status -> {
+            irisProactiveEpisodeRepository.registerOrTouchInNewTransaction(userId, exerciseId, "ep-requires-new");
+            status.setRollbackOnly();
+        });
+
+        assertThat(irisProactiveEpisodeRepository.find(userId, exerciseId, "ep-requires-new")).isPresent();
+    }
+
     private long userId() {
         return userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
     }

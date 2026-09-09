@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -21,6 +20,7 @@ import java.util.function.Function;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -41,11 +40,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -82,9 +81,6 @@ class IrisStruggleInterventionPrimitivesTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Mock
-    private PlatformTransactionManager transactionManager;
-
-    @Mock
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
@@ -110,11 +106,14 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         // The episode service is the real one, built on the same mocked repositories, so the registry logic these
         // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
-        episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
+        // The write fragments are what the services now delegate to, so the real implementations are wired onto the
+        // mocked repositories. Without this the mocks would answer null and none of the logic below would run.
+        IrisWriteFragments.attachTo(irisSessionRepository, irisMessageRepository, irisProactiveEpisodeRepository);
+        episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository);
         // The confidence gate reads this bean, so the default 0.6 the tests assume comes from the bean's own default.
         var properties = new IrisProactiveProperties();
-        service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService, properties);
+        service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisChatWebsocketService, irisSessionRepository, irisProactiveEpisodeRepository,
+                episodeService, llmTokenUsageService, properties);
     }
 
     // ---- revealAmbient ----
@@ -158,23 +157,44 @@ class IrisStruggleInterventionPrimitivesTest {
         return episode;
     }
 
+    /** The proactive message the append fragment built and cascaded, or {@code null} when nothing was appended. */
+    private IrisMessage appendedMessage;
+
+    /**
+     * Let the real append fragment run against this session. A proactive append no longer goes through
+     * {@code IrisMessageService}: the session repository's write fragment locks the session, builds the message and
+     * cascades it. What a test stubs is therefore the lock and the merge, and what it inspects is the message the
+     * fragment built.
+     *
+     * @param session    the session the append targets
+     * @param assignedId the id the merge assigns to the cascaded message, or {@code null} to leave it unset
+     */
+    private void stubProactiveAppend(IrisChatSession session, @Nullable Long assignedId) {
+        when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
+        when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenAnswer(call -> {
+            IrisSession saved = call.getArgument(0);
+            appendedMessage = saved.getMessages().getLast();
+            if (assignedId != null) {
+                appendedMessage.setId(assignedId);
+            }
+            return saved;
+        });
+    }
+
     @Test
     void revealAmbient_createsRowWithServerSentAt_andReturnsDtoWithoutSendMessage() {
         offeredEpisode("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(101L);
-            return m;
-        });
+        stubProactiveAppend(session, 101L);
 
         var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 
         assertThat(dto.id()).isEqualTo(101L);
         assertThat(dto.proactiveEpisodeId()).isEqualTo("ep-1");
-        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-1".equals(m.getProactiveEpisodeId())), eq(session),
-                eq(IrisMessageSender.LLM));
+        assertThat(appendedMessage).isNotNull();
+        assertThat(appendedMessage.getOrigin()).isEqualTo(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        assertThat(appendedMessage.getProactiveEpisodeId()).isEqualTo("ep-1");
         // CRITICAL: reveal must NOT broadcast over the chat websocket (client owns the optimistic bubble)
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
     }
@@ -192,7 +212,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
         assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1")).isInstanceOf(ConflictException.class);
 
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         assertThat(episode.getConsumedAt()).as("a failed reveal must leave the offer revealable").isNull();
         assertThat(episode.getConsumedMessageId()).isNull();
     }
@@ -217,7 +237,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
         assertThat(dto.id()).isEqualTo(101L);
         // No second row: the consumed offer short-circuits before any insert.
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
     }
 
     @Test
@@ -234,11 +254,7 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-1")).thenReturn(Optional.of(unconsumed), Optional.of(consumed));
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(303L);
-            return m;
-        });
+        stubProactiveAppend(session, 303L);
         var firstRow = new IrisMessage();
         firstRow.setId(303L);
         firstRow.setProactiveEpisodeId("ep-1");
@@ -253,7 +269,7 @@ class IrisStruggleInterventionPrimitivesTest {
         assertThat(unconsumed.getConsumedMessageId()).isEqualTo(303L);
         verify(irisProactiveEpisodeRepository).save(unconsumed);
         // Exactly one insert across both calls.
-        verify(irisMessageService).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNotNull();
     }
 
     @Test
@@ -261,7 +277,7 @@ class IrisStruggleInterventionPrimitivesTest {
         // The episode is what addresses the offer; without it there is nothing a reveal could resolve.
         assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "  ")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, null)).isInstanceOf(BadRequestException.class);
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
     }
 
     // ---- recordTokenUsage ----

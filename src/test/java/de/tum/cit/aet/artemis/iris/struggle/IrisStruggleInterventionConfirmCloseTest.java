@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +23,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -30,11 +31,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -87,9 +88,6 @@ class IrisStruggleInterventionConfirmCloseTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Mock
-    private PlatformTransactionManager transactionManager;
-
-    @Mock
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
@@ -117,13 +115,40 @@ class IrisStruggleInterventionConfirmCloseTest {
         user.setLogin("student1");
         // The episode service is the real one, built on the same mocked repositories, so the registry logic these
         // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
-        episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository, transactionManager);
-        service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, irisSessionRepository, episodeService, llmTokenUsageService, new IrisProactiveProperties());
+        // The write fragments are what the services now delegate to, so the real implementations are wired onto the
+        // mocked repositories. Without this the mocks would answer null and none of the logic below would run.
+        IrisWriteFragments.attachTo(irisSessionRepository, irisMessageRepository, irisProactiveEpisodeRepository);
+        episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository);
+        service = new IrisStruggleInterventionService(userRepository, irisChatSessionService, irisChatWebsocketService, irisSessionRepository, irisProactiveEpisodeRepository,
+                episodeService, llmTokenUsageService, new IrisProactiveProperties());
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 
     // --- confirm_close progress resolved=true ---
+
+    /** The proactive message the append fragment built and cascaded, or {@code null} when nothing was appended. */
+    private IrisMessage appendedMessage;
+
+    /**
+     * Let the real append fragment run against this session. A proactive append no longer goes through
+     * {@code IrisMessageService}: the session repository's write fragment locks the session, builds the message and
+     * cascades it. What a test stubs is therefore the lock and the merge, and what it inspects is the message the
+     * fragment built.
+     *
+     * @param session    the session the append targets
+     * @param assignedId the id the merge assigns to the cascaded message, or {@code null} to leave it unset
+     */
+    private void stubProactiveAppend(IrisChatSession session, @Nullable Long assignedId) {
+        when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
+        when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenAnswer(call -> {
+            IrisSession saved = call.getArgument(0);
+            appendedMessage = saved.getMessages().getLast();
+            if (assignedId != null) {
+                appendedMessage.setId(assignedId);
+            }
+            return saved;
+        });
+    }
 
     @Test
     void confirmClose_progress_resolved_true_persistsClosingAndWritesRecovered() {
@@ -132,17 +157,14 @@ class IrisStruggleInterventionConfirmCloseTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(201L));
         when(irisMessageRepository.setProactiveOutcomeIfNull(201L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(201L);
-            return m;
-        });
+        stubProactiveAppend(session, 201L);
         var update = closeUpdate(true, "You nailed it!", "Challenge cleared", null);
 
         service.handleConfirmClose(progressJob, update);
 
-        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-cc".equals(m.getProactiveEpisodeId())), eq(session),
-                eq(IrisMessageSender.LLM));
+        assertThat(appendedMessage).isNotNull();
+        assertThat(appendedMessage.getOrigin()).isEqualTo(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        assertThat(appendedMessage.getProactiveEpisodeId()).isEqualTo("ep-cc");
         verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         verify(irisMessageRepository).setProactiveOutcomeIfNull(201L, IrisProactiveOutcome.RECOVERED);
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
@@ -152,8 +174,8 @@ class IrisStruggleInterventionConfirmCloseTest {
         // is inserted before its outcome is written, so a resolved=true close can never gate away its own row. What
         // moved is the broadcast, which now trails both. Announcing the row while its outcome was still unwritten was
         // exactly the window in which a concurrent dismiss could slip between the two.
-        InOrder order = inOrder(irisMessageService, irisMessageRepository, irisChatWebsocketService);
-        order.verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
+        InOrder order = inOrder(irisSessionRepository, irisMessageRepository, irisChatWebsocketService);
+        order.verify(irisSessionRepository).saveAndFlush(any(IrisSession.class));
         order.verify(irisMessageRepository).setProactiveOutcomeIfNull(anyLong(), eq(IrisProactiveOutcome.RECOVERED));
         order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
     }
@@ -169,17 +191,13 @@ class IrisStruggleInterventionConfirmCloseTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(204L));
         when(irisMessageRepository.setProactiveOutcomeIfNull(204L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(204L);
-            return m;
-        });
+        stubProactiveAppend(session, 204L);
 
         service.handleConfirmClose(progressJob, closeUpdate(true, "Closing", "Done", null));
 
-        InOrder order = inOrder(irisMessageRepository, irisMessageService);
+        InOrder order = inOrder(irisMessageRepository, irisSessionRepository);
         order.verify(irisMessageRepository).findEpisodeOutcomesForUpdate("ep-cc", 3L, 42L);
-        order.verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
+        order.verify(irisSessionRepository).saveAndFlush(any(IrisSession.class));
     }
 
     @Test
@@ -189,11 +207,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(202L));
         when(irisMessageRepository.setProactiveOutcomeIfNull(202L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(202L);
-            return m;
-        });
+        stubProactiveAppend(session, 202L);
         // closingSentence and episodeLabel are null/blank: defaults must apply
         var update = closeUpdate(true, null, null, null);
 
@@ -211,7 +225,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         service.handleConfirmClose(progressJob, update);
 
         // No persist, no outcome write
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         // Quiet event: resolved=false, no messageId
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
@@ -228,11 +242,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(203L));
         when(irisMessageRepository.setProactiveOutcomeIfNull(203L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(203L);
-            return m;
-        });
+        stubProactiveAppend(session, 203L);
 
         service.handleConfirmClose(progressJob, closeUpdateWithRationale(true, "tests pass and the student moved on"));
         service.handleConfirmClose(parkedJob, closeUpdateWithRationale(false, "still stuck on the same failure"));
@@ -250,7 +260,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         service.handleConfirmClose(parkedJob, update);
 
         // Nothing persisted, no outcome
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         // Terminal gate NOT consulted (no findEpisodeOutcomes call for parked_progress)
         verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
@@ -267,7 +277,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         service.handleConfirmClose(parkedJob, update);
 
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
@@ -282,7 +292,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         service.handleConfirmClose(nullReasonJob, update);
 
         // Nothing persisted, no outcome (fail-closed: identical to parked_progress)
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
@@ -298,7 +308,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         service.handleConfirmClose(progressJob, update);
 
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
     }
@@ -320,7 +330,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         service.handleConfirmClose(progressJob, closeUpdate(true, "Closing", "Done", null));
 
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(appendedMessage).isNull();
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
     }
@@ -336,7 +346,8 @@ class IrisStruggleInterventionConfirmCloseTest {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
+        when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
+        when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenThrow(new DataIntegrityViolationException("persist failed"));
         var update = closeUpdate(true, "Closing", "Done", null);
 
         service.handleConfirmClose(progressJob, update);   // must not throw
