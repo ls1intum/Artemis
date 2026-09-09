@@ -229,7 +229,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param originalTextBlocks The original text blocks to be copied
      * @param newSubmission      The submission which has newly created text blocks
      */
-    private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
+    private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, @NonNull TextSubmission newSubmission) {
         Result newResult = newSubmission.getLatestResult();
         Set<Feedback> newFeedbackList = newResult.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();

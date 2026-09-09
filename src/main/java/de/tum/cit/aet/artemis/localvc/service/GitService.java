@@ -160,7 +160,7 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
+    public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
         String repoFolderName = repoUri.folderNameForRepositoryUri();
 

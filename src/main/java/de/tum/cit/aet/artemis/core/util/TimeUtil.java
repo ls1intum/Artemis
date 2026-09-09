@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.util;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -102,7 +101,7 @@ public class TimeUtil {
      * @param newClock the new Clock instance to set
      */
     public static void setClock(@NonNull Clock newClock) {
-        threadLocalClock.set(Objects.requireNonNull(newClock, "Clock must not be null"));
+        threadLocalClock.set(newClock);
     }
 
     /**
