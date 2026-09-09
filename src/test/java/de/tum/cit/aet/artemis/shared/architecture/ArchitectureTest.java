@@ -111,10 +111,10 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
+import de.tum.cit.aet.artemis.core.config.JGitConfig;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
-import de.tum.cit.aet.artemis.core.util.junit_extensions.JGitSystemReaderInitializer;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -181,11 +181,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJGitSystemReaderConfigurationOutsideInitializer() {
-        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitSystemReaderInitializer.class.getName()).should()
+        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitConfig.class.getName()).should()
                 .callMethod(SystemReader.class, "setInstance", SystemReader.class)
                 .because("SystemReader#setInstance resets JGit's static platform detection caches (isWindows, isMacOS, isLinux) before re-deriving them, so calling it while "
                         + "other threads run git operations makes those fail with a NullPointerException. Installing it from a @BeforeAll means one call per test class, and test "
-                        + "classes run in parallel. Use JGitSystemReaderInitializer#configureOnce instead, which GlobalCleanupListener invokes before the test plan starts.");
+                        + "classes run in parallel. Use JGitConfig#configureSystemReaderOnce instead, which is idempotent - the server calls it from its @PostConstruct and GlobalCleanupListener calls it before the test plan starts.");
         setInstanceUsage.check(allClasses);
     }
 

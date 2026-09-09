@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.annotation.PostConstruct;
 
@@ -22,6 +23,17 @@ import org.springframework.context.annotation.Profile;
 public class JGitConfig {
 
     private static final Logger log = LoggerFactory.getLogger(JGitConfig.class);
+
+    /**
+     * Whether the {@link SystemReader} below has already been installed in this JVM.
+     * <p>
+     * {@link SystemReader#setInstance} nulls JGit's static platform detection caches ({@code isWindows}, {@code isMacOS},
+     * {@code isLinux}) and only then re-derives them, so a call that lands while another thread is doing git work makes
+     * that work fail with a {@code NullPointerException}. Installing exactly once, as early as possible, is the whole
+     * protection - which is also why the tests install it from their launcher listener before the test plan starts
+     * rather than letting the first Spring context do it mid-run.
+     */
+    private static final AtomicBoolean SYSTEM_READER_CONFIGURED = new AtomicBoolean(false);
 
     /**
      * Disables JGit's packed Git memory-mapped file feature to prevent issues when deleting repositories on NFS filesystems.
@@ -65,14 +77,40 @@ public class JGitConfig {
      */
     @PostConstruct
     public void useRepositoryGitConfigurationOnly() {
+        configureSystemReaderOnce();
+    }
+
+    /**
+     * Installs the reader the first time it is called and does nothing afterwards.
+     * <p>
+     * Public and static because the test launcher installs it before the test plan starts, while the JVM is still
+     * single-threaded; the {@code @PostConstruct} above then finds it already configured and does nothing. In
+     * production nothing runs before the context, so the {@code @PostConstruct} is the call that installs it.
+     *
+     * @return true if this call installed the reader, false if it was already installed
+     */
+    public static boolean configureSystemReaderOnce() {
+        if (!SYSTEM_READER_CONFIGURED.compareAndSet(false, true)) {
+            return false;
+        }
         log.debug("Applying JGit configuration: ignore the system, user and jgit git configuration files");
         SystemReader.setInstance(new RepositoryOnlyConfigReader(SystemReader.getInstance()));
+        return true;
+    }
+
+    /**
+     * Whether the reader has been installed in this JVM.
+     *
+     * @return true once {@link #configureSystemReaderOnce()} has installed it
+     */
+    public static boolean isSystemReaderConfigured() {
+        return SYSTEM_READER_CONFIGURED.get();
     }
 
     /**
      * Everything the platform reader does, except that the three configuration files above a repository are empty.
      */
-    private static final class RepositoryOnlyConfigReader extends SystemReader.Delegate {
+    static final class RepositoryOnlyConfigReader extends SystemReader.Delegate {
 
         RepositoryOnlyConfigReader(SystemReader delegate) {
             super(delegate);
