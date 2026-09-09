@@ -6,7 +6,7 @@ import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -23,7 +23,6 @@ import {
     isAIResultAndFailed,
     isAIResultAndTimedOut,
     isAthenaAIResult,
-    isInstructorAssessedResult,
 } from 'app/exercise/result/result.utils';
 import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
@@ -53,9 +52,9 @@ export class ResultHistoryDropdownComponent {
 
     readonly faAngleDown = faAngleDown;
     readonly faClock = faClock;
+    readonly faRobot = faRobot;
     readonly ExerciseType = ExerciseType;
     readonly isAthenaAIResult = isAthenaAIResult;
-    readonly isInstructorAssessedResult = isInstructorAssessedResult;
 
     exercise = input.required<Exercise>();
     sortedHistoryResults = input.required<Result[]>();

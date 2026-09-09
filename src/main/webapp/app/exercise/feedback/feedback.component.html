@@ -53,32 +53,14 @@
                                 }
                             </h4>
 
-                            <div class="flex items-center gap-1">
-                                @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                                    <p-tag
-                                        id="ai-feedback-badge"
-                                        severity="info"
-                                        [value]="'artemisApp.result.aiFeedback' | artemisTranslate | uppercase"
-                                        [pTooltip]="'artemisApp.result.aiFeedbackTooltip' | artemisTranslate"
-                                    />
-                                }
-                                @if (isInstructorAssessedResult(result())) {
-                                    <p-tag
-                                        id="instructor-feedback-badge"
-                                        severity="secondary"
-                                        [value]="'artemisApp.result.instructorFeedback' | artemisTranslate | uppercase"
-                                        [pTooltip]="'artemisApp.result.instructorFeedbackTooltip' | artemisTranslate"
-                                    />
-                                }
-                                @if (badge(); as badge) {
-                                    <p-tag
-                                        id="result-score-badge"
-                                        [severity]="badge.severity"
-                                        [value]="badge.text | artemisTranslate | uppercase"
-                                        [pTooltip]="badge.tooltip | artemisTranslate"
-                                    />
-                                }
-                            </div>
+                            @if (badge(); as badge) {
+                                <p-tag
+                                    id="result-score-badge"
+                                    [severity]="badge.severity"
+                                    [value]="badge.text | artemisTranslate | uppercase"
+                                    [pTooltip]="badge.tooltip | artemisTranslate"
+                                />
+                            }
                         </div>
 
                         <!-- Show and link to the commit hash in case of programming exercise results -->

@@ -26,7 +26,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
@@ -306,55 +305,6 @@ describe('FeedbackComponent', () => {
         expect(comp.feedbackItemNodes()?.length).toBeGreaterThan(0);
         expect(comp.scoreChartData()).toBeDefined();
         expect(comp.scoreChartConfig()).toBeDefined();
-    });
-
-    describe('AI vs instructor origin badge', () => {
-        it('should show the AI feedback badge for an Athena result', () => {
-            const { feedbacks } = generateFeedbacksAndExpectedItems();
-            comp.result().feedbacks = feedbacks;
-            comp.result().assessmentType = AssessmentType.AUTOMATIC_ATHENA;
-
-            comp.ngOnInit();
-            fixture.detectChanges();
-
-            expect(fixture.nativeElement.querySelector('#ai-feedback-badge')).toBeTruthy();
-            expect(fixture.nativeElement.querySelector('#instructor-feedback-badge')).toBeFalsy();
-        });
-
-        it('should show the instructor feedback badge for a manually assessed result', () => {
-            const { feedbacks } = generateFeedbacksAndExpectedItems();
-            comp.result().feedbacks = feedbacks;
-            comp.result().assessmentType = AssessmentType.MANUAL;
-
-            comp.ngOnInit();
-            fixture.detectChanges();
-
-            expect(fixture.nativeElement.querySelector('#instructor-feedback-badge')).toBeTruthy();
-            expect(fixture.nativeElement.querySelector('#ai-feedback-badge')).toBeFalsy();
-        });
-
-        it('should show the instructor feedback badge for a semi-automatic result', () => {
-            const { feedbacks } = generateFeedbacksAndExpectedItems();
-            comp.result().feedbacks = feedbacks;
-            comp.result().assessmentType = AssessmentType.SEMI_AUTOMATIC;
-
-            comp.ngOnInit();
-            fixture.detectChanges();
-
-            expect(fixture.nativeElement.querySelector('#instructor-feedback-badge')).toBeTruthy();
-        });
-
-        it('should show neither origin badge for a plain automatic result', () => {
-            const { feedbacks } = generateFeedbacksAndExpectedItems();
-            comp.result().feedbacks = feedbacks;
-            comp.result().assessmentType = AssessmentType.AUTOMATIC;
-
-            comp.ngOnInit();
-            fixture.detectChanges();
-
-            expect(fixture.nativeElement.querySelector('#ai-feedback-badge')).toBeFalsy();
-            expect(fixture.nativeElement.querySelector('#instructor-feedback-badge')).toBeFalsy();
-        });
     });
 
     it('should load historical source code from the assessed commit without blocking feedback', () => {

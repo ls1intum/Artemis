@@ -41,30 +41,26 @@
                             <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
                             <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
                         }
+                        @if (isAthenaAIResult(result)) {
+                            <span
+                                data-testid="ai-feedback-indicator"
+                                class="d-inline-flex align-items-center justify-content-center rounded-circle bg-state-info/10 text-state-info flex-shrink-0"
+                                style="width: 18px; height: 18px; font-size: 10px"
+                                role="img"
+                                [attr.aria-label]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                                [pTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faRobot" />
+                            </span>
+                        }
                         <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
                     </div>
-                    <div class="d-flex align-items-center gap-1 flex-wrap">
-                        @if (isAthenaAIResult(result)) {
-                            <p-tag
-                                data-testid="ai-feedback-indicator"
-                                severity="info"
-                                [value]="'artemisApp.result.aiFeedback' | artemisTranslate"
-                                [pTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
-                            />
-                        }
-                        @if (isInstructorAssessedResult(result)) {
-                            <p-tag
-                                data-testid="instructor-feedback-indicator"
-                                severity="secondary"
-                                [value]="'artemisApp.result.instructorFeedback' | artemisTranslate"
-                                [pTooltip]="'artemisApp.result.instructorFeedbackTooltip' | artemisTranslate"
-                            />
-                        }
-                        @if (shouldShowResultMetadata(result)) {
+                    @if (shouldShowResultMetadata(result)) {
+                        <div class="d-flex align-items-center gap-1">
                             <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadge(result).severity" />
                             <span class="text-body-tertiary" style="font-size: 11px">{{ result.completionDate | artemisDate }}</span>
-                        }
-                    </div>
+                        </div>
+                    }
                 </div>
                 @if (exercise().type === ExerciseType.PROGRAMMING && shouldShowResultMetadata(result)) {
                     <p-button

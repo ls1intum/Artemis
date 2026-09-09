@@ -146,16 +146,6 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
-/**
- * Checks whether the result was assessed by an instructor, either fully manually or with instructor sign-off on
- * automatic checks.
- *
- * @return true if the result's assessment type is MANUAL or SEMI_AUTOMATIC
- */
-export function isInstructorAssessedResult(result: Result): boolean {
-    return result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC;
-}
-
 const getAthenaFeedbackTemplateStatus = (result: Result | undefined): ResultTemplateStatus | undefined => {
     if (!result || !isAthenaAIResult(result)) {
         return undefined;
