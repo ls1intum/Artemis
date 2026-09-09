@@ -59,6 +59,11 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
      * it as one would have the entry look for {@code notes.pdf} in the lecture directory, and if some other attachment of that lecture genuinely has a file of that name, move
      * that file into the wrong unit and strand the attachment it belongs to. The blank check is there for the same reason, so that a row holding an empty string does not
      * resolve to the directory itself.
+     * <p>
+     * The scheme exclusion is a plain colon test rather than the RFC 3986 scheme pattern the Java side matches, because a regex is spelled differently on PostgreSQL and MySQL
+     * while {@code LIKE} is not. The two agree on every value this column can hold: a stored filename cannot contain a colon, since {@code FileUtil#checkAndSanitizeFilename}
+     * allows only letters, digits, {@code _}, {@code .} and {@code -}. Any colon therefore means the value is not a filename, which is the question being asked. Matching only
+     * {@code ://} would have let {@code file:/lecture/notes.pdf} through, because a URI authority is optional.
      *
      * @param minimumAttachmentId only attachments with a larger id are returned
      * @param pageable            how many to return
@@ -73,7 +78,7 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
                 AND attachment.link IS NOT NULL
                 AND TRIM(attachment.link) <> ''
                 AND attachment.link NOT LIKE '/%'
-                AND attachment.link NOT LIKE '%://%'
+                AND attachment.link NOT LIKE '%:%'
             ORDER BY attachment.id
             """)
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);

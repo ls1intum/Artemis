@@ -6,9 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 
@@ -58,10 +61,11 @@ class AttachmentFileLocationIntegrationTest extends AbstractSpringIntegrationInd
      * The collision the exclusion exists for: both attachments hang off the same lecture and the external one ends in the filename of the other. Without the exclusion the entry
      * would be handed two candidates for one file.
      */
-    @Test
-    void shouldNotOfferAnAttachmentHostedElsewhereEvenWhenItEndsInTheFilenameOfAnother() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("externalLinksEndingInAStoredFilename")
+    void shouldNotOfferAnAttachmentHostedElsewhereEvenWhenItEndsInTheFilenameOfAnother(String externalLink) {
         Attachment stored = attachmentWithLink("notes.pdf");
-        Attachment external = attachmentWithLink("https://example.org/lecture/notes.pdf");
+        Attachment external = attachmentWithLink(externalLink);
 
         assertThat(locationsOf(stored, external)).extracting(AttachmentFileLocationDTO::attachmentId).containsExactly(stored.getId());
     }
@@ -81,10 +85,11 @@ class AttachmentFileLocationIntegrationTest extends AbstractSpringIntegrationInd
      * would hand back the location of whichever stored file shares its last segment, and a caller would then serve that file under this attachment's visibility or schedule it
      * for deletion with this unit.
      */
-    @Test
-    void shouldNotLocateAFileForAnAttachmentHostedElsewhere() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("externalLinksEndingInAStoredFilename")
+    void shouldNotLocateAFileForAnAttachmentHostedElsewhere(String externalLink) {
         Attachment stored = attachmentWithLink("notes.pdf");
-        Attachment external = attachmentWithLink("https://example.org/lecture/notes.pdf");
+        Attachment external = attachmentWithLink(externalLink);
 
         assertThat(external.fileLocation()).isEmpty();
         // The file the external attachment would otherwise have been given.
@@ -96,6 +101,19 @@ class AttachmentFileLocationIntegrationTest extends AbstractSpringIntegrationInd
     void shouldNotLocateAFileForAnAttachmentWhoseLinkIsAbsoluteOrBlank() {
         assertThat(attachmentWithLink("/public/images/placeholder.png").fileLocation()).isEmpty();
         assertThat(attachmentWithLink("  ").fileLocation()).isEmpty();
+    }
+
+    /**
+     * External links whose last segment is the filename of a genuinely stored attachment of the same lecture.
+     * <p>
+     * The second and third carry no authority, which is the case a {@code ://} test misses: RFC 3986 makes the
+     * authority optional, so a scheme is a scheme with one slash or none. The third also pins that the scheme is
+     * recognised whatever its case.
+     *
+     * @return the links to classify
+     */
+    private static Stream<String> externalLinksEndingInAStoredFilename() {
+        return Stream.of("https://example.org/lecture/notes.pdf", "file:/lecture/notes.pdf", "FILE:/lecture/notes.pdf");
     }
 
     private Attachment attachmentWithLink(String link) {

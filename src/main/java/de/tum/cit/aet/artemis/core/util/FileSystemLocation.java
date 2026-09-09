@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -47,6 +48,15 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * @see FilePathConverter for the fixed directory of each file type
  */
 public sealed interface FileSystemLocation {
+
+    /**
+     * A URI scheme at the start of a value, as RFC 3986 defines one: a letter followed by letters, digits, {@code +}, {@code -} or {@code .}, and then a colon.
+     * <p>
+     * Matching the scheme rather than {@code ://} is deliberate. The authority is optional in a URI, so {@code file:/lecture/notes.pdf}, {@code mailto:} and {@code data:} carry
+     * a scheme without ever containing {@code ://}, and treating those as stored filenames is what {@link #refersToStoredFile} exists to prevent. No filename this application
+     * stores can match, because {@link FileUtil#checkAndSanitizeFilename} allows only letters, digits, {@code _}, {@code .} and {@code -}, none of which is a colon.
+     */
+    Pattern URI_SCHEME_PREFIX = Pattern.compile("^[A-Za-z][A-Za-z0-9+.\\-]*:");
 
     /**
      * @return the absolute location of the file on disk
@@ -447,7 +457,7 @@ public sealed interface FileSystemLocation {
      * @return true if the value names a stored file, false for null, blank, an absolute path or anything carrying a URI scheme
      */
     static boolean refersToStoredFile(@Nullable String value) {
-        return value != null && !value.isBlank() && !value.startsWith("/") && !value.contains("://");
+        return value != null && !value.isBlank() && !value.startsWith("/") && !URI_SCHEME_PREFIX.matcher(value).find();
     }
 
     /**
