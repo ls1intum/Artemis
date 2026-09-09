@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class WorkerMessageCodecTest {
@@ -20,6 +21,7 @@ class WorkerMessageCodecTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "standard", "" })
+    @NullSource
     void commandRoundTripPreservesEmptyFilesBinaryWrappersAndDurations(String effortProfile) {
         var identity = identity();
         var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { -1, 0, 42 }, false),
@@ -33,6 +35,7 @@ class WorkerMessageCodecTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "standard", "" })
+    @NullSource
     void outcomeRoundTripPreservesReviewSemantics(String effortProfile) {
         var id = identity();
         var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of("No verified candidate")), null,
