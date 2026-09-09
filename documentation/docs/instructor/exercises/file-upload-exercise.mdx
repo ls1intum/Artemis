@@ -5,67 +5,48 @@ sidebar_label: File Upload Exercise
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
+import creationForm from './assets/file-upload/file-upload-exercise-creation-pattern.png';
+import exerciseInDashboard from './assets/file-upload/course-dashboard-exercise-file-upload.png';
+import assessmentView from './assets/file-upload/file-upload-exercise-assessment.png';
 
-import courseManagement from './assets/general/course-management.png';
-import courseManagementDashboard from './assets/general/course-management-course-dashboard-exercises.png';
-import createNewFileUploadExercise from './assets/file-upload/create-new-file-upload-exercise.png';
-import fileUploadExerciseCreationPattern from './assets/file-upload/file-upload-exercise-creation-pattern.png';
-import courseDashboardExerciseFileUpload from './assets/file-upload/course-dashboard-exercise-file-upload.png';
-import editButton from './assets/general/edit-button.png';
-import saveButton from './assets/file-upload/save_button.png';
-import fileUploadExerciseStudentView from './assets/file-upload/file-upload-exercise-student-view.png';
-import chooseFileButton from './assets/file-upload/choose-file-button.png';
-import submitButton from './assets/general/submit-button.png';
-import fileUploadExerciseStudentViewSubmitted from './assets/file-upload/file-upload-exercise-student-view-submitted.png';
-import fileUploadExerciseAssessment from './assets/file-upload/file-upload-exercise-assessment.png';
+A file upload exercise asks each student for a file: a scanned worksheet, a PDF report, an image of a hand-drawn
+diagram. Artemis stores what they hand in and shows it to you for grading; there is nothing to run and nothing to
+check automatically, so every submission is assessed by hand.
 
-## Overview
+Use it when the work happens outside Artemis and only the result needs collecting. When you want the work itself to
+happen in Artemis, one of the other exercise types fits better — a
+[text exercise](/instructor/exercises/text-exercise) for prose, a
+[modeling exercise](/instructor/exercises/modeling-exercise) for diagrams.
 
-Conducting a file upload exercise consists of 3 steps:
+## Create the Exercise
 
-1. Setup of the exercise in Artemis
-2. Submission by a student
-3. Assessment by instructors
+**Create File Upload Exercise** sits on the course's **Exercises** page in course management. The form asks for the
+same things every exercise does — title, release and due dates, points, difficulty — plus one field of its own.
 
-## Setup
+**File Pattern** lists the extensions a student may upload, comma separated and without the dots, for example
+`png, pdf`. A submission whose extension is not on the list is refused, so the list has to cover every form the
+answer may legitimately take. There is no default: an empty pattern accepts nothing.
 
-The following sections describe the supported features and the process of creating a new file upload exercise.
+<Image src={creationForm} alt="File upload exercise creation form with the File Pattern field filled in" size={ImageSize.large} caption="Creating a file upload exercise" />
 
-- Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
-- Navigate into **Exercises** of your preferred course.
+The exercise then appears on the course's exercise list, where **Edit** reopens the form and the title opens the
+exercise itself.
 
-<Image src={courseManagementDashboard} alt="Course Management Dashboard" size={ImageSize.large} caption="Course dashboard with the Exercises button" />
+<Image src={exerciseInDashboard} alt="Course exercise list showing the new file upload exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
 
-- Click on **Create a new file upload exercise**.
+## Assess Submissions
 
-<Image src={createNewFileUploadExercise} alt="Create New File Upload Exercise" size={ImageSize.large} caption="Button to create a new file upload exercise" />
+Assessment opens once the due date has passed. From the assessment dashboard, open the exercise's own dashboard and
+start an assessment: Artemis hands you one submission at a time.
 
-- Fill out all mandatory values and click on <img src={saveButton} alt="Save Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
-- The exercise-specific **File Pattern** defines which file types students can upload as solution. The input field accepts all file endings without leading dot separated by commas.
+Download the file the student uploaded, read it, and record what you find as feedback with points against it. There
+are no automatic results to build on, so the whole mark comes from the feedback you write.
+[Structured grading instructions](/instructor/assessment-grading/assessment) are worth setting up first if several
+people are marking, because they keep the criteria and the points the same across assessors.
 
-<Image src={fileUploadExerciseCreationPattern} alt="File Upload Exercise Creation Pattern" size={ImageSize.large} caption="File upload exercise creation form with file pattern configuration" />
+<Image src={assessmentView} alt="Assessment view of a file upload submission with the feedback editor" size={ImageSize.large} caption="Assessing a file upload submission" />
 
-- Result: **File Upload Exercise**.
+## What Students See
 
-<Image src={courseDashboardExerciseFileUpload} alt="Course Dashboard Exercise File Upload" size={ImageSize.large} caption="Exercise Management Dashboard showing the created file upload exercise" />
-
-- Click the <img src={editButton} alt="Edit Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button of the file upload exercise to update the configuration and assessment instructions.
-- You can get an overview of the exercise by clicking on the title.
-
-## Student Submission
-
-- When the exercise is released, the students can upload the requested file.
-- They can choose a file with <img src={chooseFileButton} alt="Browse Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and then submit the file with <img src={submitButton} alt="Submit Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
-
-<Image src={fileUploadExerciseStudentView} alt="File Upload Exercise Student View" size={ImageSize.large} caption="Student view of the file upload exercise before submission" />
-
-- After a file is uploaded it can then be downloaded again by clicking on **Download file**.
-
-<Image src={fileUploadExerciseStudentViewSubmitted} alt="File Upload Exercise Student View Submitted" size={ImageSize.large} caption="Student view after successfully submitting a file" />
-
-## Assessment
-
-- When the due date is over, you can assess the submissions. From the assessment dashboard, go to exercise the assessment dashboard of the file upload exercise.
-- There you can assess the submitted student submissions, by first downloading the file, and then adding feedback with points.
-
-<Image src={fileUploadExerciseAssessment} alt="File Upload Exercise Assessment" size={ImageSize.large} caption="Assessment view for grading file upload submissions" />
+Students choose a file, submit it, and can download it again afterwards to confirm what arrived —
+see [File Upload Exercise](/student/exercises/file-upload-exercise) on the student pages.

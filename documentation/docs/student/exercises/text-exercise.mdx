@@ -1,0 +1,47 @@
+---
+id: text-exercise
+title: Text Exercise
+sidebar_label: Text Exercise
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import exerciseCard from './assets/text/exercise-card.png';
+import textEditor from './assets/text/text-editor.png';
+
+A text exercise asks you to write an answer in prose — an explanation, an argument, a comparison. You write it in
+Artemis, in an editor beside the task, and a tutor reads and marks it after the due date.
+
+## Start the Exercise
+
+The exercise appears on the course's exercise list once it is released, with its due date and the points it is
+worth. **Start exercise** creates your participation; until you do that there is nothing to write into.
+
+<Image src={exerciseCard} alt="Text exercise on the course exercise list, before starting" size={ImageSize.large} caption="A text exercise before you start it" />
+
+## Write and Submit
+
+**Open text editor** opens the exercise: the task on one side, your answer on the other, with a running word and
+character count under the box.
+
+Artemis saves what you type as you go, but saving is not handing in. **Submit** is what marks the answer as your
+submission, and you can submit again as often as you like before the due date — the last one is the one that is
+marked.
+
+<Image src={textEditor} alt="Text editor with the task beside the answer box" size={ImageSize.large} caption="Writing an answer" />
+
+<Callout variant={CalloutVariant.warning}>
+
+  An answer that was saved but never submitted is not handed in. Check that the exercise shows as submitted before
+  the due date passes.
+
+</Callout>
+
+## Your Result
+
+Text answers are marked by a person, so nothing appears straight away. Once the assessment is published you see the
+points, and the feedback attached to the parts of your answer it refers to.
+
+Where your instructor has turned it on, you can ask for preliminary AI feedback on a draft before the due date. It
+is a guide, not a grade: the mark that counts is the one a tutor writes afterwards.
