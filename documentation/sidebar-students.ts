@@ -34,7 +34,12 @@ const sidebars: SidebarsConfig = {
                 'learning-content/iris',
             ],
         },
-        'exams',
+        {
+            type: 'category',
+            label: 'Exams',
+            link: { type: 'doc', id: 'exams' },
+            items: ['exams/take-an-exam', 'exams/exercises-in-an-exam', 'exams/after-the-exam'],
+        },
         {
             type: 'category',
             label: 'Assessment & Grades',
