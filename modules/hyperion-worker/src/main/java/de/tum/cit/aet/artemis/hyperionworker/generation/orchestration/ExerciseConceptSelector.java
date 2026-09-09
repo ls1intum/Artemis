@@ -48,7 +48,8 @@ public class ExerciseConceptSelector {
 
     private static final String CANDIDATE_PROMPT = """
             Generate exactly three candidate realizations for the instructor brief below. When the brief leaves the central situation or behavior open, make them genuinely
-            different concepts. When the brief already fixes those choices, preserve them and vary only coherent realization decisions the brief leaves open; never manufacture
+            different concepts, with different domain pressures rather than three noun-swapped versions of the same stock example. Prefer a concrete, coherent situation over
+            habitual animals/vehicles/payroll choices when the brief leaves the domain open. Do not change a domain the instructor fixes. When the brief already fixes those choices, preserve them and vary only coherent realization decisions the brief leaves open; never manufacture
             conceptual divergence by changing fixed requirements. Use exactly these headings in order: `## Candidate 1`, `## Candidate 2`, and `## Candidate 3`.
 
             Give facts, not a defense of the candidate. Under each heading use exactly these labels:
@@ -67,13 +68,16 @@ public class ExerciseConceptSelector {
             the exact returned strings, a closed label list, boundary count, or API. Real constraint must be a domain pressure that makes the behavior natural, never an invented
             programming-technique mandate.
             Keep each field concise. Student-owned objective is exhaustive: name every consequential behavior students implement, including concrete policies when students own
-            them, but describe behavior dimensions rather than specification-owned values, names, or partitions. Student-owned reasoning must state the concrete qualitative
-            decision dependencies or data transformation that remains after signatures and routine wiring are removed, without prematurely fixing exact formulas or constants.
+            them, but describe behavior dimensions rather than specification-owned values, names, or partitions. Distinguish reading/calling a given API, implementing a supplied
+            body, declaring new members, and creating a type: preserve the action the brief teaches and supply prerequisite scaffolding for the others. Student-owned reasoning
+            must state the concrete qualitative decision dependencies, API-usage reasoning, or type-design reasoning intrinsic to that objective, without prematurely fixing exact
+            formulas or constants. Do not subtract declaration or wiring work when that is precisely the beginner objective; do not count unrelated boilerplate as difficulty.
             It may illustrate one viable control flow, but must not require its syntax, comparison order, or construct when another implementation has the same public behavior.
             Generic phrases such as `distinct rules`, `processes the input`, or `computes a result` do not count.
             Anything named only under Alternative policies is behavior to describe, not proof that students implement it. When the brief requests interchangeable variants
             such as Strategy, students must own at least one collaboration seam—selection, injection, replacement, or delegation—in addition to any concrete policy bodies; do
-            not assign that collaboration to likely supplied support. Likely supplied support may contain only incidental input data, setup, and infrastructure.
+            not assign that collaboration to likely supplied support. Likely supplied support includes all behavior the brief gives to the learner: a fully implemented API can
+            be essential support for an API-use exercise. Keep learner-facing prerequisites bounded; supplied implementation details need not become learner obligations.
             When the brief requests interchangeable variants, Alternative policies must pursue the same caller goal for overlapping valid inputs and state the qualitative
             semantic difference between them; Observable substitution must explain what caller-visible behavior changes when one policy is replaced by another. Alternatives must
             implement the same caller-requested responsibility and preserve the semantic meaning of the result. Substitution may change the policy, trade-off, or concrete outcome,

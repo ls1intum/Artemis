@@ -68,6 +68,58 @@ class DockerGradleBuildTest {
     }
 
     @Test
+    void specificationDerivedGenericGraderRejectsErasedApiAndAcceptsRenamedTypeParameter() throws IOException {
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommandService.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Box | Own generic type | student-creates |
+                ## Public API
+                ```java
+                public class Box<T> {
+                    public Box(T value) { ... }
+                    public T get();
+                    public java.util.List<T> values();
+                }
+                ```
+                """);
+        SeededStructuralTests seeded = new StructuralOracleSeedingService(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
+        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        String path = "solution/src/de/tum/cit/aet/reference/Box.java";
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
+                package de.tum.cit.aet.reference;
+                public class Box<E> {
+                    private final E value;
+                    public Box(E value) { this.value = value; }
+                    public E get() { return value; }
+                    public java.util.List<E> values() { return java.util.List.of(value); }
+                }
+                """), Map.of()));
+        var correct = build(session, "solution");
+        assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
+        assertThat(correct.testNames()).contains("testGenericApi[Box]");
+
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
+                package de.tum.cit.aet.reference;
+                public class Box<T> {
+                    private final Object value;
+                    public Box(Object value) { this.value = value; }
+                    public Object get() { return value; }
+                    public java.util.List<Object> values() { return java.util.List.of(value); }
+                }
+                """), Map.of()));
+        var erased = build(session, "solution");
+        assertThat(erased.exitCode()).isNotZero();
+        assertThat(erased.testFailedNames()).contains("testGenericApi[Box]");
+        assertThat(erased.testFailedNames()).doesNotContain("testMethods[Box]", "testConstructors[Box]");
+    }
+
+    @Test
     void verificationDoesNotLeaveADaemonHoldingTheDisposableGradleCache() throws IOException {
         String session = sandbox.createSession();
         workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);

@@ -42,7 +42,7 @@ public class StructuralOracleSeedingService {
 
     private static final String STRUCTURAL_RESOURCE_DIR = "templates/java/test/testFiles/structural/";
 
-    private static final List<String> STRUCTURAL_CLASSES = List.of("ClassTest.java", "MethodTest.java", "AttributeTest.java", "ConstructorTest.java");
+    private static final List<String> STRUCTURAL_CLASSES = List.of("ClassTest.java", "MethodTest.java", "AttributeTest.java", "ConstructorTest.java", "GenericTypeTest.java");
 
     private static final String ORACLE_FILE = "test.json";
 
@@ -151,6 +151,8 @@ public class StructuralOracleSeedingService {
         if (!parsedContract.valid()) {
             throw new IllegalStateException("The approved Java Public API contract is invalid: " + parsedContract.errors());
         }
+        expectedStudentCreatedTypes = new LinkedHashSet<>(expectedStudentCreatedTypes);
+        expectedStudentCreatedTypes.addAll(parsedContract.contract().studentCreatedMemberOwners());
         boolean managedAssetsDetected = false;
         try {
             Map<String, String> testFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryRole.TESTS);
@@ -279,6 +281,9 @@ public class StructuralOracleSeedingService {
                 continue;
             }
             names.add("testClass[" + className + "]");
+            if (entry.has("genericApi")) {
+                names.add("testGenericApi[" + className + "]");
+            }
             if (hasEntries(entry, "methods")) {
                 names.add("testMethods[" + className + "]");
             }
@@ -297,6 +302,12 @@ public class StructuralOracleSeedingService {
         ArrayNode entries = (ArrayNode) MAPPER.readTree(oracle);
         List<String> classes = new ArrayList<>();
         classes.add("ClassTest.java");
+        for (JsonNode entry : entries) {
+            if (entry.has("genericApi")) {
+                classes.add("GenericTypeTest.java");
+                break;
+            }
+        }
         if (hasEntries(entries, "methods")) {
             classes.add("MethodTest.java");
         }
@@ -410,7 +421,8 @@ public class StructuralOracleSeedingService {
 
     private String structuralClassContent(String className, String packageName) throws IOException {
         String content;
-        try (var input = new ClassPathResource(STRUCTURAL_RESOURCE_DIR + className).getInputStream()) {
+        String resource = "GenericTypeTest.java".equals(className) ? "templates/hyperion/structural/GenericTypeTest.java" : STRUCTURAL_RESOURCE_DIR + className;
+        try (var input = new ClassPathResource(resource).getInputStream()) {
             content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
         if (packageName.isEmpty()) {

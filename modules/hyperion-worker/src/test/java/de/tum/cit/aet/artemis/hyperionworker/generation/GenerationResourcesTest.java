@@ -7,6 +7,25 @@ import org.junit.jupiter.api.Test;
 class GenerationResourcesTest {
 
     @Test
+    void generatedFixturesDoNotAttributeNewExercisesToTheReferenceAuthor() {
+        String fixture = """
+                /**
+                 * Checks the public API.
+                 * @author Reference author
+                 * @version 1.0
+                 * @return test cases
+                 */
+                """;
+
+        assertThat(GenerationResources.javaGradleFixture(fixture)).isEqualTo("""
+                /**
+                 * Checks the public API.
+                 * @return test cases
+                 */
+                """);
+    }
+
+    @Test
     void teachingStatementTestLabelsMatchSimpleNamesWithoutChangingStudentApiCalls() {
         String statement = "Implement sort().\n[task][Sorting](testSort(),testClass[Sorter],testEmpty())\ntestsColor(testSort())";
 

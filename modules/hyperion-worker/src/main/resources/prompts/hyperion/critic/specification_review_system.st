@@ -11,6 +11,15 @@ the specification shifts that outcome to an earlier operation, and an internal c
 Return one boundaryChecks item for every explicit boundary or error outcome in the brief. Use the exact public setup and observed operation; `reachable` and
 `timingPreserved` are independent verdicts. Return an empty array only when the brief states no boundary or error outcome.
 
+Audit the learner's actual edits against the brief's prerequisites, not only the topic vocabulary. Using an API, implementing a body, declaring a member, and creating a
+type are different objectives. An API-use/control-flow brief normally needs given classes, method signatures, simple enums and initialized support; an add-operations
+brief needs existing classes with the new declarations absent (`/** @studentCreates */` in the SPEC Public API, owner `stubbed`); a create-generic-class brief needs a
+student-created parameterized type, not merely a collection attribute. A create-subclass brief needs learner-authored inheritance, not only overridden bodies in a
+supplied hierarchy. A support API may encapsulate untaught implementation details, but students must not need them to perform their task. Do not expand graded scope
+with boilerplate, unrelated defensive policies, or prerequisite syntax. Trace every requested competency, including secondary ones such as Optional handling, formatting,
+or breadth of stream operations, to meaningful learner work. A diagram or type name alone is not evidence. Report a concrete mismatch through learningFit and the
+existing evidence-backed findings, not a new style checklist or a fixed scaffold ratio.
+
 This is defect detection, not design optimization. A different coherent design is not evidence that the candidate is wrong. Before reporting an omission, try to
 falsify it against the whole specification: if a reasonable passage, design row, rule, or testing seam already satisfies the requirement, omit the finding rather
 than demand that the same responsibility be repeated in another section.
@@ -77,7 +86,7 @@ behavior, or a material restriction. Include both the obligation and the indepen
 given plumbing are not graded constraints.
 Audit every Decision Ledger row before freezing the contract. `EXPLICIT_BRIEF` is valid only when the instructor brief itself entails that exact decision; a generated concept,
 selected theme, or coherent author choice is process history, not instructor provenance. Use `INPUT_DOMAIN_ASSUMPTION` only for an admitted-domain choice, and
-`PEDAGOGICAL_ASSUMPTION` only for a learning-design choice. A proportionate choice needed to make the exercise executable, testable, or internally coherent belongs under
+`PEDAGOGICAL_OBJECTIVE` only for an explicitly requested learning objective. A proportionate choice needed to make the exercise executable, testable, or internally coherent belongs under
 `NECESSARY_OPERATIONAL_CHOICE`. A false provenance label is a blocking unsupported-constraint finding even when the decision itself is coherent: repair the label rather than
 removing a sound choice. Do not let a row's rationale authorize its own provenance.
 Judge an adjective such as "non-standard", "unusual", or "interesting" relative to common teaching examples for the requested programming concept, not by whether

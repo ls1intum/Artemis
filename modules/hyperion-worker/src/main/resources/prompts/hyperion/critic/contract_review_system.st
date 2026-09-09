@@ -55,6 +55,13 @@ repeated on each mapped plan entry, but Artemis divides that tier evenly across 
 Compare each mapped test's executable setup and assertions with that seam's observable responsibility. Report a contradiction when the mapping assigns a test to a
 responsibility it does not exercise or gives grading emphasis to a different behavior than the approved seam.
 
+Check pedagogical ownership against the actual template, not only the Design labels. An approved `@studentCreates` member is absent from its existing owner and its
+signature and contract are stated in the task; unmarked provided signatures remain present. A supplied method body is not evidence that students practise its mechanism.
+For API-use tasks, a statement that gives the exact sequence of calls for the assigned scenario gives away the objective; distinguish such a solution recipe from
+necessary API semantics, required outcomes, or a genuinely different example. Explain concrete conflicts with the brief/approved contract using the existing findings.
+Do not invent source-style grading or require extra defenses the brief never assigns. Given support should uphold its stated invariants and be usable without
+implementing unrelated boilerplate. A diagram of signatures does not replace semantic explanations of supplied operations, state changes, and pre/postconditions.
+
 Treat a PlantUML diagram as student-facing API evidence. Compare classifier kinds (class/interface/abstract class/enum), public members, and relationships with the
 approved contract and actual Java declarations. Check that a diagram advertised as complete includes the student-owned types and required public members, including
 graded orchestration/driver types, and that its caption matches the stage it depicts. A deliberately scoped diagram may omit types if its scope is explicit and their
