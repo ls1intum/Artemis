@@ -2,21 +2,17 @@
  * The action buttons are projected from jhi-exercise-header-actions, so reaching them means piercing encapsulation.
  *
  * `title-bar-compact-controls` (which `page-top-bar` applies) centres a button's label by matching its line-height to
- * the pinned content height. That works for a button whose label is an inline child, but the exercise action button
- * wraps its icon and label in a `div`: the block child gets its own line box, so the pinned line-height never applies
- * to it and the label sits high in the box and clips. Centre it properly instead.
+ * the pinned content height. That works for every control here except one: the exercise action button wraps its icon
+ * and label in a `div`, and a block child gets its own line box, so the pinned line-height never reaches the label and
+ * it sits high in the box and clips.
  *
- * Flex is safe here where the mixin's comment warns it is not: that button separates its icon from its label with a
- * non-breaking space, which is a real character and survives as an anonymous flex item, rather than the
- * whitespace-only text node flex would drop.
+ * Scoped to exactly that button on purpose. Making every `.btn` a flex container also caught the instructor dropdown
+ * toggle and the items inside its menu, and both separate their icon from their label with ordinary whitespace, which
+ * flex drops — the icon ended up touching the text and the menu items lost their layout. Centring only the host leaves
+ * the inner div's inline layout, and its `&nbsp;`, exactly as it was.
  */
-:host ::ng-deep .btn {
+:host ::ng-deep button[jhi-exercise-action-button] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    > div {
-        display: inline-flex;
-        align-items: center;
-    }
 }
