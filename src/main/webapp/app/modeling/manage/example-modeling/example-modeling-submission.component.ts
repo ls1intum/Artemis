@@ -294,6 +294,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             setLatestSubmissionResult(this.modelingSubmission, result);
             delete result.submission;
         }
+        const sentAssessments = this.assessments();
 
         const exampleSubmission = this.exampleSubmission();
         exampleSubmission.submission = this.modelingSubmission;
@@ -319,11 +320,14 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             }),
             catchError((error: HttpErrorResponse) => {
-                // the model change was not persisted, so the feedback pruned for the elements it deleted must not stick either
-                this.referencedFeedback.set(referencedFeedbackBeforePruning);
-                this.feedbackChanged = feedbackChangedBeforePruning;
-                if (result) {
-                    result.feedbacks = this.assessments();
+                // the model change was not persisted, so the feedback pruned for the elements it deleted must not stick either,
+                // unless the user edited feedback while the request was in flight: the newer feedback then wins over the rollback
+                if (this.assessments() === sentAssessments) {
+                    this.referencedFeedback.set(referencedFeedbackBeforePruning);
+                    this.feedbackChanged = feedbackChangedBeforePruning;
+                    if (result) {
+                        result.feedbacks = this.assessments();
+                    }
                 }
                 onError(this.alertService, error);
                 throw error;
