@@ -24,12 +24,11 @@
     }
 
     /*
-     * The border carries the urgency as well as the digits, so the box itself changes as the quiz runs out rather
-     * than only the number inside it.
+     * The border carries the urgency alongside the digits. No fill: a filled box in the title bar pulled the eye away
+     * from the submit button next to it, which is where the student actually has to go.
      */
     &[data-severity='warning'] {
         border-color: var(--bs-warning-border-subtle);
-        background-color: var(--bs-warning-bg-subtle);
 
         .quiz-countdown__value {
             color: var(--bs-warning-text-emphasis);
@@ -38,7 +37,6 @@
 
     &[data-severity='danger'] {
         border-color: var(--bs-danger-border-subtle);
-        background-color: var(--bs-danger-bg-subtle);
 
         .quiz-countdown__value {
             color: var(--bs-danger-text-emphasis);

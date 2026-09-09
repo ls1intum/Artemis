@@ -208,14 +208,14 @@ export class ExerciseHeadersInformationComponent {
 
     getDueDateItems(): InformationBox[] {
         const items: InformationBox[] = [];
-        // During a running live/practice quiz the remaining-time countdown takes the place of the due date.
+        // A running quiz shows its remaining time in the title bar, so there is no box for it here and no due date
+        // either: the clock takes that slot for as long as it runs.
         // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
-        // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
-        // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
-        const quizTimeItem = this.getQuizTimeItem();
-        if (quizTimeItem) {
-            items.push(quizTimeItem);
-        } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
+        // due-date fallback for that brief window too, otherwise the due date flashes before the clock appears (the
+        // exercise's own due date is known immediately, the quiz info lags behind it).
+        const quizInfo = this.quizLiveHeaderInfo();
+        const titleBarShowsQuizTime = !!(quizInfo?.showRemainingTime || quizInfo?.showDuration);
+        if (!titleBarShowsQuizTime && !(this.exercise().type === ExerciseType.QUIZ && quizInfo === undefined)) {
             const dueDateItem = this.getDueDateItem();
             if (dueDateItem) {
                 items.push(dueDateItem);
@@ -427,30 +427,6 @@ export class ExerciseHeadersInformationComponent {
             contentColor: this.currentFeedbackRequestCount() >= this.feedbackRequestLimit() ? 'danger' : 'warning',
             tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
         };
-    }
-
-    getQuizTimeItem(): InformationBox | undefined {
-        const info = this.quizLiveHeaderInfo();
-        if (info?.showRemainingTime) {
-            return {
-                title: 'artemisApp.quizExercise.remainingTime',
-                content: {
-                    type: 'string',
-                    value: info.remainingTimeText ?? '',
-                },
-                contentColor: info.remainingTimeColor,
-            };
-        }
-        if (info?.showDuration) {
-            return {
-                title: 'artemisApp.quizExercise.duration',
-                content: {
-                    type: 'string',
-                    value: info.durationText ?? '',
-                },
-            };
-        }
-        return undefined;
     }
 
     getQuizLiveInfoItems(): InformationBox[] {

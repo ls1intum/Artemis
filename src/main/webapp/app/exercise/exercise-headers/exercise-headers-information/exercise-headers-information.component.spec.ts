@@ -219,7 +219,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(compiled.querySelector('[role="button"]')).toBeTruthy();
     });
 
-    it('should render the remaining-time box in the due-date slot and results-available last', () => {
+    it('should leave the remaining time to the title bar and keep results-available last', () => {
         fixture.componentRef.setInput('quizLiveHeaderInfo', {
             showRemainingTime: true,
             remainingTimeText: '5 min',
@@ -232,11 +232,8 @@ describe('ExerciseHeadersInformationComponent', () => {
         const items = component.informationBoxItems();
         const titles = items.map((item) => item.title);
 
-        // Remaining time takes the due-date slot: it sits before the submission status, not at the very end.
-        const remainingTimeBox = items.find((item) => item.title === 'artemisApp.quizExercise.remainingTime')!;
-        expect((remainingTimeBox.content as { value: string }).value).toBe('5 min');
-        expect(remainingTimeBox.contentColor).toBe('warning');
-        expect(titles.indexOf('artemisApp.quizExercise.remainingTime')).toBeLessThan(titles.indexOf('artemisApp.courseOverview.exerciseDetails.status'));
+        // The remaining time belongs to the title bar's countdown; repeating it here would say the same thing twice.
+        expect(titles).not.toContain('artemisApp.quizExercise.remainingTime');
 
         // Results available stays last.
         const lastItem = items[items.length - 1];
@@ -254,14 +251,15 @@ describe('ExerciseHeadersInformationComponent', () => {
         // Without quiz info, the (past) due date renders the submission-due-over box.
         expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.submissionDueOver')).toBe(true);
 
-        // Countdown active: the due-date box is replaced by the live "time left" box.
+        // Countdown active in the title bar: no due-date box here, and no duplicate of the clock either.
         fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
         fixture.detectChanges();
 
         let titles = component.informationBoxItems().map((item) => item.title);
         expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
         expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
-        expect(titles).toContain('artemisApp.quizExercise.remainingTime');
+        // Nor is the time repeated here: the title bar's countdown has that slot for as long as it runs.
+        expect(titles).not.toContain('artemisApp.quizExercise.remainingTime');
 
         // Quiz info present but countdown not shown (e.g. before start / results / preview): the due date is shown again.
         fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: false, showResultsAvailable: false });
