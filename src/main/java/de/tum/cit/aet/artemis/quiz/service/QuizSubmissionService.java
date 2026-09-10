@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -17,7 +16,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -37,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -91,30 +90,28 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final QuizBatchService quizBatchService;
 
-    private final QuizStatisticService quizStatisticService;
+    private final QuizStatisticsService quizStatisticsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    // Executor for the (asynchronous) quiz statistics update. Delegates to the shared pool in production and is
-    // synchronous under the test profile.
-    private final Executor quizStatisticsExecutor;
+    private final Optional<LtiApi> ltiApi;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
-            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("quizStatisticsTaskExecutor") Executor quizStatisticsExecutor) {
+            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService,
+            QuizStatisticsService quizStatisticsService, StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            Optional<LtiApi> ltiApi) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
-        this.quizStatisticService = quizStatisticService;
+        this.quizStatisticsService = quizStatisticsService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
-        this.quizStatisticsExecutor = quizStatisticsExecutor;
+        this.ltiApi = ltiApi;
     }
 
     /**
@@ -129,15 +126,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * and records the current date and time as the submission date.</li>
      * <li><b>Calculating Scores:</b> Computes the scores based on the quiz questions and updates the submission.</li>
      * <li><b>Saving Submission:</b> Saves the updated submission in the repository.</li>
-     * <li><b>Creating Result:</b> Initializes a new result, associates it with the participation, sets it as unrated
-     * and automatic, and records the current date and time as the completion date.</li>
+     * <li><b>Creating Result:</b> Initializes a new result, links it to the submission, calculates its score, and records
+     * the current date and time as the completion date.</li>
      * <li><b>Saving Result:</b> Saves the newly created result in the repository.</li>
-     * <li><b>Setting Result-Submission Relation:</b> Links the result to the submission and recalculates the score.</li>
-     * <li><b>Updating Submission with Result:</b> Adds the result to the submission and saves it again to set the result index column.</li>
-     * <li><b>Re-saving Result:</b> Saves the result again to store the calculated score.</li>
-     * <li><b>Fixing Proxy Objects:</b> Reassigns the participation to the result to avoid proxy issues.</li>
-     * <li><b>Recalculating Statistics:</b> Updates the quiz statistics based on the new result.</li>
-     * <li><b>Saving Question Progress</b>Updates the question progress based on the result and submission.</li>
+     * <li><b>Updating Submission:</b> Links the submission to its participation and result.</li>
+     * <li><b>Notifying Statistics Subscribers:</b> Notifies open instructor pages that the on-demand statistics changed.</li>
      * </ol>
      *
      * @param quizSubmission The quiz submission to be processed.
@@ -174,14 +167,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         result = resultRepository.save(result);
         quizSubmissionRepository.save(quizSubmission);
 
-        // Update the quiz statistics asynchronously: statistics are only relevant for instructors, so the student must
-        // not wait for them. Previously this ran a full recalculation synchronously, iterating every participation of
-        // the quiz with several queries each, which took many seconds per submission on popular practice quizzes. The
-        // async task incrementally adds just this result (the same O(1) mechanism used for live and exam submissions),
-        // loading the quiz and result freshly by id so it never mutates the entities used to build this response.
-        long resultId = result.getId();
-        long quizExerciseId = quizExercise.getId();
-        quizStatisticsExecutor.execute(() -> quizStatisticService.updateStatisticsForNewResult(quizExerciseId, resultId));
+        // Statistics are calculated on demand. Notify open instructor pages after the result and its score are durable.
+        quizStatisticsService.notifyStatisticsChanged(quizExercise.getId());
 
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
@@ -193,7 +180,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * @param quizExerciseId the id of the quiz exercise for which the results should be calculated
      */
     public void calculateAllResults(long quizExerciseId) {
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
         Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseId(quizExercise.getId());
         associateQuizSubmissionsWithStudentParticipations(participations);
@@ -236,12 +223,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             studentParticipationRepository.save(participation);
             quizSubmission.setResults(Set.of(result));
 
+            ltiApi.ifPresent(api -> api.onNewResult(participation));
             sendQuizResultToUser(quizExerciseId, participation);
         });
-        quizStatisticService.recalculateStatistics(quizExercise);
-        // notify users via websocket about new results for the statistics, filter out solution information
-        quizExercise.filterForStatisticWebsocket();
-        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
+        quizStatisticsService.notifyStatisticsChanged(quizExercise.getId());
     }
 
     /**
