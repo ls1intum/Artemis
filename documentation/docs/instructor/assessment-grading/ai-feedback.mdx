@@ -1,0 +1,81 @@
+---
+id: ai-feedback
+title: AI-Assisted Feedback
+sidebar_label: AI-Assisted Feedback
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+Artemis can ask [Athena](/admin/artemis-intelligence) to write feedback on a submission. It does this in two quite
+different situations, and they are worth keeping apart because they serve different people.
+
+| | **Grading feedback suggestions** | **Formative feedback requests** |
+|---|---|---|
+| Who asks | Nobody — they are waiting when a reviewer opens a submission | The student, on a draft |
+| Who reads | The reviewer, before they mark | The student |
+| When | After the due date, while marking | Before the due date |
+| Effect on the mark | None until a reviewer submits the assessment | None at all |
+| Exercise types | Text, programming, modeling | Text, modeling, and programming where the exercise is assessed semi-automatically |
+
+Neither ever marks anything. A suggestion is a draft a person accepts, edits or discards, and a formative response is
+guidance the student reads. The mark is always written by a reviewer.
+
+## Switching It On
+
+It is configured once, for the course. **AI Assisted Feedback for Exercises Enabled** on the course settings is the
+master switch, and **Grading Feedback Suggestions Enabled** and **Formative Feedback Requests Enabled** beneath it
+turn on the two kinds. See
+[Course Configuration](/instructor/course-management/course-configuration#ai-assisted-feedback).
+
+There is no per-exercise switch: an exercise gets AI feedback because its course has it on and because its type
+supports it. Two restrictions follow from the type rather than from a setting.
+
+- A **programming** exercise takes formative feedback requests only where it is assessed semi-automatically — that
+  is, where manual assessment is enabled alongside the tests. With purely automatic assessment there is nothing for
+  Athena to be formative about.
+- An **exam** exercise is outside this entirely. Exam feedback follows the exam's own review and publication dates.
+
+<Callout variant={CalloutVariant.info}>
+
+  Because it is a course-level setting, turning it on reaches every eligible exercise at once, including exercises
+  that already exist. Turning it off does the same.
+
+</Callout>
+
+## What a Reviewer Sees
+
+Where grading suggestions are on, opening a submission loads Athena's proposals into the assessment editor, which
+takes a moment. Each is a feedback block with points attached, sitting where a reviewer would have written one.
+
+The exercise pages show this per type, because the editors differ: see
+[text exercises](/instructor/exercises/text-exercise#automatic-assessment-suggestions) and
+[modeling exercises](/instructor/exercises/modeling-exercise#automatic-assessment-suggestions).
+
+<Callout variant={CalloutVariant.warning}>
+
+  Suggestions are drawn from assessments already given in the same exercise, so they inherit whatever the first
+  reviewers did — including their mistakes. Mark a first batch deliberately before leaning on them.
+
+</Callout>
+
+## What a Student Sees
+
+Where formative requests are on, a student can ask for preliminary feedback on a draft before the due date and get a
+response with a provisional score. It is explicitly not their mark, and Artemis says so where it appears.
+
+Students can also shape how that feedback reads — how detailed and how formal — through their feedback preferences.
+See [Adaptive Learning](/student/progress-analytics/adaptive-learning#feedback-learner-profile) for those, and the
+[modeling exercise](/student/exercises/modeling-exercise#automatic-student-feedback) page for the flow itself.
+
+<Callout variant={CalloutVariant.info}>
+
+  A student cannot complain about preliminary AI feedback: there is no assessment to dispute yet. See
+  [Assessment and Grading](/instructor/assessment-grading/assessment#complaints).
+
+</Callout>
+
+## Related
+
+- [Iris](/instructor/communication-support/iris) — the other AI a student meets, which tutors rather than assesses.
+- [Artemis Intelligence](/admin/artemis-intelligence) — every AI service Artemis integrates with, and who owns what.
