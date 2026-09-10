@@ -335,7 +335,8 @@
                     "nextMonth": "Next month",
                     "sessionsShort": "{{ count }} sess.",
                     "fromTime": "from {{ time }}",
-                    "untilTime": "until {{ time }}"
+                    "untilTime": "until {{ time }}",
+                    "addHolidayOn": "Add a holiday on {{ date }}"
                 },
                 "form": {
                     "from": "From",

@@ -20,6 +20,13 @@ interface HolidayListEntry {
     readonly dayOfMonth: number;
     /** Weekday for a single day, or the span for a holiday covering several. */
     readonly whenLabel: string;
+    /**
+     * The full date, for screen readers.
+     *
+     * The date block beside the row is hidden from the accessibility tree because it splits the month from the day, and
+     * the visible weekday alone would leave a listener without a date at all.
+     */
+    readonly accessibleDate: string;
     readonly timeLabel: string;
     readonly sessionCount: number;
 }
@@ -89,6 +96,7 @@ export class HolidayListComponent {
                 monthLabel: start.format('MMM'),
                 dayOfMonth: holiday.start.date(),
                 whenLabel: holiday.spansMultipleDays ? `${start.format('D MMM')} – ${end.format('D MMM')}` : start.format('dddd'),
+                accessibleDate: holiday.spansMultipleDays ? `${start.format('LL')} – ${end.format('LL')}` : start.format('LL'),
                 timeLabel: holiday.wholeDay ? wholeDayLabel : `${holiday.startTime}–${holiday.endTime}`,
                 sessionCount: this.countSessionsIn(holiday, sessionCountsByDay),
             };

@@ -154,6 +154,31 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY.plusDays(6), MONDAY));
     }
 
+    /** A year is past anything the page asks for, so the bound has to leave the largest real request alone. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCounts_withTheLongestAllowedSpan_shouldSucceed() throws Exception {
+        createSessionOn(MONDAY, 10);
+
+        List<TutorialGroupSessionCountDTO> counts = request.getList(sessionCountsPath(), HttpStatus.OK, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(366)));
+
+        assertThat(counts).containsExactly(new TutorialGroupSessionCountDTO(MONDAY, 1));
+    }
+
+    /** The dates come straight from the request, and the count loads a row per session in the span. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCounts_withAnOverlongSpan_shouldReturnBadRequest() throws Exception {
+        request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(367)));
+    }
+
+    /** Answering 400 rather than 500: LocalDate.MAX would otherwise overflow the exclusive end the count runs to. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCounts_withAnExtremeEndDate_shouldReturnBadRequest() throws Exception {
+        request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY, LocalDate.MAX));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSessionCounts_asTutor_shouldReturnForbidden() throws Exception {

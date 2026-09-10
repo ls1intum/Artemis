@@ -122,6 +122,16 @@ describe('HolidayListComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-sessions"]'))).toHaveLength(1);
+        // The count itself, not just the tag: dropping either day would leave the tag rendered and the number wrong.
+        expect(fixture.componentInstance['entries']()[0].sessionCount).toBe(12);
+    });
+
+    it('should give a screen reader the full date, which the date block beside the row hides', () => {
+        const dates = fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-accessible-date"]'));
+
+        expect(dates).toHaveLength(2);
+        // A weekday on its own would leave a listener without a date at all.
+        expect(dates[0].nativeElement.textContent).toContain('2025');
     });
 
     it('should offer edit and delete directly rather than behind a menu', () => {

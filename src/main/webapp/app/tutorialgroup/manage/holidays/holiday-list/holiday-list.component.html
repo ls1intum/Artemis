@@ -40,7 +40,9 @@
                 <!-- Takes the slack, so the tag and the buttons stay pinned to the end of the row. -->
                 <div class="flex min-w-0 flex-1 flex-col">
                     <span class="font-semibold break-words">{{ entry.holiday.reason }}</span>
-                    <span class="text-[0.8125rem] opacity-70">{{ entry.whenLabel }} · {{ entry.timeLabel }}</span>
+                    <span class="sr-only" data-testid="holiday-list-accessible-date">{{ entry.accessibleDate }}</span>
+                    <span class="text-[0.8125rem] opacity-70" aria-hidden="true">{{ entry.whenLabel }} · {{ entry.timeLabel }}</span>
+                    <span class="sr-only">{{ entry.timeLabel }}</span>
                 </div>
 
                 @if (entry.sessionCount > 0) {

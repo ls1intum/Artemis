@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,6 +52,17 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupFreePeriodServi
 public class TutorialGroupFreePeriodResource {
 
     private static final String ENTITY_NAME = "tutorialGroupFreePeriod";
+
+    /**
+     * Longest span the session counts may be asked for.
+     *
+     * The page asks for one month's grid, or for the span of a single holiday, so a year is already well past anything
+     * it needs. The bound is there because the dates arrive straight from the request and the count materialises one
+     * row per session in the span: without it an instructor could ask for every session the course has ever held in one
+     * call. It also keeps an extreme date such as {@code +999999999-12-31} from overflowing the exclusive upper bound
+     * the count is taken over, which would answer 500 rather than saying the request was wrong.
+     */
+    private static final long MAX_SESSION_COUNT_SPAN_DAYS = 366;
 
     private static final Logger log = LoggerFactory.getLogger(TutorialGroupFreePeriodResource.class);
 
@@ -234,6 +246,9 @@ public class TutorialGroupFreePeriodResource {
         log.debug("REST request to get tutorial group session counts between {} and {} of course: {}", from, to, courseId);
         if (from.isAfter(to)) {
             throw new BadRequestAlertException("The start of the span must not be after its end", ENTITY_NAME, "invalidDateRange");
+        }
+        if (ChronoUnit.DAYS.between(from, to) > MAX_SESSION_COUNT_SPAN_DAYS) {
+            throw new BadRequestAlertException("The span must not cover more than " + MAX_SESSION_COUNT_SPAN_DAYS + " days", ENTITY_NAME, "spanTooLong");
         }
         TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
