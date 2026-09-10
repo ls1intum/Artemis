@@ -1,0 +1,75 @@
+<div class="flex items-center justify-between gap-3 px-4 py-3">
+    <h2 class="m-0 flex items-baseline gap-2 text-base font-semibold">
+        <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.allHolidays"></span>
+        <span class="text-sm font-normal opacity-60" data-testid="holiday-list-count">{{ entries().length }}</span>
+    </h2>
+    <tum-ui-select-button
+        size="small"
+        optionLabel="label"
+        optionValue="value"
+        data-testid="holiday-list-filter"
+        [options]="filterOptions()"
+        [allowEmpty]="false"
+        [ngModel]="filter()"
+        [ngModelOptions]="{ standalone: true }"
+        (changed)="onFilterSelected($event)"
+    />
+</div>
+
+@if (entries().length === 0) {
+    <p class="px-4 py-6 text-center opacity-60" data-testid="holiday-list-empty" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.noHolidays"></p>
+} @else {
+    <ul class="holiday-list m-0 list-none p-0" data-testid="holiday-list">
+        @for (entry of entries(); track entry.key) {
+            <li class="holiday-list-item" data-testid="holiday-list-item" [attr.data-day]="entry.occurrence.dayKey">
+                <div class="holiday-list-date" aria-hidden="true">
+                    <span class="holiday-list-month">{{ entry.monthLabel }}</span>
+                    <span class="holiday-list-day">{{ entry.dayOfMonth }}</span>
+                </div>
+
+                <div class="holiday-list-body">
+                    <span class="holiday-list-reason">{{ entry.occurrence.reason }}</span>
+                    <span class="holiday-list-meta">{{ entry.weekdayLabel }} · {{ entry.timeLabel }}</span>
+                </div>
+
+                @if (entry.sessionCount > 0) {
+                    <tum-ui-tag
+                        severity="danger"
+                        rounded="true"
+                        data-testid="holiday-list-sessions"
+                        [value]="'artemisApp.pages.tutorialFreePeriodsManagement.sessionsCancelled' | artemisTranslate: { count: entry.sessionCount }"
+                    />
+                }
+
+                <button
+                    tumUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="text"
+                    type="button"
+                    data-testid="holiday-list-actions"
+                    [tumUiMenuTrigger]="holidayActions"
+                    [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.actionsFor' | artemisTranslate: { reason: entry.occurrence.reason }"
+                >
+                    <fa-icon [icon]="faEllipsis" />
+                </button>
+                <ng-template #holidayActions>
+                    <tum-ui-menu>
+                        <button tumUiMenuItem type="button" data-testid="holiday-edit" (click)="editRequested.emit(entry.occurrence)">
+                            <span jhiTranslate="entity.action.edit"></span>
+                        </button>
+                        <button tumUiMenuItem type="button" data-testid="holiday-delete" (click)="deleteRequested.emit(entry.occurrence)">
+                            <span jhiTranslate="entity.action.delete"></span>
+                        </button>
+                    </tum-ui-menu>
+                </ng-template>
+            </li>
+        }
+    </ul>
+}
+
+@if (filter() === 'upcoming' && pastCount() > 0) {
+    <p class="holiday-list-footnote" data-testid="holiday-list-past-note">
+        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.pastHidden' | artemisTranslate: { count: pastCount() } }}
+    </p>
+}

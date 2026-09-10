@@ -316,11 +316,49 @@
                 }
             },
             "tutorialFreePeriodsManagement": {
-                "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",
-                "title": "Tutorial Free Periods Management",
-                "createFreePeriodButton": "Add New Free Period",
+                "title": "Holidays",
+                "explanation": "Define course wide days on which no tutorial group sessions take place.",
+                "allHolidays": "All holidays",
+                "addHoliday": "Add holiday",
+                "editHoliday": "Edit holiday",
+                "wholeDay": "Whole day",
+                "noHolidays": "No holidays yet.",
+                "sessionsCancelled": "{{ count }} sessions",
+                "actionsFor": "Actions for {{ reason }}",
+                "pastHidden": "{{ count }} holidays in the past are hidden from the upcoming filter.",
+                "filter": {
+                    "upcoming": "Upcoming",
+                    "all": "All"
+                },
+                "calendar": {
+                    "today": "Today",
+                    "previousMonth": "Previous month",
+                    "nextMonth": "Next month",
+                    "sessionsShort": "{{ count }} sess."
+                },
+                "form": {
+                    "date": "Date",
+                    "startTime": "Start time",
+                    "endTime": "End time",
+                    "reason": "Reason",
+                    "reasonPlaceholder": "e.g. Christmas holidays",
+                    "wholeDayHint": "All sessions on this date are cancelled.",
+                    "invalidTimeRange": "The start time must be before the end time.",
+                    "sessionsWillBeCancelled": "{{ count }} sessions on this date will be cancelled."
+                },
+                "import": {
+                    "button": "Import public holidays",
+                    "header": "Import public holidays",
+                    "loading": "Loading public holidays…",
+                    "notConfigured": "Artemis has no source of public holidays configured yet, so there is nothing to import. Add holidays manually in the meantime.",
+                    "noneFound": "No public holidays fall within this course's tutorial period.",
+                    "alreadyExists": "Already added",
+                    "importSelected": "Import {{ count }}"
+                },
                 "deleteDialog": {
-                    "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
+                    "header": "Delete holiday",
+                    "question": "Are you sure you want to delete the holiday {{ reason }}?",
+                    "multiDayQuestion": "{{ reason }} spans several days and is stored as one entry, so deleting it removes every day it covers. Delete it?"
                 }
             },
             "createOrEditTutorialFreePeriodTitle": {

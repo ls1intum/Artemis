@@ -1,0 +1,83 @@
+<div class="flex items-center justify-between gap-3 px-4 py-3">
+    <h2 class="m-0 text-xl font-semibold" data-testid="holiday-calendar-month">{{ monthLabel() }}</h2>
+    <div class="flex items-center gap-2">
+        <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-calendar-today" (click)="showCurrentMonth()">
+            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.calendar.today"></span>
+        </button>
+        <button
+            tumUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            type="button"
+            data-testid="holiday-calendar-previous"
+            [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.previousMonth' | artemisTranslate"
+            (click)="showPreviousMonth()"
+        >
+            <fa-icon [icon]="faChevronLeft" />
+        </button>
+        <button
+            tumUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            type="button"
+            data-testid="holiday-calendar-next"
+            [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.nextMonth' | artemisTranslate"
+            (click)="showNextMonth()"
+        >
+            <fa-icon [icon]="faChevronRight" />
+        </button>
+    </div>
+</div>
+
+<div class="holiday-grid" role="grid" data-testid="holiday-calendar-grid">
+    <div class="holiday-grid-row holiday-grid-head" role="row">
+        @for (weekdayKey of weekdayKeys; track weekdayKey) {
+            <div class="holiday-grid-weekday" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
+        }
+    </div>
+
+    @for (week of weeks(); track week.id) {
+        <div class="holiday-grid-row" role="row">
+            @for (day of week.days; track day.dayKey) {
+                <!-- A day is a button only where it can act, so a day outside the month is not announced as clickable. -->
+                <div
+                    class="holiday-grid-day"
+                    role="gridcell"
+                    [class.holiday-grid-day-outside]="!day.inDisplayedMonth"
+                    [class.holiday-grid-day-has-holiday]="day.holidays.length > 0"
+                    [attr.data-day]="day.dayKey"
+                    [attr.data-has-holiday]="day.holidays.length > 0 ? true : null"
+                    [attr.tabindex]="day.inDisplayedMonth ? 0 : null"
+                    [attr.role]="day.inDisplayedMonth ? 'button' : null"
+                    (click)="onDayClick(day)"
+                    (keydown.enter)="onDayClick(day)"
+                    (keydown.space)="onDayClick(day)"
+                >
+                    <div class="holiday-grid-day-header">
+                        <span class="holiday-grid-day-number" [class.holiday-grid-day-number-today]="day.isToday">{{ day.dayOfMonth }}</span>
+                        @if (day.sessionCount > 0 && day.holidays.length === 0) {
+                            <span class="holiday-grid-day-sessions">{{
+                                'artemisApp.pages.tutorialFreePeriodsManagement.calendar.sessionsShort' | artemisTranslate: { count: day.sessionCount }
+                            }}</span>
+                        }
+                    </div>
+
+                    @for (holiday of day.holidays; track holiday.period.id + '-' + holiday.dayKey) {
+                        <div class="holiday-grid-event" data-testid="holiday-calendar-event">
+                            <span class="holiday-grid-event-title">{{ holiday.reason }}</span>
+                            <span class="holiday-grid-event-time">
+                                @if (holiday.wholeDay) {
+                                    <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.wholeDay"></span>
+                                } @else {
+                                    {{ holiday.startTime }}–{{ holiday.endTime }}
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

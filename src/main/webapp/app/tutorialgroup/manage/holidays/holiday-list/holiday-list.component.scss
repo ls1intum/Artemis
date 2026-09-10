@@ -1,0 +1,55 @@
+.holiday-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    border-top: 1px solid var(--tumaet-ui-border-color);
+}
+
+/* Fixed width so the month/day blocks line up down the list however wide the localized month abbreviation is. */
+.holiday-list-date {
+    display: flex;
+    flex: none;
+    width: 2.5rem;
+    flex-direction: column;
+    align-items: center;
+}
+
+.holiday-list-month {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.6;
+}
+
+.holiday-list-day {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* Takes the slack so the tag and the actions button stay pinned to the end of the row. */
+.holiday-list-body {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.holiday-list-reason {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.holiday-list-meta {
+    font-size: 0.8125rem;
+    opacity: 0.7;
+}
+
+.holiday-list-footnote {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--tumaet-ui-border-color);
+    font-size: 0.8125rem;
+    opacity: 0.7;
+}

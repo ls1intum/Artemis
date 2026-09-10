@@ -316,11 +316,49 @@
                 }
             },
             "tutorialFreePeriodsManagement": {
-                "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
-                "title": "Freie Zeiträume verwalten",
-                "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
+                "title": "Feiertage",
+                "explanation": "Lege kursweite Tage fest, an denen keine Übungsgruppentermine stattfinden.",
+                "allHolidays": "Alle Feiertage",
+                "addHoliday": "Feiertag hinzufügen",
+                "editHoliday": "Feiertag bearbeiten",
+                "wholeDay": "Ganztägig",
+                "noHolidays": "Noch keine Feiertage.",
+                "sessionsCancelled": "{{ count }} Termine",
+                "actionsFor": "Aktionen für {{ reason }}",
+                "pastHidden": "{{ count }} vergangene Feiertage werden im Filter „Bevorstehend“ ausgeblendet.",
+                "filter": {
+                    "upcoming": "Bevorstehend",
+                    "all": "Alle"
+                },
+                "calendar": {
+                    "today": "Heute",
+                    "previousMonth": "Vorheriger Monat",
+                    "nextMonth": "Nächster Monat",
+                    "sessionsShort": "{{ count }} Term."
+                },
+                "form": {
+                    "date": "Datum",
+                    "startTime": "Startzeit",
+                    "endTime": "Endzeit",
+                    "reason": "Grund",
+                    "reasonPlaceholder": "z. B. Weihnachtsferien",
+                    "wholeDayHint": "Alle Termine an diesem Datum werden abgesagt.",
+                    "invalidTimeRange": "Die Startzeit muss vor der Endzeit liegen.",
+                    "sessionsWillBeCancelled": "{{ count }} Termine an diesem Datum werden abgesagt."
+                },
+                "import": {
+                    "button": "Feiertage importieren",
+                    "header": "Feiertage importieren",
+                    "loading": "Feiertage werden geladen…",
+                    "notConfigured": "In Artemis ist noch keine Quelle für gesetzliche Feiertage konfiguriert, daher gibt es nichts zu importieren. Feiertage können solange manuell angelegt werden.",
+                    "noneFound": "Im Übungszeitraum dieses Kurses liegen keine gesetzlichen Feiertage.",
+                    "alreadyExists": "Bereits hinzugefügt",
+                    "importSelected": "{{ count }} importieren"
+                },
                 "deleteDialog": {
-                    "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
+                    "header": "Feiertag löschen",
+                    "question": "Sicher, dass der Feiertag {{ reason }} gelöscht werden soll?",
+                    "multiDayQuestion": "{{ reason }} erstreckt sich über mehrere Tage und ist als ein Eintrag gespeichert. Beim Löschen entfallen daher alle betroffenen Tage. Wirklich löschen?"
                 }
             },
             "createOrEditTutorialFreePeriodTitle": {

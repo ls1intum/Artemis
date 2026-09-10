@@ -120,6 +120,29 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             """)
     Set<TutorialGroupSession> findAllBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
+    /**
+     * Returns the start of every session of a course that begins in the given span, ordered.
+     * <p>
+     * Only the start is selected because the caller counts sessions per calendar day and nothing else about the session
+     * matters for that. Grouping by day is deliberately left to the caller rather than expressed in the query: the day a
+     * session falls on depends on the time zone of the tutorial groups configuration, and a database-side date
+     * conversion would key the count off the server's zone instead.
+     *
+     * @param course the course whose sessions are counted
+     * @param start  the inclusive start of the span
+     * @param end    the exclusive end of the span
+     * @return the start of each session in the span, ascending
+     */
+    @Query("""
+            SELECT session.start
+            FROM TutorialGroupSession session
+            WHERE session.tutorialGroup.course = :course
+                AND session.start >= :start
+                AND session.start < :end
+            ORDER BY session.start
+            """)
+    List<ZonedDateTime> findSessionStartsBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
+
     @Transactional // ok because of delete
     @Modifying
     void deleteByTutorialGroupCourse(Course course);

@@ -4,6 +4,9 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -13,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -31,10 +36,13 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.PublicHolidaySuggestionsDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodRequestDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.service.PublicHolidayProvider;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupFreePeriodService;
 
 @Conditional(TutorialGroupEnabled.class)
@@ -56,13 +64,16 @@ public class TutorialGroupFreePeriodResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final PublicHolidayProvider publicHolidayProvider;
+
     public TutorialGroupFreePeriodResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
             TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository, TutorialGroupFreePeriodService tutorialGroupFreePeriodService,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, PublicHolidayProvider publicHolidayProvider) {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
         this.authorizationCheckService = authorizationCheckService;
+        this.publicHolidayProvider = publicHolidayProvider;
     }
 
     /**
@@ -207,6 +218,65 @@ public class TutorialGroupFreePeriodResource {
         tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod, null, true);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET courses/:courseId/tutorial-free-periods/session-counts : how many tutorial group sessions the course holds on
+     * each day of the requested span.
+     * <p>
+     * The holidays page shows the number beside every day of the month it displays, and again beside each holiday, so it
+     * asks for a whole month at a time instead of one day per request. Days without a session are omitted.
+     *
+     * @param courseId the id of the course whose sessions are counted
+     * @param from     the inclusive first day of the span, in the time zone of the tutorial groups configuration
+     * @param to       the inclusive last day of the span, in the time zone of the tutorial groups configuration
+     * @return ResponseEntity with status 200 (OK) and the counts of the days that hold at least one session
+     */
+    @GetMapping("courses/{courseId}/tutorial-free-periods/session-counts")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<TutorialGroupSessionCountDTO>> getSessionCounts(@PathVariable Long courseId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        log.debug("REST request to get tutorial group session counts between {} and {} of course: {}", from, to, courseId);
+        if (from.isAfter(to)) {
+            throw new BadRequestAlertException("The start of the span must not be after its end", ENTITY_NAME, "invalidDateRange");
+        }
+        TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+        ZoneId timeZone = ZoneId.of(configuration.getCourse().getTimeZone());
+        return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsPerDay(configuration.getCourse(), from, to, timeZone));
+    }
+
+    /**
+     * GET courses/:courseId/tutorial-free-periods/public-holidays : the public holidays that can be imported into the
+     * course as free periods.
+     * <p>
+     * Answers with {@code configured = false} while no source of holidays is in place, which the client explains rather
+     * than rendering as "no holidays found". See {@link de.tum.cit.aet.artemis.tutorialgroup.service.PublicHolidayProvider}.
+     *
+     * @param courseId the id of the course the holidays would be imported into
+     * @param from     the inclusive first day to consider
+     * @param to       the inclusive last day to consider
+     * @return ResponseEntity with status 200 (OK) and the holidays on offer
+     */
+    @GetMapping("courses/{courseId}/tutorial-free-periods/public-holidays")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<PublicHolidaySuggestionsDTO> getPublicHolidays(@PathVariable Long courseId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        log.debug("REST request to get importable public holidays between {} and {} for course: {}", from, to, courseId);
+        if (from.isAfter(to)) {
+            throw new BadRequestAlertException("The start of the span must not be after its end", ENTITY_NAME, "invalidDateRange");
+        }
+        TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
+        return ResponseEntity.ok(new PublicHolidaySuggestionsDTO(publicHolidayProvider.isConfigured(), publicHolidayProvider.findHolidaysBetween(from, to)));
+    }
+
+    private TutorialGroupsConfiguration getConfigurationElseThrow(Long courseId) {
+        return tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId)
+                .orElseThrow(() -> new BadRequestAlertException("The course has no tutorial groups configuration", ENTITY_NAME, "noConfiguration"));
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroupFreePeriod tutorialGroupFreePeriod, Optional<Long> courseId, Optional<Long> tutorialGroupsConfigurationId) {

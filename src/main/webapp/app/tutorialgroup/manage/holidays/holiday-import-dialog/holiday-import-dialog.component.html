@@ -1,0 +1,41 @@
+<tum-ui-dialog size="medium" data-testid="holiday-import-dialog" [(visible)]="visible" [header]="'artemisApp.pages.tutorialFreePeriodsManagement.import.header' | artemisTranslate">
+    @if (isLoading()) {
+        <p class="py-6 text-center opacity-60" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.import.loading"></p>
+    } @else if (!providerConfigured()) {
+        <!-- Not an error: nothing is broken, Artemis simply has no source of public holidays wired up yet. -->
+        <tum-ui-message
+            severity="info"
+            data-testid="holiday-import-unavailable"
+            [text]="'artemisApp.pages.tutorialFreePeriodsManagement.import.notConfigured' | artemisTranslate"
+        />
+    } @else if (candidates().length === 0) {
+        <p class="py-6 text-center opacity-60" data-testid="holiday-import-empty" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.import.noneFound"></p>
+    } @else {
+        <ul class="m-0 flex list-none flex-col gap-1 p-0" data-testid="holiday-import-list">
+            @for (candidate of candidates(); track candidate.holiday.date) {
+                <li class="flex items-center gap-3 py-1">
+                    <tum-ui-checkbox
+                        [checked]="isSelected(candidate.holiday)"
+                        [disabled]="candidate.holiday.alreadyExists"
+                        [ariaLabel]="candidate.holiday.name"
+                        (changed)="toggle(candidate.holiday, $event.checked)"
+                    />
+                    <span class="flex-1">{{ candidate.holiday.name }}</span>
+                    <span class="text-sm opacity-70">{{ candidate.label }}</span>
+                    @if (candidate.holiday.alreadyExists) {
+                        <span class="text-sm opacity-60" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.import.alreadyExists"></span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    <div class="mt-4 flex justify-end gap-2">
+        <button tumUiButton severity="secondary" variant="outlined" type="button" data-testid="holiday-import-cancel" (click)="onCancel()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button tumUiButton type="button" data-testid="holiday-import-submit" [disabled]="selectedCount() === 0" (click)="onImport()">
+            {{ 'artemisApp.pages.tutorialFreePeriodsManagement.import.importSelected' | artemisTranslate: { count: selectedCount() } }}
+        </button>
+    </div>
+</tum-ui-dialog>
