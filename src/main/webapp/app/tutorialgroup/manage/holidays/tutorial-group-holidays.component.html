@@ -1,9 +1,5 @@
-@if (course(); as currentCourse) {
+@if (course()) {
     <div *titleBarActions class="flex items-center gap-2">
-        <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="import-public-holidays-btn" (click)="importDialogVisible.set(true)">
-            <fa-icon [icon]="faFileImport" />
-            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.import.button"></span>
-        </button>
         <button tumUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialog()">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
@@ -11,7 +7,7 @@
     </div>
 
     <!-- Calendar and list sit side by side where there is room, and stack below xl so neither is squeezed. -->
-    <div class="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(22rem,1fr)]">
+    <div class="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
         <section class="rounded-lg border border-solid" style="border-color: var(--tumaet-ui-border-color)" data-testid="holiday-calendar">
             <jhi-holiday-month-grid
                 [displayedMonth]="displayedMonth()"
@@ -46,16 +42,6 @@
         (save)="onSave($event)"
         (selectedDayChange)="dialogSelectedDay.set($event)"
     />
-
-    @if (currentCourse.id !== undefined) {
-        <jhi-holiday-import-dialog
-            [(visible)]="importDialogVisible"
-            [courseId]="currentCourse.id"
-            [from]="importSpanStart()"
-            [to]="importSpanEnd()"
-            (importRequested)="onImport($event)"
-        />
-    }
 
     <tum-ui-confirm-dialog />
 }

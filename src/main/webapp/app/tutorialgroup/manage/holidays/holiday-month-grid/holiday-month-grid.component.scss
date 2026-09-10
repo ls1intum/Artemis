@@ -22,8 +22,9 @@
 }
 
 .holiday-grid-day {
-    min-height: 7.5rem;
-    padding: 0.5rem;
+    /* Room for the day number plus one holiday; a day with more simply grows, so an empty month stays compact. */
+    min-height: 5.5rem;
+    padding: 0.375rem 0.5rem;
     border-right: 1px solid var(--tumaet-ui-border-color);
     border-bottom: 1px solid var(--tumaet-ui-border-color);
     cursor: pointer;
@@ -69,7 +70,7 @@
 }
 
 .holiday-grid-day-sessions {
-    font-family: var(--bs-font-monospace, monospace);
+    font-family: monospace;
     font-size: 0.75rem;
     opacity: 0.6;
 }
@@ -94,7 +95,7 @@
 }
 
 .holiday-grid-event-time {
-    font-family: var(--bs-font-monospace, monospace);
+    font-family: monospace;
     font-size: 0.75rem;
     opacity: 0.75;
 }

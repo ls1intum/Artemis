@@ -20,12 +20,11 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.PublicHolidaySuggestionsDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 
 /**
- * Covers the endpoints the holidays page added: the per-day session counts it labels the calendar with, and the public
- * holiday suggestions it offers for import.
+ * Covers the endpoint the holidays page added: the per-day session counts it labels the calendar and the holiday list
+ * with.
  */
 class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -58,10 +57,6 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
     private String sessionCountsPath() {
         return "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-free-periods/session-counts";
-    }
-
-    private String publicHolidaysPath() {
-        return "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-free-periods/public-holidays";
     }
 
     private MultiValueMap<String, String> span(LocalDate from, LocalDate to) {
@@ -146,19 +141,4 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         request.getList(sessionCountsPath(), HttpStatus.FORBIDDEN, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getPublicHolidays_withoutAConfiguredProvider_shouldReportThatRatherThanAnEmptyList() throws Exception {
-        PublicHolidaySuggestionsDTO suggestions = request.get(publicHolidaysPath(), HttpStatus.OK, PublicHolidaySuggestionsDTO.class, span(MONDAY, MONDAY.plusMonths(3)));
-
-        // The client shows an explanation for this, so that "not wired up yet" never reads as "this span has none".
-        assertThat(suggestions.configured()).isFalse();
-        assertThat(suggestions.holidays()).isNullOrEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPublicHolidays_asStudent_shouldReturnForbidden() throws Exception {
-        request.get(publicHolidaysPath(), HttpStatus.FORBIDDEN, PublicHolidaySuggestionsDTO.class, span(MONDAY, MONDAY.plusMonths(3)));
-    }
 }

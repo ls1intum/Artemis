@@ -116,32 +116,6 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(create).not.toHaveBeenCalled();
     });
 
-    it('should create one whole-day holiday per imported public holiday', () => {
-        const create = vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
-
-        component['onImport']([
-            { date: '2025-12-25', name: 'Christmas Day', alreadyExists: false },
-            { date: '2026-01-01', name: 'New Year', alreadyExists: false },
-        ]);
-
-        expect(create).toHaveBeenCalledTimes(2);
-        expect(create.mock.calls[0][2].reason).toBe('Christmas Day');
-        expect(dayjs(create.mock.calls[1][2].endDate).format('HH:mm')).toBe('23:59');
-    });
-
-    it('should not issue a request when nothing was selected for import', () => {
-        const create = vi.spyOn(freePeriodService, 'create');
-
-        component['onImport']([]);
-
-        expect(create).not.toHaveBeenCalled();
-    });
-
-    it('should offer the tutorial period of the course as the import span', () => {
-        expect(component['importSpanStart']().format('YYYY-MM-DD')).toBe('2025-10-01');
-        expect(component['importSpanEnd']().format('YYYY-MM-DD')).toBe('2026-02-01');
-    });
-
     it('should expand a legacy multi-day holiday across its days', () => {
         const multiDay = new TutorialGroupFreePeriod();
         multiDay.id = 12;

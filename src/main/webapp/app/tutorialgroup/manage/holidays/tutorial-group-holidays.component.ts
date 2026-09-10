@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { finalize } from 'rxjs/operators';
-import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,9 +22,6 @@ import { DAY_KEY_FORMAT, HolidayOccurrence, groupByDay, inCourseZone, toOccurren
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 import { HolidayListComponent, HolidayListFilter } from 'app/tutorialgroup/manage/holidays/holiday-list/holiday-list.component';
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
-import { HolidayImportDialogComponent } from 'app/tutorialgroup/manage/holidays/holiday-import-dialog/holiday-import-dialog.component';
-import { PublicHoliday } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
-import { forkJoin } from 'rxjs';
 
 /** The last minute of the day, which is how a whole-day holiday is stored. */
 const END_OF_DAY = { hour: 23, minute: 59 };
@@ -51,7 +48,6 @@ const END_OF_DAY = { hour: 23, minute: 59 };
         HolidayMonthGridComponent,
         HolidayListComponent,
         HolidayDialogComponent,
-        HolidayImportDialogComponent,
     ],
 })
 export class TutorialGroupHolidaysComponent {
@@ -64,7 +60,6 @@ export class TutorialGroupHolidaysComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faPlus = faPlus;
-    protected readonly faFileImport = faFileImport;
 
     protected readonly course = signal<Course | undefined>(undefined);
     protected readonly configuration = signal<TutorialGroupsConfiguration | undefined>(undefined);
@@ -75,7 +70,6 @@ export class TutorialGroupHolidaysComponent {
 
     protected readonly filter = signal<HolidayListFilter>('upcoming');
     protected readonly dialogVisible = signal(false);
-    protected readonly importDialogVisible = signal(false);
     protected readonly editedHoliday = signal<HolidayOccurrence | undefined>(undefined);
     protected readonly dialogInitialDay = signal<dayjs.Dayjs | undefined>(undefined);
     /** The day the dialog is currently showing, so the session warning follows the date the reader picks. */
@@ -86,20 +80,6 @@ export class TutorialGroupHolidaysComponent {
     /** Today in the course's zone: a holiday cancels a day of the course, not a day of whoever is reading. */
     protected readonly today = computed(() => inCourseZone(dayjs(), this.timeZone()).startOf('day'));
     protected readonly displayedMonth = signal(dayjs().startOf('month'));
-
-    /*
-     * The import offers the course's tutorial period, which is the span holidays can matter for. A course without one
-     * configured falls back to the displayed year, so the button still does something rather than failing silently.
-     */
-    protected readonly importSpanStart = computed(() => {
-        const periodStart = this.configuration()?.tutorialPeriodStartInclusive;
-        return periodStart ? inCourseZone(periodStart, this.timeZone()) : this.displayedMonth().startOf('year');
-    });
-
-    protected readonly importSpanEnd = computed(() => {
-        const periodEnd = this.configuration()?.tutorialPeriodEndInclusive;
-        return periodEnd ? inCourseZone(periodEnd, this.timeZone()) : this.displayedMonth().endOf('year');
-    });
 
     protected readonly occurrences = computed(() => toOccurrences(this.freePeriods(), this.timeZone()));
     protected readonly holidaysByDay = computed(() => groupByDay(this.occurrences()));
@@ -249,38 +229,6 @@ export class TutorialGroupHolidaysComponent {
                     });
             },
         });
-    }
-
-    /**
-     * Creates one whole-day free period per chosen public holiday.
-     *
-     * The requests go out together and the page reloads once at the end, rather than reloading per holiday: importing a
-     * term's worth of holidays would otherwise refetch the configuration a dozen times over.
-     */
-    protected onImport(holidays: readonly PublicHoliday[]): void {
-        const courseId = this.course()?.id;
-        const configurationId = this.configuration()?.id;
-        if (courseId === undefined || configurationId === undefined || holidays.length === 0) {
-            return;
-        }
-        this.isSaving.set(true);
-        const requests = holidays.map((holiday) => {
-            const day = dayjs(holiday.date).startOf('day');
-            return this.freePeriodService.create(courseId, configurationId, {
-                startDate: day.toDate(),
-                endDate: day.set('hour', END_OF_DAY.hour).set('minute', END_OF_DAY.minute).startOf('minute').toDate(),
-                reason: holiday.name,
-            });
-        });
-        forkJoin(requests)
-            .pipe(
-                finalize(() => this.isSaving.set(false)),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe({
-                next: () => this.loadConfiguration(),
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
     }
 
     private applyTime(day: dayjs.Dayjs, time: string): dayjs.Dayjs {

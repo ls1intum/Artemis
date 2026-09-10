@@ -26,19 +26,6 @@ export interface TutorialGroupSessionCount {
     count: number;
 }
 
-/** One public holiday on offer for import. */
-export interface PublicHoliday {
-    date: string;
-    name: string;
-    alreadyExists: boolean;
-}
-
-export interface PublicHolidaySuggestions {
-    /** False while Artemis has no source of public holidays configured, as opposed to a span that simply has none. */
-    configured: boolean;
-    holidays?: PublicHoliday[];
-}
-
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodService {
     private httpClient = inject(HttpClient);
@@ -97,17 +84,6 @@ export class TutorialGroupFreePeriodService {
     getSessionCounts(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs): Observable<TutorialGroupSessionCount[]> {
         const params = new HttpParams().set('from', from.format(SERVER_DATE_FORMAT)).set('to', to.format(SERVER_DATE_FORMAT));
         return this.httpClient.get<TutorialGroupSessionCount[]>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/session-counts`, { params });
-    }
-
-    /**
-     * Loads the public holidays that can be imported into the course.
-     *
-     * `configured` is false while Artemis has no source of public holidays, which the caller explains rather than
-     * rendering as "no holidays found".
-     */
-    getPublicHolidays(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs): Observable<PublicHolidaySuggestions> {
-        const params = new HttpParams().set('from', from.format(SERVER_DATE_FORMAT)).set('to', to.format(SERVER_DATE_FORMAT));
-        return this.httpClient.get<PublicHolidaySuggestions>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/public-holidays`, { params });
     }
 
     private convertTutorialGroupFreePeriodResponseDatesFromServer(res: HttpResponse<TutorialGroupFreePeriod>): HttpResponse<TutorialGroupFreePeriod> {

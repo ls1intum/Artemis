@@ -346,15 +346,6 @@
                     "invalidTimeRange": "The start time must be before the end time.",
                     "sessionsWillBeCancelled": "{{ count }} sessions on this date will be cancelled."
                 },
-                "import": {
-                    "button": "Import public holidays",
-                    "header": "Import public holidays",
-                    "loading": "Loading public holidays…",
-                    "notConfigured": "Artemis has no source of public holidays configured yet, so there is nothing to import. Add holidays manually in the meantime.",
-                    "noneFound": "No public holidays fall within this course's tutorial period.",
-                    "alreadyExists": "Already added",
-                    "importSelected": "Import {{ count }}"
-                },
                 "deleteDialog": {
                     "header": "Delete holiday",
                     "question": "Are you sure you want to delete the holiday {{ reason }}?",

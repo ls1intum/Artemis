@@ -36,13 +36,11 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.PublicHolidaySuggestionsDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodRequestDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.service.PublicHolidayProvider;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupFreePeriodService;
 
 @Conditional(TutorialGroupEnabled.class)
@@ -64,16 +62,13 @@ public class TutorialGroupFreePeriodResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final PublicHolidayProvider publicHolidayProvider;
-
     public TutorialGroupFreePeriodResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
             TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository, TutorialGroupFreePeriodService tutorialGroupFreePeriodService,
-            AuthorizationCheckService authorizationCheckService, PublicHolidayProvider publicHolidayProvider) {
+            AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
         this.authorizationCheckService = authorizationCheckService;
-        this.publicHolidayProvider = publicHolidayProvider;
     }
 
     /**
@@ -247,31 +242,6 @@ public class TutorialGroupFreePeriodResource {
         }
         ZoneId timeZone = ZoneId.of(configuration.getCourse().getTimeZone());
         return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsPerDay(configuration.getCourse(), from, to, timeZone));
-    }
-
-    /**
-     * GET courses/:courseId/tutorial-free-periods/public-holidays : the public holidays that can be imported into the
-     * course as free periods.
-     * <p>
-     * Answers with {@code configured = false} while no source of holidays is in place, which the client explains rather
-     * than rendering as "no holidays found". See {@link de.tum.cit.aet.artemis.tutorialgroup.service.PublicHolidayProvider}.
-     *
-     * @param courseId the id of the course the holidays would be imported into
-     * @param from     the inclusive first day to consider
-     * @param to       the inclusive last day to consider
-     * @return ResponseEntity with status 200 (OK) and the holidays on offer
-     */
-    @GetMapping("courses/{courseId}/tutorial-free-periods/public-holidays")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<PublicHolidaySuggestionsDTO> getPublicHolidays(@PathVariable Long courseId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        log.debug("REST request to get importable public holidays between {} and {} for course: {}", from, to, courseId);
-        if (from.isAfter(to)) {
-            throw new BadRequestAlertException("The start of the span must not be after its end", ENTITY_NAME, "invalidDateRange");
-        }
-        TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
-        return ResponseEntity.ok(new PublicHolidaySuggestionsDTO(publicHolidayProvider.isConfigured(), publicHolidayProvider.findHolidaysBetween(from, to)));
     }
 
     private TutorialGroupsConfiguration getConfigurationElseThrow(Long courseId) {

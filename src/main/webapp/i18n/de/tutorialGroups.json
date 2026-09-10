@@ -346,15 +346,6 @@
                     "invalidTimeRange": "Die Startzeit muss vor der Endzeit liegen.",
                     "sessionsWillBeCancelled": "{{ count }} Termine an diesem Datum werden abgesagt."
                 },
-                "import": {
-                    "button": "Feiertage importieren",
-                    "header": "Feiertage importieren",
-                    "loading": "Feiertage werden geladen…",
-                    "notConfigured": "In Artemis ist noch keine Quelle für gesetzliche Feiertage konfiguriert, daher gibt es nichts zu importieren. Feiertage können solange manuell angelegt werden.",
-                    "noneFound": "Im Übungszeitraum dieses Kurses liegen keine gesetzlichen Feiertage.",
-                    "alreadyExists": "Bereits hinzugefügt",
-                    "importSelected": "{{ count }} importieren"
-                },
                 "deleteDialog": {
                     "header": "Feiertag löschen",
                     "question": "Sicher, dass der Feiertag {{ reason }} gelöscht werden soll?",
