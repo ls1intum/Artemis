@@ -153,15 +153,21 @@ export class TutorialGroupsManagementComponent {
     private readonly campusColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('campusColumn');
     private readonly scheduleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('scheduleColumn');
 
+    /*
+     * No column declares a `width`. A width is a floor rather than a hint, so the seven that carried one claimed 71rem
+     * between them however little they held - a group titled "Test 1" sat in 11rem - and the row buttons, the only
+     * column without a floor, were pushed into the horizontal scroller. Auto layout sizes each column to its content
+     * and shares out the rest, which is what the short values here want; the headings are nowrap and already keep a
+     * column from collapsing below its own label.
+     */
     protected readonly columns = computed<ColumnDef<TutorialGroupRow>[]>(() => [
-        { field: 'title', headerKey: 'artemisApp.entities.tutorialGroup.title', sort: true, width: '11rem', templateRef: this.titleColumn() },
-        { field: 'tutor', headerKey: 'artemisApp.entities.tutorialGroup.teachingAssistant', sort: true, width: '11rem', templateRef: this.tutorColumn() },
+        { field: 'title', headerKey: 'artemisApp.entities.tutorialGroup.title', sort: true, templateRef: this.titleColumn() },
+        { field: 'tutor', headerKey: 'artemisApp.entities.tutorialGroup.teachingAssistant', sort: true, templateRef: this.tutorColumn() },
         {
             field: 'utilization',
             headerKey: 'artemisApp.entities.tutorialGroup.utilization',
             headerTooltip: 'artemisApp.entities.tutorialGroup.utilizationHelp',
             sort: true,
-            width: '10rem',
             hideBelow: 'md',
             templateRef: this.utilizationColumn(),
         },
@@ -169,12 +175,14 @@ export class TutorialGroupsManagementComponent {
             field: 'registrations',
             headerKey: 'artemisApp.entities.tutorialGroup.registrationsWithCapacity',
             sort: true,
-            width: '8rem',
+            // "Registrations / Capacity" is far wider than the "0 / 15" beneath it, so it wraps rather than setting the floor.
+            wrapHeader: true,
             templateRef: this.registrationsColumn(),
         },
-        { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, width: '10rem', hideBelow: 'xl' },
-        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '8rem', hideBelow: 'lg', templateRef: this.campusColumn() },
-        { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '13rem', templateRef: this.scheduleColumn() },
+        // Last to appear and the one most often empty, so it waits for the width that fits every other column comfortably.
+        { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, hideBelow: '2xl' },
+        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, hideBelow: 'lg', templateRef: this.campusColumn() },
+        { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, templateRef: this.scheduleColumn() },
     ]);
 
     /** Re-projects the rows on a language change, so the mode standing in for a missing campus follows it. */
