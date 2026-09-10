@@ -26,7 +26,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -1447,7 +1446,7 @@ describe('Course Management Update Component', () => {
     });
 });
 
-describe('Course Management Learning Paths Feature Toggle Update', () => {
+describe('Course Management Feature Toggle Update', () => {
     const validTimeZone = 'Europe/Berlin';
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let featureToggleService: FeatureToggleService;
@@ -1498,12 +1497,10 @@ describe('Course Management Learning Paths Feature Toggle Update', () => {
         // Run change detection to update the view
         fixture.changeDetectorRef.detectChanges();
 
-        // Try to find the form field in the DOM
-        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
-        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+        const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(0);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
     });
     it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
@@ -1519,12 +1516,32 @@ describe('Course Management Learning Paths Feature Toggle Update', () => {
         // Run change detection to update the view
         fixture.changeDetectorRef.detectChanges();
 
-        // Try to find the form field in the DOM
-        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
-        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+        const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(1);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+    });
+
+    it('should hide the presentation assessments form field when the feature is not toggled', () => {
+        featureToggleSpy.mockImplementation((feature: string) => of(feature !== FeatureToggle.PresentationAssessments));
+
+        fixture.changeDetectorRef.detectChanges();
+
+        const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
+
+        expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+    });
+
+    it('should show the presentation assessments form field when the feature is toggled', () => {
+        featureToggleSpy.mockImplementation((feature: string) => of(feature === FeatureToggle.PresentationAssessments));
+
+        fixture.changeDetectorRef.detectChanges();
+
+        const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
+
+        expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
     });
 });
 

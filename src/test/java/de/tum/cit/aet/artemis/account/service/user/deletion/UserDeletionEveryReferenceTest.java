@@ -136,7 +136,8 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         long courseNotificationId = insert("course_notification", values("course_id", courseId, "type", 1, "creation_date", now, "deletion_date", now));
         long threadId = insert("review_comment_thread", values("exercise_id", exerciseId, "initial_line_number", 1, "target_type", "FILE"));
         long presentationAssessmentId = insert("presentation_assessment", values("title", "Presentation", "max_points", 10, "course_id", courseId));
-        long presentationAssessmentInstanceId = insert("presentation_assessment_instance", values("presentation_assessment_id", presentationAssessmentId));
+        long presentationAssessmentInstanceId = insert("presentation_assessment_instance",
+                values("presentation_assessment_id", presentationAssessmentId, "presentation_date", now, "language", "en", "presentation_mode", "IN_PERSON"));
 
         // ACCOUNT
         seed(UserDeletionReferencePolicy.CONDUCT_AGREEMENT, userId, values("course_id", courseId));
@@ -184,7 +185,6 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.COMPLAINT_STUDENT, userId, values("result_id", resultId, "complaint_type", "COMPLAINT", "exercise_id", exerciseId));
         seed(UserDeletionReferencePolicy.COMPLAINT_REVIEWER, userId, values("complaint_id", complaintId));
         seed(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, userId, values());
-        seed(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_STUDENT, userId, values("presentation_assessment_id", presentationAssessmentId));
         seed(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_INSTANCE_STUDENT, userId, values("presentation_assessment_instance_id", presentationAssessmentInstanceId));
         seed(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR, userId, values("submission_id", submissionId));
         seed(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR, userId,

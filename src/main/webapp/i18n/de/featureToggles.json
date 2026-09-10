@@ -195,7 +195,7 @@
                 },
                 "PresentationAssessments": {
                     "name": "Präsentationen",
-                    "description": "Ermöglicht Lehrenden, Präsentationen anzulegen und einzelne Präsentationsinstanzen zu bewerten.",
+                    "description": "Ermöglicht Lehrenden, Präsentationen anzulegen und zu bewerten.",
                     "disableWarning": "Lehrende können nicht auf Präsentationsbewertungen zugreifen oder sie verwalten. Bestehende Präsentationsdaten bleiben gespeichert."
                 },
                 "Deimos": {

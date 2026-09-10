@@ -10,7 +10,9 @@ import { FormsModule } from '@angular/forms';
 import {
     TumUiButtonComponent,
     TumUiButtonDirective,
+    TumUiButtonGroupComponent,
     TumUiDialogComponent,
+    TumUiIconFieldComponent,
     TumUiInputDirective,
     TumUiMessageComponent,
     TumUiPaginatorComponent,
@@ -84,7 +86,9 @@ const PRESENTATION_SIDEBAR_ALWAYS_SHOW = presentationSidebarAlwaysShowRecord as 
         PresentationAssessmentInstanceFormDialogComponent,
         TumUiButtonComponent,
         TumUiButtonDirective,
+        TumUiButtonGroupComponent,
         TumUiDialogComponent,
+        TumUiIconFieldComponent,
         TumUiInputDirective,
         TumUiMessageComponent,
         TumUiPaginatorComponent,
@@ -403,14 +407,19 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
 
-        this.presentationAssessmentService.delete(this.courseId(), presentationAssessment.id).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.presentationAssessments.set(this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id));
-                this.alertService.success('artemisApp.presentationAssessment.deleted', { title: presentationAssessment.title });
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.isSaving.set(true);
+        this.presentationAssessmentService
+            .delete(this.courseId(), presentationAssessment.id)
+            .pipe(finalize(() => this.isSaving.set(false)))
+            .subscribe({
+                next: () => {
+                    this.dialogErrorSource.next('');
+                    this.presentationDialogVisible.set(false);
+                    this.presentationAssessments.set(this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id));
+                    this.alertService.success('artemisApp.presentationAssessment.deleted', { title: presentationAssessment.title });
+                },
+                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            });
     }
 
     private openPresentationDialog(presentationAssessment?: PresentationAssessment): void {
@@ -447,7 +456,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         if (this.isSaving()) {
             return;
         }
-        this.presentationDialogVisible.set(false);
         this.deletePresentationAssessment(presentationAssessment);
     }
 
@@ -459,13 +467,17 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.dialogInstancePresentationAssessment.set(presentationAssessment);
         this.dialogInstance.set(instance);
         this.dialogInstanceStudentLogin.set(studentLogin);
-        this.dialogAssignedStudents.set(
-            (studentLogin ? [studentLogin] : (instance?.studentLogins ?? [])).map((login) => {
-                const user = new User(undefined, login);
-                return user;
-            }),
-        );
+        this.dialogAssignedStudents.set(this.resolveStudentsByLogin(studentLogin ? [studentLogin] : (instance?.studentLogins ?? [])));
         this.instanceDialogVisible.set(true);
+    }
+
+    private resolveStudentsByLogin(studentLogins: string[]): User[] {
+        const studentsByLogin = new Map(
+            this.courseStudents()
+                .filter((student) => !!student.login)
+                .map((student) => [student.login!, student]),
+        );
+        return studentLogins.map((login) => studentsByLogin.get(login) ?? new User(undefined, login));
     }
 
     handleInstanceDialogSave(result: PresentationAssessmentInstance): void {

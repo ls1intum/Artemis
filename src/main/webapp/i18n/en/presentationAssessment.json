@@ -22,8 +22,7 @@
             },
             "validation": {
                 "numberRequired": "Please enter a number.",
-                "wholeNumber": "Please enter a whole number.",
-                "maxPointsMin": "Max. points must be at least 1.",
+                "maxPointsMin": "Please enter a value greater than 0.",
                 "resultPointsMin": "Result must be at least 0.",
                 "pointsMax": "Points must not exceed {{ max }}."
             },

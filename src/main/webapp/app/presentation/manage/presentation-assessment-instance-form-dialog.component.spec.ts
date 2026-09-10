@@ -65,9 +65,9 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         expect(component.editForm.controls.presentationDate.hasError('minDate')).toBe(true);
     });
 
-    it('should reject non-integer and excessive result points', () => {
+    it('should accept decimal and reject excessive result points', () => {
         component.editForm.controls.resultPoints.setValue(1.5);
-        expect(component.editForm.controls.resultPoints.hasError('wholeNumber')).toBe(true);
+        expect(component.editForm.controls.resultPoints.valid).toBe(true);
 
         component.editForm.controls.resultPoints.setValue(10001);
         expect(component.editForm.controls.resultPoints.hasError('max')).toBe(true);

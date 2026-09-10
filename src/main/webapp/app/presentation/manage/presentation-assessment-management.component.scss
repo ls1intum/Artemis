@@ -11,6 +11,10 @@
 .presentation-sidebar {
     flex: 0 0 auto;
     min-width: 0;
+
+    ::ng-deep .sidebar-body > .mt-2:first-child {
+        margin-bottom: 0.25rem;
+    }
 }
 
 .presentation-content {
@@ -75,36 +79,25 @@
 }
 
 .presentation-content thead th {
-    background: var(--p-surface-50);
+    background: var(--p-content-hover-background);
 }
 
 .student-search {
-    position: relative;
     width: min(100%, 19rem);
-}
-
-.student-search-icon {
-    position: absolute;
-    z-index: 1;
-    top: 50%;
-    left: 0.75rem;
-    line-height: 1;
-    pointer-events: none;
-    transform: translateY(-50%);
 }
 
 .student-search-input {
     padding-left: 2.25rem;
-    background: var(--p-surface-50);
+    background: var(--p-content-hover-background);
 }
 
 .presentation-detail-row > td {
     padding: 1rem 1.5rem;
-    background: var(--p-surface-50);
+    background: var(--p-content-hover-background);
 }
 
 .presentation-student-row-striped > td {
-    background: var(--p-surface-50);
+    background: var(--p-content-hover-background);
 }
 
 .presentation-overview {
@@ -124,43 +117,39 @@
 .presentation-statistic {
     display: grid;
     min-width: 4.75rem;
-    cursor: pointer;
-    border: 0;
-    border-right: 1px solid var(--p-content-border-color);
-    background: transparent;
-    color: var(--p-text-color);
+    gap: 0;
     text-align: center;
 
-    &:last-child {
-        border-right: 0;
-    }
-
-    strong {
+    ::ng-deep strong {
         font-size: 1rem;
         line-height: 1.25;
     }
 
-    span {
+    ::ng-deep span {
         color: var(--p-text-muted-color);
         font-size: 0.6875rem;
     }
-
-    &.active strong {
-        color: var(--p-primary-color);
-    }
 }
 
-.presentation-statistic-assessed strong {
-    color: var(--success);
+.presentation-statistic-total ::ng-deep strong {
+    color: var(--p-primary-color);
 }
 
-.presentation-statistic-pending strong {
-    color: var(--warning);
+.presentation-statistic-assessed ::ng-deep strong {
+    color: var(--color-state-success);
+}
+
+.presentation-statistic-pending ::ng-deep strong {
+    color: var(--color-state-warning);
 }
 
 .presentation-status-filter {
-    display: flex;
-    gap: 0.5rem;
+    flex: 0 0 auto;
+
+    tum-ui-button.active ::ng-deep .tum-ui-btn {
+        color: var(--p-primary-color);
+        font-weight: 600;
+    }
 }
 
 .presentation-toolbar-divider {

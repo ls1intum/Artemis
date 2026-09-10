@@ -195,7 +195,7 @@
                 },
                 "PresentationAssessments": {
                     "name": "Presentations",
-                    "description": "Enables instructors to create presentations and assess individual presentation instances.",
+                    "description": "Enables instructors to create and assess presentations.",
                     "disableWarning": "Instructors will not be able to access or manage presentation assessments. Existing presentation data remains stored."
                 },
                 "Deimos": {

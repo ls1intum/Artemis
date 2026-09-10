@@ -1,7 +1,7 @@
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { map } from 'rxjs/operators';
-import { combineLatest } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { combineLatest, of } from 'rxjs';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -19,5 +19,6 @@ export const presentationAssessmentFeatureGuard: CanActivateFn = (route) => {
             }
             return router.createUrlTree(['/course-management', courseId, 'lectures']);
         }),
+        catchError(() => of(router.createUrlTree(['/course-management', courseId, 'lectures']))),
     );
 };

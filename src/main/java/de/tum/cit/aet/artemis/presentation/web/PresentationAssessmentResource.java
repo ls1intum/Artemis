@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentInstanceDTO;
-import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService;
 
@@ -172,23 +171,6 @@ public class PresentationAssessmentResource {
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.deleteInstance(courseId, assessmentId, instanceId);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * GET /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students : get students assigned to a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @return the ResponseEntity with status 200 (OK) and the assigned students
-     */
-    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<PresentationAssessmentStudentDTO>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
-        log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
-        return ResponseEntity
-                .ok(presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId).stream().map(PresentationAssessmentStudentDTO::of).toList());
     }
 
     private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {

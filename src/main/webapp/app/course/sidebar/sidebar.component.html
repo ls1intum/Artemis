@@ -16,7 +16,7 @@
                 <div class="sidebar-body">
                     @if (searchFieldEnabled()) {
                         <div class="mt-2 d-flex align-items-center">
-                            <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
+                            <jhi-search-filter [size]="searchFieldSize()" (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
                             @if (showFilter()) {
                                 <div class="ms-2">
                                     <a class="filter-link" (click)="openFilterExercisesDialog()">

@@ -82,8 +82,6 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.RESULT_ASSESSOR, bind(assessment::countAssessedResults, assessment::detachAssessedResults));
         bindings.put(UserDeletionReferencePolicy.PARTICIPANT_SCORE, bind(assessment::countStudentScores, assessment::deleteStudentScores));
         bindings.put(UserDeletionReferencePolicy.TUTOR_PARTICIPATION, bind(assessment::countTutorParticipations, assessment::deleteTutorParticipations));
-        bindings.put(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_STUDENT,
-                bind(assessment::countPresentationAssessmentStudents, assessment::deletePresentationAssessmentStudents));
         bindings.put(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_INSTANCE_STUDENT,
                 bind(assessment::countPresentationAssessmentInstanceStudents, assessment::deletePresentationAssessmentInstanceStudents));
 

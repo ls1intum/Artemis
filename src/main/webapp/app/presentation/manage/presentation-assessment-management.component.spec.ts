@@ -221,6 +221,14 @@ describe('PresentationAssessmentManagementComponent', () => {
         );
     });
 
+    it('should keep loaded student details when opening the instance edit dialog', () => {
+        const sharedInstance = presentationAssessment.instances![0];
+
+        component.startEditInstance(presentationAssessment, sharedInstance, 'student1');
+
+        expect(component.dialogAssignedStudents()).toEqual([expect.objectContaining({ login: 'student1', name: 'Student One' })]);
+    });
+
     it('should only remove the selected student from a shared instance', () => {
         const sharedInstance = presentationAssessment.instances![0];
         presentationAssessmentService.updateInstance.mockReturnValue(of(new HttpResponse({ body: sharedInstance })));

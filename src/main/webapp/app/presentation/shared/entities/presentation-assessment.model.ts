@@ -5,10 +5,7 @@ export interface PresentationAssessment {
     title?: string;
     description?: string;
     maxPoints?: number;
-    resultPoints?: number | null;
-    presentationDate?: dayjs.Dayjs;
     courseId?: number;
-    studentLogins?: string[];
     exerciseId?: number;
     exerciseTitle?: string;
     instances?: PresentationAssessmentInstance[];

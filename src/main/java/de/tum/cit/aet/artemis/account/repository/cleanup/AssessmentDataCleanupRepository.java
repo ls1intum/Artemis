@@ -130,22 +130,6 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
 
     @Query(nativeQuery = true, value = """
             SELECT student_id AS userId, COUNT(*) AS count
-            FROM presentation_assessment_student
-            WHERE student_id IN :userIds
-            GROUP BY student_id
-            """)
-    List<UserReferenceCount> countPresentationAssessmentStudents(@Param("userIds") Collection<Long> userIds);
-
-    @Modifying
-    @Transactional // ok because of delete
-    @Query(nativeQuery = true, value = """
-            DELETE FROM presentation_assessment_student
-            WHERE student_id = :userId
-            """)
-    int deletePresentationAssessmentStudents(@Param("userId") long userId);
-
-    @Query(nativeQuery = true, value = """
-            SELECT student_id AS userId, COUNT(*) AS count
             FROM presentation_assessment_instance_student
             WHERE student_id IN :userIds
             GROUP BY student_id

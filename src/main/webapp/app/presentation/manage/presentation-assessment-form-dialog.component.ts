@@ -1,5 +1,6 @@
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -7,6 +8,7 @@ import {
     TumUiAutoCompleteComponent,
     TumUiAutoCompleteSearchEvent,
     TumUiButtonComponent,
+    TumUiButtonDirective,
     TumUiInputDirective,
     TumUiInputNumberComponent,
     TumUiMessageComponent,
@@ -16,14 +18,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
 }
 
 const MAX_POINTS_UPPER_BOUND = 10000;
-const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
-    control.value !== undefined && control.value !== null && !Number.isInteger(Number(control.value)) ? { wholeNumber: true } : null;
 const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     typeof control.value === 'string' && control.value.trim().length === 0 ? { required: true } : null;
 
@@ -39,9 +41,11 @@ const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | nul
         FaIconComponent,
         TumUiAutoCompleteComponent,
         TumUiButtonComponent,
+        TumUiButtonDirective,
         TumUiInputDirective,
         TumUiInputNumberComponent,
         TumUiMessageComponent,
+        DeleteButtonDirective,
     ],
 })
 export class PresentationAssessmentFormDialogComponent {
@@ -51,10 +55,12 @@ export class PresentationAssessmentFormDialogComponent {
     readonly presentationAssessment = input<PresentationAssessment>();
     readonly exercises = input<Exercise[]>([]);
     readonly isSaving = input(false);
+    readonly dialogError = input<Observable<string>>();
     readonly saved = output<PresentationAssessmentFormDialogResult>();
     readonly cancelled = output<void>();
     readonly deleteRequested = output<PresentationAssessment>();
 
+    protected readonly ActionType = ActionType;
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
@@ -64,7 +70,7 @@ export class PresentationAssessmentFormDialogComponent {
     editForm = this.formBuilder.group({
         title: ['', [Validators.required, notBlank, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
-        maxPoints: [undefined as number | undefined, [Validators.required, wholeNumber, Validators.min(1), Validators.max(MAX_POINTS_UPPER_BOUND)]],
+        maxPoints: [undefined as number | undefined, [Validators.required, Validators.min(0.01), Validators.max(MAX_POINTS_UPPER_BOUND)]],
         exercise: [undefined as Exercise | undefined],
     });
 

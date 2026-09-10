@@ -26,8 +26,6 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
 
 const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
-const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
-    control.value !== undefined && control.value !== null && !Number.isInteger(Number(control.value)) ? { wholeNumber: true } : null;
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
 
@@ -93,7 +91,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         {
             presentationDate: [undefined as dayjs.Dayjs | undefined, [Validators.required, minimumPresentationDate]],
             presentationTime: [undefined as dayjs.Dayjs | undefined],
-            resultPoints: [undefined as number | undefined, [wholeNumber, Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
+            resultPoints: [undefined as number | undefined, [Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
             maxPoints: [0],
             language: ['en', Validators.required],
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],

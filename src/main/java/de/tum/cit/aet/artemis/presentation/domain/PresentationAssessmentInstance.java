@@ -30,17 +30,17 @@ public class PresentationAssessmentInstance extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private PresentationAssessment presentationAssessment;
 
-    @Column(name = "presentation_date")
+    @Column(name = "presentation_date", nullable = false)
     private ZonedDateTime presentationDate;
 
     @Column(name = "result_points")
     private Double resultPoints;
 
-    @Column(name = "language", length = 10)
+    @Column(name = "language", nullable = false, length = 10)
     private String language;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "presentation_mode", length = 20)
+    @Column(name = "presentation_mode", nullable = false, length = 20)
     private PresentationAssessmentMode mode;
 
     @Column(name = "location")

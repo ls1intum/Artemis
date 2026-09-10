@@ -10,6 +10,7 @@
             <jhi-sidebar
                 [courseId]="courseId()"
                 [sidebarData]="sidebarData()"
+                searchFieldSize="small"
                 [collapseState]="sidebarCollapseState"
                 [sidebarItemAlwaysShow]="sidebarItemAlwaysShow"
                 [itemSelected]="viewMode() === 'presentations'"
@@ -40,8 +41,7 @@
                             <div class="presentation-summary">{{ presentationAssessment.description || '-' }}</div>
 
                             <div class="presentation-grading-toolbar">
-                                <div class="student-search">
-                                    <fa-icon class="student-search-icon text-muted-color" [icon]="faSearch" />
+                                <tum-ui-icon-field class="student-search" [icon]="faSearch">
                                     <input
                                         tumUiInput
                                         tumUiInputSize="small"
@@ -52,7 +52,7 @@
                                         placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
                                         data-testid="selected-presentation-student-search"
                                     />
-                                </div>
+                                </tum-ui-icon-field>
                                 <div class="flex items-center">
                                     <tum-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="create-instance-button">
                                         <span jhiTranslate="artemisApp.presentationAssessment.enterGrade"></span>
@@ -171,33 +171,22 @@
                 } @else {
                     <section class="presentation-overview">
                         <div class="presentation-statistics" data-testid="presentation-overview-statistics">
-                            <button type="button" class="presentation-statistic" [class.active]="assessmentStatusFilter() === 'all'" (click)="setAssessmentStatusFilter('all')">
+                            <div class="presentation-statistic presentation-statistic-total">
                                 <strong>{{ studentRows().length }}</strong>
                                 <span jhiTranslate="artemisApp.presentationAssessment.statistics.total"></span>
-                            </button>
-                            <button
-                                type="button"
-                                class="presentation-statistic presentation-statistic-assessed"
-                                [class.active]="assessmentStatusFilter() === 'assessed'"
-                                (click)="setAssessmentStatusFilter('assessed')"
-                            >
+                            </div>
+                            <div class="presentation-statistic presentation-statistic-assessed">
                                 <strong>{{ assessedStudentCount() }}</strong>
                                 <span jhiTranslate="artemisApp.presentationAssessment.assessed"></span>
-                            </button>
-                            <button
-                                type="button"
-                                class="presentation-statistic presentation-statistic-pending"
-                                [class.active]="assessmentStatusFilter() === 'pending'"
-                                (click)="setAssessmentStatusFilter('pending')"
-                            >
+                            </div>
+                            <div class="presentation-statistic presentation-statistic-pending">
                                 <strong>{{ pendingStudentCount() }}</strong>
                                 <span jhiTranslate="artemisApp.presentationAssessment.pending"></span>
-                            </button>
+                            </div>
                         </div>
 
                         <div class="presentation-overall-toolbar">
-                            <div class="student-search">
-                                <fa-icon class="student-search-icon text-muted-color" [icon]="faSearch" />
+                            <tum-ui-icon-field class="student-search" [icon]="faSearch">
                                 <input
                                     tumUiInput
                                     tumUiInputSize="small"
@@ -208,30 +197,36 @@
                                     placeholder="{{ 'artemisApp.presentationAssessment.searchOverview' | artemisTranslate }}"
                                     data-testid="student-search"
                                 />
-                            </div>
-                            <div class="presentation-status-filter" role="group" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
+                            </tum-ui-icon-field>
+                            <tum-ui-button-group class="presentation-status-filter" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
                                 <tum-ui-button
                                     size="small"
-                                    [variant]="assessmentStatusFilter() === 'all' ? 'solid' : 'outlined'"
+                                    variant="text"
                                     severity="secondary"
+                                    [class.active]="assessmentStatusFilter() === 'all'"
+                                    [ariaPressed]="assessmentStatusFilter() === 'all'"
                                     (clicked)="setAssessmentStatusFilter('all')"
                                     ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
                                 ></tum-ui-button>
                                 <tum-ui-button
                                     size="small"
-                                    [variant]="assessmentStatusFilter() === 'assessed' ? 'solid' : 'outlined'"
+                                    variant="text"
                                     severity="secondary"
+                                    [class.active]="assessmentStatusFilter() === 'assessed'"
+                                    [ariaPressed]="assessmentStatusFilter() === 'assessed'"
                                     (clicked)="setAssessmentStatusFilter('assessed')"
                                     ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
                                 ></tum-ui-button>
                                 <tum-ui-button
                                     size="small"
-                                    [variant]="assessmentStatusFilter() === 'pending' ? 'solid' : 'outlined'"
+                                    variant="text"
                                     severity="secondary"
+                                    [class.active]="assessmentStatusFilter() === 'pending'"
+                                    [ariaPressed]="assessmentStatusFilter() === 'pending'"
                                     (clicked)="setAssessmentStatusFilter('pending')"
                                     ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
                                 ></tum-ui-button>
-                            </div>
+                            </tum-ui-button-group>
                             <span class="presentation-toolbar-divider" aria-hidden="true"></span>
                             <tum-ui-select
                                 size="small"
@@ -436,6 +431,7 @@
                 [presentationAssessment]="dialogPresentationAssessment()"
                 [exercises]="exercises()"
                 [isSaving]="isSaving()"
+                [dialogError]="dialogError$"
                 (saved)="handlePresentationDialogSave($event)"
                 (deleteRequested)="handlePresentationDialogDelete($event)"
                 (cancelled)="handlePresentationDialogCancel()"

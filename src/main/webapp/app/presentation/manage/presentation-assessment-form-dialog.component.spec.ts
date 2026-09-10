@@ -59,7 +59,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(1.5);
-        expect(component.editForm.controls.maxPoints.hasError('wholeNumber')).toBe(true);
+        expect(component.editForm.controls.maxPoints.valid).toBe(true);
 
         component.editForm.controls.maxPoints.setValue(10001);
         expect(component.editForm.controls.maxPoints.hasError('max')).toBe(true);

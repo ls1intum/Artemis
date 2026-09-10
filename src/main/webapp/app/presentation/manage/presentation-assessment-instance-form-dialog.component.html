@@ -37,19 +37,17 @@
                 [fluid]="true"
                 [min]="0"
                 [max]="resultPointsUpperBound"
-                [step]="1"
-                [maxFractionDigits]="0"
+                [step]="0.1"
+                [maxFractionDigits]="2"
                 formControlName="resultPoints"
             />
             @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
                 <tum-ui-message severity="error">
                     <span
                         [jhiTranslate]="
-                            editForm.controls.resultPoints.hasError('wholeNumber')
-                                ? 'artemisApp.presentationAssessment.validation.wholeNumber'
-                                : editForm.controls.resultPoints.hasError('max')
-                                  ? 'artemisApp.presentationAssessment.validation.pointsMax'
-                                  : 'artemisApp.presentationAssessment.validation.resultPointsMin'
+                            editForm.controls.resultPoints.hasError('max')
+                                ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                : 'artemisApp.presentationAssessment.validation.resultPointsMin'
                         "
                         [translateValues]="{ max: resultPointsUpperBound }"
                     ></span>

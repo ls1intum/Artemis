@@ -70,9 +70,7 @@ public class PresentationAssessmentService {
         }
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
-        Set<User> students = resolveAssignedCourseStudents(course, dto.studentLogins());
         applyDto(presentationAssessment, dto);
-        presentationAssessment.setStudents(students);
         return presentationAssessmentRepository.save(presentationAssessment);
     }
 
@@ -90,14 +88,9 @@ public class PresentationAssessmentService {
         if (!dto.id().equals(assessmentId)) {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
-        Set<User> students = dto.studentLogins() != null ? resolveAssignedCourseStudents(course, dto.studentLogins()) : null;
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
         applyDto(presentationAssessment, dto);
-        if (students != null) {
-            presentationAssessment.setStudents(students);
-        }
         presentationAssessmentRepository.save(presentationAssessment);
-        return PresentationAssessmentDTO.of(findByIdAndCourseIdElseThrow(course.getId(), assessmentId));
     }
 
     /**
@@ -176,14 +169,9 @@ public class PresentationAssessmentService {
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
-        if (dto.resultPoints() != null && dto.resultPoints() > dto.maxPoints()) {
-            throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessment.ENTITY_NAME, "resultPointsExceedMaxPoints");
-        }
         presentationAssessment.setTitle(dto.title().trim());
         presentationAssessment.setDescription(dto.description());
         presentationAssessment.setMaxPoints(dto.maxPoints());
-        presentationAssessment.setResultPoints(dto.resultPoints());
-        presentationAssessment.setPresentationDate(dto.presentationDate());
         presentationAssessment.setExercise(findCourseExercise(presentationAssessment.getCourse(), dto.exerciseId()));
     }
 
