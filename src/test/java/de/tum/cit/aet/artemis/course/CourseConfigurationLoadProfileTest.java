@@ -7,7 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 /**
  * Pins what reading a course costs.
@@ -25,7 +30,17 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private CourseTestRepository courseRepository;
 
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private long courseId;
+
+    private long examId;
+
+    private long exerciseId;
 
     @BeforeEach
     void setup() {
@@ -34,10 +49,28 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         courseId = courseRepository.save(course).getId();
+
+        Exam exam = examUtilService.addExamWithExerciseGroup(courseRepository.findByIdElseThrow(courseId), true);
+        examId = exam.getId();
+        TextExercise examExercise = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
+        exerciseId = exerciseRepository.save(examExercise).getId();
     }
 
     @Test
     void readingACourseDoesNotReadItsConfigurations() throws Exception {
         assertThatDb(() -> courseRepository.findByIdElseThrow(courseId)).hasBeenCalledTimes(1);
+    }
+
+    @Test
+    void readingAnExamReadsTheExamAndItsCourseOnly() throws Exception {
+        // Exam.course is an eager @ManyToOne, so two rows; the course's configurations must stay out of it
+        assertThatDb(() -> examRepository.findByIdElseThrow(examId)).hasBeenCalledAtMostTimes(2);
+    }
+
+    @Test
+    void readingAnExamExerciseReadsTheChainAndNothingElse() throws Exception {
+        // Exercise.exerciseGroup, ExerciseGroup.exam and Exam.course are all eager @ManyToOne, so the chain is read
+        // whatever we do. What must not be added on top is the Athena configuration of either course.
+        assertThatDb(() -> exerciseRepository.findByIdElseThrow(exerciseId)).hasBeenCalledAtMostTimes(4);
     }
 }
