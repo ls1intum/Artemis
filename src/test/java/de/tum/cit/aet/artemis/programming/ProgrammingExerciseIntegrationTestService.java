@@ -443,8 +443,7 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.deleteIfExists(pomPath);
     }
 
-    private static Path findFirstFile(List<Path> zipPaths, String fileName) throws IOException {
-        Objects.requireNonNull(zipPaths, "zipPaths must not be null");
+    private static Path findFirstFile(@NonNull List<Path> zipPaths, String fileName) throws IOException {
         if (fileName == null || fileName.isBlank()) {
             throw new IllegalArgumentException("fileName must not be null/blank");
         }

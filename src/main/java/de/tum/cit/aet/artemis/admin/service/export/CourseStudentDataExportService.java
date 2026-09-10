@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -85,6 +86,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 public class CourseStudentDataExportService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseStudentDataExportService.class);
+
+    /** Everything an exam title may not contribute to a file name, replaced by an underscore. */
+    private static final Pattern UNSAFE_TITLE_CHARACTER = Pattern.compile("[^a-zA-Z0-9-_]");
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -900,7 +904,7 @@ public class CourseStudentDataExportService {
             lines.add(String.join(",", createStatisticsRow("Std Dev", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateStandardDeviation,
                     allOverallPoints, maxPointsDouble, course)));
 
-            String sanitizedExamTitle = examScores.title() != null ? examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_") : "unnamed";
+            String sanitizedExamTitle = examScores.title() != null ? UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_") : "unnamed";
             Path outputFile = outputDir.resolve("exam-scores-" + examId + "-" + sanitizedExamTitle + ".csv");
             exportedFiles.add(writeLinesToFile(lines, outputFile));
 
@@ -1083,7 +1087,7 @@ public class CourseStudentDataExportService {
             // Score interval distribution
             writeIntervalDistributionRows(lines, overallScores, totalStudents);
 
-            String sanitizedExamTitle = examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_");
+            String sanitizedExamTitle = UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_");
             Path outputFile = outputDir.resolve("exam-" + examId + "-" + sanitizedExamTitle + "-grade-distribution.csv");
             return Optional.of(writeLinesToFile(lines, outputFile));
         }

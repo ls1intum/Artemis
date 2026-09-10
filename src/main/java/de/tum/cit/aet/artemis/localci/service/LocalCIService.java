@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 public class LocalCIService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
+
+    /** Everything a build plan name may not contain. Compiled once rather than on every call to {@code String#replaceAll}. */
+    private static final Pattern NON_PLAN_NAME_CHARACTER = Pattern.compile("[^A-Z0-9]");
 
     private final BuildPhasesTemplateService buildPhasesTemplateService;
 
@@ -192,6 +196,6 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     private String getCleanPlanName(String name) {
-        return name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return NON_PLAN_NAME_CHARACTER.matcher(name.toUpperCase(Locale.ROOT)).replaceAll("");
     }
 }

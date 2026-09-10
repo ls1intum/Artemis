@@ -277,6 +277,9 @@ public class ProgrammingExerciseUpdateResource {
             updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
         }
 
+        // Validate the effective LocalCI timeline before auxiliary repository handlers can cause DB or VCS side effects.
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, originalBuildAndTestOffset);
+
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
@@ -380,6 +383,9 @@ public class ProgrammingExerciseUpdateResource {
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+        if (exercise.isCourseExercise() && exercise.getDueDate() == null) {
+            exercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        }
 
         if (dto.testCasesChanged() != null) {
             exercise.setTestCasesChanged(dto.testCasesChanged());
@@ -529,6 +535,8 @@ public class ProgrammingExerciseUpdateResource {
 
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
+
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, originalBuildAndTestOffset);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 

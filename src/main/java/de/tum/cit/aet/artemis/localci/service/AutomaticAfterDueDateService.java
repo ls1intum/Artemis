@@ -95,8 +95,8 @@ public class AutomaticAfterDueDateService {
             hasAfterDueDatePhase = hasAfterDueDatePhase(phases);
         }
         else { // check once user saves, after due date phase would be set
-            List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(Objects.requireNonNull(relevantData.programmingLanguage()),
-                    Optional.ofNullable(relevantData.projectType()), relevantData.staticCodeAnalysisEnabled(), relevantData.sequentialTestRuns());
+            List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(relevantData.programmingLanguage(), Optional.ofNullable(relevantData.projectType()),
+                    relevantData.staticCodeAnalysisEnabled(), relevantData.sequentialTestRuns());
             if (relevantData.examId() != null) {
                 phases = buildPhasesTemplateService.applyExamDefaults(phases);
             }
@@ -240,7 +240,7 @@ public class AutomaticAfterDueDateService {
 
         // if correctly set already then keep as is to allow client to modify the build and test date
         final ZonedDateTime currentBuildAndTestDate = exerciseWithBuildConfig.getBuildAndTestStudentSubmissionsAfterDueDate();
-        if (!forceCompute && currentBuildAndTestDate != null && !dueDate.isAfter(currentBuildAndTestDate)) {
+        if (!forceCompute && offset == null && currentBuildAndTestDate != null && !dueDate.isAfter(currentBuildAndTestDate)) {
             return currentBuildAndTestDate;
         }
 

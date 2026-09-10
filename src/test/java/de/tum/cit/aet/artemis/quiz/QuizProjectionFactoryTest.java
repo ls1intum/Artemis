@@ -2,15 +2,13 @@ package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
@@ -38,11 +36,6 @@ class QuizProjectionFactoryTest {
         @Override
         public QuizQuestion copyQuestionId() {
             return this;
-        }
-
-        @Override
-        public void initializeStatistic() {
-            // no statistic for a type that is never persisted
         }
     }
 
@@ -76,10 +69,7 @@ class QuizProjectionFactoryTest {
 
     @Test
     void shouldRejectAnUnknownQuestionTypeWithStatistics() {
-        QuizExercise exercise = new QuizExercise();
-        exercise.setQuizQuestions(List.of(new UnknownQuestion()));
-
-        assertThatIllegalArgumentException().isThrownBy(() -> QuizExerciseWithStatisticsDTO.of(exercise)).withMessageContaining("UnknownQuestion");
+        assertThatIllegalArgumentException().isThrownBy(() -> QuizQuestionStatisticDTO.of(new UnknownQuestion(), 0, 0, 0, 0, null)).withMessageContaining("UnknownQuestion");
     }
 
     @Test

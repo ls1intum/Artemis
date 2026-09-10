@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -24,8 +23,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 @Service
 public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public ModelingExerciseWithSubmissionsExportService(FileService fileService, ModelingSubmissionExportService modelingSubmissionExportService, JsonMapper objectMapper) {
-        super(fileService, objectMapper, modelingSubmissionExportService);
+    public ModelingExerciseWithSubmissionsExportService(ModelingSubmissionExportService modelingSubmissionExportService, JsonMapper objectMapper) {
+        super(objectMapper, modelingSubmissionExportService);
     }
 
     /**

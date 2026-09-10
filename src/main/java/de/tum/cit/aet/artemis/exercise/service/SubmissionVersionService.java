@@ -51,17 +51,20 @@ public class SubmissionVersionService {
      *
      * @param submission Submission for which to save a version
      * @param user       Author of the submission update
-     * @return created/updated submission version
      */
-    public SubmissionVersion saveVersionForTeam(Submission submission, User user) {
-        return submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
-            if (latestVersion.getAuthor().equals(user)) {
-                return updateExistingVersion(latestVersion, submission);
+    public void saveVersionForTeam(Submission submission, User user) {
+        var latestVersion = submissionVersionRepository.findLatestVersion(submission.getId());
+        if (latestVersion.isEmpty()) {
+            saveVersionForIndividual(submission, user);
+        }
+        else {
+            if (latestVersion.get().getAuthor().equals(user)) {
+                updateExistingVersion(latestVersion.get(), submission);
             }
             else {
-                return saveVersionForIndividual(submission, user);
+                saveVersionForIndividual(submission, user);
             }
-        }).orElseGet(() -> saveVersionForIndividual(submission, user));
+        }
     }
 
     /**
@@ -69,14 +72,13 @@ public class SubmissionVersionService {
      *
      * @param submission Submission for which to save a version
      * @param user       Author of the submission update
-     * @return created/updated submission version
      */
-    public SubmissionVersion saveVersionForIndividual(Submission submission, User user) {
+    public void saveVersionForIndividual(Submission submission, User user) {
         SubmissionVersion version = new SubmissionVersion();
         version.setAuthor(user);
         version.setSubmission(submission);
         version.setContent(getSubmissionContent(submission));
-        return submissionVersionRepository.save(version);
+        submissionVersionRepository.save(version);
     }
 
     /**
@@ -100,9 +102,9 @@ public class SubmissionVersionService {
         asyncSubmissionVersionService.write(submissionId, userId, content);
     }
 
-    private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {
+    private void updateExistingVersion(SubmissionVersion version, Submission submission) {
         version.setContent(getSubmissionContent(submission));
-        return submissionVersionRepository.save(version);
+        submissionVersionRepository.save(version);
     }
 
     private String getSubmissionContent(Submission submission) {

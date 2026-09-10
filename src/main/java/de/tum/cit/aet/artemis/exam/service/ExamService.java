@@ -984,15 +984,6 @@ public class ExamService {
     }
 
     /**
-     * Calculates the points achieved in the first correction round if applicable.
-     *
-     * @param participation                      the participation of the student in the exercise
-     * @param exam                               the exam the exercise belongs to
-     * @param examGrade                          the exam grade dto containing the score and max points of the exercise
-     * @param plagiarismPointDeductionPercentage the percentage of points to be deducted due to plagiarism
-     * @return the points achieved in the first correction round or 0.0 if not applicable
-     */
-    /**
      * Reads the manual results of the latest submission of every given participation, grouped by submission.
      * <p>
      * Only needed while an exam has two correction rounds, because that is the only case in which the exam scores report
@@ -1397,7 +1388,7 @@ public class ExamService {
         long start = System.nanoTime();
         log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
-        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuizAndUpdateStatistics);
+        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuiz);
         if (log.isDebugEnabled()) {
             log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
         }
@@ -1654,13 +1645,11 @@ public class ExamService {
      */
     public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
-            searchableItemWeaviateService.ifPresent(service -> {
-                examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
-                    service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
-                    service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
-                            .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
-                });
-            });
+            searchableItemWeaviateService.ifPresent(service -> examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
+                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+            }));
         }
     }
 
@@ -1670,13 +1659,11 @@ public class ExamService {
      * @param exam the exam whose metadata and exercises should be synced
      */
     public void syncExamExercisesMetadata(Exam exam) {
-        searchableItemWeaviateService.ifPresent(service -> {
-            examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
-                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
-                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
-                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
-            });
-        });
+        searchableItemWeaviateService.ifPresent(service -> examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
+            service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+            service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+        }));
     }
 
     /**

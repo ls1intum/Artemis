@@ -142,7 +142,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam to be deleted
      */
-    public void delete(@NonNull long examId) {
+    public void delete(long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
@@ -327,7 +327,7 @@ public class ExamDeletionService {
      * @param examId the ID of the exam for which the deletion summary should be fetched
      * @return the exam deletion summary
      */
-    public ExamDeletionSummaryDTO getExamDeletionSummary(@NonNull long examId) {
+    public ExamDeletionSummaryDTO getExamDeletionSummary(long examId) {
         Set<Long> programmingExerciseIds = programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId);
         long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
 

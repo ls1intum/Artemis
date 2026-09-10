@@ -109,7 +109,6 @@ public class ProgrammingExerciseBuildPlanService {
 
             final BuildPlanPhasesDTO completePlan = new BuildPlanPhasesDTO(phases, dockerImage);
             buildConfig.setBuildPlanConfiguration(completePlan.toBuildPlanConfiguration());
-            programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         }
         else {
             log.warn("No build plan phases for the settings of exercise {}", programmingExercise.getId());

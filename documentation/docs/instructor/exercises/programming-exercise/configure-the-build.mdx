@@ -1,14 +1,15 @@
+---
+id: configure-the-build
+title: Configure the Build
+sidebar_label: Configure the Build
+---
+
 import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
-import checkoutPathsPreview from '../assets/programming/checkout-paths-preview.png';
-import checkoutPathsEdit from '../assets/programming/checkout-paths-edit.png';
-import timeoutSlider from '../assets/programming/timeout-slider.png';
-import dockerFlagsEdit from '../assets/programming/docker-flags-edit.png';
 import buildPlanPhases from '../assets/programming/build-plan-phases.png';
-
-# Configure the Build
+import containerConfiguration from '../assets/programming/build-container-configuration.png';
 
 Every push to a student repository triggers a build, and the build is what turns code into a result. A new exercise starts with a working build for its language, so most exercises need nothing from this page. Come here when you need to change what the build runs, how long it may take, what the container it runs in is allowed to do, or when you want to add code quality checks.
 
@@ -22,7 +23,7 @@ Instructors can configure the build phases.
 To do this, check the **Customize Build Configuration** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
 You can view the configured build plan on the exercise's detail or edit page.
 
-<Image src={buildPlanPhases} alt="Build Plan Configuration" size={ImageSize.large} caption="Build Plan Configuration" />
+<Image src={buildPlanPhases} alt="Build phases with their scripts and result paths" size={ImageSize.large} caption="The build phases" />
 
 The build plan consists of multiple phases. Each phase can be customized in the following ways:
 
@@ -76,11 +77,7 @@ Preconfigured checkout paths usually don't need changes.
 
 Checkout paths depend on the programming language and project type:
 
-<Image src={checkoutPathsPreview} alt="Checkout Paths Preview" size={ImageSize.medium} caption="Checkout Paths Preview (Java)" />
-
 To change checkout paths, click **edit repositories checkout path**:
-
-<Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths (Java)" />
 
 Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-phases-optional) section).
 
@@ -104,7 +101,7 @@ The default maximum build duration (120 seconds) usually doesn't need changes.
 
 Use the slider to adjust the time limit for build plan execution:
 
-<Image src={timeoutSlider} alt="Timeout Slider" size={ImageSize.large} caption="Maximum Build Duration Slider" />
+<Image src={containerConfiguration} alt="Docker image, build duration and container limits" size={ImageSize.large} caption="The container the build runs in" />
 
 ## Edit Container Configuration (Optional)
 
@@ -113,8 +110,6 @@ Use the slider to adjust the time limit for build plan execution:
 In most cases, the default container configuration does not need to be changed.
 
 Currently, instructors can change which network the container joins, add additional environment variables, and configure resource limits such as CPU and memory.
-
-<Image src={dockerFlagsEdit} alt="Docker Flags Edit" size={ImageSize.large} caption="Container Configuration" />
 
 **Use custom network** selects the container's network: the default bridge, one of the networks your administrators have configured, or **None**, which cuts the container off from the network entirely.
 Choosing **None** is how you stop students downloading additional dependencies during the build. The dependencies must then already be present in the Docker image.

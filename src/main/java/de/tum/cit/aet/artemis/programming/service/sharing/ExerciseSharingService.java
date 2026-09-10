@@ -73,6 +73,15 @@ public class ExerciseSharingService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
 
+    /** The basket entry that holds the exercise details. */
+    private static final Pattern EXERCISE_DETAILS_ENTRY = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
+
+    /** The characters an export token may consist of. */
+    private static final Pattern VALID_EXPORT_TOKEN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+
+    /** Everything a basket token may not contain, removed before it becomes part of a file name. */
+    private static final Pattern UNSAFE_TOKEN_CHARACTER = Pattern.compile("[^a-zA-Z0-9_-]");
+
     private static final int COPY_BUFFER_SIZE = 102400;
 
     @Value("${artemis.repo-download-clone-path}")
@@ -179,10 +188,8 @@ public class ExerciseSharingService {
      * @throws EntityNotFoundException if the details entry is missing or cannot be parsed
      */
     public ImportProgrammingExerciseRequestDTO getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
-        Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
-
         try {
-            String exerciseDetailString = getEntryFromBasket(pattern, sharingInfo)
+            String exerciseDetailString = getEntryFromBasket(EXERCISE_DETAILS_ENTRY, sharingInfo)
                     .orElseThrow(() -> new EntityNotFoundException("Could not retrieve exercise details from imported exercise"));
             // Remove the id on the JSON tree: the record is immutable, and the exported id belongs to the source instance.
             ObjectNode exerciseDetailNode = (ObjectNode) objectMapper.readTree(exerciseDetailString);
@@ -376,7 +383,7 @@ public class ExerciseSharingService {
      * @return {@code true} if the token is blank, too long, or contains characters other than {@code [a-zA-Z0-9_-]}
      */
     private boolean isInvalidToken(String token) {
-        return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
+        return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !VALID_EXPORT_TOKEN.matcher(token).matches();
     }
 
     /**
@@ -387,7 +394,7 @@ public class ExerciseSharingService {
      * @return sanitized filename for the cached ZIP
      */
     private String getBasketFileName(String basketToken, int itemPosition) {
-        String safeToken = basketToken.replaceAll("[^a-zA-Z0-9_-]", "");
+        String safeToken = UNSAFE_TOKEN_CHARACTER.matcher(basketToken).replaceAll("");
         return "sharingBasket" + safeToken + "-" + itemPosition + ".zip";
     }
 

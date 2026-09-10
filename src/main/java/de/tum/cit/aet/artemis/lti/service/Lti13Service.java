@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -89,6 +90,9 @@ public class Lti13Service {
     private static final String COURSE_PATH_PATTERN = "/courses/{courseId}/**";
 
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+
+    /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
 
     private final UserRepository userRepository;
 
@@ -521,7 +525,7 @@ public class Lti13Service {
 
     private String getSanitizedUsername(String username) {
         // Remove \r and LF \n characters to prevent HTTP response splitting
-        return username.replaceAll("[\r\n]", "");
+        return LINE_BREAK.matcher(username).replaceAll("");
     }
 
     public boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {

@@ -18,7 +18,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -526,7 +525,9 @@ class Lti13ServiceTest {
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains(Constants.BEARER_PREFIX + accessToken);
 
-        JsonNode body = JsonObjectMapper.get().readTree(Objects.requireNonNull(httpEntity.getBody()));
+        var requestBody = httpEntity.getBody();
+        assertThat(requestBody).isNotNull();
+        JsonNode body = JsonObjectMapper.get().readTree(requestBody);
         assertThat(body.get("userId").asString()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
         assertThat(body.get("timestamp").asString()).as("Parameter missing in score publish request: timestamp").isNotNull();
         assertThat(body.get("activityProgress").asString()).as("Parameter missing in score publish request: activityProgress").isNotNull();

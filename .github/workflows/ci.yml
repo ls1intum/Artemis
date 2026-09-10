@@ -548,6 +548,30 @@ jobs:
           fi
           exit 0
 
+  # SonarQube Cloud analysis, running alongside Codacy so the two code-quality grades can be compared
+  # on the same code before either is trusted with a README badge. Scope is pinned to Codacy's in
+  # `gradle/sonar.gradle`; see README.md ("The code quality analyses").
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED, for the same reason `coverage-badge`
+  # above is: coverage imported from a partially failed run is artificially low, and unlike a badge
+  # this would persist into Sonar's own history as a real dip. Skipping instead leaves the last
+  # analysis standing. `ci-sonar.yml` is separately dispatchable for an on-demand grade.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating — the called job is
+  # `continue-on-error`, so a Sonar outage or an expired token cannot turn develop red.
+  sonar:
+    name: Sonar
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    uses: ./.github/workflows/ci-sonar.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.sha }}
+      with_coverage: true
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   translation:
     name: Check Translation Keys
     needs: detect-changes
@@ -812,7 +836,7 @@ jobs:
               echo "|---------|---------|"
               echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
               echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
-              echo "| Java checkstyle | \`./gradlew checkstyleMain\` |"
+              echo "| Java checkstyle | \`./gradlew checkstyleMain checkstyleTest\` |"
               echo
               echo "Failed test details are in the **Test** and **E2E** checks above."
               echo "</details>"

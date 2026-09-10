@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -25,8 +24,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public TextExerciseWithSubmissionsExportService(FileService fileService, TextSubmissionExportService textSubmissionExportService, JsonMapper objectMapper) {
-        super(fileService, objectMapper, textSubmissionExportService);
+    public TextExerciseWithSubmissionsExportService(TextSubmissionExportService textSubmissionExportService, JsonMapper objectMapper) {
+        super(objectMapper, textSubmissionExportService);
     }
 
     /**

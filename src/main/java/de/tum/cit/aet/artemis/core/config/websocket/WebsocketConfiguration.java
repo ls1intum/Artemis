@@ -62,13 +62,13 @@ import org.springframework.web.socket.sockjs.transport.handler.WebSocketTranspor
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -99,7 +99,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
+    private final UserRepository userRepository;
 
     /**
      * Resolved when a subscription arrives rather than injected: this class is eager, so reaching for the service
@@ -123,13 +123,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(JsonMapper jsonMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            ObjectProvider<ElevatedAccessService> elevatedAccessService, ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
+            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ObjectProvider<ElevatedAccessService> elevatedAccessService,
+            ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
         this.jsonMapper = jsonMapper;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
         this.elevatedAccessService = elevatedAccessService;
         this.exerciseRepository = exerciseRepository;
         this.examRepositoryApi = examRepositoryApi;
@@ -389,17 +389,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 // Request-bound elevation rather than account classification: the session the handshake established
                 // has to prove the configured passkey requirement, so an administrator who signed in with a password
                 // must not reach the admin build queue, job and agent topics on their persisted role alone.
-                return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
+                return hasAdministratorAccess(principal);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+                return userRepository.isAtLeastInstructorInCourse(login, courseId.get()) || hasAdministratorAccess(principal);
             }
 
             Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
             if (buildJobCourseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, buildJobCourseId.get());
+                return userRepository.isAtLeastInstructorInCourse(login, buildJobCourseId.get()) || hasAdministratorAccess(principal);
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -411,10 +411,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {
-                    return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
+                    return userRepository.isAtLeastInstructorInExercise(login, exerciseId) || hasAdministratorAccess(principal);
                 }
                 else {
-                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+                    return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId) || hasAdministratorAccess(principal);
                 }
             }
 
@@ -422,15 +422,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             if (examId.isPresent()) {
                 ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
                 var exam = api.findByIdElseThrow(examId.get());
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
+                return userRepository.isAtLeastInstructorInCourse(login, exam.getCourse().getId()) || hasAdministratorAccess(principal);
             }
 
             var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
             if (synchronizationExerciseId.isPresent()) {
-                return authorizationCheckService.isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
+                return userRepository.isAtLeastEditorInExercise(login, synchronizationExerciseId.get()) || hasAdministratorAccess(principal);
             }
 
             return true;
+        }
+
+        private boolean hasAdministratorAccess(Principal principal) {
+            // Use the WebSocket session's authentication, never an unrelated or absent thread SecurityContext.
+            return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {

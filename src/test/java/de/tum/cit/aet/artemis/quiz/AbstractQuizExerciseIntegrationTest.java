@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
@@ -97,9 +97,9 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
         MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.CREATED) {
-            // The POST endpoint returns QuizExerciseWithStatisticsDTO, so extract the ID and load the full entity from DB
-            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseWithStatisticsDTO.class);
-            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(responseDTO.quizExercise().id());
+            // The POST endpoint returns QuizExerciseDetailsDTO, so extract the ID and load the full entity from DB
+            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseDetailsDTO.class);
+            return quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(responseDTO.quizExercise().id());
         }
         return null;
     }
@@ -109,7 +109,7 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
         quizExercise.setDuration(3600);
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
-        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
 
@@ -142,7 +142,7 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
         quizExercise.setDuration(3600);
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
-        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
 
@@ -189,7 +189,7 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
-        return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        return quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExerciseServer.getId());
     }
 
     /**
@@ -216,9 +216,9 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();
-            // The POST endpoint returns QuizExerciseWithStatisticsDTO, so extract the ID and load the full entity from DB
-            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseWithStatisticsDTO.class);
-            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(responseDTO.quizExercise().id());
+            // The POST endpoint returns QuizExerciseDetailsDTO, so extract the ID and load the full entity from DB
+            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseDetailsDTO.class);
+            return quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(responseDTO.quizExercise().id());
         }
         return null;
     }
@@ -288,7 +288,7 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             // Reload from database to get full entity with all associations
-            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+            return quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId());
         }
         return null;
     }

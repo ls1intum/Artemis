@@ -113,6 +113,19 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
+    void computeBuildAndTestDateForExistingExercise_courseExercise_dueDateMovedEarlier_preservesOffset() throws JacksonException {
+        var originalDueDate = BASE_TIME.plusDays(1);
+        var originalBuildAndTestDate = originalDueDate.plusMinutes(15);
+        var updatedDueDate = originalDueDate.minusHours(2);
+        var exercise = createCourseExercise(updatedDueDate, BuildPhaseCondition.AFTER_DUE_DATE);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalBuildAndTestDate);
+
+        var result = service.computeBuildAndTestDate(exercise, Duration.between(originalDueDate, originalBuildAndTestDate));
+
+        assertThat(result).isEqualTo(updatedDueDate.plusMinutes(15));
+    }
+
+    @Test
     void computeBuildAndTestDateForExistingExercise_courseExercise_phaseAddedAndRemoved_returnsCorrectDates() throws JacksonException {
         var dueDate = BASE_TIME.plusDays(1);
         var exercise = createCourseExercise(dueDate, BuildPhaseCondition.ALWAYS);

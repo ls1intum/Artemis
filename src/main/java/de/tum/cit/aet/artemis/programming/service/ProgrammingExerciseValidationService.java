@@ -47,6 +47,9 @@ public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
 
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
     // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
     private static final int MIN_DOCKER_MEMORY_MB = 6;
 
@@ -405,7 +408,7 @@ public class ProgrammingExerciseValidationService {
      * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey = (courseShortName + programmingExercise.getShortName().replaceAll("\\s+", "")).toUpperCase(Locale.ROOT);
+        String projectKey = (courseShortName + WHITESPACE_RUN.matcher(programmingExercise.getShortName()).replaceAll("")).toUpperCase(Locale.ROOT);
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);

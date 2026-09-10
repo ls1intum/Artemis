@@ -6,9 +6,9 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -68,10 +68,9 @@ public class Lti13TokenRetriever {
      * @param scopes             to ask access for
      * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform.
      */
-    public String getToken(ClientRegistration clientRegistration, String... scopes) {
+    public String getToken(@NonNull ClientRegistration clientRegistration, String... scopes) {
         log.info("Trying to retrieve access token for client");
 
-        Objects.requireNonNull(clientRegistration, "You must supply a clientRegistration.");
         if (scopes.length == 0) {
             throw new IllegalArgumentException("You must supply some scopes to request.");
         }

@@ -122,7 +122,6 @@ public abstract class CourseCompetency extends BaseCompetency {
         this.optional = optional;
     }
 
-    @ManyToOne
     public Course getCourse() {
         return course;
     }
