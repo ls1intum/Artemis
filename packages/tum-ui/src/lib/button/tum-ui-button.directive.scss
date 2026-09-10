@@ -15,7 +15,8 @@
         transition: background-color 0.15s ease;
     }
 
-    &:hover:not(:disabled)::after {
+    // aria-disabled buttons stay hoverable so they can show their tooltip; they must not look interactive.
+    &:hover:not(:disabled):not([aria-disabled='true'])::after {
         background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     }
 
