@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.quiz.config.QuizLegacyRestPaths;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticsDTO;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizStatisticsService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("evaluation/evaluation")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizStatisticsResource {
