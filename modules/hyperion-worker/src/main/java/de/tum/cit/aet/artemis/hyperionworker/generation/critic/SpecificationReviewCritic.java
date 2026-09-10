@@ -170,11 +170,7 @@ class SpecificationReviewCritic {
                 : "";
         String evidencePrompt = "INSTRUCTOR BRIEF EVIDENCE (sole authority):\n" + evidence.brief().promptText() + conceptPrompt + "\n\nCANDIDATE SPECIFICATION EVIDENCE:\n"
                 + evidence.specification().promptText();
-        String finalInstruction = "\n\nFINAL REPRESENTATION-DOMAIN CHECK: inspect every public numeric input before returning. In Java, float/double inputs include NaN and both "
-                + "infinities, and integer "
-                + "inputs include their full MIN_VALUE..MAX_VALUE range; arithmetic may overflow even when each input is valid. If the rules neither define observable behavior "
-                + "for an admitted value nor state a consistently enforceable finite/range precondition, report that exact gap in ambiguities. Do not invent an arbitrary outcome "
-                + "when a narrow precondition is sufficient.\n\nReturn the complete JSON verdict specified by the system prompt.";
+        String finalInstruction = "\n\nReturn the complete evidence-grounded JSON verdict specified by the system prompt.";
         String userPrompt = evidencePrompt + previousReviewContext(previousReview) + finalInstruction;
         try {
             String response = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);

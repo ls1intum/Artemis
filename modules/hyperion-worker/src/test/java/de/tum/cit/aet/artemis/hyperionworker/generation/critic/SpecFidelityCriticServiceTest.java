@@ -780,7 +780,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewPromptNumbersBriefAndSpecificationEvidenceSeparately() {
-        // The prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
+        // Verify that evidence numbering reaches the reviewer alongside the learner-path assessment criteria.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"scaffoldingAligned":true,"scaffoldingRationale":"The supplied scaffold and learner declarations match the brief and its prerequisites.","briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
@@ -791,8 +791,8 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model()).call(prompt.capture());
         assertThat((prompt.getValue().getInstructions().get(1)).getText()).contains("INSTRUCTOR BRIEF EVIDENCE", "[B1] Students create the strategy interface.",
-                "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.", "FINAL REPRESENTATION-DOMAIN CHECK", "NaN", "MIN_VALUE..MAX_VALUE");
-        assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("Design ownership table");
+                "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.").doesNotContain("FINAL REPRESENTATION-DOMAIN CHECK");
+        assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("LEARNER PATH", "CONTRACT SOUNDNESS");
     }
 
     @Test
