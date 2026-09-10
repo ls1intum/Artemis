@@ -100,13 +100,19 @@ export class TutorialGroupFreePeriodService {
     }
 
     /**
-     * Counts the sessions a span would cancel.
+     * Counts the sessions saving a holiday over this span would cancel.
      *
-     * Separate from the per-day counts the calendar is labelled with, because cancellation goes by overlap: a holiday
+     * Separate from the per-day counts the calendar is labelled with, because cancelling goes by overlap: a holiday
      * from 09:00 to 10:00 leaves that afternoon's sessions alone, and the day's total would say otherwise.
+     *
+     * `editedFreePeriodId` names the holiday being edited, whose own cancelled sessions it would release and take
+     * again; without it, reopening a saved holiday unchanged would report that it cancels nothing.
      */
-    getOverlappingSessionCount(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs): Observable<number> {
-        const params = new HttpParams().set('from', from.format(SERVER_DATE_TIME_FORMAT)).set('to', to.format(SERVER_DATE_TIME_FORMAT));
+    getOverlappingSessionCount(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs, editedFreePeriodId?: number): Observable<number> {
+        let params = new HttpParams().set('from', from.format(SERVER_DATE_TIME_FORMAT)).set('to', to.format(SERVER_DATE_TIME_FORMAT));
+        if (editedFreePeriodId !== undefined) {
+            params = params.set('editedFreePeriodId', editedFreePeriodId);
+        }
         return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/overlapping-session-count`, { params });
     }
 

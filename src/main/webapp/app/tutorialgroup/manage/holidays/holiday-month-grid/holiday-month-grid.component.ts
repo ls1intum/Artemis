@@ -168,7 +168,9 @@ export class HolidayMonthGridComponent {
 
         for (const holiday of holidays) {
             const firstDay = holiday.start.startOf('day');
-            const lastDay = holiday.end.startOf('day');
+            // The end is exclusive on the server, so a holiday finishing at 00:00 covers nothing of that day and must
+            // not claim it: drawing a bar there would also hide the day's session count, which is not cancelled.
+            const lastDay = holiday.end.subtract(1, 'millisecond').startOf('day');
             if (lastDay.isBefore(weekStart, 'day') || firstDay.isAfter(weekEnd, 'day')) {
                 continue;
             }

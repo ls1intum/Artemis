@@ -21,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
@@ -67,6 +68,15 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         parameters.add("from", from.toString());
         parameters.add("to", to.toString());
         return parameters;
+    }
+
+    /** A session already cancelled by a holiday, which is the state editing that holiday has to account for. */
+    private void cancelSessionOn(LocalDate day, int hour, TutorialGroupFreePeriod cancelledBy) {
+        ZoneId zone = ZoneId.of(exampleTimeZone);
+        var session = tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(day.atTime(hour, 0), zone), ZonedDateTime.of(day.atTime(hour + 1, 0), zone), "01.05.13",
+                null, TutorialGroupSessionStatus.CANCELLED, null, exampleTutorialGroup);
+        session.setTutorialGroupFreePeriod(cancelledBy);
+        tutorialGroupSessionRepository.saveAndFlush(session);
     }
 
     private void createSessionOn(LocalDate day, int hour) {
@@ -223,6 +233,49 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         assertThat(count).isOne();
     }
 
+    /** Cancelling only takes active sessions, so counting one another holiday already took would promise too much. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_shouldLeaveOutSessionsThatAreAlreadyCancelled() throws Exception {
+        createSessionOn(MONDAY, 9);
+        var otherHoliday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 30), MONDAY.atTime(10, 30), "Another");
+        cancelSessionOn(MONDAY, 10, otherHoliday);
+
+        Long count = request.get(overlapCountPath(), HttpStatus.OK, Long.class, span(MONDAY.atTime(9, 0), MONDAY.atTime(12, 0)));
+
+        // Only the active one: the cancelled session is already gone and saving would not take it again.
+        assertThat(count).isOne();
+    }
+
+    /** Editing releases the sessions a holiday had taken before it takes them again, so its own still count. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_shouldCountTheSessionsTheEditedHolidayItselfCancelled() throws Exception {
+        var holiday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(0, 0), MONDAY.atTime(23, 59), "Whole day");
+        cancelSessionOn(MONDAY, 9, holiday);
+
+        var withoutTheHoliday = span(MONDAY.atTime(0, 0), MONDAY.atTime(23, 59));
+        var whileEditingIt = span(MONDAY.atTime(0, 0), MONDAY.atTime(23, 59));
+        whileEditingIt.add("editedFreePeriodId", holiday.getId().toString());
+
+        // The session is cancelled already, so another holiday over it would cancel nothing more...
+        assertThat(request.get(overlapCountPath(), HttpStatus.OK, Long.class, withoutTheHoliday)).isZero();
+        // ...but reopening the one holding it has to report it, rather than claiming the holiday affects nothing.
+        assertThat(request.get(overlapCountPath(), HttpStatus.OK, Long.class, whileEditingIt)).isOne();
+    }
+
+    /**
+     * A wall clock inside a daylight saving gap moves forward when it is read in a zone, which can put a start after an
+     * end that looked earlier. Bucharest loses 03:00 to 04:00 on the last Sunday of March.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_withASpanInvertedByADaylightSavingGap_shouldReturnBadRequest() throws Exception {
+        LocalDate springForward = LocalDate.of(2025, 3, 30);
+
+        request.get(overlapCountPath(), HttpStatus.BAD_REQUEST, Long.class, span(springForward.atTime(3, 30), springForward.atTime(4, 0)));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOverlappingSessionCount_withAnEndBeforeItsStart_shouldReturnBadRequest() throws Exception {
@@ -247,9 +300,10 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
 
         List<TutorialGroupFreePeriodSessionCountDTO> counts = request.getList(countsPerPeriodPath(), HttpStatus.OK, TutorialGroupFreePeriodSessionCountDTO.class);
 
-        assertThat(counts).contains(new TutorialGroupFreePeriodSessionCountDTO(morningOnly.getId(), 1));
-        // A holiday covering nothing still answers, rather than dropping out and leaving the list without a row.
-        assertThat(counts).extracting(TutorialGroupFreePeriodSessionCountDTO::freePeriodId).contains(quietDay.getId());
+        // Exactly these two, so a holiday covering nothing still answers - with zero - rather than dropping out and
+        // leaving its row in the list without a number.
+        assertThat(counts).containsExactlyInAnyOrder(new TutorialGroupFreePeriodSessionCountDTO(morningOnly.getId(), 1),
+                new TutorialGroupFreePeriodSessionCountDTO(quietDay.getId(), 0));
     }
 
     @Test

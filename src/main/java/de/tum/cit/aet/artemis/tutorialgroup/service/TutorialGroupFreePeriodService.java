@@ -64,15 +64,16 @@ public class TutorialGroupFreePeriodService {
     }
 
     /**
-     * Counts the sessions a span would cancel, by the same overlap the cancellation itself uses.
+     * Counts the sessions saving a holiday over this span would cancel.
      *
-     * @param course the course whose sessions are counted
-     * @param start  the start of the span, already an instant in the course's zone
-     * @param end    the end of the span
-     * @return how many sessions the span covers
+     * @param course             the course whose sessions are counted
+     * @param start              the start of the span, already an instant in the course's zone
+     * @param end                the end of the span
+     * @param editedFreePeriodId the holiday being edited, or null when creating one
+     * @return how many sessions saving would cancel
      */
-    public long countSessionsOverlapping(Course course, ZonedDateTime start, ZonedDateTime end) {
-        return tutorialGroupSessionRepository.countOverlappingSessions(course, start, end);
+    public long countSessionsOverlapping(Course course, ZonedDateTime start, ZonedDateTime end, Long editedFreePeriodId) {
+        return tutorialGroupSessionRepository.countCancellableSessions(course, start, end, editedFreePeriodId);
     }
 
     /**

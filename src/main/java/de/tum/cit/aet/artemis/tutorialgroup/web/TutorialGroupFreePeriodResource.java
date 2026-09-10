@@ -269,15 +269,17 @@ public class TutorialGroupFreePeriodResource {
      * saved matches what saving it does. The per-day counts the calendar is labelled with cannot answer this: a holiday
      * narrowed to part of a day would be credited with the whole day's sessions.
      *
-     * @param courseId the id of the course whose sessions are counted
-     * @param from     the start of the span, read as a wall clock in the time zone of the course
-     * @param to       the end of the span
-     * @return ResponseEntity with status 200 (OK) and how many sessions the span covers
+     * @param courseId           the id of the course whose sessions are counted
+     * @param from               the start of the span, read as a wall clock in the time zone of the course
+     * @param to                 the end of the span
+     * @param editedFreePeriodId the holiday being edited, whose own cancelled sessions it would take again; omitted
+     *                               when creating one
+     * @return ResponseEntity with status 200 (OK) and how many sessions saving would cancel
      */
     @GetMapping("courses/{courseId}/tutorial-free-periods/overlapping-session-count")
     @EnforceAtLeastInstructor
     public ResponseEntity<Long> getOverlappingSessionCount(@PathVariable Long courseId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to, @RequestParam(required = false) Long editedFreePeriodId) {
         log.debug("REST request to count sessions between {} and {} of course: {}", from, to, courseId);
         if (!from.isBefore(to)) {
             throw new BadRequestAlertException("The start of the span must be before its end", ENTITY_NAME, "invalidDateRange");
@@ -293,7 +295,12 @@ public class TutorialGroupFreePeriodResource {
         String timeZone = configuration.getCourse().getTimeZone();
         ZonedDateTime start = interpretInTimeZone(from.toLocalDate(), from.toLocalTime(), timeZone);
         ZonedDateTime end = interpretInTimeZone(to.toLocalDate(), to.toLocalTime(), timeZone);
-        return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsOverlapping(configuration.getCourse(), start, end));
+        // Checked again on the instants: a wall clock inside a daylight saving gap moves forward when it is read in a
+        // zone, and a span whose start moves further than its end would otherwise be queried inverted.
+        if (!start.isBefore(end)) {
+            throw new BadRequestAlertException("The start of the span must be before its end in the time zone of the course", ENTITY_NAME, "invalidDateRange");
+        }
+        return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsOverlapping(configuration.getCourse(), start, end, editedFreePeriodId));
     }
 
     /**

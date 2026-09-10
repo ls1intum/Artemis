@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import { TumUiConfirmationService } from '@tumaet/ui-angular';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
@@ -209,6 +209,61 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(component['dialogSessionCount']()).toBe(2);
         // The per-day endpoint labels the calendar and must not be what the warning is built from.
         expect(freePeriodService.getSessionCounts).not.toHaveBeenCalledWith(42, expect.anything(), dayjs('2025-12-22T10:00'));
+    });
+
+    it('should show the counts of the month on screen when an older month answers last', () => {
+        // Stepping quickly leaves several months in flight; without switching, the slowest answer would win.
+        const december = new Subject<{ date: string; count: number }[]>();
+        const january = new Subject<{ date: string; count: number }[]>();
+        vi.mocked(freePeriodService.getSessionCounts).mockReturnValueOnce(december).mockReturnValueOnce(january);
+
+        component['onMonthChange'](dayjs('2025-12-01'));
+        component['onMonthChange'](dayjs('2026-01-01'));
+        january.next([{ date: '2026-01-05', count: 3 }]);
+        december.next([{ date: '2025-12-17', count: 9 }]);
+
+        // December was left behind, so its late answer must not reach the calendar.
+        expect(component['sessionCountsByDay']().get('2026-01-05')).toBe(3);
+        expect(component['sessionCountsByDay']().has('2025-12-17')).toBe(false);
+    });
+
+    it('should show the newest per-holiday counts when an older reload answers last', () => {
+        const first = new Subject<{ freePeriodId: number; count: number }[]>();
+        const second = new Subject<{ freePeriodId: number; count: number }[]>();
+        vi.mocked(freePeriodService.getSessionCountsPerFreePeriod).mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+        component['loadSessionCountsPerHoliday']();
+        component['loadSessionCountsPerHoliday']();
+        second.next([{ freePeriodId: 11, count: 2 }]);
+        first.next([{ freePeriodId: 11, count: 99 }]);
+
+        expect(component['sessionCountsByHoliday']().get(11)).toBe(2);
+    });
+
+    it('should keep counting spans after a failed request', () => {
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockClear();
+        vi.mocked(freePeriodService.getOverlappingSessionCount)
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+            .mockReturnValueOnce(of(4));
+
+        component['onDialogSpanChange']({ start: dayjs('2025-12-22T09:00'), end: dayjs('2025-12-22T10:00') });
+        vi.advanceTimersByTime(500);
+        component['onDialogSpanChange']({ start: dayjs('2025-12-23T09:00'), end: dayjs('2025-12-23T10:00') });
+        vi.advanceTimersByTime(500);
+
+        // An error reaching the outer subscription would have closed the stream and ignored the second span.
+        expect(freePeriodService.getOverlappingSessionCount).toHaveBeenCalledTimes(2);
+        expect(component['dialogSessionCount']()).toBe(4);
+    });
+
+    it('should name the holiday being edited when counting, so reopening it does not report nothing', async () => {
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockClear();
+
+        query('holiday-edit').nativeElement.click();
+        await settle();
+        vi.advanceTimersByTime(500);
+
+        expect(vi.mocked(freePeriodService.getOverlappingSessionCount).mock.calls.at(-1)![3]).toBe(11);
     });
 
     it('should ask for the count once when the reader moves through several dates', () => {

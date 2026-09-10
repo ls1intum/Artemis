@@ -145,16 +145,18 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     List<ZonedDateTime> findSessionStartsBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     /**
-     * Counts the sessions of a course that a span would cancel.
+     * Counts the sessions of a course that saving a holiday over this span would cancel.
      *
-     * By overlap, which is the same test {@code cancelOverlappingSessions} applies, so what a holiday is said to cancel
-     * before it is saved is what it then cancels. Counting whole days instead would overstate a holiday narrowed to
-     * part of one.
+     * Overlap alone is not the answer, because cancelling only touches sessions that are still active - a session
+     * another holiday already cancelled would be counted twice over. Editing is the exception: a holiday releases the
+     * sessions it had cancelled before it takes them again, so its own are counted as well and the number does not
+     * collapse to zero when a saved holiday is reopened unchanged.
      *
-     * @param course the course whose sessions are counted
-     * @param start  the start of the span
-     * @param end    the end of the span
-     * @return how many sessions overlap the span
+     * @param course             the course whose sessions are counted
+     * @param start              the start of the span
+     * @param end                the end of the span
+     * @param editedFreePeriodId the holiday being edited, whose own cancelled sessions still count; null when creating
+     * @return how many sessions saving would cancel
      */
     @Query("""
             SELECT COUNT(session)
@@ -162,8 +164,11 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             WHERE session.tutorialGroup.course = :course
                 AND session.start < :end
                 AND session.end > :start
+                AND (session.status = de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus.ACTIVE
+                    OR (:editedFreePeriodId IS NOT NULL AND session.tutorialGroupFreePeriod.id = :editedFreePeriodId))
             """)
-    long countOverlappingSessions(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
+    long countCancellableSessions(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end,
+            @Param("editedFreePeriodId") Long editedFreePeriodId);
 
     /**
      * Counts, for every free period of a course, how many of its sessions that period covers.

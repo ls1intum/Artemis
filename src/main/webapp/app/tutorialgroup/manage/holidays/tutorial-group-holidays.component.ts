@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { EMPTY, Subject } from 'rxjs';
-import { debounceTime, finalize, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
@@ -68,6 +68,10 @@ export class TutorialGroupHolidaysComponent {
     protected readonly sessionCountsByDay = signal<Map<string, number>>(new Map());
     /** Sessions each holiday covers, by overlap - the per-day totals would overstate a holiday within a day. */
     protected readonly sessionCountsByHoliday = signal<Map<number, number>>(new Map());
+    /** Months whose day counts are wanted. Switched over, so only the month on screen can fill the calendar. */
+    private readonly monthCountRequests = new Subject<dayjs.Dayjs>();
+    /** Reloads of the per-holiday counts. Switched over for the same reason: the newest load is the true one. */
+    private readonly holidayCountRequests = new Subject<number>();
     protected readonly isLoading = signal(false);
     protected readonly isSaving = signal(false);
 
@@ -95,7 +99,55 @@ export class TutorialGroupHolidaysComponent {
 
     constructor() {
         this.countSessionsForSpansChosenInTheDialog();
+        this.countSessionsForTheDisplayedMonth();
+        this.countSessionsForEachHoliday();
         this.loadCourseFromRoute();
+    }
+
+    /**
+     * Fills the calendar with the day counts of the month on screen.
+     *
+     * Switched rather than subscribed per request: stepping quickly through months leaves several in flight, and
+     * without this the slowest answer wins rather than the newest, leaving one month labelled with another's counts.
+     */
+    private countSessionsForTheDisplayedMonth(): void {
+        this.monthCountRequests
+            .pipe(
+                switchMap((month) => {
+                    const courseId = this.course()?.id;
+                    if (courseId === undefined) {
+                        return EMPTY;
+                    }
+                    // The whole grid, so the days of the neighbouring months it shows carry their counts too.
+                    const from = month.startOf('month').startOf('isoWeek');
+                    const to = month.endOf('month').endOf('isoWeek');
+                    return this.freePeriodService.getSessionCounts(courseId, from, to).pipe(
+                        catchError((response: HttpErrorResponse) => {
+                            onError(this.alertService, response);
+                            return EMPTY;
+                        }),
+                    );
+                }),
+                takeUntilDestroyed(),
+            )
+            .subscribe((counts) => this.sessionCountsByDay.set(new Map(counts.map((count) => [count.date, count.count]))));
+    }
+
+    /** One request for the whole list, switched over so a reload after an edit is not undone by the one before it. */
+    private countSessionsForEachHoliday(): void {
+        this.holidayCountRequests
+            .pipe(
+                switchMap((courseId) =>
+                    this.freePeriodService.getSessionCountsPerFreePeriod(courseId).pipe(
+                        catchError((response: HttpErrorResponse) => {
+                            onError(this.alertService, response);
+                            return EMPTY;
+                        }),
+                    ),
+                ),
+                takeUntilDestroyed(),
+            )
+            .subscribe((counts) => this.sessionCountsByHoliday.set(new Map(counts.map((count) => [count.freePeriodId, count.count]))));
     }
 
     /**
@@ -112,14 +164,21 @@ export class TutorialGroupHolidaysComponent {
                 // resolves is dropped instead of throwing inside the stream and killing it for the rest of the page.
                 switchMap((span) => {
                     const courseId = this.course()?.id;
-                    return courseId === undefined ? EMPTY : this.freePeriodService.getOverlappingSessionCount(courseId, span.start, span.end);
+                    if (courseId === undefined) {
+                        return EMPTY;
+                    }
+                    // Caught inside the switch: an error reaching the outer subscription would close this pipeline, and
+                    // every later date the reader picks would go uncounted until the page is reloaded.
+                    return this.freePeriodService.getOverlappingSessionCount(courseId, span.start, span.end, this.editedHoliday()?.period.id).pipe(
+                        catchError((response: HttpErrorResponse) => {
+                            onError(this.alertService, response);
+                            return EMPTY;
+                        }),
+                    );
                 }),
                 takeUntilDestroyed(),
             )
-            .subscribe({
-                next: (count) => this.dialogSessionCount.set(count),
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
+            .subscribe((count) => this.dialogSessionCount.set(count));
     }
 
     private loadCourseFromRoute(): void {
@@ -157,41 +216,15 @@ export class TutorialGroupHolidaysComponent {
             });
     }
 
-    /**
-     * Loads the session counts for the displayed month.
-     *
-     * The span is the whole grid rather than the month, so the days of the neighbouring months the grid shows carry
-     * their counts too instead of appearing empty.
-     */
     private loadSessionCounts(): void {
-        const courseId = this.course()?.id;
-        if (courseId === undefined) {
-            return;
-        }
-        const from = this.displayedMonth().startOf('month').startOf('isoWeek');
-        const to = this.displayedMonth().endOf('month').endOf('isoWeek');
-        this.freePeriodService
-            .getSessionCounts(courseId, from, to)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (counts) => this.sessionCountsByDay.set(new Map(counts.map((count) => [count.date, count.count]))),
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
+        this.monthCountRequests.next(this.displayedMonth());
     }
 
-    /** One request for the whole list, so a page of holidays does not become a request per row. */
     private loadSessionCountsPerHoliday(): void {
         const courseId = this.course()?.id;
-        if (courseId === undefined) {
-            return;
+        if (courseId !== undefined) {
+            this.holidayCountRequests.next(courseId);
         }
-        this.freePeriodService
-            .getSessionCountsPerFreePeriod(courseId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (counts) => this.sessionCountsByHoliday.set(new Map(counts.map((count) => [count.freePeriodId, count.count]))),
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
     }
 
     protected onMonthChange(month: dayjs.Dayjs): void {

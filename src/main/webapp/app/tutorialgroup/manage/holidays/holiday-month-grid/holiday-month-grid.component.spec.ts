@@ -199,6 +199,15 @@ describe('HolidayMonthGridComponent', () => {
         expect(edited).toBe(false);
     });
 
+    it('should leave the day out when a holiday ends exactly at its midnight', () => {
+        // The end is exclusive, so 17 December 00:00 cancels nothing on the 17th and the day keeps its own count.
+        setHolidays(period(1, '2025-12-15T23:00:00', '2025-12-16T23:00:00'));
+
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-17"]')).attributes['data-has-holiday']).toBeUndefined();
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-16"]')).attributes['data-has-holiday']).toBe('true');
+        expect(queryAll('holiday-calendar-event')[0].attributes['data-span']).toBe('1');
+    });
+
     it('should ignore a click on a day of a neighbouring month', () => {
         let daySelected = false;
         fixture.componentInstance.daySelected.subscribe(() => (daySelected = true));
