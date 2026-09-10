@@ -44,6 +44,8 @@ import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -237,6 +239,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         // Mock the ResizeObserver, which is not available in the test environment. Assign the mock class directly:
         // a vi.fn().mockImplementation returning a new instance is not usable as a constructor under vitest.
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        // Athena active by default; the "module inactive" case is covered explicitly below.
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
     });
 
     afterEach(() => {
@@ -992,6 +996,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should return false for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is absent', () => {
         comp.exercise.set(cloneWith(exercise, { course: { athenaGradingFeedbackEnabled: false } }) as unknown as ProgrammingExercise);
+        expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
+    });
+
+    it('should return false for isFeedbackSuggestionsEnabled when the Athena module is inactive, even if the course flag is set', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        comp.exercise.set(cloneWith(exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 

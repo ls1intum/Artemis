@@ -124,6 +124,8 @@ describe('ModelingAssessmentEditorComponent', () => {
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
         mockAuth.hasAnyAuthorityDirect([]);
         mockAuth.identity();
+        // Athena active by default; the "module inactive" case is covered explicitly below.
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
         fixture.detectChanges();
 
         router = TestBed.inject(Router);
@@ -874,6 +876,15 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled()).toBe(true);
+    });
+
+    it('should report feedback suggestions not enabled when the Athena module is inactive, even if the course flag is set', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        const courseWithAthena = new Course();
+        courseWithAthena.athenaGradingFeedbackEnabled = true;
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
+        component.ngOnInit();
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
     describe('feedback suggestions chrome', () => {

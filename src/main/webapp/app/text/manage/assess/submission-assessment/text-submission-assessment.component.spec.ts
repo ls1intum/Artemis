@@ -64,6 +64,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -210,6 +212,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         router = TestBed.inject(Router);
         vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
         vi.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
+        // Athena active by default; the "module inactive" case is covered explicitly below.
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
 
         fixture.changeDetectorRef.detectChanges();
     });
@@ -877,6 +881,11 @@ describe('TextSubmissionAssessmentComponent', () => {
             component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: false } as Course }) as TextExercise;
             vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
             expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should report feedback suggestions not enabled when the Athena module is inactive, even if the course flag is set', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+            expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
         });
 
         it('should reflect a new exercise assigned after the predicates were already read, as happens when "Assess Next" reuses the component', () => {
