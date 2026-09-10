@@ -79,9 +79,11 @@ describe('holiday model', () => {
         });
 
         it('should fall back to the reader time zone when the course has none', () => {
-            const holidays = toHolidays([period(1, '2025-12-04T08:15:00', '2025-12-04T12:45:00')], undefined);
+            const withoutZone = toHolidays([period(1, '2025-12-04T08:15:00', '2025-12-04T12:45:00')], undefined);
 
-            expect(holidays).toHaveLength(1);
+            // Berlin is an hour ahead of UTC in December, so naming the zone has to move the reading.
+            expect(withoutZone[0].startTime).toBe(dayjs.utc('2025-12-04T08:15:00').local().format('HH:mm'));
+            expect(toHolidays([period(1, '2025-12-04T08:15:00', '2025-12-04T12:45:00')], TIME_ZONE)[0].startTime).toBe('09:15');
         });
     });
 

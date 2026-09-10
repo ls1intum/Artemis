@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -115,6 +116,36 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         List<TutorialGroupSessionCountDTO> counts = request.getList(sessionCountsPath(), HttpStatus.OK, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
 
         assertThat(counts).isEmpty();
+    }
+
+    /**
+     * The point of the endpoint: a day is the course's day, not the server's.
+     * <p>
+     * {@code exampleTimeZone} is ahead of UTC, so a session in the small hours belongs to the previous day in UTC. It
+     * has to be counted on the day the instructor sees it on, because that is the day a holiday would cancel it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCounts_shouldGroupDaysInTheTimeZoneOfTheCourse() throws Exception {
+        LocalDate day = MONDAY.plusDays(1);
+        createSessionOn(day, 1);
+        // Guards the premise: with a zone at or behind UTC the session would fall on the same day either way.
+        assertThat(ZonedDateTime.of(day.atTime(1, 0), ZoneId.of(exampleTimeZone)).withZoneSameInstant(ZoneOffset.UTC).toLocalDate()).isEqualTo(day.minusDays(1));
+
+        List<TutorialGroupSessionCountDTO> counts = request.getList(sessionCountsPath(), HttpStatus.OK, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
+
+        assertThat(counts).containsExactly(new TutorialGroupSessionCountDTO(day, 1));
+    }
+
+    /** The span's own ends are read in the same zone, so a session early on its first day is inside it. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCounts_shouldIncludeASessionEarlyOnTheFirstDayOfTheSpan() throws Exception {
+        createSessionOn(MONDAY, 1);
+
+        List<TutorialGroupSessionCountDTO> counts = request.getList(sessionCountsPath(), HttpStatus.OK, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
+
+        assertThat(counts).containsExactly(new TutorialGroupSessionCountDTO(MONDAY, 1));
     }
 
     @Test

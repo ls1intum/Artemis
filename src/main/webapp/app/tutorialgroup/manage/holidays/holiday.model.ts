@@ -34,7 +34,9 @@ export interface Holiday {
  * on a day in the course's zone, so a reader in another zone must still see the day the sessions are cancelled on.
  */
 export function inCourseZone(instant: dayjs.Dayjs, timeZone: string | undefined): dayjs.Dayjs {
-    return timeZone ? instant.tz(timeZone) : instant;
+    // A course with no zone falls back to the reader's, which has to be said explicitly: an instant parsed in UTC mode
+    // stays in UTC mode otherwise, and would then be read an hour or more away from the day it belongs to.
+    return timeZone ? instant.tz(timeZone) : instant.local();
 }
 
 /** The last minute of a day, which is how the end of a whole-day holiday is stored. */
