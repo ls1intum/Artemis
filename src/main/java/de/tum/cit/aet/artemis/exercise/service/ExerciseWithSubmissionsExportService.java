@@ -45,13 +45,13 @@ public abstract class ExerciseWithSubmissionsExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(%smarkdown/.*\\)".formatted(ARTEMIS_FILE_PATH_PREFIX);
+    private static final Pattern EMBEDDED_FILE_MARKDOWN_SYNTAX = Pattern.compile("\\[.*] *\\(%smarkdown/.*\\)".formatted(ARTEMIS_FILE_PATH_PREFIX));
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT = "\\(%smarkdown/.* \".*\"\\)".formatted(ARTEMIS_FILE_PATH_PREFIX);
+    private static final Pattern EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT = Pattern.compile("\\(%smarkdown/.* \".*\"\\)".formatted(ARTEMIS_FILE_PATH_PREFIX));
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"%smarkdown/.*\".*>".formatted(ARTEMIS_FILE_PATH_PREFIX);
+    private static final Pattern EMBEDDED_FILE_HTML_SYNTAX = Pattern.compile("<img src=\"%smarkdown/.*\".*>".formatted(ARTEMIS_FILE_PATH_PREFIX));
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
     private static final String API_MARKDOWN_FILE_PATH = "%smarkdown/".formatted(ARTEMIS_FILE_PATH_PREFIX);
@@ -108,8 +108,8 @@ public abstract class ExerciseWithSubmissionsExportService {
         Set<String> embeddedFilesWithMarkdownSyntax = new HashSet<>();
         Set<String> embeddedFilesWithHtmlSyntax = new HashSet<>();
 
-        Matcher matcherForMarkdownSyntax = Pattern.compile(EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX).matcher(exercise.getProblemStatement());
-        Matcher matcherForHtmlSyntax = Pattern.compile(EMBEDDED_FILE_HTML_SYNTAX_REGEX).matcher(exercise.getProblemStatement());
+        Matcher matcherForMarkdownSyntax = EMBEDDED_FILE_MARKDOWN_SYNTAX.matcher(exercise.getProblemStatement());
+        Matcher matcherForHtmlSyntax = EMBEDDED_FILE_HTML_SYNTAX.matcher(exercise.getProblemStatement());
         checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithMarkdownSyntax, matcherForMarkdownSyntax);
         Path embeddedFilesDir = checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithHtmlSyntax,
                 matcherForHtmlSyntax);
@@ -136,7 +136,7 @@ public abstract class ExerciseWithSubmissionsExportService {
             String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
             String filePath;
 
-            if (Pattern.compile(EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT).matcher(lastPartOfMatchedString).matches()) {
+            if (EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT.matcher(lastPartOfMatchedString).matches()) {
                 filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(" "));
             }
             else {
