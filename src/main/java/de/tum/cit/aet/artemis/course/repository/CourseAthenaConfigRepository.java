@@ -17,11 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
- * Spring Data JPA repository for the course-level Athena configuration.
+ * Spring Data JPA repository for the {@link CourseAthenaConfig} entity, which reads a course's Athena settings without
+ * the lazy association on the course, as {@link CourseConfigurationRepository} does for the course configuration. The
+ * queries start from {@code Course} because the foreign key lives there.
  * <p>
  * The two feature flags are switched independently and save immediately, so each one is written by its own conditional
  * statement rather than by storing a whole configuration read earlier: two instructors switching the two features at
@@ -33,6 +38,79 @@ import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 @Lazy
 @Repository
 public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<CourseAthenaConfig, Long> {
+
+    /**
+     * Finds the Athena configuration of the given course, if one exists.
+     *
+     * @param courseId the id of the course
+     * @return the configuration, or empty when the course has none yet
+     */
+    @Query("""
+            SELECT athenaConfig
+            FROM Course course
+                JOIN course.athenaConfig athenaConfig
+            WHERE course.id = :courseId
+            """)
+    Optional<CourseAthenaConfig> findByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * The two feedback switches of the course an exercise belongs to, reached through the course or through the exam.
+     * Reads the flags rather than the entity, because this answers a yes/no on a request path.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the settings, defaulting to off
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO(
+                COALESCE(courseConfig.gradingFeedbackEnabled, examCourseConfig.gradingFeedbackEnabled, FALSE),
+                COALESCE(courseConfig.formativeFeedbackEnabled, examCourseConfig.formativeFeedbackEnabled, FALSE))
+            FROM Exercise exercise
+                LEFT JOIN exercise.course course
+                LEFT JOIN course.athenaConfig courseConfig
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
+                LEFT JOIN examCourse.athenaConfig examCourseConfig
+            WHERE exercise.id = :exerciseId
+            """)
+    Optional<AthenaFeedbackSettingsDTO> findFeedbackSettingsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * The two feedback switches of a course.
+     *
+     * @param courseId the id of the course
+     * @return the settings, defaulting to off
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO(
+                COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
+            FROM Course course
+                LEFT JOIN course.athenaConfig athenaConfig
+            WHERE course.id = :courseId
+            """)
+    Optional<AthenaFeedbackSettingsDTO> findFeedbackSettingsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Puts the configuration onto the course of the given exercise, so the code below an entry point can keep asking
+     * {@code Exercise#areFeedbackSuggestionsEnabled()}. Call it where an Athena flow starts. A course without a
+     * configuration stays null, which reads as switched off.
+     *
+     * @param exercise the exercise whose course should carry its Athena configuration
+     */
+    default void attachToCourseOf(Exercise exercise) {
+        attachTo(exercise == null ? null : exercise.getCourseViaExerciseGroupOrCourseMember());
+    }
+
+    /**
+     * Puts a course's Athena configuration onto it, for a response that reports the two switches.
+     *
+     * @param course the course, may be null
+     */
+    default void attachTo(Course course) {
+        if (course != null) {
+            course.setAthenaConfig(findByCourseId(course.getId()).orElse(null));
+        }
+    }
 
     /**
      * Switches the grading feedback flag of a configuration, if it does not already have the requested value.
@@ -76,9 +154,8 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * Takes a write lock on a course row, so that the courses whose {@code athena_config_id} is still null - every
      * course that existed before the configuration was introduced - cannot have two configurations created at once.
      * <p>
-     * Selects the course's own id and mentions no association, so the statement locks exactly the course row. Locking
-     * the loaded course entity instead would not work: its Athena configuration is an eager to-one over a nullable join
-     * column, and PostgreSQL rejects a locking read on the nullable side of an outer join.
+     * Selects the course's own id and mentions no association, so the statement locks exactly the course row rather than
+     * whatever a locking read of the course entity would join in along with it.
      *
      * @param courseId the id of the course to lock
      * @return the course's id, or empty if there is no such course

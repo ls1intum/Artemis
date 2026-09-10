@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
@@ -83,6 +84,8 @@ public class CourseUpdateResource {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private final UserRepository userRepository;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -90,8 +93,8 @@ public class CourseUpdateResource {
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseAutoOrchestrationApi> autoOrchestrationApi,
-            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, UserRepository userRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository,
+            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -102,6 +105,7 @@ public class CourseUpdateResource {
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.userRepository = userRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
@@ -229,6 +233,9 @@ public class CourseUpdateResource {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
 
+        // The Athena configuration is lazy and not part of the update, so attach it for the response to report the stored
+        // flags; otherwise the client would cache a course that claims Athena is off.
+        courseAthenaConfigRepository.attachTo(result);
         return ResponseEntity.ok(result);
     }
 }

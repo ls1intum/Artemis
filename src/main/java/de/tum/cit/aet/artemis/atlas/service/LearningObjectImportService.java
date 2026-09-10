@@ -213,8 +213,7 @@ public class LearningObjectImportService {
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, TextExercise::new, api::importTextExercise);
             }
             case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, QuizExercise::new,
-                    (newQuizExercise, source) -> {
+                    quizExerciseRepository::findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, QuizExercise::new, (newQuizExercise, source) -> {
                         try {
                             return quizExerciseImportService.importQuizExercise(newQuizExercise, source, null);
                         }

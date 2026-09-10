@@ -6,12 +6,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -25,17 +24,14 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 public class CourseAthenaConfigService {
 
-    private final CourseRepository courseRepository;
-
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
     private final ExerciseRepository exerciseRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    public CourseAthenaConfigService(CourseRepository courseRepository, CourseAthenaConfigRepository courseAthenaConfigRepository, ExerciseRepository exerciseRepository,
+    public CourseAthenaConfigService(CourseAthenaConfigRepository courseAthenaConfigRepository, ExerciseRepository exerciseRepository,
             InstanceMessageSendService instanceMessageSendService) {
-        this.courseRepository = courseRepository;
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.exerciseRepository = exerciseRepository;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -48,7 +44,7 @@ public class CourseAthenaConfigService {
      * @return the course's Athena configuration, all flags disabled when the course has no configuration yet
      */
     public CourseAthenaConfigDTO getConfig(long courseId) {
-        return CourseAthenaConfigDTO.from(loadCourseWithAthenaConfig(courseId));
+        return CourseAthenaConfigDTO.from(courseAthenaConfigRepository.findFeedbackSettingsByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId)));
     }
 
     /**
@@ -78,10 +74,6 @@ public class CourseAthenaConfigService {
         }
 
         return courseAthenaConfigRepository.getArbitraryValueElseThrow(courseAthenaConfigRepository.findConfigById(configId), String.valueOf(configId));
-    }
-
-    private Course loadCourseWithAthenaConfig(long courseId) {
-        return courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
     }
 
     /**

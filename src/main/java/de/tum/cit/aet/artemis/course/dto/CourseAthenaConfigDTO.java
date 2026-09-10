@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
-
 /**
  * The course-level Athena configuration an instructor can edit, exchanged by
  * {@link de.tum.cit.aet.artemis.course.web.CourseAthenaConfigResource}.
@@ -22,16 +19,12 @@ import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 public record CourseAthenaConfigDTO(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled) {
 
     /**
-     * Reads the configuration off a course, treating a course without a config row as fully disabled.
+     * Converts the switches read for a course, which already default to off when the course has no config row.
      *
-     * @param course the course to read the Athena configuration from
+     * @param settings the course's Athena feedback settings
      * @return the course's Athena configuration
      */
-    public static CourseAthenaConfigDTO from(Course course) {
-        CourseAthenaConfig config = course.getAthenaConfig();
-        if (config == null) {
-            return new CourseAthenaConfigDTO(false, false);
-        }
-        return new CourseAthenaConfigDTO(config.isGradingFeedbackEnabled(), config.isFormativeFeedbackEnabled());
+    public static CourseAthenaConfigDTO from(AthenaFeedbackSettingsDTO settings) {
+        return new CourseAthenaConfigDTO(settings.gradingFeedbackEnabled(), settings.formativeFeedbackEnabled());
     }
 }
