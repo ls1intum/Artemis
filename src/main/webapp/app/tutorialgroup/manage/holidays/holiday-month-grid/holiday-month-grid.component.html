@@ -83,8 +83,9 @@
             <!-- Only the bars themselves take clicks, so the free part of a day still offers to create a holiday there. -->
             <div class="pointer-events-none absolute inset-x-0 bottom-0" [style.top.rem]="headerHeightRem">
                 @for (bar of week.bars; track bar.key) {
+                    <!-- Inset inside its lane, so two holidays on one day are separated by the cell behind them. -->
                     <div
-                        class="absolute px-1"
+                        class="absolute px-1 py-0.5"
                         [style.left.%]="bar.startColumn * columnWidthPercent"
                         [style.width.%]="bar.span * columnWidthPercent"
                         [style.top.rem]="bar.lane * laneHeightRem"
