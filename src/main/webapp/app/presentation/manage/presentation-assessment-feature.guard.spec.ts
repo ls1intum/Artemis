@@ -1,4 +1,4 @@
-import { ActivatedRouteSnapshot, Router, UrlTree, convertToParamMap } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, convertToParamMap } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, firstValueFrom, isObservable, of, throwError } from 'rxjs';
@@ -41,7 +41,7 @@ describe('presentationAssessmentFeatureGuard', () => {
     });
 
     async function runGuard(): Promise<boolean | UrlTree> {
-        const result = TestBed.runInInjectionContext(() => presentationAssessmentFeatureGuard(route, {}));
+        const result = TestBed.runInInjectionContext(() => presentationAssessmentFeatureGuard(route, {} as RouterStateSnapshot));
         expect(isObservable(result)).toBe(true);
         return await firstValueFrom(result as Observable<boolean | UrlTree>);
     }
