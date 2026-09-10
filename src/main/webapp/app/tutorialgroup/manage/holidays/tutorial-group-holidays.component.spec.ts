@@ -13,7 +13,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
 import { TutorialGroupHolidaysComponent } from 'app/tutorialgroup/manage/holidays/tutorial-group-holidays.component';
-import { toOccurrences } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 
 const TIME_ZONE = 'Europe/Berlin';
@@ -61,7 +60,7 @@ describe('TutorialGroupHolidaysComponent', () => {
 
     it('should load the holidays of the course', () => {
         expect(component['freePeriods']()).toHaveLength(1);
-        expect(component['occurrences']()[0].reason).toBe('Christmas holidays');
+        expect(component['holidays']()[0].reason).toBe('Christmas holidays');
     });
 
     it('should ask for session counts covering the whole grid, not just the month', () => {
@@ -81,22 +80,31 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(component['displayedMonth']().format('YYYY-MM')).toBe('2026-01');
     });
 
-    it('should store a whole-day holiday as midnight to 23:59', () => {
+    it('should store the span exactly as the dialog produced it', () => {
         const create = vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
 
-        component['onSave']({ day: dayjs('2025-12-04').startOf('day'), wholeDay: true, reason: 'Dies Academicus' });
+        component['onSave']({ start: dayjs('2025-12-04T00:00'), end: dayjs('2025-12-04T23:59'), reason: 'Dies Academicus' });
 
         const payload = create.mock.calls[0][2];
 
-        expect(dayjs(payload.startDate).format('HH:mm')).toBe('00:00');
-        expect(dayjs(payload.endDate).format('HH:mm')).toBe('23:59');
+        expect(dayjs(payload.startDate).format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 00:00');
+        expect(dayjs(payload.endDate).format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 23:59');
         expect(payload.reason).toBe('Dies Academicus');
+    });
+
+    it('should store a holiday covering two weeks as a single period', () => {
+        const create = vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
+
+        component['onSave']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2026-01-05T23:59'), reason: 'Christmas holidays' });
+
+        expect(create).toHaveBeenCalledOnce();
+        expect(dayjs(create.mock.calls[0][2].endDate).format('YYYY-MM-DD')).toBe('2026-01-05');
     });
 
     it('should store the chosen times when the holiday only covers part of a day', () => {
         const create = vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
 
-        component['onSave']({ day: dayjs('2025-12-04').startOf('day'), wholeDay: false, startTime: '09:15', endTime: '13:45', reason: 'Dies Academicus' });
+        component['onSave']({ start: dayjs('2025-12-04T09:15'), end: dayjs('2025-12-04T13:45'), reason: 'Dies Academicus' });
 
         const payload = create.mock.calls[0][2];
 
@@ -107,22 +115,43 @@ describe('TutorialGroupHolidaysComponent', () => {
     it('should update rather than create when a holiday is being edited', () => {
         const update = vi.spyOn(freePeriodService, 'update').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
         const create = vi.spyOn(freePeriodService, 'create');
-        component['openEditDialog'](component['occurrences']()[0]);
+        component['openEditDialog'](component['holidays']()[0]);
 
-        component['onSave']({ day: dayjs('2025-12-17').startOf('day'), wholeDay: true, reason: 'Christmas holidays' });
+        component['onSave']({ start: dayjs('2025-12-17T00:00'), end: dayjs('2025-12-17T23:59'), reason: 'Christmas holidays' });
 
         expect(update).toHaveBeenCalledOnce();
         expect(update.mock.calls[0][2]).toBe(11);
         expect(create).not.toHaveBeenCalled();
     });
 
-    it('should expand a legacy multi-day holiday across its days', () => {
+    it('should count the sessions of the span the dialog is showing, not just of the loaded month', () => {
+        vi.mocked(freePeriodService.getSessionCounts).mockClear();
+        vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(
+            of([
+                { date: '2025-12-22', count: 4 },
+                { date: '2025-12-23', count: 3 },
+            ]),
+        );
+
+        component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2026-01-05T23:59') });
+
+        // The span is asked for directly, so a holiday running past the displayed month is still counted in full.
+        const [, from, to] = vi.mocked(freePeriodService.getSessionCounts).mock.calls[0];
+        expect(from.format('YYYY-MM-DD')).toBe('2025-12-22');
+        expect(to.format('YYYY-MM-DD')).toBe('2026-01-05');
+        expect(component['dialogSessionCount']()).toBe(7);
+    });
+
+    it('should keep a holiday covering several days as one entry and mark each of its days', () => {
         const multiDay = new TutorialGroupFreePeriod();
         multiDay.id = 12;
         multiDay.start = dayjs.utc('2025-12-16T23:00:00');
         multiDay.end = dayjs.utc('2025-12-19T22:59:00');
         multiDay.reason = 'Christmas holidays';
+        component['freePeriods'].set([multiDay]);
 
-        expect(toOccurrences([multiDay], TIME_ZONE)).toHaveLength(3);
+        expect(component['holidays']()).toHaveLength(1);
+        expect(component['holidays']()[0].dayCount).toBe(3);
+        expect([...component['holidaysByDay']().keys()]).toEqual(['2025-12-17', '2025-12-18', '2025-12-19']);
     });
 });

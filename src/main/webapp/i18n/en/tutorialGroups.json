@@ -337,20 +337,23 @@
                     "sessionsShort": "{{ count }} sess."
                 },
                 "form": {
-                    "date": "Date",
-                    "startTime": "Start time",
-                    "endTime": "End time",
+                    "from": "From",
+                    "to": "To",
+                    "create": "Create",
                     "reason": "Reason",
                     "reasonPlaceholder": "e.g. Christmas holidays",
-                    "wholeDayHint": "All sessions on this date are cancelled.",
-                    "invalidTimeRange": "The start time must be before the end time.",
-                    "sessionsWillBeCancelled": "{{ count }} sessions on this date will be cancelled."
+                    "wholeDayHint": "Cancels every session on these dates. Switch off to cancel only part of the day.",
+                    "invalidRange": "The end must be after the start.",
+                    "spansDays": "Covers {{ count }} days.",
+                    "sessionsWillBeCancelled": "{{ count }} sessions in this period will be cancelled."
                 },
                 "deleteDialog": {
                     "header": "Delete holiday",
                     "question": "Are you sure you want to delete the holiday {{ reason }}?",
-                    "multiDayQuestion": "{{ reason }} spans several days and is stored as one entry, so deleting it removes every day it covers. Delete it?"
-                }
+                    "multiDayQuestion": "{{ reason }} covers {{ count }} days and is stored as one holiday, so deleting it removes every one of them. Delete it?"
+                },
+                "editHolidayNamed": "Edit {{ reason }}",
+                "deleteHolidayNamed": "Delete {{ reason }}"
             },
             "createOrEditTutorialFreePeriodTitle": {
                 "create": "Create free day",

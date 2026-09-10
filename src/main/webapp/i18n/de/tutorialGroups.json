@@ -337,20 +337,23 @@
                     "sessionsShort": "{{ count }} Term."
                 },
                 "form": {
-                    "date": "Datum",
-                    "startTime": "Startzeit",
-                    "endTime": "Endzeit",
+                    "from": "Von",
+                    "to": "Bis",
+                    "create": "Erstellen",
                     "reason": "Grund",
                     "reasonPlaceholder": "z. B. Weihnachtsferien",
-                    "wholeDayHint": "Alle Termine an diesem Datum werden abgesagt.",
-                    "invalidTimeRange": "Die Startzeit muss vor der Endzeit liegen.",
-                    "sessionsWillBeCancelled": "{{ count }} Termine an diesem Datum werden abgesagt."
+                    "wholeDayHint": "Sagt alle Termine an diesen Tagen ab. Ausschalten, um nur einen Teil des Tages abzusagen.",
+                    "invalidRange": "Das Ende muss nach dem Beginn liegen.",
+                    "spansDays": "Umfasst {{ count }} Tage.",
+                    "sessionsWillBeCancelled": "{{ count }} Termine in diesem Zeitraum werden abgesagt."
                 },
                 "deleteDialog": {
                     "header": "Feiertag löschen",
                     "question": "Sicher, dass der Feiertag {{ reason }} gelöscht werden soll?",
-                    "multiDayQuestion": "{{ reason }} erstreckt sich über mehrere Tage und ist als ein Eintrag gespeichert. Beim Löschen entfallen daher alle betroffenen Tage. Wirklich löschen?"
-                }
+                    "multiDayQuestion": "{{ reason }} umfasst {{ count }} Tage und ist als ein Feiertag gespeichert. Beim Löschen entfallen daher alle. Wirklich löschen?"
+                },
+                "editHolidayNamed": "{{ reason }} bearbeiten",
+                "deleteHolidayNamed": "{{ reason }} löschen"
             },
             "createOrEditTutorialFreePeriodTitle": {
                 "create": "Freien Tag erstellen",

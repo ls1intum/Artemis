@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,28 +14,26 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { HolidayOccurrence } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, coversWholeDays, endOfHolidayDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
-/** What the dialog hands back on save. Times are absent for a whole-day holiday. */
+/** What the dialog hands back on save: the span exactly as it will be stored. */
 export interface HolidaySubmission {
-    readonly day: dayjs.Dayjs;
-    readonly wholeDay: boolean;
-    readonly startTime?: string;
-    readonly endTime?: string;
+    readonly start: dayjs.Dayjs;
+    readonly end: dayjs.Dayjs;
     readonly reason: string;
 }
 
-/** Where a partial-day holiday starts and ends when the reader first turns "whole day" off. */
-const DEFAULT_START_TIME = '09:00';
-const DEFAULT_END_TIME = '12:00';
-const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** Where a holiday narrowed to part of a day starts and ends when the reader first turns "whole day" off. */
+const DEFAULT_START_HOUR = 9;
+const DEFAULT_END_HOUR = 12;
 
 /**
- * Creates and edits a single holiday.
+ * Creates and edits a holiday.
  *
- * One dialog covers both, because the fields are identical and only the heading and the confirming button differ. It
- * deliberately offers a single day rather than a span: a holiday reads as "this day is cancelled", and a term break is
- * entered as the handful of days it actually covers, which is also what the list and the calendar show.
+ * The reader picks when it starts and when it ends, and that one span expresses every shape the old page made them
+ * choose a kind for first: a single day, a run of days such as a two-week break, and a slot within one day. **Whole
+ * day** is a shortcut over the same two fields - it snaps the start to 00:00 and the end to 23:59 - rather than a
+ * separate mode, so switching it off leaves the dates alone and only opens up the times.
  */
 @Component({
     selector: 'jhi-holiday-dialog',
@@ -57,82 +55,143 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export class HolidayDialogComponent {
     readonly visible = model(false);
     /** The holiday being edited, or undefined to create one. */
-    readonly holiday = input<HolidayOccurrence | undefined>(undefined);
-    /** Prefills the date when the reader opened the dialog by clicking an empty day. */
+    readonly holiday = input<Holiday | undefined>(undefined);
+    /** Prefills the date when the reader opened the dialog by clicking a day in the calendar. */
     readonly initialDay = input<dayjs.Dayjs | undefined>(undefined);
-    /** Sessions scheduled on the chosen day, so the dialog can say what saving would cancel. */
-    readonly sessionCountForSelectedDay = input(0);
+    /** Sessions the span currently covers, so the dialog can say what saving would cancel. */
+    readonly sessionCountForSelectedSpan = input(0);
     readonly saving = input(false);
 
     readonly save = output<HolidaySubmission>();
-    /** The reader picked another date, so the page can load the session count for it. */
-    readonly selectedDayChange = output<dayjs.Dayjs>();
+    /** The chosen span changed, so the page can count the sessions it covers. */
+    readonly selectedSpanChange = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
 
     private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
 
-    protected readonly day = signal<dayjs.Dayjs | undefined>(undefined);
-    protected readonly wholeDay = signal(true);
-    protected readonly startTime = signal(DEFAULT_START_TIME);
-    protected readonly endTime = signal(DEFAULT_END_TIME);
+    protected readonly start = signal<dayjs.Dayjs | undefined>(undefined);
+    protected readonly end = signal<dayjs.Dayjs | undefined>(undefined);
     protected readonly reason = signal('');
 
     protected readonly isEditMode = computed(() => this.holiday() !== undefined);
-    protected readonly weekdayLabel = computed(() => this.day()?.locale(this.locale()).format('dddd') ?? '');
 
-    protected readonly timesAreValid = computed(() => {
-        if (this.wholeDay()) {
-            return true;
-        }
-        const start = this.startTime();
-        const end = this.endTime();
-        return TIME_PATTERN.test(start) && TIME_PATTERN.test(end) && start < end;
+    /** Derived rather than stored: the switch reflects the span, so editing a time cannot leave the two disagreeing. */
+    protected readonly wholeDay = computed(() => {
+        const start = this.start();
+        const end = this.end();
+        return !start || !end ? true : coversWholeDays(start, end);
     });
 
-    protected readonly canSave = computed(() => this.day() !== undefined && this.reason().trim().length > 0 && this.timesAreValid() && !this.saving());
+    protected readonly spansMultipleDays = computed(() => {
+        const start = this.start();
+        const end = this.end();
+        return !!start && !!end && !start.isSame(end, 'day');
+    });
+
+    /** Names the days rather than repeating the dates, which the fields already show. */
+    protected readonly startWeekday = computed(() => this.start()?.locale(this.locale()).format('dddd') ?? '');
+    protected readonly endWeekday = computed(() => this.end()?.locale(this.locale()).format('dddd') ?? '');
+
+    protected readonly dayCount = computed(() => {
+        const start = this.start();
+        const end = this.end();
+        return !start || !end ? 0 : end.startOf('day').diff(start.startOf('day'), 'day') + 1;
+    });
+
+    protected readonly endIsBeforeStart = computed(() => {
+        const start = this.start();
+        const end = this.end();
+        return !!start && !!end && !end.isAfter(start);
+    });
+
+    protected readonly canSave = computed(() => !!this.start() && !!this.end() && this.reason().trim().length > 0 && !this.endIsBeforeStart() && !this.saving());
 
     constructor() {
-        // Reloads the form whenever the dialog opens, so a cancelled edit never leaks into the next one.
+        // Reloads the form whenever the dialog opens on a holiday, so a cancelled edit never leaks into the next one.
         effect(() => {
             if (!this.visible()) {
                 return;
             }
-            const occurrence = this.holiday();
-            if (occurrence) {
-                this.day.set(occurrence.day);
-                this.wholeDay.set(occurrence.wholeDay);
-                this.startTime.set(occurrence.startTime ?? DEFAULT_START_TIME);
-                this.endTime.set(occurrence.endTime ?? DEFAULT_END_TIME);
-                this.reason.set(occurrence.reason);
-            } else {
-                this.day.set(this.initialDay() ?? dayjs().startOf('day'));
-                this.wholeDay.set(true);
-                this.startTime.set(DEFAULT_START_TIME);
-                this.endTime.set(DEFAULT_END_TIME);
-                this.reason.set('');
-            }
+            const holiday = this.holiday();
+            const initialDay = this.initialDay();
+            // Untracked because filling the form reads the very fields it writes - through emitSpan - and an effect
+            // tracking those would re-run on the reader's first edit and reset the dialog under them.
+            untracked(() => {
+                if (holiday) {
+                    this.start.set(holiday.start);
+                    this.end.set(holiday.end);
+                    this.reason.set(holiday.reason);
+                } else {
+                    const day = (initialDay ?? dayjs()).startOf('day');
+                    this.start.set(day);
+                    this.end.set(endOfHolidayDay(day));
+                    this.reason.set('');
+                }
+                this.emitSpan();
+            });
         });
     }
 
-    protected onDayChange(value: dayjs.Dayjs | undefined): void {
-        this.day.set(value);
-        if (value) {
-            this.selectedDayChange.emit(value);
+    protected onStartChange(value: dayjs.Dayjs | undefined): void {
+        if (!value) {
+            this.start.set(undefined);
+            return;
+        }
+        const previousStart = this.start();
+        this.start.set(value);
+
+        // Moving the start carries a single-day holiday with it, so the common case needs one edit rather than two.
+        const end = this.end();
+        if (end && previousStart && previousStart.isSame(end, 'day') && !value.isSame(end, 'day')) {
+            this.end.set(this.wholeDay() ? endOfHolidayDay(value) : value.startOf('day').set('hour', end.hour()).set('minute', end.minute()));
+        } else if (end && !end.isAfter(value)) {
+            this.end.set(endOfHolidayDay(value));
+        }
+        this.emitSpan();
+    }
+
+    protected onEndChange(value: dayjs.Dayjs | undefined): void {
+        this.end.set(value);
+        this.emitSpan();
+    }
+
+    /**
+     * Turns the span into whole days, or opens it up to times.
+     *
+     * Switching on keeps the days and widens them; switching off keeps the days and narrows the first one to a default
+     * slot, so neither direction silently moves the holiday to another date.
+     */
+    protected onWholeDayChange(wholeDay: boolean): void {
+        const start = this.start();
+        const end = this.end();
+        if (!start || !end) {
+            return;
+        }
+        if (wholeDay) {
+            this.start.set(start.startOf('day'));
+            this.end.set(endOfHolidayDay(end));
+        } else {
+            this.start.set(start.startOf('day').set('hour', DEFAULT_START_HOUR));
+            this.end.set(end.startOf('day').set('hour', DEFAULT_END_HOUR));
+        }
+        this.emitSpan();
+    }
+
+    private emitSpan(): void {
+        const start = this.start();
+        const end = this.end();
+        if (start && end && end.isAfter(start)) {
+            this.selectedSpanChange.emit({ start, end });
         }
     }
 
     protected onSubmit(): void {
-        const day = this.day();
-        if (!day || !this.canSave()) {
+        const start = this.start();
+        const end = this.end();
+        if (!start || !end || !this.canSave()) {
             return;
         }
-        this.save.emit({
-            day,
-            wholeDay: this.wholeDay(),
-            startTime: this.wholeDay() ? undefined : this.startTime(),
-            endTime: this.wholeDay() ? undefined : this.endTime(),
-            reason: this.reason().trim(),
-        });
+        this.save.emit({ start, end, reason: this.reason().trim() });
     }
 
     protected onCancel(): void {

@@ -6,7 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { groupByDay, toOccurrences } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { holidaysByDay, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 
 const TIME_ZONE = 'Europe/Berlin';
@@ -56,8 +56,8 @@ describe('HolidayMonthGridComponent', () => {
     });
 
     it('should render a holiday on the day it falls on', () => {
-        const occurrences = toOccurrences([period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
-        fixture.componentRef.setInput('holidaysByDay', groupByDay(occurrences));
+        const holidays = toHolidays([period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
+        fixture.componentRef.setInput('holidaysByDay', holidaysByDay(holidays));
         fixture.detectChanges();
 
         const day = fixture.debugElement.query(By.css('[data-day="2025-12-17"]'));
@@ -67,8 +67,8 @@ describe('HolidayMonthGridComponent', () => {
     });
 
     it('should show the session count only on days without a holiday, so the holiday is what the day reads as', () => {
-        const occurrences = toOccurrences([period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
-        fixture.componentRef.setInput('holidaysByDay', groupByDay(occurrences));
+        const holidays = toHolidays([period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
+        fixture.componentRef.setInput('holidaysByDay', holidaysByDay(holidays));
         fixture.componentRef.setInput(
             'sessionCountsByDay',
             new Map([
@@ -110,8 +110,8 @@ describe('HolidayMonthGridComponent', () => {
     });
 
     it('should open the existing holiday when a day that already has one is clicked', () => {
-        const occurrences = toOccurrences([period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
-        fixture.componentRef.setInput('holidaysByDay', groupByDay(occurrences));
+        const holidays = toHolidays([period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
+        fixture.componentRef.setInput('holidaysByDay', holidaysByDay(holidays));
         fixture.detectChanges();
         let selectedId: number | undefined;
         fixture.componentInstance.holidaySelected.subscribe((occurrence) => (selectedId = occurrence.period.id));

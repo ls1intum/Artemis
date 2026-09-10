@@ -5,26 +5,26 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 export const DAY_KEY_FORMAT = 'YYYY-MM-DD';
 
 /**
- * One day on which a holiday cancels sessions.
+ * A span during which sessions are cancelled, read in the time zone of the course.
  *
- * A free period is stored as a start and an end instant, which lets a single row span several days. The page creates
- * only single-day holidays, but rows created before it did can still span more, so every row is expanded into one
- * occurrence per day it covers. `period` stays the row behind the occurrence, so editing or deleting any occurrence acts
- * on the whole row rather than on the day the reader happened to click.
+ * A free period is stored as two instants, which is enough to express all three shapes the old page asked the reader to
+ * choose between up front: a whole day, a run of whole days, and a span within one day. Which of those a holiday is
+ * follows from its start and end rather than from a separate kind, so it is derived here instead of being stored.
  */
-export interface HolidayOccurrence {
+export interface Holiday {
     readonly period: TutorialGroupFreePeriod;
-    /** Start of the day this occurrence falls on, in the time zone of the tutorial groups configuration. */
-    readonly day: dayjs.Dayjs;
-    readonly dayKey: string;
+    /** Start of the span, in the time zone of the course. */
+    readonly start: dayjs.Dayjs;
+    readonly end: dayjs.Dayjs;
     readonly reason: string;
-    /** True when the occurrence covers the whole day rather than a span within it. */
+    /** True when the span covers its days completely, from 00:00 on the first to 23:59 on the last. */
     readonly wholeDay: boolean;
-    /** The span within the day, absent when `wholeDay`. */
-    readonly startTime?: string;
-    readonly endTime?: string;
-    /** True when the underlying row covers more than this one day, which the page can no longer produce. */
-    readonly partOfMultiDayPeriod: boolean;
+    readonly spansMultipleDays: boolean;
+    /** How many calendar days the span touches, counting both ends. */
+    readonly dayCount: number;
+    /** `HH:mm` in the course's zone. Precomputed because the date pipe would re-read the instant in the reader's. */
+    readonly startTime: string;
+    readonly endTime: string;
 }
 
 /**
@@ -37,66 +37,65 @@ export function inCourseZone(instant: dayjs.Dayjs, timeZone: string | undefined)
     return timeZone ? instant.tz(timeZone) : instant;
 }
 
-/**
- * Whether a free period covers its days completely.
- *
- * A whole-day holiday is stored as 00:00 to 23:59, which is what the create dialog writes and what the import would
- * write. Anything else is a span within a day and keeps its times.
- */
-export function coversWholeDay(period: TutorialGroupFreePeriod, timeZone: string | undefined): boolean {
-    if (!period.start || !period.end) {
-        return false;
-    }
-    const start = inCourseZone(period.start, timeZone);
-    const end = inCourseZone(period.end, timeZone);
+/** The last minute of a day, which is how the end of a whole-day holiday is stored. */
+export function endOfHolidayDay(day: dayjs.Dayjs): dayjs.Dayjs {
+    return day.startOf('day').set('hour', 23).set('minute', 59).startOf('minute');
+}
+
+/** Whether a span runs from midnight on its first day to 23:59 on its last, rather than being narrowed within a day. */
+export function coversWholeDays(start: dayjs.Dayjs, end: dayjs.Dayjs): boolean {
     return start.hour() === 0 && start.minute() === 0 && end.hour() === 23 && end.minute() === 59;
 }
 
 /**
- * Expands the free periods of a course into one occurrence per day, ascending.
+ * Projects the free periods of a course into the shape the page renders, ascending by start.
  *
- * Rows without a start or an end are skipped rather than rendered at an arbitrary day: they cannot be placed on the
- * calendar, and showing them somewhere wrong is worse than leaving them out of the grid.
+ * Rows without a start or an end are skipped rather than placed at an arbitrary day: they cannot be put on the calendar,
+ * and showing them somewhere wrong is worse than leaving them out.
  */
-export function toOccurrences(periods: readonly TutorialGroupFreePeriod[], timeZone: string | undefined): HolidayOccurrence[] {
-    const occurrences: HolidayOccurrence[] = [];
+export function toHolidays(periods: readonly TutorialGroupFreePeriod[], timeZone: string | undefined): Holiday[] {
+    const holidays: Holiday[] = [];
     for (const period of periods) {
         if (!period.start || !period.end) {
             continue;
         }
         const start = inCourseZone(period.start, timeZone);
         const end = inCourseZone(period.end, timeZone);
-        const wholeDay = coversWholeDay(period, timeZone);
-        const partOfMultiDayPeriod = !start.isSame(end, 'day');
-
-        let day = start.startOf('day');
-        const lastDay = end.startOf('day');
-        while (!day.isAfter(lastDay)) {
-            occurrences.push({
-                period,
-                day,
-                dayKey: day.format(DAY_KEY_FORMAT),
-                reason: period.reason ?? '',
-                wholeDay: wholeDay || partOfMultiDayPeriod,
-                startTime: wholeDay || partOfMultiDayPeriod ? undefined : start.format('HH:mm'),
-                endTime: wholeDay || partOfMultiDayPeriod ? undefined : end.format('HH:mm'),
-                partOfMultiDayPeriod,
-            });
-            day = day.add(1, 'day');
-        }
+        holidays.push({
+            period,
+            start,
+            end,
+            reason: period.reason ?? '',
+            wholeDay: coversWholeDays(start, end),
+            spansMultipleDays: !start.isSame(end, 'day'),
+            dayCount: end.startOf('day').diff(start.startOf('day'), 'day') + 1,
+            startTime: start.format('HH:mm'),
+            endTime: end.format('HH:mm'),
+        });
     }
-    return occurrences.sort((left, right) => left.day.valueOf() - right.day.valueOf());
+    return holidays.sort((left, right) => left.start.valueOf() - right.start.valueOf());
 }
 
-/** Groups occurrences by their day, so the calendar grid can look a day up without scanning the list. */
-export function groupByDay(occurrences: readonly HolidayOccurrence[]): Map<string, HolidayOccurrence[]> {
-    const byDay = new Map<string, HolidayOccurrence[]>();
-    for (const occurrence of occurrences) {
-        const existing = byDay.get(occurrence.dayKey);
-        if (existing) {
-            existing.push(occurrence);
-        } else {
-            byDay.set(occurrence.dayKey, [occurrence]);
+/**
+ * Indexes the holidays by every day they touch, so the calendar can look a day up without scanning the list.
+ *
+ * A holiday spanning several days appears under each of them, which is what puts a two-week break on all of its days
+ * while keeping it a single entry in the list beside the calendar.
+ */
+export function holidaysByDay(holidays: readonly Holiday[]): Map<string, Holiday[]> {
+    const byDay = new Map<string, Holiday[]>();
+    for (const holiday of holidays) {
+        let day = holiday.start.startOf('day');
+        const lastDay = holiday.end.startOf('day');
+        while (!day.isAfter(lastDay)) {
+            const key = day.format(DAY_KEY_FORMAT);
+            const existing = byDay.get(key);
+            if (existing) {
+                existing.push(holiday);
+            } else {
+                byDay.set(key, [holiday]);
+            }
+            day = day.add(1, 'day');
         }
     }
     return byDay;

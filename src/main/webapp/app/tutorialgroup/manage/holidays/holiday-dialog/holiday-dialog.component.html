@@ -5,59 +5,50 @@
     [header]="(isEditMode() ? 'artemisApp.pages.tutorialFreePeriodsManagement.editHoliday' : 'artemisApp.pages.tutorialFreePeriodsManagement.addHoliday') | artemisTranslate"
 >
     <form class="flex flex-col gap-4" (ngSubmit)="onSubmit()">
-        <tum-ui-form-field [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.date' | artemisTranslate">
-            <div class="flex items-center gap-3">
-                <tum-ui-date-picker
-                    class="flex-1"
-                    data-testid="holiday-date"
-                    [hideLabelName]="true"
-                    [value]="day()"
-                    (valueChange)="onDayChange($event)"
-                    [ariaLabel]="'artemisApp.pages.tutorialFreePeriodsManagement.form.date' | artemisTranslate"
-                />
-                <!-- The weekday is what tells an instructor whether the day carries tutorials at all, so it is shown beside the date. -->
-                <span class="whitespace-nowrap opacity-70" data-testid="holiday-weekday">{{ weekdayLabel() }}</span>
-            </div>
-        </tum-ui-form-field>
-
         <label class="flex items-start gap-3 rounded-md border border-solid p-3" style="border-color: var(--tumaet-ui-border-color)">
-            <tum-ui-toggle-switch data-testid="holiday-whole-day" [ngModel]="wholeDay()" [ngModelOptions]="{ standalone: true }" (changed)="wholeDay.set($event)" />
+            <tum-ui-toggle-switch data-testid="holiday-whole-day" [ngModel]="wholeDay()" [ngModelOptions]="{ standalone: true }" (changed)="onWholeDayChange($event)" />
             <span class="flex flex-col">
                 <span class="font-semibold" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.wholeDay"></span>
                 <span class="text-sm opacity-70" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.form.wholeDayHint"></span>
             </span>
         </label>
 
-        @if (!wholeDay()) {
-            <div class="flex gap-3">
-                <tum-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.startTime' | artemisTranslate">
-                    <input
-                        tumUiInput
-                        type="time"
-                        data-testid="holiday-start-time"
-                        [ngModel]="startTime()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="startTime.set($event)"
-                    />
-                </tum-ui-form-field>
-                <tum-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.endTime' | artemisTranslate">
-                    <input
-                        tumUiInput
-                        type="time"
-                        data-testid="holiday-end-time"
-                        [ngModel]="endTime()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="endTime.set($event)"
-                    />
-                </tum-ui-form-field>
-            </div>
-            @if (!timesAreValid()) {
-                <tum-ui-message
-                    severity="error"
-                    data-testid="holiday-time-error"
-                    [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.invalidTimeRange' | artemisTranslate"
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <tum-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate">
+                <!-- The picker carries the date and the time together, so a holiday within a day needs no extra field. -->
+                <tum-ui-date-picker
+                    data-testid="holiday-start"
+                    [hideLabelName]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [value]="start()"
+                    (valueChange)="onStartChange($event)"
+                    [ariaLabel]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate"
                 />
-            }
+                <span class="mt-1 block text-sm opacity-70" data-testid="holiday-start-weekday">{{ startWeekday() }}</span>
+            </tum-ui-form-field>
+
+            <tum-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.to' | artemisTranslate">
+                <tum-ui-date-picker
+                    data-testid="holiday-end"
+                    [hideLabelName]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [value]="end()"
+                    (valueChange)="onEndChange($event)"
+                    [ariaLabel]="'artemisApp.pages.tutorialFreePeriodsManagement.form.to' | artemisTranslate"
+                />
+                <span class="mt-1 block text-sm opacity-70" data-testid="holiday-end-weekday">{{ endWeekday() }}</span>
+            </tum-ui-form-field>
+        </div>
+
+        @if (endIsBeforeStart()) {
+            <tum-ui-message severity="error" data-testid="holiday-range-error" [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.invalidRange' | artemisTranslate" />
+        } @else if (spansMultipleDays()) {
+            <!-- A run of days is easy to get wrong by a day, so the dialog says how many it currently covers. -->
+            <tum-ui-message
+                severity="info"
+                data-testid="holiday-span-summary"
+                [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.spansDays' | artemisTranslate: { count: dayCount() }"
+            />
         }
 
         <tum-ui-form-field [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reason' | artemisTranslate">
@@ -73,11 +64,11 @@
             />
         </tum-ui-form-field>
 
-        @if (sessionCountForSelectedDay() > 0) {
+        @if (sessionCountForSelectedSpan() > 0) {
             <tum-ui-message
                 severity="info"
                 data-testid="holiday-session-warning"
-                [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.sessionsWillBeCancelled' | artemisTranslate: { count: sessionCountForSelectedDay() }"
+                [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.sessionsWillBeCancelled' | artemisTranslate: { count: sessionCountForSelectedSpan() }"
             />
         }
 
@@ -86,7 +77,7 @@
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button tumUiButton type="submit" data-testid="holiday-submit" [disabled]="!canSave()">
-                <span [jhiTranslate]="isEditMode() ? 'entity.action.save' : 'entity.action.create'"></span>
+                <span [jhiTranslate]="isEditMode() ? 'entity.action.save' : 'artemisApp.pages.tutorialFreePeriodsManagement.form.create'"></span>
             </button>
         </div>
     </form>

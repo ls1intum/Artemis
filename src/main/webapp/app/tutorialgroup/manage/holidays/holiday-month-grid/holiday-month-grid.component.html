@@ -64,7 +64,7 @@
                         }
                     </div>
 
-                    @for (holiday of day.holidays; track holiday.period.id + '-' + holiday.dayKey) {
+                    @for (holiday of day.holidays; track holiday.period.id) {
                         <div class="holiday-grid-event" data-testid="holiday-calendar-event">
                             <span class="holiday-grid-event-title">{{ holiday.reason }}</span>
                             <span class="holiday-grid-event-time">

@@ -6,18 +6,18 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { toOccurrences } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
 
 const TIME_ZONE = 'Europe/Berlin';
 
-function occurrenceOf(start: string, end: string, reason: string) {
+function holidayOf(start: string, end: string, reason: string) {
     const freePeriod = new TutorialGroupFreePeriod();
     freePeriod.id = 3;
     freePeriod.start = dayjs.utc(start);
     freePeriod.end = dayjs.utc(end);
     freePeriod.reason = reason;
-    return toOccurrences([freePeriod], TIME_ZONE)[0];
+    return toHolidays([freePeriod], TIME_ZONE)[0];
 }
 
 describe('HolidayDialogComponent', () => {
@@ -34,7 +34,7 @@ describe('HolidayDialogComponent', () => {
         component = fixture.componentInstance;
     });
 
-    /** ngModel writes the value to the input asynchronously, so the DOM is only settled after a stable tick. */
+    /** ngModel writes to the DOM asynchronously, so the form is only settled after a stable tick. */
     async function open(): Promise<void> {
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
@@ -42,87 +42,119 @@ describe('HolidayDialogComponent', () => {
         fixture.detectChanges();
     }
 
-    it('should start a new holiday as a whole day, which is the common case', async () => {
+    it('should start a new holiday as one whole day', async () => {
         fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
         await open();
 
-        expect(fixture.debugElement.query(By.css('[data-testid="holiday-start-time"]'))).toBeNull();
+        expect(component['wholeDay']()).toBe(true);
+        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 00:00');
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 23:59');
     });
 
-    it('should load the holiday being edited into the form', async () => {
-        fixture.componentRef.setInput('holiday', occurrenceOf('2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
+    it('should load the whole span of the holiday being edited, not just its first day', async () => {
+        fixture.componentRef.setInput('holiday', holidayOf('2025-12-16T23:00:00', '2025-12-31T22:59:00', 'Christmas holidays'));
         await open();
 
-        const reason = fixture.debugElement.query(By.css('[data-testid="holiday-reason"]')).nativeElement as HTMLInputElement;
-
-        expect(reason.value).toBe('Dies Academicus');
-        // A holiday stored as a span within a day opens with its times visible rather than as a whole day.
-        expect(fixture.debugElement.query(By.css('[data-testid="holiday-start-time"]'))).not.toBeNull();
+        expect(component['start']()!.format('YYYY-MM-DD')).toBe('2025-12-17');
+        expect(component['end']()!.format('YYYY-MM-DD')).toBe('2025-12-31');
+        expect(component['dayCount']()).toBe(15);
     });
 
-    it('should reveal the time fields when whole day is switched off', async () => {
+    it('should derive the whole-day switch from the span, so a time edit cannot leave the two disagreeing', async () => {
+        fixture.componentRef.setInput('holiday', holidayOf('2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
         await open();
-        fixture.debugElement.query(By.css('[data-testid="holiday-whole-day"]')).triggerEventHandler('changed', false);
+
+        expect(component['wholeDay']()).toBe(false);
+    });
+
+    it('should widen the span to whole days when the switch goes on, keeping the dates', async () => {
+        fixture.componentRef.setInput('holiday', holidayOf('2025-12-04T08:15:00', '2025-12-05T12:45:00', 'Break'));
+        await open();
+
+        component['onWholeDayChange'](true);
+
+        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 00:00');
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-05 23:59');
+    });
+
+    it('should narrow to default times when the switch goes off, keeping the dates', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        await open();
+
+        component['onWholeDayChange'](false);
+
+        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 09:00');
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 12:00');
+    });
+
+    it('should carry a single-day holiday along when its start moves', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        await open();
+
+        component['onStartChange'](dayjs('2025-12-10').startOf('day'));
+
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-10 23:59');
+        expect(component['spansMultipleDays']()).toBe(false);
+    });
+
+    it('should leave a multi-day span alone when its start moves within the range', async () => {
+        fixture.componentRef.setInput('holiday', holidayOf('2025-12-16T23:00:00', '2025-12-31T22:59:00', 'Christmas holidays'));
+        await open();
+
+        component['onStartChange'](dayjs('2025-12-18').startOf('day'));
+
+        expect(component['end']()!.format('YYYY-MM-DD')).toBe('2025-12-31');
+    });
+
+    it('should refuse a span whose end is not after its start', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        await open();
+        component['reason'].set('Dies Academicus');
+
+        component['onEndChange'](dayjs('2025-12-01').startOf('day'));
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[data-testid="holiday-start-time"]'))).not.toBeNull();
-        expect(fixture.debugElement.query(By.css('[data-testid="holiday-end-time"]'))).not.toBeNull();
+        expect(component['canSave']()).toBe(false);
+        expect(fixture.debugElement.query(By.css('[data-testid="holiday-range-error"]'))).not.toBeNull();
     });
 
     it('should refuse to save without a reason, since the reason is what students are shown', async () => {
         fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
         await open();
 
-        const submit = fixture.debugElement.query(By.css('[data-testid="holiday-submit"]')).nativeElement as HTMLButtonElement;
-
-        expect(submit.disabled).toBe(true);
-    });
-
-    it('should refuse to save a span that ends before it starts', async () => {
-        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
-        await open();
-        fixture.debugElement.query(By.css('[data-testid="holiday-whole-day"]')).triggerEventHandler('changed', false);
-        fixture.detectChanges();
-
-        component['reason'].set('Dies Academicus');
-        component['startTime'].set('14:00');
-        component['endTime'].set('09:00');
-        fixture.detectChanges();
-
         expect((fixture.debugElement.query(By.css('[data-testid="holiday-submit"]')).nativeElement as HTMLButtonElement).disabled).toBe(true);
-        expect(fixture.debugElement.query(By.css('[data-testid="holiday-time-error"]'))).not.toBeNull();
     });
 
-    it('should emit a whole-day submission without times', async () => {
-        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+    it('should emit the span exactly as it will be stored', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-22').startOf('day'));
         await open();
         let submission: HolidaySubmission | undefined;
         component.save.subscribe((value) => (submission = value));
 
-        component['reason'].set('Dies Academicus');
+        component['onEndChange'](dayjs('2026-01-05').startOf('day').set('hour', 23).set('minute', 59));
+        component['reason'].set('  Christmas holidays  ');
         fixture.detectChanges();
         fixture.debugElement.query(By.css('[data-testid="holiday-submit"]')).nativeElement.click();
 
-        expect(submission?.wholeDay).toBe(true);
-        expect(submission?.startTime).toBeUndefined();
-        expect(submission?.day.format('YYYY-MM-DD')).toBe('2025-12-04');
+        expect(submission?.start.format('YYYY-MM-DD HH:mm')).toBe('2025-12-22 00:00');
+        expect(submission?.end.format('YYYY-MM-DD HH:mm')).toBe('2026-01-05 23:59');
+        // Trimmed, so trailing whitespace never reaches the students.
+        expect(submission?.reason).toBe('Christmas holidays');
     });
 
-    it('should trim the reason, so trailing whitespace does not reach the students', async () => {
+    it('should announce the chosen span so the page can count what it cancels', async () => {
         fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        const spans: { start: dayjs.Dayjs; end: dayjs.Dayjs }[] = [];
+        component.selectedSpanChange.subscribe((span) => spans.push(span));
+
         await open();
-        let submission: HolidaySubmission | undefined;
-        component.save.subscribe((value) => (submission = value));
 
-        component['reason'].set('  Dies Academicus  ');
-        fixture.detectChanges();
-        fixture.debugElement.query(By.css('[data-testid="holiday-submit"]')).nativeElement.click();
-
-        expect(submission?.reason).toBe('Dies Academicus');
+        expect(spans.length).toBeGreaterThan(0);
+        expect(spans.at(-1)!.start.format('YYYY-MM-DD')).toBe('2025-12-04');
     });
 
     it('should reset a cancelled edit, so it does not leak into the next holiday created', async () => {
-        fixture.componentRef.setInput('holiday', occurrenceOf('2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
+        fixture.componentRef.setInput('holiday', holidayOf('2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
         await open();
         fixture.componentRef.setInput('visible', false);
         fixture.detectChanges();
@@ -131,9 +163,7 @@ describe('HolidayDialogComponent', () => {
         fixture.componentRef.setInput('initialDay', dayjs('2025-12-20').startOf('day'));
         await open();
 
-        const reason = fixture.debugElement.query(By.css('[data-testid="holiday-reason"]')).nativeElement as HTMLInputElement;
-
-        expect(reason.value).toBe('');
-        expect(fixture.debugElement.query(By.css('[data-testid="holiday-start-time"]'))).toBeNull();
+        expect(component['reason']()).toBe('');
+        expect(component['wholeDay']()).toBe(true);
     });
 });

@@ -22,7 +22,7 @@
 
         <section class="rounded-lg border border-solid" style="border-color: var(--tumaet-ui-border-color)" data-testid="holiday-panel">
             <jhi-holiday-list
-                [holidays]="occurrences()"
+                [holidays]="holidays()"
                 [sessionCountsByDay]="sessionCountsByDay()"
                 [today]="today()"
                 [filter]="filter()"
@@ -37,10 +37,10 @@
         [(visible)]="dialogVisible"
         [holiday]="editedHoliday()"
         [initialDay]="dialogInitialDay()"
-        [sessionCountForSelectedDay]="sessionCountForDialogDay()"
+        [sessionCountForSelectedSpan]="dialogSessionCount()"
         [saving]="isSaving()"
         (save)="onSave($event)"
-        (selectedDayChange)="dialogSelectedDay.set($event)"
+        (selectedSpanChange)="onDialogSpanChange($event)"
     />
 
     <tum-ui-confirm-dialog />
