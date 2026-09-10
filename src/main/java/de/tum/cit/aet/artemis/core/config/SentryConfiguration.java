@@ -39,7 +39,7 @@ public class SentryConfiguration {
      * The user data a Sentry message may carry, scrubbed before it leaves the server: {@code user=barney_young},
      * {@code User{...}} and email addresses.
      */
-    private static final List<Pattern> PERSONAL_DATA_PATTERNS = List.of(Pattern.compile("user=\\S+"), Pattern.compile("User{[^}]*}"),
+    private static final List<Pattern> PERSONAL_DATA_PATTERNS = List.of(Pattern.compile("user=\\S+"), Pattern.compile("User\\{[^}]*}"),
             Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"));
 
     /** The part of a repository URI between the last hyphen and the git suffix, which is a user login. */
