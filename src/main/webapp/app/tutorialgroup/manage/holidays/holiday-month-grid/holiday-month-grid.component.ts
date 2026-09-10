@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { getWeekdayNameKeys } from 'app/calendar/shared/util/calendar-util';
-import { DAY_KEY_FORMAT, Holiday } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { DAY_KEY_FORMAT, Holiday, endsAtEndOfDay, startsAtBeginningOfDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** Days in a week, and so the number of columns a week is laid out in. */
 const DAYS_PER_WEEK = 7;
@@ -21,6 +21,9 @@ const HEADER_HEIGHT_REM = 2;
 
 /** A week with no holiday still gets this much room, so an empty month keeps its shape. */
 const MIN_WEEK_HEIGHT_REM = 5.5;
+
+/** Breathing room below the last lane, so a full week does not end flush against its border. */
+const WEEK_BOTTOM_PADDING_REM = 0.5;
 
 /**
  * One holiday as a single bar across the days of one week.
@@ -66,6 +69,8 @@ export interface HolidayCalendarWeek {
     readonly bars: readonly HolidayBar[];
     /** Rows of bars this week needs, which makes its cells as tall as they have to be and no taller. */
     readonly laneCount: number;
+    /** Height of the week in rem, derived from its lanes so a busy week grows and an empty one does not. */
+    readonly heightRem: number;
 }
 
 /**
@@ -138,11 +143,13 @@ export class HolidayMonthGridComponent {
                 });
             }
 
+            const laneCount = bars.reduce((highest, bar) => Math.max(highest, bar.lane + 1), 0);
             weeks.push({
                 id: days[0].dayKey,
                 days,
                 bars,
-                laneCount: bars.reduce((highest, bar) => Math.max(highest, bar.lane + 1), 0),
+                laneCount,
+                heightRem: Math.max(MIN_WEEK_HEIGHT_REM, HEADER_HEIGHT_REM + laneCount * LANE_HEIGHT_REM + WEEK_BOTTOM_PADDING_REM),
             });
             weekStart = weekStart.add(1, 'week');
         }
@@ -170,8 +177,8 @@ export class HolidayMonthGridComponent {
             const clipEnd = lastDay.isAfter(weekEnd, 'day') ? weekEnd : lastDay;
             const startsRun = clipStart.isSame(firstDay, 'day');
             const endsRun = clipEnd.isSame(lastDay, 'day');
-            const startsPartway = startsRun && !(holiday.start.hour() === 0 && holiday.start.minute() === 0);
-            const endsPartway = endsRun && !(holiday.end.hour() === 23 && holiday.end.minute() === 59);
+            const startsPartway = startsRun && !startsAtBeginningOfDay(holiday.start);
+            const endsPartway = endsRun && !endsAtEndOfDay(holiday.end);
             const startColumn = clipStart.diff(weekStart, 'day');
             const span = clipEnd.diff(clipStart, 'day') + 1;
 
@@ -199,11 +206,6 @@ export class HolidayMonthGridComponent {
             lane++;
         }
         return lane;
-    }
-
-    /** Cells are as tall as the week's bars need, and never shorter than an empty week. */
-    protected weekHeightRem(week: HolidayCalendarWeek): number {
-        return Math.max(MIN_WEEK_HEIGHT_REM, HEADER_HEIGHT_REM + week.laneCount * LANE_HEIGHT_REM + 0.5);
     }
 
     protected showPreviousMonth(): void {

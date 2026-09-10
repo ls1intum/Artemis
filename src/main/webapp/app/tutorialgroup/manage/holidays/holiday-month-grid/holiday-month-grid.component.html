@@ -40,7 +40,7 @@
 
     @for (week of weeks(); track week.id) {
         <!-- The cells give the week its grid and borders; the bars are laid over them so one can span several days. -->
-        <div class="relative grid grid-cols-7" role="row" [style.height.rem]="weekHeightRem(week)">
+        <div class="relative grid grid-cols-7" role="row" [style.height.rem]="week.heightRem">
             @for (day of week.days; track day.dayKey) {
                 <!-- A day is a button only where it can act, so a day outside the month is not announced as clickable. -->
                 <div

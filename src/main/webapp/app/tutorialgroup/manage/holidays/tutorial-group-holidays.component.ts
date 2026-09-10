@@ -92,6 +92,17 @@ export class TutorialGroupHolidaysComponent {
     protected readonly holidays = computed(() => toHolidays(this.freePeriods(), this.timeZone()));
 
     constructor() {
+        this.countSessionsForSpansChosenInTheDialog();
+        this.loadCourseFromRoute();
+    }
+
+    /**
+     * Answers the dialog's chosen span with the number of sessions it would cancel.
+     *
+     * Debounced because typing a date emits per keystroke and stepping through a month emits per day, so the raw
+     * stream would ask for counts nobody sees. switchMap drops the answer to a span already moved past.
+     */
+    private countSessionsForSpansChosenInTheDialog(): void {
         this.dialogSpanRequests
             .pipe(
                 debounceTime(SESSION_COUNT_DEBOUNCE_MS),
@@ -107,7 +118,9 @@ export class TutorialGroupHolidaysComponent {
                 next: (counts) => this.dialogSessionCount.set(counts.reduce((total, count) => total + count.count, 0)),
                 error: (response: HttpErrorResponse) => onError(this.alertService, response),
             });
+    }
 
+    private loadCourseFromRoute(): void {
         this.activatedRoute.data.pipe(takeUntilDestroyed()).subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);

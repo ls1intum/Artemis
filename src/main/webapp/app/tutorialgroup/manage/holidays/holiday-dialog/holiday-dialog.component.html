@@ -45,7 +45,7 @@
             <input
                 tumUiInput
                 type="text"
-                maxlength="256"
+                [attr.maxlength]="reasonMaxLength"
                 data-testid="holiday-reason"
                 [value]="reason()"
                 (input)="onReasonInput($event)"

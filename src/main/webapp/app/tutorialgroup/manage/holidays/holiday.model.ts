@@ -5,6 +5,17 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 export const DAY_KEY_FORMAT = 'YYYY-MM-DD';
 
 /**
+ * The bounds a holiday covering a whole day is stored between.
+ *
+ * A free period holds two instants and nothing that says "all day", so covering a day means starting at its first
+ * minute and ending at its last. Reading and writing that has to agree on those two, hence the names.
+ */
+const FIRST_HOUR_OF_DAY = 0;
+const FIRST_MINUTE_OF_HOUR = 0;
+const LAST_HOUR_OF_DAY = 23;
+const LAST_MINUTE_OF_HOUR = 59;
+
+/**
  * A span during which sessions are cancelled, read in the time zone of the course.
  *
  * A free period is stored as two instants, which is enough to express all three shapes the old page asked the reader to
@@ -41,12 +52,22 @@ export function inCourseZone(instant: dayjs.Dayjs, timeZone: string | undefined)
 
 /** The last minute of a day, which is how the end of a whole-day holiday is stored. */
 export function endOfHolidayDay(day: dayjs.Dayjs): dayjs.Dayjs {
-    return day.startOf('day').set('hour', 23).set('minute', 59).startOf('minute');
+    return day.startOf('day').set('hour', LAST_HOUR_OF_DAY).set('minute', LAST_MINUTE_OF_HOUR).startOf('minute');
 }
 
-/** Whether a span runs from midnight on its first day to 23:59 on its last, rather than being narrowed within a day. */
+/** Whether a holiday takes its first day from the very beginning, rather than starting partway through it. */
+export function startsAtBeginningOfDay(instant: dayjs.Dayjs): boolean {
+    return instant.hour() === FIRST_HOUR_OF_DAY && instant.minute() === FIRST_MINUTE_OF_HOUR;
+}
+
+/** Whether a holiday holds its last day to the very end, rather than releasing it partway through. */
+export function endsAtEndOfDay(instant: dayjs.Dayjs): boolean {
+    return instant.hour() === LAST_HOUR_OF_DAY && instant.minute() === LAST_MINUTE_OF_HOUR;
+}
+
+/** Whether a span runs from the first minute of its first day to the last of its last, rather than being narrowed. */
 export function coversWholeDays(start: dayjs.Dayjs, end: dayjs.Dayjs): boolean {
-    return start.hour() === 0 && start.minute() === 0 && end.hour() === 23 && end.minute() === 59;
+    return startsAtBeginningOfDay(start) && endsAtEndOfDay(end);
 }
 
 /**

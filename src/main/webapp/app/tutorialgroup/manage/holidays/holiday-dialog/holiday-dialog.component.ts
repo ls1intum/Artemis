@@ -7,6 +7,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { Holiday, endOfHolidayDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
+/** Mirrors the `@Size` the server puts on the reason, so the field stops where the request would be rejected. */
+const REASON_MAX_LENGTH = 256;
+
 /** What the dialog hands back on save: the span exactly as it will be stored. */
 export interface HolidaySubmission {
     readonly start: dayjs.Dayjs;
@@ -58,6 +61,8 @@ export class HolidayDialogComponent {
     protected readonly end = signal<dayjs.Dayjs | undefined>(undefined);
     protected readonly reason = signal('');
 
+    protected readonly reasonMaxLength = REASON_MAX_LENGTH;
+
     protected readonly isEditMode = computed(() => this.holiday() !== undefined);
 
     protected readonly spansMultipleDays = computed(() => {
@@ -78,31 +83,35 @@ export class HolidayDialogComponent {
 
     protected readonly canSave = computed(() => !!this.start() && !!this.end() && this.reason().trim().length > 0 && !this.endIsBeforeStart() && !this.saving());
 
-    constructor() {
-        // Reloads the form whenever the dialog opens on a holiday, so a cancelled edit never leaks into the next one.
-        effect(() => {
-            if (!this.visible()) {
-                return;
+    /**
+     * Reloads the form whenever the dialog opens on a holiday, so a cancelled edit never leaks into the next one.
+     *
+     * Untracked around the writes because filling the form reads the very fields it writes - through emitSpan - and an
+     * effect tracking those would re-run on the reader's first edit and reset the dialog under them.
+     *
+     * Held in a field rather than run from a constructor so it carries a name; protected because a private one reads
+     * as unused, which is the same reason the sidebar-sync effects elsewhere in the client are declared that way.
+     */
+    protected readonly fillFormOnOpen = effect(() => {
+        if (!this.visible()) {
+            return;
+        }
+        const holiday = this.holiday();
+        const initialDay = this.initialDay();
+        untracked(() => {
+            if (holiday) {
+                this.start.set(holiday.start);
+                this.end.set(holiday.end);
+                this.reason.set(holiday.reason);
+            } else {
+                const day = (initialDay ?? dayjs()).startOf('day');
+                this.start.set(day);
+                this.end.set(endOfHolidayDay(day));
+                this.reason.set('');
             }
-            const holiday = this.holiday();
-            const initialDay = this.initialDay();
-            // Untracked because filling the form reads the very fields it writes - through emitSpan - and an effect
-            // tracking those would re-run on the reader's first edit and reset the dialog under them.
-            untracked(() => {
-                if (holiday) {
-                    this.start.set(holiday.start);
-                    this.end.set(holiday.end);
-                    this.reason.set(holiday.reason);
-                } else {
-                    const day = (initialDay ?? dayjs()).startOf('day');
-                    this.start.set(day);
-                    this.end.set(endOfHolidayDay(day));
-                    this.reason.set('');
-                }
-                this.emitSpan();
-            });
+            this.emitSpan();
         });
-    }
+    });
 
     protected onStartChange(value: dayjs.Dayjs | undefined): void {
         if (!value) {
