@@ -29,8 +29,8 @@
         cursor: default;
     }
 
-    // Bootstrap sets cursor:pointer on every enabled button from outside any cascade layer, which beats the
-    // aria-disabled utility in @layer utilities. The blocked state has to be stated here to win.
+    // Stated here rather than left to a utility class: an application's unlayered rules can set cursor:pointer on
+    // enabled buttons, and unlayered always beats a cascade layer, whatever the specificity of the utility.
     &[aria-disabled='true'] {
         cursor: not-allowed;
     }

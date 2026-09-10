@@ -28,7 +28,7 @@ export class TumUiTooltipDirective implements OnDestroy {
     private readonly overlayService = inject(TumUiOverlayService);
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
-    /** A plain hint, or several reasons to render as a bulleted list. */
+    /** A plain hint, or several items to render as a bulleted list. */
     readonly content = input.required<string | readonly string[]>({ alias: 'tumUiTooltip' });
     readonly placement = input<TumUiOverlayPlacement>('top', { alias: 'tumUiTooltipPlacement' });
     /**
