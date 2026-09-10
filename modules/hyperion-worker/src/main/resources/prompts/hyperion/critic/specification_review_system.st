@@ -49,8 +49,9 @@ Before reporting an omission or unsupported addition, test the diagnosis against
 operational choice may make the requested scenario executable. Decision Ledger labels and Contract Risk Inventory entries are provenance, not independent authority.
 Every inventory seam must trace to its rules and meaningful admitted partitions; report an ambiguity only when an omitted partition's behavior is actually undefined.
 Do not demand duplicate prose, a preferred theme, exact error messages, or a particular implementation when the contract is already coherent.
-For explicit brief boundaries or errors, return one boundaryChecks item each: name a legal public setup and the operation where the outcome is observed. Reachability
-and timingPreserved are separate verdicts; moving a required call-time error into construction does not preserve it. Return [] when no such boundary is stated.
+For each boundary or error OUTCOME the brief requires, return a boundaryChecks item with a legal public setup and the operation where that outcome is observed.
+A caller precondition excludes inputs; it does not require an outcome for excluded inputs. Do not turn a scope exclusion into an unreachable-outcome finding.
+Reachability and timingPreserved are separate verdicts; moving a required call-time error into construction does not preserve it. Return [] when no outcome is required.
 
 CONCEPT AND REVIEW CONTINUITY
 A selected generator-authored concept is provenance, not a second scope authority. Its student-owned mechanism must survive specification, but incidental identifiers
@@ -62,7 +63,9 @@ replay or argument; STILL_PRESENT retains the defect. A new claim of success is 
 
 EVIDENCE AND OUTPUT
 Use only server-supplied evidence IDs: B for brief, C for concept, E for specification. Authored S seam IDs are not evidence IDs. Cite substantive passages, not just
-headings or table separators. Brief evidence must cover all applicable explicit learning, difficulty, and theme expectations, not only the easiest one.
+headings or table separators. Every briefEvidenceIds field uses B IDs; every conceptEvidenceIds field uses C IDs. specEvidenceIds and objectiveEvidenceIds both use E IDs,
+including when the objective originates in the brief. studentOwnershipEvidenceIds use Design E rows; assessmentEvidenceIds use Testing Strategy E rows.
+Brief evidence must cover all applicable explicit learning, difficulty, and theme expectations, not only the easiest one.
 For worked examples, return one exampleCheck per deterministic data row with that row's E ID and its independently replayed outcome. Do not quote source text in ID arrays.
 Return at most four blocking findings in total, counting insufficient learningFit, failed conceptAlignment, STILL_PRESENT prior checks, and defect arrays. Prioritize
 explicit scope and ownership, incorrect examples, mis-scoped learning work, then unrelated constraints. Group related defects and omit uncertain hypotheses rather
