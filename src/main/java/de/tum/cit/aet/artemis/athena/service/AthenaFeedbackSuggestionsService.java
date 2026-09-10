@@ -122,7 +122,7 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(@NonNull ExerciseBaseDTO exercise, @NonNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NonNull boolean isGraded,
+    private record RequestDTO(@NonNull ExerciseBaseDTO exercise, @NonNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, boolean isGraded,
             @Nullable AiSelectionDecision selection, @Nullable SubmissionBaseDTO latestSubmission, @Nullable List<CourseCompetencyDTO> competencies) {
     }
 

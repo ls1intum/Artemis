@@ -529,10 +529,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
     Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
         List<ProgrammingExerciseStudentParticipation> participations;
         if (exercise.isTeamMode()) {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentIdInTeam(exercise.getId(), user.getId());
         }
         else {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), user.getId());
         }
 
         if (participations.isEmpty()) {

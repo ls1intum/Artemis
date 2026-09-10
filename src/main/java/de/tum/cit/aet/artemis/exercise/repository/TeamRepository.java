@@ -91,15 +91,6 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     List<ExerciseTeamAssignmentDTO> findAssignmentsForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("userId") long userId);
 
     @Query("""
-            SELECT team
-            FROM Team team
-                LEFT JOIN team.students student
-            WHERE team.exercise.id = :exerciseId
-                AND student.login = :userLogin
-            """)
-    Optional<Team> findOneByExerciseIdAndUserLogin(@Param("exerciseId") Long exerciseId, @Param("userLogin") String userLogin);
-
-    @Query("""
             SELECT student.id, team.id
             FROM Team team
                 LEFT JOIN team.students student

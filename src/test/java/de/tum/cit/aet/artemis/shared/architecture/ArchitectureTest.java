@@ -111,10 +111,10 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
+import de.tum.cit.aet.artemis.core.config.JGitConfig;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
-import de.tum.cit.aet.artemis.core.util.junit_extensions.JGitSystemReaderInitializer;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -183,11 +183,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJGitSystemReaderConfigurationOutsideInitializer() {
-        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitSystemReaderInitializer.class.getName()).should()
+        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitConfig.class.getName()).should()
                 .callMethod(SystemReader.class, "setInstance", SystemReader.class)
                 .because("SystemReader#setInstance resets JGit's static platform detection caches (isWindows, isMacOS, isLinux) before re-deriving them, so calling it while "
                         + "other threads run git operations makes those fail with a NullPointerException. Installing it from a @BeforeAll means one call per test class, and test "
-                        + "classes run in parallel. Use JGitSystemReaderInitializer#configureOnce instead, which GlobalCleanupListener invokes before the test plan starts.");
+                        + "classes run in parallel. Use JGitConfig#configureSystemReaderOnce instead, which is idempotent - the server calls it from its @PostConstruct and GlobalCleanupListener calls it before the test plan starts.");
         setInstanceUsage.check(allClasses);
     }
 
@@ -249,6 +249,84 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
+    }
+
+    @Test
+    void testTransactionBoundariesOnlyInRepositories() {
+        String reason = """
+                A transaction boundary may only be declared inside a repository interface, where it lasts for one \
+                statement. Declared anywhere else it stays open for the whole call: it holds its locks across every \
+                repository call, remote request and file write inside it, blocks anyone who needs those rows for that \
+                entire span, and gives two concurrent calls enough overlapping rows to deadlock under load. A \
+                self-invoked one is worse than useless, because Spring applies the annotation through a proxy and the \
+                call therefore does nothing at all, silently.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Checked globally, not per module. AbstractModuleRepositoryArchitectureTest carries the same two rules, but
+        // only for modules that actually have a subclass — account, calendar, deimos and globalsearch have none, which
+        // left 35 services where an annotation would have passed CI unnoticed. A rule that depends on someone
+        // remembering to add a per-module test is not an enforced rule, and a module added later would inherit the
+        // same hole.
+        var repositoryInterfaces = and(INTERFACES, annotatedWith(Repository.class));
+
+        ArchRule methodBoundaries = methods().that().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(repositoryInterfaces).because(reason);
+
+        // A class-level annotation applies to every method of the class, which is the widest boundary available, and
+        // the method rule above cannot see it. It has to demand the same repositoryInterfaces predicate rather than
+        // merely @Repository: five concrete classes carry that annotation without being Spring Data interfaces
+        // (CustomAuditEventRepository and the four passkey repositories), and a class-level boundary on one of those
+        // is an ordinary wide transaction with a repository's name on it.
+        ArchRule classBoundaries = noClasses().that(not(repositoryInterfaces)).should().beAnnotatedWith(simpleNameAnnotation("Transactional")).because(reason);
+
+        methodBoundaries.check(productionClasses);
+        classBoundaries.check(productionClasses);
+    }
+
+    @Test
+    void testNoProgrammaticTransactionManagement() {
+        String reason = """
+                A transaction boundary declared with TransactionTemplate or a PlatformTransactionManager is the same \
+                boundary @Transactional declares, only spelled in a way no annotation rule can see — which is exactly \
+                how three services kept one after the annotation was banned. It has every cost of the annotated form: \
+                the transaction stays open for the whole callback, holding its locks across every repository call and \
+                remote request inside it, and two concurrent callbacks with overlapping rows deadlock under load.
+                Do the work explicitly instead. To make a check and a write atomic, put the check into the WHERE clause \
+                of a @Modifying repository query and act on whether it updated a row — see \
+                AnswerPostRepository.verifyIfUnverified. To undo work on failure, compensate in a catch block — see \
+                SlideSplitterService.SlideOperation.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Production only. A test may legitimately need a transaction of its own: to seed data an @Modifying query
+        // would have to be invented for, or to hold a row lock while asserting that the code under test waits for it.
+        // Everything in org.springframework.transaction is programmatic except the annotation package, which carries
+        // @Transactional itself and the enums it takes, and repositories are allowed to use those.
+        ArchRule noProgrammaticTransactions = noClasses().should()
+                .dependOnClassesThat(resideInAPackage("org.springframework.transaction..").and(not(resideInAPackage("org.springframework.transaction.annotation.."))))
+                .because(reason);
+
+        noProgrammaticTransactions.check(productionClasses);
+    }
+
+    @Test
+    void testNoTransactionSynchronization() {
+        String reason = """
+                A transaction synchronization callback only runs while a transaction is open, and a transaction boundary may only be \
+                declared inside a repository, where it lasts for one statement. Registering a callback from anywhere else therefore \
+                does nothing at all: TransactionSynchronizationManager.isSynchronizationActive() is false, so afterCommit and \
+                afterCompletion never fire, and nothing is logged. That is the failure mode this rule exists to prevent — code written \
+                to delete a file on rollback or to publish an event after commit silently skips both, leaving orphaned files and \
+                half-written state behind.
+                Do the work explicitly instead. After a repository call returns, its transaction has committed, so "after commit" is \
+                simply the next statement. To undo work on failure, compensate in a catch block: see SlideSplitterService.SlideOperation \
+                for the pattern, which records the files and rows an operation created and puts them back if it fails.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Checked over allClasses, tests included: a test that activates synchronization by hand keeps a dead production branch
+        // looking covered, which is how the previous usages survived.
+        ArchRule noTransactionSynchronization = noClasses().should()
+                .dependOnClassesThat(resideInAnyPackage("org.springframework.transaction.support..").and(simpleNameContaining("TransactionSynchronization"))).because(reason);
+
+        noTransactionSynchronization.check(allClasses);
     }
 
     @Test

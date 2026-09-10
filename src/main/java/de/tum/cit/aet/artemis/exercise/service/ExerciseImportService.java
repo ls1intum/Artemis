@@ -185,7 +185,7 @@ public abstract class ExerciseImportService {
 
     /**
      * This helper method does a hard copy of the result of a submission.
-     * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}
+     * To copy the feedback, it calls {@link #copyFeedback(Collection, Result, Map)}
      *
      * @param originalResult                The original result to be copied
      * @param newSubmission                 The submission in which we link the result clone
