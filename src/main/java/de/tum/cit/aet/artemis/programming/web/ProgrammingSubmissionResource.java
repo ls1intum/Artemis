@@ -412,6 +412,9 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
 
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // code editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(programmingExercise);
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission = programmingSubmissionService
                 .getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound).orElse(null);
@@ -436,8 +439,6 @@ public class ProgrammingSubmissionResource {
         // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
         manualResults.forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
 
-        // the code editor gates feedback suggestions on the course's Athena setting
-        courseAthenaConfigRepository.attachToCourseOf(programmingExercise);
         return ResponseEntity.ok().body(ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults));
     }
 }

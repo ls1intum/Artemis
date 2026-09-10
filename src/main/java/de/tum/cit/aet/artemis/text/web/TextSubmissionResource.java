@@ -328,6 +328,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // assessment editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
                 skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
 
@@ -359,8 +362,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // previous hideDetails behavior which only stripped the participant for non-instructors.
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         studentParticipation.setSubmissions(Set.of(textSubmission));
-        // the assessment editor gates feedback suggestions on the course's Athena setting
-        courseAthenaConfigRepository.attachToCourseOf(exercise);
         TextParticipationDTO participationDTO = TextParticipationDTO.of(studentParticipation, includeStudent).withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
         return ResponseEntity.ok().body(TextSubmissionWithoutAssessmentDTO.of(textSubmission, participationDTO));
     }

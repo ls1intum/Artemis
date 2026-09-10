@@ -100,8 +100,8 @@ public class StudentExamAthenaFeedbackService {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
         }
 
-        // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
-        // avoiding lazy-load traversal through StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
+        // Determine the eligible exercise ids from the studentExam exercises, whose Athena configuration is resolved
+        // just below, rather than traversing StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
         // Only text and modeling exercises are dispatched below, so exclude other exercise types here even if their
         // course has formative feedback enabled - otherwise a request could reserve a cap slot without ever
         // generating feedback.
