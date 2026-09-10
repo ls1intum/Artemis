@@ -149,11 +149,14 @@ public class StudentExamAthenaFeedbackService {
 
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();
+            // Hand over the submission validated above rather than letting the generator read the participation again,
+            // which for a test run could return an answer another run of the same exercise saved in the meantime.
+            Submission validatedSubmission = participation.findLatestSubmission().orElseThrow();
             if (exercise instanceof TextExercise textExercise) {
-                textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise));
+                textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, validatedSubmission));
             }
             else if (exercise instanceof ModelingExercise modelingExercise) {
-                modelingFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise));
+                modelingFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, validatedSubmission));
             }
         }
     }

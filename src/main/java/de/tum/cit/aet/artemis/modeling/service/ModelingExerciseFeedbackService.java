@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -71,28 +70,21 @@ public class ModelingExerciseFeedbackService {
 
     /**
      * Asynchronously triggers non-graded Athena feedback for a modeling submission in a test exam.
+     * <p>
+     * The submission is the one the caller validated, not a freshly read one: test runs of the same exercise share a
+     * participation, so re-reading it here could pick up an answer another run saved in the meantime.
      *
      * @param participation    the student participation associated with the exercise
      * @param modelingExercise the modeling exercise
+     * @param submission       the submission that was validated as eligible for feedback
      */
-    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise, Submission submission) {
         if (this.athenaFeedbackApi.isEmpty()) {
             return;
         }
-        Optional<Submission> submissionOptional;
-        try {
-            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
-        }
-        catch (EntityNotFoundException e) {
-            log.warn("Skipping Athena feedback for modeling participation {}: {}", participation.getId(), e.getMessage());
-            return;
-        }
-        if (submissionOptional.isEmpty()) {
-            return;
-        }
-        if (!(submissionOptional.get() instanceof ModelingSubmission modelingSubmission)) {
-            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: latest submission {} is not a ModelingSubmission", participation.getId(),
-                    modelingExercise.getId(), submissionOptional.get().getId());
+        if (!(submission instanceof ModelingSubmission modelingSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: submission {} is not a ModelingSubmission", participation.getId(),
+                    modelingExercise.getId(), submission.getId());
             return;
         }
         if (modelingSubmission.isEmpty()) {
