@@ -209,7 +209,7 @@ export class HyperionRunPageComponent {
         return [
             exercise?.programmingLanguage ? `artemisApp.ProgrammingLanguage.${exercise.programmingLanguage}` : undefined,
             exercise?.projectType ? `artemisApp.programmingExercise.projectTypes.${exercise.projectType}` : undefined,
-            exercise?.difficulty ? `artemisApp.DifficultyLevel.${exercise.difficulty}` : undefined,
+            exercise?.difficulty ? `artemisApp.exercise.${exercise.difficulty.toLowerCase()}` : undefined,
         ].filter((key): key is string => key !== undefined);
     });
 
