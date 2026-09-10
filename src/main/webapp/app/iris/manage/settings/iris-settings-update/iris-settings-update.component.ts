@@ -200,7 +200,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
     /**
-     * Current instructional support level, defaulting to MODERATE to mirror the backend.
+     * Current instructional support level, defaulting to MODERATE to mirror the server.
      */
     readonly currentSupportLevel = computed((): IrisSupportLevel => this.settings()?.supportLevel ?? 'moderate');
 

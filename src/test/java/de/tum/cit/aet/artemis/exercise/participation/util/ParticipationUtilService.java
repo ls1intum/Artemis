@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRe
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -101,6 +102,25 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ParticipationUtilService {
+
+    @Autowired
+    private ParticipationService participationServiceForEagerResults;
+
+    /**
+     * Finds a student's participation with its results, and fails the test if there is none.
+     * <p>
+     * Lives here rather than in {@code ParticipationService} because only tests want the throwing variant: production
+     * code handles the empty case itself.
+     *
+     * @param exercise the exercise the participation belongs to
+     * @param student  the student whose participation to find
+     * @return the participation, with submissions and results
+     * @throws EntityNotFoundException if the student has no participation in that exercise
+     */
+    public StudentParticipation findOneByExerciseAndStudentWithEagerResultsElseThrow(Exercise exercise, User student) {
+        return participationServiceForEagerResults.findOneByExerciseAndStudentAnyStateWithEagerResults(exercise, student)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and user " + student.getLogin() + "!"));
+    }
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
@@ -284,7 +304,8 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                userUtilService.getUserByLogin(login).getId(), false);
         if (storedParticipation.isEmpty()) {
             User user = userUtilService.getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -292,7 +313,8 @@ public class ParticipationUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                    userUtilService.getUserByLogin(login).getId(), false);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
@@ -306,7 +328,8 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                userUtilService.getUserByLogin(login).getId(), false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = userUtilService.getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -314,7 +337,8 @@ public class ParticipationUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), userUtilService.getUserByLogin(login).getId(),
+                false);
         assertThat(storedParticipation).isPresent();
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
@@ -1127,20 +1151,19 @@ public class ParticipationUtilService {
     }
 
     /**
-     * Assigns the correction round the way production does, so that fixtures behave like the assessment lock: the n-th
-     * manual result of a submission belongs to round n. Automatic and Athena results are not correction rounds and keep
-     * a null round.
-     * <p>
-     * The count comes from the submission's results in memory, which is where the position of the result used to come
-     * from as well when Hibernate maintained the order column.
-     *
-     * @param result the result about to be saved
-     * @return the same result, with its correction round set when it is a manual one
+     * @param one   a result
+     * @param other another result
+     * @return whether both are persisted and refer to the same database row
      */
+    private static boolean isSameRow(Result one, Result other) {
+        return one.getId() != null && one.getId().equals(other.getId());
+    }
+
     /**
      * Assigns the correction round a manual result would get if it were added through {@link Submission#addResult}, so
      * that results created directly through the repository carry the same value as results created through the
-     * production code path.
+     * production code path: the round after the highest one the submission's manual results already hold, or 0 if
+     * there is none. Automatic and Athena results are not correction rounds and keep a null round.
      * <p>
      * The already existing results are read from the database rather than from {@code submission.getResults()}, because
      * the submissions handed to these helpers usually come straight out of a repository and are detached, which makes
@@ -1149,10 +1172,6 @@ public class ParticipationUtilService {
      * @param result the result about to be saved
      * @return the same result, with the correction round set when it is a manual one
      */
-    private static boolean isSameRow(Result one, Result other) {
-        return one.getId() != null && one.getId().equals(other.getId());
-    }
-
     private Result withCorrectionRound(Result result) {
         boolean manual = result.getAssessmentType() != null && !result.isAutomatic() && !result.isAthenaBased();
         Submission submission = result.getSubmission();
@@ -1169,10 +1188,8 @@ public class ParticipationUtilService {
         }
         // Excluded by reference and by id: a result that is not saved yet has no id to match on, and a caller can also
         // hand in a persisted result, which the query above returns as a different object for the same row.
-        long manualResults = existing.filter(
-                other -> other != null && other != result && !isSameRow(other, result) && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
-                .count();
-        result.setCorrectionRound((int) manualResults);
+        result.setCorrectionRound(Submission.nextCorrectionRound(existing.filter(
+                other -> other != null && other != result && !isSameRow(other, result) && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())));
         return result;
     }
 }

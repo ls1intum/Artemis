@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.account.dto.OrganizationInputDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -80,14 +80,14 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         return buildSearch(searchTerm, 0, 100, "id", SortingOrder.ASCENDING);
     }
 
-    private OrganizationInputDTO toInputDTO(Organization organization) {
-        return new OrganizationInputDTO(organization.getId(), organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(),
+    private OrganizationRequestDTO toInputDTO(Organization organization) {
+        return new OrganizationRequestDTO(organization.getId(), organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(),
                 organization.getLogoUrl(), organization.getEmailPattern());
     }
 
-    private OrganizationInputDTO toCreateInputDTO(Organization organization) {
-        return new OrganizationInputDTO(null, organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(), organization.getLogoUrl(),
-                organization.getEmailPattern());
+    private OrganizationRequestDTO toCreateInputDTO(Organization organization) {
+        return new OrganizationRequestDTO(null, organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(),
+                organization.getLogoUrl(), organization.getEmailPattern());
     }
 
     /**
@@ -280,7 +280,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testAddOrganizationWithId() throws Exception {
         Organization organization = organizationUtilService.createOrganization();
         String originalName = organization.getName();
-        OrganizationInputDTO inputDTO = new OrganizationInputDTO(organization.getId(), "ChangedName", organization.getShortName(), organization.getUrl(),
+        OrganizationRequestDTO inputDTO = new OrganizationRequestDTO(organization.getId(), "ChangedName", organization.getShortName(), organization.getUrl(),
                 organization.getDescription(), organization.getLogoUrl(), organization.getEmailPattern());
 
         request.postWithResponseBody("/api/core/admin/organizations", inputDTO, OrganizationDTO.class, HttpStatus.BAD_REQUEST);

@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -1368,7 +1367,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
                     assertThat(studentParticipation.findLatestSubmission().get().getResults()).isNotNull().hasSize(exam2.getNumberOfCorrectionRoundsInExam());
-                    for (var result : Objects.requireNonNull(studentParticipation.findLatestSubmission().get().getResults())) {
+                    for (var result : studentParticipation.findLatestSubmission().get().getResults()) {
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
@@ -1450,7 +1449,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
                     assertThat(studentParticipation.findLatestSubmission().get().getResults()).isNotNull().hasSize(exam2.getNumberOfCorrectionRoundsInExam());
-                    for (var result : Objects.requireNonNull(studentParticipation.findLatestSubmission().get().getResults())) {
+                    for (var result : studentParticipation.findLatestSubmission().get().getResults()) {
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
@@ -1917,7 +1916,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             case QuizExercise quizExercise -> {
                 assertThat(quizExercise.getQuizQuestions()).hasSize(3);
                 quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-                    assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
                     assertThat(quizQuestion.getExplanation()).isNull();
                     switch (quizQuestion) {
                         case MultipleChoiceQuestion mcQuestion -> mcQuestion.getAnswerOptions().forEach(answerOption -> {
@@ -2143,7 +2141,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     }
                     if (question != null) {
                         assertThat(question.getExplanation()).isNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
@@ -2202,7 +2199,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     QuizQuestion question = submittedAnswer.getQuizQuestion();
                     if (question != null) {
                         assertThat(question.getExplanation()).isNotNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();
@@ -2596,7 +2592,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
      * {@code submissionPolicy} feeds the remaining-submissions indicator
      * ({@code ProgrammingSubmissionPolicyStatusComponent} reads {@code active}, {@code submissionLimit}, {@code type}
      * and {@code exceedingPenalty}). {@code prepareStudentExamForConduction} loads the policy onto the exercise, so
-     * dropping it from the projection means the backend keeps enforcing a limit the student cannot see. Non-default
+     * dropping it from the projection means the server keeps enforcing a limit the student cannot see. Non-default
      * values throughout, so a projection that emitted the field but not its contents still fails.
      */
     @Test
@@ -3316,7 +3312,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);
@@ -3442,19 +3438,37 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         }
 
         assertThat(quizExercise).isNotNull();
+        assertThat(quizSubmission).isNotNull();
+        ZonedDateTime oldSubmissionDate = ZonedDateTime.now().minusDays(1);
+        QuizSubmission persistedQuizSubmission = quizSubmissionTestRepository.findById(quizSubmission.getId()).orElseThrow();
+        persistedQuizSubmission.setSubmissionDate(oldSubmissionDate);
+        quizSubmissionTestRepository.saveAndFlush(persistedQuizSubmission);
+
+        Instant beforeInitialEvaluation = Instant.now();
         request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+        Instant afterInitialEvaluation = Instant.now();
         testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRunResponse.getId() + "/summary",
                 HttpStatus.OK, StudentExam.class);
 
-        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        Result initialResult = checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        assertThat(initialResult.getCompletionDate().toInstant()).isBetween(beforeInitialEvaluation, afterInitialEvaluation).isNotEqualTo(oldSubmissionDate.toInstant());
+
+        ZonedDateTime staleCompletionDate = ZonedDateTime.now().minusHours(1);
+        initialResult.setCompletionDate(staleCompletionDate);
+        resultRepository.saveAndFlush(initialResult);
 
         // reconnect references so that the following method works
         testRunResponse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(studentParticipation -> studentParticipation.setExercise(exercise)));
         // invoke a second time to test the else case in this method
         SecurityUtils.setAuthorizationObject();
+        Instant beforeCompletionDateRepair = Instant.now();
         examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(testRunResponse);
-        // make sure that no second result is created
-        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        Instant afterCompletionDateRepair = Instant.now();
+
+        // make sure that the existing result is repaired and no second result is created
+        Result repairedResult = checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        assertThat(repairedResult.getId()).isEqualTo(initialResult.getId());
+        assertThat(repairedResult.getCompletionDate().toInstant()).isBetween(beforeCompletionDateRepair, afterCompletionDateRepair).isNotEqualTo(staleCompletionDate.toInstant());
     }
 
     @Test
@@ -3545,7 +3559,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(testRunExam.getExerciseGroups().size());
     }
 
-    private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
+    private Result checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
 
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
 
@@ -3553,6 +3567,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
+        assertThat(result.getCompletionDate()).isNotNull();
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
@@ -3570,6 +3585,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             }
         }
+        return result;
     }
 
     @Test
@@ -3948,7 +3964,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         private final int QUIZ_SUBMISSION_QUERY_COUNT = 17;
 
         // exam summary: user with course roles, student exam with its exercises' groups, exam, quiz questions,
-        // participations with latest submission and result, submitted answers
+        // participations with latest submission and result, submitted answers. A real exam summary does not read the
+        // course's Athena configuration: only a test exam offers the AI feedback request.
         private final int SUMMARY_QUERY_COUNT = 9;
 
         private TextExercise textExercise;
