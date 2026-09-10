@@ -6,7 +6,9 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackSuggestionType,
+    buildFeedbackTextForReview,
 } from 'app/assessment/shared/entities/feedback.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {
     describe('getReferenceLineRange', () => {
@@ -42,6 +44,41 @@ describe('Feedback', () => {
         it('should return ADAPTED for an adapted-suggestion prefix, accepting either a string or a Feedback object', () => {
             expect(Feedback.getFeedbackSuggestionType(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`)).toBe(FeedbackSuggestionType.ADAPTED);
             expect(Feedback.getFeedbackSuggestionType({ text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check` })).toBe(FeedbackSuggestionType.ADAPTED);
+        });
+    });
+
+    describe('buildFeedbackTextForReview', () => {
+        const gradingInstruction = { feedback: 'Poor' } as GradingInstruction;
+
+        it('should drop an accepted AI suggestion title even with a matched grading instruction, keeping the criterion and detail text', () => {
+            const feedback = {
+                text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Incorrect city`,
+                detailText: 'The answer provided does not name the capital of France.',
+                gradingInstruction,
+            } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>The answer provided does not name the capital of France.');
+        });
+
+        it('should drop an adapted AI suggestion title without a grading instruction, keeping only the detail text', () => {
+            const feedback = {
+                text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Incorrect city`,
+                detailText: 'The answer provided does not name the capital of France.',
+            } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe('The answer provided does not name the capital of France.');
+        });
+
+        it('should keep a plain manual text alongside its grading instruction, since it is not an AI suggestion', () => {
+            const feedback = { text: 'feedback1', gradingInstruction } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>feedback1');
+        });
+
+        it('should drop even a non-suggestion text when addFeedbackText is false', () => {
+            const feedback = { text: 'File Main.java at line 3', gradingInstruction } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback, false)).toBe('Poor');
         });
     });
 });

@@ -312,25 +312,30 @@ export class Feedback implements BaseEntity {
  * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
  * it returns the detailed text and/or text properties of the feedback depending on the submission element.
  *
+ * An AI feedback suggestion's `text` is never included: it only ever holds the suggestion's short title (tagged
+ * with the internal `FeedbackSuggestion:...` marker), which the assessor never sees or edits as separate content,
+ * and which would otherwise show up as a redundant trailing line after the suggestion's own `detailText`.
+ *
  * @param feedback that contains feedback text and grading instruction
- * @param addFeedbackText if the text of the feedback should be part of the resulting text. Defaults to true.
- *                        The detailText of the feedback is always added if present.
+ * @param addFeedbackText if the (non-suggestion) text of the feedback should be part of the resulting text.
+ *                        Defaults to true. The detailText of the feedback is always added if present.
  * @returns formatted string representing the feedback text ready to display
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
+    const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
     let feedbackText = '';
     if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
-        if (addFeedbackText && feedback.text) {
-            feedbackText = feedbackText + '\n' + Feedback.stripSuggestionPrefix(feedback.text);
+        if (includeText) {
+            feedbackText = feedbackText + '\n' + feedback.text;
         }
     } else if (feedback.detailText) {
         feedbackText = feedback.detailText;
-    } else if (addFeedbackText && feedback.text) {
-        feedbackText = Feedback.stripSuggestionPrefix(feedback.text);
+    } else if (includeText) {
+        feedbackText = feedback.text!;
     }
 
     // escape special characters like "<", ">", "&" to render them correctly
