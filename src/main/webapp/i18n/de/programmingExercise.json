@@ -829,7 +829,9 @@
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
                 "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",

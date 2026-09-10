@@ -5,11 +5,18 @@ import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import programmingExerciseEn from 'src/main/webapp/i18n/en/programmingExercise.json';
+import programmingExerciseDe from 'src/main/webapp/i18n/de/programmingExercise.json';
+import programmingLanguageEn from 'src/main/webapp/i18n/en/programmingLanguage.json';
+import programmingLanguageDe from 'src/main/webapp/i18n/de/programmingLanguage.json';
+import exerciseEn from 'src/main/webapp/i18n/en/exercise.json';
+import exerciseDe from 'src/main/webapp/i18n/de/exercise.json';
+import difficultyEn from 'src/main/webapp/i18n/en/difficultyLevel.json';
+import difficultyDe from 'src/main/webapp/i18n/de/difficultyLevel.json';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
@@ -126,7 +133,7 @@ describe('HyperionRunPageComponent', () => {
                 { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: TranslateService, useClass: MockTranslateService },
+                provideTranslateService({ lang: 'en' }),
                 { provide: HyperionExerciseGenerationService, useValue: service },
                 { provide: HyperionJobRegistryService, useValue: registry },
                 {
@@ -490,13 +497,22 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-step-counter"]')).not.toBeNull();
     });
 
-    it('names the exercise in translated terms, never as a raw enum', () => {
+    it.each([
+        { language: 'en', catalogues: [programmingExerciseEn, programmingLanguageEn, exerciseEn, difficultyEn], expected: 'Java · Gradle · Medium' },
+        { language: 'de', catalogues: [programmingExerciseDe, programmingLanguageDe, exerciseDe, difficultyDe], expected: 'Java · Gradle · Mittel' },
+    ])('renders localized metadata from the real $language catalogue', ({ language, catalogues, expected }) => {
+        const translate = TestBed.inject(TranslateService);
+        for (const catalogue of catalogues) {
+            translate.setTranslation(language, catalogue, true);
+        }
+        translate.use(language);
         render(status({ running: true, events: [event({ type: 'STARTED', phase: 'PREPARING' })] }));
 
-        const meta = testId('hyperion-run-meta')!.textContent!;
-        expect(meta).toContain('artemisApp.ProgrammingLanguage.JAVA');
-        expect(meta).toContain('artemisApp.programmingExercise.projectTypes.GRADLE_GRADLE');
-        expect(meta).toContain('artemisApp.DifficultyLevel.MEDIUM');
+        expect(testId('hyperion-run-meta')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(expected);
+        for (const projectType of Object.values(ProjectType)) {
+            const key = `artemisApp.programmingExercise.projectTypes.${projectType}`;
+            expect(translate.instant(key)).not.toBe(key);
+        }
     });
 
     it('groups the files written so far by repository and calls out the one being written now', () => {
