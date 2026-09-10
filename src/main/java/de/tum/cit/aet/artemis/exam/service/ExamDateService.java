@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -102,12 +102,13 @@ public class ExamDateService {
         // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
         // For test exams, we aim to find the latest student exam.
         // For real exams, we aim to find the only existing student exam.
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(exam.getId(),
-                studentParticipation.getParticipant().getId());
+        // A projection: the caller already holds the exam, and reading the two values off the student exam entity pulled
+        // its eager exam, that exam's course and the course configuration in behind them, on every exam submission.
+        Optional<StudentExamWorkingPeriodDTO> workingPeriod = studentExamRepository.findWorkingPeriodsByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId())
+                .stream().findFirst();
 
-        if (optionalStudentExam.isPresent()) {
-            StudentExam studentExam = optionalStudentExam.get();
-            return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
+        if (workingPeriod.isPresent()) {
+            return workingPeriod.get().isWorkingPeriodOver(exam);
         }
 
         throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());

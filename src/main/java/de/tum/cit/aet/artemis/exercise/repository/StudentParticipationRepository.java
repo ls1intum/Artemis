@@ -450,8 +450,19 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
 
+    /**
+     * The student's most recently initialized participation in an exercise, with its submissions.
+     * <p>
+     * The collection join repeats the participation once per submission, and there is deliberately no SELECT DISTINCT:
+     * Hibernate passes that through to SQL, where it sorts rows carrying the whole exercise and course, problem
+     * statement included. Every row is the same instance, so the wrapper below takes the first.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the participation, repeated once per fetched row
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.initializationDate = (
@@ -462,10 +473,36 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     AND p2.student.id = :studentId
             )
             """)
-    Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<StudentParticipation> findLatestWithSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
+    /**
+     * The student's most recently initialized participation in an exercise, with its submissions, once.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the participation, or empty when the student has none
+     */
+    default Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(long exerciseId, long studentId) {
+        return findLatestWithSubmissionsByExerciseIdAndStudentId(exerciseId, studentId).stream().findFirst();
+    }
+
+    /**
+     * The student's graded or practice participation in an exercise, with its submissions and the exercise context.
+     * <p>
+     * The exercise, its course and the exercise group with its exam are fetched because each of those hops is a
+     * {@code @ManyToOne} and therefore eager: leaving them out does not avoid reading them, it turns them into one
+     * secondary select each. The collection join repeats the participation once per submission, and there is
+     * deliberately no SELECT DISTINCT - Hibernate passes that through to SQL, where it sorts rows carrying the whole
+     * exercise and course, problem statement included. Every row is the same instance, so the wrapper below takes the
+     * first.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param testRun    whether to look for the test run participation
+     * @return the participation, repeated once per fetched row
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.exercise ex
@@ -478,8 +515,20 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.student.id = :studentId
                 AND p.testRun = :testRun
             """)
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
+    List<StudentParticipation> findWithSubmissionsByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
             @Param("testRun") boolean testRun);
+
+    /**
+     * The student's graded or practice participation in an exercise, with its submissions, once.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param testRun    whether to look for the test run participation
+     * @return the participation, or empty when the student has none
+     */
+    default Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(long exerciseId, long studentId, boolean testRun) {
+        return findWithSubmissionsByExerciseIdAndStudentIdAndTestRun(exerciseId, studentId, testRun).stream().findFirst();
+    }
 
     @Query("""
             SELECT p
@@ -489,8 +538,19 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findOneByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
+    /**
+     * A team's participation in an exercise, with its submissions and the team members.
+     * <p>
+     * Two collection joins, so a participation repeats once per submission and member. There is deliberately no SELECT
+     * DISTINCT, which Hibernate passes through to SQL as a sort; every row is the same instance and the wrapper below
+     * takes the first.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return the participation, repeated once per fetched row
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.team t
@@ -498,7 +558,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
             """)
-    Optional<StudentParticipation> findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<StudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
+    /**
+     * A team's participation in an exercise, with its submissions and the team members, once.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return the participation, or empty when the team has none
+     */
+    default Optional<StudentParticipation> findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(long exerciseId, long teamId) {
+        return findWithSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exerciseId, teamId).stream().findFirst();
+    }
 
     @Query("""
             SELECT DISTINCT p
