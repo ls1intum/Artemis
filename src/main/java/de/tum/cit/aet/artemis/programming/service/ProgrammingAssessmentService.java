@@ -63,9 +63,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
             SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
             TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository,
             ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, CourseAthenaConfigRepository courseAthenaConfigRepository) {
-        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.testCasePointsService = testCasePointsService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;

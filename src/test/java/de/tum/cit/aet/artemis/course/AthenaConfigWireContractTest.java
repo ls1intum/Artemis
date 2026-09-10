@@ -111,6 +111,18 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void assessmentDashboardProgrammingExerciseCarriesTheAthenaFlags() throws Exception {
+        // a programming exercise is reloaded before the response is built, which answers from its own persistence context
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseRepository.findByIdWithEagerExercisesElseThrow(course.getId()));
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exerciseRepository.save(exercise);
+
+        JsonNode response = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, JsonNode.class);
+        assertBothFlagsPresent(response.get("course"));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void courseManagementDetailCarriesTheAthenaFlags() throws Exception {
         JsonNode response = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, JsonNode.class);

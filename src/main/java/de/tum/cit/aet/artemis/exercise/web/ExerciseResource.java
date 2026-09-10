@@ -271,7 +271,6 @@ public class ExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        courseAthenaConfigRepository.attachToCourseOf(exercise);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
@@ -284,6 +283,8 @@ public class ExerciseResource {
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         }
+        // after the reload above, which answers from its own persistence context and carries no configuration
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
 
         if (exercise.isExamExercise()) {
             // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
