@@ -18,6 +18,14 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  */
 public class LocalVCRepositoryUri extends VcsRepositoryUri {
 
+    /**
+     * The shape a repository name has to have: a project key, a hyphen, and the rest.
+     * <p>
+     * Compiled once. A {@code LocalVCRepositoryUri} is constructed on every git request, and {@code String#matches}
+     * compiles its pattern on every call.
+     */
+    private static final Pattern REPOSITORY_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9]+-[a-zA-Z0-9-]+");
+
     /** The project key under which the repository is categorized in the local VC system. */
     private final String projectKey;
 
@@ -64,7 +72,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     private static String extractProjectKey(String repositoryName) {
-        if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
+        if (!REPOSITORY_NAME_PATTERN.matcher(repositoryName).matches()) {
             throw new IllegalArgumentException("Repository name must be in the format <projectKey>-<repoType>");
         }
         return repositoryName.split("-")[0].toUpperCase(Locale.ROOT);
