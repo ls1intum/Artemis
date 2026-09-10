@@ -44,6 +44,10 @@ Report only high-confidence defects that would make later artifacts faithfully i
 - Added validation, errors, immutability, purity, architecture, or other constraints are unrelated, disproportionate, or narrow an explicit instructor choice.
 - The Testing Strategy assigns behavior to an owner that cannot control it, requires completing unrelated student work before a task is diagnosable, or emphasizes
   supporting work instead of the requested objective. Independent work needs independent diagnosis; genuinely cumulative work may be one task.
+- Supplied behavior is assigned a graded seam or student-work risk partition, especially a row described as zero-credit preservation that also carries a weight tier.
+  In modification exercises, distinguish unchanged successful cases and guards from the extension the old method lacks. Preserve the former outside the graded
+  seam/risk tables; do not require the starter to lose working behavior just so those regression tests can fail.
+
 
 Before reporting an omission or unsupported addition, test the diagnosis against the whole specification. A passage elsewhere may satisfy a requirement; a necessary
 operational choice may make the requested scenario executable. Decision Ledger labels and Contract Risk Inventory entries are provenance, not independent authority.
