@@ -16,8 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
@@ -67,7 +67,7 @@ class CompetencyMappingToolsServiceTest {
 
     private CompetencyMappingToolsService service;
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private Course course;
 
@@ -116,7 +116,7 @@ class CompetencyMappingToolsServiceTest {
 
         JsonNode json = objectMapper.readTree(service.getCourseCompetencies(999L));
 
-        assertThat(json.get("error").asText()).contains("Course not found");
+        assertThat(json.get("error").asString()).contains("Course not found");
     }
 
     @Test
@@ -186,6 +186,6 @@ class CompetencyMappingToolsServiceTest {
 
         JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
 
-        assertThat(json.get("error").asText()).contains("Failed to get ML-based");
+        assertThat(json.get("error").asString()).contains("Failed to get ML-based");
     }
 }

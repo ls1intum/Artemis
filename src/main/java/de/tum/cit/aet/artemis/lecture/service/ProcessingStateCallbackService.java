@@ -15,9 +15,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -78,7 +78,7 @@ public class ProcessingStateCallbackService {
      */
     private final ReentrantLock dispatchLock = new ReentrantLock();
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
 
@@ -346,7 +346,7 @@ public class ProcessingStateCallbackService {
 
             saveTranscription(lectureUnitId, state, checkpoint);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Failed to parse checkpoint data for unit {}: {}", lectureUnitId, e.getMessage());
         }
     }
@@ -386,7 +386,7 @@ public class ProcessingStateCallbackService {
      * Parse transcription checkpoint data from JSON.
      * Expected format: {@code {"language": "en", "segments": [...]}}
      */
-    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) throws JsonProcessingException {
+    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) {
         var tree = objectMapper.readTree(resultJson);
 
         var segmentsNode = tree.get("segments");
@@ -395,7 +395,7 @@ public class ProcessingStateCallbackService {
             return null;
         }
 
-        String language = tree.has("language") ? tree.get("language").asText("en") : "en";
+        String language = tree.has("language") ? tree.get("language").asString("en") : "en";
         List<LectureTranscriptionSegment> segments = objectMapper.convertValue(segmentsNode, new TypeReference<>() {
         });
 
