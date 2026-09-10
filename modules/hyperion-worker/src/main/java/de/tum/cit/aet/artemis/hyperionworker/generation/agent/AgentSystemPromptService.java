@@ -53,6 +53,8 @@ public class AgentSystemPromptService {
             Preserve the existing implementation where the brief asks students to extend or modify it. Remove only the work assigned to the learner; use a TODO and a
             throwing placeholder only for a genuinely unimplemented body. Approved student-created declarations remain absent. Never condition behavior on test names,
             stack traces, or grading context, and never leak the completed student work into the starter.
+            For an existing method to modify, establish PRESERVATION checks of its old successful behavior and retained guards before writing tests of the new behavior.
+            Those checks call the supplied method directly, without depending on student-created members. Assess only the new behavior that fails on the old body.
             3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
             non-degenerate witnesses that distinguish plausible wrong implementations.
             4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;

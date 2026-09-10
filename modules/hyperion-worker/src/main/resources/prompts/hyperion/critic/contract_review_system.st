@@ -59,6 +59,11 @@ Check that their assertions really concern given behavior. A preservation label 
 
 Check pedagogical ownership against the actual template, not only the Design labels. An approved `@studentCreates` member is absent from its existing owner and its
 signature and contract are stated in the task; unmarked provided signatures remain present. A supplied method body is not evidence that students practise its mechanism.
+For modification tasks, inspect the claimed pre-change implementation itself. If the brief or approved contract says students extend a working method but the
+starter erases it with a placeholder, report a contradiction with that authoritative quote and the exact starter body. Reaching that placeholder is not evidence
+that the promised modification activity exists; use contradictions, not a same-owner template reachability failure. Check that standalone tests of unchanged
+behavior are PRESERVATION, exercise the old method directly, and do not depend on members students must still create. Do not recommend deleting working code to
+make regression tests fail, or creating a graded task for supplied behavior that the learner should leave unchanged.
 For API-use tasks, a statement that gives the exact sequence of calls for the assigned scenario gives away the objective; distinguish such a solution recipe from
 necessary API semantics, required outcomes, or a genuinely different example. Explain concrete conflicts with the brief/approved contract using the existing findings.
 Do not invent source-style grading or require extra defenses the brief never assigns. Given support should uphold its stated invariants and be usable without
