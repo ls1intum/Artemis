@@ -180,10 +180,11 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
     }
 
     /**
-     * FINDING 4: the summary wire must carry the course's {@code athenaFormativeFeedbackEnabled} flag; the test-exam AI
+     * FINDING 4: a test exam's summary wire must carry the course's {@code athenaFormativeFeedbackEnabled} flag; the AI
      * feedback button ({@code exam-request-ai-feedback-button.component}) reads {@code exam.course.athenaFormativeFeedbackEnabled}
      * to decide whether to show itself, and with a bare {@code CourseForStudentExamDTO} projection the field was always absent,
-     * hiding the button even when formative feedback was enabled for the course.
+     * hiding the button even when formative feedback was enabled for the course. The button gates on
+     * {@code exam.testExam} as well, which is why only a test exam summary resolves the (lazy) configuration.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -192,6 +193,11 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         courseRepository.save(course);
+
+        // A test exam, because that is the only kind whose summary offers the button. The flag used to be on the wire of
+        // every exam only because the association was eager; a real exam summary no longer reads it.
+        exam.setTestExam(true);
+        exam = examRepository.save(exam);
 
         StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
 

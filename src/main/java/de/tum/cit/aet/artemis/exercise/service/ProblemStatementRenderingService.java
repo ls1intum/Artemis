@@ -76,6 +76,9 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
+    /** The fixed pixel size PlantUML writes into a rendered diagram, which is dropped so the diagram scales. */
+    private static final Pattern FIXED_SVG_SIZE = Pattern.compile("style=\"width:\\d+px;height:\\d+px;");
+
     private static final String RENDERER_VERSION = "1.0.0";
 
     /**
@@ -295,7 +298,7 @@ public class ProblemStatementRenderingService {
             try {
                 String rawSvg = plantUmlService.generateSvg(resolvedSource, darkMode);
                 rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
-                rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
+                rawSvg = FIXED_SVG_SIZE.matcher(rawSvg).replaceFirst("style=\"");
                 rawSvg = rawSvg.replace("background:#FFFFFF;", "");
                 String sanitized = SvgSanitizer.sanitize(rawSvg);
                 inlineSvg = sanitized != null ? sanitized : "<div class=\"alert alert-danger\">Failed to render diagram</div>";

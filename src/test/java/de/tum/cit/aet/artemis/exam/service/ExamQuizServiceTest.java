@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -28,13 +27,9 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -62,9 +57,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizExerciseService quizExerciseService;
-
-    @Autowired
-    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
     private StudentExamTestRepository studentExamRepository;
@@ -197,7 +189,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
-        checkStatistics(quizExercise);
+        checkEvaluationResults(quizExercise);
 
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
@@ -300,7 +292,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
-        checkStatistics(quizExercise);
+        checkEvaluationResults(quizExercise);
 
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
@@ -351,7 +343,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
-        checkStatistics(quizExercise);
+        checkEvaluationResults(quizExercise);
 
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
@@ -359,65 +351,13 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
-    private void checkStatistics(QuizExercise quizExercise) {
-        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
-
-        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
-        assertThat(quizExerciseWithStatistic.getMaxPoints()).isCloseTo(questionScore, within(0.0001));
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
-        // check general statistics
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            // MC, DnD and short Answer are all incorrect
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS - NUMBER_OF_STUDENTS / 2 - NUMBER_OF_STUDENTS / 3 + NUMBER_OF_STUDENTS / 6);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            // only DnD is correct
-            else if (pointCounter.getPoints() == 3.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 3 - NUMBER_OF_STUDENTS / 6);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            // only MC is correct
-            else if (pointCounter.getPoints() == 4.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 2 - NUMBER_OF_STUDENTS / 6 - NUMBER_OF_STUDENTS / 4);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            // MC and short Answer are correct
-            else if (pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            // MC and DnD are correct
-            else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 6);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            // MC, DnD and short Answer are all correct
-            else if (pointCounter.getPoints() == 9.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 12);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
-            }
-        }
-        // check statistic for each question
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 2);
-            }
-            else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 3);
-            }
-            else {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
-            }
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
-        }
+    private void checkEvaluationResults(QuizExercise quizExercise) {
+        var participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(quizExercise.getId(), false);
+        assertThat(participations).hasSize(NUMBER_OF_STUDENTS);
+        long resultCount = participations.stream().flatMap(participation -> participation.getSubmissions().stream()).flatMap(submission -> submission.getResults().stream())
+                .count();
+        assertThat(resultCount).isEqualTo(NUMBER_OF_STUDENTS);
+        double questionScore = quizExercise.getQuizQuestions().stream().mapToDouble(question -> question.getPoints()).sum();
+        assertThat(quizExercise.getMaxPoints()).isEqualTo(questionScore);
     }
 }

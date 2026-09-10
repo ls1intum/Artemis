@@ -344,6 +344,14 @@ public class AthenaRequestMockProvider {
         mockServer.verify();
     }
 
+    /**
+     * Verifies the expectations registered for the submission selection, which runs on its own rest template with a
+     * very short timeout and is therefore not covered by {@link #verify()}.
+     */
+    public void verifySubmissionSelection() {
+        mockServerVeryShortTimeout.verify();
+    }
+
     public RestTemplate getRestTemplate() {
         return restTemplate;
     }
