@@ -706,6 +706,28 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     /**
+     * Reads which students already have a participation in one of the given states for an exercise, as ids only.
+     * <p>
+     * Answers for a whole cohort at once what {@link #findByExerciseIdAndStudentId} answers for one student, so that
+     * preparing an exam does not need one query and one full participation row per student and exercise. Pass
+     * {@link InitializationState#statesThatCompleted} to ask for a state having been reached rather than matched
+     * exactly.
+     *
+     * @param exerciseId           the id of the exercise
+     * @param initializationStates the states that count
+     * @return the ids of the students with such a participation, empty for team exercises
+     */
+    @Query("""
+            SELECT participation.student.id
+            FROM StudentParticipation participation
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.id IS NOT NULL
+                AND participation.initializationState IN :initializationStates
+            """)
+    Set<Long> findStudentIdsWithParticipationInStateByExerciseId(@Param("exerciseId") long exerciseId,
+            @Param("initializationStates") Collection<InitializationState> initializationStates);
+
+    /**
      * The student's participations in an exercise, with their submissions and results.
      * <p>
      * The collection joins repeat a participation once per submission and result, and there is deliberately no SELECT
