@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,6 +93,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
+
+    /** A space in a Maven artifact id, which has to be a hyphen. */
+    private static final Pattern SPACE = Pattern.compile(" ");
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
@@ -869,7 +873,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 nameNode.setTextContent(nameNode.getTextContent() + " " + participantIdentifier);
             }
             if (artifactIdNode != null) {
-                String artifactId = (artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll(" ", "-").toLowerCase(Locale.ROOT);
+                String artifactId = SPACE.matcher(artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll("-").toLowerCase(Locale.ROOT);
                 artifactIdNode.setTextContent(artifactId);
             }
 

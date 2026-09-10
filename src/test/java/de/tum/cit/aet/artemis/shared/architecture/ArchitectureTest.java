@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Entity;
@@ -93,12 +94,14 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.JavaMethodReference;
+import com.tngtech.archunit.core.domain.JavaStaticInitializer;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -203,6 +206,100 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
         toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testRegularExpressionsAreCompiledOnce() {
+        String reason = """
+                A regular expression has to be compiled before it can be matched, and compiling one is far more \
+                expensive than running it. String.matches, String.replaceAll and String.replaceFirst hide that cost: \
+                each of them compiles the expression again on every single call, throws the compiled form away, and \
+                does so even when the expression is a literal that can never change. Pattern.compile called from a \
+                method body has the same problem, only spelled out.
+                Declare the expression as a private static final Pattern instead and match against it \
+                (PATTERN.matcher(input).matches(), .replaceAll(replacement)), so it is compiled once per class rather \
+                than once per call. LocalVCRepositoryUri is the case that prompted this rule: it is constructed on \
+                every git request, and its one String.matches call recompiled the same expression every time.""";
+
+        ArchRule noStringRegexShortcuts = noClasses().should().callMethod(String.class, "matches", String.class).orShould()
+                .callMethod(String.class, "replaceAll", String.class, String.class).orShould().callMethod(String.class, "replaceFirst", String.class, String.class).orShould()
+                .callMethod(Pattern.class, "matches", String.class, CharSequence.class).because(reason);
+
+        ArchRule patternsCompiledInStaticInitializers = classes().should(compileRegularExpressionsOnlyOnce()).because(reason);
+
+        // String.split stays allowed on purpose. It is the one shortcut that does not always compile a pattern: for a
+        // single character that is not a regular expression metacharacter - the comma, the slash, the colon that most
+        // call sites pass - String.split takes a fast path that never touches Pattern at all.
+        noStringRegexShortcuts.check(productionClasses);
+        patternsCompiledInStaticInitializers.check(productionClasses);
+    }
+
+    /**
+     * The methods that may call {@code Pattern.compile} even though they are not a static initializer or a
+     * constructor, because the expression they compile is only known at runtime and can therefore not be a constant.
+     * <p>
+     * Every entry is a place where the expression comes from data rather than from the code: a value stored in the
+     * database, a configured property, or an input the method was handed. Adding to this list is a statement that the
+     * expression genuinely varies, not that compiling it once was inconvenient.
+     */
+    private static final Set<String> METHODS_THAT_COMPILE_A_RUNTIME_EXPRESSION = Set.of(
+            // the email pattern of an organization, stored per organization
+            "de.tum.cit.aet.artemis.account.repository.OrganizationRepository.getAllMatchingOrganizationsByUserEmail(java.lang.String)",
+            // the extraction patterns of the identity provider, configured per deployment and compiled once per bean
+            "de.tum.cit.aet.artemis.account.security.SAML2Service.generateExtractionPatterns(de.tum.cit.aet.artemis.account.config.SAML2Properties)",
+            // the spot of a short answer submission, which the export writes back into the question text
+            "de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService.replaceSpotWithSubmittedAnswer(de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer, java.lang.StringBuilder, boolean)",
+            // the span that is searched for, assembled from the text being extracted
+            "de.tum.cit.aet.artemis.atlas.service.ContentExtractionService.findSpan(java.lang.String, java.lang.String)",
+            // the logins mentioned in a post, which differ per post
+            "de.tum.cit.aet.artemis.communication.service.PostingService.parseUserMentions(de.tum.cit.aet.artemis.course.domain.Course, java.lang.String)",
+            // the placeholder names the caller asks to replace
+            "de.tum.cit.aet.artemis.core.util.FileUtil.replacePlaceholderSections(java.nio.file.Path, java.util.Map)",
+            // the branch expression configured on the exercise
+            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
+            // the exceptions to filter, which the caller passes in
+            "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)");
+
+    /**
+     * Complements the {@code callMethod} rules in {@link #testRegularExpressionsAreCompiledOnce()} for
+     * {@code Pattern.compile}. A call carries no per-call cost when it runs once for the class or once for the
+     * instance, which is what a static initializer and a constructor do: they are where the assignment of a
+     * {@code static final} or {@code final Pattern} field ends up. The same call in a method body compiles the
+     * expression again on every call.
+     * <p>
+     * Method references are covered as well, so that {@code Pattern::compile} cannot become a hole in the rule the way
+     * it can in a {@code callMethod} rule, which only looks at invocations.
+     *
+     * @return the condition
+     */
+    private ArchCondition<JavaClass> compileRegularExpressionsOnlyOnce() {
+        return new ArchCondition<>("compile regular expressions in a static initializer or a constructor, so that they are compiled once rather than once per call") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                for (JavaMethodCall call : item.getMethodCallsFromSelf()) {
+                    if (isPatternCompile(call.getTarget().getName(), call.getTarget().getOwner()) && compilesOncePerCall(call.getOrigin())) {
+                        events.add(violated(call, call.getDescription()));
+                    }
+                }
+                for (JavaMethodReference reference : item.getMethodReferencesFromSelf()) {
+                    if (isPatternCompile(reference.getTarget().getName(), reference.getTarget().getOwner()) && compilesOncePerCall(reference.getOrigin())) {
+                        events.add(violated(reference, reference.getDescription()));
+                    }
+                }
+            }
+
+            private static boolean isPatternCompile(String name, JavaClass owner) {
+                return "compile".equals(name) && owner.isEquivalentTo(Pattern.class);
+            }
+
+            private static boolean compilesOncePerCall(JavaCodeUnit origin) {
+                if (origin instanceof JavaStaticInitializer || origin instanceof JavaConstructor) {
+                    return false;
+                }
+                return !METHODS_THAT_COMPILE_A_RUNTIME_EXPRESSION.contains(origin.getFullName());
+            }
+        };
     }
 
     @Test
