@@ -16,33 +16,30 @@ different situations, and they are worth keeping apart because they serve differ
 | Who reads | The reviewer, before they mark | The student |
 | When | After the due date, while marking | Before the due date |
 | Effect on the mark | None until a reviewer submits the assessment | None at all |
-| Exercise types | Text, programming, modeling | Text, modeling |
+| Exercise types | Text, programming, modeling | Text, modeling, and programming where the exercise is assessed semi-automatically |
 
 Neither ever marks anything. A suggestion is a draft a person accepts, edits or discards, and a formative response is
 guidance the student reads. The mark is always written by a reviewer.
 
 ## Switching It On
 
-There are two levels, and both are needed.
+It is configured once, for the course. **AI Assisted Feedback for Exercises Enabled** on the course settings is the
+master switch, and **Grading Feedback Suggestions Enabled** and **Formative Feedback Requests Enabled** beneath it
+turn on the two kinds. See
+[Course Configuration](/instructor/course-management/course-configuration#ai-assisted-feedback).
 
-**The course.** **AI Assisted Feedback for Exercises Enabled** on the course settings is the master switch, and
-**Grading Feedback Suggestions Enabled** and **Formative Feedback Requests Enabled** beneath it turn on the two
-kinds. See [Course Configuration](/instructor/course-management/course-configuration#ai-assisted-feedback).
+There is no per-exercise switch: an exercise gets AI feedback because its course has it on and because its type
+supports it. Two restrictions follow from the type rather than from a setting.
 
-**The exercise.** Each exercise then decides for itself. The switch is on the exercise's own form, and what it is
-called depends on the type:
-
-- A [text exercise](/instructor/exercises/text-exercise) has **Automatic assessment suggestions**.
-- A [modeling exercise](/instructor/exercises/modeling-exercise) has two: **Enable automatic assessment
-  suggestions**, which reuses assessments already given in that exercise, and **Enable feedback suggestions from
-  Athena**, which generates them.
-- A [programming exercise](/instructor/exercises/programming-exercise) takes grading suggestions but not formative
-  requests.
+- A **programming** exercise takes formative feedback requests only where it is assessed semi-automatically — that
+  is, where manual assessment is enabled alongside the tests. With purely automatic assessment there is nothing for
+  Athena to be formative about.
+- An **exam** exercise is outside this entirely. Exam feedback follows the exam's own review and publication dates.
 
 <Callout variant={CalloutVariant.info}>
 
-  Enabling it on the course makes it possible; the exercise decides. An exercise created before you turned the course
-  setting on will still have its own switch off.
+  Because it is a course-level setting, turning it on reaches every eligible exercise at once, including exercises
+  that already exist. Turning it off does the same.
 
 </Callout>
 
