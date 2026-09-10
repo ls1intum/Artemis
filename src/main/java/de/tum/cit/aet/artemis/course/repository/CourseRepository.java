@@ -309,7 +309,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
     // per-course Atlas auto-orchestration settings for editing.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig", "courseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
