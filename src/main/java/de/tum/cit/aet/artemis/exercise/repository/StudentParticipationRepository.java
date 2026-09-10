@@ -655,7 +655,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param exerciseId the id of the exercise
      * @param studentId  the id of the student
-     * @return one row per participation, carrying the id of one existing submission if there is one
+     * @return one row per participation, graded before test run and oldest first, carrying the id of one existing
+     *         submission if there is one
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO(
@@ -668,6 +669,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND student.id = :studentId
             GROUP BY participation.id, participation.initializationState, participation.initializationDate, participation.individualDueDate, participation.testRun,
                 student.id, student.login, student.firstName, student.lastName
+            ORDER BY participation.testRun ASC, participation.id ASC
             """)
     List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
@@ -691,6 +693,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND team.id = :teamId
             GROUP BY participation.id, participation.initializationState, participation.initializationDate, participation.individualDueDate, participation.testRun,
                 owner.id, owner.login, owner.firstName, owner.lastName
+            ORDER BY participation.testRun ASC, participation.id ASC
             """)
     List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 

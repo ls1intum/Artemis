@@ -186,6 +186,8 @@ public class ExamSubmissionService {
         if (participations.isEmpty()) {
             return null;
         }
+        // The rows are ordered graded first, then oldest first, so the one an instructor's test run added alongside the
+        // graded participation cannot decide which submission is overwritten.
         ExamSubmissionGateDTO existing = participations.getFirst();
         if (existing.existingSubmissionId() != null) {
             // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
