@@ -1,124 +1,26 @@
 /*
- * The grid is CSS grid rather than a table: the cells are equal-width, equal-height boxes that carry stacked content,
- * and a table would make each row's height depend on its tallest cell in ways the mockup does not want.
+ * Everything else on this grid is Tailwind in the template. What is left here is the one thing utilities express badly:
+ * joining the days of a multi-day holiday into a single band.
+ *
+ * A band has to reach past its cell's padding and over the one-pixel cell border to touch the band beside it, which
+ * takes a negative margin paired with matching padding so the text stays put. Written as arbitrary utilities that is
+ * four repeated values per side that no longer say what they are for.
  */
-.holiday-grid {
-    border-top: 1px solid var(--tumaet-ui-border-color);
-}
-
-.holiday-grid-row {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-}
-
-.holiday-grid-weekday {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.holiday-grid-head {
-    border-bottom: 1px solid var(--tumaet-ui-border-color);
-}
-
-.holiday-grid-day {
-    /* Room for the day number plus one holiday; a day with more simply grows, so an empty month stays compact. */
-    min-height: 5.5rem;
-    padding: 0.375rem 0.5rem;
-
-    /* The event stretches past this padding to meet the cell edge, so a run of days joins without a visible seam. */
-    overflow: hidden;
-    border-right: 1px solid var(--tumaet-ui-border-color);
-    border-bottom: 1px solid var(--tumaet-ui-border-color);
-    cursor: pointer;
-
-    &:first-child {
-        border-left: 1px solid var(--tumaet-ui-border-color);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--tumaet-ui-primary-color, currentcolor);
-        outline-offset: -2px;
-    }
-}
-
-/* Days from the neighbouring months stay visible for context but are not actionable, so they lose the pointer. */
-.holiday-grid-day-outside {
-    cursor: default;
-    opacity: 0.45;
-}
-
-.holiday-grid-day-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.holiday-grid-day-number {
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-/* Today is a filled circle, so it reads at a glance without relying on colour alone for the number itself. */
-.holiday-grid-day-number-today {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
-    background-color: var(--tumaet-ui-primary-color);
-    color: var(--tumaet-ui-primary-contrast-color);
-}
-
-.holiday-grid-day-sessions {
-    font-family: monospace;
-    font-size: 0.75rem;
-    opacity: 0.6;
-}
-
-.holiday-grid-event {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.375rem;
-    padding: 0.25rem 0.5rem;
-
-    /* The bar carries the meaning here, and it sits next to the text rather than behind it, so contrast is unaffected. */
-    border-left: 3px solid var(--tumaet-ui-state-danger);
-    border-radius: 0.25rem;
+.holiday-band {
     background-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 10%, transparent);
-    color: var(--tumaet-ui-state-danger-foreground);
-    font-size: 0.8125rem;
-    line-height: 1.2;
 }
 
-.holiday-grid-event-title {
-    font-weight: 600;
-}
-
-.holiday-grid-event-time {
-    font-family: monospace;
-    font-size: 0.75rem;
-    opacity: 0.75;
-}
-
-/*
- * A holiday covering several days is one band rather than a row of separate chips: the days it continues across lose
- * the rounded corner and the accent bar on that side, and reach into the cell's padding so neighbouring cells meet.
- * The cells are separated by a one-pixel border, which the negative margin covers.
- */
-.holiday-grid-event-continues-before {
+.holiday-band-continues-before {
     margin-left: calc(-0.5rem - 1px);
-    border-left: 0;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
     padding-left: calc(0.5rem + 1px);
+    border-left: 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
 }
 
-.holiday-grid-event-continues-after {
+.holiday-band-continues-after {
     margin-right: -0.5rem;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
     padding-right: 0.5rem;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
 }

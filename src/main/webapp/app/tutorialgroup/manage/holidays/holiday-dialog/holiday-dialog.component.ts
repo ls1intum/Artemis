@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiDialogComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
@@ -28,7 +27,6 @@ export interface HolidaySubmission {
     templateUrl: './holiday-dialog.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         TumUiButtonDirective,
@@ -137,7 +135,13 @@ export class HolidayDialogComponent {
         }
     }
 
-    protected onSubmit(): void {
+    protected onReasonInput(event: Event): void {
+        this.reason.set((event.target as HTMLInputElement).value);
+    }
+
+    protected onSubmit(event: Event): void {
+        // The dialog owns its state, so the browser must not navigate away on submit.
+        event.preventDefault();
         const start = this.start();
         const end = this.end();
         if (!start || !end || !this.canSave()) {

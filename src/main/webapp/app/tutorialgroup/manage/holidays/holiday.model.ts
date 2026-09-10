@@ -102,7 +102,7 @@ export interface HolidayDaySegment {
  * A holiday spanning several days appears under each of them, which is what puts a two-week break on all of its days
  * while keeping it a single entry in the list beside the calendar.
  */
-export function holidaysByDay(holidays: readonly Holiday[]): Map<string, HolidayDaySegment[]> {
+export function groupHolidaysByDay(holidays: readonly Holiday[]): Map<string, HolidayDaySegment[]> {
     const byDay = new Map<string, HolidayDaySegment[]>();
     for (const holiday of holidays) {
         const firstDay = holiday.start.startOf('day');

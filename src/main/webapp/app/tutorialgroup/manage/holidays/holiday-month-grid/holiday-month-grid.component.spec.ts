@@ -6,7 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { holidaysByDay, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { groupHolidaysByDay, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 
 const TIME_ZONE = 'Europe/Berlin';
@@ -48,16 +48,16 @@ describe('HolidayMonthGridComponent', () => {
     });
 
     it('should mark the days that belong to the neighbouring months', () => {
-        const outsideDays = fixture.debugElement.queryAll(By.css('.holiday-grid-day-outside'));
+        const outsideDays = fixture.debugElement.queryAll(By.css('[data-outside-month]'));
 
         // 1 December is a Monday, so only the days after 31 December fall outside.
         expect(outsideDays.length).toBeGreaterThan(0);
-        expect(fixture.debugElement.query(By.css('[data-day="2025-12-15"]')).classes['holiday-grid-day-outside']).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-15"]')).attributes['data-outside-month']).toBeUndefined();
     });
 
     it('should render a holiday on the day it falls on', () => {
         const holidays = toHolidays([period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
-        fixture.componentRef.setInput('holidaysByDay', holidaysByDay(holidays));
+        fixture.componentRef.setInput('holidaysByDay', groupHolidaysByDay(holidays));
         fixture.detectChanges();
 
         const day = fixture.debugElement.query(By.css('[data-day="2025-12-17"]'));
@@ -68,7 +68,7 @@ describe('HolidayMonthGridComponent', () => {
 
     it('should show the session count only on days without a holiday, so the holiday is what the day reads as', () => {
         const holidays = toHolidays([period(1, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
-        fixture.componentRef.setInput('holidaysByDay', holidaysByDay(holidays));
+        fixture.componentRef.setInput('holidaysByDay', groupHolidaysByDay(holidays));
         fixture.componentRef.setInput(
             'sessionCountsByDay',
             new Map([
@@ -78,8 +78,8 @@ describe('HolidayMonthGridComponent', () => {
         );
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[data-day="2025-12-17"] .holiday-grid-day-sessions'))).toBeNull();
-        expect(fixture.debugElement.query(By.css('[data-day="2025-12-18"] .holiday-grid-day-sessions'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-17"] [data-testid="holiday-calendar-sessions"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-day="2025-12-18"] [data-testid="holiday-calendar-sessions"]'))).not.toBeNull();
     });
 
     it('should emit the next month when the forward control is used', () => {
@@ -111,7 +111,7 @@ describe('HolidayMonthGridComponent', () => {
 
     it('should open the existing holiday when a day that already has one is clicked', () => {
         const holidays = toHolidays([period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00')], TIME_ZONE);
-        fixture.componentRef.setInput('holidaysByDay', holidaysByDay(holidays));
+        fixture.componentRef.setInput('holidaysByDay', groupHolidaysByDay(holidays));
         fixture.detectChanges();
         let selectedId: number | undefined;
         fixture.componentInstance.holidaySelected.subscribe((occurrence) => (selectedId = occurrence.period.id));

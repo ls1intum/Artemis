@@ -34,7 +34,7 @@ describe('HolidayDialogComponent', () => {
         component = fixture.componentInstance;
     });
 
-    /** ngModel writes to the DOM asynchronously, so the form is only settled after a stable tick. */
+    /** The dialog fills the form in an effect, so the DOM is only settled after a stable tick. */
     async function open(): Promise<void> {
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();

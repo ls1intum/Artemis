@@ -10,6 +10,24 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { getWeekdayNameKeys } from 'app/calendar/shared/util/calendar-util';
 import { DAY_KEY_FORMAT, Holiday, HolidayDaySegment } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
+/**
+ * One holiday as a single day of the grid draws it.
+ *
+ * The reason is repeated only where a run of days begins - at the holiday's first day, or where it resumes after a week
+ * break - so a fortnight reads as one labelled band rather than fourteen repetitions of the same words. Days in the
+ * middle of a run render an unlabelled bar of the same height, which is what keeps the band unbroken.
+ */
+export interface HolidayBand {
+    readonly key: string;
+    readonly holiday: Holiday;
+    readonly reason: string;
+    readonly showsLabel: boolean;
+    readonly startTime?: string;
+    readonly endTime?: string;
+    readonly continuesBefore: boolean;
+    readonly continuesAfter: boolean;
+}
+
 /** One cell of the grid. */
 export interface HolidayCalendarDay {
     readonly date: dayjs.Dayjs;
@@ -17,7 +35,7 @@ export interface HolidayCalendarDay {
     readonly dayOfMonth: number;
     readonly inDisplayedMonth: boolean;
     readonly isToday: boolean;
-    readonly holidays: readonly HolidayDaySegment[];
+    readonly bands: readonly HolidayBand[];
     /** Sessions scheduled that day, or 0 when the day holds none. */
     readonly sessionCount: number;
 }
@@ -84,7 +102,7 @@ export class HolidayMonthGridComponent {
                     dayOfMonth: date.date(),
                     inDisplayedMonth: date.month() === month.month(),
                     isToday: dayKey === todayKey,
-                    holidays: holidaysByDay.get(dayKey) ?? [],
+                    bands: (holidaysByDay.get(dayKey) ?? []).map((segment) => this.toBand(segment, dayKey, index)),
                     sessionCount: sessionCountsByDay.get(dayKey) ?? 0,
                 });
                 date = date.add(1, 'day');
@@ -93,6 +111,24 @@ export class HolidayMonthGridComponent {
         }
         return weeks;
     });
+
+    /**
+     * A band is labelled where its run starts, where a week break resumes it, and where one of its own ends falls -
+     * those are the places the reason or a time says something the previous cell has not already said.
+     */
+    private toBand(segment: HolidayDaySegment, dayKey: string, indexInWeek: number): HolidayBand {
+        const hasOwnEnd = segment.startTime !== undefined || segment.endTime !== undefined;
+        return {
+            key: `${segment.holiday.period.id}-${dayKey}`,
+            holiday: segment.holiday,
+            reason: segment.holiday.reason,
+            showsLabel: !segment.continuesBefore || indexInWeek === 0 || hasOwnEnd,
+            startTime: segment.startTime,
+            endTime: segment.endTime,
+            continuesBefore: segment.continuesBefore,
+            continuesAfter: segment.continuesAfter,
+        };
+    }
 
     protected showPreviousMonth(): void {
         this.monthChange.emit(this.displayedMonth().subtract(1, 'month').startOf('month'));
@@ -116,8 +152,8 @@ export class HolidayMonthGridComponent {
         if (!day.inDisplayedMonth) {
             return;
         }
-        if (day.holidays.length > 0) {
-            this.holidaySelected.emit(day.holidays[0].holiday);
+        if (day.bands.length > 0) {
+            this.holidaySelected.emit(day.bands[0].holiday);
         } else {
             this.daySelected.emit(day.date);
         }

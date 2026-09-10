@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiSelectButtonComponent, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -37,9 +36,8 @@ interface HolidayListEntry {
 @Component({
     selector: 'jhi-holiday-list',
     templateUrl: './holiday-list.component.html',
-    styleUrl: './holiday-list.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiSelectButtonComponent, TumUiTagComponent, TumUiTooltipDirective],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiTagComponent, TumUiTooltipDirective],
 })
 export class HolidayListComponent {
     readonly holidays = input.required<readonly Holiday[]>();
@@ -58,10 +56,8 @@ export class HolidayListComponent {
     protected readonly faWrench = faWrench;
     protected readonly faTrash = faTrash;
 
-    protected readonly filterOptions = computed(() => [
-        { label: this.translateService.instant('artemisApp.pages.tutorialFreePeriodsManagement.filter.upcoming'), value: 'upcoming' },
-        { label: this.translateService.instant('artemisApp.pages.tutorialFreePeriodsManagement.filter.all'), value: 'all' },
-    ]);
+    /** Two plain buttons rather than a form control: the filter is component state, so nothing here needs ngModel. */
+    protected readonly filters: readonly HolidayListFilter[] = ['upcoming', 'all'];
 
     /** Holidays that ended before today, which the upcoming filter leaves out. One running today still counts. */
     protected readonly pastCount = computed(() => {
@@ -107,12 +103,5 @@ export class HolidayListComponent {
             day = day.add(1, 'day');
         }
         return total;
-    }
-
-    protected onFilterSelected(value: unknown): void {
-        // The segmented control allows an empty selection, which here would leave the list with no filter at all.
-        if (value === 'upcoming' || value === 'all') {
-            this.filterChange.emit(value);
-        }
     }
 }

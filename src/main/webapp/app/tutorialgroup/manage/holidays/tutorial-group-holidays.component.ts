@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { Subject } from 'rxjs';
+import { EMPTY, Subject } from 'rxjs';
 import { debounceTime, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
-import { Holiday, holidaysByDay, inCourseZone, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, groupHolidaysByDay, inCourseZone, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 import { HolidayListComponent, HolidayListFilter } from 'app/tutorialgroup/manage/holidays/holiday-list/holiday-list.component';
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
@@ -90,13 +90,18 @@ export class TutorialGroupHolidaysComponent {
     protected readonly displayedMonth = signal(dayjs().startOf('month'));
 
     protected readonly holidays = computed(() => toHolidays(this.freePeriods(), this.timeZone()));
-    protected readonly holidaysByDay = computed(() => holidaysByDay(this.holidays()));
+    protected readonly holidaysByDay = computed(() => groupHolidaysByDay(this.holidays()));
 
     constructor() {
         this.dialogSpanRequests
             .pipe(
                 debounceTime(SESSION_COUNT_DEBOUNCE_MS),
-                switchMap((span) => this.freePeriodService.getSessionCounts(this.course()!.id!, span.start, span.end)),
+                // The course id is captured per request rather than asserted, so a span arriving before the route
+                // resolves is dropped instead of throwing inside the stream and killing it for the rest of the page.
+                switchMap((span) => {
+                    const courseId = this.course()?.id;
+                    return courseId === undefined ? EMPTY : this.freePeriodService.getSessionCounts(courseId, span.start, span.end);
+                }),
                 takeUntilDestroyed(),
             )
             .subscribe({
@@ -185,9 +190,6 @@ export class TutorialGroupHolidaysComponent {
      * month the calendar happens to show and a partial count would understate what saving does.
      */
     protected onDialogSpanChange(span: { start: dayjs.Dayjs; end: dayjs.Dayjs }): void {
-        if (this.course()?.id === undefined) {
-            return;
-        }
         this.dialogSpanRequests.next(span);
     }
 

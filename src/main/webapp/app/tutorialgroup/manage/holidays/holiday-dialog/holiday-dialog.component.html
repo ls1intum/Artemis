@@ -4,7 +4,8 @@
     [(visible)]="visible"
     [header]="(isEditMode() ? 'artemisApp.pages.tutorialFreePeriodsManagement.editHoliday' : 'artemisApp.pages.tutorialFreePeriodsManagement.addHoliday') | artemisTranslate"
 >
-    <form class="flex flex-col gap-4" (ngSubmit)="onSubmit()">
+    <!-- The native submit event, not ngSubmit: that one is an NgForm output and this form carries no form controls. -->
+    <form class="flex flex-col gap-4" (submit)="onSubmit($event)">
         <div class="flex flex-col gap-3 sm:flex-row">
             <tum-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate">
                 <!--
@@ -40,14 +41,14 @@
         }
 
         <tum-ui-form-field [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reason' | artemisTranslate">
+            <!-- tumUiInput is a directive on a native input, so the signal binds directly and needs no form control. -->
             <input
                 tumUiInput
                 type="text"
                 maxlength="256"
                 data-testid="holiday-reason"
-                [ngModel]="reason()"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="reason.set($event)"
+                [value]="reason()"
+                (input)="onReasonInput($event)"
                 [attr.placeholder]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reasonPlaceholder' | artemisTranslate"
             />
         </tum-ui-form-field>

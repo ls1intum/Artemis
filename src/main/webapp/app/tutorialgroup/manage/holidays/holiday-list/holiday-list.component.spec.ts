@@ -142,12 +142,20 @@ describe('HolidayListComponent', () => {
         expect(deleted).toBe(2);
     });
 
-    it('should ignore a cleared filter selection rather than leaving the list unfiltered', () => {
+    it('should request the filter the reader pressed', () => {
         let emitted: string | undefined;
         fixture.componentInstance.filterChange.subscribe((value) => (emitted = value));
 
-        fixture.debugElement.query(By.css('[data-testid="holiday-list-filter"]')).triggerEventHandler('changed', undefined);
+        fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement.click();
 
-        expect(emitted).toBeUndefined();
+        expect(emitted).toBe('all');
+    });
+
+    it('should mark the active filter, so which one applies is visible and announced', () => {
+        const upcoming = fixture.debugElement.query(By.css('[data-filter="upcoming"]')).nativeElement as HTMLButtonElement;
+        const all = fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement as HTMLButtonElement;
+
+        expect(upcoming.getAttribute('aria-pressed')).toBe('true');
+        expect(all.getAttribute('aria-pressed')).toBe('false');
     });
 });
