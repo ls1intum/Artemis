@@ -115,6 +115,32 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     }
 
     /**
+     * A forwarded message points at exactly one destination, so naming both is malformed input rather than a server
+     * fault: without this the second setter on the entity throws IllegalStateException and the request answers 500.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectForwardedMessageWithTwoDestinations() throws Exception {
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(null, testPost.getId(), PostingType.POST, testPost.getId(), testAnswerPost.getId());
+
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/communication/forwarded-messages")).param("courseId", exampleCourseId.toString())
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    /**
+     * The other half of the same invariant: a message with no destination would be stored but never returned, because
+     * retrieval groups messages by their destination.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectForwardedMessageWithoutDestination() throws Exception {
+        ForwardedMessageDTO dto = new ForwardedMessageDTO(null, testPost.getId(), PostingType.POST, null, null);
+
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/communication/forwarded-messages")).param("courseId", exampleCourseId.toString())
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    /**
      * Test retrieving forwarded messages for destination IDs of type 'post'.
      */
     @Test
