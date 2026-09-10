@@ -41,8 +41,8 @@ describe('GradingInstructionsDetailsComponent', () => {
     let alertService: MockAlertService;
 
     const criterionMarkdownText =
-        '[criterion] testCriteria\n' +
-        '\t[instruction]\n' +
+        '[criterion] {id:1} testCriteria\n' +
+        '\t[instruction] {id:1}\n' +
         '\t[credits] 1\n' +
         '\t[gradingScale] scale\n' +
         '\t[description] description\n' +
@@ -700,7 +700,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingInstructions).toBe(genuineInstructions);
     });
 
-    const getDomainActionArray = () => {
+    const getDomainActionArray = (ids?: { criterionId?: number; instructionId?: number }) => {
         const creditsAction = new GradingCreditsAction();
         const scaleAction = new GradingScaleAction();
         const descriptionAction = new GradingDescriptionAction();
@@ -708,10 +708,12 @@ describe('GradingInstructionsDetailsComponent', () => {
         const usageCountAction = new GradingUsageCountAction();
         const instructionAction = new GradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
         const criterionAction = new GradingCriterionAction(instructionAction);
+        const criterionText = ids?.criterionId != undefined ? `{id:${ids.criterionId}} testCriteria` : 'testCriteria';
+        const instructionText = ids?.instructionId != undefined ? `{id:${ids.instructionId}}` : '';
 
         return [
-            { text: 'testCriteria', action: criterionAction },
-            { text: '', action: instructionAction },
+            { text: criterionText, action: criterionAction },
+            { text: instructionText, action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'scale', action: scaleAction },
             { text: 'description', action: descriptionAction },
@@ -747,7 +749,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const originalCriterion = gradingCriterion;
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray();
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
         domainActions[5] = { text: 'updated feedback', action: domainActions[5].action };
 
         component.onDomainActionsFound(domainActions);
@@ -763,14 +765,14 @@ describe('GradingInstructionsDetailsComponent', () => {
         exercise.gradingInstructionFeedbackUsed = true;
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray();
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
         const creditsAction = domainActions[2].action;
         const scaleAction = domainActions[3].action;
         const descriptionAction = domainActions[4].action;
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
         const instructionAction = domainActions[1].action;
-        // Insert a second instruction before the original — content match must keep id 1 on the original row.
+        // Insert a second instruction before the original — identity markers / content match must keep id 1 on the original row.
         domainActions.splice(
             1,
             0,
@@ -790,6 +792,77 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[0].gradingScale).toBe('inserted');
         expect(instructions[1]).toBe(originalInstruction);
         expect(instructions[1].id).toBe(1);
+    });
+
+    it('should keep instruction ids across reorders via identity markers', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
+        const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
+        const criterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instructionA, instructionB] } as GradingCriterion;
+        exercise.gradingCriteria = [criterion];
+
+        const base = getDomainActionArray({ criterionId: 1, instructionId: 10 });
+        const instructionAction = base[1].action;
+        const creditsAction = base[2].action;
+        const scaleAction = base[3].action;
+        const descriptionAction = base[4].action;
+        const feedbackAction = base[5].action;
+        const usageCountAction = base[6].action;
+        // Reorder: B then A (same shape — must not remount by position)
+        const domainActions = [
+            base[0],
+            { text: '{id:20}', action: instructionAction },
+            { text: '2', action: creditsAction },
+            { text: 'b', action: scaleAction },
+            { text: 'b', action: descriptionAction },
+            { text: 'b', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            { text: '{id:10}', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'a', action: scaleAction },
+            { text: 'a', action: descriptionAction },
+            { text: 'a', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions[0]).toBe(instructionB);
+        expect(instructions[0].id).toBe(20);
+        expect(instructions[1]).toBe(instructionA);
+        expect(instructions[1].id).toBe(10);
+    });
+
+    it('should keep instruction id when content and structure both change', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        domainActions.push(
+            { text: '', action: instructionAction },
+            { text: '3', action: creditsAction },
+            { text: 'extra', action: scaleAction },
+            { text: 'extra', action: descriptionAction },
+            { text: 'extra', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions).toHaveLength(2);
+        expect(instructions[0]).toBe(originalInstruction);
+        expect(instructions[0].id).toBe(1);
+        expect(instructions[0].feedback).toBe('edited feedback');
+        expect(instructions[1].id).toBeUndefined();
     });
 
     it('should update properties for grading instruction', () => {

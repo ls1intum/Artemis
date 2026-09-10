@@ -188,7 +188,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                     // if it is a dummy criterion, leave out the action identifier
                     markdownText += this.generateInstructionsMarkdown(criterion);
                 } else {
-                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
+                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${this.formatIdentityMarker(criterion.id)}${criterion.id != undefined ? ' ' : ''}${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
                 }
             }
         }
@@ -214,8 +214,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     }
 
     generateInstructionText(instruction: GradingInstruction): string {
+        const identitySuffix = instruction.id != undefined ? ` ${this.formatIdentityMarker(instruction.id)}` : '';
         return (
             GradingInstructionAction.IDENTIFIER +
+            identitySuffix +
             '\n' +
             '\t' +
             this.generateCreditsText(instruction) +
@@ -234,6 +236,24 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             '\n' +
             '\n'
         );
+    }
+
+    /** Stable id carried in text-mode markdown so parse/reconcile can keep persisted identities. */
+    private formatIdentityMarker(id: number | undefined): string {
+        return id != undefined ? `{id:${id}}` : '';
+    }
+
+    /**
+     * Reads an optional `{id:N}` prefix from a domain-action text segment and assigns it to the entity.
+     * @returns remainder after the marker (e.g. criterion title)
+     */
+    private applyParsedIdentity(entity: { id?: number }, text: string): string {
+        const match = /^\{id:(\d+)\}\s*(.*)$/s.exec(text);
+        if (!match) {
+            return text;
+        }
+        entity.id = Number(match[1]);
+        return match[2];
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
@@ -342,11 +362,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         const criteria = [...this.criteria()];
-        for (const { action } of textWithDomainActions) {
+        for (const { text, action } of textWithDomainActions) {
             this.setExerciseGradingInstructionText(textWithDomainActions);
             if (action instanceof GradingInstructionAction) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
+                this.applyParsedIdentity(newInstruction, text);
                 dummyCriterion.structuredGradingInstructions = [];
                 dummyCriterion.structuredGradingInstructions.push(newInstruction);
                 this.instructions.push(newInstruction);
@@ -373,7 +394,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         for (const { text, action } of textWithDomainActions) {
             if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
-                newCriterion.title = text;
+                newCriterion.title = this.applyParsedIdentity(newCriterion, text);
                 gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const arrayWithoutCriterion = textWithDomainActions.slice(1); // remove the identifier after creating its criterion object
@@ -383,6 +404,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                     endOfCriterion++;
                     if (instrAction instanceof GradingInstructionAction) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
+                        this.applyParsedIdentity(newInstruction, remainingTextWithDomainAction.text);
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
@@ -444,44 +466,25 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
     /**
      * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
-     * database IDs (and feedback links). Same shape → match by position (covers in-place field
-     * edits). Shape change → match by title / instruction content fingerprint so insertions,
-     * deletions, and reorders do not wipe every ID or attach an ID to the wrong row.
+     * database IDs (and feedback links). Match by `{id:N}` markers from markdown first, then
+     * title / content fingerprint. Never match by position alone — reorders would remount IDs.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
-        const reconciled = this.hasSameCriteriaStructure(previousCriteria, parsedCriteria)
-            ? this.reconcileCriteriaByPosition(previousCriteria, parsedCriteria)
-            : this.reconcileCriteriaByContent(previousCriteria, parsedCriteria);
+        const reconciled = this.reconcileCriteriaByContent(previousCriteria, parsedCriteria);
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
-    }
-
-    private hasSameCriteriaStructure(previous: GradingCriterion[], parsed: GradingCriterion[]): boolean {
-        if (previous.length !== parsed.length) {
-            return false;
-        }
-        return previous.every((criterion, index) => (criterion.structuredGradingInstructions?.length ?? 0) === (parsed[index].structuredGradingInstructions?.length ?? 0));
-    }
-
-    private reconcileCriteriaByPosition(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): GradingCriterion[] {
-        return parsedCriteria.map((parsedCriterion, criterionIndex) => {
-            const existingCriterion = previousCriteria[criterionIndex];
-            existingCriterion.title = parsedCriterion.title;
-            const parsedInstructions = parsedCriterion.structuredGradingInstructions ?? [];
-            const existingInstructions = existingCriterion.structuredGradingInstructions ?? [];
-            existingCriterion.structuredGradingInstructions = parsedInstructions.map((parsedInstruction, instructionIndex) =>
-                this.applyInstructionFields(existingInstructions[instructionIndex], parsedInstruction),
-            );
-            return existingCriterion;
-        });
     }
 
     private reconcileCriteriaByContent(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): GradingCriterion[] {
         const unusedCriteria = [...previousCriteria];
         return parsedCriteria.map((parsedCriterion) => {
-            const matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
+            let matchIndex = this.findUnusedById(unusedCriteria, parsedCriterion.id);
+            if (matchIndex < 0 && (parsedCriterion.title ?? '') !== '') {
+                matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
+            }
             if (matchIndex < 0) {
+                this.clearStaleParsedId(parsedCriterion, previousCriteria);
                 return parsedCriterion;
             }
             const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
@@ -497,14 +500,32 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private reconcileInstructionsByContent(previousInstructions: GradingInstruction[], parsedInstructions: GradingInstruction[]): GradingInstruction[] {
         const unusedInstructions = [...previousInstructions];
         return parsedInstructions.map((parsedInstruction) => {
-            const fingerprint = this.instructionFingerprint(parsedInstruction);
-            const matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
+            let matchIndex = this.findUnusedById(unusedInstructions, parsedInstruction.id);
             if (matchIndex < 0) {
+                const fingerprint = this.instructionFingerprint(parsedInstruction);
+                matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
+            }
+            if (matchIndex < 0) {
+                this.clearStaleParsedId(parsedInstruction, previousInstructions);
                 return parsedInstruction;
             }
             const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
             return this.applyInstructionFields(existingInstruction, parsedInstruction);
         });
+    }
+
+    private findUnusedById<T extends { id?: number }>(unused: T[], id: number | undefined): number {
+        if (id == undefined) {
+            return -1;
+        }
+        return unused.findIndex((entity) => entity.id === id);
+    }
+
+    /** Drop a marker id that already belonged to a previous entity we could not reclaim (duplicate marker). */
+    private clearStaleParsedId<T extends { id?: number }>(parsed: T, previous: T[]): void {
+        if (parsed.id != undefined && previous.some((entity) => entity.id === parsed.id)) {
+            delete parsed.id;
+        }
     }
 
     private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {
