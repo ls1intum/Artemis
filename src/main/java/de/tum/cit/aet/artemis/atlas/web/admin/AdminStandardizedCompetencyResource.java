@@ -21,8 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
@@ -56,9 +55,9 @@ public class AdminStandardizedCompetencyResource {
 
     private final KnowledgeAreaService knowledgeAreaService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public AdminStandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, KnowledgeAreaService knowledgeAreaService, ObjectMapper objectMapper) {
+    public AdminStandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, KnowledgeAreaService knowledgeAreaService, JsonMapper objectMapper) {
         this.standardizedCompetencyService = standardizedCompetencyService;
         this.knowledgeAreaService = knowledgeAreaService;
         this.objectMapper = objectMapper;
@@ -179,10 +178,9 @@ public class AdminStandardizedCompetencyResource {
      * GET admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
      *
      * @return the ResponseEntity with status 200 (OK) and the body containing the standardized competency catalog
-     * @throws JsonProcessingException if the catalog cannot be serialized
      */
     @GetMapping("standardized-competencies/export")
-    public ResponseEntity<String> exportStandardizedCompetencyCatalog() throws JsonProcessingException {
+    public ResponseEntity<String> exportStandardizedCompetencyCatalog() {
         log.debug("REST request to export standardized competency catalog");
 
         var catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();

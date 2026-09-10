@@ -165,8 +165,12 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
+    /**
+     * Lazy, like every other configuration on a course. Read it through {@code CourseAthenaConfigRepository} where it
+     * is needed rather than dragging it along with the course.
+     */
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "athena_config_id")
     private CourseAthenaConfig athenaConfig;
 
