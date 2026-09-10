@@ -130,7 +130,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
-        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/metis/courses/" + course.getId()), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/communication/courses/" + course.getId()), any(PostBroadcastDTO.class));
     }
 
     @Test
