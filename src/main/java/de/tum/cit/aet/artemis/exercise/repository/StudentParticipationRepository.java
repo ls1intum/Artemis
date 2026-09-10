@@ -418,7 +418,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
             WHERE p.exercise.course.id = :courseId
                 AND p.team.shortName = :teamShortName
@@ -481,7 +481,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("testRun") boolean testRun);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
@@ -650,7 +650,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") long participationId);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.exercise ex
@@ -662,10 +662,29 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<StudentParticipation> findWithSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * The participations of a student in an exercise, with their submissions, one entry per participation.
+     * <p>
+     * The de-duplication happens here rather than as SELECT DISTINCT because Hibernate passes that DISTINCT through to
+     * SQL, and the row it would have to sort carries the whole exercise - problem statement and grading instructions
+     * included. Measured against a real exam row on staging2, that sort is most of what the query costs: 0.433 ms with
+     * the DISTINCT against 0.110 ms without. It is the most expensive statement of a 2000 student exam run, 21,752
+     * calls for 10.1 seconds, so the sort alone is around seven seconds of database time per exam. The join fetch of a
+     * to-many still repeats the participation once per submission, so the rows are collapsed here instead - Hibernate
+     * returns the same instance for each of them, and {@code DomainObject} compares on id.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the student's participations in that exercise, each once
+     */
+    default List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(long exerciseId, long studentId) {
+        return findWithSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(exerciseId, studentId).stream().distinct().toList();
+    }
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
