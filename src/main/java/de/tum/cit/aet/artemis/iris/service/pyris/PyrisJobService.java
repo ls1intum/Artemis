@@ -91,13 +91,9 @@ public class PyrisJobService {
     }
 
     /**
-     * Lazy init: retrieves the distributed map that holds the single-flight in-flight markers for
-     * struggle-intervention runs, keyed by {@link #struggleInFlightKey(long, long)} (value = the reserving job token).
-     *
-     * <p>
-     * The entry lifetime is a crash self-heal backstop: a reservation whose run never completes (node crash) expires
-     * with the job TTL. Like the job map, the lifetime is requested here rather than configured on the provider,
-     * because a map-level TTL is not expressible on every one of them.
+     * The single-flight in-flight markers for struggle runs, keyed by {@link #struggleInFlightKey(long, long)}. The
+     * entry lifetime is a crash self-heal backstop, requested here rather than configured on the provider because a
+     * map-level TTL is not expressible on every one of them.
      *
      * @return the map of {@code (userId:exerciseId) -> token} reservations
      */
@@ -113,12 +109,9 @@ public class PyrisJobService {
     }
 
     /**
-     * Lazy init: the distributed map of struggle admission charges, keyed by
-     * {@link #struggleCooldownKey(long, long, String)} (value = the token of the run that paid).
-     *
-     * <p>
-     * Deliberately not the in-flight map: that marker means "a run is happening" and a scoped cancel clears it, so
-     * a charge living on it would be refundable by the very client it bounds.
+     * The struggle admission charges, keyed by {@link #struggleCooldownKey(long, long, String)}. Deliberately not the
+     * in-flight map, whose marker a scoped cancel clears, which would make the charge refundable by the very client
+     * it bounds.
      *
      * @return the map of {@code (userId:exerciseId:intent) -> token} charges
      */
@@ -139,8 +132,7 @@ public class PyrisJobService {
     }
 
     /**
-     * How long a charge holds its key, and therefore how long a rejected caller has to wait. Read here rather than
-     * at the call site so the duration stays with the map that enforces it.
+     * How long a charge holds its key, read here so the duration stays with the map that enforces it.
      *
      * @return the struggle cooldown in seconds
      */
@@ -149,9 +141,9 @@ public class PyrisJobService {
     }
 
     /**
-     * Charge the admission cooldown for a trigger that is about to start a run. A single {@code putIfAbsent}, not a
+     * Charge the admission cooldown for a trigger about to start a run. A single {@code putIfAbsent} rather than a
      * read then a write, so two triggers racing on the same key cannot both be admitted. The returned token is what
-     * a later refund has to present, so only the charge's own run can clear it.
+     * a later refund has to present.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the student is struggling on
@@ -165,13 +157,10 @@ public class PyrisJobService {
     }
 
     /**
-     * Refund a charge whose run provably cost nothing upstream: only the local bails that happen before anything
-     * reaches Pyris. A failure reported through the pipeline's status consumer is not refundable, because a
-     * preparation failure and a connector failure arrive there as the same frame and a read timeout can follow a
-     * request Pyris accepted. Nor is a client-requested cancel, which is attacker-controlled.
-     *
-     * <p>
-     * Conditional on the stored token, so a late refund cannot clear a newer admission's charge.
+     * Refund a charge whose run provably cost nothing upstream, meaning only the local bails before anything reaches
+     * Pyris. A failure reported through the pipeline's status consumer is not refundable, because a preparation
+     * failure and a connector failure arrive there as the same frame. Nor is a client-requested cancel, which is
+     * attacker-controlled. Conditional on the stored token, so a late refund cannot clear a newer charge.
      *
      * @param token      the token that paid the charge
      * @param userId     the struggling student
@@ -234,11 +223,9 @@ public class PyrisJobService {
     }
 
     /**
-     * Cluster-atomically reserve the single-flight slot for {@code (userId, exerciseId)} and mint a struggle
-     * job. Returns the new token, or empty if a run is already in flight for that pair. The reservation
-     * TTL matches the job TTL, so a crashed run self-heals. If any write in the sequence fails, a rollback of both
-     * the job and the reservation is attempted (token-conditional). A rollback that fails too leaves the TTL as the
-     * backstop it already is for a crashed node.
+     * Cluster-atomically reserve the single-flight slot for {@code (userId, exerciseId)} and mint a struggle job.
+     * The reservation TTL matches the job TTL, so a crashed run self-heals. If any write in the sequence fails, a
+     * token-conditional rollback of both is attempted, and a rollback that fails leaves the TTL as the backstop.
      *
      * @param courseId        the course the run belongs to
      * @param userId          the struggling student
@@ -255,25 +242,20 @@ public class PyrisJobService {
         var token = generateJobIdToken();
         var key = struggleInFlightKey(userId, exerciseId);
         var job = new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken, proactivityMode);
-        // Everything from the reservation to the re-stamp is undone as one unit. Nothing here hands the token out,
-        // so a caller that catches the failure cannot release what a partial write left behind: the pair would stay
-        // blocked for a whole jobTimeout with no run to show for it. The reservation write is inside the boundary
-        // too, because a provider can apply it and still fail the call.
+        // Reservation through re-stamp is undone as one unit. Nothing here hands the token out, so a caller that
+        // catches the failure cannot release what a partial write left behind. The reservation write is inside the
+        // boundary too, because a provider can apply it and still fail the call.
         try {
             String existing = getStruggleInFlightMap().putIfAbsent(key, token, Duration.ofSeconds(jobTimeout));
             if (existing != null) {
                 return Optional.empty();
             }
-            // Shares the job map with every other pipeline. A build that does not know this record never reads one,
-            // because the map is only ever read by token (getJob, never iterated) and a struggle token only ever
-            // reaches the struggle callback path, which such a build does not serve. That is what keeps the entry
-            // harmless next to older ones, not what makes the release compatible: this record is one of the two
-            // reasons DistributedDataSchema.VERSION was raised to 2, so an older build reads the previous namespace
-            // rather than this one.
+            // Shares the job map with every other pipeline. The map is only ever read by token, never iterated, so
+            // a build that does not know this record never reads one. What makes the release compatible is
+            // DistributedDataSchema.VERSION being raised to 2, which puts an older build on the previous namespace.
             getPyrisJobMap().put(token, job);
-            // The marker was written before the job, so it would also expire before it, and the run would outlive the
-            // reservation that protects it. Re-stamp it now that the job stands, keeping the marker's lifetime the
-            // longer of the two - the same ordering every keep-alive callback follows.
+            // The marker was written before the job, so it would expire first and the run would outlive the
+            // reservation protecting it. Re-stamping keeps the marker's lifetime the longer of the two.
             refreshStruggleInFlightMarker(token, userId, exerciseId);
         }
         catch (RuntimeException e) {
@@ -284,14 +266,10 @@ public class PyrisJobService {
     }
 
     /**
-     * Undo a half-written struggle reservation, keeping the failure that caused it as the one that escapes.
-     *
-     * <p>
-     * Both removals are conditional on what THIS call wrote, so neither can touch a newer run that has since taken
-     * the pair, and both are noops for the write that never landed. They are attempted independently: a provider
-     * that fails the first would otherwise leave the second undone, which is the leak this exists to prevent.
-     * Cleanup failures are recorded on the carrier rather than thrown, so the caller still sees the original cause -
-     * the same shape {@code IrisStruggleTriggerService#undoAdmission} uses one level up.
+     * Undo a half-written struggle reservation, keeping the failure that caused it as the one that escapes. Both
+     * removals are conditional on what this call wrote, so neither can touch a newer run, and both are attempted
+     * independently, because a provider failing the first would otherwise leave the second undone. Cleanup failures
+     * are recorded on the carrier rather than thrown, so the caller still sees the original cause.
      *
      * @param token   the token this call minted
      * @param job     the job this call wrote, or would have written
@@ -314,9 +292,8 @@ public class PyrisJobService {
     }
 
     /**
-     * Release a reserved struggle slot + its job on a LOCAL send failure (no callback will arrive). Idempotent
-     * and token-conditional: only clears the in-flight marker if it still holds THIS token, so it cannot wipe a
-     * newer reservation for the same {@code (user, exercise)}.
+     * Release a reserved struggle slot and its job on a local send failure, where no callback will arrive.
+     * Idempotent and token-conditional, so it cannot wipe a newer reservation for the same pair.
      *
      * @param token      the reserving job token
      * @param userId     the struggling student
@@ -328,25 +305,15 @@ public class PyrisJobService {
     }
 
     /**
-     * Extend the in-flight reservation for a run that is still alive, token-conditionally.
+     * Extend the in-flight reservation for a run that is still alive, token-conditionally. A run that outlives its
+     * own marker lets a second trigger reserve the same pair while it is still going, which is the duplicate session
+     * and bubble the single-flight guard exists to prevent, so every point that extends a run's life re-stamps the
+     * marker.
      *
      * <p>
-     * A run that outlives its own marker lets a second trigger reserve the same {@code (userId, exerciseId)} while it
-     * is still in flight, which is the duplicate session and bubble the single-flight guard exists to prevent. Every
-     * point that extends a run's life therefore re-stamps the marker: the reservation, once the job it protects
-     * stands; every non-terminal callback, alongside the job entry it refreshes; and the terminal claim, whose
-     * handler keeps working after the job entry is already gone.
-     *
-     * <p>
-     * The re-put is conditional on the stored value still being THIS token, so a refresh arriving late cannot
-     * resurrect a reservation that has already been released and retaken by a newer run.
-     *
-     * <p>
-     * A refresh that finds no marker of its own is therefore a silent noop, which the reservation path accepts. The
-     * only normal application path that can clear a marker in the microseconds between minting it and re-stamping it
-     * is a scoped cancel carrying the same client-minted {@code requestToken}, and that cancel is meant to win:
-     * reporting it from here would turn a run the student cancelled into a failed request. Anything else that could
-     * empty the marker in that window is external state loss, not a caller.
+     * The re-put is conditional on the stored value still being this token, so a late refresh cannot resurrect a
+     * reservation a newer run has retaken. A refresh that finds no marker is a silent noop: the only normal path
+     * that can clear one in that window is a scoped cancel, and that cancel is meant to win.
      *
      * @param token      the reserving job token
      * @param userId     the struggling student
@@ -367,10 +334,9 @@ public class PyrisJobService {
     }
 
     /**
-     * Release ONLY the in-flight marker (token-conditional), leaving the job map untouched. Called on the terminal
-     * callback AFTER {@code handleDecision} has finished: the job-map entry was already removed up front
-     * (so the trailing-duplicate callback 403s), but the marker must outlive the session-materialization + persist
-     * + push, otherwise a concurrent second trigger could race in and create a duplicate session/bubble.
+     * Release only the in-flight marker, token-conditionally, leaving the job map untouched. Called on the terminal
+     * callback after {@code handleDecision} has finished: the job entry is removed up front so a trailing duplicate
+     * callback 403s, but the marker has to outlive the persist and push, or a second trigger races in.
      *
      * @param token      the reserving job token
      * @param userId     the struggling student
@@ -381,23 +347,15 @@ public class PyrisJobService {
     }
 
     /**
-     * Scoped cancel: remove the pending struggle job and its in-flight marker ONLY IF the job's stamped
-     * {@code requestToken} equals the provided token. If no pending job exists, or the token does not match,
-     * this is an idempotent noop (the slot is left intact).
+     * Scoped cancel: remove the pending struggle job and its in-flight marker only if the job's stamped
+     * {@code requestToken} matches. A missing job or a non-matching token is an idempotent noop, which is what stops
+     * {@code cancel(A)} from removing a since-started run B.
      *
      * <p>
-     * This prevents {@code cancel(A)} from accidentally removing a since-started run B that carries a different
-     * token. Run B is only removed by its own scoped cancel or by the normal completion path.
-     *
-     * <p>
-     * The removal runs under {@link #runWithJobLock}, keyed on the pending token, and re-reads the job under that
-     * lock. The terminal callback ({@code PyrisStatusUpdateService#handleStatusUpdate}) runs its whole
-     * remove-job-then-{@code handleDecision}-then-release-marker sequence under the same job lock. Without this
-     * serialization, cancel's read-check-remove is not atomic against it: cancel could read job A as still present,
-     * pass the token check, and then release the marker after the callback has removed the job but while
-     * {@code handleDecision} is still materializing + persisting + pushing - reopening the re-trigger race the
-     * marker exists to close. Under the lock, cancel either runs fully before the callback claims the job, or sees
-     * the job already gone and does nothing.
+     * The removal runs under {@link #runWithJobLock} and re-reads the job there, because the terminal callback runs
+     * its whole remove-then-handle-then-release sequence under the same lock. Without that serialization cancel
+     * could pass the token check and then release the marker while {@code handleDecision} is still persisting and
+     * pushing, reopening the re-trigger race the marker exists to close.
      *
      * @param userId       the struggling student (scopes the in-flight key)
      * @param exerciseId   the exercise the student is struggling on (scopes the in-flight key)
@@ -408,11 +366,9 @@ public class PyrisJobService {
             return;
         }
         var key = struggleInFlightKey(userId, exerciseId);
-        // Read the marker outside the lock only to learn WHICH job id to lock on. Everything the removal depends on
-        // is re-read under the lock. A stale read here cannot cancel the wrong run: we lock and re-check that token's
-        // own job, and the marker remove is token-conditional, so a marker already retaken by a newer run B is never
-        // touched. The worst a stale read does is lock a token whose job is gone (noop) or clean up its own leftover
-        // job-map entry.
+        // Read outside the lock only to learn which job id to lock on; everything the removal depends on is re-read
+        // under it. A stale read locks a token whose job is gone, which is a noop, and the marker remove stays
+        // token-conditional.
         String pendingToken = getStruggleInFlightMap().get(key);
         if (pendingToken == null) {
             return;  // no pending job, idempotent noop
@@ -425,8 +381,7 @@ public class PyrisJobService {
             if (!requestToken.equals(sij.requestToken())) {
                 return null;  // token mismatch: cancel(A) must never remove a since-started B
             }
-            // Scoped match, still pending under our token: remove the job entry and the in-flight marker
-            // (token-conditional, so a marker already retaken by a newer run is left intact).
+            // Still pending under our token, so remove both, token-conditionally.
             getPyrisJobMap().remove(pendingToken);
             getStruggleInFlightMap().remove(key, pendingToken);
             return null;

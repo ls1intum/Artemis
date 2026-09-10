@@ -81,14 +81,9 @@ public class PyrisDTOService {
 
     /**
      * The exercise as the struggle-intervention pipeline needs it: identity, language, problem statement and dates,
-     * with all three repositories left empty.
-     *
-     * <p>
-     * {@link #toPyrisProgrammingExerciseDTO} walks the template, solution and tests repositories, tens to hundreds of
-     * files per call. The struggle pipeline hands the exercise to a single tool, which reads the problem statement;
-     * the student's own code reaches it through the submission instead. A struggle trigger fires by itself while a
-     * student works, so unlike a chat message this is paid over and over for a payload nothing reads. Pyris defaults
-     * the three maps to empty, so leaving them out needs no change on its side.
+     * with all three repositories left empty. {@link #toPyrisProgrammingExerciseDTO} walks tens to hundreds of files
+     * per call, while this pipeline only reads the problem statement and gets the student's code from the submission.
+     * A struggle trigger fires by itself while a student works, so that payload would be paid for over and over.
      *
      * @param exercise the programming exercise to convert
      * @return the converted DTO without any repository contents
@@ -124,31 +119,24 @@ public class PyrisDTOService {
         Map<String, String> committedFiles = committed.files();
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
-        // getFilteredRepositoryContents tolerates a null participation and reports it as unreadable, so every other
-        // dereference below has to tolerate it too, otherwise a submission without one NPEs and aborts the whole
-        // Pyris conversion instead of degrading to "no committed code readable" like any unreadable repository.
+        // getFilteredRepositoryContents tolerates a null participation, so every dereference below has to as well,
+        // or a submission without one aborts the whole conversion instead of degrading to "nothing readable".
         var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
         var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage, committed.readable());
-        // submittedRepositoryAvailable = we actually read the submitted repo. Lets Pyris tell "no code changed since
-        // the submission" apart from "the submitted code could not be read" (both would otherwise be an empty
-        // submittedRepository, e.g. on a repository-fetch failure). Taken from the fetch, not from the file count: a
-        // repository holding no file of the exercise language is readable and empty, not unavailable.
+        // Lets Pyris tell "no code changed since the submission" apart from "the submitted code could not be read",
+        // which would otherwise both be an empty map. Taken from the fetch rather than the file count, because a
+        // repository holding no file of the exercise language is readable and empty.
         boolean submittedRepositoryAvailable = committed.readable();
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
                 submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 
     /**
-     * The committed (last-submitted-build) version of ONLY the CODE files the client changed locally, so Pyris can diff
-     * live-vs-submitted. Uses the same language predicate as {@link #getFilteredRepositoryContents} (non-language files
-     * such as README are skipped). A changed existing code file contributes its committed content; a genuinely new
-     * local code file contributes {@code ""} (all-added); unchanged code files are skipped.
-     * <p>
-     * If the committed set could not be read, an empty map is returned rather than fabricating an all-added diff for
-     * every changed file: a "new file" is only claimed when the committed set was actually read. Readability is passed
-     * in rather than inferred from {@code committedFiles} being empty, because a repository that holds no file of the
-     * exercise language is readable and empty, and inferring would cost the student's genuinely new files their
-     * all-added baseline.
+     * The committed version of only the code files the client changed locally, so Pyris can diff live against
+     * submitted. A changed existing file contributes its committed content, a genuinely new one contributes
+     * {@code ""}, and unchanged files are skipped. An unreadable committed set returns an empty map rather than
+     * fabricating an all-added diff. Readability is passed in rather than inferred from an empty map, because a
+     * repository holding no file of the exercise language is readable and empty.
      *
      * @param committedFiles    the (language-filtered) committed repository contents
      * @param uncommittedFiles  the student's live working-copy files from the client
@@ -191,20 +179,16 @@ public class PyrisDTOService {
     }
 
     /**
-     * Like {@link #toPyrisMessageDTOList}, but tags each proactive (origin PROACTIVE_STRUGGLE) message with how
-     * the student reacted, so the struggle gate can avoid repeating a dismissed/ignored hint. Builds
-     * fresh DTOs — it never mutates the stored IrisMessage entities — and preserves id/sentAt/sender.
+     * Like {@link #toPyrisMessageDTOList}, but tags each proactive message with how the student reacted, so the
+     * struggle gate can avoid repeating a hint that was dismissed or ignored. Builds fresh DTOs and never mutates the
+     * stored entities.
      *
      * <p>
-     * A hint that belongs to a DIFFERENT episode than the one running now is additionally marked as such. The
-     * session outlives any single bout of being stuck, and its proactive messages are never cleaned up, so without
-     * this a hint from an episode that ended days ago arrives looking exactly like one given a minute ago and the
-     * gate falls silent on a fresh struggle. The marker is ADDED, never substituted: an explicit {@code dismissed}
-     * survives it, because a rejection outlives the episode it was given in.
-     *
-     * <p>
-     * Pyris is the only reader of the distinction, and its {@code sent_at} never reaches the model (it is dropped
-     * when the history is converted to the agent's messages), so the tag text is the one channel that carries this.
+     * A hint belonging to a different episode than the one running is marked as such. The session outlives any single
+     * bout of being stuck and its proactive messages are never cleaned up, so without this a hint from days ago looks
+     * exactly like one given a minute ago. The marker is added rather than substituted, because a rejection outlives
+     * the episode it was given in. The tag text is the one channel that carries this, since {@code sent_at} is
+     * dropped before the history reaches the model.
      *
      * @param messages         the chat-history messages, in chronological order
      * @param currentEpisodeId the episode this run belongs to, or null when the caller has none. Null marks

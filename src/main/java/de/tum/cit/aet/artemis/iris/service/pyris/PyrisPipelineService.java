@@ -226,9 +226,9 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Fires the proactive struggle-intervention pipeline with a pre-minted job token and pre-built
-     * data DTOs (the caller loaded them off-thread, by id). Uses a no-op status consumer that releases the
-     * single-flight slot on a preparation/connector ERROR (no callback will then arrive).
+     * Fires the proactive struggle-intervention pipeline with a pre-minted job token and pre-built data DTOs, which
+     * the caller loaded off-thread by id. The status consumer releases the single-flight slot on an error, since no
+     * callback will then arrive.
      *
      * @param variant         resolved Iris variant (e.g. "default")
      * @param supportLevel    the instructional support level ("low" / "moderate" / "high")
@@ -253,20 +253,13 @@ public class PyrisPipelineService {
                         intent, episode, proactivityMode),
                 (runId, runState, error) -> {
                     if (runState == PyrisRunState.FAILED) {
-                        // A preparation failure never reached Pyris, but a connector failure is ambiguous: a read
-                        // timeout or a reset can arrive after Pyris took the request, and the exception carries
-                        // nothing that tells the two apart. The slot is released either way, which makes the
-                        // guarantee "at most one DELIVERABLE result" rather than "at most one Pyris run": releasing
-                        // drops the job entry too, so a late callback for this token fails authentication and can
-                        // produce no message, no outcome and no frame. Holding the marker instead would buy strict
-                        // single-flight by suppressing every further intervention for this student and exercise for
-                        // the whole job timeout, which is five minutes by default, and it would do so precisely when
-                        // Pyris is having trouble and the student is stuck. A wasted upstream run is the cheaper
-                        // side of that trade. Emit the terminal frame here before releasing the slot, so the
-                        // client's in-flight request clears. Sending it from here rather than delegating to
-                        // IrisStruggleTriggerService#emitTerminalCompletion avoids a bean cycle (that service already
-                        // depends on this one); the frame itself comes from the shared factory, so the two paths
-                        // cannot drift apart.
+                        // A preparation failure never reached Pyris, but a connector failure is ambiguous and the
+                        // exception carries nothing that tells the two apart. Releasing either way makes the
+                        // guarantee "at most one deliverable result" rather than "at most one Pyris run": the job
+                        // entry goes with it, so a late callback for this token fails authentication. Holding the
+                        // marker instead would suppress every further intervention for this student for the whole
+                        // job timeout, precisely when Pyris is struggling and so is the student. The frame is sent
+                        // from here rather than through IrisStruggleTriggerService to avoid a bean cycle.
                         try {
                             if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
                                 irisChatWebsocketService.sendStruggleEvent(user,
@@ -274,8 +267,7 @@ public class PyrisPipelineService {
                             }
                         }
                         catch (Exception e) {
-                            // A missing completion frame degrades to the client's own timeout; never let it block the
-                            // slot release, which matters more.
+                            // A missing frame degrades to a client timeout; the slot release matters more.
                             log.warn("Could not emit terminal completion for failed struggle pipeline job {} exercise {} user {}", jobToken, exerciseId, user.getId(), e);
                         }
                         pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);
