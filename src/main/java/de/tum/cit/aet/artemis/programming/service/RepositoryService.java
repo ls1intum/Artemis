@@ -492,7 +492,7 @@ public class RepositoryService {
             else {
                 File templateFile = templateRepoFiles.get(fileName);
                 try {
-                    if (FileUtils.contentEquals(file, templateFile)) {
+                    if (Files.mismatch(file.toPath(), templateFile.toPath()) == -1) {
                         filesWithInformationAboutChange.put(fileName, false);
                     }
                     else {

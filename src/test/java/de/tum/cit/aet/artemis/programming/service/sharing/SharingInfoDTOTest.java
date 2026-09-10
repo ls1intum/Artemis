@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
@@ -53,7 +54,7 @@ class SharingInfoDTOTest {
             if (!tempPath.toFile().exists()) {
                 tempPath.toFile().mkdirs();
             }
-            File tmpFile = File.createTempFile("zipTest", "zip", tempPath.toFile());
+            File tmpFile = Files.createTempFile(tempPath, "zipTest", "zip").toFile();
             sharingZip.transferTo(tmpFile);
             assertThat(tmpFile.length()).isGreaterThan(0);
             assertThat(sharingZip.getSize()).isZero();

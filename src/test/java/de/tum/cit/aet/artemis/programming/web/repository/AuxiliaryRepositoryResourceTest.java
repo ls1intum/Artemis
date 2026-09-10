@@ -398,7 +398,7 @@ class AuxiliaryRepositoryResourceTest {
         var missing = new FileSubmission();
         missing.setFileName("Missing.java");
         missing.setFileContent("content");
-        java.io.File onDisk = java.io.File.createTempFile("aux", ".java");
+        java.io.File onDisk = java.nio.file.Files.createTempFile("aux", ".java").toFile();
         onDisk.deleteOnExit();
         when(gitService.getFileByName(repository, "Saved.java")).thenReturn(Optional.of(new de.tum.cit.aet.artemis.programming.domain.File(onDisk, repository)));
         when(gitService.getFileByName(repository, "Missing.java")).thenReturn(Optional.empty());

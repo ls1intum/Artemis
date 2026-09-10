@@ -161,6 +161,26 @@ modernizer {
         "org/apache/commons/io/FileUtils.copyFile:(Ljava/io/File;Ljava/io/File;)V",
         "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;)V",
         "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;Ljava/nio/charset/Charset;)V",
+        // The remaining FileUtils write and move rules, for the same reason. FileUtil is the one class the ArchUnit rule
+        // exempts, and it keeps FileUtils there deliberately too: moveFile falls back to copy-and-delete across
+        // filesystems, which a bare Files.move cannot do, and writeByteArrayToFile creates the temp directory the write
+        // targets.
+        "org/apache/commons/io/FileUtils.writeByteArrayToFile:(Ljava/io/File;[B)V",
+        "org/apache/commons/io/FileUtils.writeByteArrayToFile:(Ljava/io/File;[BZ)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/util/Collection;)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/util/Collection;Z)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/lang/String;Ljava/util/Collection;)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/lang/String;Ljava/util/Collection;Z)V",
+        "org/apache/commons/io/FileUtils.moveFile:(Ljava/io/File;Ljava/io/File;)V",
+        "org/apache/commons/io/FileUtils.moveFile:(Ljava/io/File;Ljava/io/File;[Ljava/nio/file/CopyOption;)V",
+        // List.of and Set.of reject null elements, and Artemis passes null into both on purpose: the exercise timeline
+        // validation compares lists of nullable dates, and two tests assert how a null element is handled. Swapping the
+        // factory would turn those into a NullPointerException.
+        "java/util/Collections.singletonList:(Ljava/lang/Object;)Ljava/util/List;",
+        "java/util/Collections.singleton:(Ljava/lang/Object;)Ljava/util/Set;",
+        // ProgrammingExercise's File extends java.io.File to carry its Repository, so its constructors have to call
+        // super(String). Path.of is not a substitute for a superclass constructor.
+        'java/io/File."<init>":(Ljava/lang/String;)V',
     ]
 }
 

@@ -1197,7 +1197,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
 
                 // method calls on and after a verify() line are usually not calls on the actual object
-                var firstVerifyLineNumber = firstVerifyLineNumberOptional.getAsInt();
+                var firstVerifyLineNumber = firstVerifyLineNumberOptional.orElseThrow();
                 return asyncCalls.anyMatch(call -> call.getLineNumber() < firstVerifyLineNumber);
             }
         };
