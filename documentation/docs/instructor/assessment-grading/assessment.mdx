@@ -41,9 +41,10 @@ returns the submission to the queue.
 </Callout>
 
 An assessment lock does not time out. A submission stays with the reviewer who opened it until they submit or
-cancel, so a reviewer who leaves work unfinished has to release it — or an instructor has to, from the assessment
-dashboard. A complaint is the exception: a reviewer holds it for 24 hours, and the panel names the hour it comes
-free.
+cancel, and only that reviewer can let it go: the assessment locks page lists the submissions *you* hold, not
+everybody's. What the dashboard gives an instructor is the count, which is enough to notice a queue that has stalled
+and ask whoever is holding it. A complaint is the exception to all of this — a reviewer holds one for 24 hours, and
+the panel names the hour it comes free.
 
 Nothing reaches the student until the exercise's assessment due date has passed. Until then marks can be revised
 freely; afterwards the results are published together, and students can
@@ -69,7 +70,7 @@ A criterion is a piece of feedback with a point value attached, defined once on 
 they sit beside the submission under **Structured Assessment Criteria**, grouped by what they judge, and a reviewer
 applies one by dragging it onto the passage or the element it concerns rather than typing the comment again.
 
-<Image src={gradingCriteria} alt="Assessment editor with the grading criteria beside the submission" size={ImageSize.large} caption="Applying a grading criterion" />
+<Image src={gradingCriteria} alt="Assessment editor with the structured assessment criteria beside the submission" size={ImageSize.large} caption="Applying a criterion to a submission" />
 
 The point of them is consistency: two reviewers deduct the same marks for the same mistake and describe it in the same
 words, which is also what makes a complaint answerable. Students see the criterion that was applied, so the mark
@@ -117,8 +118,10 @@ never blocked, while one who files unfounded complaints runs out.
 
 <Callout variant={CalloutVariant.info}>
 
-  A complaint needs a manually marked result to dispute. Automatic results and Athena's preliminary AI feedback cannot
-  be complained about, and in an exam a complaint is only possible during the student review period.
+  A quiz can never be complained about. An exercise marked automatically can, but only if it carries **Complaint on
+  Automatic Assessment** — an option Artemis offers only where manual assessment is off and a due date is set, because
+  the complaint is what brings a tutor to the submission. Athena's preliminary AI feedback is refused outright, and in
+  an exam a complaint is only possible during the student review period.
 
 </Callout>
 
@@ -168,9 +171,12 @@ else's — is worth a conversation before the course ends rather than after.
 ## Automatic Assessment
 
 A quiz is marked automatically as soon as it is over, and this is the only mode it has. A programming exercise is
-marked by its test cases, either while the exercise is running or once it has closed, and can be marked semi-
-automatically by having a reviewer correct the result afterwards. Complaints can be enabled for automatically graded
-programming exercises, so a student can dispute what the tests concluded.
+marked by its test cases, either while the exercise is running or once it has closed, and can be marked
+semi-automatically by having a reviewer correct the result afterwards.
+
+**Complaint on Automatic Assessment**, on the programming exercise's own form, lets students dispute what the tests
+concluded. Turning it on is what puts a tutor in front of a submission that no tutor would otherwise have seen, so
+budget for the work before enabling it on a large course.
 
 ## Exercise-Specific Assessment
 
