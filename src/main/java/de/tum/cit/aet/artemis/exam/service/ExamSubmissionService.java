@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -178,23 +179,49 @@ public class ExamSubmissionService {
             return null;
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
-        if (!participations.isEmpty()) {
-            Set<Submission> submissions = participations.getFirst().getSubmissions();
-            if (!submissions.isEmpty()) {
-                Submission existingSubmission = submissions.iterator().next();
-                // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
-                // we set the id of the received submission to the id of the existing submission. When repository.save()
-                // is invoked the existing submission will be updated.
-                submission.setId(existingSubmission.getId());
-            }
-            StudentParticipation resolved = participations.getFirst();
-            if (participations.size() == 1 && !resolved.isTestRun()) {
-                return resolved;
-            }
+        // A projection rather than the participation entity: loading that one pulls the whole exercise graph behind it,
+        // which nothing here reads, and the caller already holds the exercise.
+        List<ExamSubmissionGateDTO> participations = participationService.findExamSubmissionGate(exercise, user.getId());
+        if (participations.isEmpty()) {
+            return null;
+        }
+        ExamSubmissionGateDTO existing = participations.getFirst();
+        if (existing.existingSubmissionId() != null) {
+            // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
+            // we set the id of the received submission to the id of the existing submission. When repository.save()
+            // is invoked the existing submission will be updated.
+            submission.setId(existing.existingSubmissionId());
+        }
+        // Team participations are owned by a Team, not by a User, so they cannot be rebuilt from these fields. The caller
+        // resolves those itself, exactly as it does when several participations exist.
+        if (participations.size() == 1 && !existing.testRun() && !exercise.isTeamMode()) {
+            return toParticipation(existing, exercise);
         }
 
         return null;
+    }
+
+    /**
+     * Rebuilds the participation the gate resolved from its projection, with the exercise the caller already loaded.
+     *
+     * @param gate     the projected participation
+     * @param exercise the exercise the submission belongs to
+     * @return a detached participation carrying what the callers read: the dates, the state, the student and the exercise
+     */
+    private static StudentParticipation toParticipation(ExamSubmissionGateDTO gate, Exercise exercise) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setId(gate.participationId());
+        participation.setInitializationState(gate.initializationState());
+        participation.setInitializationDate(gate.initializationDate());
+        participation.setIndividualDueDate(gate.individualDueDate());
+        participation.setTestRun(gate.testRun());
+        participation.setExercise(exercise);
+        User student = new User(gate.studentId());
+        student.setLogin(gate.studentLogin());
+        student.setFirstName(gate.studentFirstName());
+        student.setLastName(gate.studentLastName());
+        participation.setParticipant(student);
+        return participation;
     }
 
     private boolean isSubmissionInTime(Exercise exercise, StudentExamSubmissionGateDTO submissionGate, boolean withGracePeriod) {

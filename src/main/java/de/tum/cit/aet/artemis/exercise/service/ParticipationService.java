@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -906,6 +907,22 @@ public class ParticipationService {
      * @param studentId the id of student
      * @return the list of exercise participations belonging to exercise and student
      */
+    /**
+     * What the exam submission gate needs to know about a student's participations in an exercise, without loading the
+     * participation entity and the whole exercise graph that hangs off it.
+     *
+     * @param exercise  the exercise
+     * @param studentId the id of the student
+     * @return one row per participation of that student, or of their team for a team exercise
+     */
+    public List<ExamSubmissionGateDTO> findExamSubmissionGate(Exercise exercise, long studentId) {
+        if (exercise.isTeamMode()) {
+            return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId)
+                    .map(team -> studentParticipationRepository.findExamSubmissionGateByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+        }
+        return studentParticipationRepository.findExamSubmissionGateByExerciseIdAndStudentId(exercise.getId(), studentId);
+    }
+
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);

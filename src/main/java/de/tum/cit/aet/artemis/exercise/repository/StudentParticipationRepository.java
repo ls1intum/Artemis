@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -665,15 +666,55 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findWithSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     /**
+     * The student's participations in an exercise, as far as the exam submission gate needs them.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return one row per participation, carrying the id of one existing submission if there is one
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO(
+                participation.id, MIN(submission.id), participation.initializationState, participation.initializationDate, participation.individualDueDate,
+                participation.testRun, student.id, student.login, student.firstName, student.lastName)
+            FROM StudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.submissions submission
+            WHERE participation.exercise.id = :exerciseId
+                AND student.id = :studentId
+            GROUP BY participation.id, participation.initializationState, participation.initializationDate, participation.individualDueDate, participation.testRun,
+                student.id, student.login, student.firstName, student.lastName
+            """)
+    List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * The same rows as {@link #findExamSubmissionGateByExerciseIdAndStudentId} for a team exercise, where the
+     * participation belongs to a team rather than to a student. The student fields are those of the team owner.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return one row per participation, carrying the id of one existing submission if there is one
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO(
+                participation.id, MIN(submission.id), participation.initializationState, participation.initializationDate, participation.individualDueDate,
+                participation.testRun, owner.id, owner.login, owner.firstName, owner.lastName)
+            FROM StudentParticipation participation
+                JOIN participation.team team
+                LEFT JOIN team.owner owner
+                LEFT JOIN participation.submissions submission
+            WHERE participation.exercise.id = :exerciseId
+                AND team.id = :teamId
+            GROUP BY participation.id, participation.initializationState, participation.initializationDate, participation.individualDueDate, participation.testRun,
+                owner.id, owner.login, owner.firstName, owner.lastName
+            """)
+    List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
+    /**
      * The participations of a student in an exercise, with their submissions, one entry per participation.
      * <p>
-     * The de-duplication happens here rather than as SELECT DISTINCT because Hibernate passes that DISTINCT through to
-     * SQL, and the row it would have to sort carries the whole exercise - problem statement and grading instructions
-     * included. Measured against a real exam row on staging2, that sort is most of what the query costs: 0.433 ms with
-     * the DISTINCT against 0.110 ms without. It is the most expensive statement of a 2000 student exam run, 21,752
-     * calls for 10.1 seconds, so the sort alone is around seven seconds of database time per exam. The join fetch of a
-     * to-many still repeats the participation once per submission, so the rows are collapsed here instead - Hibernate
-     * returns the same instance for each of them, and {@code DomainObject} compares on id.
+     * De-duplicated here rather than with SELECT DISTINCT: Hibernate passes that through to SQL, where it becomes a sort
+     * over rows carrying the whole exercise, problem statement included. Hibernate returns the same instance for each
+     * repeated row and {@code DomainObject} compares on id, so collapsing them in Java is exact and far cheaper.
      *
      * @param exerciseId the id of the exercise
      * @param studentId  the id of the student
