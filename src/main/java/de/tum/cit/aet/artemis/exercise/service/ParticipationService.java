@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -882,6 +883,55 @@ public class ParticipationService {
         // multiple test runs exist for the same exercise.
         if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        return gradedParticipation;
+    }
+
+    /**
+     * The participation a submission should be saved against, rebuilt from a projection rather than loaded.
+     * <p>
+     * Resolves exactly as {@link #findOneByExerciseAndStudentWithEagerSubmissionsAnyState} does - team, test exam,
+     * practice after the effective due date, instructor test run - but reads five columns instead of the participation
+     * with its eager exercise, that exercise's course, and for an exam exercise the exercise group, its exam and the
+     * exam's course. The exercise and the participant are the ones the caller already holds, so what comes back
+     * carries everything the save and the response read. It has no submissions: a caller that needs those has to
+     * resolve the participation itself.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @return the participation, or empty when the student has none
+     */
+    public Optional<StudentParticipation> findSubmitTargetByExerciseAndStudent(Exercise exercise, User student) {
+        if (exercise.isTeamMode()) {
+            return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId()).flatMap(
+                    team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()).map(t -> t.toParticipation(exercise, team)));
+        }
+        return findSubmitTargetOfStudent(exercise, student).map(target -> target.toParticipation(exercise, student));
+    }
+
+    /**
+     * The projected participation of an individual student, before it is rebuilt.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @return the projection, or empty when the student has none
+     */
+    private Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetOfStudent(Exercise exercise, User student) {
+        if (exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        Optional<StudentParticipationSubmitTargetDTO> gradedParticipation = studentParticipationRepository.findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                student.getId(), false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+            Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
+                    .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
         }
         return gradedParticipation;
     }

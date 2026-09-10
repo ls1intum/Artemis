@@ -79,12 +79,11 @@ public class TextSubmissionService extends SubmissionService {
         // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
         // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
         // would return the same row. Every other caller passes null and the participation is resolved here.
-        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
-                : participationService.findOneByExerciseAndStudentWithEagerSubmissionsAnyState(exercise, user);
-        if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
-        }
-        final var participation = optionalParticipation.get();
+        // A projection, rebuilt with the exercise and the user this method already has: nothing here reads the
+        // participation's submissions, and loading the entity for them pulled the whole eager exercise chain along.
+        final var participation = participationFromExamGate != null ? participationFromExamGate
+                : participationService.findSubmitTargetByExerciseAndStudent(exercise, user).orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId()));
         final var dueDate = ExerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {

@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -449,6 +450,68 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findWithEagerExerciseContextByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
+
+    /**
+     * The student's graded or practice participation in an exercise, as far as saving a submission needs it.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param testRun    whether to look for the test run participation
+     * @return the projected participation, or empty when the student has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND p.testRun = :testRun
+            """)
+    Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
+            @Param("testRun") boolean testRun);
+
+    /**
+     * The student's newest participation in an exercise, as far as saving a submission needs it. A test exam can be
+     * taken more than once, so the newest attempt is picked by id inside the query.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the projected participation, or empty when the student has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
+            FROM StudentParticipation p
+            WHERE p.id = (
+                SELECT MAX(p2.id)
+                FROM StudentParticipation p2
+                WHERE p2.exercise.id = :exerciseId
+                    AND p2.student.id = :studentId
+                    AND p2.initializationDate = (
+                        SELECT MAX(p3.initializationDate)
+                        FROM StudentParticipation p3
+                        WHERE p3.exercise.id = :exerciseId
+                            AND p3.student.id = :studentId
+                    )
+            )
+            """)
+    Optional<StudentParticipationSubmitTargetDTO> findLatestSubmitTargetByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * A team's participation in an exercise, as far as saving a submission needs it.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return the projected participation, or empty when the team has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.team.id = :teamId
+            """)
+    Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     /**
      * The student's most recently initialized participation in an exercise, with its submissions.
