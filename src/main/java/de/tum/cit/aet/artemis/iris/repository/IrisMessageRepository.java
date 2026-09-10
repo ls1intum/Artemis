@@ -52,18 +52,13 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int countFinalLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     /**
-     * Stable write-target finder for the pre-registry outcome write. Returns the episode's rows ordered by id
-     * ascending; the caller takes the smallest-id element as the target. Ordering by {@code sentAt} would be
-     * unstable, since a delivery row that persists late can carry an earlier {@code sentAt} but a larger id. The
-     * smallest id is monotonic, so two concurrent outcome writes pick the SAME target row and the row-scoped
-     * {@link #setProactiveOutcomeIfNull} guard makes first-terminal-wins atomic without a same-table subquery or a
-     * pessimistic lock.
+     * Stable write-target finder for the pre-registry outcome write: the smallest id is monotonic, so two concurrent
+     * outcome writes pick the same target row and the row-scoped {@link #setProactiveOutcomeIfNull} guard makes
+     * first-terminal-wins atomic. Ordering by {@code sentAt} would not be stable.
      * <p>
-     * The user scope is a security guard: {@code episodeId} is a client-generated UUID, so an unscoped lookup would
-     * let any student write an outcome onto another student's episode by guessing or replaying the id. The exercise
-     * scope closes the same reuse inside one user, and it matches on {@code proactiveExerciseId} rather than the
-     * session's {@code entityId} because a session's mode and entityId change on every context switch. The match is
-     * strict: a row that carries no exercise is never returned.
+     * The user scope is a security guard, since {@code episodeId} is client-generated; the exercise scope closes the
+     * same reuse inside one user and reads {@code proactiveExerciseId} rather than the session, whose entityId moves
+     * on every context switch.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only rows in this user's sessions are returned
@@ -101,12 +96,9 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<Long> findEpisodeRowIdsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
-     * Episode-wide outcome read: returns all non-null {@code proactive_outcome} values across every row tagged with
-     * the given episode id. By first-terminal-wins, at most one such value exists. Reading across all episode rows
-     * rather than the earliest makes the result stable under out-of-order persistence: if the delivery row's persist
-     * is still pending while a later row already persisted its outcome, this query still finds it.
-     * <p>
-     * User- and exercise-scoped for the reasons given on {@link #findEpisodeRowsForUserOrderByIdAsc}.
+     * Episode-wide outcome read, across every row tagged with the episode id rather than the earliest one, so the
+     * result is stable under out-of-order persistence. By first-terminal-wins at most one value exists. Scoped for
+     * the reasons given on {@link #findEpisodeRowsForUserOrderByIdAsc}.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only outcomes on rows in this user's sessions are returned
@@ -128,16 +120,10 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * committed RIGHT NOW rather than what this transaction's snapshot holds.
      *
      * <p>
-     * Only for the caller that has to classify a guarded outcome write which came back with zero affected rows. Under
-     * REPEATABLE READ a plain read there can still miss the outcome the write just lost to, and the two answers lead
-     * to opposite client behaviour: an outcome that stands means there is nothing left to back-fill, while a target
-     * row that merely vanished leaves the episode open and the client has to write the outcome again onto a later row.
-     *
-     * <p>
-     * Ordered by id so concurrent callers take the row locks in the same order. The user scope is a subquery on the
-     * session table rather than the navigation {@link #findEpisodeOutcomes} uses, because that navigation joins
-     * {@code iris_session} into the FROM list and a {@code FOR UPDATE} over a join locks the joined session row too
-     * on dialects that cannot restrict the lock to one table.
+     * Only for the caller classifying a guarded outcome write that affected zero rows, where a plain read can miss
+     * the outcome it just lost to and the two answers lead to opposite client behaviour. Ordered by id so concurrent
+     * callers take the locks in the same order, and user-scoped through a subquery rather than the navigation
+     * {@link #findEpisodeOutcomes} uses, which would join {@code iris_session} into the lock.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only outcomes on rows in this user's sessions are returned
@@ -190,8 +176,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
 
     /**
      * The message's position in its session's ordered list. Native, because {@code iris_message_order} is an
-     * {@link jakarta.persistence.OrderColumn} maintained by Hibernate from the owning side and therefore not a
-     * mapped field this repository could select through JPQL.
+     * {@link jakarta.persistence.OrderColumn} and therefore not a mapped field JPQL could select.
      *
      * @param messageId the message to look up
      * @return the row's list index, or empty when the row is gone
@@ -200,15 +185,10 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     Optional<Integer> findListIndex(@Param("messageId") long messageId);
 
     /**
-     * Close the hole a deleted row leaves in its session's list indices by shifting every later row down one.
-     *
-     * <p>
-     * Deleting a message with a plain statement does not go through the collection that owns
-     * {@code iris_message_order}, so nothing renumbers the rows after it. The gap is not cosmetic: Hibernate
-     * materialises an ordered collection by index, so the next load of the session puts a {@code null} where the
-     * missing index is and the read fails on it, which is the same failure mode {@code IrisMessageService#saveMessage}
-     * documents for an insert that bypasses the owner. The caller must hold the session's write lock, so this cannot
-     * interleave with an append allocating the next index.
+     * Close the hole a deleted row leaves in its session's list indices. A plain delete does not go through the
+     * collection that owns {@code iris_message_order}, and the gap is not cosmetic: Hibernate materialises an ordered
+     * collection by index, so the next load puts a {@code null} on the missing one and fails. The caller holds the
+     * session write lock, so this cannot interleave with an append allocating the next index.
      *
      * @param sessionId    the session whose list is being compacted
      * @param removedIndex the index the deleted row occupied
@@ -225,12 +205,9 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int compactMessageOrderAfter(@Param("sessionId") long sessionId, @Param("removedIndex") int removedIndex);
 
     /**
-     * Atomic guarded delete for stale-row suppression. Deletes the row
-     * ONLY IF all three guards hold in one statement: it is {@code PROACTIVE_STRUGGLE} origin, it carries a null
-     * {@code proactiveOutcome} (never delete a canonical outcome row), and it belongs to one of the given user's
-     * sessions. Doing the guard + delete in a single statement removes the check-then-delete (TOCTOU) race: a
-     * concurrent outcome write that lands between a load and a delete can no longer cause a terminal row to be deleted.
-     * The user-ownership guard uses a subquery on the (different) session table, so it is MySQL-1093 safe.
+     * Atomic guarded delete for stale-row suppression: proactive origin, null {@code proactiveOutcome} and the
+     * user's own session, all in one statement, which is what removes the check-then-delete race. The ownership
+     * guard is a subquery on the session table, so it is MySQL-1093 safe.
      *
      * @param messageId the id of the proactive message row to delete
      * @param userId    the requesting user; the row is only deleted if its session belongs to this user

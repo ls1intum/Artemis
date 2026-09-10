@@ -71,9 +71,9 @@ public interface IrisSessionWriteRepository {
     IrisMessage appendProactiveMessage(long sessionId, long exerciseId, String text, @Nullable String episodeId);
 
     /**
-     * Delete a superseded proactive message and close the gap it leaves in the session's list indices. The guarded
-     * delete decides whether the row goes; it cannot keep the ordered list intact, because it never goes through the
-     * collection that owns {@code iris_message_order}. Read, delete and compact therefore share the session lock.
+     * Delete a superseded proactive message and close the gap it leaves in the list indices. The guarded delete
+     * never goes through the collection that owns {@code iris_message_order}, so read, delete and compact share the
+     * session lock.
      *
      * @param messageId the message to delete
      * @param userId    the requesting user; only rows in this user's own sessions are touched

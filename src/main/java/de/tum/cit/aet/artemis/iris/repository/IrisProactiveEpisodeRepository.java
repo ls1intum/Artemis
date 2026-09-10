@@ -39,10 +39,8 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     Optional<IrisProactiveEpisode> find(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId);
 
     /**
-     * The same lookup, taking a write lock on the episode row. This is the mutex the whole feature serializes on:
-     * every path that decides from the terminal state and then writes takes this lock first and holds it until its
-     * transaction commits. Deliberately no join fetch, because that would make this an outer join and PostgreSQL
-     * rejects {@code FOR UPDATE} on the nullable side of one.
+     * The same lookup under a write lock, the mutex the whole feature serializes on. No join fetch, because that
+     * would make this an outer join and PostgreSQL rejects {@code FOR UPDATE} on the nullable side of one.
      *
      * @param userId     the student the episode belongs to
      * @param exerciseId the exercise the episode belongs to
@@ -54,10 +52,9 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     Optional<IrisProactiveEpisode> findForUpdate(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId);
 
     /**
-     * Refresh {@code last_triggered_at} on an existing episode, the first half of the registration upsert. No
-     * {@code outcome} predicate, because touching an ended episode is harmless and a predicate would make a zero
-     * result mean two things. Zero affected rows means "attempt the insert", not "provably absent": some databases
-     * report changed rather than matched rows, and the insert's duplicate-key recovery is what makes that safe.
+     * Refresh {@code last_triggered_at}, the first half of the registration upsert. No {@code outcome} predicate,
+     * which would make a zero result mean two things. Zero means "attempt the insert" rather than "provably absent",
+     * and the insert's duplicate-key recovery is what makes that safe.
      *
      * @param userId      the student the episode belongs to
      * @param exerciseId  the exercise the episode belongs to
@@ -104,12 +101,9 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     int deleteAllByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Retention for episodes that went quiet: a trigger whose callback never arrived leaves an open row behind that
-     * nothing on a request path would remove. Rows carrying an {@code outcome} are kept, because deleting one loses
-     * the terminal state that suppresses a late message, and rows carrying a consumed offer are kept, because
-     * {@code consumed_message_id} is what makes a repeated reveal return the first reveal message. Both go with the
-     * course's student-data reset ({@link #deleteAllByCourseId}). The cutoff reads {@code last_triggered_at}, which
-     * every trigger refreshes, so an episode still in use is never reaped out from under a run in flight.
+     * Retention for episodes that went quiet, which nothing on a request path would remove. Rows carrying an
+     * {@code outcome} or a consumed offer are kept and go with the student-data reset ({@link #deleteAllByCourseId}).
+     * The cutoff reads {@code last_triggered_at}, so an episode still in use is never reaped mid-run.
      *
      * @param triggeredBefore rows last triggered before this are removed
      * @return number of rows deleted
