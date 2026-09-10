@@ -109,6 +109,14 @@ describe('HolidayMonthGridComponent', () => {
         expect(bars[1].query(By.css('[data-testid="holiday-calendar-event-time"]'))).not.toBeNull();
     });
 
+    it('should say nothing about times for a day held to an exclusive midnight', () => {
+        // 16 December 00:00 to 17 December 00:00: the 16th is covered outright, so no time belongs on it.
+        setHolidays(period(1, '2025-12-15T23:00:00', '2025-12-16T23:00:00'));
+
+        expect(queryAll('holiday-calendar-event')).toHaveLength(1);
+        expect(queryAll('holiday-calendar-event-time')).toHaveLength(0);
+    });
+
     it('should print both times for a holiday confined to part of one day', () => {
         setHolidays(period(1, '2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
 

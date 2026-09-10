@@ -5,7 +5,7 @@ import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiDialogComponent, T
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { Holiday, endOfHolidayDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, endOfHolidayDay, lastDayCovered } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** Mirrors the `@Size` the server puts on the reason, so the field stops where the request would be rejected. */
 const REASON_MAX_LENGTH = 256;
@@ -73,10 +73,11 @@ export class HolidayDialogComponent {
 
     protected readonly isEditMode = computed(() => this.holiday() !== undefined);
 
+    /** Measured against the last day the span covers: an end at midnight belongs to the day before it. */
     protected readonly spansMultipleDays = computed(() => {
         const start = this.start();
         const end = this.end();
-        return !!start && !!end && !start.isSame(end, 'day');
+        return !!start && !!end && !start.startOf('day').isSame(lastDayCovered(start, end), 'day');
     });
 
     /** Names the days rather than repeating the dates, which the fields already show. */
@@ -134,12 +135,20 @@ export class HolidayDialogComponent {
         const previousStart = this.start();
         this.start.set(value);
 
-        // Moving the start carries a single-day holiday with it, so the common case needs one edit rather than two.
         const end = this.end();
-        if (end && previousStart && previousStart.isSame(end, 'day') && !value.isSame(end, 'day')) {
-            this.end.set(value.startOf('day').set('hour', end.hour()).set('minute', end.minute()));
-        } else if (end && !end.isAfter(value)) {
-            this.end.set(endOfHolidayDay(value));
+        if (end && previousStart) {
+            // Moving the start carries a holiday of one day with it, so the common case needs one edit rather than
+            // two. Moved by whole days rather than rebuilt, so the time it ends at - and which midnight that is -
+            // survive the move.
+            const coveredOneDay = previousStart.startOf('day').isSame(lastDayCovered(previousStart, end), 'day');
+            const dayDelta = value.startOf('day').diff(previousStart.startOf('day'), 'day');
+            if (coveredOneDay) {
+                if (dayDelta !== 0) {
+                    this.end.set(end.add(dayDelta, 'day'));
+                }
+            } else if (!end.isAfter(value)) {
+                this.end.set(endOfHolidayDay(value));
+            }
         }
         this.emitSpan();
     }

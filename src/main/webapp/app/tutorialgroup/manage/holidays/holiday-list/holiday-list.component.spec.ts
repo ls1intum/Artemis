@@ -124,6 +124,14 @@ describe('HolidayListComponent', () => {
         expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(0);
     });
 
+    it('should call a holiday ending at an exclusive midnight a whole day, not a span of no length', () => {
+        const toMidnight = toHolidays([period(9, '2025-12-15T23:00:00', '2025-12-16T23:00:00', 'One day')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', toMidnight);
+        fixture.detectChanges();
+
+        expect(query('holiday-list-item').nativeElement.textContent).not.toContain('00:00');
+    });
+
     it('should list a holiday covering several days once rather than once per day', () => {
         const twoWeeks = toHolidays([period(6, '2025-12-21T23:00:00', '2026-01-04T22:59:00', 'Christmas holidays')], TIME_ZONE);
         fixture.componentRef.setInput('holidays', twoWeeks);

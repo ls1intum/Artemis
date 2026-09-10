@@ -350,6 +350,30 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(vi.mocked(freePeriodService.getOverlappingSessionCount).mock.calls.at(-1)![3]).toBe(11);
     });
 
+    it('should drop the previous count while the new span is being counted', () => {
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValue(of(7));
+        component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-22T23:59') });
+        vi.advanceTimersByTime(500);
+        expect(component['dialogSessionCount']()).toBe(7);
+
+        // Kept, the seven would stand against a span it was never counted for - and stay there if the request fails.
+        component['onDialogSpanChange']({ start: dayjs('2025-12-23T00:00'), end: dayjs('2025-12-23T23:59') });
+
+        expect(component['dialogSessionCount']()).toBe(0);
+    });
+
+    it('should not leave a count standing when the request for the new span fails', () => {
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValueOnce(of(7));
+        component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-22T23:59') });
+        vi.advanceTimersByTime(500);
+
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component['onDialogSpanChange']({ start: dayjs('2025-12-23T00:00'), end: dayjs('2025-12-23T23:59') });
+        vi.advanceTimersByTime(500);
+
+        expect(component['dialogSessionCount']()).toBe(0);
+    });
+
     it('should ask for the count once when the reader moves through several dates', () => {
         vi.mocked(freePeriodService.getOverlappingSessionCount).mockClear();
         vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValue(of(2));

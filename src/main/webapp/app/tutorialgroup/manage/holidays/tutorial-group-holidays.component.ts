@@ -314,6 +314,9 @@ export class TutorialGroupHolidaysComponent {
      * month the calendar happens to show and a partial count would understate what saving does.
      */
     protected onDialogSpanChange(span: { start: dayjs.Dayjs; end: dayjs.Dayjs }): void {
+        // Dropped before the new one is asked for, so the count of the span just left is not shown against this one
+        // while the request is on its way - and is not left standing if it never arrives.
+        this.dialogSessionCount.set(0);
         this.dialogSpanRequests.next(span);
     }
 

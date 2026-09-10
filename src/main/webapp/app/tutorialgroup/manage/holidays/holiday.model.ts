@@ -80,9 +80,19 @@ export function endsAtEndOfDay(instant: dayjs.Dayjs): boolean {
     return instant.hour() === LAST_HOUR_OF_DAY && instant.minute() === LAST_MINUTE_OF_HOUR && instant.second() === NO_SECONDS && instant.millisecond() === NO_MILLISECONDS;
 }
 
-/** Whether a span runs from the first minute of its first day to the last of its last, rather than being narrowed. */
+/**
+ * Whether a span holds its last day to the end of it.
+ *
+ * There are two ways to say that, and both have to be read the same: 23:59 names the last minute of the day, and
+ * midnight is the exclusive end just past it. Only a time in between actually releases the day partway through.
+ */
+export function coversLastDayFully(end: dayjs.Dayjs): boolean {
+    return endsAtEndOfDay(end) || startsAtBeginningOfDay(end);
+}
+
+/** Whether a span runs from the first minute of its first day to the end of its last, rather than being narrowed. */
 export function coversWholeDays(start: dayjs.Dayjs, end: dayjs.Dayjs): boolean {
-    return startsAtBeginningOfDay(start) && endsAtEndOfDay(end);
+    return startsAtBeginningOfDay(start) && coversLastDayFully(end);
 }
 
 /**
@@ -91,7 +101,7 @@ export function coversWholeDays(start: dayjs.Dayjs, end: dayjs.Dayjs): boolean {
  * A holiday finishing at 00:00 stops just short of that date, so the day before it is the last one it covers. A span
  * that ends where it starts covers its own day rather than reaching back before it.
  */
-function lastDayCovered(start: dayjs.Dayjs, end: dayjs.Dayjs): dayjs.Dayjs {
+export function lastDayCovered(start: dayjs.Dayjs, end: dayjs.Dayjs): dayjs.Dayjs {
     const firstDay = start.startOf('day');
     const lastDay = end.subtract(1, 'millisecond').startOf('day');
     return lastDay.isBefore(firstDay) ? firstDay : lastDay;

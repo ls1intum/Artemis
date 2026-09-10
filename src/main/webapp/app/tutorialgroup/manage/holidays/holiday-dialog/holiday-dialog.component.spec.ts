@@ -80,6 +80,19 @@ describe('HolidayDialogComponent', () => {
         expect(component['spansMultipleDays']()).toBe(false);
     });
 
+    it('should carry a single day ending at an exclusive midnight rather than stretching it', async () => {
+        // 16 December 00:00 to 17 December 00:00 is one day. Reading the raw end would call it two, and moving the
+        // start back to the 10th would leave the end where it was - one holiday becoming seven days.
+        fixture.componentRef.setInput('holiday', holidayOf('2025-12-15T23:00:00', '2025-12-16T23:00:00', 'One day'));
+        await open();
+        expect(component['spansMultipleDays']()).toBe(false);
+
+        component['onStartChange'](dayjs('2025-12-10').startOf('day'));
+
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-11 00:00');
+        expect(component['spansMultipleDays']()).toBe(false);
+    });
+
     it('should leave a multi-day span alone when its start moves within the range', async () => {
         fixture.componentRef.setInput('holiday', holidayOf('2025-12-16T23:00:00', '2025-12-31T22:59:00', 'Christmas holidays'));
         await open();

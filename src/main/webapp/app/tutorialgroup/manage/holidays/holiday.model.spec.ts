@@ -31,6 +31,11 @@ describe('holiday model', () => {
             expect(coversWholeDays(dayjs('2025-12-17T00:00:00.500'), dayjs('2025-12-17T23:59:00'))).toBe(false);
         });
 
+        it('should treat an end at midnight as covering the day before it in full', () => {
+            // 16 December 00:00 to 17 December 00:00 is the exclusive way of saying the whole of the 16th.
+            expect(coversWholeDays(dayjs('2025-12-16T00:00'), dayjs('2025-12-17T00:00'))).toBe(true);
+        });
+
         it('should not treat a span narrowed within a day as whole days', () => {
             expect(coversWholeDays(dayjs('2025-12-04T09:15'), dayjs('2025-12-04T13:45'))).toBe(false);
         });
@@ -51,6 +56,14 @@ describe('holiday model', () => {
             expect(holiday.spansMultipleDays).toBe(false);
             expect(holiday.dayCount).toBe(1);
             expect(holiday.start.format('YYYY-MM-DD')).toBe('2025-12-17');
+        });
+
+        it('should call a holiday ending at midnight a whole day rather than showing it as a span of times', () => {
+            const [holiday] = toHolidays([period(1, '2025-12-15T23:00:00', '2025-12-16T23:00:00', 'One day')], TIME_ZONE);
+
+            expect(holiday.wholeDay).toBe(true);
+            expect(holiday.spansMultipleDays).toBe(false);
+            expect(holiday.dayCount).toBe(1);
         });
 
         it('should keep a holiday that only covers part of a day as a span with times', () => {

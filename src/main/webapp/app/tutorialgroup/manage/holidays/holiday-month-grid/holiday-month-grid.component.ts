@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { getWeekdayNameKeys } from 'app/calendar/shared/util/calendar-util';
-import { DAY_KEY_FORMAT, Holiday, endsAtEndOfDay, startsAtBeginningOfDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { DAY_KEY_FORMAT, Holiday, coversLastDayFully, startsAtBeginningOfDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** Days in a week, and so the number of columns a week is laid out in. */
 const DAYS_PER_WEEK = 7;
@@ -189,7 +189,7 @@ export class HolidayMonthGridComponent {
             const startsRun = clipStart.isSame(firstDay, 'day');
             const endsRun = clipEnd.isSame(lastDay, 'day');
             const startsPartway = startsRun && !startsAtBeginningOfDay(holiday.start);
-            const endsPartway = endsRun && !endsAtEndOfDay(holiday.end);
+            const endsPartway = endsRun && !coversLastDayFully(holiday.end);
             const startColumn = clipStart.diff(weekStart, 'day');
             const span = clipEnd.diff(clipStart, 'day') + 1;
 
