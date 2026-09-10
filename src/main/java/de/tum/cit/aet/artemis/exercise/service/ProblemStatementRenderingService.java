@@ -169,7 +169,7 @@ public class ProblemStatementRenderingService {
         this.fileService = fileService;
         this.serverUrl = serverUrl;
         this.commonMarkRenderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
-                .attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
+                .attributeProviderFactory(_ -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
     }
 
     /**
