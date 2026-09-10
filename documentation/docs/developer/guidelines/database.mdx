@@ -145,7 +145,9 @@ In JPA lazy fetching can be set on any relationship using the fetch attribute. T
 
 ### Eager fetching is not allowed
 
-Every `@OneToOne`, `@OneToMany` and `@ManyToMany` must declare `fetch = FetchType.LAZY`. The ArchUnit rule `ArchitectureTest.testNoEagerFetching` fails the build for any that does not; the associations that are still eager are listed in `FIELDS_ALLOWED_TO_FETCH_EAGERLY`, which may only shrink.
+No `@OneToOne`, `@OneToMany` or `@ManyToMany` may fetch eagerly. The ArchUnit rule `ArchitectureTest.testNoEagerFetching` fails the build for any that does; the associations that are still eager are listed in `FIELDS_ALLOWED_TO_FETCH_EAGERLY`, which may only shrink.
+
+The rule judges the fetch type that actually applies, not what is written down. `@OneToOne` defaults to `EAGER`, so it has to spell out `fetch = FetchType.LAZY`; `@OneToMany` and `@ManyToMany` are lazy already and need not repeat it, though writing it out does no harm.
 
 `@ManyToOne` is out of scope. Hibernate cannot make a to-one association lazy without bytecode enhancement or a proxy, and a proxied `@ManyToOne` does not work with entity hierarchies - which most of ours are. Its eager default is a fact to design around, not something to declare.
 

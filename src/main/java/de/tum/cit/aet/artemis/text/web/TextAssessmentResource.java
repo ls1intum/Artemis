@@ -464,6 +464,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
 
+        // the assessment editor gates feedback suggestions on the course's Athena setting
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         final TextParticipationDTO participationDTO = TextParticipationDTO.of((StudentParticipation) participation, isAtLeastInstructorForExercise)
                 .withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
         return ResponseEntity.ok().body(participationDTO);

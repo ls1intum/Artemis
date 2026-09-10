@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -101,11 +102,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ResultRepository resultRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
             Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -119,6 +122,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
         this.resultRepository = resultRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -355,6 +359,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // previous hideDetails behavior which only stripped the participant for non-instructors.
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         studentParticipation.setSubmissions(Set.of(textSubmission));
+        // the assessment editor gates feedback suggestions on the course's Athena setting
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         TextParticipationDTO participationDTO = TextParticipationDTO.of(studentParticipation, includeStudent).withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
         return ResponseEntity.ok().body(TextSubmissionWithoutAssessmentDTO.of(textSubmission, participationDTO));
     }

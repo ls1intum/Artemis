@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -90,11 +91,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi) {
+            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -303,6 +307,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         }
 
+        // The assessment editor gates feedback suggestions on the course's Athena setting, and the reloads above return
+        // a submission whose course does not carry it, so it is resolved here rather than on the way in.
+        courseAthenaConfigRepository.attachToCourseOf(modelingSubmission.getParticipation().getExercise());
         // Tutors must not see the student behind a submission (double-blind); instructors may.
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);
         return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, includeStudent));
@@ -349,6 +356,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // Make sure the exercise is connected to the participation in the json response
             submission.getParticipation().setExercise(modelingExercise);
             this.modelingSubmissionService.hideDetails(submission, user);
+            courseAthenaConfigRepository.attachToCourseOf(modelingExercise);
         }
 
         // Tutors must not see the student behind a submission (double-blind); instructors may.

@@ -63,7 +63,9 @@ the list is the wrong fix.
 
 ## Fetching
 
-**Rule.** Every `@OneToOne`, `@OneToMany` and `@ManyToMany` declares `fetch = FetchType.LAZY`.
+**Rule.** No `@OneToOne`, `@OneToMany` or `@ManyToMany` fetches eagerly. The rule reads the fetch
+type that applies, not the one written down, so an omitted `fetch` on a `@OneToOne` counts as eager
+and has to be spelled out as `FetchType.LAZY`; `@OneToMany` and `@ManyToMany` are lazy by default.
 
 **Enforced by.** `testNoEagerFetching` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
