@@ -22,8 +22,7 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
-import { AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
-import { AthenaCourseConfigState, AthenaFeature } from 'app/course/manage/services/athena-course-config.state';
+import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 
@@ -50,8 +49,6 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
-    /** Loading, switching and rolling back work the same here as on the course overview, so both share this state. */
-    private readonly athenaState = new AthenaCourseConfigState(inject(AthenaCourseConfigService), inject(AlertService));
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
@@ -64,9 +61,14 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly isIrisEnabled = computed(() => this.irisSettings()?.enabled ?? false);
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
-    readonly athenaConfig = this.athenaState.config;
-    readonly isAthenaFormativeEnabled = this.athenaState.formativeFeedbackEnabled;
-    readonly isAthenaGradingEnabled = this.athenaState.gradingFeedbackEnabled;
+    /**
+     * Loading, switching and rolling back work the same here as on the course overview, so both share this state. It
+     * is replaced whenever the course id changes, and there is none while the Athena module is inactive.
+     */
+    private readonly athenaState = createAthenaCourseConfigState(computed(() => (this.athenaEnabled ? this.course()?.id : undefined)));
+    readonly athenaConfig = computed(() => this.athenaState()?.config());
+    readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
+    readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [
@@ -101,9 +103,6 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
                 },
             });
         }
-        if (this.athenaEnabled) {
-            this.athenaState.load(courseId);
-        }
     }
 
     setIrisEnabled(enabled: boolean) {
@@ -136,10 +135,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
      * @param enabled whether the feature should be enabled
      */
     setAthenaFeatureEnabled(feature: AthenaFeature, enabled: boolean) {
-        const courseId = this.course()?.id;
-        if (courseId) {
-            this.athenaState.setEnabled(courseId, feature, enabled);
-        }
+        this.athenaState()?.setEnabled(feature, enabled);
     }
 
     updateField<K extends keyof Course>(field: K, value: Course[K]) {

@@ -215,6 +215,32 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(comp.isAthenaGradingEnabled()).toBe(false);
         });
 
+        it('should load the configuration of the new course when the course changes', () => {
+            createWithAthenaActive();
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+            const otherCourse = new Course();
+            otherCourse.id = 2;
+
+            fixture.componentRef.setInput('course', otherCourse);
+            fixture.detectChanges();
+
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(2);
+            expect(comp.isAthenaGradingEnabled()).toBe(true);
+        });
+
+        it('should not reload when the wizard replaces the course with an updated copy', () => {
+            // The wizard hands this step a new course object on every change, always with the same id.
+            createWithAthenaActive();
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig');
+            const updated = Course.from(course);
+            updated.title = 'Renamed';
+
+            fixture.componentRef.setInput('course', updated);
+            fixture.detectChanges();
+
+            expect(getSpy).not.toHaveBeenCalled();
+        });
+
         it('should revert the feature and alert when saving fails', () => {
             createWithAthenaActive();
             vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));

@@ -213,6 +213,73 @@ describe('AthenaEnabledComponent', () => {
         expect(comp.gradingEnabled()).toBe(true);
     });
 
+    describe('when the course changes', () => {
+        // The course detail page is reused when only its course id changes, so the panel stays while its input
+        // switches to another course.
+        const otherCourse = new Course();
+        otherCourse.id = 6;
+
+        const switchCourse = (next: Course) => {
+            componentRef.setInput('course', next);
+            fixture.detectChanges();
+        };
+
+        it('should load the configuration of the new course', () => {
+            initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+
+            switchCourse(otherCourse);
+
+            expect(getSpy).toHaveBeenCalledTimes(2);
+            expect(getSpy).toHaveBeenLastCalledWith(6);
+            expect(comp.gradingEnabled()).toBe(false);
+        });
+
+        it('should switch the new course even where the previous one already had the requested state', () => {
+            initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(new Subject<AthenaCourseConfigDTO>().asObservable());
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(new Subject<never>().asObservable());
+            switchCourse(otherCourse);
+
+            comp.setEnabled('gradingFeedbackEnabled', true);
+
+            // Carrying over the enabled grading feedback of course 5 would have made this switch look like a no-op.
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(6, { gradingFeedbackEnabled: true });
+        });
+
+        it('should ignore answers that arrive for the previous course', () => {
+            const load = new Subject<AthenaCourseConfigDTO>();
+            const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValueOnce(load.asObservable()).mockReturnValueOnce(of(bothDisabled));
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
+            componentRef.setInput('course', course);
+            fixture.detectChanges();
+            comp.setEnabled('formativeFeedbackEnabled', true);
+
+            switchCourse(otherCourse);
+            load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
+            save.next(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } }));
+
+            expect(comp.config()).toEqual(bothDisabled);
+        });
+
+        it('should keep its state when the course is replaced by a copy with the same id', () => {
+            initWith(bothDisabled);
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(
+                of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })),
+            );
+            comp.setEnabled('gradingFeedbackEnabled', true);
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig');
+            const copy = new Course();
+            copy.id = 5;
+
+            switchCourse(copy);
+
+            expect(getSpy).toHaveBeenCalledOnce();
+            expect(comp.gradingEnabled()).toBe(true);
+        });
+    });
+
     it('should not send a request when the feature already has the requested state', () => {
         initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
         const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');

@@ -1,4 +1,4 @@
-import { Signal, computed, signal } from '@angular/core';
+import { Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -28,6 +28,9 @@ const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, 
  * things, so a feature the server has said nothing about has no confirmed state at all and a load answering later
  * still counts as that first word. The switch count decides whose answer may be shown, so an answer that a newer
  * switch of the same feature has already replaced is dropped rather than put back on screen.
+ *
+ * An instance belongs to one course for its whole life. Use {@link createAthenaCourseConfigState} to follow a course
+ * that can change while the toggles stay on screen.
  */
 export class AthenaCourseConfigState {
     /** The configuration on screen; undefined until it is either loaded or switched. */
@@ -51,6 +54,7 @@ export class AthenaCourseConfigState {
     private readonly settled: Record<AthenaFeature, number> = { formativeFeedbackEnabled: 0, gradingFeedbackEnabled: 0 };
 
     constructor(
+        private readonly courseId: number,
         private readonly athenaCourseConfigService: AthenaCourseConfigService,
         private readonly alertService: AlertService,
     ) {}
@@ -63,11 +67,9 @@ export class AthenaCourseConfigState {
      * that feature is still in flight, because what that switch put on screen is what the instructor last asked for.
      * It is recorded as the confirmed state either way, so a switch that then fails rolls back to what is stored
      * rather than to "disabled".
-     *
-     * @param courseId the id of the course
      */
-    load(courseId: number): void {
-        this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
+    load(): void {
+        this.athenaCourseConfigService.getCourseConfig(this.courseId).subscribe({
             next: (loaded) => {
                 for (const feature of ATHENA_FEATURES) {
                     if (this.confirmed[feature] !== undefined) {
@@ -92,11 +94,10 @@ export class AthenaCourseConfigState {
      * feature on and find out from the alert if that could not be saved. A failure while the load is still on its way
      * falls back to "off" for the same reason; correcting that is what the load is still applied for afterwards.
      *
-     * @param courseId the id of the course
      * @param feature the feature to switch
      * @param enabled whether the feature should be enabled
      */
-    setEnabled(courseId: number, feature: AthenaFeature, enabled: boolean): void {
+    setEnabled(feature: AthenaFeature, enabled: boolean): void {
         if ((this.config() ?? DISABLED_CONFIG)[feature] === enabled) {
             return;
         }
@@ -106,7 +107,7 @@ export class AthenaCourseConfigState {
 
         // Only the switched feature is sent: restating the other one would write back whatever this client last read
         // for it, undoing a change made elsewhere in the meantime.
-        this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
+        this.athenaCourseConfigService.updateCourseConfig(this.courseId, { [feature]: enabled }).subscribe({
             next: (response) => {
                 const stored = response.body?.[feature] ?? enabled;
                 this.confirmed[feature] = stored;
@@ -157,4 +158,36 @@ export class AthenaCourseConfigState {
     private settle(feature: AthenaFeature, revision: number): void {
         this.settled[feature] = Math.max(this.settled[feature], revision);
     }
+}
+
+/**
+ * The Athena configuration state of whichever course `courseId` currently names, loaded as soon as it is created.
+ *
+ * Angular reuses a route whose only change is its `:courseId`, so the toggles can stay on screen while their course is
+ * replaced by another one. Each course therefore gets a state of its own rather than one state being reset: answers
+ * still on their way for the previous course land in the state that was dropped with it, so none of them can show up
+ * for the new course, and a switch of the new course never starts from what was known about the previous one. A course
+ * replaced by a copy with the same id, as the onboarding wizard does on every change, keeps its state, provided
+ * `courseId` is a computed signal that only notifies when the id itself changes.
+ *
+ * Must be called in an injection context, such as a component field initializer.
+ *
+ * @param courseId the id of the course to show; undefined shows no configuration and loads nothing
+ */
+export function createAthenaCourseConfigState(courseId: Signal<number | undefined>): Signal<AthenaCourseConfigState | undefined> {
+    const athenaCourseConfigService = inject(AthenaCourseConfigService);
+    const alertService = inject(AlertService);
+
+    const state = computed(() => {
+        const id = courseId();
+        return id ? new AthenaCourseConfigState(id, athenaCourseConfigService, alertService) : undefined;
+    });
+
+    effect(() => {
+        const current = state();
+        // Loading writes the configuration on screen, which must not become something this effect reruns for.
+        untracked(() => current?.load());
+    });
+
+    return state;
 }
