@@ -48,20 +48,8 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Plain Mockito unit test for the decision side of {@link IrisStruggleInterventionService#handleDecision}.
- *
- * <p>
- * Contracts verified here:
- * <ul>
- * <li>active above threshold: persist with episodeId, sendMessage, emit kind="decide"/action="active" event.</li>
- * <li>active below threshold: downgrades to silent, no session created, emits kind="decide"/action="silent" noop.</li>
- * <li>ambient above threshold: NO persist (pull model), session resolved for sessionId, emits kind="decide"/action="ambient" event.</li>
- * <li>active with terminal episode: no persist, emits kind="decide"/action="silent" noop.</li>
- * <li>active resolved session not exercise-bound: defensive drop, no save, emits kind="decide"/action="silent" noop.</li>
- * <li>active non-transient persist failure: no save, still emits kind="decide"/action="active" with messageId=null.</li>
- * <li>null result: emits kind="decide"/action="silent" noop regardless of action.</li>
- * <li>active with episodeId: episodeId stamped on the persisted message.</li>
- * </ul>
+ * Plain Mockito unit test for the decision side of {@link IrisStruggleInterventionService#handleDecision}: which
+ * action each confidence and proactivity mode produces, what it persists, and which event frame it emits.
  */
 @ExtendWith(MockitoExtension.class)
 class IrisStruggleInterventionDecisionTest {
@@ -110,10 +98,8 @@ class IrisStruggleInterventionDecisionTest {
         user = new User();
         user.setId(3L);
         user.setLogin("student1");
-        // The episode service is the real one, built on the same mocked repositories, so the registry logic these
-        // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
-        // The write fragments are what the services now delegate to, so the real implementations are wired onto the
-        // mocked repositories. Without this the mocks would answer null and none of the logic below would run.
+        // Real episode service and real write fragments on top of the mocked repositories, so the registry logic
+        // these tests exercise actually runs instead of the mocks answering null.
         IrisWriteFragments.attachTo(irisSessionRepository, irisMessageRepository, irisProactiveEpisodeRepository);
         episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository);
         // The confidence gate reads this bean, so the default 0.6 the tests assume comes from the bean's own default.
@@ -126,15 +112,8 @@ class IrisStruggleInterventionDecisionTest {
     /** The proactive message the append fragment built and cascaded, or {@code null} when nothing was appended. */
     private IrisMessage appendedMessage;
 
-    /**
-     * Let the real append fragment run against this session. A proactive append no longer goes through
-     * {@code IrisMessageService}: the session repository's write fragment locks the session, builds the message and
-     * cascades it. What a test stubs is therefore the lock and the merge, and what it inspects is the message the
-     * fragment built.
-     *
-     * @param session    the session the append targets
-     * @param assignedId the id the merge assigns to the cascaded message, or {@code null} to leave it unset
-     */
+    // The append seam: the session repository's write fragment locks the session, builds the message and cascades
+    // it, so a test stubs the lock and the merge and inspects the message the fragment built.
     private void stubProactiveAppend(IrisChatSession session, @Nullable Long assignedId) {
         when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenAnswer(call -> {
@@ -158,8 +137,8 @@ class IrisStruggleInterventionDecisionTest {
         assertThat(appendedMessage).isNotNull();
         assertThat(appendedMessage.getOrigin()).isEqualTo(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
-        // Objects.equals: sessionId is a @Nullable Long, so a regression to null fails as a clean assertion mismatch
-        // rather than throwing NPE inside argThat. confidence is forwarded for the eval log.
+        // Objects.equals, because sessionId is nullable and a regression to null must fail as an assertion
+        // mismatch rather than an NPE inside argThat.
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "active".equals(e.action()) && Objects.equals(e.sessionId(), 99L) && Objects.equals(e.messageId(), 555L) && Objects.equals(e.confidence(), 0.8)));
     }
@@ -177,7 +156,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void ambient_aboveThreshold_emitsEventWithSessionId_noPersistedMessage() {
-        // Pull model: ambient does NOT persist. Session is resolved to supply sessionId on the event.
+        // Ambient does not persist; the session is resolved only to supply sessionId on the event.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), "Sort.java", 42,
@@ -210,16 +189,10 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void ambient_withAnExistingOffer_refreshesTheOfferOnTheLockedEpisode() {
-        // Guard against a lost update. The callback runs outside a transaction, so anything it loads is detached,
-        // and saving a detached aggregate merges EVERY column: reading the decision, checking consumedAt and saving
-        // that entity would overwrite a reveal committing in between, reset consumedAt and consumedMessageId to NULL,
-        // and make an already-revealed offer revealable a second time.
-        //
-        // What this test proves: a repeat callback updates the row the caller holds the episode lock on, rather than
-        // creating a second offer. It does NOT prove the database race itself - reproducing that interleaving
-        // deterministically would need a @MockitoSpyBean seam, and AbstractIrisIntegrationTest is not in
-        // ALLOWED_BASE_CLASSES in SpringContextConfigurationArchitectureTest, so such a seam would break the
-        // ArchUnit rule.
+        // Guard against a lost update: the callback runs outside a transaction, so saving a detached aggregate
+        // merges every column and would reset consumedAt and consumedMessageId, making a revealed offer revealable
+        // again. This proves the repeat callback updates the locked row rather than creating a second offer; the
+        // database race itself would need a spy bean the ArchUnit rules do not allow on this base class.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         var episode = registeredEpisode("ep-123");
@@ -237,9 +210,8 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void ambient_previousOfferAlreadyRevealed_emitsSilentNotAmbient() {
-        // The episode's prior offer was already revealed, so its message exists and there is nothing fresh to
-        // surface. The client is completed silently rather than pointed at a reveal that would return the stale,
-        // already-used row. Overwriting the text would also rewrite history the student has already seen.
+        // The prior offer was revealed, so its message exists. Completing silently beats pointing the client at a
+        // reveal that returns the already-used row.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         var episode = registeredEpisode("ep-123");
@@ -260,8 +232,8 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void ambient_overlongEpisodeId_emitsSilentNotAmbient_recordsNothing() {
-        // Defence at the recording boundary (the trigger also bean-validates the id): an id past the 64-char column
-        // width records nothing, so no ambient pointer is announced - a reveal would 409. Complete silently instead.
+        // Defence at the recording boundary: an id past the 64-char column width records nothing, so announcing a
+        // pointer would only produce a 409 on reveal.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         String overlong = "e".repeat(65);

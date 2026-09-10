@@ -117,12 +117,9 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Test
     void registerEpisode_commitsEvenWhenTheCallersTransactionRollsBack() {
-        // The registration is annotated REQUIRES_NEW on the repository fragment interface, and everything the
-        // duplicate handling does depends on that annotation actually taking effect: the catch for a unique-key
-        // violation sits outside the registration's transaction, and would only ever see an
-        // UnexpectedRollbackException at the caller's commit if the two shared one. Spring Data's own transaction
-        // interceptor is what reads that annotation off a custom fragment, so this asserts the wiring rather than
-        // trusting it: register from inside a transaction that then rolls back, and the row must still be there.
+        // Everything the duplicate handling does depends on REQUIRES_NEW taking effect on a custom fragment, so
+        // this asserts the wiring rather than trusting it: register inside a transaction that then rolls back, and
+        // the row must still be there.
         long userId = userId();
         long exerciseId = exercise.getId();
         var template = new TransactionTemplate(transactionManager);
@@ -138,13 +135,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         return userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
     }
 
-    /**
-     * Two tests here assert that a write BLOCKS while another transaction holds the row. H2, which the suite
-     * supports in-process as an alternative to the Postgres container, gives up after one second by default, so the
-     * write would fail rather than wait and the assertion would see the wrong exception. Raise the database's limit
-     * instead of loosening the assertion: a write that fails fast is not the behaviour under test. No-op on every
-     * other engine, whose defaults are already well above the two seconds these tests wait.
-     */
+    // Two tests assert that a write blocks while another transaction holds the row. H2 gives up after one second by
+    // default, so raise its limit rather than loosen the assertion; a no-op on the other engines.
     private void raiseLockTimeoutOnH2() throws SQLException {
         try (var connection = dataSource.getConnection()) {
             if (!connection.getMetaData().getURL().startsWith("jdbc:h2:")) {
@@ -163,8 +155,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         var preparation = struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-register", true, null), null, null, null);
 
         assertThat(preparation.accepted()).isTrue();
-        // The row has to exist by the time prepareTrigger returns: the caller only dispatches Pyris afterwards, so
-        // this is what guarantees every later path finds a row to lock.
+        // The row has to exist by the time prepareTrigger returns, because Pyris is only dispatched afterwards.
         assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-register")).isPresent();
     }
 
@@ -175,9 +166,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         var preparation = struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", null, null, null, null);
 
         assertThat(preparation.accepted()).isTrue();
-        // A legacy client that sends no episode keeps the pre-registry behaviour rather than getting a row it can
-        // never address. Scoped to this test's own user and exercise: the suite runs classes in parallel against one
-        // database, so asserting the table is empty would fail on whatever another class registered meanwhile.
+        // A client that sends no episode keeps the pre-registry behaviour. Scoped to this test's own user and
+        // exercise, because classes run in parallel against one database.
         assertThat(irisProactiveEpisodeRepository.findAll()).noneMatch(e -> e.getUserId() == user.getId() && e.getExerciseId() == exercise.getId());
     }
 
@@ -186,8 +176,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-early", true, null), null, null, null);
 
-        // The dismiss arrives while the run is still in flight, so no message row exists yet. Before the registry
-        // this could only be deferred, and the episode stayed non-terminal until the client back-filled.
+        // The dismiss arrives while the run is in flight, so no message row exists yet. Before the registry this
+        // could only be deferred.
         boolean applied = proactiveEpisodeService.writeEpisodeOutcome("ep-early", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId());
 
         assertThat(applied).isTrue();
@@ -196,9 +186,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Test
     void terminalisingAnUnrevealedEpisode_clearsTheOfferedHint() {
-        // The counterpart to the reveal clearing its own text: an episode that ends without ever being revealed has
-        // no reader for the offer either, because the reveal refuses a terminal episode outright. Without this the
-        // hint would be the one large column on a row that lives until the course's student-data reset.
+        // The counterpart to the reveal clearing its own text: an episode that ends unrevealed has no reader for
+        // the offer either, and the hint is the one large column on a row that lives until the reset.
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-unrevealed", true, null), null, null, null);
         var episode = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-unrevealed").orElseThrow();
@@ -214,19 +203,14 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Test
     void courseStudentDataReset_removesTheCoursesEpisodes_andLeavesAnotherCoursesAlone() {
-        // The horizon for a retained episode. A reset preserves the course's exercises, so the exercise foreign key
-        // never fires and nothing else would reach these rows; they carry a user id and the shape of one student's
-        // struggle, so leaving them behind would keep student data past the reset that exists to remove it.
-        //
-        // Goes through IrisSettingsApi rather than the repository, because that is the seam CourseResetService
-        // actually calls, and a second REAL course is registered alongside so a mis-scoped delete shows up as the
-        // other course losing its rows rather than as a passing test.
+        // The horizon for a retained episode: a reset preserves the exercises, so the foreign key never fires and
+        // these rows would outlive the student data they carry. Goes through IrisSettingsApi because that is the
+        // seam CourseResetService calls, and a second real course makes a mis-scoped delete visible.
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
-        // The second course needs the activation setUp gives the first: proactive struggle is off by default and
-        // prepareTrigger answers courseOff() for a course that has it off, so without this the episode this test
-        // asserts SURVIVES would never be registered, and the test would pass for the wrong reason.
+        // The second course needs the activation setUp gives the first, or the episode this test asserts survives
+        // would never be registered and the test would pass for the wrong reason.
         activateIrisFor(otherCourse);
         activateIrisFor(otherExercise);
         setProactiveStruggleFor(otherCourse, true);
@@ -267,18 +251,15 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         // Backdate the registration so the refresh is unambiguous, and so this row would be reaped as it stands.
         registered.setLastTriggeredAt(ZonedDateTime.now().minusDays(30));
         irisProactiveEpisodeRepository.save(registered);
-        // Free the single-flight slot the first trigger reserved. Without this the second call is rejected before it
-        // ever reaches the registry, and the test would report a missing refresh that never had a chance to happen.
+        // Free the slot the first trigger reserved, or the second call is rejected before it reaches the registry.
         pyrisJobService.releaseStruggleInFlightJob(first.trigger().jobToken(), user.getId(), exercise.getId());
 
         // The confirm_close run that follows a decide run carries the same episode id, so re-registration is normal.
         var second = struggleTriggerService.prepareTrigger(exercise.getId(), user, "confirm_close", new StruggleEpisodeDTO("ep-touch", true, null), "progress", null, null);
         assertThat(second.accepted()).isTrue();
 
-        // Asserted through the retention delete: this row was deliberately aged past the cutoff, so it survives the
-        // delete only if the second trigger refreshed its timestamp in the database. The count is deliberately not
-        // asserted, the same rule the retention test below follows: the delete is table-wide and classes run in
-        // parallel, so another class's aged row would make it flaky.
+        // Asserted through the retention delete: the row was aged past the cutoff, so it survives only if the
+        // second trigger refreshed its timestamp. The count is not asserted, because the delete is table-wide.
         irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minusDays(7));
 
         assertThat(irisProactiveEpisodeRepository.findById(registered.getId())).as("a repeat trigger must refresh the row and reuse it, not insert a second one").isPresent();
@@ -293,8 +274,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         long revealed = agedEpisode("ep-revealed", null, true);
         struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-live", true, null), null, null, null);
 
-        // The count is deliberately not asserted: the delete is table-wide and classes run in parallel, so another
-        // class's aged row would make it flaky. What matters is which of THESE four rows survived.
+        // The count is not asserted, because the delete is table-wide. What matters is which of these four rows
+        // survived.
         irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(cutoff);
 
         assertThat(irisProactiveEpisodeRepository.findById(abandoned)).as("an episode nobody triggered for a week and that holds nothing is reaped").isEmpty();
@@ -309,12 +290,10 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         long reaped = agedEpisode("ep-reused", null, false);
         irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minusDays(7));
 
-        // A late outcome for the reaped episode finds neither a registry row nor a message row: it is discarded,
-        // which is the documented contract rather than a silent write into whatever comes next.
+        // A late outcome finds neither row and is discarded, which is the documented contract.
         assertThat(proactiveEpisodeService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId())).isFalse();
 
-        // Reusing the id afterwards is a NEW lifecycle under the same identity. Episode identity is
-        // (user, exercise, episodeId) with no generation, so this is a property of the natural key.
+        // Reusing the id is a new lifecycle under the same identity, which the natural key allows.
         struggleTriggerService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-reused", true, null), null, null, null);
 
         var fresh = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-reused").orElseThrow();
@@ -368,8 +347,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
             var outcome = writer.submit(() -> proactiveEpisodeService.writeEpisodeOutcome("ep-lock", IrisProactiveOutcome.DISMISSED, userId, exerciseId));
 
-            // This is the assertion that makes the test about the lock: while the holder still has the row, the
-            // outcome write must NOT be able to finish. Without the lock it would complete here and the test fails.
+            // The assertion that makes this a test about the lock: without it the write completes here.
             assertThatThrownBy(() -> outcome.get(2, TimeUnit.SECONDS)).as("the outcome write must block while the episode row is locked").isInstanceOf(TimeoutException.class);
 
             releaseHolder.countDown();
@@ -388,9 +366,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
     @Test
     void aLegacyTerminalOutcomeSurvivesRegistration() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        // An episode that reached a terminal outcome before the registry existed: its state lives on the message row
-        // alone. Registering the same id afterwards must not hand it a fresh open row, or every later check would
-        // trust that row and let a late message through for an episode the student had already closed.
+        // An episode whose terminal state lives on the message row alone. Registering the same id must not hand it
+        // a fresh open row that every later check would trust.
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
         var legacy = new IrisMessage();
         legacy.addContent(new IrisTextMessageContent("hint"));
@@ -407,16 +384,14 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Test
     void anOpenRegistryRowWithACommittedMessageOutcomeReadsAsTerminal() {
-        // The state the unlocked carry-over read in registration can leave behind: an outcome commits between that
-        // read and the insert, so the registry row is open while the episode's message row has already closed it.
+        // What the unlocked carry-over read can leave behind: an outcome commits between that read and the insert.
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
         long hintId = proactiveHint(session, "ep-diverged").getId();
         irisMessageRepository.setProactiveOutcomeIfNull(hintId, IrisProactiveOutcome.DISMISSED);
         openRegistryRow("ep-diverged", null);
 
-        // Asserted on the append, not on the service's terminal gate one level up: that gate is a fast path by its own
-        // javadoc, and this is the read that actually decides whether a hint reaches the student.
+        // Asserted on the append rather than the service's terminal gate, which is only a fast path.
         var appended = irisProactiveEpisodeRepository.appendProactiveMessageWithOutcome(session.getId(), user.getId(), exercise.getId(), "a late hint", "ep-diverged", null);
         assertThat(appended.terminal()).as("a dismiss the registry row never learned about still ends the episode").isTrue();
         assertThat(appended.message()).as("nothing may be appended for an episode the student has already closed").isNull();
@@ -439,13 +414,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
                 .as("the message row keeps the one outcome it had, and gains no second one").containsExactly(IrisProactiveOutcome.DISMISSED);
     }
 
-    /**
-     * A persisted proactive hint carrying the given episode id, the row an outcome can be written onto.
-     *
-     * @param session   the chat session to append to
-     * @param episodeId the episode the hint belongs to
-     * @return the saved message
-     */
+    // A persisted proactive hint carrying the episode id, the row an outcome can be written onto.
     private IrisMessage proactiveHint(IrisChatSession session, String episodeId) {
         var hint = new IrisMessage();
         hint.addContent(new IrisTextMessageContent("a hint that carries the episode's outcome"));
@@ -474,8 +443,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
         irisMessageRepository.setProactiveOutcomeIfNull(proactiveHint(session, "ep-reveal-diverged").getId(), IrisProactiveOutcome.DISMISSED);
-        // With hint text, so the reveal reaches the terminal gate instead of refusing earlier for having nothing to
-        // reveal, which would pass this test for the wrong reason.
+        // With hint text, so the reveal reaches the terminal gate instead of refusing earlier.
         openRegistryRow("ep-reveal-diverged", "an offer that was made before the episode closed");
 
         assertThatExceptionOfType(ConflictException.class)
@@ -483,12 +451,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
                 .withMessageContaining("can no longer be revealed");
     }
 
-    /**
-     * A registry row with no outcome, standing in for the one registration inserts after its carry-over read came
-     * back empty.
-     *
-     * @param episodeId the episode to register
-     */
+    // A registry row with no outcome, standing in for the one registration inserts after an empty carry-over read.
     private void openRegistryRow(String episodeId, @Nullable String hintText) {
         var episode = new IrisProactiveEpisode();
         episode.setUserId(userId());
@@ -497,17 +460,15 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         episode.setLastTriggeredAt(ZonedDateTime.now());
         episode.setHintText(hintText);
         irisProactiveEpisodeRepository.save(episode);
-        // Asserted, not assumed: without a registry row the tests below would take the unregistered fallback, which
-        // already reads the dismissed message row, and would pass without exercising the divergence at all.
+        // Asserted, not assumed: without the row the tests take the unregistered fallback and prove nothing.
         assertThat(irisProactiveEpisodeRepository.find(userId(), exercise.getId(), episodeId)).get().extracting(IrisProactiveEpisode::getOutcome)
                 .as("the divergence under test is an OPEN registry row next to a closed message row").isNull();
     }
 
     @Test
     void theLockingOutcomeReadRunsOnTheRealDatabase() {
-        // The classification read in the zero-rows branch of the legacy outcome write. It is a scalar projection with
-        // a pessimistic lock over a join to the session table, which is the kind of query a dialect can reject at
-        // execution time rather than at bootstrap, so it gets exercised against the real database here.
+        // A scalar projection with a pessimistic lock over a join, which a dialect can reject at execution time
+        // rather than at bootstrap, so it is exercised against the real database.
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         long userId = user.getId();
         long exerciseId = exercise.getId();
@@ -535,8 +496,8 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         long userId = user.getId();
         long exerciseId = exercise.getId();
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        // No trigger, so no registry row. This is the pre-registry path: the terminal check has no row to lock and
-        // reads the message rows instead, which is why a dismiss can commit between that read and the append.
+        // The pre-registry path: the terminal check has no row to lock, so a dismiss can commit between its read
+        // and the append.
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
         var hint = new IrisMessage();
         hint.addContent(new IrisTextMessageContent("the hint the student is about to dismiss"));
@@ -564,15 +525,13 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
             }));
             assertThat(dismissHoldsTheRow.await(10, TimeUnit.SECONDS)).isTrue();
 
-            // Pyris confirms the close while that dismiss is uncommitted and therefore invisible: the terminal check
-            // passes, the closing row is appended, and only the guarded outcome write can still notice.
+            // The close runs while the dismiss is uncommitted and invisible, so only the guarded write notices.
             var job = new StruggleInterventionJob("race", courseId, exerciseId, userId, "confirm_close", "ep-race", "progress", null, null);
             var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, true, "All good now.",
                     "Resolved");
             var close = closer.submit(() -> struggleInterventionService.handleConfirmClose(job, update));
 
-            // The close cannot finish while the dismiss holds the row it has to write through. Without that guarded
-            // write it would sail past here, commit its closing row, and announce the episode as recovered.
+            // Without the guarded write the close would sail past here and announce the episode as recovered.
             assertThatThrownBy(() -> close.get(2, TimeUnit.SECONDS)).as("the close must wait for the row the dismiss is holding").isInstanceOf(TimeoutException.class);
 
             releaseDismiss.countDown();
@@ -585,8 +544,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
             closer.shutdownNow();
         }
 
-        // The dismiss won, so nothing the close wrote may survive: the closing row is rolled back with its outcome
-        // write, and the episode ends the way the student ended it.
+        // The dismiss won, so the closing row is rolled back with its outcome write.
         assertThat(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-race", userId, exerciseId)).as("the rolled-back closing row must not be there")
                 .containsExactly(hintId);
         assertThat(irisMessageRepository.findEpisodeOutcomes("ep-race", userId, exerciseId)).containsExactly(IrisProactiveOutcome.DISMISSED);

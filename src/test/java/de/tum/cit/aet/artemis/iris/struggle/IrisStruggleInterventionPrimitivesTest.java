@@ -100,10 +100,8 @@ class IrisStruggleInterventionPrimitivesTest {
         user = new User();
         user.setId(USER_ID);
         user.setLogin("student1");
-        // The episode service is the real one, built on the same mocked repositories, so the registry logic these
-        // tests exercise still runs. Mocking it away would leave the assertions below asserting nothing.
-        // The write fragments are what the services now delegate to, so the real implementations are wired onto the
-        // mocked repositories. Without this the mocks would answer null and none of the logic below would run.
+        // Real episode service and real write fragments on top of the mocked repositories, so the registry logic
+        // these tests exercise actually runs instead of the mocks answering null.
         IrisWriteFragments.attachTo(irisSessionRepository, irisMessageRepository, irisProactiveEpisodeRepository);
         episodeService = new IrisProactiveEpisodeService(irisProactiveEpisodeRepository, irisMessageRepository);
         // The confidence gate reads this bean, so the default 0.6 the tests assume comes from the bean's own default.
@@ -114,31 +112,16 @@ class IrisStruggleInterventionPrimitivesTest {
 
     // ---- revealAmbient ----
 
-    /**
-     * Stub the episode carrying the offer Artemis recorded when it emitted the pointer. A reveal requires one: the
-     * row is what makes the persisted text the server's rather than the caller's, and what makes the offer
-     * single-use.
-     *
-     * @param episodeId  the episode the offer belongs to
-     * @param serverText the hint text as authored by Pyris
-     * @return the stubbed episode
-     */
+    // The offer row a reveal requires: it makes the persisted text the server's and the offer single-use.
     private IrisProactiveEpisode offeredEpisode(String episodeId, String serverText) {
         var episode = episodeFor(episodeId, serverText);
-        // findForUpdate, not the plain finder: the reveal takes the episode under a write lock so the terminal
-        // check, the unconsumed check and the claim cannot interleave with anything writing to the same episode.
+        // findForUpdate, because the reveal takes the episode under a write lock.
         when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, episodeId)).thenReturn(Optional.of(episode));
         return episode;
     }
 
-    /**
-     * Build an unstubbed episode carrying an offer. Used where a test needs SEPARATE instances across two lookups,
-     * so one call's in-memory mutation cannot silently satisfy the next one.
-     *
-     * @param episodeId  the episode the offer belongs to
-     * @param serverText the hint text as authored by Pyris
-     * @return the episode, not wired into any lookup stub
-     */
+    // Unstubbed, for tests needing separate instances across two lookups so one call's in-memory mutation cannot
+    // satisfy the next.
     private IrisProactiveEpisode episodeFor(String episodeId, String serverText) {
         var episode = new IrisProactiveEpisode();
         episode.setId(900L);
@@ -147,8 +130,7 @@ class IrisStruggleInterventionPrimitivesTest {
         episode.setEpisodeId(episodeId);
         episode.setHintText(serverText);
         episode.setLastTriggeredAt(ZonedDateTime.now());
-        // lenient: the tests that assert a rejection never reach the claim, and an offered episode is still the
-        // correct precondition for them - the rejection must come from the guard under test, not from a missing offer.
+        // lenient: rejection tests never reach the claim, and the rejection must come from the guard under test.
         lenient().when(irisProactiveEpisodeRepository.save(episode)).thenReturn(episode);
         return episode;
     }
@@ -156,15 +138,8 @@ class IrisStruggleInterventionPrimitivesTest {
     /** The proactive message the append fragment built and cascaded, or {@code null} when nothing was appended. */
     private IrisMessage appendedMessage;
 
-    /**
-     * Let the real append fragment run against this session. A proactive append no longer goes through
-     * {@code IrisMessageService}: the session repository's write fragment locks the session, builds the message and
-     * cascades it. What a test stubs is therefore the lock and the merge, and what it inspects is the message the
-     * fragment built.
-     *
-     * @param session    the session the append targets
-     * @param assignedId the id the merge assigns to the cascaded message, or {@code null} to leave it unset
-     */
+    // The append seam: the session repository's write fragment locks the session, builds the message and cascades
+    // it, so a test stubs the lock and the merge and inspects the message the fragment built.
     private void stubProactiveAppend(IrisChatSession session, @Nullable Long assignedId) {
         when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         when(irisSessionRepository.saveAndFlush(any(IrisSession.class))).thenAnswer(call -> {
@@ -197,9 +172,8 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_sessionMovedToAnotherExercise_failsAndLeavesTheOfferUnconsumed() {
-        // The episode lock says nothing about the session. A run for a DIFFERENT exercise can switch the same
-        // session between resolving it and the write, and the hint would land in that exercise's history.
-        // The reveal must fail instead, so the offer stays unconsumed and the student can reveal it again later.
+        // The episode lock says nothing about the session, so a run for another exercise can switch it between
+        // resolution and write. The reveal must fail, leaving the offer unconsumed.
         var episode = offeredEpisode("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
@@ -215,8 +189,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_replay_returnsTheRowTheFirstRevealCreated_noDuplicate() {
-        // Contract test, not a red proof: idempotency is scoped to (user, exercise, episode) and enforced by the
-        // episode row. A replay finds the offer already consumed and resolves the row that reveal created.
+        // Contract test: idempotency is scoped to (user, exercise, episode) and enforced by the episode row.
         var episode = offeredEpisode("ep-1", "Re-check the loop.");
         episode.setConsumedAt(ZonedDateTime.now());
         episode.setConsumedMessageId(101L);
@@ -224,8 +197,7 @@ class IrisStruggleInterventionPrimitivesTest {
         firstReveal.setId(101L);
         firstReveal.setProactiveEpisodeId("ep-1");
         when(irisMessageRepository.findById(101L)).thenReturn(Optional.of(firstReveal));
-        // The session is resolved before the transaction now, so a replay resolves it too. It is the session the
-        // first reveal already wrote into, so this finds it and switches nothing.
+        // A replay resolves the same session the first reveal wrote into, so it switches nothing.
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
 
@@ -238,11 +210,8 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_secondRevealOfTheSameEpisode_returnsTheSameRow() {
-        // The episode row makes the offer single-use, so a second call must resolve the FIRST reveal's row instead
-        // of inserting another one, however the client varies its message id.
-        //
-        // Two DISTINCT episode instances on purpose. Returning one shared object would let the first call's in-memory
-        // mutation satisfy the second lookup, and the test would still pass if the persist of the claim were deleted.
+        // Two distinct episode instances on purpose: one shared object would let the first call's in-memory
+        // mutation satisfy the second lookup, and the test would pass even if the claim were never persisted.
         var unconsumed = episodeFor("ep-1", "Re-check the loop.");
         var consumed = episodeFor("ep-1", "Re-check the loop.");
         consumed.setConsumedAt(ZonedDateTime.now());
@@ -368,8 +337,8 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void writeEpisodeOutcome_registered_mirrorWritesNothingWhenTheEpisodeAlreadyCarriesAnOutcome() {
-        // Without the episode-wide pre-check, a first row that already carries an outcome reports zero rows exactly
-        // like a deleted one, and the walk would stamp a second row.
+        // Without the episode-wide pre-check, a row that already carries an outcome reports zero rows exactly like
+        // a deleted one, and the walk would stamp a second row.
         when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-done")).thenReturn(Optional.of(registeredEpisode("ep-done")));
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-done", USER_ID, EXERCISE_ID)).thenReturn(List.of(100L, 200L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-done", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED));
@@ -427,8 +396,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void writeEpisodeOutcome_smallestIdTargetIsStable_thenEpisodeWideNoop() {
-        // The target is the smallest-id (first-persisted) row 600. A later-inserted row (larger id, even with an
-        // earlier sentAt) never becomes the target. Once 600 carries the outcome, a second call is a no-op.
+        // The target is the smallest-id row 600; a later-inserted row never becomes the target.
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of(600L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // first call: not terminal yet
         when(irisMessageRepository.setProactiveOutcomeIfNull(600L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
@@ -437,21 +405,20 @@ class IrisStruggleInterventionPrimitivesTest {
         assertThat(firstApplied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(600L, IrisProactiveOutcome.DISMISSED);
 
-        // Second call: the episode already holds an outcome, so it is a no-op regardless of newer rows.
+        // The episode already holds an outcome, so the second call is a no-op regardless of newer rows.
         when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
 
         boolean secondApplied = episodeService.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
         assertThat(secondApplied).isTrue();
 
-        // setProactiveOutcomeIfNull is invoked exactly once across both calls (only the first call writes).
+        // Invoked exactly once across both calls.
         verify(irisMessageRepository).setProactiveOutcomeIfNull(anyLong(), any());
     }
 
     @Test
     void writeEpisodeOutcome_targetVanished_butOutcomeNowExists_returnsTrue() {
-        // The guarded update affects 0 rows because the target was concurrently given an outcome; the re-check finds
-        // an episode-wide outcome, so applied = true. The re-check is a LOCKING read: the plain one would answer from
-        // this transaction's snapshot, which predates the write that just won the row.
+        // The guarded update affects 0 rows because the target was concurrently given an outcome. The re-check is a
+        // locking read, because a plain one would answer from a snapshot predating the write that won the row.
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of());                     // pre-check: empty
         when(irisMessageRepository.findEpisodeOutcomesForUpdate("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED)); // re-check: now set
@@ -464,8 +431,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void writeEpisodeOutcome_targetVanished_andNoOutcomeEstablished_returnsFalseDeferred() {
-        // The guarded update affects 0 rows because the target row was concurrently DELETED, and no outcome stands
-        // anywhere: nothing is established, so applied = false (deferred - the client back-fills once a row exists).
+        // The target row was concurrently deleted and no outcome stands anywhere, so the client back-fills later.
         when(irisMessageRepository.findEpisodeRowIdsForUserOrderByIdAsc("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of(500L));
         when(irisMessageRepository.findEpisodeOutcomes("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of());          // pre-check: empty
         when(irisMessageRepository.findEpisodeOutcomesForUpdate("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of()); // re-check under lock: still empty
@@ -490,10 +456,8 @@ class IrisStruggleInterventionPrimitivesTest {
     }
 
     // ---- deleteSupersededProactiveMessage ----
-    // The guard logic (proactive-origin AND null outcome AND user ownership) lives in ONE atomic SQL statement, so it
-    // cannot be meaningfully exercised against a mock; the guards are verified end-to-end in the integration test
-    // (the real database enforces the WHERE). What is worth asserting here is the sequence around that statement:
-    // the session lock, and the list compaction that must follow a delete and only a delete.
+    // The guards live in one atomic statement and are verified end-to-end in the integration test. What is worth
+    // asserting here is the sequence around it: the session lock, and the compaction that must follow a delete.
 
     @Test
     void deleteSupersededProactiveMessage_compactsTheListUnderTheSessionLock() {
@@ -513,8 +477,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void deleteSupersededProactiveMessage_rowFailedTheGuards_leavesTheOrderAlone() {
-        // The delete's own guards rejected the row (wrong origin, or an outcome landed on it), so it is still there
-        // and still holds its index. Renumbering around a row that stayed would be the corruption, not the fix.
+        // The guards rejected the row, so it still holds its index and renumbering around it would corrupt.
         when(irisMessageRepository.findOwnedSessionId(77L, USER_ID)).thenReturn(Optional.of(99L));
         when(irisMessageRepository.findListIndex(77L)).thenReturn(Optional.of(1));
         when(irisMessageRepository.deleteSupersededProactiveMessage(77L, USER_ID)).thenReturn(0);
@@ -526,8 +489,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void deleteSupersededProactiveMessage_foreignOrMissingRow_locksNothing() {
-        // No session id means the row does not exist or belongs to someone else. Silent noop, and notably it must
-        // not take a write lock on a session the caller named indirectly.
+        // No session id means the row is missing or someone else's, and no lock may be taken.
         service.deleteSupersededProactiveMessage(user, 77L);
 
         verify(irisSessionRepository, never()).findByIdWithWriteLockElseThrow(anyLong());
@@ -544,9 +506,8 @@ class IrisStruggleInterventionPrimitivesTest {
         exercise.setCourse(course);
         var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         session.setId(99L);
-        // The proactive append re-reads the session under a write lock and re-checks its exercise binding before
-        // writing, so hand the same instance back for that lookup. Lenient because the paths that never persist
-        // (ambient, silent, early drops) do not reach it.
+        // The append re-reads the session under a write lock, so hand the same instance back. Lenient because the
+        // paths that never persist do not reach it.
         lenient().when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         return session;
     }
