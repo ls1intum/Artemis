@@ -6,110 +6,86 @@ sidebar_label: Assessment and Feedback
 
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-import complaintSubmissionImg from '../assets/assessment/complaint-submission.png';
-import moreFeedbackImg from '../assets/assessment/more-feedback.png';
-import studentFeedbackImg from '../assets/assessment/student-feedback.png';
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-## Assessment Types
+import resultActions from '../assets/assessment/result-actions.png';
+import complaintForm from '../assets/assessment/complaint-form.png';
+import moreFeedbackForm from '../assets/assessment/more-feedback-form.png';
+import feedbackRating from '../assets/assessment/feedback-rating.png';
 
-Artemis offers three different modes of exercise assessment:
+How your work is marked depends on the exercise. A quiz and a programming exercise are marked by Artemis itself,
+against the correct answers or the test cases. A text, modeling or file upload exercise is read and marked by a tutor
+or an instructor. A programming exercise can be both: the tests give a starting point and a reviewer corrects it.
 
-- **Manual:** Reviewers (tutors or instructors) manually assess your submissions.
-- **Automatic:** Your submissions are automatically assessed (e.g., quiz exercises, programming exercises with test cases).
-- **Semi-Automatic:** Automatic assessment provides a starting point, which reviewers then improve manually.
+## Receiving Your Result
 
-After an exercise's due date passes, your submission will be assessed according to the configured assessment mode.
-Once the assessment is complete and the assessment due date has passed, you'll receive detailed feedback on your work.
+Nothing appears while marking is in progress. Once the assessment due date has passed, all the results are published
+together, and the exercise header carries yours: the points you scored, your percentage, and the date up to which you
+could dispute it.
 
+<Image src={resultActions} alt="Exercise header with the points, the status and the complaint deadline" size={ImageSize.large} caption="Your result on the exercise page" />
+
+Opening the status shows the feedback itself — the comments on your answer, the criteria that were applied, and where
+points were added or taken off. For a programming exercise with immediate feedback, results appear during the working
+period as well; whether that is switched on is your instructor's choice.
 
 ## Double-Blind Assessment
 
-Manual assessments in Artemis are **double-blind**:
-
-- Reviewers don't see your name when grading your submission
-- You don't see the reviewer's identity
-
-This increases objectivity and minimizes bias in the assessment process.
-
-
-## Receiving Feedback
-
-After the assessment due date, you can view your:
-
-- **Score:** Points achieved out of the total possible points
-- **Feedback:** Detailed comments on your submission, often organized by grading criteria
-- **Assessment:** Any inline annotations or corrections made by reviewers
-
-<Callout variant={CalloutVariant.info}>
-
-    For programming exercises with automatic grading, you may receive immediate feedback during the working period if configured by your instructor.
-
-</Callout>
-
+Marking is double-blind. The reviewer does not see your name while marking your work, and you do not see who marked
+it. Neither of you can be influenced by the other's identity.
 
 ## Complaints
 
-If you believe an assessment was incorrect or unfair, you can submit a **complaint** _(if enabled by your instructor)_.
-Submitting a complaint is a request for a re-evaluation of your submission.
+If you believe the assessment is wrong, **Complain** disputes it — where your instructor has enabled complaints. The
+form asks you to say in detail why the assessment is wrong, in up to 2000 characters, and **Submit a complaint** sends
+it. A **second** reviewer, not the one who marked your work, then looks at it.
 
-### How Complaints Work
+<Image src={complaintForm} alt="Complaint form with its text box and the submit action" size={ImageSize.large} caption="Filing a complaint" />
 
-1. **Complaint Tokens:** Your instructor sets a maximum number of allowed complaints per course. Each complaint uses one token. If your complaint is accepted, the token is returned — so you can submit additional complaints as long as accepted ones replenish your tokens.
-2. **Deadline:** Complaints must be submitted within a certain number of days after your individual result is published. The instructor configures this window (the default is 7 days).
+Two limits apply.
 
-### Submitting a Complaint
+- **A deadline.** The header names it as **Complaint due** — by default seven days after your result was published.
+  After that the option is gone.
+- **A number.** You may have only so many complaints that are still open or were rejected at once, three by default.
+  An accepted complaint stops counting, so being right costs you nothing; being wrong repeatedly uses your allowance
+  up.
 
-1. Open the assessed exercise
-2. Click the **"Complain"** button below the exercise instructions
-3. Write a clear justification explaining why the assessment should be reconsidered
-4. Submit your complaint
-
-<Image src={complaintSubmissionImg} alt={"Complaint Submission"} size={ImageSize.large}></Image>
-
-A reviewer will evaluate your complaint and either:
-- **Accept it:** Your score may be adjusted (up or down) with additional feedback
-- **Reject it:** The reviewer will explain why the original assessment stands
+A reviewer either accepts the complaint, which reopens the assessment and may change your marks, or rejects it and
+explains why the original marks stand.
 
 <Callout variant={CalloutVariant.warning}>
 
-    Once you submit a complaint, you cannot submit a "More Feedback Request" for the same exercise.
+  Accepting a complaint reopens the whole assessment, not only the part you disputed, so a mark can go down as well as
+  up.
 
 </Callout>
 
+Automatic results cannot be complained about, and neither can Artemis's preliminary AI feedback. In an exam,
+complaints are only possible during the student review period.
 
 ## More Feedback Requests
 
-If you want additional clarification or feedback but don't want to dispute your score, you can submit a **More Feedback Request**.
+If you do not think the marks are wrong but want them explained, **Request more feedback** asks for that instead. The
+form says what it does plainly: it does not affect your number of allowed complaints, but your score stays as it is,
+and the **same** reviewer who marked your work answers.
 
-<Image src={moreFeedbackImg} alt={"More Feedback Request"} size={ImageSize.large}></Image>
+<Image src={moreFeedbackForm} alt="More feedback request form, stating that the score stays unchanged" size={ImageSize.large} caption="Asking for more feedback" />
 
 <Callout variant={CalloutVariant.danger}>
 
-    <strong>Important:</strong> Sending a feedback request removes the option to complain entirely, even if the reviewer made a mistake during the initial assessment. Choose carefully!
+  Complaints and more feedback requests are mutually exclusive: Artemis keeps one or the other per result, never both.
+  If you request more feedback you cannot complain about that result afterwards, even if it turns out the marking was
+  wrong. When you are unsure whether the marks or only their explanation is the problem, complain.
 
 </Callout>
-
-### Key Differences from Complaints
-
-- **No Token Required:** More feedback requests don't use complaint tokens
-- **Score Typically Does Not Change:** More feedback requests are intended for clarification, not score adjustment
-- **Cannot Complain After:** Submitting a feedback request removes your ability to complain about that exercise
-
 
 ## Rating Feedback Quality
 
-After receiving feedback, including responses to complaints or feedback requests, you can rate the quality of the feedback you received.
+Once you have your feedback, Artemis asks how useful it was, and the answer is five stars and nothing else — no
+comment to write.
 
-<Image src={studentFeedbackImg} alt={"Student Feedback Rating"} size={ImageSize.large}></Image>
+<Image src={feedbackRating} alt="Feedback rating asking how useful the feedback was, with five stars" size={ImageSize.large} caption="Rating the feedback you received" />
 
-Your ratings help:
-- Motivate reviewers to provide high-quality, helpful feedback
-- Instructors monitor and improve the assessment process
-- Other students benefit from better feedback in the future
-
-<Callout variant={CalloutVariant.info}>
-
-    Be fair and constructive when rating feedback. Consider whether the feedback helps you understand your mistakes and improve.
-
-</Callout>
+Your rating is not attached to your name for the reviewer, and it does not change your marks. What it does is show up
+on your course's grading leaderboard as that reviewer's average, which is what instructors watch to find feedback
+that is not helping anyone. Rate on whether the feedback told you something you can use, not on the score.
