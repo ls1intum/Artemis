@@ -34,6 +34,8 @@ describe('HolidayListComponent', () => {
         TIME_ZONE,
     );
 
+    const query = (testId: string) => fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [HolidayListComponent],
@@ -95,6 +97,31 @@ describe('HolidayListComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('[data-testid="holiday-list-empty"]'))).not.toBeNull();
+    });
+
+    it('should name a holiday only up to the last day it covers, since its end is exclusive', () => {
+        // 16 December 00:00 to 18 December 00:00 in the course zone: it covers the 16th and 17th, not the 18th.
+        const toMidnight = toHolidays([period(8, '2025-12-15T23:00:00', '2025-12-17T23:00:00', 'Break')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', toMidnight);
+        fixture.detectChanges();
+
+        expect(query('holiday-list-item').nativeElement.textContent).toContain('17 Dec');
+        expect(query('holiday-list-item').nativeElement.textContent).not.toContain('18 Dec');
+    });
+
+    it('should stop calling a holiday upcoming once its last covered day has passed', () => {
+        const toMidnight = toHolidays([period(8, '2025-12-15T23:00:00', '2025-12-17T23:00:00', 'Break')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', toMidnight);
+
+        // On the 17th it is still running...
+        fixture.componentRef.setInput('today', dayjs('2025-12-17').startOf('day'));
+        fixture.detectChanges();
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(1);
+
+        // ...and on the 18th, which it does not cover, it is past.
+        fixture.componentRef.setInput('today', dayjs('2025-12-18').startOf('day'));
+        fixture.detectChanges();
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(0);
     });
 
     it('should list a holiday covering several days once rather than once per day', () => {

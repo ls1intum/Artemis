@@ -67,6 +67,15 @@ public class TutorialGroupFreePeriodResource {
      */
     private static final long MAX_SESSION_COUNT_SPAN_DAYS = 366;
 
+    /**
+     * The last day the counts can be asked up to.
+     *
+     * The count runs to an exclusive upper bound, which is the day after the one requested, so the very last day a
+     * {@link LocalDate} can hold has no bound to run to. A span that begins and ends there is short enough to pass the
+     * length check, and would then fail while being counted rather than being turned away.
+     */
+    private static final LocalDate LATEST_COUNTABLE_DAY = LocalDate.MAX.minusDays(1);
+
     private static final Logger log = LoggerFactory.getLogger(TutorialGroupFreePeriodResource.class);
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
@@ -252,6 +261,9 @@ public class TutorialGroupFreePeriodResource {
         }
         if (ChronoUnit.DAYS.between(from, to) > MAX_SESSION_COUNT_SPAN_DAYS) {
             throw new BadRequestAlertException("The span must not cover more than " + MAX_SESSION_COUNT_SPAN_DAYS + " days", ENTITY_NAME, "spanTooLong");
+        }
+        if (to.isAfter(LATEST_COUNTABLE_DAY)) {
+            throw new BadRequestAlertException("The end of the span must not be later than " + LATEST_COUNTABLE_DAY, ENTITY_NAME, "endTooLate");
         }
         TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);

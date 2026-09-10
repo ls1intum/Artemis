@@ -24,6 +24,13 @@ describe('holiday model', () => {
             expect(coversWholeDays(dayjs('2025-12-17T00:00'), dayjs('2025-12-31T23:59'))).toBe(true);
         });
 
+        it('should not treat a span that misses the ends of its days by seconds as whole days', () => {
+            // The endpoint takes a full timestamp, so a span stored elsewhere can carry seconds. 00:00:30 does not
+            // take its day from the beginning, and calling it whole-day would hide the times the reader needs.
+            expect(coversWholeDays(dayjs('2025-12-17T00:00:30'), dayjs('2025-12-17T23:59:30'))).toBe(false);
+            expect(coversWholeDays(dayjs('2025-12-17T00:00:00.500'), dayjs('2025-12-17T23:59:00'))).toBe(false);
+        });
+
         it('should not treat a span narrowed within a day as whole days', () => {
             expect(coversWholeDays(dayjs('2025-12-04T09:15'), dayjs('2025-12-04T13:45'))).toBe(false);
         });

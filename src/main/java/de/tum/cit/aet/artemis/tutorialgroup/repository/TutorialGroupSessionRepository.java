@@ -152,6 +152,9 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
      * sessions it had cancelled before it takes them again, so its own are counted as well and the number does not
      * collapse to zero when a saved holiday is reopened unchanged.
      *
+     * The join is spelled out and left outer on purpose: most sessions have no holiday against them, and navigating
+     * that association inline would leave whether they survive the query up to how the association is resolved.
+     *
      * @param course             the course whose sessions are counted
      * @param start              the start of the span
      * @param end                the end of the span
@@ -161,11 +164,12 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     @Query("""
             SELECT COUNT(session)
             FROM TutorialGroupSession session
+                LEFT JOIN session.tutorialGroupFreePeriod cancelledBy
             WHERE session.tutorialGroup.course = :course
                 AND session.start < :end
                 AND session.end > :start
                 AND (session.status = de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus.ACTIVE
-                    OR (:editedFreePeriodId IS NOT NULL AND session.tutorialGroupFreePeriod.id = :editedFreePeriodId))
+                    OR (:editedFreePeriodId IS NOT NULL AND cancelledBy.id = :editedFreePeriodId))
             """)
     long countCancellableSessions(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end,
             @Param("editedFreePeriodId") Long editedFreePeriodId);

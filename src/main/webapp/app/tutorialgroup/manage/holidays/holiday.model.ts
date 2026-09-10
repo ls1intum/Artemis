@@ -16,6 +16,14 @@ const LAST_HOUR_OF_DAY = 23;
 const LAST_MINUTE_OF_HOUR = 59;
 
 /**
+ * A holiday written by this page lands on a whole minute, but the endpoint takes a full timestamp, so a span stored by
+ * anything else can carry seconds. 00:00:30 does not take its day from the beginning, and calling it whole-day would
+ * replace times the reader needs to see with the whole-day label.
+ */
+const NO_SECONDS = 0;
+const NO_MILLISECONDS = 0;
+
+/**
  * A span during which sessions are cancelled, read in the time zone of the course.
  *
  * A free period is stored as two instants, which is enough to express all three shapes the old page asked the reader to
@@ -64,12 +72,12 @@ export function endOfHolidayDay(day: dayjs.Dayjs): dayjs.Dayjs {
 
 /** Whether a holiday takes its first day from the very beginning, rather than starting partway through it. */
 export function startsAtBeginningOfDay(instant: dayjs.Dayjs): boolean {
-    return instant.hour() === FIRST_HOUR_OF_DAY && instant.minute() === FIRST_MINUTE_OF_HOUR;
+    return instant.hour() === FIRST_HOUR_OF_DAY && instant.minute() === FIRST_MINUTE_OF_HOUR && instant.second() === NO_SECONDS && instant.millisecond() === NO_MILLISECONDS;
 }
 
 /** Whether a holiday holds its last day to the very end, rather than releasing it partway through. */
 export function endsAtEndOfDay(instant: dayjs.Dayjs): boolean {
-    return instant.hour() === LAST_HOUR_OF_DAY && instant.minute() === LAST_MINUTE_OF_HOUR;
+    return instant.hour() === LAST_HOUR_OF_DAY && instant.minute() === LAST_MINUTE_OF_HOUR && instant.second() === NO_SECONDS && instant.millisecond() === NO_MILLISECONDS;
 }
 
 /** Whether a span runs from the first minute of its first day to the last of its last, rather than being narrowed. */

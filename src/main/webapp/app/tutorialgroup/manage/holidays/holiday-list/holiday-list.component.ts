@@ -74,10 +74,10 @@ export class HolidayListComponent {
         { value: 'all', labelKey: 'artemisApp.pages.tutorialFreePeriodsManagement.filter.all' },
     ];
 
-    /** Holidays that ended before today, which the upcoming filter leaves out. One running today still counts. */
+    /** Holidays whose last covered day is behind today, which the upcoming filter leaves out. One running today counts. */
     protected readonly pastCount = computed(() => {
         const today = this.today().startOf('day');
-        return this.holidays().filter((holiday) => holiday.end.isBefore(today, 'day')).length;
+        return this.holidays().filter((holiday) => holiday.lastDay.isBefore(today, 'day')).length;
     });
 
     protected readonly entries = computed<HolidayListEntry[]>(() => {
@@ -86,11 +86,12 @@ export class HolidayListComponent {
         const today = this.today().startOf('day');
         const wholeDayLabel = this.translateService.instant('artemisApp.pages.tutorialFreePeriodsManagement.wholeDay');
 
-        const visible = this.filter() === 'all' ? this.holidays() : this.holidays().filter((holiday) => !holiday.end.isBefore(today, 'day'));
+        const visible = this.filter() === 'all' ? this.holidays() : this.holidays().filter((holiday) => !holiday.lastDay.isBefore(today, 'day'));
 
         return visible.map((holiday) => {
             const start = holiday.start.locale(locale);
-            const end = holiday.end.locale(locale);
+            // The last day it covers rather than its exclusive end, so a span finishing at midnight is not named a day long.
+            const end = holiday.lastDay.locale(locale);
             return {
                 holiday,
                 key: String(holiday.period.id),

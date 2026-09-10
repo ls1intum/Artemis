@@ -191,6 +191,13 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY, LocalDate.MAX));
     }
 
+    /** A single day at the very end of the range is short enough to pass the length check, and still has no bound. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCounts_forTheSingleLastRepresentableDay_shouldReturnBadRequest() throws Exception {
+        request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(LocalDate.MAX, LocalDate.MAX));
+    }
+
     private String overlapCountPath() {
         return "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-free-periods/overlapping-session-count";
     }
@@ -262,6 +269,22 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         assertThat(request.get(overlapCountPath(), HttpStatus.OK, Long.class, withoutTheHoliday)).isZero();
         // ...but reopening the one holding it has to report it, rather than claiming the holiday affects nothing.
         assertThat(request.get(overlapCountPath(), HttpStatus.OK, Long.class, whileEditingIt)).isOne();
+    }
+
+    /**
+     * Navigating a nullable association in a query can force an inner join, which would drop every session that no
+     * holiday has cancelled - that is, all the active ones the count exists to find.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_whileEditing_shouldStillCountActiveSessionsThatNoHolidayHasTouched() throws Exception {
+        createSessionOn(MONDAY, 9);
+        var holiday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(0, 0), MONDAY.atTime(23, 59), "Whole day");
+
+        var whileEditing = span(MONDAY.atTime(0, 0), MONDAY.atTime(23, 59));
+        whileEditing.add("editedFreePeriodId", holiday.getId().toString());
+
+        assertThat(request.get(overlapCountPath(), HttpStatus.OK, Long.class, whileEditing)).isOne();
     }
 
     /**
