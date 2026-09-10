@@ -140,7 +140,7 @@
                 "generativeAIAssessmentInfo": "Review and adapt suggestions as needed — you remain responsible for the final assessment.",
                 "loading": "Generating AI feedback suggestions…",
                 "aiExperienceOptInHint": "This exercise supports AI-generated feedback suggestions.",
-                "enableAiExperience": "Enable AI feedback suggestions",
+                "enableAiExperience": "Enable AI feedback",
                 "chrome": {
                     "automaticAssessment": "Automatic assessment",
                     "suggestions": "AI feedback suggestions",

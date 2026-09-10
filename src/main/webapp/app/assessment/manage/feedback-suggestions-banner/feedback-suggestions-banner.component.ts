@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleNotch, faInfoCircle, faQuestionCircle, faRobot, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faInfoCircle, faPenSquare, faQuestionCircle, faRobot, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TooltipModule } from 'primeng/tooltip';
 import { TumUiButtonComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
@@ -79,4 +79,5 @@ export class FeedbackSuggestionsBannerComponent {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faInfoCircle = faInfoCircle;
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faPenSquare = faPenSquare;
 }

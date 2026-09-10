@@ -77,7 +77,7 @@
             <div class="flex items-center gap-2">
                 <fa-icon [icon]="faInfoCircle" size="lg" />
                 <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"></span>
-                <tum-ui-button id="enable-ai-feedback-suggestions" size="small" variant="solid" (clicked)="optIn.emit()">
+                <tum-ui-button id="enable-ai-feedback-suggestions" [icon]="faPenSquare" (clicked)="optIn.emit()">
                     <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.enableAiExperience"></span>
                 </tum-ui-button>
             </div>

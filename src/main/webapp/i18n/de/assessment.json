@@ -140,7 +140,7 @@
                 "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
                 "loading": "KI-Feedback-Vorschläge werden generiert…",
                 "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge.",
-                "enableAiExperience": "KI-Feedback-Vorschläge aktivieren",
+                "enableAiExperience": "KI-Feedback aktivieren",
                 "chrome": {
                     "automaticAssessment": "Automatische Bewertung",
                     "suggestions": "KI-Feedback-Vorschläge",
