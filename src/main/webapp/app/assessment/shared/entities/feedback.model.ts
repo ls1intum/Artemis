@@ -312,9 +312,14 @@ export class Feedback implements BaseEntity {
  * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
  * it returns the detailed text and/or text properties of the feedback depending on the submission element.
  *
- * An AI feedback suggestion's `text` is never included: it only ever holds the suggestion's short title (tagged
- * with the internal `FeedbackSuggestion:...` marker), which the assessor never sees or edits as separate content,
- * and which would otherwise show up as a redundant trailing line after the suggestion's own `detailText`.
+ * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
+ * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
+ * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
+ * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
+ * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
+ * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
+ * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
+ * assessor-authored content is ever hiding behind the excluded `text`.
  *
  * @param feedback that contains feedback text and grading instruction
  * @param addFeedbackText if the (non-suggestion) text of the feedback should be part of the resulting text.

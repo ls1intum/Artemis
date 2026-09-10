@@ -14,7 +14,7 @@
     @for (singleFeedback of feedback(); track singleFeedback) {
         <jhi-unified-feedback
             [feedback]="singleFeedback"
-            [feedbackContent]="buildFeedbackTextForReview(singleFeedback, false)"
+            [feedbackContent]="buildFeedbackTextForReview(singleFeedback)"
             [points]="singleFeedback.credits || 0"
             [scoreAccuracy]="course()?.accuracyOfScores"
             [showReference]="false"

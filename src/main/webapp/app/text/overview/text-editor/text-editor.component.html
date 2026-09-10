@@ -93,7 +93,7 @@
                                         @for (feedback of unreferencedFeedback; track feedback.id) {
                                             <jhi-unified-feedback
                                                 [feedback]="feedback"
-                                                [feedbackContent]="buildFeedbackTextForReview(feedback, false)"
+                                                [feedbackContent]="buildFeedbackTextForReview(feedback)"
                                                 [points]="feedback.credits || 0"
                                                 [scoreAccuracy]="course()?.accuracyOfScores"
                                             />
