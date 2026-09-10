@@ -779,8 +779,14 @@ tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
 checkstyle {
     toolVersion = "${checkstyle_version}"
     configFile = file("checkstyle.xml")
-    checkstyleTest.enabled = false
     maxErrors = 0
+}
+
+// Test sources get their own configuration rather than checkstyle.xml, which requires Javadoc on public methods and
+// would therefore demand a comment on every test method. checkstyle-test.xml carries only the rules that apply to
+// test code; see the note at the top of that file.
+checkstyleTest {
+    configFile = file("checkstyle-test.xml")
 }
 
 gradleLint {

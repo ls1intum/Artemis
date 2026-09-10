@@ -1697,10 +1697,17 @@ public class LocalVCServletService {
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullSSH(ServerSession session, int clientOffered) {
         try {
-            if (session.getAttribute(SshConstants.USER_KEY).getName().equals(BUILD_USER_NAME)) {
+            // Both attributes are absent on a session that never got that far, which is a normal case rather than a
+            // failure. They used to be dereferenced straight away, so the absence arrived as a NullPointerException
+            // caught below and logged at debug, indistinguishable from an actual problem with the access log.
+            var user = session.getAttribute(SshConstants.USER_KEY);
+            if (user == null || user.getName().equals(BUILD_USER_NAME)) {
                 return;
             }
             var accessLog = session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+            if (accessLog == null) {
+                return;
+            }
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
             accessLog.setRepositoryActionType(repositoryActionType);
             vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
