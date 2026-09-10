@@ -56,8 +56,15 @@ export class HolidayListComponent {
     protected readonly faWrench = faWrench;
     protected readonly faTrash = faTrash;
 
-    /** Two plain buttons rather than a form control: the filter is component state, so nothing here needs ngModel. */
-    protected readonly filters: readonly HolidayListFilter[] = ['upcoming', 'all'];
+    /**
+     * Two plain buttons rather than a form control: the filter is component state, so nothing here needs ngModel.
+     *
+     * The keys are spelled out rather than built from the value, so a search for either one finds this.
+     */
+    protected readonly filters: readonly { value: HolidayListFilter; labelKey: string }[] = [
+        { value: 'upcoming', labelKey: 'artemisApp.pages.tutorialFreePeriodsManagement.filter.upcoming' },
+        { value: 'all', labelKey: 'artemisApp.pages.tutorialFreePeriodsManagement.filter.all' },
+    ];
 
     /** Holidays that ended before today, which the upcoming filter leaves out. One running today still counts. */
     protected readonly pastCount = computed(() => {

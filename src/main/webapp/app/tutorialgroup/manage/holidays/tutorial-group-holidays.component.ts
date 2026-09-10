@@ -19,7 +19,7 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
-import { Holiday, groupHolidaysByDay, inCourseZone, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, inCourseZone, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 import { HolidayListComponent, HolidayListFilter } from 'app/tutorialgroup/manage/holidays/holiday-list/holiday-list.component';
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
@@ -90,7 +90,6 @@ export class TutorialGroupHolidaysComponent {
     protected readonly displayedMonth = signal(dayjs().startOf('month'));
 
     protected readonly holidays = computed(() => toHolidays(this.freePeriods(), this.timeZone()));
-    protected readonly holidaysByDay = computed(() => groupHolidaysByDay(this.holidays()));
 
     constructor() {
         this.dialogSpanRequests

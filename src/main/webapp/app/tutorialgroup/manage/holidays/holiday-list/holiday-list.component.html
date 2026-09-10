@@ -4,18 +4,18 @@
         <span class="text-sm font-normal opacity-60" data-testid="holiday-list-count">{{ entries().length }}</span>
     </h2>
     <div class="flex items-center gap-1" role="group" data-testid="holiday-list-filter">
-        @for (option of filters; track option) {
+        @for (option of filters; track option.value) {
             <button
                 tumUiButton
                 size="small"
                 type="button"
-                [severity]="filter() === option ? 'primary' : 'secondary'"
-                [variant]="filter() === option ? 'solid' : 'outlined'"
-                [attr.aria-pressed]="filter() === option"
-                [attr.data-filter]="option"
-                (click)="filterChange.emit(option)"
+                [severity]="filter() === option.value ? 'primary' : 'secondary'"
+                [variant]="filter() === option.value ? 'solid' : 'outlined'"
+                [attr.aria-pressed]="filter() === option.value"
+                [attr.data-filter]="option.value"
+                (click)="filterChange.emit(option.value)"
             >
-                <span [jhiTranslate]="'artemisApp.pages.tutorialFreePeriodsManagement.filter.' + option"></span>
+                <span [jhiTranslate]="option.labelKey"></span>
             </button>
         }
     </div>

@@ -127,11 +127,20 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(payload.reason).toBe('Dies Academicus');
     });
 
-    it('should open the existing holiday rather than a blank one when its day is clicked', async () => {
-        fixture.debugElement.query(By.css('[data-day="2025-12-17"]')).nativeElement.click();
+    it('should open the existing holiday when its bar in the calendar is clicked', async () => {
+        // By id rather than by position: December also carries the past holiday, whose bar comes first.
+        fixture.debugElement.query(By.css('[data-testid="holiday-calendar-event"][data-holiday-id="11"]')).nativeElement.click();
         await settle();
 
         expect((query('holiday-reason').nativeElement as HTMLInputElement).value).toBe('Christmas holidays');
+    });
+
+    it('should offer a blank holiday on a day that already carries one, so a second one is reachable', async () => {
+        // Two holidays on one day are allowed as long as their times do not overlap, so the day has to stay clickable.
+        fixture.debugElement.query(By.css('[data-day="2025-12-17"]')).nativeElement.click();
+        await settle();
+
+        expect((query('holiday-reason').nativeElement as HTMLInputElement).value).toBe('');
     });
 
     it('should update the holiday being edited instead of creating another', async () => {

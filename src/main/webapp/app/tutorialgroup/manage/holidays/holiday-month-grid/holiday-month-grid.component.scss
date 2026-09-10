@@ -1,26 +1,18 @@
 /*
- * Everything else on this grid is Tailwind in the template. What is left here is the one thing utilities express badly:
- * joining the days of a multi-day holiday into a single band.
- *
- * A band has to reach past its cell's padding and over the one-pixel cell border to touch the band beside it, which
- * takes a negative margin paired with matching padding so the text stays put. Written as arbitrary utilities that is
- * four repeated values per side that no longer say what they are for.
+ * The grid itself is Tailwind in the template. What is left here is the bar, whose tinted fill has to be mixed from the
+ * danger token rather than picked, and the flattened edges that say a run carries on into the week beside this one.
  */
-.holiday-band {
-    background-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 10%, transparent);
+.holiday-bar {
+    background-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 12%, transparent);
 }
 
-.holiday-band-continues-before {
-    margin-left: calc(-0.5rem - 1px);
-    padding-left: calc(0.5rem + 1px);
+.holiday-bar-continues-before {
     border-left: 0;
     border-start-start-radius: 0;
     border-end-start-radius: 0;
 }
 
-.holiday-band-continues-after {
-    margin-right: -0.5rem;
-    padding-right: 0.5rem;
+.holiday-bar-continues-after {
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }

@@ -39,17 +39,18 @@
     </div>
 
     @for (week of weeks(); track week.id) {
-        <div class="grid grid-cols-7" role="row">
+        <!-- The cells give the week its grid and borders; the bars are laid over them so one can span several days. -->
+        <div class="relative grid grid-cols-7" role="row" [style.height.rem]="weekHeightRem(week)">
             @for (day of week.days; track day.dayKey) {
                 <!-- A day is a button only where it can act, so a day outside the month is not announced as clickable. -->
                 <div
-                    class="min-h-22 cursor-pointer overflow-hidden border-r border-b border-solid border-(--tumaet-ui-border-color) px-2 py-1.5 first:border-l focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
+                    class="cursor-pointer border-r border-b border-solid border-(--tumaet-ui-border-color) px-2 py-1.5 first:border-l focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
                     role="gridcell"
                     [class.cursor-default]="!day.inDisplayedMonth"
                     [class.opacity-45]="!day.inDisplayedMonth"
                     [attr.data-day]="day.dayKey"
                     [attr.data-outside-month]="day.inDisplayedMonth ? null : true"
-                    [attr.data-has-holiday]="day.bands.length > 0 ? true : null"
+                    [attr.data-has-holiday]="day.hasHoliday ? true : null"
                     [attr.tabindex]="day.inDisplayedMonth ? 0 : null"
                     [attr.role]="day.inDisplayedMonth ? 'button' : null"
                     (click)="onDayClick(day)"
@@ -70,45 +71,55 @@
                             [class.text-(--tumaet-ui-primary-contrast-color)]="day.isToday"
                             >{{ day.dayOfMonth }}</span
                         >
-                        @if (day.sessionCount > 0 && day.bands.length === 0) {
+                        @if (day.sessionCount > 0 && !day.hasHoliday) {
                             <span class="font-mono text-xs opacity-60" data-testid="holiday-calendar-sessions">{{
                                 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.sessionsShort' | artemisTranslate: { count: day.sessionCount }
                             }}</span>
                         }
                     </div>
-
-                    @for (band of day.bands; track band.key) {
-                        <!--
-                            Every band is one line tall whether or not it carries a label, so the days of a run line up
-                            and read as a single bar rather than as chips of differing heights.
-                        -->
-                        <div
-                            class="holiday-band mt-1.5 flex h-6 items-center gap-1.5 overflow-hidden rounded border-l-3 border-solid border-(--tumaet-ui-state-danger) px-2 text-(--tumaet-ui-state-danger-foreground)"
-                            data-testid="holiday-calendar-event"
-                            [class.holiday-band-continues-before]="band.continuesBefore"
-                            [class.holiday-band-continues-after]="band.continuesAfter"
-                            [attr.data-continues-before]="band.continuesBefore ? true : null"
-                            [attr.data-continues-after]="band.continuesAfter ? true : null"
-                        >
-                            @if (band.showsLabel) {
-                                <span class="truncate text-[0.8125rem] font-semibold">{{ band.reason }}</span>
-                                <!-- Only an end that actually falls on this day is named; a fully covered day says nothing. -->
-                                @if (band.startTime || band.endTime) {
-                                    <span class="shrink-0 font-mono text-xs opacity-75" data-testid="holiday-calendar-event-time">
-                                        @if (band.startTime && band.endTime) {
-                                            {{ band.startTime }}–{{ band.endTime }}
-                                        } @else if (band.startTime) {
-                                            {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.fromTime' | artemisTranslate: { time: band.startTime } }}
-                                        } @else {
-                                            {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.untilTime' | artemisTranslate: { time: band.endTime } }}
-                                        }
-                                    </span>
-                                }
-                            }
-                        </div>
-                    }
                 </div>
             }
+
+            <!-- Only the bars themselves take clicks, so the free part of a day still offers to create a holiday there. -->
+            <div class="pointer-events-none absolute inset-x-0 bottom-0" [style.top.rem]="headerHeightRem">
+                @for (bar of week.bars; track bar.key) {
+                    <div
+                        class="absolute px-1"
+                        [style.left.%]="bar.startColumn * columnWidthPercent"
+                        [style.width.%]="bar.span * columnWidthPercent"
+                        [style.top.rem]="bar.lane * laneHeightRem"
+                        [style.height.rem]="laneHeightRem"
+                    >
+                        <button
+                            type="button"
+                            class="holiday-bar pointer-events-auto flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded border-0 border-l-3 border-solid border-(--tumaet-ui-state-danger) px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
+                            data-testid="holiday-calendar-event"
+                            [class.holiday-bar-continues-before]="!bar.startsRun"
+                            [class.holiday-bar-continues-after]="!bar.endsRun"
+                            [attr.data-holiday-id]="bar.holiday.period.id"
+                            [attr.data-span]="bar.span"
+                            [attr.data-continues-before]="bar.startsRun ? null : true"
+                            [attr.data-continues-after]="bar.endsRun ? null : true"
+                            [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.editHolidayNamed' | artemisTranslate: { reason: bar.reason }"
+                            (click)="onBarClick(bar, $event)"
+                        >
+                            <span class="truncate text-[0.8125rem] leading-tight font-semibold">{{ bar.reason }}</span>
+                            <!-- Only an end that actually falls in this stretch is named; days covered outright say nothing. -->
+                            @if (bar.startTime || bar.endTime) {
+                                <span class="truncate font-mono text-xs leading-tight opacity-75" data-testid="holiday-calendar-event-time">
+                                    @if (bar.startTime && bar.endTime) {
+                                        {{ bar.startTime }}–{{ bar.endTime }}
+                                    } @else if (bar.startTime) {
+                                        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.fromTime' | artemisTranslate: { time: bar.startTime } }}
+                                    } @else {
+                                        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.untilTime' | artemisTranslate: { time: bar.endTime } }}
+                                    }
+                                </span>
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
         </div>
     }
 </div>

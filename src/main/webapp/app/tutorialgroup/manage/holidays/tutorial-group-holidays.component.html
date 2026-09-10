@@ -11,7 +11,7 @@
         <section class="rounded-lg border border-solid" style="border-color: var(--tumaet-ui-border-color)" data-testid="holiday-calendar">
             <jhi-holiday-month-grid
                 [displayedMonth]="displayedMonth()"
-                [holidaysByDay]="holidaysByDay()"
+                [holidays]="holidays()"
                 [sessionCountsByDay]="sessionCountsByDay()"
                 [today]="today()"
                 (monthChange)="onMonthChange($event)"
