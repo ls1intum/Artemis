@@ -25,11 +25,12 @@ import java.util.regex.Pattern;
  * @param blockingReasons         the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
  * @param solutionBuildDiagnostic bounded build output for failures outside individual solution tests
  * @param templateBuildDiagnostic bounded build output shown when the template ran no tests
+ * @param preservationTestNames   visible zero-credit checks of supplied behavior; never student-task bindings
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
         boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
         List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
-        String solutionBuildDiagnostic, String templateBuildDiagnostic) {
+        String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames) {
 
     /** The longest list rendered inline before it is truncated with a remaining-count, so a huge suite never floods the agent's context. */
     private static final int MAX_RENDERED_NAMES = 40;
@@ -47,6 +48,15 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final String ARES_CONSTRUCTOR_MISMATCH = "does not have a constructor with the arguments";
+
+    public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
+            boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
+            List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
+            String solutionBuildDiagnostic, String templateBuildDiagnostic) {
+        this(solutionTests, solutionPassed, solutionFailedNames, solutionFailureEvidence, templateTests, templateCompiled, templateFailed, templateFailureEvidence,
+                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, hiddenTestNames, solutionBuildDiagnostic,
+                templateBuildDiagnostic, List.of());
+    }
 
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, int templateTests, boolean templateCompiled, boolean templateFailed,
             List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,
@@ -125,25 +135,24 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         appendReflectionConstructorGuidance(builder, solutionFailureEvidence);
 
         if (!templateCompiled) {
-            builder.append("Template: did NOT compile (ran no tests). It must compile and FAIL the tests — give the stubs the same signatures as the solution with wrong "
-                    + "placeholder bodies.\n");
+            builder.append("Template: did NOT compile (ran no tests). Restore a compile-safe starter while preserving supplied behavior and the assigned student work.\n");
             appendBuildDiagnostic(builder, "Template", templateBuildDiagnostic);
         }
         else if (!templateWronglyPassing.isEmpty()) {
-            builder.append("Template WRONGLY PASSES (these must FAIL — make the stub return a value wrong for them, or throw/panic): ").append(renderNames(templateWronglyPassing))
-                    .append('\n');
+            builder.append("Template WRONGLY PASSES (these assessed student-work tests must FAIL; preserve unrelated supplied behavior): ")
+                    .append(renderNames(templateWronglyPassing)).append('\n');
         }
         else if (!templateFailed) {
-            // The template compiled but failed too few tests, often passing everything, so there are no failed names to list. Flagging the shape here stops the agent from
-            // misreading an empty wrongly-passing list as "correctly fails"; the blocking reasons carry the precise count.
-            builder.append("Template does NOT fail enough tests (it is nearly complete or passes them) — strip its bodies to wrong placeholders so every test fails.\n");
+            builder.append("Template does not satisfy the starter policy. Read the blocking reasons: assessed work must fail, while preservation checks must pass.\n");
         }
         else {
-            builder.append("Template: all required gradable tests fail; build/configuration gates may pass.\n");
+            builder.append("Template: all required gradable tests fail; supplied-behavior preservation checks pass.\n");
         }
         appendFailureEvidence(builder, "Template", templateFailureEvidence);
 
-        List<String> bindableNames = ProblemStatementBindingChecker.bindableTestNames(exactTestNames, Set.copyOf(hiddenTestNames));
+        Set<String> excludedBindings = java.util.stream.Stream.concat(hiddenTestNames.stream(), preservationTestNames.stream())
+                .map(ProblemStatementBindingChecker::normalizeTestName).collect(java.util.stream.Collectors.toSet());
+        List<String> bindableNames = ProblemStatementBindingChecker.bindableTestNames(exactTestNames, excludedBindings);
         String exactNamesLabel;
         if (includeStatementGuidance) {
             exactNamesLabel = "Exact test names — bind each [task] to one of these VERBATIM: ";
@@ -158,6 +167,9 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         if (!hiddenTestNames.isEmpty()) {
             builder.append("Hidden until the due date (they grade silently; copy these into test-plan.json, NEVER into a [task] line): ").append(renderNames(hiddenTestNames))
                     .append('\n');
+        }
+        if (!preservationTestNames.isEmpty()) {
+            builder.append("Preservation checks (visible, zero-credit; keep in test-plan.json, never bind to a [task]): ").append(renderNames(preservationTestNames)).append('\n');
         }
 
         if (includeStatementGuidance && !unresolvedTaskBindings.isEmpty()) {

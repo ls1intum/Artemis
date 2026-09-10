@@ -13,8 +13,8 @@ it" — the template is where students actually read while coding.
 ## TODO placement
 
 Anchor each stubbed seam with an imperative `// TODO S1: <mirror of the task wording>` INSIDE its owner member body, using
-the stable ID from the specification's Testing Strategy and placing it directly
-above the placeholder throw — never between the javadoc and the signature, never between an annotation and
+the stable ID from the specification's Testing Strategy and placing it at the assigned change location
+(above the placeholder throw for a new unfinished body) — never between the javadoc and the signature, never between an annotation and
 the signature. Every unfinished member of a stubbed owner carries its seam ID; the same ID may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
 
@@ -40,12 +40,16 @@ design the tests may not even reward.
 
 ## Honesty
 
-A stub fails the same way for every caller. Never inspect stack traces, test names, or any grading context to
-change behavior.
+Never inspect stack traces, test names, or any grading context to change behavior. Supplied behavior may
+remain implemented, including within a method the learner modifies.
 
 ## What may vary
 
-The placeholder (`throw new UnsupportedOperationException("Not implemented")` is the Java default) follows
+For modification tasks, preserve the existing implementation and mark the assigned change with its seam TODO.
+Do not replace working context with an empty body. Preservation checks must pass on both repositories and
+carry zero credit; assessed tests must still fail on the starter.
+
+For a new unfinished body, the placeholder (`throw new UnsupportedOperationException("Not implemented")` is the Java default) follows
 the language's idiom; a returned placeholder value is acceptable only if every test rejects it. TODO wording
 mirrors this exercise's tasks. How much is stubbed versus given follows the design's template-status
 column, not a fixed ratio.

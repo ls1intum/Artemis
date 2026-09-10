@@ -1,8 +1,9 @@
 # Tests (instructor harness)
 
 Role: the executable oracle. Every observable statement promise needs evidence here, and every assertion needs
-a stated rule — the two must trace to each other in both directions. Tests must pass on the solution and fail
-on the template for their intended reason.
+a stated rule — the two must trace to each other in both directions. Assessment tests pass on the solution
+and fail on the starter at the assigned work. Preservation checks protect supplied behavior, pass on both
+repositories, and earn no credit.
 
 ## One partition per assertion focus
 
@@ -69,8 +70,13 @@ implementation including a broken one. If a test cannot fail for the wrong reaso
 
 ## The grading plan (test-plan.json)
 
-Once the differential is green, write `/workspace/test-plan.json` implementing the spec's Testing Strategy:
+Before running the differential, write `/workspace/test-plan.json` implementing the spec's Testing Strategy:
 `{"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}`.
+Purpose defaults to `ASSESSMENT`. For a check solely of supplied behavior, use
+`{"name":"<exact test name>","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}`.
+Preservation entries have no seam or riskPartitions, cannot cover student-work partitions, and never bind
+to a `[task]`. They remain visible so a learner who breaks supplied behavior receives useful feedback.
+
 List every agent-authored behavioral test. Do not list build gates or server-seeded structural checks; Artemis keeps seeded structural checks visible and zero-weight.
 The seam is the stable ID from the specification row this test implements. Start with the highest-risk
 learning-objective seam (for a design pattern, prove delegation with a recording fake before concrete formulas). Weights say

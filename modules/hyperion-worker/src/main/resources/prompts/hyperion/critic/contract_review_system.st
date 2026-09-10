@@ -54,6 +54,8 @@ Treat the GENERATED TEST PLAN as the authoritative mapping from executable test 
 repeated on each mapped plan entry, but Artemis divides that tier evenly across the seam's persisted test cases; do not multiply emphasis by the number of partitions.
 Compare each mapped test's executable setup and assertions with that seam's observable responsibility. Report a contradiction when the mapping assigns a test to a
 responsibility it does not exercise or gives grading emphasis to a different behavior than the approved seam.
+Entries with purpose PRESERVATION check supplied behavior, pass on both repositories, and receive zero credit; they are not student-work seams or task bindings.
+Check that their assertions really concern given behavior. A preservation label cannot legitimize supplying the very change the brief assigns to the learner.
 
 Check pedagogical ownership against the actual template, not only the Design labels. An approved `@studentCreates` member is absent from its existing owner and its
 signature and contract are stated in the task; unmarked provided signatures remain present. A supplied method body is not evidence that students practise its mechanism.

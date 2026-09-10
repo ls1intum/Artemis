@@ -242,6 +242,10 @@ final class ProblemStatementBindingChecker {
      * are ignored because they must not occur in the statement at all. Traceability only: it says nothing about whether the seams themselves are pedagogically meaningful.
      */
     static List<String> seamTaskGroupingReasons(String problemStatement, GeneratedTestPlan plan) {
+        List<String> preservationReasons = preservationTaskBindingReasons(problemStatement, plan);
+        if (!preservationReasons.isEmpty()) {
+            return preservationReasons;
+        }
         List<GeneratedTestPlan.Entry> visible = plan.visibleEntries();
         List<String> missingSeams = visible.stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
         if (!missingSeams.isEmpty()) {
@@ -286,6 +290,14 @@ final class ProblemStatementBindingChecker {
             }
         }
         return List.copyOf(reasons);
+    }
+
+    static List<String> preservationTaskBindingReasons(String problemStatement, GeneratedTestPlan plan) {
+        Set<String> boundNames = boundTestNames(problemStatement).stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        List<String> boundPreservation = plan.preservationEntries().stream().map(GeneratedTestPlan.Entry::name).filter(name -> boundNames.contains(normalizeTestName(name)))
+                .sorted().toList();
+        return boundPreservation.isEmpty() ? List.of()
+                : List.of("Do not bind preservation checks to a [task]: " + boundPreservation + ". They check supplied behavior, not student work.");
     }
 
     private static String expectedGroups(Set<String> seams, Map<String, List<String>> visibleTestsBySeam) {

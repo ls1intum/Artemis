@@ -48,13 +48,11 @@ public class AgentSystemPromptService {
     private static final String THE_CONTRACT = """
             THE CONTRACT
             1. The solution compiles and passes every behavioural test.
-            2. The template compiles. Every task-bound BEHAVIOURAL test fails because its student-created owner is absent or its stubbed owner remains at the intended TODO.
-            Structural checks for starter code MAY pass; behavioural tests may not.
-            Preserve the solution's public API for `given` and ordinarily `stubbed` work with readable stubs, preferably a TODO followed by
-            `throw new UnsupportedOperationException("Not implemented")`; a returned placeholder is valid only if every test rejects it. Never leak solution logic or grader-defeating hints.
-            Approved `student-creates` types and dependent members are absent; tasks and reflective tests anchor them.
-            A stub fails identically for every caller: never inspect stack traces, test names, or grading context. Shared plumbing may stay implemented only when no behavioural
-            test binds it.
+            2. The template compiles and runs the same tests. Every ASSESSMENT test fails at the assigned student work; every PRESERVATION check passes on both repositories.
+            Preservation checks protect already supplied behavior, carry zero credit, and never stand in for assessed work. Server-seeded structural checks may pass.
+            Preserve the existing implementation where the brief asks students to extend or modify it. Remove only the work assigned to the learner; use a TODO and a
+            throwing placeholder only for a genuinely unimplemented body. Approved student-created declarations remain absent. Never condition behavior on test names,
+            stack traces, or grading context, and never leak the completed student work into the starter.
             3. Run the same meaningful tests against solution and template. Cover central behaviour, representative boundaries, state transitions, and stated errors. Use
             non-degenerate witnesses that distinguish plausible wrong implementations.
             4. Every observable statement promise needs executable evidence, and every behavioural assertion a stated rule. Preserve pedagogical objectives that black-box tests cannot prove;
@@ -66,7 +64,7 @@ public class AgentSystemPromptService {
 
     private static final String LEARNING_OWNERSHIP = """
             LEARNING OWNERSHIP
-            Distinguish using an API, implementing a body, declaring a member, and creating a type. Assign only the operation the brief teaches to the learner:
+            Distinguish using an API, implementing or modifying a body, declaring a member, and creating a type. Assign only the operation the brief teaches to the learner:
             - For API use or control flow, supply the owner class, method signatures, simple enums, initialized collections, and incidental exception classes. Leave a meaningful
               scenario inside the supplied method, not class/constructor design or enum internals. The entry class is `stubbed`, never `student-creates` for this objective;
               its existing method declaration is not marked `@studentCreates`. Knowing what a class/object is does not mean learners must author their declarations.
@@ -120,7 +118,7 @@ public class AgentSystemPromptService {
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
             language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with its Testing Strategy ID and wording:
             `// TODO S<n>: <task wording>`
-            Normally put it INSIDE the member above its throw. If an absent type makes the seam undeclarable, keep an empty owner class with its own seam TODO. Do not restore the
+            Put it INSIDE the member at the assigned change; above its throw for a new unfinished body. If an absent type makes the seam undeclarable, keep an empty owner class with its own seam TODO. Do not restore the
             type, use `Object`, edit SPEC.md, or reuse its seam.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
             Omit student-created types, keep the starter compiling, and grade them with the reference's structural/reflection pattern. Tasks and tests anchor them; never put their
@@ -277,12 +275,13 @@ public class AgentSystemPromptService {
 
             The solution is canonical: implement production-quality behavior and replay the worked examples. Write complete Javadoc for its public types and members before
             deriving the template; the template inherits that documentation verbatim, and missing documentation is repaired in the solution first. Derive the template by
-            removing exactly `stubbed` and `student-creates` work. Omit student-created types entirely. Stubbed bodies retain shared Javadoc plus their in-body seam TODO and throw; if an absent type makes a
+            removing only the assigned student work. Omit student-created types entirely. A `stubbed` owner contains unfinished work, not necessarily empty methods: retain
+            existing logic for modification tasks and put its seam TODO at the change location. Use a throwing placeholder for a new unfinished body. If an absent type makes a
             collaborator member undeclarable, omit only the dependent member and leave one honest insertion-point TODO owned by that collaborator's separate seam when it has
             independently actionable work. Shared Javadoc and non-TODO comments remain byte-identical. Never author documentation only in the template.
 
-            Add tests in seam/partition batches. Each behavioral test must pass on the solution and fail on the template for its intended reason (a structural check may already
-            pass). A stubbed template throws everywhere, so failing on it proves nothing: what counts is whether a complete but WRONG implementation fails. Every `## Rules`
+            Add tests in seam/partition batches. Each assessed behavioral test must pass on the solution and fail on the template for its intended reason. Preservation checks
+            of supplied behavior must pass on both and receive zero credit. Starter failure alone is weak evidence: distinguish a complete but WRONG implementation. Every `## Rules`
             row a caller can observe needs such a test, with its negative direction; never assert state students cannot reach. Behavioural tests call only the public API. Never
             inspect or measure assignment/solution/template source or bytecode, use proxies such as file size or source substrings, or pad production code to satisfy a test.
             Keep an unobservable technique as ungraded pedagogy. Verify the first end-to-end slice and each meaningful increment; use incomplete reports to finish the owning
@@ -299,7 +298,9 @@ public class AgentSystemPromptService {
             message strings, unless the statement fixes the exact message; give every assertion a failure message naming the
             broken behaviour — it is all a failing student sees. Then write `/workspace/test-plan.json` implementing
             the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":<1..3>,
-            "visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}. Map every ID to a witness; every test needs one of its seam's IDs. Include every behavioral test, not
+            "visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}. Purpose defaults to ASSESSMENT. Map every student-work risk ID to an assessment witness. For checks solely of supplied
+            behavior, use {"name":"<exact test name>","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}, without seam or riskPartitions. These checks must
+            pass on both repositories and never bind to a task. Write the plan before verification so the verifier knows each test's purpose. Include every behavioral test, not
             build gates or seeded structural checks; Artemis manages the latter as visible, zero-weight feedback. Each seam needs an ALWAYS behavioral test; hidden `yes` adds a
             fresh AFTER_DUE_DATE behavioral witness, while `no` forbids one.
             Repeating the tier assigns seam importance; persistence divides it evenly among that seam's cases. Names must match `verify`. Fix differential defects in the owning

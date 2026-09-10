@@ -25,6 +25,23 @@ deadline to its per-request chat options as well as the HTTP client. This is
 separate from the assignment's overall wall-time budget. Core-node model
 configuration is not inherited by the worker.
 
+## Verification and starter behavior
+
+The completed solution must pass every test. The starter must run the same tests
+and fail every assessed student-work test. It can retain working code when the
+exercise asks learners to modify or extend it.
+
+The generated `test-plan.json` distinguishes assessed work (the default
+`ASSESSMENT` purpose) from `PRESERVATION` checks of supplied behavior. Preservation
+checks must pass on both solution and starter. They are always visible, persist
+with weight zero, and have no student-work seam, risk-partition claim, or task
+binding. Every declared student-work seam still needs visible assessed evidence;
+preservation checks cannot replace it. Existing plans without a purpose field
+remain assessment-only.
+
+These checks establish executable behavior, not teaching suitability. Review the
+actual learner changes and any quality findings before releasing an exercise.
+
 ## Broker isolation
 
 `broker.xml` is an Apache Artemis broker configuration for one worker named
