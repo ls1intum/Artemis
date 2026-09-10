@@ -36,14 +36,11 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 /**
  * Pins the endpoints that have to report the two Athena course switches.
  * <p>
- * {@code Course.athenaConfig} is lazy and {@code open-in-view} is disabled, so a response built from a course that
- * nobody resolved the configuration for reports both switches as false - no exception, no log line, just the AI
- * feedback features quietly missing from the client. Each endpoint here is one the webapp reads them from, and each
- * one resolves the configuration explicitly through {@code CourseAthenaConfigRepository}.
+ * {@code Course.athenaConfig} is lazy, so a response built from a course nobody resolved it for reports both switches
+ * as false - no exception, no log line, just the AI feedback features missing from the client.
  * <p>
- * The assessment editors are covered twice, because a tutor reaches them two ways: by submission id, and by asking for
- * the next unassessed submission. Both hand the exercise to the editor, and the by-id path additionally reloads the
- * submission for the lock, which drops whatever the first query had resolved.
+ * The assessment editors appear twice because a tutor reaches them two ways, by submission id and by asking for the
+ * next unassessed submission, and the by-id path reloads the submission for the lock.
  */
 class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentTest {
 

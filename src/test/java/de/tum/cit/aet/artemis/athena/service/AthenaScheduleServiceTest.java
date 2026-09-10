@@ -26,10 +26,8 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
- * The scheduler decides on {@code Exercise#areFeedbackSuggestionsEnabled()}, which reads the lazy Athena configuration
- * off the course. Neither of the two callers hands over an exercise that carries it - the startup query filters on it
- * with a join rather than a fetch, and the message listener reads the exercise by id - so the configuration has to be
- * resolved here. Without that the predicate answers false for every exercise and cancels the tasks it just selected.
+ * The scheduler decides on {@code Exercise#areFeedbackSuggestionsEnabled()}, and neither caller hands over an exercise
+ * whose course carries the lazy Athena configuration, so it has to resolve it before it asks.
  */
 @ExtendWith(MockitoExtension.class)
 class AthenaScheduleServiceTest {

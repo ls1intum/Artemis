@@ -307,8 +307,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         }
 
-        // The assessment editor gates feedback suggestions on the course's Athena setting, and the reloads above return
-        // a submission whose course does not carry it, so it is resolved here rather than on the way in.
+        // the assessment editor gates feedback suggestions on the course's Athena setting, which the reloads above drop
         courseAthenaConfigRepository.attachToCourseOf(modelingSubmission.getParticipation().getExercise());
         // Tutors must not see the student behind a submission (double-blind); instructors may.
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);

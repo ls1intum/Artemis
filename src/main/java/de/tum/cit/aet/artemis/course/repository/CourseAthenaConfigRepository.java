@@ -17,12 +17,9 @@ import de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
- * Spring Data JPA repository for the {@link CourseAthenaConfig} entity. Used to read a course's Athena settings
- * independently of the (lazy) association on the course, the same way {@link CourseConfigurationRepository} reads the
- * course configuration.
- * <p>
- * The queries start from {@code Course} because the foreign key lives there ({@code course.athena_config_id}), so the
- * config has no owning reference back to the course to filter on.
+ * Spring Data JPA repository for the {@link CourseAthenaConfig} entity, which reads a course's Athena settings without
+ * the lazy association on the course, as {@link CourseConfigurationRepository} does for the course configuration. The
+ * queries start from {@code Course} because the foreign key lives there.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -44,10 +41,8 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
     Optional<CourseAthenaConfig> findByCourseId(@Param("courseId") long courseId);
 
     /**
-     * The two feedback switches of the course an exercise belongs to, resolved through either the course or the exam.
-     * <p>
-     * Reads the flags rather than the entity: this answers a yes/no on a request path, and an exercise belongs either to
-     * a course or to an exercise group, never both. A course without a configuration row counts as switched off.
+     * The two feedback switches of the course an exercise belongs to, reached through the course or through the exam.
+     * Reads the flags rather than the entity, because this answers a yes/no on a request path.
      *
      * @param exerciseId the id of the exercise
      * @return the settings, defaulting to off
@@ -83,12 +78,9 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
     Optional<AthenaFeedbackSettingsDTO> findFeedbackSettingsByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Puts the course's Athena configuration onto the course of the given exercise, so that the code downstream of an
-     * entry point can keep asking {@code Exercise#areFeedbackSuggestionsEnabled()} without every one of those layers
-     * needing a repository of its own.
-     * <p>
-     * Call this at the point where an Athena flow starts. It is a no-op for an exercise without a course, and leaves
-     * the configuration null when the course has none - which reads as switched off, the right answer.
+     * Puts the configuration onto the course of the given exercise, so the code below an entry point can keep asking
+     * {@code Exercise#areFeedbackSuggestionsEnabled()}. Call it where an Athena flow starts. A course without a
+     * configuration stays null, which reads as switched off.
      *
      * @param exercise the exercise whose course should carry its Athena configuration
      */

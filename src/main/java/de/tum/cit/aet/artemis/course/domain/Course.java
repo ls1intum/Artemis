@@ -166,9 +166,8 @@ public class Course extends DomainObject {
     private Integer accuracyOfScores = 1; // default value
 
     /**
-     * Lazy, like every other configuration hanging off a course. Eager cost 155,848 queries during one 2000 student
-     * exam, none of which read the answer - an exam does not care whether Athena is switched on. Read it with
-     * {@code CourseAthenaConfigRepository} where it is actually needed rather than dragging it along with the course.
+     * Lazy, like every other configuration on a course. Read it through {@code CourseAthenaConfigRepository} where it
+     * is needed rather than dragging it along with the course.
      */
     @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

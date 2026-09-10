@@ -389,12 +389,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     /**
      * No new {@code @OneToOne}, {@code @OneToMany} or {@code @ManyToMany} may be fetched eagerly.
      * <p>
-     * An eager association is loaded for every caller, including the overwhelming majority that never read it, and the
-     * cost surfaces nowhere near where it was written. {@code Course.athenaConfig} was two booleans behind an eager
-     * one-to-one: a 2000 student exam issued 155,848 queries for it, and an exam does not care whether Athena is on.
-     * <p>
-     * Declare {@code fetch = FetchType.LAZY} and read the association where it is needed, through its own repository -
-     * {@code CourseAthenaConfigRepository} and {@code CourseConfigurationRepository} are the pattern.
+     * An eager association is loaded for every caller, including the majority that never read it, and the cost surfaces
+     * nowhere near where it was written. Declare {@code fetch = FetchType.LAZY} and read the association where it is
+     * needed, through its own repository - {@code CourseAthenaConfigRepository} is the pattern.
      */
     @Test
     void testNoEagerFetching() {

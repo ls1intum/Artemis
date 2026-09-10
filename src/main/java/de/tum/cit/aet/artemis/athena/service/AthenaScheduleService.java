@@ -95,9 +95,8 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
-        // Both entry points hand over an exercise whose course does not carry the configuration: the startup query
-        // filters on it with a join rather than a fetch, and the message listener reads the exercise by id. Without
-        // this the predicate below would answer false for every exercise and cancel the very tasks it selected.
+        // Neither caller hands over an exercise whose course carries the configuration, and without it the check
+        // below answers false for every exercise and cancels the tasks it should schedule.
         courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             cancelScheduledAthena(exercise.getId());
