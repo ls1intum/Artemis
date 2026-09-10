@@ -31,8 +31,8 @@
     </div>
 </div>
 
-<div class="border-t border-solid border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid">
-    <div class="grid grid-cols-7 border-b border-solid border-(--tumaet-ui-border-color)" role="row">
+<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid">
+    <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
         @for (weekdayKey of weekdayKeys; track weekdayKey) {
             <div class="px-3 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
         }
@@ -42,7 +42,11 @@
         <!-- The cells give the week its grid and borders; the bars are laid over them so one can span several days. -->
         <div class="relative grid grid-cols-7" role="row" [style.height.rem]="week.heightRem">
             @for (day of week.days; track day.dayKey) {
-                <div class="border-r border-b border-solid border-(--tumaet-ui-border-color) first:border-l" role="gridcell">
+                <!--
+                    Only the lines between cells are drawn here. The card around the calendar already draws its own
+                    edge, and a cell drawing one there too laid a second grey line beside it.
+                -->
+                <div class="border-(--tumaet-ui-border-color)" role="gridcell" [class.border-r]="day.drawsRightBorder" [class.border-b]="day.drawsBottomBorder">
                     <!--
                         A real button rather than a div with a role: it is focusable, it answers Enter and Space without
                         the page scrolling, and disabling it is what makes a day of a neighbouring month inert. The cell
@@ -100,7 +104,7 @@
                     >
                         <button
                             type="button"
-                            class="holiday-bar pointer-events-auto flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded border-0 border-l-3 border-solid border-(--tumaet-ui-state-danger) px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
+                            class="holiday-bar pointer-events-auto flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
                             data-testid="holiday-calendar-event"
                             [class.holiday-bar-continues-before]="!bar.startsRun"
                             [class.holiday-bar-continues-after]="!bar.endsRun"

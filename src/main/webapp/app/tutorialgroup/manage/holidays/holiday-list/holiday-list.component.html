@@ -27,7 +27,7 @@
     <ul class="m-0 list-none p-0" data-testid="holiday-list">
         @for (entry of entries(); track entry.key) {
             <li
-                class="flex items-center gap-3 border-t border-solid border-(--tumaet-ui-border-color) px-4 py-2.5"
+                class="flex items-center gap-3 border-t border-(--tumaet-ui-border-color) px-4 py-2.5"
                 data-testid="holiday-list-item"
                 [attr.data-holiday-id]="entry.holiday.period.id"
             >
@@ -89,7 +89,7 @@
 }
 
 @if (filter() === 'upcoming' && pastCount() > 0) {
-    <p class="m-0 border-t border-solid border-(--tumaet-ui-border-color) px-4 py-3 text-[0.8125rem] opacity-70" data-testid="holiday-list-past-note">
+    <p class="m-0 border-t border-(--tumaet-ui-border-color) px-4 py-3 text-[0.8125rem] opacity-70" data-testid="holiday-list-past-note">
         {{ 'artemisApp.pages.tutorialFreePeriodsManagement.pastHidden' | artemisTranslate: { count: pastCount() } }}
     </p>
 }

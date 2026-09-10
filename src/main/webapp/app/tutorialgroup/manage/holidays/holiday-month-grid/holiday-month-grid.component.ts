@@ -61,6 +61,14 @@ export interface HolidayCalendarDay {
     readonly hasHoliday: boolean;
     /** Sessions scheduled that day, or 0 when the day holds none. */
     readonly sessionCount: number;
+    /**
+     * Whether this cell draws the line to its right, and the one below it.
+     *
+     * Only the lines between cells are drawn: the card around the calendar already draws its own edge, and a cell
+     * drawing one there too laid a second grey line beside it.
+     */
+    readonly drawsRightBorder: boolean;
+    readonly drawsBottomBorder: boolean;
 }
 
 export interface HolidayCalendarWeek {
@@ -128,11 +136,14 @@ export class HolidayMonthGridComponent {
             const bars = this.barsForWeek(holidays, weekStart);
             const coveredColumns = new Set(bars.flatMap((bar) => Array.from({ length: bar.span }, (_, offset) => bar.startColumn + offset)));
 
+            const isLastWeek = !weekStart.add(1, 'week').isBefore(gridEnd);
             const days: HolidayCalendarDay[] = [];
             for (let column = 0; column < DAYS_PER_WEEK; column++) {
                 const date = weekStart.add(column, 'day');
                 const dayKey = date.format(DAY_KEY_FORMAT);
                 days.push({
+                    drawsRightBorder: column < DAYS_PER_WEEK - 1,
+                    drawsBottomBorder: !isLastWeek,
                     date,
                     dayKey,
                     dayOfMonth: date.date(),
