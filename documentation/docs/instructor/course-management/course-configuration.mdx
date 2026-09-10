@@ -12,6 +12,7 @@ import generalInformation from './assets/course-configuration/general-informatio
 import exercisesAndGrading from './assets/course-configuration/exercises-and-grading.png';
 import additionalFeatures from './assets/course-configuration/additional-features.png';
 import studentEnrollment from './assets/course-configuration/student-enrollment.png';
+import athenaSettings from './assets/course-configuration/athena-settings.png';
 
 Once a course exists — from a [course request](/instructor/course-management/course-requests) or from an
 administrator — **Settings** at the foot of the course sidebar opens everything you can change about it. The page is
@@ -131,6 +132,27 @@ that has none of its own. Every participant sees whatever is in it.
 
 See [Communication](/instructor/communication-support/communication) for managing and moderating channels.
 
+### AI Assisted Feedback
+
+These three settings appear only where an administrator has configured Athena for the instance, which is why they may
+be absent from your form entirely.
+
+<Image src={athenaSettings} alt="The three Athena settings, with the two nested under the master switch" size={ImageSize.large} caption="AI assisted feedback" />
+
+**AI Assisted Feedback for Exercises Enabled** is the master switch: with it off, no exercise in the course can use
+Athena at all. On its own it enables nothing — it makes the two below it available.
+
+**Formative Feedback Requests Enabled** lets students ask Athena for preliminary feedback on a draft *before* the due
+date. It is feedback to learn from rather than a mark, and it does not replace the assessment that follows.
+
+**Grading Feedback Suggestions Enabled** offers Athena's suggestions to tutors while they mark text, programming and
+modeling submissions. A suggestion is a starting point a person accepts, edits or ignores; nothing reaches a student
+without a reviewer submitting it.
+
+Each exercise then has its own switch as well, so enabling these here makes the feature possible rather than
+universal. See [AI Assisted Feedback](/instructor/assessment-grading/ai-feedback) for which exercise types support
+which, and where each switch lives.
+
 ## Student Course Enrollment
 
 <Image src={studentEnrollment} alt="Student course enrollment section" size={ImageSize.large} caption="Student enrollment" />
@@ -154,9 +176,10 @@ is off, because the two are mutually exclusive. See
 
 ## Iris
 
-Iris, the AI tutor, is configured separately from this form, from the course overview page rather than from
-**Settings**. Its features are switched on one at a time, and each can be tuned for the course.
+Iris, the AI tutor, has its own settings page rather than a section on this form: **Iris** in the course management,
+not **Settings**. One switch decides whether the whole course has Iris, and a **Level of Instructional Support**
+decides how much it gives away.
 
-Enabling Iris changes what students see: a chat icon appears wherever Iris can help, on programming exercises and
-lecture content, and it guides rather than answers so that the work stays the student's own. See
-[Iris](/student/learning-content/iris) for the student's side of it.
+See [Iris](/instructor/communication-support/iris) for those settings, and
+[Iris for students](/student/learning-content/iris) for what a student meets — including the choice each student
+makes for themselves about whether to use AI at all.
