@@ -12,6 +12,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { latestSubmissionRoute } from 'app/exercise/exercise-headers/exercise-headers-information/result-history-dropdown/result-history-dropdown.component';
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 /**
@@ -251,6 +252,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe(() => this.syncModeWithRoutedParticipation());
+
+        // Its own subscription rather than a second call inside the one above: the two are independent, and sharing a
+        // subscriber would let a failure in either one stop the other from ever running again.
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.syncViewingSubmissionWithRoute());
+        this.syncViewingSubmissionWithRoute();
 
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
@@ -564,8 +575,26 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return updatedExisting.concat(newSubmissions);
     }
 
-    /** Handed to the header, which cannot reach the result history itself now that it lives in the details panel. */
-    readonly continueToLatest = (): void => this.splitPanel()?.continueToLatest();
+    /**
+     * Whether the route points at a specific earlier submission. Derived here rather than reported by the result
+     * history, which lives in the details panel and is unmounted whenever another tab is shown - the header would
+     * then keep offering "continue" with nothing to act on, or fail to hide submit at all.
+     */
+    readonly isViewingSubmission = signal(false);
+
+    /** Handed to the header. Navigates directly, for the same reason the flag above is derived here. */
+    readonly continueToLatest = (): void => {
+        const participation = this.activeParticipation();
+        const exercise = this.exercise;
+        if (!participation || !exercise) {
+            return;
+        }
+        void this.router.navigate(latestSubmissionRoute(exercise, participation));
+    };
+
+    private syncViewingSubmissionWithRoute(): void {
+        this.isViewingSubmission.set(/\/(result|submission)\/\d+/.test(this.router.url));
+    }
 
     onNewParticipation(participation: StudentParticipation) {
         const current = this._studentParticipations();

@@ -36,6 +36,21 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
+/**
+ * Where "continue to latest" goes for an exercise. Exported because the page offers the same action from the title
+ * bar, where the dropdown that owns this method may not be rendered at all.
+ */
+export function latestSubmissionRoute(exercise: Exercise, participation: StudentParticipation): unknown[] {
+    const courseId = getCourseFromExercise(exercise)?.id;
+    if (exercise.type === ExerciseType.QUIZ) {
+        return isPracticeMode(participation)
+            ? ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]
+            : ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live'];
+    }
+    const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+    return ['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id];
+}
+
 @Component({
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
@@ -131,20 +146,7 @@ export class ResultHistoryDropdownComponent {
         if (!participation) {
             return;
         }
-        const exercise = this.exercise();
-        const courseId = getCourseFromExercise(exercise)?.id;
-
-        if (exercise.type === ExerciseType.QUIZ) {
-            if (isPracticeMode(participation)) {
-                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]);
-            } else {
-                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
-            }
-            return;
-        }
-
-        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        void this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
+        void this.router.navigate(latestSubmissionRoute(this.exercise(), participation));
     }
 
     resultsPopover = viewChild<Popover>('resultsPopover');

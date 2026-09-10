@@ -28,7 +28,6 @@
                     [athenaEnabled]="athenaEnabled()"
                     [quizLiveStatus]="quizLiveStatus()"
                     [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
-                    (viewingSubmissionChange)="isViewingSubmission.set($event)"
                 />
             </div>
             <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()" />
@@ -121,7 +120,6 @@
                 [athenaEnabled]="athenaEnabled()"
                 [quizLiveStatus]="quizLiveStatus()"
                 [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
-                (viewingSubmissionChange)="isViewingSubmission.set($event)"
             />
         </ng-template>
     }

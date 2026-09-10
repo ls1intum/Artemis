@@ -797,6 +797,39 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', exercise.id, 'code-editor', 680], expect.objectContaining({ replaceUrl: true }));
     });
 
+    describe('continue to latest', () => {
+        // Both the flag and the action are owned here rather than delegated to the details panel: that panel is
+        // unmounted whenever another tab is shown, which used to leave the header offering an action that did nothing.
+        it('should navigate to the latest submission without needing the details panel', () => {
+            comp.courseId = 1;
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT, course: { id: 1 } } as unknown as Exercise;
+            const participation = { id: 42, testRun: false } as StudentParticipation;
+            comp.studentParticipations = [participation];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(participation);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            comp.continueToLatest();
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'exercises', 'text-exercises', exercise.id, 'participate', 42]);
+        });
+
+        it.each([
+            ['/courses/1/exercises/2/participate/3', false],
+            ['/courses/1/exercises/2/submission/7', true],
+            ['/courses/1/exercises/2/result/9', true],
+        ])('should take the viewing-submission state from the route %s', (url, expected) => {
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT, course: { id: 1 } } as unknown as Exercise;
+            // detectChanges so ngOnInit runs and subscribes; the route sync is wired there.
+            fixture.detectChanges();
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            router.setUrl(url);
+
+            expect(comp.isViewingSubmission()).toBe(expected);
+        });
+    });
+
     it('does not add a history entry when correcting the URL to the practice participation', () => {
         // replaceUrl, because the address being corrected is one the student never chose: a back navigation must not
         // return them to the graded editor they were never shown.

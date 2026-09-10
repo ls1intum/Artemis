@@ -17,7 +17,7 @@
             [quizLiveHeaderInfo]="splitPanel()?.quizLiveHeaderInfo()"
             [showSidebarToggle]="showSidebarToggle()"
             [isSidebarCollapsed]="isSidebarCollapsed()"
-            [isViewingSubmission]="splitPanel()?.isViewingSubmission() ?? false"
+            [isViewingSubmission]="isViewingSubmission()"
             [onContinueToLatest]="continueToLatest"
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
