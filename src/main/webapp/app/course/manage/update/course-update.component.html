@@ -473,7 +473,7 @@
                     @if (athenaFeedbackEnabled() && !hasInstructorAcceptedAiExperience()) {
                         <div class="nested-form-group ai-experience-hint flex items-center gap-2" id="ai-experience-hint-course-settings">
                             <span class="text-sm text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.aiExperienceHint"></span>
-                            <button type="button" tumUiButton size="small" variant="outlined" id="enable-ai-experience-course-settings" (click)="showLLMSelectionModal()">
+                            <button type="button" tumUiButton size="small" id="enable-ai-experience-course-settings" (click)="showLLMSelectionModal()">
                                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                                 <span jhiTranslate="artemisApp.course.athenaConfig.enableAiExperience"></span>
                             </button>
