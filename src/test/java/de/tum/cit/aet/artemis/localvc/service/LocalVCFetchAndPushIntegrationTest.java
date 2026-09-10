@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -501,11 +501,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
 
-            StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
 
             assertThat(participation).isNotNull();
-            assertThat(participation.getStudent()).contains(student1);
+            assertThat(participation.student().getId()).isEqualTo(student1.getId());
 
             String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
 
@@ -553,7 +553,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Student1 starts the exercise via REST API (this creates the repository)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             // Now set due date to the past (re-fetch exercise to avoid Hibernate orphan removal of the new participation)
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -593,20 +593,20 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Student1 starts the exercise via REST API
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation1 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            StudentParticipationDTO participation1 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
 
             assertThat(participation1).isNotNull();
-            assertThat(participation1.getStudent()).contains(student1);
+            assertThat(participation1.student().getId()).isEqualTo(student1.getId());
 
             // Student2 starts the exercise via REST API
             userUtilService.changeUser(TEST_PREFIX + "student2");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation2 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            StudentParticipationDTO participation2 = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
 
             assertThat(participation2).isNotNull();
-            assertThat(participation2.getStudent()).contains(student2);
+            assertThat(participation2.student().getId()).isEqualTo(student2.getId());
 
             String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
             String student2RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student2.getLogin();
@@ -703,7 +703,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Team member (student1) starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             // Team member (student1) should be able to fetch and push
             try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
@@ -806,7 +806,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Team member (student1) starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             // Now set due date to the past (re-fetch exercise to avoid Hibernate orphan removal of the new participation)
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -848,7 +848,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // TA starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             String taRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + tutor1.getLogin();
 
@@ -882,7 +882,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             // Instructor starts the exercise via REST API (creates repo)
             mockDockerClientForStudentBuild();
-            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             String instructorRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + instructor1.getLogin();
 
@@ -923,9 +923,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create practice participation for student1 via REST API
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
-            assertThat(practiceParticipation.isPracticeMode()).isTrue();
+            StudentParticipationDTO practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.testRun()).isTrue();
 
             String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + student1.getLogin();
 
@@ -972,9 +972,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create practice participation for tutor1 via REST API
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
             mockDockerClientForStudentBuild();
-            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
-            assertThat(practiceParticipation.isPracticeMode()).isTrue();
+            StudentParticipationDTO practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.testRun()).isTrue();
 
             String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + tutor1.getLogin();
 
@@ -1015,9 +1015,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Create practice participation for instructor1 via REST API
             // Note: instructor1 is already the current user from @WithMockUser
             mockDockerClientForStudentBuild();
-            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
-            assertThat(practiceParticipation.isPracticeMode()).isTrue();
+            StudentParticipationDTO practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.testRun()).isTrue();
 
             String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + instructor1.getLogin();
 
@@ -1462,12 +1462,12 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Team member (student1) starts the exercise via REST API
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
+            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class,
                     HttpStatus.CREATED);
 
             // Create a participation VCS access token for student1
-            localVCLocalCITestService.createParticipationVcsAccessToken(student1, participation.getId());
-            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
+            localVCLocalCITestService.createParticipationVcsAccessToken(student1, participation.id());
+            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.id());
             String token = participationToken.getVcsAccessToken();
 
             // Disable LDAP fallback so success can only come from participation token auth
@@ -1504,11 +1504,11 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Student1 starts participation
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
+            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class,
                     HttpStatus.CREATED);
 
             // Get the auto-created participation VCS access token for student1
-            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
+            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.id());
             String token = participationToken.getVcsAccessToken();
 
             // Disable LDAP fallback so success can only come from participation token auth

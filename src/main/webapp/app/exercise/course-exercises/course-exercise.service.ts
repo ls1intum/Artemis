@@ -116,14 +116,12 @@ export class CourseExerciseService {
      * @param exercise - the complete exercise already loaded by the caller
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number, exercise: Exercise): Observable<StudentParticipation | null> {
-        return this.http
-            .put<StudentParticipationDTO | null>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {})
-            .pipe(
-                map((participationDTO) => {
-                    const participation = this.mapStudentParticipationDTO(participationDTO);
-                    return participation ? this.handleParticipation(participation, exercise) : null;
-                }),
-            );
+        return this.http.put<StudentParticipationDTO | null>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {}).pipe(
+            map((participationDTO) => {
+                const participation = this.mapStudentParticipationDTO(participationDTO);
+                return participation ? this.handleParticipation(participation, exercise) : null;
+            }),
+        );
     }
 
     requestFeedback(exerciseId: number, participationId: number): Observable<StudentParticipation | null> {

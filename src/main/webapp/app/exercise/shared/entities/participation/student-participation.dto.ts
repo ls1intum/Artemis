@@ -208,7 +208,7 @@ function createSubmission(type: SubmissionExerciseType): Submission {
         case SubmissionExerciseType.FILE_UPLOAD:
             return new FileUploadSubmission();
         default:
-            throw new Error(`Unsupported submission exercise type: ${type}`);
+            throw new Error(`Unsupported submission exercise type: ${String(type)}`);
     }
 }
 
