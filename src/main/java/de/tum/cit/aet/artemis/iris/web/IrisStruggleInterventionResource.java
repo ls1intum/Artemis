@@ -35,10 +35,9 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionServi
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
 
 /**
- * Exercise-keyed trigger for the proactive struggle-intervention feature. The client engine has
- * already gated the alert; Iris acts as a downstream intervention gate. Async command: returns {@code 202}
- * immediately; the outcome arrives over the per-user struggle topic. No user message is persisted, no session
- * is created here.
+ * Exercise-keyed trigger for the proactive struggle-intervention feature. The client engine has already gated the
+ * alert and Iris acts as a downstream gate. Returns {@code 202} immediately and the outcome arrives over the per-user
+ * struggle topic; no user message is persisted and no session is created here.
  */
 @Conditional(IrisEnabled.class)
 @Lazy
@@ -89,12 +88,9 @@ public class IrisStruggleInterventionResource {
     }
 
     /**
-     * POST exercises/{exerciseId}/episodes/{episodeId}/reveal : persist a previously-hidden ambient hint.
-     *
-     * <p>
-     * Idempotent per {@code (user, exercise, episode)}: a retry finds the episode's offer already consumed and
-     * returns the row the first reveal created. Does NOT broadcast over the chat websocket (the client owns the
-     * optimistic bubble; the client reconciles via the returned DTO).
+     * POST exercises/{exerciseId}/episodes/{episodeId}/reveal : persist a previously-hidden ambient hint. Idempotent
+     * per {@code (user, exercise, episode)}: a retry finds the offer consumed and returns the row the first reveal
+     * created. Does not broadcast, because the client owns the optimistic bubble and reconciles via the returned DTO.
      *
      * @param exerciseId the programming exercise id (session scope)
      * @param episodeId  the client-allocated episode UUID
@@ -106,9 +102,8 @@ public class IrisStruggleInterventionResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> revealAmbient(@PathVariable long exerciseId, @PathVariable String episodeId, @RequestBody RevealAmbientRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
-        // Bind the exerciseId path variable to a real authorization check, exactly as setEpisodeOutcome does:
-        // @EnforceAtLeastStudent only establishes the global role, so without this any authenticated student could
-        // have a session resolved, and context-switched, for an exercise they have no access to.
+        // Bind the exerciseId path variable to a real authorization check, as setEpisodeOutcome does:
+        // @EnforceAtLeastStudent only establishes the global role.
         struggleTriggerService.checkAtLeastStudentForExercise(exerciseId, user);
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId);
@@ -116,12 +111,9 @@ public class IrisStruggleInterventionResource {
     }
 
     /**
-     * DELETE exercises/{exerciseId}/messages/{messageId}/proactive : durably delete a superseded proactive row.
-     *
-     * <p>
-     * Only deletes if the row is {@code PROACTIVE_STRUGGLE} origin, belongs to the requesting user's session, and
-     * has a null {@code proactiveOutcome}. All other cases (missing, wrong origin, wrong user, terminal outcome)
-     * are silent {@code 204} noops.
+     * DELETE exercises/{exerciseId}/messages/{messageId}/proactive : durably delete a superseded proactive row. Only
+     * deletes a {@code PROACTIVE_STRUGGLE} row in the requesting user's session with a null {@code proactiveOutcome};
+     * every other case is a silent {@code 204} noop.
      *
      * @param exerciseId the programming exercise id (kept for route symmetry; auth is via session ownership)
      * @param messageId  the id of the proactive message row to delete

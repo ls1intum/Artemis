@@ -5,30 +5,21 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Per-user struggle event pushed to {@code /user/topic/iris/struggle-intervention}. {@code kind} is the
- * event discriminator ({@code "decide"} | {@code "confirm_close"}).
- * {@code action} is {@code "ambient"} (lamp, {@code message} holds the hint text) or {@code "active"} (chat bubble) or
- * {@code "silent"} (noop completion frame); null for confirm_close events. After the pull-model change
- * Ambient is event-only: no proactive message is persisted. The client holds the text frozen and
- * reveals it on click. Active still persists and pushes a chat-ws bubble. Both carry {@code sessionId} so the
- * client knows which session to target. Active carries {@code messageId} when persist succeeded (null on permanent
- * failure, client renders a runtime-only fallback bubble). Silent carries neither. {@code confidence} is the
- * server-computed Pyris confidence, forwarded for the client eval log. {@code anchorFile}/
- * {@code anchorLine}/{@code inlineHint} are set only when the gate localized the nudge to a single line.
- * {@code episodeId} is the client-allocated UUID that correlates this event back to the outstanding slot request.
- * {@code rationale} is the gate's own one-sentence reason for the decision. It is never shown to the student; it rides
- * alongside {@code confidence} so the client's eval log records WHY a run decided as it did, which matters most for a
- * {@code silent} run, where the detector fired and the gate still surfaced nothing.
+ * Per-user struggle event pushed to {@code /user/topic/iris/struggle-intervention}. {@code kind} discriminates
+ * {@code "decide"} from {@code "confirm_close"}. On a decide, {@code action} is {@code "ambient"} (event-only, the
+ * client holds {@code message} frozen and reveals it on click), {@code "active"} (a persisted, pushed bubble) or
+ * {@code "silent"} (a noop completion frame); it stays null for confirm_close. Active carries {@code messageId} when
+ * the persist succeeded and null on permanent failure, where the client renders a runtime-only fallback bubble.
  *
  * <p>
- * confirm_close payload fields:
- * <ul>
- * <li>{@code resolved}: boolean result for confirm_close events.</li>
- * <li>{@code closingSentence}: closing praise for a {@code resolved=true} confirm_close (progress).</li>
- * <li>{@code episodeLabel}: episode label for a {@code resolved=true} confirm_close (progress).</li>
- * </ul>
+ * {@code confidence} and {@code rationale} are forwarded for the client's eval log and never shown to the student,
+ * which matters most for a {@code silent} run, where the detector fired and the gate still surfaced nothing.
+ * {@code anchorFile}, {@code anchorLine} and {@code inlineHint} are set only when the gate localized the nudge to a
+ * single line. {@code episodeId} correlates the event back to the outstanding slot request. A confirm_close carries
+ * {@code resolved} and, when it is true, {@code closingSentence} and {@code episodeLabel}.
  *
- * Every payload field beyond {@code exerciseId}/{@code kind} is {@code @Nullable} so a partial push still serializes.
+ * <p>
+ * Every payload field beyond {@code exerciseId} and {@code kind} is nullable, so a partial push still serializes.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullable String action, @Nullable String message, @Nullable Long sessionId, @Nullable Long messageId,
@@ -36,10 +27,9 @@ public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullab
         @Nullable String closingSentence, @Nullable String episodeLabel, @Nullable String rationale) {
 
     /**
-     * The noop completion frame for a {@code decide} run that surfaces nothing, so the client's in-flight decide
-     * clears. Fifteen positional fields, most of them nullable and adjacent, are easy to shift by one without the
-     * compiler noticing - which is exactly what happened to the empty-result frame, where a {@code null} sat in the
-     * {@code confidence} slot and the client silently lost the value it logs for the eval.
+     * The noop completion frame for a {@code decide} run that surfaces nothing. A named factory rather than the
+     * positional constructor, because fifteen adjacent nullable fields are easy to shift by one without the compiler
+     * noticing, which is how the empty-result frame once lost the confidence the client logs for the eval.
      *
      * @param exerciseId the exercise the run belongs to
      * @param confidence the gate confidence, forwarded for the client eval log; null when no decision produced one
@@ -52,12 +42,10 @@ public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullab
     }
 
     /**
-     * The bare completion frame for a {@code confirm_close} run that resolved nothing, the close-mode counterpart to
-     * {@link #silentDecide}. {@code resolved=false} rather than null: a run that ended without resolving must not
-     * read as a resolved episode. Every confirm_close path that commits neither a closing row nor a {@code RECOVERED}
-     * outcome goes through here, including the ones where Pyris itself answered {@code resolved=true}: the gate's
-     * verdict is not the same fact as a committed close, and forwarding it told the client an episode had recovered
-     * that carried no closing row and no outcome.
+     * The bare completion frame for a {@code confirm_close} run that resolved nothing. {@code resolved=false} rather
+     * than null, because a run that ended without resolving must not read as a resolved episode. Every path that
+     * commits neither a closing row nor a {@code RECOVERED} outcome goes through here, including the ones Pyris
+     * answered {@code resolved=true} for: the gate's verdict is not the same fact as a committed close.
      *
      * @param exerciseId the exercise the run belongs to
      * @param episodeId  the client-allocated episode id, or null when the run carried none

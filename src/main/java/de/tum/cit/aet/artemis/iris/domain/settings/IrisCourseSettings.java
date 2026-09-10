@@ -42,11 +42,10 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
     }
 
     /**
-     * Whether Iris watches this course's students for signs of struggle and offers help unprompted.
-     * <p>
-     * Nullable like {@link #legacyBuildTriggersEffective()}, with the opposite default: {@code null} means the
-     * payload said nothing, and the update path keeps what is stored rather than reading the omission as an
-     * opt-out. Read the decision here, never off the raw component, which unboxes to an NPE on those rows.
+     * Whether Iris watches this course's students for signs of struggle and offers help unprompted. Nullable like
+     * {@link #legacyBuildTriggersEffective()} with the opposite default: {@code null} means the payload said nothing
+     * and the update path keeps what is stored. Read the decision here, never off the raw component, which unboxes to
+     * an NPE on those rows.
      *
      * @return the effective decision, defaulting to off
      */
@@ -56,16 +55,12 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
     }
 
     /**
-     * Whether Artemis' own build-triggered proactive Iris events (build_failed / progress_stalled,
-     * {@code IrisChatSessionService#handleNewResultEvent}) may fire for this course.
-     * <p>
-     * Three states, and the distinction is load-bearing. {@code null} means nobody ever decided:
-     * a settings row written before this field existed has no key, and a full PUT from a client that
-     * does not know the field omits it. Both must keep whatever is stored rather than silently
-     * flipping a course, so the default lives HERE and nowhere else, and the update path merges a
-     * null request value from the persisted one. {@code true} preserves the behaviour every course
-     * had before the field existed; {@code false} is an explicit opt-out, which is what a course
-     * running this thesis' struggle detection wants so build-triggered proactivity has one owner.
+     * Whether Artemis' own build-triggered proactive Iris events may fire for this course. Three states, and the
+     * distinction is load-bearing: {@code null} means nobody ever decided, because a settings row written before this
+     * field existed has no key and a full PUT from a client that does not know the field omits it. Both must keep
+     * what is stored, so the default lives here and the update path merges a null request value from the persisted
+     * one. {@code true} preserves the behaviour every course had before the field existed, {@code false} is an
+     * explicit opt-out so that build-triggered proactivity has one owner.
      *
      * @return the effective decision, defaulting to on
      */
@@ -120,9 +115,9 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
     }
 
     /**
-     * Like {@link #of(boolean, String, IrisPipelineVariant, IrisSupportLevel, IrisRateLimitConfiguration, Boolean)} but
-     * carries the legacy-trigger decision as well. Both nullable values are passed through UNCHANGED, never
-     * defaulted: only the update path may resolve a null, by merging the persisted value.
+     * Like {@link #of(boolean, String, IrisPipelineVariant, IrisSupportLevel, IrisRateLimitConfiguration, Boolean)}
+     * but carries the legacy-trigger decision as well. Both nullable values pass through unchanged: only the update
+     * path may resolve a null, by merging the persisted value.
      *
      * @param enabled                    desired enabled flag
      * @param customInstructions         optional custom instructions
