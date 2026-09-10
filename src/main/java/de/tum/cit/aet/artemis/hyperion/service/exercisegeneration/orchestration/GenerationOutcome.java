@@ -44,8 +44,10 @@ public final class GenerationOutcome {
         Map<String, WorkspaceFile> original = seed.snapshot().files().stream().collect(Collectors.toMap(WorkspaceFile::path, file -> file));
         if (output != null) {
             Map<String, WorkspaceFile> produced = output.candidate().files().stream().collect(Collectors.toMap(WorkspaceFile::path, file -> file));
+            // Early unverified failures may capture only diagnostics, before any repository artifacts exist.
+            boolean capturesRepositories = output.verification().mechanicallyVerified() || produced.keySet().stream().anyMatch(path -> path.contains("/"));
             for (WorkspaceFile seedFile : seed.snapshot().files()) {
-                if (BinaryContent.isBinary(seedFile.content()) && !seedFile.equals(produced.get(seedFile.path()))) {
+                if (capturesRepositories && BinaryContent.isBinary(seedFile.content()) && !seedFile.equals(produced.get(seedFile.path()))) {
                     throw new IllegalArgumentException("Generated output omitted or changed canonical binary scaffolding");
                 }
             }
