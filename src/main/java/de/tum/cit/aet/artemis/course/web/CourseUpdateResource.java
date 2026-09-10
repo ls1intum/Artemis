@@ -126,12 +126,20 @@ public class CourseUpdateResource {
         User user = userRepository.getUserWithAuthorities();
 
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
-        // from loading (and potentially modifying) a different course than the URL indicates.
-        // Give a course that predates the Athena configuration one before loading it: saving the course writes back the
-        // configuration it was loaded with, so a course loaded without one would detach a configuration that a concurrent
-        // first Athena switch attached in between, and that switch would silently be lost.
-        courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
+        // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+
+        // only allow admins or instructors of the existing course to change it
+        // this is important, otherwise someone could put themselves into the instructor group of the updated course
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
+
+        // Saving the course writes back the Athena configuration it was loaded with, so a course that predates the
+        // configuration would detach one that a concurrent first Athena switch attached in between, and that switch would
+        // silently be lost. Give such a course its configuration and load it again, only once the user may change it.
+        if (existingCourse.getAthenaConfig() == null) {
+            courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
+            existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+        }
 
         // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
@@ -147,10 +155,6 @@ public class CourseUpdateResource {
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
-
-        // only allow admins or instructors of the existing course to change it
-        // this is important, otherwise someone could put themselves into the instructor group of the updated course
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
         if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)

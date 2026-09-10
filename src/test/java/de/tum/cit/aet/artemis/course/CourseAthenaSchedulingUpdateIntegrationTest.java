@@ -93,11 +93,15 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
      * carries it. Returning the parsed tree instead of a {@code Course} lets callers read it directly.
      */
     private JsonNode updateCourse(Course courseToUpdate) throws Exception {
+        return updateCourse(courseToUpdate, HttpStatus.OK);
+    }
+
+    private JsonNode updateCourse(Course courseToUpdate, HttpStatus expectedStatus) throws Exception {
         ObjectMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-        MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         return mapper.readTree(result.getResponse().getContentAsString());
     }
 
@@ -191,5 +195,18 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
 
         assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(configId);
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndCreatesNoConfig() throws Exception {
+        // The course update gives a course that predates the Athena configuration one, which must only happen once the
+        // user has been authorized for the course: an instructor of another course is rejected without leaving state.
+        userUtilService.addInstructor(TEST_PREFIX + "instructor2");
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+
+        updateCourse(course, HttpStatus.FORBIDDEN);
+
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
     }
 }
