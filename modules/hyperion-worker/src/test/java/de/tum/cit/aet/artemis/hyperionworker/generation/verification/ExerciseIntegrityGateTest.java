@@ -967,6 +967,36 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void preservationChecksDoNotReplaceOrDiluteAssessedSeamEvidence() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Payment | accept fractional amounts | 3 | no |
+
+                ## Contract Risk Inventory
+                | Seam | Rules | Admitted partitions | Excluded inputs |
+                |---|---|---|---|
+                | S1 | R1 | S1.P1: fractional amounts | none |
+                """;
+        String plan = """
+                {"tests":[
+                  {"name":"acceptsFraction","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"preservesGuard","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}
+                ]}
+                """;
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("acceptsFraction", "preservesGuard"))).isEmpty();
+
+        String preservationOnly = """
+                {"tests":[{"name":"preservesGuard","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                """;
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, preservationOnly, List.of("preservesGuard"))).isNotEmpty();
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons("", preservationOnly, List.of("preservesGuard"))).isNotEmpty();
+        assertThat(ExerciseIntegrityGate.statementTraceabilityReasons(plan, "[task][Extend payment](acceptsFraction,preservesGuard)"))
+                .anyMatch(reason -> reason.contains("preservation") && reason.contains("preservesGuard"));
+    }
+
+    @Test
     void approvedTestPlan_rejectsUnplannedTestsWithoutASpecification() {
         String plan = """
                 {"tests":[{"name":"planned","seam":"S1","seamWeightTier":1,"visibility":"ALWAYS"}]}

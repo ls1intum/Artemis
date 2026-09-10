@@ -35,10 +35,10 @@ import de.tum.cit.aet.artemis.hyperionworker.sandbox.SandboxExecResult;
  * Independently verifies generated exercises by building solution and template from a pristine script and parsing verifier-owned reports with the production LocalCI parsers, so
  * the oracle's view of a build is the same one grading will take (parity by construction).
  * <p>
- * The enforced starter-credit policy: the solution must pass every test, and the template must compile and run the same tests while failing every non-structural gradable one.
+ * The solution must pass every test. The template must run the same tests, fail every assessed student-work test, and pass every declared preservation check.
  * Build/compile/configure gates are exempt because they only gate compilation, and structural tests seeded by {@link StructuralOracleSeedingService} may legitimately pass, as
- * Artemis's own reference exercises give early structural credit for a correctly-shaped stub. There is no "at least half" or "at least one per task" leniency: each individual
- * non-structural gradable test that passes on the template is an actionable rejection naming that test.
+ * Artemis's own reference exercises include correctly-shaped stubs. Preservation checks carry zero weight and never replace assessed evidence. Every assessed test that passes
+ * on the starter remains an actionable rejection; there is no percentage-based leniency.
  */
 public class DifferentialVerificationService {
 
@@ -167,7 +167,8 @@ public class DifferentialVerificationService {
      * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, VerificationRequest request, Runnable restoreCandidate) {
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTests(), request.producedProblemStatement(), restoreCandidate);
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTests(), request.producedProblemStatement(),
+                request.producedTestPlan(), restoreCandidate);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -265,7 +266,9 @@ public class DifferentialVerificationService {
         Map<String, String> templateFiles = sourceSnapshot.templateFiles();
         Map<String, String> solutionFiles = sourceSnapshot.solutionFiles();
         String problemStatement = readProblemStatement(sandbox, sessionId);
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTests, problemStatement, () -> sourceSnapshot.restore(sandbox, sessionId));
+        String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTests, problemStatement, testPlanJson,
+                () -> sourceSnapshot.restore(sandbox, sessionId));
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
 
@@ -285,7 +288,6 @@ public class DifferentialVerificationService {
                 .flatMap(spec -> ExerciseIntegrityGate.approvedSpecificationReasons(spec, templateFiles, solutionFiles).stream()).distinct().toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
-        String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
         List<String> approvedTestPlanReasons = includeStatementChecks
                 ? ExerciseIntegrityGate.approvedTestPlanReasons(String.join("\n\n", contractSpecifications), testPlanJson, solution.testNames(), exercise.hasDueDate(),
                         seededStructuralTestNames)
@@ -305,7 +307,7 @@ public class DifferentialVerificationService {
                 includeStatementChecks ? analysis.unresolvedTaskBindings() : List.of(), analysis.possiblyDeadFiles(),
                 (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && approvedSpecificationHolds
                         && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
-                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)), solution.buildDiagnostic(), template.buildDiagnostic());
+                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)), solution.buildDiagnostic(), template.buildDiagnostic(), analysis.preservationTestNames());
     }
 
     /**
@@ -382,10 +384,23 @@ public class DifferentialVerificationService {
      * post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
      */
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,
-            @Nullable String producedProblemStatement, Runnable restoreCandidate) {
+            @Nullable String producedProblemStatement, @Nullable String producedTestPlan, Runnable restoreCandidate) {
         List<String> reasons = new ArrayList<>();
         List<String> statementReasons = new ArrayList<>();
         Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
+        GeneratedTestPlan plan = null;
+        boolean planValid = true;
+        if (producedTestPlan != null && !producedTestPlan.isBlank()) {
+            try {
+                plan = GeneratedTestPlan.parse(producedTestPlan);
+            }
+            catch (IllegalArgumentException exception) {
+                reasons.add("Invalid test-plan.json: " + exception.getMessage());
+                planValid = false;
+            }
+        }
+        Set<String> preservationTestNames = plan == null ? Set.of()
+                : plan.preservationEntries().stream().map(GeneratedTestPlan.Entry::name).collect(Collectors.toUnmodifiableSet());
 
         BuildSummary behavioralSolution;
         BuildSummary behavioralTemplate;
@@ -424,9 +439,17 @@ public class DifferentialVerificationService {
         boolean noDuplicateTestNames = checkNoDuplicateTestNames(solution, reasons);
         boolean templateBuildSound = checkTemplateBuildSound(solution, template, reasons);
         List<String> behaviouralTestNames = behaviouralTestNames(solution, seededStructuralTestNames);
-        boolean hasBehaviouralTests = checkHasBehaviouralTests(behaviouralTestNames, reasons);
-        List<String> gradableTestsPassingOnTemplate = templateBuildSound && hasBehaviouralTests ? gradableTestsPassingOnTemplate(behaviouralTestNames, template) : List.of();
-        boolean templateFailed = templateBuildSound && hasBehaviouralTests && checkNoGradableTestPassesTemplate(gradableTestsPassingOnTemplate, reasons);
+        List<String> assessmentTestNames = behaviouralTestNames.stream().filter(name -> !preservationTestNames.contains(name)).toList();
+        boolean hasBehaviouralTests = checkHasBehaviouralTests(assessmentTestNames, reasons);
+        List<String> invalidPreservation = preservationTestNames.stream()
+                .filter(name -> !behaviouralTestNames.contains(name) || !template.testNames().contains(name) || template.testFailedNames().contains(name)).sorted().toList();
+        if (!invalidPreservation.isEmpty()) {
+            reasons.add("These preservation checks do not pass on the template: " + invalidPreservation
+                    + ". They must run as behavioral tests and pass on both repositories. Restore the supplied behavior; do not erase it to manufacture a student gap.");
+        }
+        List<String> gradableTestsPassingOnTemplate = templateBuildSound && hasBehaviouralTests ? gradableTestsPassingOnTemplate(assessmentTestNames, template) : List.of();
+        boolean templateFailed = planValid && invalidPreservation.isEmpty() && templateBuildSound && hasBehaviouralTests
+                && checkNoGradableTestPassesTemplate(gradableTestsPassingOnTemplate, reasons);
 
         String problemStatement = producedProblemStatement != null ? producedProblemStatement : readProblemStatement(sandbox, sessionId);
         boolean problemStatementHasTasks = ProblemStatementBindingChecker.hasTaskBindings(problemStatement);
@@ -451,15 +474,19 @@ public class DifferentialVerificationService {
         }
 
         Set<String> hiddenTestNames = readHiddenTestNames(sandbox, sessionId);
+        Set<String> unboundTestNames = new LinkedHashSet<>(hiddenTestNames);
+        preservationTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).forEach(unboundTestNames::add);
         List<String> unresolvedTaskBindings = ProblemStatementBindingChecker.unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
-        List<String> bindableTestNames = ProblemStatementBindingChecker.bindableTestNames(solution.testNames(), hiddenTestNames);
+        List<String> bindableTestNames = ProblemStatementBindingChecker.bindableTestNames(solution.testNames(), unboundTestNames);
         boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, bindableTestNames, problemStatementHasTasks, statementReasons);
         List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, statementReasons);
         // Hidden tests must stay unbound, so they are exempt here and forbidden below. Both halves must move together: exempting alone lets a bound hidden test through,
         // forbidding alone makes the two gates jointly unsatisfiable.
-        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, hiddenTestNames);
+        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, unboundTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, statementReasons);
+        List<String> preservationBindingReasons = plan == null ? List.of() : ProblemStatementBindingChecker.preservationTaskBindingReasons(problemStatement, plan);
+        statementReasons.addAll(preservationBindingReasons);
         List<String> hiddenTestMentions = ProblemStatementBindingChecker.hiddenTestMentions(problemStatement, hiddenTestNames);
         boolean noHiddenTestsExposed = hiddenTestMentions.isEmpty();
         if (!noHiddenTestsExposed) {
@@ -517,14 +544,14 @@ public class DifferentialVerificationService {
 
         boolean testArtifactGatesPass = laneResultsSound && solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0;
         boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && !taskBindingHiddenInMarkdownCode && taskKeywordsWellFormed && taskBindingsResolve
-                && noDuplicateTaskBindings && allGradableTestsBound && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve && noStrayUmlDirectives
-                && diagramSyntaxValid && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
+                && noDuplicateTaskBindings && allGradableTestsBound && preservationBindingReasons.isEmpty() && proseHygienic && taskTitlesUnique && statementVoiceOk
+                && diagramLinksResolve && noStrayUmlDirectives && diagramSyntaxValid && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         List<String> actionableReasons = new ArrayList<>(reasons);
         actionableReasons.addAll(statementReasons);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, testArtifactGatesPass, actionableGatesPass, List.copyOf(reasons),
-                List.copyOf(actionableReasons), unresolvedTaskBindings, possiblyDeadFiles, gradableTestsPassingOnTemplate);
+                List.copyOf(actionableReasons), unresolvedTaskBindings, possiblyDeadFiles, gradableTestsPassingOnTemplate, preservationTestNames.stream().sorted().toList());
     }
 
     /**
@@ -534,7 +561,7 @@ public class DifferentialVerificationService {
      */
     private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean testArtifactGatesPass,
             boolean actionableGatesPass, List<String> testArtifactReasons, List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles,
-            List<String> gradableTestsPassingOnTemplate) {
+            List<String> gradableTestsPassingOnTemplate, List<String> preservationTestNames) {
     }
 
     /**
@@ -687,9 +714,8 @@ public class DifferentialVerificationService {
             return true;
         }
         reasons.add("These non-structural gradable tests pass on the template but must fail: " + gradableTestsPassingOnTemplate
-                + ". Starter credit is allowed only for structural tests seeded by the exercise scaffold (checking a class/method/attribute/constructor shape exists) — every other "
-                + "test is behavioural and a student who has not started must not pass it. Strip the template's implementation to a wrong placeholder for each of these until it "
-                + "fails.");
+                + ". Remove only the assigned student work, not supplied behavior. Checks solely for supplied behavior belong in test-plan.json as zero-credit PRESERVATION "
+                + "checks, which must pass on both repositories and cannot cover a student-work seam.");
         return false;
     }
 

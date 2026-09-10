@@ -362,23 +362,26 @@ public final class ExerciseIntegrityGate {
                     + ". Map every agent-authored behavioral test to one approved seam so no test bypasses the approved weight, visibility, or statement traceability. "
                     + "Server-seeded structural checks are managed separately and must not be added to the plan.");
         }
+        if (plan.assessmentEntries().isEmpty()) {
+            return List.of("the final test-plan.json has no assessed student work. Preservation checks cover supplied behavior and cannot replace a graded task.");
+        }
         List<StageCheckService.TestingStrategyRow> declaredRows = StageCheckService.testingStrategyRows(approvedSpec);
         List<String> declaredSeams = declaredRows.stream().map(StageCheckService.TestingStrategyRow::seamId).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
         // Seam traceability is enforced exactly where the specification declares seams; a candidate without them (an adaptation of a hand-authored exercise) is not made to invent
         // metadata that has nowhere to be persisted.
         if (!declaredSeams.isEmpty()) {
-            List<String> entriesWithoutSeams = plan.tests().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
+            List<String> entriesWithoutSeams = plan.assessmentEntries().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
             if (!entriesWithoutSeams.isEmpty()) {
                 return List.of("the final test-plan.json has no seam for test(s) " + entriesWithoutSeams + ". Map every generated test to one approved Testing Strategy ID: "
                         + declaredSeams + ".");
             }
-            List<String> undeclaredSeams = plan.tests().stream().map(GeneratedTestPlan.Entry::seam).filter(seam -> !declaredSeams.contains(seam)).distinct().toList();
+            List<String> undeclaredSeams = plan.assessmentEntries().stream().map(GeneratedTestPlan.Entry::seam).filter(seam -> !declaredSeams.contains(seam)).distinct().toList();
             if (!undeclaredSeams.isEmpty()) {
                 return List.of("the final test-plan.json uses seam(s) the approved Testing Strategy never declared: " + undeclaredSeams + ". Use only " + declaredSeams + ".");
             }
             Map<String, Double> weightBySeam = declaredRows.stream().filter(row -> row.weightTier().matches("[123]"))
                     .collect(Collectors.toMap(StageCheckService.TestingStrategyRow::seamId, row -> Double.parseDouble(row.weightTier()), (first, ignored) -> first));
-            List<String> wrongWeights = plan.tests().stream().filter(entry -> weightBySeam.containsKey(entry.seam()))
+            List<String> wrongWeights = plan.assessmentEntries().stream().filter(entry -> weightBySeam.containsKey(entry.seam()))
                     .filter(entry -> Double.compare(entry.seamWeightTier(), weightBySeam.get(entry.seam())) != 0)
                     .map(entry -> entry.name() + "=" + entry.seamWeightTier() + " (seam " + entry.seam() + " requires " + weightBySeam.get(entry.seam()).intValue() + ")").toList();
             if (!wrongWeights.isEmpty()) {
@@ -390,13 +393,13 @@ public final class ExerciseIntegrityGate {
                 Map<String, List<String>> partitionsBySeam = declaredRiskPartitions.stream()
                         .collect(Collectors.groupingBy(partition -> partition.substring(0, partition.indexOf('.')), LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
                 // Older programmatic plans can infer a seam's sole partition. Multiple partitions require explicit claims so broad test names cannot silently collapse them.
-                List<String> testsWithoutRiskPartitions = plan.tests().stream().filter(entry -> entry.riskPartitions().isEmpty())
+                List<String> testsWithoutRiskPartitions = plan.assessmentEntries().stream().filter(entry -> entry.riskPartitions().isEmpty())
                         .filter(entry -> partitionsBySeam.getOrDefault(entry.seam(), List.of()).size() != 1).map(GeneratedTestPlan.Entry::name).toList();
                 if (!testsWithoutRiskPartitions.isEmpty()) {
                     return List.of("the final test-plan.json does not say which Contract Risk Inventory partitions test(s) " + testsWithoutRiskPartitions
                             + " witness. Add non-empty riskPartitions arrays using the approved IDs for each test's seam.");
                 }
-                List<String> mappedRiskPartitions = plan.tests().stream().flatMap(entry -> {
+                List<String> mappedRiskPartitions = plan.assessmentEntries().stream().flatMap(entry -> {
                     if (!entry.riskPartitions().isEmpty()) {
                         return entry.riskPartitions().stream();
                     }

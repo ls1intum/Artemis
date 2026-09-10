@@ -800,6 +800,107 @@ class DifferentialVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("sortsUnsortedArray") && r.contains("sortsArrayWithDuplicates"));
     }
 
+    @Nested
+    class PreservationChecks {
+
+        private static final List<String> NAMES = List.of("acceptsFraction", "preservesLockedGuard");
+
+        private static final String STATEMENT = "# Payments\n[task][Extend payments](acceptsFraction)\nAccept fractional amounts while preserving the existing locked-account guard.\n";
+
+        private static final String PLAN = """
+                {"tests":[
+                  {"name":"acceptsFraction","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"preservesLockedGuard","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}
+                ]}
+                """;
+
+        private static ScriptedSandbox sandbox(List<String> templateFailures, String statement) {
+            return new ScriptedSandbox(resultWithFails(0, NAMES, List.of()), resultWithFails(1, NAMES, templateFailures), statement).withTestPlan(PLAN);
+        }
+
+        private static VerificationResult verifyPreservation(ScriptedSandbox sandbox, String capturedPlan) {
+            return newVerifier().verify(sandbox, "s", input(), new VerificationRequest(harness(), Map.of(), Map.of(), harness(), Map.of(), Map.of(), Set.of(),
+                    SeededStructuralTests.EMPTY, Set.of(), sandbox.problemStatement, capturedPlan, false), NO_RESTORE);
+        }
+
+        @Test
+        void acceptsAnExistingStarterWhoseAssignedChangeStillFails() {
+            VerificationResult result = verifyPreservation(sandbox(List.of("acceptsFraction"), STATEMENT), PLAN);
+
+            assertThat(result.mechanicallyVerified()).as("%s", result.reasons()).isTrue();
+        }
+
+        @Test
+        void rejectsErasingSuppliedBehaviorToMakeEveryTestFail() {
+            VerificationResult result = verifyPreservation(sandbox(NAMES, STATEMENT), PLAN);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("preservation") && reason.contains("preservesLockedGuard"));
+        }
+
+        @Test
+        void stillRejectsAlreadySolvedStudentWork() {
+            VerificationResult result = verifyPreservation(sandbox(List.of(), STATEMENT), PLAN);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("must fail") && reason.contains("acceptsFraction"));
+        }
+
+        @Test
+        void doesNotAcceptPreservationChecksAsStudentTaskBindings() {
+            VerificationResult result = verifyPreservation(sandbox(List.of("acceptsFraction"), STATEMENT.replace("(acceptsFraction)", "(acceptsFraction,preservesLockedGuard)")),
+                    PLAN);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("preservation") && reason.contains("[task]"));
+        }
+
+        @Test
+        void cannotUseAWorkspacePlanToReclassifyTheCapturedCandidate() {
+            String capturedPlan = """
+                    {"tests":[
+                      {"name":"acceptsFraction","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                      {"name":"preservesLockedGuard","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}
+                    ]}
+                    """;
+            VerificationResult result = verifyPreservation(sandbox(List.of("acceptsFraction"), STATEMENT), capturedPlan);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("must fail") && reason.contains("preservesLockedGuard"));
+        }
+
+        @Test
+        void selfCheckUsesTheSamePreservationPolicy() {
+            AgentVerifyReport report = newVerifier().selfCheckTestsStage(sandbox(List.of("acceptsFraction"), STATEMENT), "s", input(), harness(), SeededStructuralTests.EMPTY);
+
+            assertThat(report.wouldBeAccepted()).isTrue();
+            assertThat(report.templateWronglyPassing()).isEmpty();
+            assertThat(report.preservationTestNames()).containsExactly("preservesLockedGuard");
+            assertThat(report.toObservation().lines().filter(line -> line.startsWith("Exact test names"))).singleElement().asString().contains("acceptsFraction")
+                    .doesNotContain("preservesLockedGuard");
+        }
+
+        @Test
+        void preservationMustAlsoPassOnTheCompletedSolution() {
+            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(1, NAMES, List.of("preservesLockedGuard")), resultWithFails(1, NAMES, List.of("acceptsFraction")),
+                    STATEMENT).withTestPlan(PLAN);
+
+            VerificationResult result = verifyPreservation(sandbox, PLAN);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.solutionPassed()).isFalse();
+        }
+
+        @Test
+        void missingPreservationEvidenceCannotBeExempted() {
+            String plan = PLAN.replace("preservesLockedGuard", "neverRan");
+            VerificationResult result = verifyPreservation(sandbox(List.of("acceptsFraction"), STATEMENT), plan);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("preservation") && reason.contains("neverRan"));
+        }
+    }
+
     @Test
     void shouldRejectWhenSolutionFails() {
         VerificationResult result = verify(result(5, 2, 0, 1), result(5, 5, 0, 1));

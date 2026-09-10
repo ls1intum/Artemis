@@ -21,7 +21,8 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  * A tier belongs to a seam rather than to a single test and is repeated on each of that seam's tests so entries stay self-contained; Artemis stores weights per test case, so the
  * tier is divided evenly across the seam's cases. The seam id itself is transient generation metadata that persistence ignores, and a plan without seams still parses so a
  * candidate verified without them can still be persisted; the TESTS-stage gate is what requires seams wherever the specification declares them. Risk-partition IDs trace the
- * specification's boundary inventory to executable evidence and are likewise generation metadata.
+ * specification's boundary inventory to executable evidence and are likewise generation metadata. Preservation checks protect supplied behavior, carry zero weight, and do not
+ * contribute to student-work seams or their risk coverage.
  */
 public record GeneratedTestPlan(List<Entry> tests) {
 
@@ -29,7 +30,11 @@ public record GeneratedTestPlan(List<Entry> tests) {
 
     private static final Pattern PARTITION_ID = Pattern.compile("S[1-9][0-9]*\\.P[1-9][0-9]*");
 
-    public record Entry(String name, String seam, double seamWeightTier, String visibility, List<String> riskPartitions) {
+    public enum Purpose {
+        ASSESSMENT, PRESERVATION
+    }
+
+    public record Entry(String name, String seam, double seamWeightTier, String visibility, List<String> riskPartitions, Purpose purpose) {
 
         public Entry {
             riskPartitions = riskPartitions == null ? List.of() : List.copyOf(riskPartitions);
@@ -37,6 +42,10 @@ public record GeneratedTestPlan(List<Entry> tests) {
 
         public Entry(String name, String seam, double seamWeightTier, String visibility) {
             this(name, seam, seamWeightTier, visibility, List.of());
+        }
+
+        public Entry(String name, String seam, double seamWeightTier, String visibility, List<String> riskPartitions) {
+            this(name, seam, seamWeightTier, visibility, riskPartitions, Purpose.ASSESSMENT);
         }
     }
 
@@ -72,6 +81,13 @@ public record GeneratedTestPlan(List<Entry> tests) {
             if (name.isBlank()) {
                 throw new IllegalArgumentException("Every test-plan.json entry needs a non-empty \"name\" (the exact test name verify reports).");
             }
+            Purpose purpose;
+            try {
+                purpose = Purpose.valueOf(testNode.has("purpose") ? testNode.path("purpose").asString("") : "ASSESSMENT");
+            }
+            catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs purpose ASSESSMENT or PRESERVATION.");
+            }
             String seam = testNode.path("seam").asString("").strip();
             if (!seam.isEmpty() && !SEAM_ID.matcher(seam).matches()) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seam '" + seam + "'; use a stable SPEC seam ID such as \"S1\".");
@@ -83,7 +99,7 @@ public record GeneratedTestPlan(List<Entry> tests) {
                         + (int) MAX_SEAM_WEIGHT_TIER + " (core seams weigh more than supporting or edge seams).");
             }
             double tier = tierNode.asDouble();
-            if (tier < MIN_SEAM_WEIGHT_TIER || tier > MAX_SEAM_WEIGHT_TIER) {
+            if (!Double.isFinite(tier) || (purpose == Purpose.ASSESSMENT && (tier < MIN_SEAM_WEIGHT_TIER || tier > MAX_SEAM_WEIGHT_TIER))) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seamWeightTier " + tier + "; tiers must be between " + (int) MIN_SEAM_WEIGHT_TIER
                         + " and " + (int) MAX_SEAM_WEIGHT_TIER + ".");
             }
@@ -92,7 +108,11 @@ public record GeneratedTestPlan(List<Entry> tests) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has visibility '" + visibility + "'; use \"ALWAYS\" or \"AFTER_DUE_DATE\".");
             }
             List<String> riskPartitions = parseRiskPartitions(testNode, name, seam);
-            entries.add(new Entry(name, seam, tier, visibility, riskPartitions));
+            if (purpose == Purpose.PRESERVATION && (tier != 0 || !"ALWAYS".equals(visibility) || !seam.isEmpty() || !riskPartitions.isEmpty())) {
+                throw new IllegalArgumentException("test-plan.json preservation check '" + name
+                        + "' must have seamWeightTier 0, visibility ALWAYS, and no seam or riskPartitions: supplied behavior earns no credit and cannot evidence student work.");
+            }
+            entries.add(new Entry(name, seam, tier, visibility, riskPartitions, purpose));
         }
         List<String> duplicateNames = entries.stream().map(Entry::name).collect(Collectors.groupingBy(name -> name)).entrySet().stream()
                 .filter(group -> group.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
@@ -133,19 +153,32 @@ public record GeneratedTestPlan(List<Entry> tests) {
         return tests.stream().filter(entry -> "AFTER_DUE_DATE".equals(entry.visibility())).toList();
     }
 
-    /** The entries students can satisfy before the due date and therefore may appear in a statement task binding. */
+    /** Assessed entries visible before the due date; preservation checks remain visible feedback but never become student tasks. */
     public List<Entry> visibleEntries() {
-        return tests.stream().filter(entry -> "ALWAYS".equals(entry.visibility())).toList();
+        return assessmentEntries().stream().filter(entry -> "ALWAYS".equals(entry.visibility())).toList();
+    }
+
+    public List<Entry> assessmentEntries() {
+        return tests.stream().filter(entry -> entry.purpose() == Purpose.ASSESSMENT).toList();
+    }
+
+    public List<Entry> preservationEntries() {
+        return tests.stream().filter(entry -> entry.purpose() == Purpose.PRESERVATION).toList();
     }
 
     /**
      * Artemis weights individual test cases while the specification assigns importance to a learning seam, so each tier is split evenly across its mapped cases and adding
-     * behavioural partitions cannot silently make a seam worth more. The plan contains only agent-authored behavioural tests; server-seeded structural tests are identified from
+     * behavioural partitions cannot silently make a seam worth more. Preservation checks carry zero weight. The plan contains only agent-authored behavioural tests; server-seeded
+     * structural tests are identified from
      * their trusted provenance outside this agent-authored file and are therefore never classified by their forgeable names here.
      */
     public Map<String, Double> effectiveWeightsByName() {
-        Map<String, Long> totalCountBySeam = tests.stream().filter(entry -> !entry.seam().isBlank()).collect(Collectors.groupingBy(Entry::seam, Collectors.counting()));
+        Map<String, Long> totalCountBySeam = assessmentEntries().stream().filter(entry -> !entry.seam().isBlank())
+                .collect(Collectors.groupingBy(Entry::seam, Collectors.counting()));
         return tests.stream().collect(Collectors.toUnmodifiableMap(Entry::name, entry -> {
+            if (entry.purpose() == Purpose.PRESERVATION) {
+                return 0.0;
+            }
             if (entry.seam().isBlank()) {
                 return entry.seamWeightTier();
             }

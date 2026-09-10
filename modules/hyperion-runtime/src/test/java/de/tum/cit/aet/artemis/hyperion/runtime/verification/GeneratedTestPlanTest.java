@@ -4,12 +4,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Unit tests for the TESTS stage's grading plan. Every rejection message is what the agent reads back from the stage gate, so each test pins the actionable part of the message,
  * not just the fact that parsing failed — a rejection the agent cannot act on is the same as no feedback at all.
  */
 class GeneratedTestPlanTest {
+
+    @Test
+    void preservationChecksRemainVisibleButDoNotEarnCreditOrBecomeStudentTasks() {
+        GeneratedTestPlan plan = GeneratedTestPlan.parse("""
+                {"tests":[
+                  {"name":"acceptsFractionalPayment","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"acceptsSmallFraction","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"preservesLockedGuard","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}
+                ]}
+                """);
+
+        assertThat(plan.tests()).hasSize(3);
+        assertThat(plan.visibleEntries()).extracting(GeneratedTestPlan.Entry::name).containsExactly("acceptsFractionalPayment", "acceptsSmallFraction");
+        assertThat(plan.hiddenEntries()).isEmpty();
+        assertThat(plan.effectiveWeightsByName()).containsEntry("acceptsFractionalPayment", 1.5).containsEntry("acceptsSmallFraction", 1.5).containsEntry("preservesLockedGuard",
+                0.0);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\"purpose\":\"PRESERVATION\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"",
+            "\"purpose\":\"PRESERVATION\",\"seamWeightTier\":0,\"visibility\":\"AFTER_DUE_DATE\"",
+            "\"purpose\":\"PRESERVATION\",\"seamWeightTier\":0,\"visibility\":\"ALWAYS\",\"seam\":\"S1\"",
+            "\"purpose\":\"PRESERVATION\",\"seamWeightTier\":0,\"visibility\":\"ALWAYS\",\"riskPartitions\":[\"S1.P1\"]",
+            "\"purpose\":\"ASSSESSMENT\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"" })
+    void rejectsPreservationChecksThatCouldHideOrClaimStudentWork(String entryFields) {
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"check\"," + entryFields + "}]}"));
+    }
 
     @Test
     void parsesSeamWeightTiersAndVisibility() {
