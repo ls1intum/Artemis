@@ -146,7 +146,6 @@ class StubExerciseTitleChannelNameComponent {
     readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
 }
 
-// Settable stand-ins so each test can drive both branches of the title/channel wiring.
 class MockTitleChannelNameComponent {
     channelFieldDisplayed = true;
     isChannelFieldDisplayed = () => this.channelFieldDisplayed;
@@ -846,8 +845,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // The type-based viewChild never matches the selector-registered stub, so override the signal
-            // directly. Scoped to this block's own fixture.
             titleChannelNameComponentMock = new MockTitleChannelNameComponent();
             component.exerciseTitleChannelNameComponent = (() => ({
                 titleChannelNameComponent: () => titleChannelNameComponentMock,

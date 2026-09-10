@@ -607,7 +607,6 @@ describe('DragAndDropQuestionEditComponent', () => {
             scoringType: ScoringType.ALL_OR_NOTHING,
         } as DragAndDropQuestion;
         component.backupQuestion = backupQuestion;
-        // the shared spy already recorded the question-input effect's emit; flush it, then start counting
         fixture.detectChanges();
         questionUpdatedSpy.mockClear();
 
@@ -625,7 +624,6 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.text = 'backupText';
-        // the shared spy already recorded the question-input effect's emit; flush it, then start counting
         fixture.detectChanges();
         questionUpdatedSpy.mockClear();
 

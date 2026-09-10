@@ -67,7 +67,6 @@ class StubTitleChannelNameComponent {
     isValid = signal(true);
 }
 
-// Settable stand-ins so each test can drive both branches of the title/channel wiring.
 class MockTitleChannelNameComponent {
     channelFieldDisplayed = true;
     isChannelFieldDisplayed = () => this.channelFieldDisplayed;
@@ -912,8 +911,6 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // The type-based viewChild never matches the selector-registered stub, so override the signal
-            // directly. Scoped to this block's own fixture.
             titleChannelNameComponentMock = new MockTitleChannelNameComponent();
             (comp as unknown as { exerciseTitleChannelNameComponent: unknown }).exerciseTitleChannelNameComponent = () => ({
                 titleChannelNameComponent: () => titleChannelNameComponentMock,

@@ -90,7 +90,6 @@ class MockMarkdownEditorMonacoComponent {
     domainActions = input<unknown[]>([]);
 }
 
-// Settable stand-ins so each test can drive both branches of the title/channel wiring.
 class MockTitleChannelNameComponent {
     isValid = signal(true);
     channelFieldDisplayed = true;
@@ -693,8 +692,6 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // The type-based viewChild never matches the selector-registered stub, so override the signal
-            // directly. Scoped to this block's own fixture.
             titleChannelNameComponentMock = new MockTitleChannelNameComponent();
             component.exerciseTitleChannelNameComponent = (() => ({
                 titleChannelNameComponent: () => titleChannelNameComponentMock,
