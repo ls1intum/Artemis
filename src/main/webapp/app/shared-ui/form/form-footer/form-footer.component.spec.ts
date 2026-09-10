@@ -138,6 +138,25 @@ describe('FormFooterComponent', () => {
         expect(document.getElementById('form-footer-invalid-reasons')).not.toBeNull();
     });
 
+    it('should describe the blocked save button only once while its tooltip is open', () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('invalidReasons', [
+            { translateKey: 'reason.one', translateValues: {} },
+            { translateKey: 'reason.two', translateValues: {} },
+        ]);
+        fixture.detectChanges();
+
+        const host = findSubmitTooltipHost();
+        const button = host.nativeElement as HTMLElement;
+        button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(300);
+        TestBed.inject(ApplicationRef).tick();
+
+        // The tooltip renders the same reasons, so letting it describe the host too would announce each one twice.
+        expect(document.querySelector('.tum-ui-tooltip-bubble')).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBe('form-footer-invalid-reasons');
+    });
+
     it('should not emit save when the blocked button is clicked', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();

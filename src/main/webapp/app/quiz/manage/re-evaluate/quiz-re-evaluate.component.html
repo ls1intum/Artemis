@@ -186,7 +186,7 @@
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
                         <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
-                        <!-- The tooltip only describes its host while it is open, so the reasons also live here permanently for aria-describedby. -->
+                        <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
                         @if (!quizIsValid()) {
                             <ul [id]="saveReasonsId" class="sr-only">
                                 @for (reason of invalidReasons(); track $index) {
@@ -204,6 +204,7 @@
                             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                             (click)="onSaveClick()"
                             [tumUiTooltip]="invalidReasonTexts()"
+                            [tumUiTooltipDescribesHost]="false"
                             [attr.aria-disabled]="isSaveDisabled()"
                             [attr.aria-describedby]="quizIsValid() ? null : saveReasonsId"
                             jhiTranslate="entity.action.save"

@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, ElementRef, OnDestroy, computed, effect, inject, input, numberAttribute } from '@angular/core';
+import { ComponentRef, Directive, ElementRef, OnDestroy, booleanAttribute, computed, effect, inject, input, numberAttribute } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { Subscription, fromEvent } from 'rxjs';
@@ -31,6 +31,11 @@ export class TumUiTooltipDirective implements OnDestroy {
     /** A plain hint, or several reasons to render as a bulleted list. */
     readonly content = input.required<string | readonly string[]>({ alias: 'tumUiTooltip' });
     readonly placement = input<TumUiOverlayPlacement>('top', { alias: 'tumUiTooltipPlacement' });
+    /**
+     * Whether the tooltip adds itself to the host's `aria-describedby` while open. Turn this off on a host that is
+     * already described by permanent markup carrying the same text, so the description is not announced twice.
+     */
+    readonly describesHost = input(true, { alias: 'tumUiTooltipDescribesHost', transform: booleanAttribute });
     readonly showDelayMs = input(150, { transform: numberAttribute });
     readonly hideDelayMs = input(100, { transform: numberAttribute });
 
@@ -190,6 +195,9 @@ export class TumUiTooltipDirective implements OnDestroy {
     }
 
     private addDescribedBy(): void {
+        if (!this.describesHost()) {
+            return;
+        }
         const host = this.elementRef.nativeElement;
         const tokens = (host.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
         if (!tokens.includes(this.tooltipId)) {
@@ -198,6 +206,9 @@ export class TumUiTooltipDirective implements OnDestroy {
         host.setAttribute('aria-describedby', tokens.join(' '));
     }
     private removeDescribedBy(): void {
+        if (!this.describesHost()) {
+            return;
+        }
         const host = this.elementRef.nativeElement;
         const tokens = (host.getAttribute('aria-describedby') ?? '').split(' ').filter((token) => token && token !== this.tooltipId);
         if (tokens.length > 0) {

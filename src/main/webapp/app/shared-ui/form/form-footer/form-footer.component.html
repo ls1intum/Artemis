@@ -21,7 +21,7 @@
     @if (!isCreation() && !isImport()) {
         <jhi-exercise-update-notification class="flex-grow-1 w-100" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
     }
-    <!-- The tooltip only describes its host while it is open, so the reasons also live here permanently for aria-describedby. -->
+    <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
     @if (invalidReasons().length) {
         <ul [id]="invalidReasonsId" class="sr-only">
             @for (reason of invalidReasons(); track $index) {
@@ -47,6 +47,7 @@
                 class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                 size="small"
                 [tumUiTooltip]="invalidReasonTexts()"
+                [tumUiTooltipDescribesHost]="false"
                 [attr.aria-disabled]="isSubmitDisabled()"
                 [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
                 (click)="onGenerateWithAi()"
@@ -66,6 +67,7 @@
             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
             size="small"
             [tumUiTooltip]="invalidReasonTexts()"
+            [tumUiTooltipDescribesHost]="false"
             [attr.aria-disabled]="isSubmitDisabled()"
             [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
             (click)="onSave()"

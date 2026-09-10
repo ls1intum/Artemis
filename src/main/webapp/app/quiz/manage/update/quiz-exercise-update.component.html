@@ -395,7 +395,7 @@
                                     <span jhiTranslate="entity.action.re-evaluate"></span>
                                 </button>
                             }
-                            <!-- The tooltip only describes its host while it is open, so the same text also lives here permanently for aria-describedby. -->
+                            <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
                             @if (!isSaveTooltipDisabled()) {
                                 <div [id]="saveReasonsId" class="sr-only">
                                     <ul>
@@ -413,6 +413,7 @@
                                 class="footer-save-btn aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                                 (click)="onSaveClick()"
                                 [tumUiTooltip]="saveBlockedReasons()"
+                                [tumUiTooltipDescribesHost]="false"
                                 [attr.aria-disabled]="isSaveDisabled()"
                                 [attr.aria-describedby]="isSaveTooltipDisabled() ? null : saveReasonsId"
                             >

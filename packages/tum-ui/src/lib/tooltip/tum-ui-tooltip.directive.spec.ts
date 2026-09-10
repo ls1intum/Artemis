@@ -198,3 +198,47 @@ describe('TumUiTooltipDirective', () => {
         expect(button.getAttribute('aria-describedby')).toBe('external-desc');
     });
 });
+
+@Component({
+    template: `<button aria-describedby="external-desc" [tumUiTooltip]="text()" [tumUiTooltipDescribesHost]="false" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
+    imports: [TumUiTooltipDirective],
+})
+class NonDescribingTooltipHostComponent {
+    text = signal<string | readonly string[]>(['First reason', 'Second reason']);
+}
+
+describe('TumUiTooltipDirective with tumUiTooltipDescribesHost false', () => {
+    let fixture: ComponentFixture<NonDescribingTooltipHostComponent>;
+    let button: HTMLButtonElement;
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [NonDescribingTooltipHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(NonDescribingTooltipHostComponent);
+        fixture.detectChanges();
+        button = fixture.debugElement.query(By.css('button')).nativeElement;
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('shows the tooltip without adding itself to aria-describedby', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+
+        expect(document.querySelector('.tum-ui-tooltip-bubble')).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+
+    it('leaves the external aria-describedby in place when it hides', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+});
