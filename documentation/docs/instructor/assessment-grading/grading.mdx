@@ -4,92 +4,118 @@ title: Grading
 sidebar_label: Grading
 ---
 
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-import gradeKeyBonusImg from "./assets/grading/grade_key_bonus.png";
-import bonusButtonImg from "./assets/grading/bonus_button.png";
-import bonusTooltipImg from "./assets/grading/bonus_tooltip.png";
-import bonusCreateOptionsImg from "./assets/grading/bonus_create_options.png";
-import bonusEditOptionsImg from "./assets/grading/bonus_edit_options.png";
-import bonusFormulaExamplesImg from "./assets/grading/bonus_formula_examples.png";
-import bonusDynamicExampleImg from "./assets/grading/bonus_dynamic_example.png";
+import courseGradingKey from "./assets/grading/course-grading-key.png";
+import bonusCreateOptions from "./assets/grading/bonus-create-options.png";
+import bonusFormula from "./assets/grading/bonus-formula.png";
+import bonusExamples from "./assets/grading/bonus-examples.png";
 
-Artemis allows instructors to define grading keys for courses and exams.
-When the grading key is defined, the total points obtained by a student from all exercises are calculated and mapped to a grade.
-Grading Keys can be either:
+A grading key turns the points a student has collected into a grade. Define one for a course or for an exam, and
+Artemis maps every total onto it automatically — including after the fact, so a key created once the course is over
+still produces grades for everyone.
 
-- `Grade` type which maps the points to a letter or numeric grade with a `First Passing Grade`. This can be used e.g., for final exams or courses without exams that are graded solely by exercises.
-- `Bonus` type which maps the points to a numeric value. This can be used e.g., when the grade obtained in the given course or exam is not an end result but complements a final exam.
+A key is a list of grade steps that together cover every percentage from 0 to 100. Adjacent steps meet at their
+boundary, and **Inclusivity** decides which of the two owns it: with **Lower Bound Inclusive**, a score of exactly 70%
+falls into the step that starts at 70 rather than the one that ends there.
 
-There are two configurable special grades that are automatically treated as failing grades:
+## Grade Types
 
-- `Plagiarism Grade` (default `U`) is assigned when a student has received a [Plagiarism verdict](/instructor/assessment-grading/plagiarism-check) in one or more exercises.
-- `No-participation Grade` (default `X`) is assigned according to the conditions below for courses and exams:
+**Grade Type** decides what the key produces.
 
-- For a course, a student receives this grade if they do not start any exercise, i.e., the number of participations is 0.
-- For an exam, a student receives this grade if they do not submit the exam.
+- **Grade** maps points onto a letter or numeric grade, and needs a **First Passing Grade**. Every step at or above it
+  counts as passed. Use it for a final exam, or for a course graded solely by its exercises.
+- **Bonus** maps points onto a number of bonus points instead of a grade. Use it where the result is not an end in
+  itself but improves something else — most often a final exam.
 
-In bonus assignment calculations, these two special grades are treated equivalent as receiving a total score of 0 from the corresponding course or exam.
+<Image src={courseGradingKey} alt="Course grading key of type Bonus, with its grade steps and special grades" size={ImageSize.large} caption="A course grading key of type Bonus" />
 
-The `Presentation Mode` allows you to decide whether students can hold presentations in the course, e.g. to be eligible for an exam bonus.
-Note that you can define for every exercise whether it should be eligible for the presentation score within the exercise settings. There are three different modes:
+**Mode** decides how the boundaries are written: **Percentage** for a key that works on any total, **Points** for one
+whose bands are absolute. The **Detailed** tab beside **Interval** is the same steps laid out one row per field, which
+is the easier of the two to correct a single boundary in.
 
-- `None`: No presentation can be held.
-- `Basic`: Students must hold a given `Number` of presentations to be eligible for the exam bonus. The presentations are not graded.
-- `Graded`: Students can hold a given `Number` of presentations. The presentations are graded, and their `Combined Weight` makes up for the specified percentage of points in the course.
+**Max. Points for Course** is the total the percentages are measured against, and it is what makes the **Points** mode
+meaningful. For an exam that total feeds the grade calculation itself; for a course it is used only for the example
+calculations.
 
-> **Note:** The `Presentation Mode` is only available for grading keys of courses but not for exams.
+## Special Grades
 
----
+Two grade names are treated as failing whatever the points say, and both are configurable.
 
-## Instructors
+- **Plagiarism Grade**, `U` by default, is assigned when a student has a confirmed plagiarism verdict in any exercise.
+  See [Plagiarism Check](/instructor/assessment-grading/plagiarism-check).
+- **No-participation Grade**, `X` by default, is assigned when a student did not take part at all. In a course that
+  means they started no exercise; in an exam it means they either never started or never handed in.
 
-Instructors can export and import grading keys in CSV format to reuse them inside or outside of Artemis.
-If a grading key is defined, exporting student results includes the obtained grade information as well.
-It is also possible to create or modify grading keys after an exam or course is over.
-In that case student grades will be adjusted automatically.
+In a bonus calculation both count as a total score of zero from the course or exam that awarded them.
 
-> **Note:** You can check the [grading key](/instructor/exams/grade-and-publish#grading-key) for more detailed information on how to create grading keys for courses and exams.
+## Presentations
 
-<Image src={gradeKeyBonusImg} alt={"Course Grading Key with Bonus type"} size={ImageSize.large} />
+**Presentation Mode** decides whether students can hold presentations in the course, for example to become eligible
+for an exam bonus. Each exercise carries its own setting for whether it counts towards the presentation score.
 
----
+- **None** — no presentations.
+- **Basic** — a student must hold the given **Number** of presentations to be eligible for the bonus. The
+  presentations are not graded.
+- **Graded** — a student may hold up to the given **Number** of presentations, they are graded, and their
+  **Combined Weight (%)** is the share of the course points they make up.
+
+<Callout variant={CalloutVariant.info}>
+
+  Presentations belong to a course grading key only. An exam key has no presentation mode.
+
+</Callout>
+
+## Import and Export
+
+**Import CSV** and **Export CSV** move grade steps in and out of Artemis, so a key can be reused across courses or
+edited in a spreadsheet. The columns depend on the grade type: `gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade`
+for a key of type Grade, and `bonusPoints,lowerBoundPercentage,upperBoundPercentage` for one of type Bonus. Points and
+inclusivity are set in Artemis afterwards.
+
+When a grading key exists, exporting student results includes the grade each student reached alongside their points.
+
+For how to create a key step by step, see [Grading Key](/instructor/exams/grade-and-publish#grading-key).
 
 ## Bonus
 
-Instructors can create bonus configurations for exams with `Grade` type grading keys by clicking on <Image src={bonusButtonImg} alt={"bonus"} size={ImageSize.small} hideBorder={true} inline /> on the exam detail page.
-A bonus configuration maps the grade received from a bonus source, which can be a course or another exam, as an improvement to the final exam grade.
-In order to configure a bonus, an instructor needs to choose appropriate values for the fields below:
+A bonus improves the grade of an exam whose key is of type **Grade**, using the result of some other course or exam as
+the source. **Bonus** on the exam detail page opens the configuration.
 
-1. **Bonus strategy** defines how the grade obtained from the bonus source will affect the final exam. Artemis currently supports 2 strategies:
+<Image src={bonusCreateOptions} alt="Bonus configuration with the strategy, the calculation and the bonus source" size={ImageSize.large} caption="Configuring a bonus" />
 
-- *Grades*: First, calculates the target exam grade. Then, applies the bonus to that.
-- *Points*: First, applies the bonus to the student's points. Then, calculates the final grade by matching the resulting points to the target exam's grading key.
+Three choices define it.
 
-2. **Discreteness** (Only applicable if *grades* bonus strategy is selected) specifies how to combine the bonus grade with the exam grade. Currently only the first discreteness option is implemented.
+**Select a bonus strategy** decides what the bonus is applied to.
 
-- *Continuous*: Applies bonus arithmetically to the student's grade. Final grade can be any numeric value between the best and the worst grade step values.
-- *Discrete*: (Not available yet)
+- **Grades** works out the exam grade first, then applies the bonus to that grade. The bonus is applied
+  arithmetically, so the result can be any value between the best and the worst grade step — 1.3 can become 1.2.
+- **Points** applies the bonus to the student's points first, then matches the result against the exam's grading key.
 
-3. **Calculation** defines the sign of the operation to indicate if it is an addition or subtraction.
+**Select calculation** is the sign of the operation: **−** subtracts the bonus, which is what you want where a lower
+number is a better grade, and **+** adds it, for scales where higher is better. Subtraction is the default for
+**Grades** and addition for **Points**.
 
-- *−* (Default option for *grades*): Subtracts bonus.
-- *+* (Default option for *points*): Adds bonus.
+**Select bonus source** is the course or exam that determines the amount. Only courses and exams whose grading key is
+of type **Bonus** are offered, and the one you pick has its grade steps listed underneath so you can see what each
+band is worth.
 
-4. **Bonus source** is the course or exam determining the bonus amount.
+<Callout variant={CalloutVariant.warning}>
 
----
+  Artemis warns you when the strategy and the calculation together would make a student's grade worse rather than
+  better. Read the examples below the form before saving.
 
-When configuring bonus:
+</Callout>
 
-<Image src={bonusCreateOptionsImg} alt={"Bonus Options Create Mode"} size={ImageSize.large} />
+Once the choices are made, Artemis writes the resulting calculation out as a formula, so the configuration can be
+read rather than inferred.
 
-<Image src={bonusEditOptionsImg} alt={"Bonus Options Edit Mode"} size={ImageSize.large} />
+<Image src={bonusFormula} alt="Generated bonus formula for the configured strategy and calculation" size={ImageSize.large} caption="The formula Artemis derives" />
 
-After completing configuration, Artemis generates the bonus calculation formula with examples:
+Underneath, it works that formula through for a range of point totals. The last row of the table is yours to edit: put
+in a pair of totals and Artemis shows the grade that combination would produce, which is the quickest way to find out
+whether a configuration does what you meant.
 
-<Image src={bonusFormulaExamplesImg} alt={"Bonus Formula and Static Examples"} size={ImageSize.large} />
-
-Dynamic examples allow instructors to test values manually:
-
-<Image src={bonusDynamicExampleImg} alt={"Dynamic Example"} size={ImageSize.large} />
+<Image src={bonusExamples} alt="Worked bonus examples, with the last row editable" size={ImageSize.large} caption="Worked examples, and one row to try your own" />
