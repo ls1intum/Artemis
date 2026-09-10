@@ -272,6 +272,27 @@ class GenerationOrchestrationServiceTest {
         verify(workers).release(claim);
     }
 
+    @Test
+    void rejectingTerminalArtifactsDoesNotInvalidateReconciledAccounting() {
+        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
+        var status = mock(ExerciseGenerationStatusDTO.class);
+        when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
+        when(jobs.getStatus(user, exercise)).thenReturn(Optional.of(status));
+        var invalid = new WorkspaceSnapshot(List.of(new WorkspaceFile("unexpected.md", "content".getBytes(StandardCharsets.UTF_8), false)));
+        var output = new GenerationOutput(invalid, new VerificationResult(true, true, true, 1, List.of()), invalid.sha256(), SpecFidelityReport.empty(), "CONVERGED", reported,
+                GenerationOutput.AccountingState.COMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output));
+
+        var outcome = run(() -> false);
+
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        assertThat(outcome.hasCapturedArtifacts()).isFalse();
+        assertThat(outcome.errorMessage()).contains("rejected");
+        verify(usage, never()).markUncertain();
+        verify(jobs, never()).retainUnsavedArtifacts(org.mockito.ArgumentMatchers.anyLong(), any(), any(), any());
+        verify(workers).release(claim);
+    }
+
     private GenerationOutcome run(BooleanSupplier stop) {
         return service.generate(exercise, user, "generate a stack", "job", GenerationMode.GENERATE, stop, progress, fileUpdates::add, usage, "original brief",
                 Instant.now().plusSeconds(600), null);

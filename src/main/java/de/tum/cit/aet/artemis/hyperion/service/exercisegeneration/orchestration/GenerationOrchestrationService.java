@@ -102,6 +102,7 @@ public class GenerationOrchestrationService {
                 sourceBrief);
         var parameters = parameters(resolved);
         var claim = workers.claim(jobId, exercise.getId());
+        boolean accountingComplete = false;
         try {
             var assignment = new GenerationAssignment(claim.identity(), brief, parameters, seed.snapshot(), deadline, claim.imageDigest());
             client.send(new WorkerCommand(1, WorkerCommand.Type.START, claim.identity(), assignment));
@@ -153,7 +154,8 @@ public class GenerationOrchestrationService {
             }
             WorkerEvent finished = terminal.get();
             GenerationOutput output = finished.output();
-            if (output == null || output.accountingState() != GenerationOutput.AccountingState.COMPLETE || !matchesAccount(output, user, exercise)) {
+            accountingComplete = output != null && output.accountingState() == GenerationOutput.AccountingState.COMPLETE && matchesAccount(output, user, exercise);
+            if (!accountingComplete) {
                 markUncertain(usage);
             }
             if (output == null) {
@@ -164,10 +166,12 @@ public class GenerationOrchestrationService {
         }
         catch (RuntimeException failure) {
             log.warn("Generation worker execution {} stopped ({})", claim.identity().executionId(), failure.getClass().getSimpleName());
-            markUncertain(usage);
+            if (!accountingComplete) {
+                markUncertain(usage);
+            }
             GenerationOutput fallback = reviewedFallback(latest.get());
-            return fallback == null ? GenerationOutcome.stopped(seed, jobs.isCancelled(jobId), "Generation worker became unavailable.")
-                    : GenerationOutcome.received(fallback, seed, jobs.isCancelled(jobId));
+            String message = terminal.get() == null ? "Generation worker became unavailable." : "Generation worker output was rejected by core validation.";
+            return fallback == null ? GenerationOutcome.stopped(seed, jobs.isCancelled(jobId), message) : GenerationOutcome.received(fallback, seed, jobs.isCancelled(jobId));
         }
         finally {
             try {

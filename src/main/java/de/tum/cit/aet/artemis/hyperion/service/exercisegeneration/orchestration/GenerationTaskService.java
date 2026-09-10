@@ -270,7 +270,7 @@ public class GenerationTaskService {
                 if (tokenAccountingFailed.get() && !outcome.isMechanicallyVerified()) {
                     emitter.milestone(ExerciseGenerationEventDTO
                             .of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    "The AI provider request failed or returned no usable usage information. Generation stopped without saving. Please try again later.")
+                                    "Complete token accounting could not be verified. Generation stopped without saving. Please try again later.")
                             .withTerminationReason(TerminationReason.RUN_FAILED));
                     return;
                 }
