@@ -14,8 +14,12 @@ rule across tests that each assert nothing meaningful alone.
 ## Non-degenerate witnesses
 
 Choose inputs that distinguish plausible wrong implementations, not just "any input that happens to pass".
-Vary every input dimension a wrong implementation could ignore (if an argument should be irrelevant, prove it
-by varying it; if order matters, pick inputs where the wrong order gives a different answer).
+Vary input dimensions independently: competing order/tie rules must disagree on the expected winner, not
+select the same one. If forwarding an argument or calling exactly once is promised, observe the actual
+argument or call count; equal final state from an argument-ignoring or idempotent collaborator proves neither.
+For object-local state, interleave two instances before observing both. When the contract promises reference
+identity, use equal-but-distinct objects and identity assertions; equality alone does not distinguish them.
+Do not add these requirements when the contract does not promise them.
 
 For delegation, callbacks, strategies, and similar collaborations, prefer a tiny fake or recording
 implementation that returns a distinctive value and records its inputs. This proves the context really uses
@@ -76,6 +80,15 @@ Purpose defaults to `ASSESSMENT`. For a check solely of supplied behavior, use
 `{"name":"<exact test name>","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}`.
 Preservation entries have no seam or riskPartitions, cannot cover student-work partitions, and never bind
 to a `[task]`. They remain visible so a learner who breaks supplied behavior receives useful feedback.
+
+For an existing method students modify, first write separate preservation checks for its already-working
+cases (including a successful case and any guard the change must retain). Call that supplied method directly;
+do not depend on a member students still have to create. Keep these checks passing on the actual old body.
+Then write assessment tests for the new behavior that distinguishes the completed method from that body.
+An unchanged guard does not become new student work merely because it is inside a modified method: its
+standalone regression test is PRESERVATION, not ASSESSMENT. Never erase the old body to make such a test fail.
+The final suite must reject both an unchanged old implementation (missing the extension) and a placeholder
+that discards its working behavior. Do not create a graded task for leaving supplied code untouched.
 
 List every agent-authored behavioral test. Do not list build gates or server-seeded structural checks; Artemis keeps seeded structural checks visible and zero-weight.
 The seam is the stable ID from the specification row this test implements. Start with the highest-risk
