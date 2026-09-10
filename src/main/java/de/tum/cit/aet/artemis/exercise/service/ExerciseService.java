@@ -385,7 +385,7 @@ public class ExerciseService {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
 
-            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            // Filter out questions so users cannot see which answer options are correct.
             if (exercise instanceof QuizExercise quizExercise) {
                 quizExercise.filterSensitiveInformation();
 
@@ -396,17 +396,6 @@ public class ExerciseService {
                 }
             }
         }
-    }
-
-    /**
-     * Updates the points of related exercises if the points of exercises have changed
-     *
-     * @param originalExercise the original exercise
-     * @param updatedExercise  the updatedExercise
-     */
-    @Async
-    public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        updatePointsInRelatedParticipantScores(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
     }
 
     /**
@@ -617,7 +606,7 @@ public class ExerciseService {
             if (!feedbackToBeDeleted.isEmpty()) {
                 Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
-                    existingFeedback.removeAll(feedbackToBeDeleted);
+                    feedbackToBeDeleted.forEach(existingFeedback::remove);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
                 List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));

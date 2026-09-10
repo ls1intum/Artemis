@@ -142,7 +142,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
-        super(fileService, springMvcJacksonConverter, null);
+        super(springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
