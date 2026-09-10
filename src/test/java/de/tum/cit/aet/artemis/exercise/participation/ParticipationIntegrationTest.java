@@ -1723,23 +1723,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipationByExerciseAndStudentIdWithEagerSubmissionsForTeam() throws Exception {
-        var exercise = createTextExerciseForTeam();
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var team = createTeamForExercise(student, exercise);
-        exercise = addTeamToExercise(team, exercise);
-
-        var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
-        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
-
-        var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
-        assertThat(participations).hasSize(1);
-        assertThat(participations.getFirst().getId()).isEqualTo(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

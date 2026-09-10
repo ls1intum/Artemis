@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.function.TriConsumer;
@@ -65,6 +66,9 @@ public class ExamUserService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamUserService.class);
 
+    /** An eight digit registration number, which is what the second word of a scanned exam user line has to be. */
+    private static final Pattern REGISTRATION_NUMBER = Pattern.compile("^[0-9]{8}$");
+
     private static final String ENTITY_NAME = "examUserService";
 
     private final ExamUserRepository examUserRepository;
@@ -109,7 +113,7 @@ public class ExamUserService {
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
                 String[] studentInformation = string.split("\\s");
 
-                if (StringUtils.hasText(string) && studentInformation.length > 1 && studentInformation[1].matches("^[0-9]{8}$")) {
+                if (StringUtils.hasText(string) && studentInformation.length > 1 && REGISTRATION_NUMBER.matcher(studentInformation[1]).matches()) {
                     // if the string is only numbers and has 8 digits, then it is the registration number
                     // and it should be the second element in the array of the string
                     studentWithImages.add(new ExamUserWithImageDTO(studentInformation[1], image));

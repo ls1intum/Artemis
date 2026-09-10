@@ -3312,7 +3312,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);

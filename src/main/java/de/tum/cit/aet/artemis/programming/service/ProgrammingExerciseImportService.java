@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -34,6 +35,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 @Lazy
 @Service
 public class ProgrammingExerciseImportService {
+
+    /** Everything that is not alphanumeric, which a short name may not contain. */
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -162,7 +166,7 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
-        newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
+        newExercise.setShortName(NON_ALPHANUMERIC.matcher(newExercise.getShortName()).replaceAll(""));
         newExercise.generateAndSetProjectKey();
         programmingExerciseValidationService.checkIfProjectExists(newExercise);
 
