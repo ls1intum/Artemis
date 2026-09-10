@@ -717,17 +717,22 @@ public class SpecFidelityCriticService {
 
     private static ArtifactEvidence renderArtifactEvidence(Map<RepositoryRole, Map<String, String>> artifacts) {
         StringBuilder evidence = new StringBuilder();
+        Map<String, String> firstArtifactByContent = new LinkedHashMap<>();
         for (RepositoryRole type : List.of(RepositoryRole.SOLUTION, RepositoryRole.TEMPLATE, RepositoryRole.TESTS)) {
             for (Map.Entry<String, String> file : new TreeMap<>(artifacts.getOrDefault(type, Map.of())).entrySet()) {
                 String content = file.getValue();
                 if (content == null) {
                     continue;
                 }
-                String header = "\n--- " + type.name() + ": " + file.getKey() + " ---\n";
-                if (evidence.length() + header.length() + content.length() > MAX_ARTIFACT_EVIDENCE_CHARS) {
+                String label = type.name() + ": " + file.getKey();
+                String firstArtifact = firstArtifactByContent.putIfAbsent(content, label);
+                // Preserve every path and distinct file content, without repeating shared scaffold across repositories.
+                String rendered = firstArtifact == null ? content : "[Content is identical to " + firstArtifact + " above.]";
+                String header = "\n--- " + label + " ---\n";
+                if (evidence.length() + header.length() + rendered.length() + 1 > MAX_ARTIFACT_EVIDENCE_CHARS) {
                     return new ArtifactEvidence(evidence.toString(), true);
                 }
-                evidence.append(header).append(content).append('\n');
+                evidence.append(header).append(rendered).append('\n');
             }
         }
         return new ArtifactEvidence(evidence.toString(), false);
