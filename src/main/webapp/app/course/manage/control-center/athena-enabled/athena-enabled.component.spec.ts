@@ -179,6 +179,40 @@ describe('AthenaEnabledComponent', () => {
         expect(comp.formativeEnabled()).toBe(true);
     });
 
+    it('should show the loaded state when the load answers after a failed switch', () => {
+        // A feature stored as enabled still shows as disabled while the configuration is loading, so Enable is what the
+        // instructor clicks. Its save failing confirms nothing, which leaves the load answering afterwards the first
+        // thing the server has said about the feature.
+        const load = new Subject<AthenaCourseConfigDTO>();
+        const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+
+        comp.setEnabled('gradingFeedbackEnabled', true);
+        save.error(new HttpErrorResponse({ status: 400 }));
+        load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+
+        expect(comp.gradingEnabled()).toBe(true);
+    });
+
+    it('should roll a failed switch back to the state the load supplied while it was in flight', () => {
+        const load = new Subject<AthenaCourseConfigDTO>();
+        const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+
+        comp.setEnabled('gradingFeedbackEnabled', true);
+        load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+        save.error(new HttpErrorResponse({ status: 400 }));
+
+        // The load is not shown while the switch is in flight, but it is what the failed switch falls back to.
+        expect(comp.gradingEnabled()).toBe(true);
+    });
+
     it('should not send a request when the feature already has the requested state', () => {
         initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
         const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');

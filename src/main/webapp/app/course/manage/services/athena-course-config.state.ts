@@ -18,14 +18,16 @@ const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, 
  * The Athena feedback configuration of one course, as the toggles that switch it show it.
  *
  * The course overview and the onboarding wizard both offer the same two switches and both save every switch right
- * away, so they share this state instead of each keeping their own. It holds three things: the configuration on
- * screen, the configuration the server last confirmed, and how often each feature has been switched.
+ * away, so they share this state instead of each keeping their own. It holds three things per feature: the state on
+ * screen, the state the server has confirmed, if it ever has, and how far the switches of that feature have got.
  *
- * The last two are what keep a toggle from claiming a state that was never stored. Rolling a failed switch back to the
- * value it replaced restores whatever the previous switch put on screen, which a failure of that switch has meanwhile
- * invalidated: switching a feature on and off again with both requests failing used to leave it on. The switch count
- * decides whose answer may be shown at all, so an answer that a newer switch of the same feature has already replaced
- * is dropped rather than put back on screen.
+ * Together they keep a toggle from claiming a state that was never stored. Rolling a failed switch back to the state it
+ * replaced restores whatever the switch before it put on screen, which a failure of that switch has meanwhile
+ * invalidated: switching a feature on and off again with both requests failing used to leave it on. Rolling back to
+ * what the server confirmed instead needs "confirmed disabled" and "never heard from the server" to be different
+ * things, so a feature the server has said nothing about has no confirmed state at all and a load answering later
+ * still counts as that first word. The switch count decides whose answer may be shown, so an answer that a newer
+ * switch of the same feature has already replaced is dropped rather than put back on screen.
  */
 export class AthenaCourseConfigState {
     /** The configuration on screen; undefined until it is either loaded or switched. */
@@ -35,11 +37,18 @@ export class AthenaCourseConfigState {
 
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
 
-    /** The configuration the server last confirmed; a failed switch rolls back to it. */
-    private confirmed = DISABLED_CONFIG;
+    /**
+     * The state the server confirmed per feature; a failed switch rolls back to it. A feature the server has not
+     * spoken about yet is missing here rather than stored as disabled, so that a load answering afterwards still
+     * counts.
+     */
+    private readonly confirmed: Partial<Record<AthenaFeature, boolean>> = {};
 
     /** How often each feature has been switched, so that only its latest switch writes back an answer. */
     private readonly revisions: Record<AthenaFeature, number> = { formativeFeedbackEnabled: 0, gradingFeedbackEnabled: 0 };
+
+    /** The latest switch of each feature that has answered, so a switch still in flight can be told from a past one. */
+    private readonly settled: Record<AthenaFeature, number> = { formativeFeedbackEnabled: 0, gradingFeedbackEnabled: 0 };
 
     constructor(
         private readonly athenaCourseConfigService: AthenaCourseConfigService,
@@ -49,9 +58,11 @@ export class AthenaCourseConfigState {
     /**
      * Load the stored configuration of a course.
      *
-     * A feature already switched by the time this answers keeps the state that switch put on screen: the answer
-     * describes the course as it was before, so applying it would undo the switch. The other feature is applied, as
-     * nothing newer is known about it.
+     * The answer describes the course as it was before anything was switched, so it counts per feature and only for a
+     * feature no save has answered for: a save knows the newer state. Where it counts it is shown, unless a switch of
+     * that feature is still in flight, because what that switch put on screen is what the instructor last asked for.
+     * It is recorded as the confirmed state either way, so a switch that then fails rolls back to what is stored
+     * rather than to "disabled".
      *
      * @param courseId the id of the course
      */
@@ -59,8 +70,11 @@ export class AthenaCourseConfigState {
         this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
             next: (loaded) => {
                 for (const feature of ATHENA_FEATURES) {
-                    if (this.revisions[feature] === 0) {
-                        this.confirm(feature, loaded[feature]);
+                    if (this.confirmed[feature] !== undefined) {
+                        continue;
+                    }
+                    this.confirmed[feature] = loaded[feature];
+                    if (this.settled[feature] === this.revisions[feature]) {
                         this.apply(feature, loaded[feature]);
                     }
                 }
@@ -75,7 +89,8 @@ export class AthenaCourseConfigState {
      *
      * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
      * cases count as "both features off" rather than blocking the toggles, so the instructor can always switch a
-     * feature on and find out from the alert if that could not be saved.
+     * feature on and find out from the alert if that could not be saved. A failure while the load is still on its way
+     * falls back to "off" for the same reason; correcting that is what the load is still applied for afterwards.
      *
      * @param courseId the id of the course
      * @param feature the feature to switch
@@ -94,11 +109,13 @@ export class AthenaCourseConfigState {
         this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
             next: (response) => {
                 const stored = response.body?.[feature] ?? enabled;
-                this.confirm(feature, stored);
+                this.confirmed[feature] = stored;
+                this.settle(feature, revision);
                 this.applyIfLatest(feature, revision, stored);
             },
             error: (error: HttpErrorResponse) => {
-                this.applyIfLatest(feature, revision, this.confirmed[feature]);
+                this.settle(feature, revision);
+                this.applyIfLatest(feature, revision, this.confirmed[feature] ?? false);
                 onError(this.alertService, error);
             },
         });
@@ -131,12 +148,13 @@ export class AthenaCourseConfigState {
     }
 
     /**
-     * Records the state the server holds for one feature, which every failing switch of it falls back to.
+     * Records that a switch has answered, so that a load arriving afterwards can tell whether the feature is still
+     * being switched. An answer cannot lower this: an older switch answering after a newer one leaves it where it is.
      *
-     * @param feature the feature the server confirmed
-     * @param enabled the state it confirmed
+     * @param feature the feature the switch was about
+     * @param revision the switch count that switch was started with
      */
-    private confirm(feature: AthenaFeature, enabled: boolean): void {
-        this.confirmed = cloneWith(this.confirmed, { [feature]: enabled });
+    private settle(feature: AthenaFeature, revision: number): void {
+        this.settled[feature] = Math.max(this.settled[feature], revision);
     }
 }
