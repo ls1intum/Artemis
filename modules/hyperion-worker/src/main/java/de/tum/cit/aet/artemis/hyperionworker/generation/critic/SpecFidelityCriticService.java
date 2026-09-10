@@ -507,7 +507,7 @@ public class SpecFidelityCriticService {
         String specificationContract = specDocument == null || specDocument.isBlank() ? "" : specDocument.strip();
         String authoritativeSource = specificationContract.isBlank() ? effectiveBrief : effectiveBrief + "\n\n" + specificationContract;
         String userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport, repairDelta,
-                testPlanJson, templateFailureEvidence) + "\n\nPRIMARY SOURCE EVIDENCE IDS FOR ORACLE ONLY:\n" + EvidenceSource.from("P", authoritativeSource).promptText();
+                testPlanJson, templateFailureEvidence);
         // An invented-requirement finding must quote an artifact the repair loop can still edit, so it gets a narrower grounding source than a contradiction or
         // hidden-requirement finding, which may quote the frozen contract. Otherwise a defect in the frozen specification becomes an impossible downstream repair.
         String planEvidence = testPlanJson == null || testPlanJson.isBlank() ? "" : "\n\n" + testPlanJson.strip();
@@ -641,9 +641,7 @@ public class SpecFidelityCriticService {
         String changes = adaptationChanges == null ? "" : "\n\nADAPTATION CHANGES (baseline to candidate):\n" + (adaptationChanges.isBlank() ? "(no changes)" : adaptationChanges);
         String repairChanges = repairDelta == null ? ""
                 : "\n\nREPAIR DELTA (previous mechanically verified candidate to current candidate):\n" + (repairDelta.isBlank() ? "(no artifact changes)" : repairDelta);
-        return "INSTRUCTOR BRIEF (authoritative for requested scope and explicit boundaries):\n" + brief
-                + "\n\nAPPROVED SPECIFICATION CONTRACT (binding authority for coherent operational choices within that scope):\n"
-                + (specificationContract.isBlank() ? "(none)" : specificationContract) + "\n\nPRODUCED PROBLEM STATEMENT:\n"
+        return renderPrimarySource(brief, specificationContract) + "\n\nPRODUCED PROBLEM STATEMENT:\n"
                 + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip()) + "\n\nTEST NAMES (navigation aid only; not coverage evidence) ("
                 + testNames.size() + "):\n" + tests
                 + "\n\nGENERATED TEST PLAN (mapping evidence only; repeated weights are seam tiers divided evenly across persisted cases; assertions remain authoritative):\n"
@@ -652,6 +650,17 @@ public class SpecFidelityCriticService {
                 + renderTemplateFailureEvidence(templateFailureEvidence) + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes + repairChanges
                 + renderPreviousReviewSection(previousReport)
                 + "\n\nDo not treat test names or comments as proof. Return the complete JSON verdict specified by the system prompt.";
+    }
+
+    private static String renderPrimarySource(String brief, String specificationContract) {
+        String source = specificationContract.isBlank() ? brief : brief + "\n\n" + specificationContract;
+        List<String> passages = EvidenceSource.from("P", source).passages().entrySet().stream().map(entry -> "[" + entry.getKey() + "] " + entry.getValue()).toList();
+        int briefLines = Math.toIntExact(brief.lines().filter(line -> !line.isBlank()).count());
+        // Both passes read the same authority once; oracle citations retain the IDs used by the verdict parser.
+        return "PRIMARY SOURCE EVIDENCE IDS FOR ORACLE ONLY (both passes read the source text below):\n"
+                + "INSTRUCTOR BRIEF (authoritative for requested scope and explicit boundaries):\n" + String.join("\n", passages.subList(0, briefLines))
+                + "\n\nAPPROVED SPECIFICATION CONTRACT (binding authority for coherent operational choices within that scope):\n"
+                + (specificationContract.isBlank() ? "(none)" : String.join("\n", passages.subList(briefLines, passages.size())));
     }
 
     private static String renderTemplateFailureEvidence(List<AgentVerifyReport.TestFailureEvidence> evidence) {

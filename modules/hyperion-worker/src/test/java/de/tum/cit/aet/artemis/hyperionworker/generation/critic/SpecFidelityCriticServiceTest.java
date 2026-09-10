@@ -136,6 +136,23 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void primarySourceFitsWithoutDuplicatingItAndKeepsOracleCitationIds() {
+        String brief = "Extend the supplied operation.\n\n" + "b".repeat(35_000);
+        String specification = "## Rules\n\nPreserve the old guard.\n" + "s".repeat(40_000);
+        var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
+
+        SpecFidelityReport report = scripted.critic().critique(brief, "# Task", List.of(), COMPLETE_ARTIFACTS, null, () -> false, null, specification, null, null);
+
+        assertThat(report.findings()).isEmpty();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getInstructions().get(1).getText()).containsOnlyOnce("Extend the supplied operation.")
+                .containsOnlyOnce("Preserve the old guard.").containsOnlyOnce("b".repeat(35_000)).containsOnlyOnce("s".repeat(40_000))
+                .contains("[P1] Extend the supplied operation.", "[P2] b", "[P3] ## Rules", "[P4] Preserve the old guard.", "[P5] s")
+                .contains("INSTRUCTOR BRIEF", "APPROVED SPECIFICATION CONTRACT").hasSizeLessThan(120_000));
+    }
+
+    @Test
     void reviewRetainsDifferentContentsAtTheSameRepositoryPath() {
         var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
         Map<RepositoryRole, Map<String, String>> artifacts = Map.of(RepositoryRole.SOLUTION, Map.of("build-support.txt", "reference support"), RepositoryRole.TEMPLATE,
