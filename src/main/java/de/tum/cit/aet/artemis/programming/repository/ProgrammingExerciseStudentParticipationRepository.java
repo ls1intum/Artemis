@@ -81,11 +81,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
-
-    List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -104,9 +99,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
-
-    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     @Query("""
             SELECT DISTINCT participation
@@ -231,10 +223,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
+                AND participation.student.id = :studentId
             ORDER BY participation.testRun ASC
             """)
-    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT participation
@@ -243,10 +235,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN FETCH team.students student
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
-                AND student.login = :username
+                AND student.id = :studentId
             ORDER BY participation.testRun ASC
             """)
-    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionByExerciseIdAndStudentIdInTeam(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
@@ -295,23 +287,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-            """)
-    Set<ProgrammingExerciseStudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
             WHERE p.id IN :participationIds
             """)
     Set<ProgrammingExerciseStudentParticipation> findByIds(@Param("participationIds") Collection<Long> participationIds);
-
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.id IN :participationIds
-            """)
-    Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
 }

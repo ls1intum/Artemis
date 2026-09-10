@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.ZonedDateTime;
+import java.util.regex.Pattern;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
@@ -17,6 +18,9 @@ import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
+
+    /** A run of whitespace inside a title, collapsed into a single space. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     @Column(name = "title")
     private String title;
@@ -74,7 +78,7 @@ public abstract class BaseExercise extends DomainObject {
      * @param title the new (non-sanitized) title to be set
      */
     public void setTitle(String title) {
-        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
+        this.title = title != null ? WHITESPACE_RUN.matcher(title.strip()).replaceAll(" ") : null;
     }
 
     public String getShortName() {

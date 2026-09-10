@@ -215,6 +215,12 @@ public class ProgrammingTriggerService {
             Thread.sleep(externalSystemRequestBatchWaitingTime);
         }
         catch (InterruptedException ex) {
+            // The interrupt status is deliberately not restored, which is what java:S2142 would ask for, and the batch
+            // deliberately carries on. There is no durable retry behind this loop: the scheduled build after the due
+            // date is a one-shot task that ExerciseLifecycle only ever schedules while its timestamp is still in the
+            // future, so a run that stops half way is never recreated on startup, and the exercise's testCasesChanged
+            // flag is not consulted by that scheduler either. Stopping here would leave the remaining participations
+            // permanently unbuilt, whereas carrying on costs one lost pause.
             log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
         }
     }
