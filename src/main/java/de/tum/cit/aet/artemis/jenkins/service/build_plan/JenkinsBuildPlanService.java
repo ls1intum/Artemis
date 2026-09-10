@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -49,6 +50,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class JenkinsBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);
+
+    /** Everything a build plan name may not contain. */
+    private static final Pattern NON_PLAN_NAME_CHARACTER = Pattern.compile("[^A-Z0-9]");
 
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
@@ -267,7 +271,7 @@ public class JenkinsBuildPlanService {
     }
 
     private String getCleanPlanName(String name) {
-        return name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return NON_PLAN_NAME_CHARACTER.matcher(name.toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     /**
