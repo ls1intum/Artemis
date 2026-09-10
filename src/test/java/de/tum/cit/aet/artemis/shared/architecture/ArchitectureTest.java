@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -440,6 +441,80 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noClassLevelCache.check(productionClasses);
         noFieldLevelCache.check(productionClasses);
         noMethodLevelCache.check(productionClasses);
+    }
+
+    /**
+     * The association annotations that must not fetch eagerly.
+     * <p>
+     * {@code @ManyToOne} is deliberately absent. Hibernate cannot make a to-one association lazy without bytecode
+     * enhancement or a proxy, and a proxied {@code @ManyToOne} does not work with entity hierarchies - which most of
+     * ours are. Its eager default is a fact to design around, not something worth declaring.
+     */
+    private static final Set<String> ASSOCIATIONS_THAT_MUST_NOT_FETCH_EAGERLY = Set.of("jakarta.persistence.OneToOne", "jakarta.persistence.OneToMany",
+            "jakarta.persistence.ManyToMany");
+
+    /**
+     * Associations that fetch eagerly today, so that {@link #testNoEagerFetching()} can forbid new ones.
+     * <p>
+     * The list only shrinks. Turning one lazy is a behaviour change - {@code open-in-view} is disabled, so an
+     * association a query did not fetch reads as absent once the session closes - so each needs the code that reads it
+     * converted first. Do not add to it.
+     */
+    private static final Set<String> FIELDS_ALLOWED_TO_FETCH_EAGERLY = Set.of("de.tum.cit.aet.artemis.assessment.domain.AssessmentNote.creator",
+            "de.tum.cit.aet.artemis.assessment.domain.Complaint.complaintResponse", "de.tum.cit.aet.artemis.assessment.domain.Complaint.result",
+            "de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse.complaint", "de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission.submission",
+            "de.tum.cit.aet.artemis.assessment.domain.GradingCriterion.structuredGradingInstructions", "de.tum.cit.aet.artemis.assessment.domain.GradingScale.course",
+            "de.tum.cit.aet.artemis.assessment.domain.GradingScale.exam", "de.tum.cit.aet.artemis.assessment.domain.GradingScale.gradeSteps",
+            "de.tum.cit.aet.artemis.assessment.domain.Rating.result", "de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.user",
+            "de.tum.cit.aet.artemis.communication.domain.AnswerPost.reactions", "de.tum.cit.aet.artemis.communication.domain.Post.answers",
+            "de.tum.cit.aet.artemis.communication.domain.Post.plagiarismCase", "de.tum.cit.aet.artemis.communication.domain.Post.reactions",
+            "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.exam", "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.exercise",
+            "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.lecture", "de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore.user",
+            "de.tum.cit.aet.artemis.iris.domain.message.IrisMessage.content", "de.tum.cit.aet.artemis.lecture.domain.Attachment.attachmentVideoUnit",
+            "de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit.attachment", "de.tum.cit.aet.artemis.lecture.domain.LectureTranscription.lectureUnit",
+            "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.course",
+            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
+            "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig.programmingExercise",
+            "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation.programmingExercise",
+            "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation.programmingExercise",
+            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy.programmingExercise",
+            "de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic.pointCounters", "de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic.quizQuestion",
+            "de.tum.cit.aet.artemis.text.domain.TextBlock.feedback", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupChannel",
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupSchedule", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule.tutorialGroup",
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration.course");
+
+    /**
+     * No new {@code @OneToOne}, {@code @OneToMany} or {@code @ManyToMany} may be fetched eagerly.
+     * <p>
+     * An eager association is loaded for every caller, including the majority that never read it, and the cost surfaces
+     * nowhere near where it was written. Declare {@code fetch = FetchType.LAZY} and read the association where it is
+     * needed, through its own repository - {@code CourseAthenaConfigRepository} is the pattern.
+     */
+    @Test
+    void testNoEagerFetching() {
+        ArchRule rule = noFields().that(are(not(allowedToFetchEagerly()))).should(fetchAnAssociationEagerly())
+                .because("an eager association is loaded for every caller, including the ones that never read it. Declare fetch = FetchType.LAZY and read it where it is "
+                        + "needed, through its own repository. Full rationale: documentation/docs/developer/guidelines/database.mdx");
+        rule.check(productionClasses);
+    }
+
+    private static DescribedPredicate<JavaField> allowedToFetchEagerly() {
+        return DescribedPredicate.describe("allowed to fetch eagerly", field -> FIELDS_ALLOWED_TO_FETCH_EAGERLY.contains(field.getFullName()));
+    }
+
+    private static ArchCondition<JavaField> fetchAnAssociationEagerly() {
+        return new ArchCondition<>("fetch a @OneToOne, @OneToMany or @ManyToMany eagerly") {
+
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                boolean eager = field.getAnnotations().stream().filter(annotation -> ASSOCIATIONS_THAT_MUST_NOT_FETCH_EAGERLY.contains(annotation.getRawType().getName()))
+                        .map(annotation -> annotation.get("fetch")).flatMap(Optional::stream)
+                        .anyMatch(fetch -> fetch instanceof JavaEnumConstant constant && "EAGER".equals(constant.name()));
+                if (eager) {
+                    events.add(SimpleConditionEvent.satisfied(field, createMessage(field, "fetches eagerly")));
+                }
+            }
+        };
     }
 
     @Test
