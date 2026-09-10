@@ -7,14 +7,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
- * Flat one-shot Hazelcast job for a proactive struggle-intervention run. The session is NOT stored in the job; the
- * callback resolves it from {@code exerciseId} + {@code userId}, which creates it if the student has none yet, for
- * an ambient offer as well as an active one. What ambient defers to the reveal is the message, not the session.
- * {@code jobId == settings.authenticationToken == Bearer run_id}.
- * <p>
- * {@code intent} and {@code episodeId} are stamped here so the async callback can correlate the
- * Pyris response back to the client slot without the websocket event echoing them. {@code confirmReason}
- * is what lets the close-mode routing tell them apart. {@code requestToken} is the scoped-cancel identity.
+ * Flat one-shot distributed job for a proactive struggle-intervention run. The session is not stored here; the
+ * callback resolves it from {@code exerciseId} and {@code userId}, creating it if the student has none yet, because
+ * what ambient defers to the reveal is the message rather than the session. The stamped {@code intent},
+ * {@code episodeId}, {@code confirmReason} and {@code requestToken} let the async callback correlate and route
+ * without the websocket event echoing them.
  *
  * @param jobId           the job id (== authentication token == Bearer run_id)
  * @param courseId        the course the run belongs to; authorizes {@link #canAccess(Course)}

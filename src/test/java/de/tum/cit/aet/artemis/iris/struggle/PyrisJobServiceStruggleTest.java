@@ -22,16 +22,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 
 /**
- * Integration test for the cluster-atomic single-flight guard on {@link PyrisJobService}. Runs against a real
- * Hazelcast instance (wired by the Spring test context) because the guard's correctness lives entirely in
- * Hazelcast's {@code putIfAbsent(ttl)} reservation + token-conditional {@code remove(key, value)} semantics; a
- * mocked map would not exercise them. Each test uses distinct {@code (courseId, userId, exerciseId)} longs so the
- * shared cluster map cannot cross-contaminate.
+ * Integration test for the cluster-atomic single-flight guard on {@link PyrisJobService}, run against a real
+ * Hazelcast instance because the guard's correctness lives entirely in {@code putIfAbsent(ttl)} and
+ * token-conditional {@code remove(key, value)}. Each test uses distinct ids so the shared map cannot
+ * cross-contaminate.
  *
  * <p>
- * Serialised, because two of these tests rewrite state that the singletons share with every other method: the
- * cooldown on {@code IrisProactiveProperties} and {@code PyrisJobService}'s {@code jobTimeout}. Both are restored in
- * a finally block, which does nothing for a sibling that is already running inside the window.
+ * Serialised, because two of these tests rewrite singleton state every other method shares, restored in a finally
+ * block that does nothing for a sibling already running inside the window.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
@@ -42,10 +40,8 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisProactiveProperties proactiveProperties;
 
-    /**
-     * The test profile sets the cooldown to 1ms so the integration tests can fire several triggers for the same
-     * student and exercise; these three are about the cooldown itself, so they need one that outlives the assertion.
-     */
+    // The test profile sets the cooldown to 1ms so triggers can be fired repeatedly; these three are about the
+    // cooldown itself and need one that outlives the assertion.
     private void withRealCooldown(Runnable body) {
         var configured = proactiveProperties.getTriggerCooldown();
         proactiveProperties.setTriggerCooldown(Duration.ofMinutes(2));
@@ -96,8 +92,7 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
 
             pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "rt-1");
 
-            // The cancel frees the single-flight slot, which is its job. It must not also hand back the admission
-            // charge, or trigger-then-cancel in a loop would buy unlimited Pyris runs.
+            // The cancel frees the slot but must not refund the charge, or a loop would buy unlimited Pyris runs.
             assertThat(pyrisJobService.chargeStruggleCooldown(userId, exerciseId, "decide")).isEmpty();
         });
     }
@@ -124,14 +119,11 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         long userId = 9110L;
         long exerciseId = 9210L;
 
-        // The reservation passes jobTimeout explicitly as a per-entry TTL, so shrinking the map config alone would
-        // change nothing; shrink the field the reservation actually reads. Without the refresh this reproduces:
-        // the marker expires while updateJob keeps the job alive, and the pair becomes reservable mid-run.
+        // The reservation passes jobTimeout as a per-entry TTL, so the field is what has to shrink. Without the
+        // refresh the marker expires while updateJob keeps the job alive, and the pair becomes reservable mid-run.
         Object previousTimeout = ReflectionTestUtils.getField(pyrisJobService, "jobTimeout");
-        // Both maps are built lazily from the jobTimeout field and keep the default entry TTL they were born with.
-        // Touching them here, while the field still holds the configured value, keeps this test from leaving a
-        // two-second TTL behind for every later test that shares this Spring context. Removing entries that were
-        // never added is a noop; the sentinels only have to be unmistakably this warm-up's.
+        // Both maps are built lazily and keep the entry TTL they were born with, so touching them while the field
+        // still holds the configured value keeps a two-second TTL from leaking into every later test.
         pyrisJobService.releaseStruggleInFlightJob("__test-map-warmup__", Long.MIN_VALUE, Long.MIN_VALUE);
         ReflectionTestUtils.setField(pyrisJobService, "jobTimeout", 2);
         try {
@@ -277,8 +269,7 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
 
         String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-1", null, "tok-A", null).orElseThrow();
 
-        // Stand in for the terminal callback, which runs its whole remove-job / handleDecision / release-marker
-        // sequence under runWithJobLock(jobId). Hold that exact lock so the scoped cancel below must wait for it.
+        // Stands in for the terminal callback, which holds runWithJobLock(jobId) across its whole sequence.
         var lockHeld = new CountDownLatch(1);
         var releaseLock = new CountDownLatch(1);
         var cancelReturned = new AtomicBoolean(false);

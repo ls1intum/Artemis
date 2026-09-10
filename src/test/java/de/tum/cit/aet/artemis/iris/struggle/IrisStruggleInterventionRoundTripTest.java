@@ -52,19 +52,11 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 
 /**
- * Capstone end-to-end round-trip test for the proactive struggle-intervention feature. Boots the
- * Spring context and exercises the whole Artemis slice against the HTTP-mocked Pyris: the exercise-keyed
- * trigger endpoint ships the live code + signal to Pyris (the mock captures + asserts the execution DTO), then
- * a Pyris-style status callback drives the decision path. The contract:
- * <ol>
- * <li>live code (the uncommitted {@code src/Sum.java}) + the struggle signal reach Pyris,</li>
- * <li>an {@code active} decision above the confidence threshold lazily creates the exercise session, persists a
- * {@link IrisMessageOrigin#PROACTIVE_STRUGGLE}-origin LLM message, and pushes a per-user {@code active} event
- * (sessionId set, confidence 0.85) on {@code /topic/iris/struggle-intervention},</li>
- * <li>a trailing duplicate callback for the same run is rejected (403, idempotency),</li>
- * <li>an {@code ambient} decision (pull model) emits an {@code ambient} event carrying the sessionId
- * (resolved without persisting) and {@code messageId=null}; no message row is saved until the student clicks.</li>
- * </ol>
+ * End-to-end round trip for the proactive struggle-intervention feature, exercising the whole Artemis slice against
+ * an HTTP-mocked Pyris: the trigger endpoint ships the live code and signal, then a Pyris-style status callback
+ * drives the decision path. Covers that the uncommitted code reaches Pyris, that an {@code active} decision creates
+ * the session and persists a {@link IrisMessageOrigin#PROACTIVE_STRUGGLE} message, that a trailing duplicate
+ * callback is rejected, and that an {@code ambient} decision persists nothing.
  */
 class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest {
 
@@ -86,16 +78,14 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
     @BeforeEach
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
-        // Seed an opted-in student1 (UserFactory defaults every generated user to CLOUD_AI, so this is enough
-        // for the server-side AI opt-in gate). Re-assert CLOUD_AI defensively.
+        // UserFactory defaults every generated user to CLOUD_AI, which the server-side opt-in gate needs.
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         // The AI decision and its timestamp moved out of jhi_user into their own table (#13546).
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.CLOUD_AI);
         userUtilService.setAiSelectionDecisionDate(student1, ZonedDateTime.now().minusDays(1));
 
-        // Programming exercise + local VC repositories, mirroring PyrisEventSystemIntegrationTest so that
-        // toPyrisSubmissionDTO can read the (committed) repository contents off-thread.
+        // Local VC repositories as in PyrisEventSystemIntegrationTest, so toPyrisSubmissionDTO can read them.
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();

@@ -13,14 +13,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * test-stagnation path sends {@code primaryBoundary="TPS"} with {@code path="discrete"}. Pyris owns the
  * value validation, so new client-side values must be introduced Pyris-first.
  * <p>
- * Annotated with a bare {@code @JsonInclude()} (no value) rather than {@code @JsonInclude(NON_EMPTY)}: Pyris
- * declares {@code trajectory} as a required field with no default, so an empty list must still be serialized
- * ({@code NON_EMPTY} would drop the key and make Pyris reject the payload with a 422). The bare form inherits
- * Jackson's default {@code ALWAYS} inclusion, keeping the empty collection on the wire, while still satisfying
- * both iris-DTO architecture rules (every DTO must carry {@code @JsonInclude}, and any explicitly declared value
- * must be {@code NON_EMPTY}). Two tests guard this: {@code emptyCollectionsAreNotDroppedFromWire} pins the
- * annotation's effect, and the round-trip test reads {@code trajectory} back out of the request body the
- * production mapper wrote, which is where a global inclusion setting would show.
+ * A bare {@code @JsonInclude()} rather than {@code @JsonInclude(NON_EMPTY)}: Pyris declares {@code trajectory} as
+ * required with no default, so an empty list must still reach the wire, and {@code NON_EMPTY} would drop the key and
+ * earn a 422. The bare form inherits Jackson's {@code ALWAYS} while still satisfying both iris-DTO architecture
+ * rules. {@code emptyCollectionsAreNotDroppedFromWire} pins the effect.
  */
 @JsonInclude
 public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, double sessionSeconds) {

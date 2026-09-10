@@ -37,16 +37,8 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 /**
  * Plain Mockito unit test for the idempotent struggle-intervention dispatch in
- * {@link PyrisStatusUpdateService#handleStatusUpdate(StruggleInterventionJob, PyrisStruggleInterventionStatusUpdateDTO)}.
- * <p>
- * The scenarios encode the exactly-once contract:
- * <ol>
- * <li>decision callback ({@code action != null}): marker re-stamped for the handler's own runtime, job removed,
- * decision dispatched, marker released last;</li>
- * <li>non-decision keep-alive ({@code action == null}, run state {@code RUNNING}): job updated, marker held;</li>
- * <li>non-decision terminal ({@code action == null}, run state {@code FAILED}): job removed, marker released;</li>
- * <li>non-decision without a run state: the null guard holds the job for the real decision callback.</li>
- * </ol>
+ * {@link PyrisStatusUpdateService#handleStatusUpdate(StruggleInterventionJob, PyrisStruggleInterventionStatusUpdateDTO)}:
+ * which frame claims the run, which keeps it alive, and in what order the job and the marker are released.
  */
 class PyrisStatusUpdateStruggleTest {
 
@@ -74,9 +66,8 @@ class PyrisStatusUpdateStruggleTest {
                 mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.<ProcessingStateCallbackApi>empty(), mock(IrisWebsocketService.class),
                 irisStruggleInterventionService, irisStruggleTriggerService);
 
-        // The struggle handler claims the callback under the job lock: it runs the body inside runWithJobLock and
-        // re-reads the map entry, dropping the callback when the job is already gone. Both are collaborator calls,
-        // so the mock has to model them - run the supplier inline, and hand the job back by id.
+        // The handler claims the callback under the job lock and re-reads the map entry, so the mock has to model
+        // both: run the supplier inline, and hand the job back by id.
         when(pyrisJobService.runWithJobLock(anyString(), any())).thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         when(pyrisJobService.getJob("t")).thenReturn(job);
         when(pyrisJobService.getJob("cc")).thenReturn(confirmCloseJob);
@@ -84,8 +75,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void everyFrameOfAClaimedCallbackIsAccountedFor() {
-        // Recording runs before the frame is routed, so a decision, a keep-alive, a failure and a close are all
-        // accounted for, whichever branch below goes on to claim them.
+        // Recording runs before routing, so every frame is accounted for whichever branch claims it.
         var tokens = List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention"));
         var decision = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
         var keepAlive = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.RUNNING, null, tokens, null, null, null, null, null, null);
@@ -105,8 +95,8 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void accountingHappensBeforeTheFrameIsRouted() {
-        // Ordering is the whole reason the call sits in the dispatcher: routing removes the job and hands the frame
-        // to a handler that may throw, and spend already reported by Pyris must be recorded either way.
+        // Routing removes the job and hands the frame to a handler that may throw, and the spend Pyris already
+        // reported has to be recorded either way.
         var tokens = List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention"));
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
 
@@ -137,8 +127,8 @@ class PyrisStatusUpdateStruggleTest {
         service.handleStatusUpdate(job, update);
 
         var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService, irisStruggleTriggerService);
-        // The refresh talks to the distributed store, so it goes FIRST: if it fails, the job is still in the map and
-        // Pyris can retry the callback instead of being 403'd on a credential that was already dropped.
+        // The refresh talks to the distributed store, so it goes first: a failure leaves the job in the map and
+        // Pyris can retry instead of being 403'd on a dropped credential.
         inOrder.verify(pyrisJobService).refreshStruggleInFlightMarker("t", 3L, 42L);    // the handler runs on a full marker TTL, not on the run's remainder
         inOrder.verify(pyrisJobService).removeJob(job);                                 // then remove the JOB-MAP entry so the trailing duplicate 403s
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
@@ -147,8 +137,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void decisionCallback_whenTheMarkerRefreshFails_leavesTheJobRetriable() {
-        // The re-stamp is a distributed-store call and can fail. Dropping the job first would make every Pyris retry
-        // 403 on a credential that is already gone, stranding the run, so nothing terminal happens before it succeeds.
+        // Nothing terminal happens before the re-stamp succeeds, or a retry 403s on a credential already gone.
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         doThrow(new CannotAcquireLockException("distributed store unavailable")).when(pyrisJobService).refreshStruggleInFlightMarker("t", 3L, 42L);
 
@@ -161,9 +150,8 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void decisionCallback_whenHandleDecisionThrows_stillCompletesClientAndReleasesMarker() {
-        // handleDecision emits its own silent frame on every deliberate drop, but an unexpected failure (e.g. a
-        // lock-timeout DataAccessException while recording the ambient offer) escapes after the job was already
-        // removed. Without the dispatcher completing the client, its in-flight decide would hang until timeout.
+        // handleDecision completes its own deliberate drops, but an unexpected failure escapes after the job was
+        // removed, and without the dispatcher completing the client its decide would hang until timeout.
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "ambient", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         doThrow(new CannotAcquireLockException("deadlock")).when(irisStruggleInterventionService).handleDecision(job, update);
 
@@ -192,9 +180,8 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void duplicateCallback_whoseJobIsAlreadyClaimed_isDropped() {
-        // The resource authenticates a callback by reading the job BEFORE the handler runs, so a genuinely
-        // concurrent duplicate can enter with the same job object. Under the lock the re-read finds nothing,
-        // which is what stops the decision from being persisted and pushed twice.
+        // The resource reads the job before the handler runs, so a concurrent duplicate enters with the same
+        // object. Under the lock the re-read finds nothing, which stops a second persist and push.
         when(pyrisJobService.getJob("t")).thenReturn(null);
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
 
@@ -235,9 +222,8 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void nonDecisionCallback_missingRunState_doesNotTerminateNorReleaseMarker() {
-        // A frame without a run state must NOT drop the job (this path deliberately does not use
-        // resolveRunState, which maps a missing run state to FAILED), otherwise the real decision
-        // callback would 403 and the intervention would be silently lost.
+        // Deliberately not resolveRunState, which maps a missing run state to FAILED: a frame without one must not
+        // drop the job, or the real decision callback 403s.
         var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, null, null, List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
@@ -250,8 +236,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void confirmClose_withNullAction_removesJobAndReleasesMarker() {
-        // action=null is the real-world response shape for confirm_close, so a gate on the action would never clear
-        // the in-flight marker and would deadlock the slot. Routing on job.intent() first is what keeps it moving.
+        // action=null is the real response shape for confirm_close, so gating on it would deadlock the slot.
         var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, null, null, List.of(), null, null, null, true, "Nice work!", "Done");
 
         service.handleStatusUpdate(confirmCloseJob, update);

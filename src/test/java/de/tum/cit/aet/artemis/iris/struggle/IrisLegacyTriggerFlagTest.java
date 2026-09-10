@@ -53,13 +53,9 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * runs, but its early return suppresses the legacy chat pipeline so exactly one proactive path exists.
  *
  * <p>
- * SAME_THREAD overrides the CONCURRENT mode inherited from {@link AbstractArtemisIntegrationTest}. The flag lives on
- * a singleton this class rewrites: {@code @BeforeEach} sets it false, and two of the three tests set it true again for
- * themselves. Run in parallel, the disabled-flag test can read a true another method just wrote and see the legacy
- * pipeline fire where it asserts silence. This does NOT need {@code @Isolated}: the base class already carries
- * {@code @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")}, which keeps every other class sharing this
- * bean, {@code PyrisEventSystemIntegrationTest} included, from running alongside. Only the methods here were left
- * racing each other.
+ * SAME_THREAD overrides the inherited CONCURRENT mode, because the flag lives on a singleton this class rewrites and
+ * two of its three tests set it back to true for themselves. No {@code @Isolated} is needed: the base class' resource
+ * lock already keeps every other class sharing the bean from running alongside, so only these methods were racing.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
@@ -137,21 +133,16 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        // Disable the legacy build/progress triggers by setting the @Value flag directly on the shared bean.
-        // A @TestPropertySource would fork a second Spring context, which shuts down the named-singleton Hazelcast
-        // instance and breaks every later Hazelcast-using test in the slice; ReflectionTestUtils is the established
-        // Artemis pattern for toggling a @Value flag without a context fork.
+        // A @TestPropertySource would fork a second Spring context, shutting down the named-singleton Hazelcast
+        // instance and breaking every later test in the slice, so the flag is set on the bean directly.
         previousLegacyBuildTriggersEnabled = ReflectionTestUtils.getField(irisChatSessionService, "globalLegacyBuildTriggersEnabled");
         ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", false);
     }
 
     @AfterEach
     void restoreLegacyTriggerFlag() {
-        // Restore what was actually configured, not a hardcoded true: the property default may change, and a
-        // profile could set it differently, in which case writing true would silently alter the shared context
-        // for every later test in the slice.
-        // Nothing to restore when setup failed before the capture. JUnit runs this method anyway, and the field is a
-        // primitive boolean, so writing the still-null holder would throw and bury the setup failure it came from.
+        // Restore what was configured rather than a hardcoded true, which would silently alter the shared context.
+        // Nothing to restore when setup failed before the capture, and writing the null holder would bury it.
         if (previousLegacyBuildTriggersEnabled != null) {
             ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", previousLegacyBuildTriggersEnabled);
         }
@@ -194,17 +185,12 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // The @EventListener still fires; the early return lives inside it, so the listener itself is still invoked.
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
 
-        // But the legacy chat pipeline must NOT fire. after(2000) gives the async dispatch time to settle so the
-        // never() assertion does not race ahead of a pipeline call that would otherwise be in flight (mirrors how
-        // PyrisEventSystemIntegrationTest asserts the negative case).
+        // after(2000) lets the async dispatch settle, so never() does not race ahead of a call still in flight.
         verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 
-    /**
-     * The per-course half of the switch. The instance-wide flag is a deployment kill switch; this one is what an
-     * admin sets on the course running the struggle detection, so build-triggered proactivity has a single owner
-     * there while every other course on the same installation keeps Artemis' own events.
-     */
+    // The per-course half of the switch: the instance-wide flag is a deployment kill switch, this one is what an
+    // admin sets on the course running the struggle detection.
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void disabledPerCourse_buildFailedEventDoesNotTriggerLegacyChatPipeline() {
@@ -224,9 +210,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 
-    /**
-     * The counterpart, so the two tests above cannot both pass by the pipeline simply never firing in this fixture.
-     */
+    // The counterpart, so the two tests above cannot pass by the pipeline never firing in this fixture.
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void bothSwitchesOn_buildFailedEventStillTriggersTheLegacyChatPipeline() {

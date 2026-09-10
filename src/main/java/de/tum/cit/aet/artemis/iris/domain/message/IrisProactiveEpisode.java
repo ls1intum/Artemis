@@ -19,30 +19,22 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * terminal outcome.
  *
  * <p>
- * The row exists so the episode has an identity that can be locked. Before it, every terminal decision was a
- * check-then-act: a callback read {@code isEpisodeTerminal} and wrote its message in a separate statement, so a
- * dismiss committing in between produced a hint the student had already closed. There was nothing to serialize on.
- * The chat session cannot serve: sessions are resolved as "the latest for (user, exercise)" with no uniqueness
- * constraint, so an episode's existing message and its next append can sit in different sessions and take different
- * locks. The episode could not lock itself either, because before its first message row it had no row.
+ * The row exists so the episode has an identity that can be locked. Without it every terminal decision is a
+ * check-then-act with nothing to serialize on. The chat session cannot serve, because sessions are resolved as the
+ * latest for {@code (user, exercise)} with no uniqueness constraint, so an episode's rows can sit in different
+ * sessions and take different locks. Registering at trigger time is what makes the row always present: the episode
+ * id arrives synchronously, before any Pyris callback can run, which also makes a dismiss arriving before the first
+ * message representable.
  *
  * <p>
- * Registering at trigger time is what makes the second half work. The episode id is client-allocated and arrives
- * synchronously in the trigger request, before any Pyris callback can run, so the row is always there when a
- * callback or an outcome write needs it. That also makes a dismiss arriving before the first message representable:
- * it is written here, rather than deferred until some row exists for it to sit on.
- *
- * <p>
- * {@link #outcome} is the authoritative terminal state. {@code iris_message.proactive_outcome} keeps being written
- * as a subordinate mirror, because the history replayed to Pyris and the message DTO both read it from the row.
+ * {@link #outcome} is the authoritative terminal state; {@code iris_message.proactive_outcome} is a subordinate
+ * mirror, because the history replayed to Pyris and the message DTO both read it from the row.
  *
  * <p>
  * The row also carries the episode's ambient offer ({@link #hintText}, {@link #consumedAt},
- * {@link #consumedMessageId}). It has the same {@code (user, exercise, episode)} grain, so a table of its own would
- * buy a second unique key, a second lock and an insert race: the episode is registered at trigger time, which makes
- * the offer an update of a row the caller already holds the lock on.
- * The three columns are nullable because a registered episode legitimately has no offer yet; that a consumed
- * offer carries both its text and its message is enforced by the single writer, not by a constraint.
+ * {@link #consumedMessageId}), which has the same grain, so a table of its own would buy a second unique key, a
+ * second lock and an insert race. The three columns are nullable because a registered episode legitimately has no
+ * offer yet; that a consumed offer carries both its text and its message is enforced by the single writer.
  */
 @Entity
 @Table(name = "iris_proactive_episode")
