@@ -256,7 +256,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void earlySpecificationFailurePreservesCompleteAccountingWithoutRepositoryCapture() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of()));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of())));
         var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
