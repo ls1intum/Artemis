@@ -148,6 +148,13 @@ behaviour, `1` for edge polish; every planned test for the seam carries that tie
 grades silently and is never bound to a task in the statement. Every row is required graded student work; keep
 optional enrichment outside this table, the test plan, and the Artemis tasks.
 
+For modification exercises, separate the pre-change behavior from the assigned extension before freezing.
+Describe unchanged successful cases and retained guards as supplied behavior outside the seam and risk
+inventory tables. They get preservation checks, not a seam, a weight tier, a student-work partition, or a
+"keep this working" task. Only behavior the old implementation lacks belongs to the modification seam.
+A row cannot simultaneously say "zero-credit preservation, not student work" and carry a graded tier.
+
+
 ## Diagram
 
 Under `## Diagram`, an honest yes/no with a reason grounded in the design: yes when several collaborating
