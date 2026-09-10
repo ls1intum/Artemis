@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,12 @@ public class ContentExtractionService {
 
     private static final Logger log = LoggerFactory.getLogger(ContentExtractionService.class);
 
+    /** Horizontal whitespace at the end of a line, stripped from extracted content. */
+    private static final Pattern TRAILING_HORIZONTAL_WHITESPACE = Pattern.compile("(?m)[ \\t]+$");
+
+    /** Three or more newlines in a row, collapsed into exactly two. */
+    private static final Pattern NEWLINE_RUN = Pattern.compile("\\n{3,}");
+
     private static final String FLAVOR_STRIP_PROMPT_PATH = "/prompts/atlas/flavor_text_strip_prompt.st";
 
     private final ChatClient chatClient;
@@ -121,8 +128,7 @@ public class ContentExtractionService {
      * @return a DTO containing the title, learning text, and metadata
      * @throws IllegalArgumentException if the learning object type is not yet supported
      */
-    public ExtractedContentDTO extractContent(LearningObject learningObject, boolean stripFlavorText) {
-        Objects.requireNonNull(learningObject, "learningObject must not be null");
+    public ExtractedContentDTO extractContent(@NonNull LearningObject learningObject, boolean stripFlavorText) {
         return switch (learningObject) {
             case ProgrammingExercise programmingExercise -> extractFromProgrammingExercise(programmingExercise, stripFlavorText);
             case TextExercise textExercise -> extractFromTextExercise(textExercise, stripFlavorText);
@@ -267,9 +273,9 @@ public class ContentExtractionService {
      */
     private String normalizeWhitespace(String text) {
         // Strip trailing horizontal whitespace from every line.
-        String stripped = text.replaceAll("(?m)[ \\t]+$", "");
+        String stripped = TRAILING_HORIZONTAL_WHITESPACE.matcher(text).replaceAll("");
         // Collapse three or more consecutive newlines to exactly two.
-        return stripped.replaceAll("\n{3,}", "\n\n");
+        return NEWLINE_RUN.matcher(stripped).replaceAll("\n\n");
     }
 
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise, boolean applyFlavorStrip) {
