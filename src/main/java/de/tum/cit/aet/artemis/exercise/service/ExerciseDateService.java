@@ -218,7 +218,7 @@ public class ExerciseDateService {
      *
      * @param latestExamEndDate      the moment the last student can no longer hand in, i.e. the latest individual exam
      *                                   end date plus the exam's grace period. This is the same notion of "the exam is
-     *                                   over" that {@link ExamDateService#isExamWithGracePeriodOver} and
+     *                                   over" that {@link ExamDateApi#isExamWithGracePeriodOver} and
      *                                   {@code AutomaticAfterDueDateService} use.
      * @param assessmentPossibleFrom the moment tutors can start assessing. Equals {@code latestExamEndDate}, except for
      *                                   programming exercises, which additionally wait for the tests to run once more on

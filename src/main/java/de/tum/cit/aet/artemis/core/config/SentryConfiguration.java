@@ -47,6 +47,16 @@ public class SentryConfiguration {
     private Optional<String> environment;
 
     /**
+     * The configured performance-trace sampling rate, if the deployment sets one.
+     * <p>
+     * Empty falls back to {@link #environmentTracesSampleRate()}. The property existed and was rendered into every
+     * deployment's configuration long before it was read here, so a deployment that had set it was silently getting
+     * the hard-coded rate instead.
+     */
+    @Value("${sentry.traces-sample-rate:#{null}}")
+    private Optional<Double> configuredTracesSampleRate;
+
+    /**
      * init sentry with the correct package name and Artemis version
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
@@ -238,11 +248,25 @@ public class SentryConfiguration {
     }
 
     /**
-     * Get the traces sample rate based on the environment.
+     * The rate at which whole requests are traced for Sentry Performance.
+     * <p>
+     * A deployment that configures {@code sentry.traces-sample-rate} gets exactly that; otherwise the environment
+     * decides. Honouring the property matters because the cost is not small: a benchmark of 1000 simulated students
+     * against a staging server spent 14% of the Artemis nodes' on-CPU samples in Sentry's sender threads, nearly all
+     * of it in the TLS handshake each envelope opens, and there was no way to turn that down from the deployment.
+     *
+     * @return the configured rate, or the environment's default when none is configured
+     */
+    private double getTracesSampleRate() {
+        return configuredTracesSampleRate.orElseGet(this::environmentTracesSampleRate);
+    }
+
+    /**
+     * The default traces sample rate for a deployment that does not configure one.
      *
      * @return 0% for local, 100% for test and staging, 5% for production environments
      */
-    private double getTracesSampleRate() {
+    private double environmentTracesSampleRate() {
         String env = getEnvironment();
         // All test/staging environments get 1.0 sample rate
         if (env.contains("test") || env.contains("staging")) {

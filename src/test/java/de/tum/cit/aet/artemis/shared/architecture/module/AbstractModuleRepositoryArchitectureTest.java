@@ -140,27 +140,34 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
         noClassesOfThisModuleThat().areAnnotatedWith(Repository.class).should().accessClassesThat().areAnnotatedWith(Service.class).allowEmptyShould(true).check(allClasses);
     }
 
-    // TODO: This method should be removed once all repositories are tested
-    protected Set<String> testTransactionalExclusions() {
-        return Set.of();
-    }
-
+    /**
+     * A transaction boundary may only be declared inside a repository interface.
+     * <p>
+     * There is deliberately no exception list. This rule previously carried a {@code testTransactionalExclusions()}
+     * hook, introduced as a temporary measure, and the effect was that adding {@code @Transactional} to a service
+     * needed nothing but one more entry in a set — so it stayed green, and six of them accumulated across three
+     * modules while three further entries went stale after the annotations they named were removed. Reintroducing such
+     * a hook would recreate exactly that. If a flow appears to need a wider boundary, restructure the flow: see
+     * <a href="https://docs.artemis.tum.de/developer/guidelines/performance#avoid-transactions">Avoid Transactions</a>.
+     */
     @Test
     void testTransactional() {
-        var classesPredicated = and(INTERFACES, annotatedWith(Repository.class));
-        var transactionalRule = methodsOfThisModuleThat().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(classesPredicated)
-                .orShould(new ArchCondition<>("methods excluded from this rule") {
-
-                    @Override
-                    public void check(JavaMethod javaMethod, ConditionEvents events) {
-                        if (!testTransactionalExclusions().contains(javaMethod.getFullName())) {
-                            events.add(violated(javaMethod, "Method %s should not be annotated with @Transactional".formatted(javaMethod.getFullName())));
-                        }
-                    }
-                });
-
+        var repositoryInterfaces = and(INTERFACES, annotatedWith(Repository.class));
         // allow empty should since some modules do not have any @Transactional methods
-        transactionalRule.allowEmptyShould(true).check(allClasses);
+        methodsOfThisModuleThat().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(repositoryInterfaces)
+                .because("a transaction boundary belongs in a repository, typically on a modifying query; a boundary in a service or controller holds its locks for the whole call")
+                .allowEmptyShould(true).check(allClasses);
+    }
+
+    /**
+     * A class-level {@code @Transactional} applies the boundary to every method of the class, which is the widest
+     * boundary there is. {@link #testTransactional()} inspects methods only, so this covers the gap it leaves.
+     */
+    @Test
+    void testNoClassLevelTransactional() {
+        noClassesOfThisModuleThat().areNotAnnotatedWith(Repository.class).should().beAnnotatedWith(simpleNameAnnotation("Transactional"))
+                .because("a class-level boundary makes every method of the class transactional, which is never what a service or controller needs").allowEmptyShould(true)
+                .check(allClasses);
     }
 
     @Test

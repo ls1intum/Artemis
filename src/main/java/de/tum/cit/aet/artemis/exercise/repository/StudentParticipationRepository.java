@@ -428,7 +428,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findByTeamId(long teamId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissions.results")
-    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentIdAndTestRun(long exerciseId, long studentId, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = "submissions.results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamId(long exerciseId, long teamId);
@@ -443,11 +443,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :username
+                AND p.student.id = :studentId
             """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    Optional<StudentParticipation> findWithEagerExerciseContextByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    Optional<StudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
+    Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
 
     @Query("""
             SELECT DISTINCT p
@@ -458,10 +458,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM StudentParticipation p2
                     LEFT JOIN p2.submissions s2
                 WHERE p2.exercise.id = :exerciseId
-                    AND p2.student.login = :username
+                    AND p2.student.id = :studentId
             )
             """)
-    Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p
@@ -474,10 +474,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :username
+                AND p.student.id = :studentId
                 AND p.testRun = :testRun
             """)
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId, @Param("username") String username,
+    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
             @Param("testRun") boolean testRun);
 
     @Query("""
@@ -847,26 +847,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.testRun = FALSE
             """)
     Set<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Find the participation with the given id. Additionally, load the latest submissions and corresponding results from the database.
-     * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
-     *
-     * @param participationId the id of the participation
-     * @return the participation with eager latest submission, it's results, exercise and course or an empty Optional
-     */
-    @Query("""
-            SELECT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results sr
-                LEFT JOIN FETCH sr.feedbacks
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students
-            WHERE p.id = :participationId
-                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
-            """)
-    Optional<StudentParticipation> findWithEagerLatestSubmissionResultsFeedbacksById(@Param("participationId") long participationId);
 
     @Query("""
             SELECT p
@@ -1799,7 +1779,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param courseId  the id of the course for which to find all grade scores
      * @param studentId the id of the student for which to find all grade scores
-     * @return a set of {@link CourseGradeScoreDTO}
+     * @return a list of {@link CourseGradeScoreDTO}
      */
     default List<CourseGradeScoreDTO> findGradeScoresForAllExercisesForCourseAndStudent(long courseId, long studentId) {
         // Distinguish between individual and team participations for performance reasons
@@ -1981,7 +1961,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Counts the number of unique, active students who have an initialized participation
      * for a specific exercise and are explicitly assigned this exact exercise variant
      * in their current exam.
-     *
+     * <p>
      * Should be used for exam dashboard to ignore test run submissions
      *
      * @param exerciseId the exercise id we are interested in
