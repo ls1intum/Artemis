@@ -2987,7 +2987,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             case TextExercise text -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(text.getId());
             case ModelingExercise modeling -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(modeling.getId());
             case FileUploadExercise fileUpload -> fileUploadExerciseRepository.findWithGradingCriteriaByIdElseThrow(fileUpload.getId());
-            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
+            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
             default -> exercise;
         };
     }

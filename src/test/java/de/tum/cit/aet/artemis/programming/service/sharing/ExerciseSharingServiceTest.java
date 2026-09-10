@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.codeability.sharing.plugins.api.ShoppingBasket;
@@ -274,7 +273,9 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private void mockSampleBasketLoadingForToken(String basketToken) throws URISyntaxException, IOException {
         URI basketJSONURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken);
-        try (InputStream in = Objects.requireNonNull(getClass().getResource("./basket/sampleBasket.json")).openStream()) {
+        var sampleBasketResource = getClass().getResource("./basket/sampleBasket.json");
+        assertThat(sampleBasketResource).isNotNull();
+        try (InputStream in = sampleBasketResource.openStream()) {
             String basketJSON = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             final ResponseActions responseActionsJSON = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketJSONURI))
                     .andExpect(method(HttpMethod.GET));
@@ -284,7 +285,9 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private void mockSampleBasketZipForToken(String basketToken) throws URISyntaxException, IOException {
         URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken + "/repository/0?format=artemis");
-        try (InputStream inputStream = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
+        var sampleExerciseResource = getClass().getResource("./basket/sampleExercise.zip");
+        assertThat(sampleExerciseResource).isNotNull();
+        try (InputStream inputStream = sampleExerciseResource.openStream()) {
             byte[] zippedBytes = inputStream.readAllBytes();
             final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketRepositoryZipURI))
                     .andExpect(method(HttpMethod.GET));

@@ -54,6 +54,6 @@ describe('DocumentationButtonComponent', () => {
         const anchor: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a');
 
         expect(anchor).not.toBeNull();
-        expect(anchor?.getAttribute('href')).toBe('https://docs.artemis.tum.de/instructor/adaptive-learning#generate-competencies');
+        expect(anchor?.getAttribute('href')).toBe('https://docs.artemis.tum.de/instructor/analytics/adaptive-learning#generate-competencies');
     });
 });

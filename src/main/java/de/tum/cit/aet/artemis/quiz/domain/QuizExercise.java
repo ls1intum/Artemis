@@ -15,9 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -66,10 +64,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      */
     @Column(name = "duration")
     private Integer duration;
-
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(unique = true)
-    private QuizPointStatistic quizPointStatistic;
 
     // Bidirectional mapping: QuizQuestion.exercise owns the exercise_id FK, so a parent saveAndFlush issues targeted
     // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
@@ -124,14 +118,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     public QuizExercise duration(Integer duration) {
         this.duration = duration;
         return this;
-    }
-
-    public QuizPointStatistic getQuizPointStatistic() {
-        return quizPointStatistic;
-    }
-
-    public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
-        this.quizPointStatistic = quizPointStatistic;
     }
 
     public Set<QuizBatch> getQuizBatches() {
@@ -277,7 +263,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      */
     @Override
     public void filterSensitiveInformation() {
-        setQuizPointStatistic(null);
         setQuizQuestions(new ArrayList<>());
         super.filterSensitiveInformation();
     }
@@ -286,25 +271,10 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      * filter out information about correct answers, so no info with respect to the solution gets leaked to students through json
      */
     public void filterForStudentsDuringQuiz() {
-        // filter out statistics
-        setQuizPointStatistic(null);
-
-        // filter out statistics, explanations, and any information about correct answers
-        // from all quizQuestions (so students can't find them in the JSON while answering the quiz)
+        // filter out explanations and any information about correct answers from all quizQuestions
+        // so students cannot find them in the JSON while answering the quiz
         for (QuizQuestion quizQuestion : this.getQuizQuestions()) {
             quizQuestion.filterForStudentsDuringQuiz();
-        }
-    }
-
-    /**
-     * filter out information about correct answers
-     */
-    public void filterForStatisticWebsocket() {
-
-        // filter out explanations, and any information about correct answers
-        // from all quizQuestions (so students can't find them in the JSON while answering the quiz)
-        for (QuizQuestion quizQuestion : this.getQuizQuestions()) {
-            quizQuestion.filterForStatisticWebsocket();
         }
     }
 
@@ -389,76 +359,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         return null;
     }
 
-    /**
-     * correct the associated quizPointStatistic
-     * 1. add new PointCounters for new Scores
-     * 2. delete old PointCounters if the score is no longer contained
-     */
-    public void recalculatePointCounters() {
-        if (quizPointStatistic == null || !Hibernate.isInitialized(quizPointStatistic)) {
-            return;
-        }
-
-        double quizPoints = getOverallQuizPoints();
-
-        // add new PointCounter
-        for (double i = 0.0; i <= quizPoints; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
-            quizPointStatistic.addScore(i);
-        }
-        // delete old PointCounter
-        Set<PointCounter> pointCounterToDelete = new HashSet<>();
-        for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
-            if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if (pointCounter.getPoints() > quizPoints || pointCounter.getPoints() < 0 || quizQuestions == null
-                        || quizQuestions.isEmpty()/* || (pointCounter.getPoints()% scoreStep) != 0 */) {
-                    pointCounterToDelete.add(pointCounter);
-                    pointCounter.setQuizPointStatistic(null);
-                }
-            }
-        }
-        quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
-    }
-
-    /**
-     * add Result to all Statistics of the given QuizExercise
-     *
-     * @param result         the result which will be added
-     * @param quizSubmission the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
-     */
-    public void addResultToAllStatistics(Result result, QuizSubmission quizSubmission) {
-
-        // update QuizPointStatistic with the result
-        if (result != null) {
-            getQuizPointStatistic().addResult(result.getScore(), result.isRated());
-            for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                // update QuestionStatistics with the result
-                if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission != null) {
-                    quizQuestion.getQuizQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
-                }
-            }
-        }
-    }
-
-    /**
-     * remove Result from all Statistics of the given QuizExercise
-     *
-     * @param result the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
-     */
-    public void removeResultFromAllStatistics(Result result) {
-        // update QuizPointStatistic with the result
-        if (result != null) {
-            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
-            getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
-            for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                // update QuestionStatistics with the result
-                if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
-                }
-            }
-        }
-    }
-
     @JsonIgnore
     @Override
     public void validateDates() {
@@ -481,13 +381,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Override
     public void reconnectJSONIgnoreAttributes() {
         QuizConfiguration.super.reconnectJSONIgnoreAttributes();
-
-        // reconnect pointCounters
-        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
-            }
-        }
 
         // reconnect quizBatches
         if (getQuizBatches() != null) {

@@ -101,7 +101,7 @@ public class ModelingSubmissionService extends SubmissionService {
         // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
         // would return the same row. Every other caller passes null and the participation is resolved here.
         final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
-                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+                : participationService.findOneByExerciseAndStudentWithEagerSubmissionsAnyState(exercise, user);
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }

@@ -14,7 +14,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
@@ -153,7 +152,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldSuccessfullyImportBasketFromSharingPlatformAsStudentNotAuthorized() throws Exception {
-        String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
+        var sampleBasketResource = this.getClass().getResource("./basket/sampleBasket.json");
+        assertThat(sampleBasketResource).isNotNull();
+        String sampleBasket = IOUtils.toString(sampleBasketResource, StandardCharsets.UTF_8);
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
 
@@ -367,7 +368,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     private void mockSampleBasketZipForToken(String basketToken, ExpectedCount expectedCount) throws Exception {
         URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken + "/repository/0?format=artemis");
-        try (InputStream inputStream = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
+        var sampleExerciseResource = getClass().getResource("./basket/sampleExercise.zip");
+        assertThat(sampleExerciseResource).isNotNull();
+        try (InputStream inputStream = sampleExerciseResource.openStream()) {
             byte[] zippedBytes = inputStream.readAllBytes();
             final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(expectedCount, requestTo(basketRepositoryZipURI))
                     .andExpect(method(HttpMethod.GET));
@@ -376,7 +379,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     private void importBasket() throws Exception {
-        String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
+        var sampleBasketResource = this.getClass().getResource("./basket/sampleBasket.json");
+        assertThat(sampleBasketResource).isNotNull();
+        String sampleBasket = IOUtils.toString(sampleBasketResource, StandardCharsets.UTF_8);
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
 
