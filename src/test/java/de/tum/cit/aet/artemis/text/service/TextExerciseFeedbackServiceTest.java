@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -44,9 +43,6 @@ class TextExerciseFeedbackServiceTest {
 
     @Mock
     private AthenaFeedbackApi athenaFeedbackApi;
-
-    @Mock
-    private SubmissionService submissionService;
 
     @Mock
     private ResultService resultService;
@@ -82,8 +78,7 @@ class TextExerciseFeedbackServiceTest {
     }
 
     private TextExerciseFeedbackService newService(Optional<AthenaFeedbackApi> api) {
-        return new TextExerciseFeedbackService(api, submissionService, resultService, resultRepository, resultWebsocketService, participationService, textBlockService,
-                userRepository);
+        return new TextExerciseFeedbackService(api, resultService, resultRepository, resultWebsocketService, participationService, textBlockService, userRepository);
     }
 
     @Test
@@ -93,7 +88,7 @@ class TextExerciseFeedbackServiceTest {
         service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, new TextSubmission());
 
         // Nothing should be looked up if Athena is not configured at all.
-        verifyNoInteractions(participationService, resultWebsocketService, resultRepository, submissionService);
+        verifyNoInteractions(participationService, resultWebsocketService, resultRepository);
     }
 
     @Test

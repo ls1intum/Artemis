@@ -192,9 +192,10 @@ public class StudentExamAthenaFeedbackService {
         if (!nonEmptySupportedSubmission) {
             return false;
         }
-        // Test-run participations are looked up by student and exercise only (repeating an exercise reuses the old
-        // participation), so a submission saved after this attempt was submitted belongs to a later attempt instead.
-        if (submission.getSubmissionDate() != null && studentExam.getSubmissionDate() != null && submission.getSubmissionDate().isAfter(studentExam.getSubmissionDate())) {
+        // Only test runs share a participation between attempts. Applying this to a test exam would reject its own
+        // final answer, since hand-in stamps the student exam before writing last-second changes.
+        if (studentExam.isTestRun() && submission.getSubmissionDate() != null && studentExam.getSubmissionDate() != null
+                && submission.getSubmissionDate().isAfter(studentExam.getSubmissionDate())) {
             return false;
         }
         return athenaFeedbackApi.map(api -> !api.submissionHasAthenaResult(submission)).orElse(true);

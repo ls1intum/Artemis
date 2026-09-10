@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -47,8 +46,6 @@ public class ModelingExerciseFeedbackService {
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final SubmissionService submissionService;
-
     private final ParticipationService participationService;
 
     private final ResultService resultService;
@@ -57,10 +54,9 @@ public class ModelingExerciseFeedbackService {
 
     private final UserRepository userRepository;
 
-    public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
-            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, UserRepository userRepository) {
+    public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, ResultService resultService, ResultRepository resultRepository,
+            ResultWebsocketService resultWebsocketService, ParticipationService participationService, UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
-        this.submissionService = submissionService;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.resultWebsocketService = resultWebsocketService;
@@ -163,7 +159,8 @@ public class ModelingExerciseFeedbackService {
 
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            submissionService.saveNewResult(modelingSubmission, automaticResult);
+            // Only the result: it owns the association, and merging the detached submission could undo a newer save.
+            automaticResult = this.resultRepository.save(automaticResult);
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
         catch (Exception e) {

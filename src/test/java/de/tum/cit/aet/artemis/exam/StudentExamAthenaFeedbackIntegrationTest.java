@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -86,6 +87,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     private Course course;
 
@@ -242,6 +246,44 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(ZonedDateTime.now());
             studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, student);
+
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void requestAthenaFeedback_shouldDispatchWhenTheFinalAnswerWasSavedAfterHandInStarted() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            enableAthenaForCourse();
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            TextSubmission submission = addTextSubmission(textParticipation, "A last second edit made while handing in.");
+
+            studentExam.getStudentParticipations().add(textParticipation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            // hand-in stamps the student exam before saveSubmissions writes changed content, so the final answer is
+            // dated after the attempt itself
+            ZonedDateTime handInStart = ZonedDateTime.now();
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(handInStart);
+            studentExamRepository.submitStudentExam(studentExam.getId(), handInStart);
+            submission.setSubmissionDate(handInStart.plusSeconds(2));
+            submissionRepository.save(submission);
 
             detachExerciseParticipationsCollection(studentExam);
 

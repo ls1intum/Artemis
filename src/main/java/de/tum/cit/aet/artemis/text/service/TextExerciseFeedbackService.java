@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -48,8 +47,6 @@ public class TextExerciseFeedbackService {
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final SubmissionService submissionService;
-
     private final ParticipationService participationService;
 
     private final ResultService resultService;
@@ -60,11 +57,9 @@ public class TextExerciseFeedbackService {
 
     private final UserRepository userRepository;
 
-    public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
-            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService,
-            UserRepository userRepository) {
+    public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, ResultService resultService, ResultRepository resultRepository,
+            ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService, UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
-        this.submissionService = submissionService;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.resultWebsocketService = resultWebsocketService;
@@ -209,7 +204,8 @@ public class TextExerciseFeedbackService {
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
             textBlockService.saveAll(textBlocks);
             textSubmission.setBlocks(textBlocks);
-            submissionService.saveNewResult(textSubmission, automaticResult);
+            // Only the result: it owns the association, and merging the detached submission could undo a newer save.
+            automaticResult = this.resultRepository.save(automaticResult);
             // This broadcast signals the client that feedback generation succeeded, result is saved in this case only
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
