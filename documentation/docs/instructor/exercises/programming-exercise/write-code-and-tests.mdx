@@ -8,10 +8,7 @@ import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
-import instructorEditor from '../assets/programming/instructor-editor.png';
-import edit from '../assets/programming/edit.png';
-import editInEditor from '../assets/programming/edit-in-editor.png';
-import submitButton from '../assets/programming/submit.png';
+import instructorEditor from '../assets/programming/code-editor-instructor.png';
 import collaborativeCodeEditor from '../assets/programming/collaborative-editing-code-editor.png';
 import collaborativeMetadataModal from '../assets/programming/collaborative-editing-metadata-modal.png';
 import collaborativeProblemStatement from '../assets/programming/collaborative-editing-problem-statement.gif';
@@ -122,11 +119,11 @@ cd tests || exit 1
 
 **Alternative 2: Edit in Browser**
 
-Open <Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} /> in Artemis and adapt the code in the online editor.
+Open **Edit in Editor** in Artemis and adapt the code in the online editor.
 
-<Image src={instructorEditor} alt="Instructor Editor" size={ImageSize.large} caption="Edit in Online Editor" />
+<Image src={instructorEditor} alt="Online editor on the template repository, with the tasks beside the code" size={ImageSize.large} caption="Editing the template repository" />
 
-You can switch between different repositories and <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> the code when done.
+You can switch between different repositories and **Submit** the code when done.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -139,14 +136,14 @@ file simultaneously with automatic conflict resolution and cursor awareness.
 
 Artemis supports real-time collaborative editing for programming exercises. Multiple instructors and editors can work on the same exercise simultaneously, with no additional setup required. Collaboration spans two views:
 
-- **Online Code Editor** (<Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} />) — live synchronization of code files, the file tree, and the problem statement.
-- **Edit Page** (<Image src={edit} alt="Edit" inline style={{height: '2rem'}} />) — synchronization of exercise settings and the problem statement.
+- **Online Code Editor** (**Edit in Editor**) — live synchronization of code files, the file tree, and the problem statement.
+- **Edit Page** (**Edit**) — synchronization of exercise settings and the problem statement.
 
 To start collaborating, have a second instructor or editor open the same exercise. Both users are connected automatically.
 
 **Live Code Editing:** When two or more users open the same file in the same repository, their edits are synchronized automatically. This is supported across all repository types: **Template**, **Solution**, **Tests**, and **Auxiliary**. Each collaborator's cursor and text selection are visible with a colored marker and name label.
 
-When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Submit" button) while the online code editor is open, a **new commit alert** is displayed. This advises you to save your work by clicking <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> and refresh the page to incorporate the new changes. The alert only appears for the repository that received the new commit.
+When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Submit" button) while the online code editor is open, a **new commit alert** is displayed. This advises you to save your work by clicking **Submit** and refresh the page to incorporate the new changes. The alert only appears for the repository that received the new commit.
 
 <Image src={collaborativeCodeEditor} alt="Two instructors editing the same file with visible cursors" size={ImageSize.large} caption="Live collaborative code editing with cursor awareness" />
 
@@ -154,11 +151,11 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 **File Tree Synchronization:** File creation, deletion, and renaming are broadcast to all connected editors immediately. If another user had a deleted or renamed file open, it is handled gracefully.
 
-**Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (<Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} />) and on the edit page (<Image src={edit} alt="Edit" inline style={{height: '2rem'}} />).
+**Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (**Edit in Editor**) and on the edit page (**Edit**).
 
 <Image src={collaborativeProblemStatement} alt="Two instructors editing the problem statement simultaneously" size={ImageSize.large} caption="Live collaborative problem statement editing" />
 
-**Exercise Settings Synchronization:** On the edit page (<Image src={edit} alt="Edit" inline style={{height: '2rem'}} />), changes to exercise settings (title, points, dates, grading criteria, etc.) are synchronized to other users when saved. Non-conflicting changes are applied automatically. If both instructors modified the same fields, a merge conflict modal lets you choose which values to keep.
+**Exercise Settings Synchronization:** On the edit page (**Edit**), changes to exercise settings (title, points, dates, grading criteria, etc.) are synchronized to other users when saved. Non-conflicting changes are applied automatically. If both instructors modified the same fields, a merge conflict modal lets you choose which values to keep.
 
 <Image src={collaborativeMetadataModal} alt="Settings conflict resolution modal" size={ImageSize.large} caption="Resolving conflicting exercise setting changes" />
 
@@ -167,7 +164,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
     <strong>Tips and Limitations:</strong>
 
     <ul>
-        <li>Click <Image src={submitButton} alt="Submit" inline style={{height: '2rem'}} /> frequently to ensure your work is committed to the repository.</li>
+        <li>Click <strong>Submit</strong> frequently to ensure your work is committed to the repository.</li>
         <li>Avoid mixing the online editor and external Git tools at the same time — pick one workflow per editing session to reduce the chance of conflicts.</li>
         <li>Use cursor awareness to see where your collaborators are editing.</li>
         <li>Handle commit alerts promptly — save and refresh before continuing to edit.</li>
@@ -194,7 +191,7 @@ Values that were not set show as **Unset**. If a whole area is missing from a sn
 
 The problem statement is what students read, and it is *interactive*: when you bind a task to test cases, Artemis shows each student whether their latest submission passes that task, right inside the description. Getting these bindings right is what turns a wall of text into a checklist students can work through.
 
-Edit it either with <Image src={edit} alt="Edit" inline style={{height: '2rem'}} /> on the exercise, or with <Image src={editInEditor} alt="Edit in Editor" inline style={{height: '2rem'}} /> to have it side by side with the code. Both editors synchronise in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
+Edit it either with **Edit** on the exercise, or with **Edit in Editor** to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
 
 The problem statement is Markdown, plus the two Artemis-specific constructs below.
 
@@ -216,7 +213,7 @@ Artemis resolves these names against the test cases reported by the **solution**
 
 ### UML Diagrams
 
-Embed a PlantUML diagram between `@startuml` and `@enduml`. Diagrams can be interactive too: colour an element according to whether a test passes by wrapping it in `testsColor`:
+Embed a PlantUML diagram between `@startuml` and `@enduml`. Diagrams can be interactive too: color an element according to whether a test passes by wrapping it in `testsColor`:
 
 ```text
 @startuml
@@ -226,7 +223,7 @@ class BubbleSort {
 @enduml
 ```
 
-The element is drawn in the success colour once that test passes, and in the failure colour while it does not. Each element takes exactly one test case; you cannot bind several tests to a single UML element.
+The element is drawn in the success color once that test passes, and in the failure color while it does not. Each element takes exactly one test case; you cannot bind several tests to a single UML element.
 
 ### Check the Bindings
 
