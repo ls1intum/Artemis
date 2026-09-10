@@ -50,6 +50,29 @@ class GenerationOutcomeTest {
     }
 
     @Test
+    void acceptsEarlyUnverifiedFailureWithoutRepositoryCapture() {
+        var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
+        for (var files : List.of(List.<WorkspaceFile>of(), List.of(text("SPEC.md", "unfinished contract")))) {
+            var outcome = GenerationOutcome.received(unverifiedOutput(files), seed(List.of(binary)), false);
+            assertThat(outcome.isMechanicallyVerified()).isFalse();
+            assertThat(outcome.errorMessage()).contains("Specification gate failed");
+            assertThat(outcome.capturedProducedFiles()).isEmpty();
+            assertThat(outcome.hasCapturedArtifacts()).isEqualTo(!files.isEmpty());
+            if (!files.isEmpty()) {
+                assertThat(outcome.specDocument()).isEqualTo("unfinished contract");
+            }
+        }
+    }
+
+    @Test
+    void unverifiedRepositoryCaptureStillRequiresCanonicalBinaries() {
+        var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
+        var output = unverifiedOutput(List.of(text("template/src/App.java", "class App {}")));
+        assertThatThrownBy(() -> GenerationOutcome.received(output, seed(List.of(binary)), false)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("canonical binary scaffolding");
+    }
+
+    @Test
     void rejectsChangedExecutableMode() {
         var executable = new WorkspaceFile("tests/gradlew", "script".getBytes(StandardCharsets.UTF_8), true);
         assertThatThrownBy(() -> GenerationOutcome.received(output(List.of(executable)), seed(List.of(text("tests/gradlew", "script"))), false))
@@ -75,6 +98,12 @@ class GenerationOutcomeTest {
 
     private static GenerationSeedService.Seed seed(List<WorkspaceFile> files) {
         return new GenerationSeedService.Seed(new WorkspaceSnapshot(files), Map.of(RepositoryType.TEMPLATE, "core-only-head"));
+    }
+
+    private static GenerationOutput unverifiedOutput(List<WorkspaceFile> files) {
+        var snapshot = new WorkspaceSnapshot(files);
+        return new GenerationOutput(snapshot, new VerificationResult(false, false, false, 0, List.of("Specification gate failed")), snapshot.sha256(), SpecFidelityReport.empty(),
+                "RUN_FAILED", null, GenerationOutput.AccountingState.INCOMPLETE, "default");
     }
 
     private static GenerationOutput output(List<WorkspaceFile> files) {
