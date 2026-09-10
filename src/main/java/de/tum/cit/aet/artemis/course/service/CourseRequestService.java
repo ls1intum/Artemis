@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,9 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 public class CourseRequestService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseRequestService.class);
+
+    /** Everything that is not a digit, removed to read the number out of a semester such as {@code WS24/25}. */
+    private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
     private static final int MAX_TITLE_LENGTH = 255;
 
@@ -262,7 +266,7 @@ public class CourseRequestService {
 
         // Extract semester number (digits only)
         if (semester != null && !semester.isBlank()) {
-            String semesterDigits = semester.replaceAll("[^0-9]", "");
+            String semesterDigits = NON_DIGIT.matcher(semester).replaceAll("");
             if (!semesterDigits.isEmpty()) {
                 baseShortName.append(semesterDigits);
             }

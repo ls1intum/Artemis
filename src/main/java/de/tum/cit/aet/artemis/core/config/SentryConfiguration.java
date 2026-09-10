@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
@@ -33,6 +34,16 @@ import io.sentry.protocol.SentryTransaction;
 public class SentryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
+
+    /**
+     * The user data a Sentry message may carry, scrubbed before it leaves the server: {@code user=barney_young},
+     * {@code User{...}} and email addresses.
+     */
+    private static final List<Pattern> PERSONAL_DATA_PATTERNS = List.of(Pattern.compile("user=\\S+"), Pattern.compile("User{[^}]*}"),
+            Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"));
+
+    /** The part of a repository URI between the last hyphen and the git suffix, which is a user login. */
+    private static final Pattern LOGIN_IN_REPOSITORY_URI = Pattern.compile("\\/git\\/([A-Z0-9]+)\\/([^/]+)-[^/]+\\.git");
 
     @Value("${artemis.version}")
     private String artemisVersion;
@@ -144,9 +155,8 @@ public class SentryConfiguration {
         // - user=barney_young => user=\S+
         // - User{...} => User{[^}]*}
         // - emails => [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}
-        List<String> piiPatterns = List.of("user=\\S+", "User{[^}]*}", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
-        for (String pattern : piiPatterns) {
-            unscrubbed = unscrubbed.replaceAll(pattern, "");
+        for (Pattern pattern : PERSONAL_DATA_PATTERNS) {
+            unscrubbed = pattern.matcher(unscrubbed).replaceAll("");
         }
         return unscrubbed;
     }
@@ -156,7 +166,7 @@ public class SentryConfiguration {
         // To ensure we're not accidentally transmitting them,
         // we use a heuristic to filter out this part of the URL.
         // We assume the part between the last dash and .git to contain a username.
-        String scrubbed = unscrubbed.replaceAll("\\/git\\/([A-Z0-9]+)\\/([^/]+)-[^/]+\\.git", "/git/$1/$2.git");
+        String scrubbed = LOGIN_IN_REPOSITORY_URI.matcher(unscrubbed).replaceAll("/git/$1/$2.git");
         // False positives: tests, exercise & solution repositories
         if (unscrubbed.contains("-tests.git") || unscrubbed.contains("-exercise.git") || unscrubbed.contains("-solution.git")) {
             return unscrubbed;

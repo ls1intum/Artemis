@@ -227,9 +227,22 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The normalized repository type or username, free of the project key prefix and "practice-" designation.
      */
     private String getRepositoryTypeOrUserName(String repositorySlug, String projectKey) {
-        String pattern = Pattern.quote(projectKey.toLowerCase(Locale.ROOT)) + "\\d*-";
-        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase(Locale.ROOT).replaceAll(pattern, "");
-        return repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
+        String slug = repositorySlug.toLowerCase(Locale.ROOT);
+        String lowerCaseProjectKey = projectKey.toLowerCase(Locale.ROOT);
+        // A slug is the project key, an optional run of digits and a hyphen, followed by the repository type or the
+        // login. Spelled out rather than expressed as a regular expression: the project key is only known at runtime,
+        // so an expression built here would be compiled again on every git request. Stripping the prefix rather than
+        // every occurrence of it also leaves a login that happens to repeat the project key intact.
+        if (slug.startsWith(lowerCaseProjectKey)) {
+            int afterProjectKey = lowerCaseProjectKey.length();
+            while (afterProjectKey < slug.length() && Character.isDigit(slug.charAt(afterProjectKey))) {
+                afterProjectKey++;
+            }
+            if (afterProjectKey < slug.length() && slug.charAt(afterProjectKey) == '-') {
+                slug = slug.substring(afterProjectKey + 1);
+            }
+        }
+        return slug.replace("practice-", "");
     }
 
     /**

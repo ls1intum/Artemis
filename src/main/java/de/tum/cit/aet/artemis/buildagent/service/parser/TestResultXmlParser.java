@@ -23,7 +23,7 @@ public class TestResultXmlParser {
     private static int maxFeedbackLength = 20_000;
 
     // https://stackoverflow.com/a/4237934
-    private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
+    private static final Pattern INVALID_XML_CHARACTER = Pattern.compile("[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]");
 
     // The root element can be preceded by processing instructions (<? ... ?>), comments (<!-- ... -->),
     // a doctype declaration (<!DOCTYPE ... >) and whitespace.
@@ -90,7 +90,7 @@ public class TestResultXmlParser {
      * @throws IOException If an I/O error occurs while reading the test result file.
      */
     public static void processTestResultFile(String testResultFileString, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) throws IOException {
-        testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
+        testResultFileString = INVALID_XML_CHARACTER.matcher(testResultFileString).replaceAll("");
 
         // The root element can be <testsuites> or <testsuite>
         if (XML_ROOT_TAG_IS_TESTSUITES.matcher(testResultFileString).find()) {

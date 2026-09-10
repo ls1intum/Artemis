@@ -4,12 +4,16 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 public class BuildLogParseUtils {
+
+    /** A carriage return or a line feed, removed so that a log line cannot forge a second one. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\\r\\n]");
 
     /**
      * Parses build logs from Jenkins into BuildLogEntry objects. The function reads the list
@@ -58,6 +62,6 @@ public class BuildLogParseUtils {
     }
 
     private static String stripLogEndOfLine(String log) {
-        return log.replaceAll("[\\r\\n]", "");
+        return LINE_BREAK.matcher(log).replaceAll("");
     }
 }

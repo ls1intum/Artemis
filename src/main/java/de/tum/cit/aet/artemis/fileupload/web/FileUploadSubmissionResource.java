@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -70,6 +71,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
+
+    /** Any whitespace inside a file pattern, removed before the pattern is split into its endings. */
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -190,8 +194,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // Check the pattern
         final String[] splittedFileName = file.getOriginalFilename().split("\\.");
         final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase(Locale.ROOT);
-        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase(Locale.ROOT).replaceAll("\\s", "").split(","));
-        if (!fileSuffix.matches(filePattern)) {
+        // The pattern is a comma separated list of plain file endings, so the check is a membership test. Joining
+        // them into an alternation and matching against that would let a metacharacter in instructor input decide what
+        // the expression means.
+        Set<String> allowedFileEndings = Set.of(WHITESPACE.matcher(exercise.getFilePattern().toLowerCase(Locale.ROOT)).replaceAll("").split(","));
+        if (!allowedFileEndings.contains(fileSuffix)) {
             throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
         }
     }

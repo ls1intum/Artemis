@@ -57,6 +57,12 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
+    /** Every run of characters that is not an uppercase letter or a digit, replaced by an underscore in a constant name. */
+    private static final Pattern NON_CONSTANT_NAME_CHARACTER_RUN = Pattern.compile("[^A-Z0-9]+");
+
+    /** Leading or trailing underscores of a generated constant name. */
+    private static final Pattern LEADING_OR_TRAILING_UNDERSCORES = Pattern.compile("^_+|_+$");
+
     private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
@@ -103,7 +109,7 @@ public abstract class HyperionCodeGenerationService {
      * Regex that matches control characters except carriage return, line feed, and tab.
      * Used to sanitize consistency issue text before prompt rendering.
      */
-    private static final String CONTROL_CHARS_PATTERN = "[\\p{Cntrl}&&[^\r\n\t]]";
+    private static final Pattern CONTROL_CHARACTER_TO_STRIP = Pattern.compile("[\\p{Cntrl}&&[^\r\n\t]]");
 
     private static final String BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE = "buildEnvironmentContext";
 
@@ -216,7 +222,7 @@ public abstract class HyperionCodeGenerationService {
         if (trimmed.isEmpty()) {
             return DEFAULT_SELECTED_FEEDBACK_THREADS;
         }
-        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
+        String sanitized = CONTROL_CHARACTER_TO_STRIP.matcher(trimmed).replaceAll("").trim();
         if (sanitized.length() > MAX_SELECTED_FEEDBACK_THREADS_LENGTH) {
             return truncateSelectedFeedbackThreadsSafely(sanitized);
         }
@@ -299,7 +305,7 @@ public abstract class HyperionCodeGenerationService {
         if (trimmed.isEmpty()) {
             return emptyFallback;
         }
-        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
+        String sanitized = CONTROL_CHARACTER_TO_STRIP.matcher(trimmed).replaceAll("").trim();
         String redacted = redactSecrets(sanitized).trim();
         if (redacted.isEmpty()) {
             return emptyFallback;
@@ -621,7 +627,8 @@ public abstract class HyperionCodeGenerationService {
         int extensionSeparatorIndex = fileName.lastIndexOf('.');
         String fileNameWithoutExtension = extensionSeparatorIndex > 0 ? fileName.substring(0, extensionSeparatorIndex) : fileName;
 
-        String sanitized = fileNameWithoutExtension.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_").replaceAll("^_+|_+$", "");
+        String underscored = NON_CONSTANT_NAME_CHARACTER_RUN.matcher(fileNameWithoutExtension.toUpperCase(Locale.ROOT)).replaceAll("_");
+        String sanitized = LEADING_OR_TRAILING_UNDERSCORES.matcher(underscored).replaceAll("");
         return sanitized.isBlank() ? "UNKNOWN" : sanitized;
     }
 

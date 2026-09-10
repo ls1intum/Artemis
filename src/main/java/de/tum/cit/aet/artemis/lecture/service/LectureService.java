@@ -72,6 +72,12 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 @Service
 public class LectureService {
 
+    /** The title Artemis gives a lecture it created without one. */
+    private static final Pattern DEFAULT_LECTURE_NAME = Pattern.compile("^Lecture (\\d+)$");
+
+    /** The channel name that follows from such a title. */
+    private static final Pattern DEFAULT_LECTURE_CHANNEL_NAME = Pattern.compile("^lecture-lecture-(\\d+)$");
+
     private final LectureRepository lectureRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -474,23 +480,20 @@ public class LectureService {
                 .thenComparing(Lecture::getId);
         List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
 
-        Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
-        Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
-
         Set<Lecture> lecturesToUpdate = new HashSet<>();
         Set<Channel> channelsToUpdate = new HashSet<>();
 
         for (int index = 0; index < existingLectures.size(); index++) {
             Lecture lecture = existingLectures.get(index);
             String newTitle = "Lecture " + (index + 1);
-            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
+            if (DEFAULT_LECTURE_NAME.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
                 lecture.setTitle(newTitle);
                 lecturesToUpdate.add(lecture);
             }
             Channel channel = lectureToChannelMap.get(lecture.getId());
             String channelName = channel.getName();
             String newChannelName = "lecture-lecture-" + (index + 1);
-            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
+            if (channelName != null && DEFAULT_LECTURE_CHANNEL_NAME.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
                 channel.setName(newChannelName);
                 channelsToUpdate.add(channel);
             }
