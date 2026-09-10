@@ -471,20 +471,27 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
-        const reconciled = this.reconcileCriteriaByContent(previousCriteria, parsedCriteria);
+        const ambiguousCriterionIds = this.duplicateParsedIds(parsedCriteria);
+        const ambiguousInstructionIds = this.duplicateParsedIds(parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions ?? []));
+        const reconciled = this.reconcileCriteriaByContent(previousCriteria, parsedCriteria, ambiguousCriterionIds, ambiguousInstructionIds);
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
     }
 
-    private reconcileCriteriaByContent(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): GradingCriterion[] {
+    private reconcileCriteriaByContent(
+        previousCriteria: GradingCriterion[],
+        parsedCriteria: GradingCriterion[],
+        ambiguousCriterionIds: Set<number>,
+        ambiguousInstructionIds: Set<number>,
+    ): GradingCriterion[] {
         const unusedCriteria = [...previousCriteria];
         return parsedCriteria.map((parsedCriterion) => {
-            let matchIndex = this.findUnusedById(unusedCriteria, parsedCriterion.id);
+            let matchIndex = this.findUnusedById(unusedCriteria, parsedCriterion.id, ambiguousCriterionIds);
             if (matchIndex < 0 && (parsedCriterion.title ?? '') !== '') {
                 matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
             }
             if (matchIndex < 0) {
-                this.clearStaleParsedId(parsedCriterion, previousCriteria);
+                this.clearStaleParsedId(parsedCriterion, previousCriteria, ambiguousCriterionIds);
                 return parsedCriterion;
             }
             const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
@@ -492,21 +499,26 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             existingCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
                 existingCriterion.structuredGradingInstructions ?? [],
                 parsedCriterion.structuredGradingInstructions ?? [],
+                ambiguousInstructionIds,
             );
             return existingCriterion;
         });
     }
 
-    private reconcileInstructionsByContent(previousInstructions: GradingInstruction[], parsedInstructions: GradingInstruction[]): GradingInstruction[] {
+    private reconcileInstructionsByContent(
+        previousInstructions: GradingInstruction[],
+        parsedInstructions: GradingInstruction[],
+        ambiguousInstructionIds: Set<number>,
+    ): GradingInstruction[] {
         const unusedInstructions = [...previousInstructions];
         return parsedInstructions.map((parsedInstruction) => {
-            let matchIndex = this.findUnusedById(unusedInstructions, parsedInstruction.id);
+            let matchIndex = this.findUnusedById(unusedInstructions, parsedInstruction.id, ambiguousInstructionIds);
             if (matchIndex < 0) {
                 const fingerprint = this.instructionFingerprint(parsedInstruction);
                 matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
             }
             if (matchIndex < 0) {
-                this.clearStaleParsedId(parsedInstruction, previousInstructions);
+                this.clearStaleParsedId(parsedInstruction, previousInstructions, ambiguousInstructionIds);
                 return parsedInstruction;
             }
             const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
@@ -514,16 +526,36 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         });
     }
 
-    private findUnusedById<T extends { id?: number }>(unused: T[], id: number | undefined): number {
-        if (id == undefined) {
+    /**
+     * Ids a text edit repeated across parsed rows, typically by copying a marked block. The copy and the
+     * original are indistinguishable by marker, so none of them may claim the persisted object; matching
+     * falls back to the content fingerprint, which leaves the copy without an id.
+     */
+    private duplicateParsedIds(parsed: { id?: number }[]): Set<number> {
+        const seenIds = new Set<number>();
+        const duplicateIds = new Set<number>();
+        for (const { id } of parsed) {
+            if (id == undefined) {
+                continue;
+            }
+            if (seenIds.has(id)) {
+                duplicateIds.add(id);
+            }
+            seenIds.add(id);
+        }
+        return duplicateIds;
+    }
+
+    private findUnusedById<T extends { id?: number }>(unused: T[], id: number | undefined, ambiguousIds: Set<number>): number {
+        if (id == undefined || ambiguousIds.has(id)) {
             return -1;
         }
         return unused.findIndex((entity) => entity.id === id);
     }
 
-    /** Drop a marker id that already belonged to a previous entity we could not reclaim (duplicate marker). */
-    private clearStaleParsedId<T extends { id?: number }>(parsed: T, previous: T[]): void {
-        if (parsed.id != undefined && previous.some((entity) => entity.id === parsed.id)) {
+    /** Drop a marker id we could not reclaim, so a copied or stale block is saved as a new entity. */
+    private clearStaleParsedId<T extends { id?: number }>(parsed: T, previous: T[], ambiguousIds: Set<number>): void {
+        if (parsed.id != undefined && (ambiguousIds.has(parsed.id) || previous.some((entity) => entity.id === parsed.id))) {
             delete parsed.id;
         }
     }

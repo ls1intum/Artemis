@@ -89,12 +89,13 @@
                                     <div class="sqi-instruction">
                                         <div class="sqi-instruction__fields-row">
                                             <div class="sqi-instruction__field sqi-instruction__field--credits">
-                                                <label class="sqi-field-label">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-credits-' + criterionIndex + '-' + instructionIndex">
                                                     <span jhiTranslate="artemisApp.exercise.credits"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.creditsHint" />
                                                 </label>
                                                 <input
                                                     tumUiInput
+                                                    [id]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.credits"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -104,12 +105,13 @@
                                                 />
                                             </div>
                                             <div class="sqi-instruction__field sqi-instruction__field--scale">
-                                                <label class="sqi-field-label">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex">
                                                     <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" />
                                                 </label>
                                                 <input
                                                     tumUiInput
+                                                    [id]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.gradingScale"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -119,12 +121,13 @@
                                                 />
                                             </div>
                                             <div class="sqi-instruction__field sqi-instruction__field--limit">
-                                                <label class="sqi-field-label">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex">
                                                     <span jhiTranslate="artemisApp.exercise.limit"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
                                                 </label>
                                                 <input
                                                     tumUiInput
+                                                    [id]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.usageCount"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -149,13 +152,14 @@
                                         <hr class="sqi-instruction__divider" />
                                         <div class="sqi-instruction__textareas">
                                             <div class="sqi-instruction__textarea-field">
-                                                <label class="sqi-field-label">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-description-' + criterionIndex + '-' + instructionIndex">
                                                     <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.descriptionHint" />
                                                 </label>
                                                 <textarea
                                                     tumUiTextarea
                                                     class="sqi-instruction__textarea"
+                                                    [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.instructionDescription"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
@@ -165,13 +169,14 @@
                                                 ></textarea>
                                             </div>
                                             <div class="sqi-instruction__textarea-field">
-                                                <label class="sqi-field-label">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex">
                                                     <span jhiTranslate="artemisApp.exercise.feedback"></span>
                                                     <jhi-help-icon text="artemisApp.exercise.feedbackHint" />
                                                 </label>
                                                 <textarea
                                                     tumUiTextarea
                                                     class="sqi-instruction__textarea"
+                                                    [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.feedback"
                                                     [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
