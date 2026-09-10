@@ -44,10 +44,11 @@ public final class GenerationOutcome {
         Map<String, WorkspaceFile> original = seed.snapshot().files().stream().collect(Collectors.toMap(WorkspaceFile::path, file -> file));
         if (output != null) {
             Map<String, WorkspaceFile> produced = output.candidate().files().stream().collect(Collectors.toMap(WorkspaceFile::path, file -> file));
-            // Early unverified failures may capture only diagnostics, before any repository artifacts exist.
-            boolean capturesRepositories = output.verification().mechanicallyVerified() || produced.keySet().stream().anyMatch(path -> path.contains("/"));
+            // Unverified diagnostic snapshots contain only changed repositories; verified candidates must include every repository.
+            Set<String> capturedRoots = produced.keySet().stream().map(path -> path.split("/", 2)[0]).collect(Collectors.toSet());
             for (WorkspaceFile seedFile : seed.snapshot().files()) {
-                if (capturesRepositories && BinaryContent.isBinary(seedFile.content()) && !seedFile.equals(produced.get(seedFile.path()))) {
+                boolean captured = output.verification().mechanicallyVerified() || capturedRoots.contains(seedFile.path().split("/", 2)[0]);
+                if (captured && BinaryContent.isBinary(seedFile.content()) && !seedFile.equals(produced.get(seedFile.path()))) {
                     throw new IllegalArgumentException("Generated output omitted or changed canonical binary scaffolding");
                 }
             }
