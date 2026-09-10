@@ -47,10 +47,13 @@
                         A real button rather than a div with a role: it is focusable, it answers Enter and Space without
                         the page scrolling, and disabling it is what makes a day of a neighbouring month inert. The cell
                         around it stays the gridcell, so the row's children keep one role between them.
+
+                        Laid out as a column rather than left to fill: a button centres its content vertically, which put
+                        the day number in the middle of the cell and so underneath the bars drawn over it.
                     -->
                     <button
                         type="button"
-                        class="block h-full w-full cursor-pointer appearance-none border-0 bg-transparent px-2 py-1.5 text-start text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
+                        class="flex h-full w-full cursor-pointer appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-start text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
                         [class.cursor-default]="!day.inDisplayedMonth"
                         [class.opacity-45]="!day.inDisplayedMonth"
                         [disabled]="!day.inDisplayedMonth"
