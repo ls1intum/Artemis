@@ -119,13 +119,12 @@ public class LocalCIQueueWebsocketService {
         if (coursesWithQueuedJobChanges.isEmpty()) {
             return;
         }
+        Set<Long> courseIds = drain(coursesWithQueuedJobChanges);
         boolean admin = hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_QUEUED_JOBS_TOPIC);
-        Set<Long> watched = watchedCourses(coursesWithQueuedJobChanges, LocalCIWebsocketMessagingService::queuedJobsTopicForCourse);
+        Set<Long> watched = watchedCourses(courseIds, LocalCIWebsocketMessagingService::queuedJobsTopicForCourse);
         if (!admin && watched.isEmpty()) {
-            // Nobody has a queue open. The markers stay so that whoever opens one is served on the next run.
             return;
         }
-        Set<Long> courseIds = drain(coursesWithQueuedJobChanges);
         try {
             var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
             if (admin) {
@@ -147,12 +146,12 @@ public class LocalCIQueueWebsocketService {
         if (coursesWithProcessingJobChanges.isEmpty()) {
             return;
         }
+        Set<Long> courseIds = drain(coursesWithProcessingJobChanges);
         boolean admin = hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_RUNNING_JOBS_TOPIC);
-        Set<Long> watched = watchedCourses(coursesWithProcessingJobChanges, LocalCIWebsocketMessagingService::runningJobsTopicForCourse);
+        Set<Long> watched = watchedCourses(courseIds, LocalCIWebsocketMessagingService::runningJobsTopicForCourse);
         if (!admin && watched.isEmpty()) {
             return;
         }
-        Set<Long> courseIds = drain(coursesWithProcessingJobChanges);
         try {
             var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
             if (admin) {
@@ -171,10 +170,9 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void broadcastBuildAgentSummary() {
-        if (!buildAgentSummaryNeedsBroadcast.get() || !hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_BUILD_AGENTS_TOPIC)) {
+        if (!buildAgentSummaryNeedsBroadcast.getAndSet(false) || !hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_BUILD_AGENTS_TOPIC)) {
             return;
         }
-        buildAgentSummaryNeedsBroadcast.set(false);
         try {
             localCIWebsocketMessagingService.sendBuildAgentSummary(removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation()));
         }

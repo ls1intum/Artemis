@@ -193,19 +193,16 @@ class LocalCIQueueWebsocketServiceTest {
     }
 
     @Test
-    void shouldSendTheCurrentStateOnceSomebodySubscribes() {
+    void shouldNotHoldOnToChangesNobodyWasWatching() {
         withoutSubscribers();
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
         localCIQueueWebsocketService.broadcastPendingChanges();
-        verifyNoInteractions(localCIWebsocketMessagingService);
 
-        // the change marker has to survive the skipped runs, otherwise whoever opens the page sees nothing until the
-        // next build job happens to change the queue
+        // the page loads its current contents over REST, so a change nobody was subscribed for is simply dropped
         withSubscribers();
-        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
         localCIQueueWebsocketService.broadcastPendingChanges();
 
-        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobs(anyList());
-        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
+        verifyNoInteractions(localCIWebsocketMessagingService);
+        verify(distributedDataAccessService, never()).getQueuedJobs();
     }
 }
