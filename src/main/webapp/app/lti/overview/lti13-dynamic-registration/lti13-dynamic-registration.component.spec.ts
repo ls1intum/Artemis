@@ -117,6 +117,25 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         window.opener = originalOpener;
     });
 
+    it.each([
+        ['is not a URL at all', 'not a url'],
+        ['parses but has an opaque origin', 'data:text/html,x'],
+    ])('should not post a message when the platform configuration %s', (_description, openIdConfiguration) => {
+        const mockPostMessage = vi.fn();
+        const originalOpener = window.opener;
+        window.opener = { postMessage: mockPostMessage };
+        route.snapshot = { queryParamMap: convertToParamMap({ openid_configuration: openIdConfiguration, registration_token: 'token' }) } as ActivatedRouteSnapshot;
+
+        vi.spyOn(http, 'post').mockReturnValue(of({ body: {} }));
+
+        comp.ngOnInit();
+
+        // There is no origin to address the close signal to, and postMessage would reject 'null' outright.
+        expect(mockPostMessage).not.toHaveBeenCalled();
+
+        window.opener = originalOpener;
+    });
+
     it('should post message to parent window after registration fails', () => {
         const mockPostMessage = vi.fn();
         const originalParent = window.parent;

@@ -73,6 +73,12 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
             // persisted by the request above, so the only cost is that the window does not close by itself.
             return;
         }
+        // A URL with an opaque origin, such as a data: or blob: configuration URL, parses but serializes its origin
+        // as the string 'null', which postMessage rejects as a target with a SyntaxError. Since the parameter comes
+        // from the query string, that would let a crafted link throw inside this callback.
+        if (platformOrigin === 'null') {
+            return;
+        }
         (window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, platformOrigin);
     }
 }
