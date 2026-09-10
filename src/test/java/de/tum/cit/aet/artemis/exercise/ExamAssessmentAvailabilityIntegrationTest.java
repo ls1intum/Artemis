@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -230,7 +230,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
 
         String response = request
                 .performMvcRequest(put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback").param("submit", "true")
-                        .contentType(MediaType.APPLICATION_JSON).content(new ObjectMapper().writeValueAsString(assessment)))
+                        .contentType(MediaType.APPLICATION_JSON).content(new JsonMapper().writeValueAsString(assessment)))
                 .andExpect(status().isForbidden()).andReturn().getResponse().getContentAsString();
 
         assertThat(response).contains(ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING);

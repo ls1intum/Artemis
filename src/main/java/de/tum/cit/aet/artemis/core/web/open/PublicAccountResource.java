@@ -301,7 +301,7 @@ public class PublicAccountResource {
     @EnforceNothing
     public ResponseEntity<Void> changeLanguageKey(@RequestBody String languageKey) {
         User user = userRepository.getUser();
-        String langKey = languageKey.replaceAll("\"", "").toLowerCase(Locale.ROOT).trim();
+        String langKey = languageKey.replace("\"", "").toLowerCase(Locale.ROOT).trim();
         if (!"en".equals(langKey) && !"de".equals(langKey)) {
             throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
         }
