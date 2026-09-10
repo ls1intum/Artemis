@@ -175,25 +175,28 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             @Param("editedFreePeriodId") Long editedFreePeriodId);
 
     /**
-     * Counts, for every free period of a course, how many of its sessions that period covers.
+     * Counts, for every free period of a course, how many sessions it has cancelled.
      *
-     * One query rather than one per holiday, and a left join so a period covering nothing still answers with zero
+     * By what the period holds rather than by what it overlaps in time. Cancelling only takes sessions that were still
+     * active, so a session someone had already cancelled by hand goes on belonging to nobody: counting it by overlap
+     * would credit the holiday with cancelling something it never touched, and would disagree with the number the
+     * dialog gave for the same span before the holiday was saved.
+     *
+     * One query rather than one per holiday, and a left join so a period holding nothing still answers with zero
      * instead of dropping out of the result.
      *
-     * @param course the course whose free periods and sessions are counted
+     * @param course the course whose free periods are counted
      * @return one entry per free period of the course
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO(period.id, COUNT(session))
             FROM TutorialGroupFreePeriod period
                 LEFT JOIN TutorialGroupSession session
-                    ON session.tutorialGroup.course = period.tutorialGroupsConfiguration.course
-                    AND session.start < period.end
-                    AND session.end > period.start
+                    ON session.tutorialGroupFreePeriod = period
             WHERE period.tutorialGroupsConfiguration.course = :course
             GROUP BY period.id
             """)
-    List<TutorialGroupFreePeriodSessionCountDTO> countOverlappingSessionsPerFreePeriod(@Param("course") Course course);
+    List<TutorialGroupFreePeriodSessionCountDTO> countCancelledSessionsPerFreePeriod(@Param("course") Course course);
 
     @Transactional // ok because of delete
     @Modifying

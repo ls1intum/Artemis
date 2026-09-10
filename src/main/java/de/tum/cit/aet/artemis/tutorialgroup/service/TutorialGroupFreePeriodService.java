@@ -77,13 +77,13 @@ public class TutorialGroupFreePeriodService {
     }
 
     /**
-     * Counts, for every free period of a course, how many sessions it covers.
+     * Counts, for every free period of a course, how many sessions it has cancelled.
      *
      * @param course the course whose free periods are counted
-     * @return one entry per free period, including the ones covering nothing
+     * @return one entry per free period, including the ones holding nothing
      */
     public List<TutorialGroupFreePeriodSessionCountDTO> countSessionsPerFreePeriod(Course course) {
-        return tutorialGroupSessionRepository.countOverlappingSessionsPerFreePeriod(course);
+        return tutorialGroupSessionRepository.countCancelledSessionsPerFreePeriod(course);
     }
 
     /**

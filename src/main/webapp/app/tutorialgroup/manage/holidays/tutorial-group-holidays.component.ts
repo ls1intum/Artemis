@@ -27,6 +27,9 @@ import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/man
 /** Long enough that typing a date or stepping through a month settles before the count is asked for. */
 const SESSION_COUNT_DEBOUNCE_MS = 300;
 
+/** Keeps the rollover from being scheduled for no delay at all if it is set up exactly on midnight. */
+const MINIMUM_ROLLOVER_DELAY_MS = 1_000;
+
 /**
  * The holidays of a course: a month calendar of everything that is cancelled, and the list of holidays beside it.
  *
@@ -93,13 +96,24 @@ export class TutorialGroupHolidaysComponent {
 
     private readonly timeZone = computed(() => this.course()?.timeZone);
 
+    /**
+     * The moment the page reckons from, moved on at each of the course's midnights.
+     *
+     * A plain `dayjs()` inside a computed has nothing that changes, so it would be read once and kept: a page left
+     * open overnight would go on calling yesterday today, in the Today button, the marker on the calendar and the
+     * upcoming filter alike.
+     */
+    private readonly now = signal(dayjs());
+    private dayRolloverTimer?: ReturnType<typeof setTimeout>;
+
     /** Today in the course's zone: a holiday cancels a day of the course, not a day of whoever is reading. */
-    protected readonly today = computed(() => inCourseZone(dayjs(), this.timeZone()).startOf('day'));
+    protected readonly today = computed(() => inCourseZone(this.now(), this.timeZone()).startOf('day'));
     protected readonly displayedMonth = signal(dayjs().startOf('month'));
 
     protected readonly holidays = computed(() => toHolidays(this.freePeriods(), this.timeZone()));
 
     constructor() {
+        this.destroyRef.onDestroy(() => clearTimeout(this.dayRolloverTimer));
         this.reloadConfigurationOnRequest();
         this.countSessionsForSpansChosenInTheDialog();
         this.countSessionsForTheDisplayedMonth();
@@ -190,9 +204,26 @@ export class TutorialGroupHolidaysComponent {
                 this.course.set(course);
                 // Start on the month the reader is in, expressed in the course's zone.
                 this.displayedMonth.set(inCourseZone(dayjs(), course.timeZone).startOf('month'));
+                this.moveOnAtTheNextCourseMidnight();
                 this.loadConfiguration();
             }
         });
+    }
+
+    /**
+     * Schedules the page to reckon from the new day when the course's midnight passes, and again at each one after.
+     *
+     * Waiting exactly until midnight rather than polling, because the only thing that changes then is which day the
+     * page calls today, and it changes once.
+     */
+    private moveOnAtTheNextCourseMidnight(): void {
+        clearTimeout(this.dayRolloverTimer);
+        const inZone = inCourseZone(dayjs(), this.timeZone());
+        const delay = Math.max(inZone.add(1, 'day').startOf('day').diff(inZone), MINIMUM_ROLLOVER_DELAY_MS);
+        this.dayRolloverTimer = setTimeout(() => {
+            this.now.set(dayjs());
+            this.moveOnAtTheNextCourseMidnight();
+        }, delay);
     }
 
     /**

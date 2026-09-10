@@ -311,22 +311,37 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
         request.get(overlapCountPath(), HttpStatus.FORBIDDEN, Long.class, span(MONDAY.atTime(9, 0), MONDAY.atTime(10, 0)));
     }
 
-    /** The list beside the calendar shows one number per holiday, so it has to be counted the same way. */
+    /** The list beside the calendar shows one number per holiday, so it has to say what that holiday did. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getSessionCountsPerFreePeriod_shouldCountByOverlapAndKeepEmptyPeriods() throws Exception {
-        createSessionOn(MONDAY, 6);
-        createSessionOn(MONDAY, 9);
-        createSessionOn(MONDAY, 14);
-        var morningOnly = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 0), MONDAY.atTime(10, 0), "Morning");
+    void getSessionCountsPerFreePeriod_shouldCountWhatEachHolidayCancelledAndKeepEmptyPeriods() throws Exception {
+        var morningOnly = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 0), MONDAY.atTime(11, 0), "Morning");
         var quietDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.plusDays(3).atTime(0, 0), MONDAY.plusDays(3).atTime(23, 59), "Quiet");
+        cancelSessionOn(MONDAY, 9, morningOnly);
 
         List<TutorialGroupFreePeriodSessionCountDTO> counts = request.getList(countsPerPeriodPath(), HttpStatus.OK, TutorialGroupFreePeriodSessionCountDTO.class);
 
-        // Exactly these two, so a holiday covering nothing still answers - with zero - rather than dropping out and
+        // Exactly these two, so a holiday holding nothing still answers - with zero - rather than dropping out and
         // leaving its row in the list without a number.
         assertThat(counts).containsExactlyInAnyOrder(new TutorialGroupFreePeriodSessionCountDTO(morningOnly.getId(), 1),
                 new TutorialGroupFreePeriodSessionCountDTO(quietDay.getId(), 0));
+    }
+
+    /**
+     * A session someone cancelled by hand overlaps the holiday but was never taken by it, because cancelling only takes
+     * sessions that are still active. Counting by overlap would report it as cancelled by a holiday that never saw it,
+     * and would contradict the zero the dialog gave for the same span.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCountsPerFreePeriod_shouldNotClaimASessionCancelledByHand() throws Exception {
+        var holiday = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 0), MONDAY.atTime(11, 0), "Morning");
+        tutorialGroupSessionRepository.saveAndFlush(tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(MONDAY.atTime(9, 30), ZoneId.of(exampleTimeZone)),
+                ZonedDateTime.of(MONDAY.atTime(10, 30), ZoneId.of(exampleTimeZone)), "01.05.13", null, TutorialGroupSessionStatus.CANCELLED, null, exampleTutorialGroup));
+
+        List<TutorialGroupFreePeriodSessionCountDTO> counts = request.getList(countsPerPeriodPath(), HttpStatus.OK, TutorialGroupFreePeriodSessionCountDTO.class);
+
+        assertThat(counts).containsExactly(new TutorialGroupFreePeriodSessionCountDTO(holiday.getId(), 0));
     }
 
     @Test

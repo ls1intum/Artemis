@@ -60,6 +60,14 @@ export class HolidayDialogComponent {
     protected readonly start = signal<dayjs.Dayjs | undefined>(undefined);
     protected readonly end = signal<dayjs.Dayjs | undefined>(undefined);
     protected readonly reason = signal('');
+    /**
+     * Whether what is typed in each field parses.
+     *
+     * A picker keeps its last committed value when the text becomes invalid, so without this the reader could type
+     * nonsense, see it sitting in the field, and still save the date it had replaced.
+     */
+    protected readonly startTextIsValid = signal(true);
+    protected readonly endTextIsValid = signal(true);
 
     protected readonly reasonMaxLength = REASON_MAX_LENGTH;
 
@@ -81,7 +89,9 @@ export class HolidayDialogComponent {
         return !!start && !!end && !end.isAfter(start);
     });
 
-    protected readonly canSave = computed(() => !!this.start() && !!this.end() && this.reason().trim().length > 0 && !this.endIsBeforeStart() && !this.saving());
+    protected readonly canSave = computed(
+        () => !!this.start() && !!this.end() && this.startTextIsValid() && this.endTextIsValid() && this.reason().trim().length > 0 && !this.endIsBeforeStart() && !this.saving(),
+    );
 
     /**
      * Reloads the form whenever the dialog opens on a holiday, so a cancelled edit never leaks into the next one.
@@ -99,6 +109,9 @@ export class HolidayDialogComponent {
         const holiday = this.holiday();
         const initialDay = this.initialDay();
         untracked(() => {
+            // A dialog reopened after invalid text was left in a field starts from the values it is given.
+            this.startTextIsValid.set(true);
+            this.endTextIsValid.set(true);
             if (holiday) {
                 this.start.set(holiday.start);
                 this.end.set(holiday.end);

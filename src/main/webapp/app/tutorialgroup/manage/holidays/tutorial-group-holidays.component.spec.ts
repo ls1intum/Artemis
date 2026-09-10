@@ -212,6 +212,23 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(freePeriodService.getSessionCounts).not.toHaveBeenCalledWith(42, expect.anything(), dayjs('2025-12-22T10:00'));
     });
 
+    it('should move on to the new day when the course passes midnight with the page open', () => {
+        // Pinned at 10:00 in the course zone, so its midnight is fourteen hours away.
+        expect(component['today']().format('YYYY-MM-DD')).toBe('2025-12-10');
+
+        vi.advanceTimersByTime(15 * 60 * 60 * 1000);
+
+        // Left as a plain dayjs read, this would still be calling the 10th today.
+        expect(component['today']().format('YYYY-MM-DD')).toBe('2025-12-11');
+    });
+
+    it('should keep moving on at each midnight after the first', () => {
+        vi.advanceTimersByTime(15 * 60 * 60 * 1000);
+        vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+
+        expect(component['today']().format('YYYY-MM-DD')).toBe('2025-12-12');
+    });
+
     it('should show the counts of the month on screen when an older month answers last', () => {
         // Stepping quickly leaves several months in flight; without switching, the slowest answer would win.
         const december = new Subject<{ date: string; count: number }[]>();

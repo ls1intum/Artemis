@@ -35,6 +35,8 @@ describe('HolidayDialogComponent', () => {
     });
 
     /** The dialog fills the form in an effect, so the DOM is only settled after a stable tick. */
+    const query = (testId: string) => fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+
     async function open(): Promise<void> {
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
@@ -97,6 +99,48 @@ describe('HolidayDialogComponent', () => {
 
         expect(component['canSave']()).toBe(false);
         expect(fixture.debugElement.query(By.css('[data-testid="holiday-range-error"]'))).not.toBeNull();
+    });
+
+    it('should refuse to save while a date field holds text that does not parse', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        await open();
+        component['reason'].set('Dies Academicus');
+        fixture.detectChanges();
+        expect((query('holiday-submit').nativeElement as HTMLButtonElement).disabled).toBe(false);
+
+        // The picker keeps its last good value, so without this the nonsense on screen would save the old date.
+        query('holiday-start').triggerEventHandler('inputValidityChange', false);
+        fixture.detectChanges();
+
+        expect((query('holiday-submit').nativeElement as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('should let saving resume once the text parses again', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        await open();
+        component['reason'].set('Dies Academicus');
+        query('holiday-end').triggerEventHandler('inputValidityChange', false);
+        fixture.detectChanges();
+
+        query('holiday-end').triggerEventHandler('inputValidityChange', true);
+        fixture.detectChanges();
+
+        expect((query('holiday-submit').nativeElement as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('should not carry invalid text into the next holiday the dialog opens on', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
+        await open();
+        query('holiday-start').triggerEventHandler('inputValidityChange', false);
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-20').startOf('day'));
+        await open();
+        component['reason'].set('Dies Academicus');
+        fixture.detectChanges();
+
+        expect((query('holiday-submit').nativeElement as HTMLButtonElement).disabled).toBe(false);
     });
 
     it('should refuse to save without a reason, since the reason is what students are shown', async () => {

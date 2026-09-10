@@ -18,6 +18,7 @@
                     [shouldDisplayTimeZoneWarning]="false"
                     [value]="start()"
                     (valueChange)="onStartChange($event)"
+                    (inputValidityChange)="startTextIsValid.set($event)"
                     [ariaLabel]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate"
                 />
                 <span class="mt-1 block text-sm opacity-70" data-testid="holiday-start-weekday">{{ startWeekday() }}</span>
@@ -30,6 +31,7 @@
                     [shouldDisplayTimeZoneWarning]="false"
                     [value]="end()"
                     (valueChange)="onEndChange($event)"
+                    (inputValidityChange)="endTextIsValid.set($event)"
                     [ariaLabel]="'artemisApp.pages.tutorialFreePeriodsManagement.form.to' | artemisTranslate"
                 />
                 <span class="mt-1 block text-sm opacity-70" data-testid="holiday-end-weekday">{{ endWeekday() }}</span>
