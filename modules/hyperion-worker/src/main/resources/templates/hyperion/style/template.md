@@ -18,8 +18,8 @@ the stable ID from the specification's Testing Strategy and placing it at the as
 the signature. Every unfinished member of a stubbed owner carries its seam ID; the same ID may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
 
-The exception is a stubbed owner whose approved Public API marks a member `/** @studentCreates */`, either because declaring it is the learning objective or because its signature needs an absent type. Keep that owner as an empty compile-safe class and put
-exactly one owner-seam TODO in its class body where students add the members. Never restore the missing type, use `Object`, edit the specification, or reuse the absent type's seam.
+The exception is a stubbed owner whose approved Public API marks a member `/** @studentCreates */`, either because declaring it is the learning objective or because its signature needs an absent type. Omit only the marked members; retain the owner's supplied fields, constructors, and working operations. Keep it compile-safe and put
+one owner-seam TODO in its class body where students add the missing declarations. Never restore the missing type, use `Object`, edit the specification, or reuse the absent type's seam.
 
 ## Types students must create
 
