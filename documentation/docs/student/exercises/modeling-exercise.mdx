@@ -41,14 +41,17 @@ The task sits beside the canvas, and the components your diagram type offers are
 one onto the canvas, then drag from its edge to another element to connect them. **Explanation**, under the canvas,
 is worth writing whenever a choice in the diagram needs justifying — an assessor reads it alongside the diagram.
 
-**Submit** hands the diagram in. The editor saves as you draw, but saving is not handing in, and you can submit
-again as often as you like before the due date.
+The editor saves the diagram by itself, roughly every thirty seconds while there is anything unsaved, and each of
+those saves counts as your submission as long as the due date has not passed. **Submit** saves straight away and
+confirms it, and it refuses an empty diagram, which the automatic save does not check. You can submit as often as
+you like before the due date — the last version is the one that is marked.
 
 <Image src={modelingExerciseStudentsInterface} alt="Modeling editor with the palette, the canvas and the task beside it" size={ImageSize.large} caption="Drawing a diagram" />
 
 <Callout variant={CalloutVariant.info}>
 
-  The modeling editor automatically saves your work as you make changes. You can continue working on your diagram until the due date.
+  Because the automatic save is already a submission, a diagram left in the editor before the due date is handed
+  in. After the due date it is not: the editor still saves, but nothing saved then is counted.
 
 </Callout>
 

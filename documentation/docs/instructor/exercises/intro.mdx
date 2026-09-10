@@ -27,12 +27,18 @@ have the same skeleton. What differs is what a student hands in and how it is ma
 **Exercises** in the course navigation opens the course's exercise list. The sidebar groups the exercises by where
 they are in time, so a student sees what needs doing before what is finished:
 
-- **Future** — released but not yet startable.
-- **Due Soon** — open and due within three days.
-- **Current** — open, and not due within three days.
+- **Future** — has not begun: its start date, or its release date when it has no start date, is still ahead. An
+  exercise in this group stays here whatever its due date says.
+- **Due Soon** — has begun and is due within three days.
+- **Current** — has begun and is due more than three days from now.
 - **Past** — the due date has passed.
-- **No Date** — no dates set at all.
+- **No Date** — has no due date. An exercise that has begun belongs here even when it has a release date and a
+  start date; it is the missing due date that decides.
 
-A group with more than five exercises is split into weekly subsections, so a long-running course stays navigable.
+A quiz is grouped a little more generously: one whose release, start or due date is today, or that is open now, or
+that is released without a due date, counts as **Current**.
+
+A group holding more than five exercises is split into weekly subsections, so a long-running course stays
+navigable. Searching turns the subsections off and lists the matches flat.
 
 <Image src={exerciseSidebar} alt="Exercise sidebar grouping the course's exercises by time" size={ImageSize.small} caption="The exercise sidebar" />
