@@ -459,26 +459,16 @@
                         </div>
                     }
                 </jhi-feature-overlay>
-                @if (isAtLeastInstructor()) {
+                @if (isAtLeastInstructor() && isAthenaEnabled()) {
                     <div class="nested-form-group-head flex items-center gap-2">
                         <tum-ui-checkbox
                             inputId="field_athenaFeedbackEnabled"
                             name="athenaFeedbackEnabled"
                             [checked]="athenaFeedbackEnabled()"
-                            [disabled]="!isAthenaEnabled()"
                             (changed)="changeAthenaFeedbackEnabled()"
                         />
                         <label jhiTranslate="artemisApp.course.athenaConfig.aiFeedbackEnabled.label" for="field_athenaFeedbackEnabled"></label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            [tumUiTooltip]="
-                                (isAthenaEnabled()
-                                    ? 'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip'
-                                    : 'artemisApp.course.athenaConfig.aiFeedbackEnabled.moduleDisabledTooltip'
-                                ) | artemisTranslate
-                            "
-                        />
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip' | artemisTranslate" />
                     </div>
                     @if (athenaFeedbackEnabled() && !hasInstructorAcceptedAiExperience()) {
                         <div class="nested-form-group ai-experience-hint flex items-center gap-2" id="ai-experience-hint-course-settings">
@@ -495,7 +485,6 @@
                                 inputId="field_athenaFormativeFeedbackEnabled"
                                 name="athenaFormativeFeedbackEnabled"
                                 [checked]="!!course.athenaFormativeFeedbackEnabled"
-                                [disabled]="!isAthenaEnabled()"
                                 (changed)="changeAthenaFormativeFeedback()"
                             />
                             <label jhiTranslate="artemisApp.course.athenaConfig.formativeFeedbackEnabled.label" for="field_athenaFormativeFeedbackEnabled"></label>
@@ -510,7 +499,6 @@
                                 inputId="field_athenaGradingFeedbackEnabled"
                                 name="athenaGradingFeedbackEnabled"
                                 [checked]="!!course.athenaGradingFeedbackEnabled"
-                                [disabled]="!isAthenaEnabled()"
                                 (changed)="changeAthenaGradingFeedback()"
                             />
                             <label jhiTranslate="artemisApp.course.athenaConfig.gradingFeedbackEnabled.label" for="field_athenaGradingFeedbackEnabled"></label>
