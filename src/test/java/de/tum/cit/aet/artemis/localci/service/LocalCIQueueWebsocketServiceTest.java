@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.user.SimpSubscription;
+import org.springframework.messaging.simp.user.SimpSubscriptionMatcher;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -156,6 +157,16 @@ class LocalCIQueueWebsocketServiceTest {
         lenient().when(simpUserRegistry.findSubscriptions(any())).thenReturn(Set.of(mock(SimpSubscription.class)));
     }
 
+    /** Makes the registry answer "subscribed" for exactly one destination and "nobody" for every other. */
+    private void withOnlySubscriberTo(String destination) {
+        SimpSubscription subscription = mock(SimpSubscription.class);
+        lenient().when(subscription.getDestination()).thenReturn(destination);
+        lenient().when(simpUserRegistry.findSubscriptions(any())).thenAnswer(invocation -> {
+            SimpSubscriptionMatcher matcher = invocation.getArgument(0);
+            return matcher.match(subscription) ? Set.of(subscription) : Set.<SimpSubscription>of();
+        });
+    }
+
     /** Makes the registry answer "nobody is subscribed" for every destination. */
     private void withoutSubscribers() {
         lenient().when(simpUserRegistry.findSubscriptions(any())).thenReturn(Set.of());
@@ -204,5 +215,32 @@ class LocalCIQueueWebsocketServiceTest {
 
         verifyNoInteractions(localCIWebsocketMessagingService);
         verify(distributedDataAccessService, never()).getQueuedJobs();
+    }
+
+    @Test
+    void shouldSendOnlyTheAdminSnapshotWhenNoCourseTopicIsWatched() {
+        withOnlySubscriberTo(LocalCIWebsocketMessagingService.ADMIN_QUEUED_JOBS_TOPIC);
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
+
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
+        localCIQueueWebsocketService.broadcastPendingChanges();
+
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobs(anyList());
+        verify(localCIWebsocketMessagingService, never()).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
+    }
+
+    @Test
+    void shouldDecideWhoIsWatchingFromTheCoursesItDrained() {
+        withOnlySubscriberTo(LocalCIWebsocketMessagingService.queuedJobsTopicForCourse(COURSE_ID));
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"), queuedJobOfOtherCourse("2"))));
+
+        // one watched course and one nobody is looking at, in the same run: the watched one must still be sent, and the
+        // unwatched one must not silently take the run's marker with it
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID + 1);
+        localCIQueueWebsocketService.broadcastPendingChanges();
+
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
+        verify(localCIWebsocketMessagingService, never()).sendQueuedBuildJobsForCourse(eq(COURSE_ID + 1), anyList());
     }
 }

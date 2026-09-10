@@ -47,9 +47,9 @@ public class LocalCIQueueWebsocketService {
      * The broker relay is configured with {@code setUserRegistryBroadcast}, so Spring aggregates the registries of all
      * nodes here rather than only this one's - which matters because the node that broadcasts the queue is the
      * scheduling node, and the admin watching the queue page is usually connected to another one. The remote half is
-     * refreshed periodically, so a new subscriber becomes visible within a few seconds rather than instantly; the
-     * change markers below are deliberately kept until a broadcast actually happens, so that subscriber then gets the
-     * current state on the next run instead of waiting for the next build job.
+     * refreshed periodically, so a new subscriber becomes visible within a few seconds rather than instantly. That
+     * window costs nothing: the page loads the current queue over REST when it opens, so a change that happened while
+     * nobody was listening yet is already in what the new subscriber sees.
      */
     private final SimpUserRegistry simpUserRegistry;
 
@@ -74,6 +74,8 @@ public class LocalCIQueueWebsocketService {
      * Instantiates a new Local ci queue websocket service.
      *
      * @param localCIWebsocketMessagingService the local ci build queue websocket service
+     * @param distributedDataAccessService     access to the distributed build job collections
+     * @param simpUserRegistry                 the cluster-wide registry of who is subscribed to what
      */
     public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, DistributedDataAccessService distributedDataAccessService,
             SimpUserRegistry simpUserRegistry) {
@@ -183,14 +185,6 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
-     * Takes everything currently pending, leaving the set empty for the changes that arrive while this run is sending.
-     * Removing each element as it is read rather than clearing at the end means a change that lands mid-drain is either
-     * taken now or still pending afterwards, never dropped.
-     *
-     * @param pending the set of course ids to drain
-     * @return what was pending
-     */
-    /**
      * Whether anyone anywhere in the cluster is subscribed to a destination.
      *
      * @param destination the topic to check
@@ -211,6 +205,14 @@ public class LocalCIQueueWebsocketService {
         return courseIds.stream().filter(courseId -> hasSubscribers(topic.apply(courseId))).collect(Collectors.toSet());
     }
 
+    /**
+     * Takes everything currently pending, leaving the set empty for the changes that arrive while this run is sending.
+     * Removing each element as it is read rather than clearing at the end means a change that lands mid-drain is either
+     * taken now or still pending afterwards, never dropped.
+     *
+     * @param pending the set of course ids to drain
+     * @return what was pending
+     */
     private static Set<Long> drain(Set<Long> pending) {
         Set<Long> drained = new HashSet<>();
         for (Iterator<Long> courses = pending.iterator(); courses.hasNext();) {
