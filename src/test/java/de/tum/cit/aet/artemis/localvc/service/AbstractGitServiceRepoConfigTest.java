@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,6 +39,9 @@ class AbstractGitServiceRepoConfigTest {
     private static final String DEFAULT_BRANCH = "main";
 
     private static final String PROJECT_KEY = "ABC";
+
+    /** A fixed time in the past, so that a rewrite is visible as a modification time that is no longer this one. */
+    private static final FileTime BACKDATED = FileTime.from(Instant.parse("2020-01-02T03:04:05Z"));
 
     @TempDir
     Path baseDir;
@@ -74,6 +78,20 @@ class AbstractGitServiceRepoConfigTest {
         }
     }
 
+    /**
+     * The reference HEAD points at, or {@code null} when HEAD is not a symbolic reference. Asserted rather than the
+     * file's text, so that a target which merely starts with the default branch cannot pass.
+     *
+     * @param repositoryPath the bare repository
+     * @return the target reference name
+     */
+    private static String storedHeadTarget(Path repositoryPath) throws IOException {
+        try (org.eclipse.jgit.lib.Repository reopened = new FileRepositoryBuilder().setGitDir(repositoryPath.toFile()).build()) {
+            Ref head = reopened.getRefDatabase().exactRef(Constants.HEAD);
+            return head != null && head.isSymbolic() ? head.getTarget().getName() : null;
+        }
+    }
+
     @Test
     void setRepoConfig_onAFreshRepository_writesTheRequiredSettings() throws Exception {
         Path repositoryPath = createBareRepository("abc-fresh");
@@ -90,17 +108,19 @@ class AbstractGitServiceRepoConfigTest {
         openForWriting(repositoryPath, "abc-twice").close();
 
         // Backdated rather than compared against the clock: a rewrite sets the modification time to now, whatever the
-        // filesystem's timestamp granularity is.
-        FileTime backdated = FileTime.from(Instant.now().minusSeconds(60));
+        // filesystem's timestamp granularity is. The times are then read back, because a filesystem stores them at its
+        // own precision rather than at the one they were set with.
         Path configFile = repositoryPath.resolve(Constants.CONFIG);
         Path headFile = repositoryPath.resolve(Constants.HEAD);
-        Files.setLastModifiedTime(configFile, backdated);
-        Files.setLastModifiedTime(headFile, backdated);
+        Files.setLastModifiedTime(configFile, BACKDATED);
+        Files.setLastModifiedTime(headFile, BACKDATED);
+        FileTime configTimeBefore = Files.getLastModifiedTime(configFile);
+        FileTime headTimeBefore = Files.getLastModifiedTime(headFile);
 
         openForWriting(repositoryPath, "abc-twice").close();
 
-        assertThat(Files.getLastModifiedTime(configFile)).as("the configuration is not written again once it holds the required values").isEqualTo(backdated);
-        assertThat(Files.getLastModifiedTime(headFile)).as("HEAD is not relinked once it points at the default branch").isEqualTo(backdated);
+        assertThat(Files.getLastModifiedTime(configFile)).as("the configuration is not written again once it holds the required values").isEqualTo(configTimeBefore);
+        assertThat(Files.getLastModifiedTime(headFile)).as("HEAD is not relinked once it points at the default branch").isEqualTo(headTimeBefore);
     }
 
     @Test
@@ -141,6 +161,6 @@ class AbstractGitServiceRepoConfigTest {
 
         openForWriting(repositoryPath, "abc-wrong-head").close();
 
-        assertThat(Files.readString(repositoryPath.resolve(Constants.HEAD))).as("HEAD is relinked to the default branch").contains("refs/heads/" + DEFAULT_BRANCH);
+        assertThat(storedHeadTarget(repositoryPath)).as("HEAD is relinked to the default branch").isEqualTo("refs/heads/" + DEFAULT_BRANCH);
     }
 }

@@ -140,6 +140,17 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         submitFile("test.ipynb", false, MediaType.APPLICATION_OCTET_STREAM);
     }
 
+    @Test
+    @WithMockUser(TEST_PREFIX + "student3")
+    void submitFileWithAFilePatternThatRepeatsAnEnding() throws Exception {
+        // The exercise validation accepts a pattern that names the same ending twice, so the check on submission has
+        // to tolerate the duplicate rather than reject an upload that the pattern allows.
+        releasedFileUploadExercise.setFilePattern("png,png");
+        exerciseRepository.save(releasedFileUploadExercise);
+
+        submitFile("file.png", false);
+    }
+
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
         submitFile(filename, differentFilePath, MediaType.IMAGE_PNG);
     }
