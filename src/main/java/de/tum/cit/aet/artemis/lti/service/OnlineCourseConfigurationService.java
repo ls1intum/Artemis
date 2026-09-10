@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.ENTITY
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -35,6 +36,9 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantTy
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
+
+    /** The shared login expression, compiled once. {@code Constants.LOGIN_REGEX} stays a string because request mappings interpolate it. */
+    private static final Pattern LOGIN_PATTERN = Pattern.compile(LOGIN_REGEX);
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
@@ -74,7 +78,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      * @param ocConfiguration the online course configuration being validated
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
-        if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !ocConfiguration.getUserPrefix().matches(LOGIN_REGEX)) {
+        if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !LOGIN_PATTERN.matcher(ocConfiguration.getUserPrefix()).matches()) {
             throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
         }
 

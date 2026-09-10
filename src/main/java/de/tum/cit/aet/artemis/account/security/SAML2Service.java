@@ -69,6 +69,9 @@ public class SAML2Service {
 
     private static final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
+    /** A placeholder no assertion attribute filled in, removed from the result. */
+    private static final Pattern UNSUBSTITUTED_PLACEHOLDER = Pattern.compile("\\{[^\\}]*?\\}");
+
     private final UserCreationService userCreationService;
 
     private final UserRepository userRepository;
@@ -199,14 +202,12 @@ public class SAML2Service {
     private String substituteAttributes(final String input, final Saml2ResponseAssertionAccessor assertion) {
         String output = input;
         for (String key : assertion.getAttributes().keySet()) {
-            final String escapedKey = Pattern.quote(key);
-            // The value comes from the identity provider, so a literal $ or backslash in it would otherwise be read as a
-            // group reference and either corrupt the result or throw.
-            final String replacement = Matcher.quoteReplacement(getAttributeValue(assertion, key));
-            output = output.replaceAll("\\{" + escapedKey + "\\}", replacement);
+            // A literal substitution: neither a metacharacter in the key nor a $ or a backslash in the value coming
+            // from the identity provider can change what is replaced or what it is replaced with.
+            output = output.replace("{" + key + "}", getAttributeValue(assertion, key));
             log.debug("SAML assertion key: {}, raw value: {}, after replacements: {}", key, assertion.getFirstAttribute(key), output);
         }
-        return output.replaceAll("\\{[^\\}]*?\\}", "");
+        return UNSUBSTITUTED_PLACEHOLDER.matcher(output).replaceAll("");
     }
 
     /**

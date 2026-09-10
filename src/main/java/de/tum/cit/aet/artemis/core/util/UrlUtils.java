@@ -4,10 +4,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.web.util.UriComponentsBuilder;
 
 public class UrlUtils {
+
+    /** A path segment that names a variable rather than a fixed value. */
+    private static final Pattern VARIABLE_SEGMENT = Pattern.compile("<.*>");
 
     /**
      * Creates a {@link UriComponentsBuilder} that can be used for creating complex URLs for REST API endpoints.
@@ -60,7 +64,7 @@ public class UrlUtils {
         final var parsedSegments = new ArrayList<String>();
         // Go through all path segments and replace variable segments with the supplied args
         for (var pathSegment : pathSegments) {
-            if (pathSegment.matches("<.*>")) {
+            if (VARIABLE_SEGMENT.matcher(pathSegment).matches()) {
                 // If we don't have enough args, throw an error
                 if (segmentCtr == args.length) {
                     throw new IllegalArgumentException("Unable to build endpoint. Too few arguments!" + Arrays.toString(args));

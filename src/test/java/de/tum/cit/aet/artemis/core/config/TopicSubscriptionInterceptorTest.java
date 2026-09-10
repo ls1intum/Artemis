@@ -14,9 +14,11 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.config.websocket.WebsocketConfiguration;
@@ -83,6 +85,60 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
 
     private static Authentication authenticationFor(String login, Role role) {
         return new UsernamePasswordAuthenticationToken(login, "irrelevant", List.of(new SimpleGrantedAuthority(role.getAuthority())));
+    }
+
+    @Test
+    void testRoleProtectedSubscriptionsUseWebsocketAuthentication() {
+        userUtilService.addAdmin(TEST_PREFIX);
+        String adminLogin = TEST_PREFIX + "admin";
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+        var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
+        var exam = examUtilService.addExerciseGroupsAndExercisesToExam(examUtilService.addExam(course), false);
+        var examExercise = exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var channel = mock(MessageChannel.class);
+        var previousContext = SecurityContextHolder.getContext();
+        SecurityContextHolder.clearContext();
+        try {
+            for (String destination : List.of("/topic/courses/" + course.getId() + "/queued-jobs", "/topic/courses/" + course.getId() + "/running-jobs",
+                    "/topic/courses/" + course.getId() + "/build-job/test-job", "/topic/exercise/" + exercise.getId() + "/newResults",
+                    "/topic/exercise/" + examExercise.getId() + "/newResults", "/topic/exams/" + exam.getId() + "/exercise-start-status",
+                    "/topic/exercises/" + exercise.getId() + "/synchronization")) {
+                SecurityContextHolder.clearContext();
+                var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+                headers.setLeaveMutable(true);
+                headers.setDestination(destination);
+                headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
+                var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("elevated administrator: %s", destination).isSameAs(message);
+                assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+
+                // Even an elevated thread context must not override the WebSocket session's permissions.
+                SecurityContextHolder.getContext().setAuthentication(authenticationFor(adminLogin, Role.ADMIN));
+                headers.setUser(authenticationFor(adminLogin, Role.STUDENT));
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("non-elevated session: %s", destination).isNull();
+
+                headers.setUser(() -> adminLogin);
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("principal without authentication: %s", destination).isNull();
+
+                headers.setUser(authenticationFor(TEST_PREFIX + "instructor1", Role.INSTRUCTOR));
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("explicit instructor: %s", destination).isSameAs(message);
+            }
+
+            var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+            headers.setDestination("/topic/participations/" + participation.getId() + "/team");
+            headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
+            var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+            assertThat(interceptor.preSend(message, channel)).as("administrator override must not bypass ownership").isNull();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
     }
 
     @Test
