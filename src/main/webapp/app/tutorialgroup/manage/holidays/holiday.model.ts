@@ -28,10 +28,17 @@ export interface Holiday {
     readonly start: dayjs.Dayjs;
     readonly end: dayjs.Dayjs;
     readonly reason: string;
+    /**
+     * The last day the holiday actually covers.
+     *
+     * The end is exclusive, so a holiday finishing at 00:00 covers nothing of that date. Derived once here rather than
+     * per reader, so the calendar, the list and the delete confirmation cannot disagree about how far it reaches.
+     */
+    readonly lastDay: dayjs.Dayjs;
     /** True when the span covers its days completely, from 00:00 on the first to 23:59 on the last. */
     readonly wholeDay: boolean;
     readonly spansMultipleDays: boolean;
-    /** How many calendar days the span touches, counting both ends. */
+    /** How many calendar days the span covers, counting both ends. */
     readonly dayCount: number;
     /** `HH:mm` in the course's zone. Precomputed because the date pipe would re-read the instant in the reader's. */
     readonly startTime: string;
@@ -71,6 +78,18 @@ export function coversWholeDays(start: dayjs.Dayjs, end: dayjs.Dayjs): boolean {
 }
 
 /**
+ * The last day a span reaches, given that its end is exclusive.
+ *
+ * A holiday finishing at 00:00 stops just short of that date, so the day before it is the last one it covers. A span
+ * that ends where it starts covers its own day rather than reaching back before it.
+ */
+function lastDayCovered(start: dayjs.Dayjs, end: dayjs.Dayjs): dayjs.Dayjs {
+    const firstDay = start.startOf('day');
+    const lastDay = end.subtract(1, 'millisecond').startOf('day');
+    return lastDay.isBefore(firstDay) ? firstDay : lastDay;
+}
+
+/**
  * Projects the free periods of a course into the shape the page renders, ascending by start.
  *
  * Rows without a start or an end are skipped rather than placed at an arbitrary day: they cannot be put on the calendar,
@@ -84,14 +103,17 @@ export function toHolidays(periods: readonly TutorialGroupFreePeriod[], timeZone
         }
         const start = inCourseZone(period.start, timeZone);
         const end = inCourseZone(period.end, timeZone);
+        const firstDay = start.startOf('day');
+        const lastDay = lastDayCovered(start, end);
         holidays.push({
             period,
             start,
             end,
             reason: period.reason ?? '',
+            lastDay,
             wholeDay: coversWholeDays(start, end),
-            spansMultipleDays: !start.isSame(end, 'day'),
-            dayCount: end.startOf('day').diff(start.startOf('day'), 'day') + 1,
+            spansMultipleDays: !firstDay.isSame(lastDay, 'day'),
+            dayCount: lastDay.diff(firstDay, 'day') + 1,
             startTime: start.format('HH:mm'),
             endTime: end.format('HH:mm'),
         });

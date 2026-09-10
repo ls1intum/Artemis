@@ -43,6 +43,7 @@ describe('TutorialGroupHolidaysComponent', () => {
     let fixture: ComponentFixture<TutorialGroupHolidaysComponent>;
     let component: TutorialGroupHolidaysComponent;
     let freePeriodService: TutorialGroupFreePeriodService;
+    let configurationService: TutorialGroupsConfigurationService;
     let confirmationService: TumUiConfirmationService;
 
     beforeEach(async () => {
@@ -61,7 +62,7 @@ describe('TutorialGroupHolidaysComponent', () => {
             ],
         }).compileComponents();
 
-        const configurationService = TestBed.inject(TutorialGroupsConfigurationService);
+        configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         freePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
 
         vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configurationDto as never })));
@@ -225,6 +226,23 @@ describe('TutorialGroupHolidaysComponent', () => {
         // December was left behind, so its late answer must not reach the calendar.
         expect(component['sessionCountsByDay']().get('2026-01-05')).toBe(3);
         expect(component['sessionCountsByDay']().has('2025-12-17')).toBe(false);
+    });
+
+    it('should keep the newest configuration when an older reload answers last', () => {
+        // Deleting and saving in quick succession leaves two reloads in flight; the earlier one still holds the
+        // holiday that has just gone, and letting it land last would put it back on the page.
+        const first = new Subject<HttpResponse<unknown>>();
+        const second = new Subject<HttpResponse<unknown>>();
+        vi.mocked(configurationService.getOneOfCourse)
+            .mockReturnValueOnce(first as never)
+            .mockReturnValueOnce(second as never);
+
+        component['loadConfiguration']();
+        component['loadConfiguration']();
+        second.next(new HttpResponse({ body: { ...configurationDto, tutorialGroupFreePeriods: [] } as never }));
+        first.next(new HttpResponse({ body: configurationDto as never }));
+
+        expect(component['holidays']()).toHaveLength(0);
     });
 
     it('should show the newest per-holiday counts when an older reload answers last', () => {

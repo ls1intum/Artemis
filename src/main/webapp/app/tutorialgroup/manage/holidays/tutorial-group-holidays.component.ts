@@ -68,6 +68,8 @@ export class TutorialGroupHolidaysComponent {
     protected readonly sessionCountsByDay = signal<Map<string, number>>(new Map());
     /** Sessions each holiday covers, by overlap - the per-day totals would overstate a holiday within a day. */
     protected readonly sessionCountsByHoliday = signal<Map<number, number>>(new Map());
+    /** Reloads of the configuration. Switched over, so a mutation's reload cannot be undone by an earlier one. */
+    private readonly configurationRequests = new Subject<number>();
     /** Months whose day counts are wanted. Switched over, so only the month on screen can fill the calendar. */
     private readonly monthCountRequests = new Subject<dayjs.Dayjs>();
     /** Reloads of the per-holiday counts. Switched over for the same reason: the newest load is the true one. */
@@ -98,6 +100,7 @@ export class TutorialGroupHolidaysComponent {
     protected readonly holidays = computed(() => toHolidays(this.freePeriods(), this.timeZone()));
 
     constructor() {
+        this.reloadConfigurationOnRequest();
         this.countSessionsForSpansChosenInTheDialog();
         this.countSessionsForTheDisplayedMonth();
         this.countSessionsForEachHoliday();
@@ -192,28 +195,43 @@ export class TutorialGroupHolidaysComponent {
         });
     }
 
+    /**
+     * Reads the configuration and the holidays it holds.
+     *
+     * Switched rather than subscribed per call: saving and deleting each trigger a reload, and two of them close
+     * together left the older answer free to land last and put a holiday that was just deleted back on the page.
+     */
+    private reloadConfigurationOnRequest(): void {
+        this.configurationRequests
+            .pipe(
+                switchMap((courseId) =>
+                    this.configurationService.getOneOfCourse(courseId).pipe(
+                        catchError((response: HttpErrorResponse) => {
+                            onError(this.alertService, response);
+                            this.isLoading.set(false);
+                            return EMPTY;
+                        }),
+                    ),
+                ),
+                takeUntilDestroyed(),
+            )
+            .subscribe((response) => {
+                const configuration = response.body ? tutorialGroupsConfigurationEntityFromDto(response.body) : undefined;
+                this.configuration.set(configuration);
+                this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
+                this.isLoading.set(false);
+                this.loadSessionCounts();
+                this.loadSessionCountsPerHoliday();
+            });
+    }
+
     private loadConfiguration(): void {
         const courseId = this.course()?.id;
         if (courseId === undefined) {
             return;
         }
         this.isLoading.set(true);
-        this.configurationService
-            .getOneOfCourse(courseId)
-            .pipe(
-                finalize(() => this.isLoading.set(false)),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe({
-                next: (response) => {
-                    const configuration = response.body ? tutorialGroupsConfigurationEntityFromDto(response.body) : undefined;
-                    this.configuration.set(configuration);
-                    this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
-                    this.loadSessionCounts();
-                    this.loadSessionCountsPerHoliday();
-                },
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
+        this.configurationRequests.next(courseId);
     }
 
     private loadSessionCounts(): void {

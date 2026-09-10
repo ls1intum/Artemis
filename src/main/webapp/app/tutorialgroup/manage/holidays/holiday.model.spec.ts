@@ -62,6 +62,23 @@ describe('holiday model', () => {
             expect(holiday.dayCount).toBe(15);
         });
 
+        it('should not count the day a holiday ends at midnight, since the end is exclusive', () => {
+            // 16 December 00:00 to 17 December 00:00 covers the 16th and nothing of the 17th.
+            const [holiday] = toHolidays([period(1, '2025-12-15T23:00:00', '2025-12-16T23:00:00', 'One day')], TIME_ZONE);
+
+            expect(holiday.lastDay.format('YYYY-MM-DD')).toBe('2025-12-16');
+            expect(holiday.spansMultipleDays).toBe(false);
+            expect(holiday.dayCount).toBe(1);
+        });
+
+        it('should still cover its own day when a span ends where it starts', () => {
+            const [holiday] = toHolidays([period(1, '2025-12-16T23:00:00', '2025-12-16T23:00:00', 'Zero length')], TIME_ZONE);
+
+            // Reaching back before the day it starts on would put it on the calendar a day early.
+            expect(holiday.lastDay.format('YYYY-MM-DD')).toBe('2025-12-17');
+            expect(holiday.dayCount).toBe(1);
+        });
+
         it('should skip periods without a start or an end rather than placing them on an arbitrary day', () => {
             const incomplete = new TutorialGroupFreePeriod();
             incomplete.id = 9;
