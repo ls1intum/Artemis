@@ -498,23 +498,23 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         User gradedStudent = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         User practiceStudent = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
 
-        assertThat(participationService.findOneByExerciseAndStudentLoginAnyState(programmingExercise, TEST_PREFIX + "student1")).as("the participation is found by login")
-                .map(StudentParticipation::getId).contains(gradedParticipation.getId());
+        assertThat(participationService.findOneByExerciseAndStudentAnyState(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")))
+                .as("the participation is found by login").map(StudentParticipation::getId).contains(gradedParticipation.getId());
         assertThat(participationService.findOneGradedByExerciseAndParticipant(programmingExercise, gradedStudent)).as("the graded participation is found")
                 .map(StudentParticipation::getId).contains(gradedParticipation.getId());
         assertThat(participationService.findOneGradedByExerciseAndParticipant(programmingExercise, practiceStudent)).as("a practice participation is not a graded one").isEmpty();
         assertThat(participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, practiceStudent)).as("the practice participation is found")
                 .map(StudentParticipation::getId).contains(practiceParticipation.getId());
         assertThat(participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, gradedStudent)).as("a graded participation is not a practice one").isEmpty();
-        assertThat(participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise, TEST_PREFIX + "student1"))
+        assertThat(participationService.findOneByExerciseAndStudentWithEagerSubmissionsAnyState(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")))
                 .as("the participation is found with its submissions").map(StudentParticipation::getId).contains(gradedParticipation.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow_withoutAParticipation_saysWhichStudentAndExercise() {
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(programmingExercise, TEST_PREFIX + "student3"))
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(
+                () -> participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3")))
                 .withMessageContaining(String.valueOf(programmingExercise.getId())).withMessageContaining(TEST_PREFIX + "student3");
     }
 

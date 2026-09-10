@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -63,8 +62,7 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private final SubmissionExportService submissionExportService;
 
-    protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            SubmissionExportService submissionExportService) {
+    protected ExerciseWithSubmissionsExportService(MappingJackson2HttpMessageConverter springMvcJacksonConverter, SubmissionExportService submissionExportService) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.submissionExportService = submissionExportService;
     }
