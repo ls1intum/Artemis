@@ -286,14 +286,15 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      *
      * @param exerciseId    The ID of the quiz exercise.
      * @param submissionDTO The quiz submission payload posted by the client.
-     * @param userLogin     The login of the user submitting the quiz.
+     * @param student       The user submitting the quiz.
      * @param submitted     A boolean indicating whether the quiz is being submitted (true) or saved (false).
      * @return The saved or submitted {@link QuizSubmission}.
      * @throws QuizSubmissionException If there is an error during the quiz submission process.
      * @throws EntityNotFoundException If the quiz exercise or submission cannot be found.
      */
-    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmissionFromLiveClientDTO submissionDTO, String userLogin, boolean submitted)
+    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmissionFromLiveClientDTO submissionDTO, User student, boolean submitted)
             throws QuizSubmissionException {
+        String userLogin = student.getLogin();
 
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
@@ -319,7 +320,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // make sure the participation is not overridden wrongly
-        var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
+        var participation = participationService.findOneByExerciseAndStudentAnyState(quizExercise, student).orElseThrow();
         quizSubmission.setParticipation(participation);
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
         quizSubmission.filterForStudentsDuringQuiz();
@@ -397,7 +398,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * @return StudentParticipation the participation if exists, otherwise throw entity not found exception
      */
     protected StudentParticipation getParticipation(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentAnyState(quizExercise, user);
 
         if (optionalParticipation.isEmpty()) {
             log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user.getLogin());

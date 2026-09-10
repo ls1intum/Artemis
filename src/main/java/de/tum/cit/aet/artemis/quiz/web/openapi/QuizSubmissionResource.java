@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
@@ -115,9 +114,12 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmissionBeforeEvaluationDTO> saveOrSubmitForLiveMode(@PathVariable Long exerciseId,
             @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO, @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
         log.debug("REST request to save or submit QuizSubmission for live mode for exercise {}", exerciseId);
-        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        // The service needs the student's id to look up their participation; selecting that participation by the
+        // joined login instead made the database read every participation of the exercise and discard all but one.
+        User student = userRepository.getUser();
+        String userLogin = student.getLogin();
         try {
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, submissionDTO, userLogin, submit);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, submissionDTO, student, submit);
             return ResponseEntity.ok(QuizSubmissionBeforeEvaluationDTO.of(updatedQuizSubmission));
         }
         catch (QuizSubmissionException e) {

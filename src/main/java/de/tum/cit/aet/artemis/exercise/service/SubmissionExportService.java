@@ -230,7 +230,7 @@ public abstract class SubmissionExportService {
                 return List.of(zipFilePath);
             }
             catch (IOException e) {
-                log.error("Failed to zip submissions for exercise {} to {}: {}", exercise.getId(), zipFilePath, e);
+                log.error("Failed to zip submissions for exercise {} to {}", exercise.getId(), zipFilePath, e);
                 return List.of();
             }
             finally {
