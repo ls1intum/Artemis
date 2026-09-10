@@ -61,6 +61,33 @@ likely to read, because it is also the canonical cache-eviction pattern below; i
 constructor. A new class taking an `EntityManagerFactory` fails the rule, and adding yourself to
 the list is the wrong fix.
 
+## Fetching
+
+**Rule.** Every `@OneToOne`, `@OneToMany` and `@ManyToMany` declares `fetch = FetchType.LAZY`.
+
+**Enforced by.** `testNoEagerFetching` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
+
+**`@ManyToOne` is out of scope.** Hibernate cannot make a to-one association lazy without bytecode
+enhancement or a proxy, and a proxied `@ManyToOne` does not work with entity hierarchies. Do not add
+`fetch = FetchType.LAZY` there expecting it to take effect.
+
+**Read a configuration through its own repository.** Do not put a lazy association into an
+`@EntityGraph` or a `JOIN FETCH` so that code further down can read it off the entity. Besides
+coupling unrelated queries to that decision, it does not work where the owner is reached through an
+eager `@ManyToOne` chain (`Exercise` to `ExerciseGroup` to `Exam` to `Course`): Hibernate resolves
+that chain by secondary select and the fetch plan no longer applies, so the association stays
+uninitialized however the query is written. `CourseAthenaConfigRepository` and
+`CourseConfigurationRepository` are the pattern.
+
+**`FIELDS_ALLOWED_TO_FETCH_EAGERLY` is grandfathering, not permission.** 38 associations, and the
+list may only shrink.
+
+**Turning an existing one lazy is not free.** `open-in-view` is disabled, so an association a query
+did not fetch reads as absent once the session closes - a `LazyInitializationException`, or a
+silently wrong value where the getter guards with `Hibernate.isInitialized`. Convert every reader,
+then pin the result with a wire-contract test; `AthenaConfigWireContractTest` is the pattern.
+
 ## Distributed data
 
 **Rule.** Never use Hazelcast or Redis directly. Everything crossing a node boundary, including the

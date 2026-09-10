@@ -143,11 +143,29 @@ The cost of retrieving and building an object's relationships far exceeds the co
 
 In JPA lazy fetching can be set on any relationship using the fetch attribute. The fetch can be set to either `LAZY` or `EAGER` as defined in the `FetchType` enum. The default fetch type is `LAZY` for all relationships except for **OneToOne** and **ManyToOne**, but in general it is a good idea to make every relationship `LAZY`. The `EAGER` default for **OneToOne** and **ManyToOne** is for implementation reasons (more easier to implement), not because it is a good idea.
 
-We **always** use `FetchType.LAZY`, unless there is a very strong case to be made for `FetchType.EAGER`.
+### Eager fetching is not allowed
+
+Every `@OneToOne`, `@OneToMany` and `@ManyToMany` must declare `fetch = FetchType.LAZY`. The ArchUnit rule `ArchitectureTest.testNoEagerFetching` fails the build for any that does not; the associations that are still eager are listed in `FIELDS_ALLOWED_TO_FETCH_EAGERLY`, which may only shrink.
+
+`@ManyToOne` is out of scope. Hibernate cannot make a to-one association lazy without bytecode enhancement or a proxy, and a proxied `@ManyToOne` does not work with entity hierarchies - which most of ours are. Its eager default is a fact to design around, not something to declare.
 
 <Callout variant={CalloutVariant.info}>
   Additional effort to use <code>FetchType.LAZY</code> does not count as a strong argument.
 </Callout>
+
+An eager association is loaded for every caller, including the overwhelming majority that never read it, and the cost never appears where it was written. `Course.athenaConfig` was two booleans behind an eager one-to-one: the server issued **155,848** queries for it during a single 2000-student exam, and an exam does not care whether Athena is switched on.
+
+### Read a configuration through its own repository
+
+Do not add a lazy association to an `@EntityGraph` or a `JOIN FETCH` just so that some code further down can read it off the entity. That couples every query that happens to be on the path to a decision made somewhere else, and it does not even work reliably: where the owning entity is reached through an eager `@ManyToOne` chain - `Exercise` to `ExerciseGroup` to `Exam` to `Course`, for instance - Hibernate resolves that chain by secondary select and the fetch plan no longer applies, so the association stays uninitialized however you spell the query.
+
+Give the configuration its own repository and read it where the decision is made. `CourseConfigurationRepository` and `CourseAthenaConfigRepository` are the pattern: a `findByCourseId`, plus a projection of the fields a hot path actually reads.
+
+#### Turning an existing association lazy
+
+`open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.
+
+Making `Course.athenaConfig` lazy was the second kind: its getters answer `false` when it was not loaded, so every response whose query did not resolve it would have reported Athena as switched off and quietly removed the feature from the client. Find every place that reads it, give each an explicit read, and pin the result - `AthenaConfigWireContractTest` does that for the endpoints the webapp reads those two flags from.
 
 ## Relationships
 

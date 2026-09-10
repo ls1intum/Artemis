@@ -3947,8 +3947,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         private final int QUIZ_SUBMISSION_QUERY_COUNT = 17;
 
         // exam summary: user with course roles, student exam with its exercises' groups, exam, quiz questions,
-        // participations with latest submission and result, submitted answers
-        private final int SUMMARY_QUERY_COUNT = 9;
+        // participations with latest submission and result, submitted answers, and the course's Athena configuration.
+        // The last one is a deliberate single read: the summary reports whether the student may request AI feedback, and
+        // Course.athenaConfig is lazy precisely so that the rest of an exam does not pay for it.
+        private final int SUMMARY_QUERY_COUNT = 10;
 
         private TextExercise textExercise;
 

@@ -165,8 +165,13 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
+    /**
+     * Lazy, like every other configuration hanging off a course. Eager cost 155,848 queries during one 2000 student
+     * exam, none of which read the answer - an exam does not care whether Athena is switched on. Read it with
+     * {@code CourseAthenaConfigRepository} where it is actually needed rather than dragging it along with the course.
+     */
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "athena_config_id")
     private CourseAthenaConfig athenaConfig;
 

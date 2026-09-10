@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -111,11 +112,14 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -267,6 +271,7 @@ public class ExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
@@ -384,6 +389,8 @@ public class ExerciseResource {
     public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+        // the page offers the AI feedback request based on these, and the config is lazy
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
 
         final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
 

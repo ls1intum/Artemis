@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -95,6 +96,8 @@ public class ParticipationResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -115,7 +118,9 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService) {
+            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -321,6 +326,7 @@ public class ParticipationResource {
                     "feedbackRequest.athenaNotEnabled");
         }
 
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (!exercise.getAllowFeedbackRequests()) {
             throw new BadRequestAlertException("Feedback requests are not enabled for this course", ENTITY_NAME, "feedbackRequest.notEnabled");
         }

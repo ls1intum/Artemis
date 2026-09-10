@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -126,12 +127,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
             FeedbackRepository feedbackRepository, ResultService resultService, GradingInstructionRepository gradingInstructionRepository,
-            LongFeedbackTextRepository longFeedbackTextRepository, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            LongFeedbackTextRepository longFeedbackTextRepository, Optional<AthenaFeedbackApi> athenaFeedbackApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
@@ -681,6 +685,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, new ArrayList<>(feedbacks));
         }
