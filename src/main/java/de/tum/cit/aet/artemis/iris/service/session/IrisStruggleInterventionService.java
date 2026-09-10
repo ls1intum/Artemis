@@ -36,17 +36,15 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
- * Applies Iris' gated result for the proactive struggle-intervention feature: what happens once the Pyris
- * pipeline calls back. Detection stays in the client engine, and the other end of a run, authorizing the student and
- * shipping the live code and signal to Pyris, is {@link IrisStruggleTriggerService}. The episode's registry row and
- * the writes that settle its outcome belong to {@link IrisProactiveEpisodeService}; this service orchestrates them
- * and owns the chat-message persistence around them.
+ * Applies Iris' gated result for the proactive struggle-intervention feature: what happens once the Pyris pipeline
+ * calls back. Detection stays in the client engine, and the other end of a run is {@link IrisStruggleTriggerService}.
+ * The episode's registry row and the writes that settle its outcome belong to {@link IrisProactiveEpisodeService};
+ * this service orchestrates them and owns the chat-message persistence around them.
  *
  * <p>
- * An {@code ambient} decision is event-only: no message row is persisted until the
- * student clicks ({@code revealAmbient} handles that). {@code active} persists a message and pushes it live over
- * the socket. {@code silent} (and empty results) always emit a noop completion event so the client's in-flight
- * {@code decide} always clears.
+ * An {@code ambient} decision is event-only, and no message row is persisted until the student clicks.
+ * {@code active} persists a message and pushes it live over the socket. Every path that surfaces nothing still emits
+ * a completion event, so the client's in-flight {@code decide} always clears.
  */
 @Lazy
 @Service
@@ -85,15 +83,9 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Apply Iris's gated decision for a completed run. Called once per run by the status
-     * handler, AFTER the job has been removed (idempotency).
-     *
-     * <p>
-     * Ambient is event-only and persists nothing. The client holds the hint text frozen and
-     * promotes it to a chat message only when the student clicks ({@code revealAmbient}). Active still persists
-     * and pushes the bubble, with bounded retry on transient failures and a fallback event frame on permanent failure.
-     * Silent (and empty results) always emit a noop {@code kind="decide", action="silent"} frame so the client's
-     * in-flight {@code decide} always clears.
+     * Apply Iris' gated decision for a completed run. Called once per run by the status handler, after the job has
+     * been removed, which is what makes it idempotent. Active persists and pushes the bubble, with bounded retry on
+     * transient failures and a fallback event frame on permanent failure.
      *
      * @param job          the struggle-intervention job (ids only; the session is resolved here)
      * @param statusUpdate the gated decision posted back by Pyris
@@ -124,43 +116,33 @@ public class IrisStruggleInterventionService {
 
         String episodeId = StruggleEpisodeDTO.usableEpisodeId(job.episodeId());
         String result = statusUpdate.result();
-        // Every path below that surfaces nothing still has to clear the client's in-flight decide, and they all clear
-        // it with the same frame: the confidence and the rationale travel even when no hint is shown, because the
-        // client logs them for the eval. One definition, so the nine exits cannot drift apart.
+        // One definition for the nine exits that surface nothing, so they cannot drift apart. The confidence and
+        // rationale travel even when no hint is shown, because the client logs them for the eval.
         Runnable completeSilently = () -> irisChatWebsocketService.sendStruggleEvent(user,
                 StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
 
         if (result == null || result.isEmpty()) {
-            // Nothing to surface; always emit a completion frame so the client's in-flight decide clears. The
-            // confidence still travels: the client logs it for the eval even when nothing is shown.
             completeSilently.run();
             return;
         }
 
         switch (finalAction) {
             case "active" -> {
-                // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
-                // This unlocked read is only the cheap fast path: a dismiss committing between it and the append is
-                // caught by the locked re-check inside saveProactiveMessageWithRetry, which rolls the insert back.
+                // Skip a late escalation arriving after the student dismissed. This unlocked read is the cheap fast
+                // path; the locked re-check inside saveProactiveMessageWithRetry rolls back what it misses.
                 if (episodeId != null && irisProactiveEpisodeService.isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
                     completeSilently.run();
                     break;
                 }
-                // Resolve the exercise-chat session; drop defensively if not exercise-bound.
                 var session = resolveProactiveSession(user, job.exerciseId());
                 if (session == null) {
-                    // Structural mismatch: resolved session is not exercise-bound. Emit a silent completion frame
-                    // so the client's in-flight decide always clears.
+                    // The resolved session is not exercise-bound, which is a structural mismatch.
                     completeSilently.run();
                     break;
                 }
-                // Persist the message with bounded retry on transient DB failures. A null result means
-                // the message was dropped; the active control event below is still emitted with messageId=null so
-                // the client's in-flight decide always clears.
                 var appended = saveProactiveMessageWithRetry(session, user, job.exerciseId(), result, episodeId, null);
                 if (appended.terminal()) {
-                    // The episode went terminal between the cheap pre-check above and the locked write. Nothing was
-                    // persisted, so complete silently rather than announcing a hint the student already closed.
+                    // Terminal between the cheap pre-check and the locked write, so nothing was persisted.
                     completeSilently.run();
                     break;
                 }
@@ -168,42 +150,33 @@ public class IrisStruggleInterventionService {
                 if (saved != null) {
                     irisChatWebsocketService.sendMessage(session, saved, terminalRunStateOf(statusUpdate), statusUpdate.error());
                 }
-                // Always emit the active control event - with messageId on success, null on permanent failure.
-                // The event always carries the hint text so the client can render a runtime fallback bubble.
+                // messageId on success, null on permanent failure. The text always travels, so the client can
+                // render a fallback bubble.
                 Long messageId = saved != null ? saved.getId() : null;
                 irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "active", result, session.getId(), messageId,
                         statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
             }
             case "ambient" -> {
-                // Skip if this episode is already terminal (late ambient arriving after the student dismissed) - the
-                // same late-arrival gate the active path applies. A stale offer must not resurface after a terminal
-                // outcome; emit a silent completion so the client's in-flight decide still clears. This read is the
-                // cheap fast path; the authoritative one runs under the registry lock below.
+                // The same late-arrival gate the active path applies, so a stale offer cannot resurface after a
+                // terminal outcome. Cheap fast path; the authoritative read runs under the registry lock below.
                 if (episodeId != null && irisProactiveEpisodeService.isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
                     completeSilently.run();
                     break;
                 }
-                // Pull model: do NOT persist. Resolve the session only to supply its id on the event
-                // so the client knows which session to reveal into when the student clicks.
+                // Nothing is persisted here. The session is resolved only to supply its id on the event, so the
+                // client knows which session to reveal into.
                 var session = resolveProactiveSession(user, job.exerciseId());
                 if (session == null) {
-                    // Structural mismatch: resolved session is not exercise-bound. A null-session ambient
-                    // pointer is unrevealable by the client; emit a silent completion frame instead.
+                    // A null-session ambient pointer is unrevealable by the client.
                     completeSilently.run();
                     break;
                 }
                 // Record what we are about to offer BEFORE telling the client about it, so a reveal that races the
-                // event still finds the decision. With an episode id, announce the ambient pointer ONLY when recording
-                // left a revealable decision behind it: an over-long id or an episode whose previous offer was already
-                // revealed records nothing, and pointing the client at a reveal that would 409 helps no one, so
-                // complete it silently instead. Without an episode id there is nothing a reveal could address; the
-                // pointer is still emitted for the client's own bookkeeping, exactly as before.
-                // A job that carried an id we cannot use is NOT the same as one that carried none. Both keep the id
-                // out of every lookup and column, but a legacy job without an episode still gets its ambient
-                // bookkeeping pointer, while an unusable id stays silent: it can never be revealed, so pointing the
-                // client at it would only produce a 409.
-                // Two statements, not a ternary: mixing the primitive with the nullable Boolean would make Java unbox
-                // the offer, and a null answer would throw right here instead of reaching the check below.
+                // event still finds the decision. With an episode id, the pointer goes out only when recording left
+                // a revealable decision behind it, since pointing the client at a reveal that would 409 helps no one.
+                // A job that carried no id at all still gets its bookkeeping pointer, while an unusable id stays
+                // silent. Two statements rather than a ternary, because mixing the primitive with the nullable
+                // Boolean would unbox the offer and throw on null before the check below.
                 Boolean offered;
                 if (episodeId != null) {
                     offered = irisProactiveEpisodeService.offerAmbientHint(user.getId(), job.exerciseId(), episodeId, result);
@@ -212,8 +185,7 @@ public class IrisStruggleInterventionService {
                     offered = job.episodeId() == null;
                 }
                 if (offered == null) {
-                    // The episode went terminal between the fast path above and the locked check. Nothing was
-                    // offered, so complete silently instead of pointing the client at a hint it has already closed.
+                    // Terminal between the fast path and the locked check, so nothing was offered.
                     completeSilently.run();
                     break;
                 }
@@ -225,40 +197,26 @@ public class IrisStruggleInterventionService {
                     completeSilently.run();
                 }
             }
-            default -> {
-                // silent (or downgraded): emit a noop completion frame so the client's in-flight decide always clears.
-                completeSilently.run();
-            }
+            default -> completeSilently.run();
         }
     }
 
     /**
-     * Apply Iris's response for a {@code confirm_close} request. Routes by the
-     * authoritative {@code job.confirmReason()}:
+     * Apply Iris' response for a {@code confirm_close} request, routed by the authoritative
+     * {@code job.confirmReason()}:
      * <ul>
-     * <li>{@code progress}: {@code resolved=true} persists a closing message + writes {@code RECOVERED};
-     * {@code resolved=false} is quiet (slot stays TAKEN, no offer posted).</li>
-     * <li>{@code parked_progress}: silent on both results (never-delivered episode, nothing persisted, no
-     * outcome). Terminal gate is NOT consulted.</li>
-     * <li>null or unknown: fail-closed to {@code parked_progress} semantics (nothing persisted, no outcome,
-     * bare completion event + warn log).</li>
+     * <li>{@code progress}: {@code resolved=true} persists a closing message and writes {@code RECOVERED};
+     * {@code resolved=false} is quiet.</li>
+     * <li>{@code parked_progress}: silent on both results, and the terminal gate is not consulted.</li>
+     * <li>null or unknown: fails closed to {@code parked_progress} semantics, plus a warn log.</li>
      * </ul>
      *
      * <p>
-     * Terminal gate (delivered reasons only): reads {@link IrisProactiveEpisodeService#isEpisodeTerminal} as a cheap fast
-     * path, and the authoritative check runs again under the episode's registry lock in the same transaction as the
-     * write. If terminal at either point, nothing is persisted and a noop event goes out. Otherwise the closing row
-     * and its {@code RECOVERED} outcome commit together, and only then is anything broadcast. Outcome-last still
-     * holds inside that transaction: the row is inserted before its outcome, so the close is never gated away by its
-     * own outcome write.
-     *
-     * <p>
-     * {@code resolved=true} on the emitted event means a closing row and its {@code RECOVERED} outcome committed,
-     * not that Pyris said the episode was resolved. Every other path emits
+     * {@code resolved=true} on the emitted event means a closing row and its {@code RECOVERED} outcome committed, not
+     * that Pyris said the episode was resolved. Every other path emits
      * {@link StruggleInterventionEventDTO#unresolvedClose}, including the ones Pyris answered {@code resolved=true}
-     * for: a terminal episode, a locked write that found the episode terminal, a dropped append, and both quiet
-     * reasons. Forwarding the gate's verdict there let the client mark an episode recovered that carried no closing
-     * row and no outcome, and nothing later would have corrected it.
+     * for. Forwarding the gate's verdict there let the client mark an episode recovered that carried no closing row
+     * and no outcome, and nothing later would have corrected it.
      *
      * @param job          the struggle-intervention job (ids + episodeId + confirmReason)
      * @param statusUpdate the Pyris response payload
@@ -268,14 +226,12 @@ public class IrisStruggleInterventionService {
         String episodeId = StruggleEpisodeDTO.usableEpisodeId(job.episodeId());
         String confirmReason = job.confirmReason();
         boolean resolved = statusUpdate.resolved() != null ? statusUpdate.resolved() : false;
-        // Every exit that does not commit a closing row emits the same frame, including the ones Pyris answered
-        // resolved=true for (see the class of cases in this method's javadoc). One definition, so no exit can start
-        // forwarding the gate's verdict by accident.
+        // One definition for every exit that does not commit a closing row, so none can start forwarding the gate's
+        // verdict by accident.
         Runnable completeUnresolved = () -> irisChatWebsocketService.sendStruggleEvent(user,
                 StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
 
-        // parked_progress (and null/unknown fail-closed): silent on both results.
-        // Persist nothing, write no outcome. Emit bare completion event only.
+        // parked_progress, and null or unknown failing closed to it: persist nothing, write no outcome.
         if (!"progress".equals(confirmReason)) {
             if (!"parked_progress".equals(confirmReason)) {
                 log.warn("Unexpected confirmReason '{}' on confirm_close for episodeId={} exercise={} user={}, failing closed to parked_progress semantics", confirmReason,
@@ -285,16 +241,14 @@ public class IrisStruggleInterventionService {
             return;
         }
 
-        // Terminal gate (delivered reasons only): if the episode already has a terminal outcome (e.g. the
-        // student DISMISSED mid-flight), skip persist and emit a noop event. This read is the cheap fast path; the
-        // authoritative one runs under the episode's registry lock in the same transaction as the write.
+        // Terminal gate for delivered reasons. Cheap fast path; the authoritative check runs under the episode's
+        // registry lock in the same transaction as the write.
         if (episodeId != null && irisProactiveEpisodeService.isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
             completeUnresolved.run();
             return;
         }
 
         if (resolved) {
-            // progress resolved=true: persist the closing message and its RECOVERED outcome together, then broadcast.
             String closingSentence = statusUpdate.closingSentence();
             if (closingSentence == null || closingSentence.isBlank()) {
                 closingSentence = "Nice work, that is resolved.";
@@ -303,27 +257,22 @@ public class IrisStruggleInterventionService {
             if (episodeLabel == null || episodeLabel.isBlank()) {
                 episodeLabel = "Resolved";
             }
-            // The close row and its RECOVERED outcome commit together, under the episode's registry lock, and only
-            // then is anything broadcast. Persisting first and writing the outcome afterwards left a window in which
-            // a dismiss could land between the two, and the live broadcast in between announced a row whose outcome
-            // was not written yet. Outcome-last still holds INSIDE the transaction: the row is inserted before the
-            // outcome is recorded, so the close can never be gated away by its own outcome.
+            // Row and RECOVERED outcome commit together under the episode's registry lock, and only then is
+            // anything broadcast: persisting first left a window for a dismiss to land between the two. Outcome-last
+            // still holds inside the transaction, so the close is never gated away by its own outcome.
             var persisted = persistProactiveMessage(user, job.exerciseId(), closingSentence, episodeId, IrisProactiveOutcome.RECOVERED);
             if (persisted == null || persisted.terminal()) {
-                // Nothing committed: either the episode went terminal between the gate above and the locked write, or
-                // the session was no longer bound to this exercise and the append was dropped. Neither case wrote a
-                // closing row or a RECOVERED outcome, so neither may report resolved=true - the client would mark an
-                // episode recovered that the server never closed, and no later run would correct it.
+                // Terminal between the gate and the locked write, or the append was dropped. Neither wrote a closing
+                // row, so neither may report resolved=true.
                 completeUnresolved.run();
                 return;
             }
-            // Broadcast the committed row so the webview receives it through the single chat-ws transport.
             irisChatWebsocketService.sendMessage(persisted.session(), persisted.saved(), terminalRunStateOf(statusUpdate), statusUpdate.error());
             irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, persisted.saved().getId(), null,
                     null, null, null, episodeId, true, closingSentence, episodeLabel, statusUpdate.rationale()));
         }
         else {
-            // progress resolved=false: quiet (slot stays TAKEN, no offer posted, no outcome).
+            // progress with resolved=false stays quiet: the slot stays taken, nothing is posted, no outcome.
             completeUnresolved.run();
         }
     }
@@ -334,28 +283,17 @@ public class IrisStruggleInterventionService {
      * the callback carried {@code tokens} and nothing read them.
      *
      * <p>
-     * Called once per claimed callback, before the frame is routed, so a run that reports spend on an intermediate
-     * frame or on a failure is counted too. Claimed is the exact guarantee, not "once per frame": a callback whose
-     * job another thread already took never reaches here, and the trailing duplicate after a terminal frame is
-     * rejected, but a retransmitted non-terminal frame arrives while the job is still alive and would be counted
-     * again, as would a retry after this node died between the save below and the job removal that follows it. There
-     * is no callback id or sequence number to key on, so those are accepted as an over-count rather than prevented.
+     * Called once per claimed callback, before the frame is routed, so spend reported on an intermediate frame or on
+     * a failure is counted too. Claimed is the exact guarantee rather than once per frame: a retransmitted
+     * non-terminal frame arrives while the job is still alive and is counted again, and there is no callback id to
+     * key on, so that is accepted as an over-count rather than prevented.
      *
      * <p>
-     * The placement is also why this attributes to the job rather than to a message: the message a decision persists
-     * does not exist yet here, and several outcomes ({@code silent}, {@code ambient}, a quiet close) never persist
-     * one at all, so keying the trace on a message would drop their cost. Course, exercise and user come off the
-     * job, which is the same scope the admin view groups by; a null message id is a documented case there, counted
-     * under "other" rather than dropped.
-     *
-     * <p>
-     * Each token-bearing callback gets its own trace, rather than one trace per run appended to as the chat path
-     * does. The chat path needs that because it has a genuine second artifact, the interaction suggestion that
-     * belongs to an already-created message trace; a one-shot struggle run has no counterpart, and threading a trace
-     * id through the job would mean writing the job back to the distributed map immediately before the terminal
-     * frame removes it. The consequence, should Pyris ever split a run's payload across callbacks: cost totals stay
-     * correct because they sum requests regardless of trace boundaries, while trace counts and trace-level exports
-     * become callback-granular rather than run-granular. Worth revisiting only if that split turns out to happen.
+     * Attributed to the job rather than to a message, because the message a decision persists does not exist yet
+     * here and several outcomes never persist one at all. Course, exercise and user come off the job, which is the
+     * scope the admin view groups by; a null message id is counted there under "other" rather than dropped. Each
+     * token-bearing callback gets its own trace, so if Pyris ever splits a run's payload across callbacks the cost
+     * totals stay correct while trace counts become callback-granular.
      *
      * @param job          the struggle-intervention job the callback belongs to
      * @param statusUpdate the callback, whose {@code tokens} may be empty
@@ -369,9 +307,8 @@ public class IrisStruggleInterventionService {
                     builder -> builder.withCourse(job.courseId()).withExercise(job.exerciseId()).withUser(job.userId()));
         }
         catch (Exception e) {
-            // Accounting must never cost the student their intervention: this runs inside the callback handler, which
-            // has already claimed the job, so an escaping failure would leave the client's in-flight request hanging.
-            // Deliberately an under-count with no retry, which is the lesser cost.
+            // Accounting must never cost the student their intervention: this runs inside the callback handler,
+            // which has already claimed the job, so an escaping failure would hang the client's request.
             log.warn("Could not record token usage for struggle job {} exercise {} user {}", job.jobId(), job.exerciseId(), job.userId(), e);
         }
     }
@@ -388,14 +325,10 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Persist a previously-hidden ambient hint as a {@code PROACTIVE_STRUGGLE} message with a server-assigned
-     * {@code sentAt}. Idempotency is scoped to {@code (user, exercise, episode)} and enforced by the episode row,
-     * not by any client-supplied key: a replay finds the offer already consumed and returns the row that reveal
-     * created, rather than inserting a second one.
-     *
-     * <p>
-     * Deliberately does NOT call {@code irisChatWebsocketService.sendMessage}: the client owns the single insert
-     * (optimistic bubble), and broadcasting here would duplicate the bubble before the client can reconcile.
+     * Persist a previously-hidden ambient hint as a {@code PROACTIVE_STRUGGLE} message. Idempotency is scoped to
+     * {@code (user, exercise, episode)} and enforced by the episode row rather than any client-supplied key: a replay
+     * finds the offer consumed and returns the row that reveal created. Deliberately does not broadcast, because the
+     * client owns the optimistic bubble and a broadcast here would duplicate it.
      *
      * @param user       the student performing the reveal
      * @param exerciseId the programming exercise id (session scope)
@@ -403,75 +336,51 @@ public class IrisStruggleInterventionService {
      * @return the persisted message as a DTO (id + proactiveEpisodeId visible to the client for reconciliation)
      */
     public IrisMessageResponseDTO revealAmbient(User user, long exerciseId, String episodeId) {
-        // Authoritative text: the reveal may only surface a hint Artemis actually offered for THIS episode, and it
-        // persists the server's copy. Trusting the caller's hintText let a student post arbitrary content as an LLM
-        // message - which is fed back into the Pyris prompt as assistant history - and mint unlimited rows with
-        // fresh ids. The lookup is scoped by user and exercise, so a guessed episode id reaches nothing.
+        // The reveal may only surface a hint Artemis offered for this episode, and it persists the server's copy.
+        // Trusting the caller's hintText let a student post arbitrary content as an LLM message, which is fed back
+        // into the Pyris prompt as assistant history.
         if (episodeId == null || episodeId.isBlank()) {
             throw new BadRequestException("An episode id is required to reveal an ambient hint");
         }
-        // Resolve (and if necessary switch) the session BEFORE the transaction, the same way the callback paths do.
-        // Inside it, applyContextChange's own template would join this transaction, so its CTXSWAP frame would go out
-        // before the commit and survive a rollback. Resolving out here also keeps the session lock from being held
-        // while the registry lock is taken, so the two are never acquired in opposing orders.
+        // Resolve the session before the transaction, as the callback paths do: inside it, applyContextChange's
+        // CTXSWAP frame would go out before the commit and survive a rollback, and the session lock would be held
+        // while the registry lock is taken.
         var session = resolveProactiveSession(user, exerciseId);
         if (session == null) {
             throw new ConflictException("Cannot persist reveal: the exercise-chat session could not be resolved", "IrisMessage", "revealSessionConflict");
         }
-        // The insert and the claim have to commit together, otherwise a crash between them persists a message that no
-        // decision records as consumed, and the offer could be revealed a second time. That unit is a repository
-        // operation; the refusals it raises are thrown from inside it, so each one takes the append back with it.
+        // Insert and claim commit together, otherwise a crash between them leaves a message no decision records as
+        // consumed and the offer can be revealed twice.
         return IrisMessageResponseDTO.of(irisProactiveEpisodeRepository.revealAmbient(user.getId(), exerciseId, episodeId, session.getId()));
     }
 
     /**
-     * Delete a superseded proactive message row, making stale-row suppression durable (not just live). The guards
-     * (proactive-origin AND null outcome AND the row belongs to one of the user's sessions) and the delete run as ONE
-     * atomic SQL statement ({@link IrisMessageRepository#deleteSupersededProactiveMessage}), so there is no
-     * check-then-delete race: a concurrent outcome write can never cause a now-terminal row to be deleted. Missing or
-     * already-deleted rows, non-proactive rows, other users' rows, and rows with a terminal outcome are all silent
-     * noops (idempotent 204 semantics at the endpoint level).
+     * Delete a superseded proactive message row, making stale-row suppression durable rather than merely live. The
+     * guards and the delete are one atomic statement, so a concurrent outcome write can never cause a now-terminal
+     * row to be deleted; everything it rejects is a silent noop, which is what gives the endpoint its idempotent 204.
      *
      * <p>
-     * A registered episode cannot reach this state through a race: the append re-checks the outcome under the
-     * episode's write lock and rolls itself back. What is left for this endpoint is an episode with no registry row
-     * (never registered, or reaped by retention while its messages stayed) and, more commonly, a hint the client
-     * superseded with a newer one before either acquired an outcome. Both leave a row that would keep being replayed
-     * to Pyris as something the tutor said, so a client that only hides such a message locally leaves the server's
-     * history wrong.
-     *
-     * <p>
-     * The guarded statement decides WHETHER the row goes; it cannot also keep the session's ordered message list
-     * intact, because it never touches the collection that owns the order column. That is what the surrounding
-     * transaction and the session write lock are for.
+     * A registered episode cannot reach this state through a race, because the append re-checks the outcome under the
+     * episode's write lock. What is left is an episode with no registry row and, more commonly, a hint the client
+     * superseded before either acquired an outcome. Both leave a row that would keep being replayed to Pyris as
+     * something the tutor said.
      *
      * @param user      the requesting student
      * @param messageId the id of the message to delete
      */
     public void deleteSupersededProactiveMessage(User user, long messageId) {
-        // The delete itself stays one guarded statement, but it cannot stand alone: it does not go through the
-        // collection that owns iris_message_order, so removing anything but the last message leaves a hole in the
-        // list indices and the next load of the session materialises a null element on it. Reading the index,
-        // deleting and closing the gap therefore happen in ONE transaction, under the session's write lock, which is
-        // the same lock every append takes.
+        // The guarded delete cannot stand alone: it does not go through the collection that owns
+        // iris_message_order, so removing anything but the last message leaves a hole the next load materialises as
+        // a null element. Read, delete and compact share one transaction under the session's write lock.
         irisSessionRepository.deleteSupersededProactiveMessageAndCompact(messageId, user.getId());
     }
 
-    /**
-     * Resolve the shared exercise-chat session. Returns null when the resolved session is not exercise-bound
-     * (defensive drop). Callers decide whether to persist into it.
-     *
-     * @param user       the student
-     * @param exerciseId the programming exercise id
-     * @return the session, or null if not exercise-bound
-     */
+    // Null when the resolved session is not exercise-bound. Callers decide whether to persist into it.
     private @Nullable IrisChatSession resolveProactiveSession(User user, long exerciseId) {
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
-        // Every session is born a COURSE_CHAT and only points at an exercise after an explicit context switch
-        // (which also writes the CTXSWAP marker into the history), so asking for an exercise chat that does not
-        // exist yet yields the course session. Switch it here, mirroring what the build-failed proactive event
-        // does; without this a student with no exercise session yet would get the proactive hint into their
-        // course chat, where the client's exercise-scoped reveal cannot find it.
+        // Every session is born a COURSE_CHAT and only points at an exercise after an explicit context switch, so
+        // asking for an exercise chat that does not exist yet yields the course session. Without the switch the hint
+        // would land in the course chat, where the client's exercise-scoped reveal cannot find it.
         if (session.getMode() == IrisChatMode.COURSE_CHAT) {
             irisChatSessionService.applyContextChange(session, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
         }
@@ -482,27 +391,16 @@ public class IrisStruggleInterventionService {
         return session;
     }
 
-    /**
-     * Resolve the shared exercise-chat session and persist an origin-tagged proactive message. Returns null when the
-     * resolved session is not exercise-bound (defensive drop). Shared by paths that need the session + saved message
-     * together (e.g. {@code revealAmbient}). Does NOT push over the socket.
-     *
-     * @param user       the student the proactive message belongs to
-     * @param exerciseId the programming exercise id the message is bound to
-     * @param result     the proactive message text returned by the gate
-     * @param episodeId  the client-allocated episode UUID; stamped on the persisted message when non-null
-     * @return the resolved session + saved message, or null if the resolved session is not exercise-bound
-     */
+    // Resolves the session and persists an origin-tagged proactive message, for the paths that need both together.
+    // Does not push over the socket.
     @Nullable
     PersistedProactive persistProactiveMessage(User user, long exerciseId, String result, @Nullable String episodeId, @Nullable IrisProactiveOutcome outcomeOnSuccess) {
         var session = resolveProactiveSession(user, exerciseId);
         if (session == null) {
             return null;
         }
-        // On a permanent DataAccessException (or once the transient retries are exhausted) the message is dropped and
-        // null is returned rather than propagating: the confirm_close caller then still emits its completion frame
-        // (with messageId=null) so the client's in-flight slot always clears instead of the exception
-        // bubbling up and leaving the single-flight slot stuck.
+        // A dropped message returns null rather than propagating, so the caller still emits its completion frame
+        // with messageId=null and the client's in-flight slot clears.
         var appended = saveProactiveMessageWithRetry(session, user, exerciseId, result, episodeId, outcomeOnSuccess);
         if (appended.terminal()) {
             return PersistedProactive.alreadyTerminal();
@@ -510,52 +408,31 @@ public class IrisStruggleInterventionService {
         return appended.message() == null ? null : new PersistedProactive(session, appended.message());
     }
 
-    /**
-     * Persist an origin-tagged proactive message into an already-resolved session, with bounded retry on transient
-     * DB failures. Returns null when the message could not be persisted: on a permanent
-     * {@link DataAccessException} (retrying cannot help) or once the transient attempts are exhausted.
-     *
-     * <p>
-     * Deliberately never propagates a persistence failure. Both callers have to emit their completion frame with
-     * {@code messageId=null} afterwards, so the client's in-flight slot always clears; an exception escaping here
-     * would strand it. The session is taken as a parameter rather than resolved, because the active path still
-     * needs the session id for that frame even when the message itself was dropped.
-     *
-     * @param session          the already-resolved exercise-chat session to persist into
-     * @param user             the student the proactive message belongs to (logging scope)
-     * @param exerciseId       the programming exercise id the message is bound to (logging scope)
-     * @param result           the proactive message text returned by the gate
-     * @param episodeId        the client-allocated episode UUID; stamped on the persisted message when non-null
-     * @param outcomeOnSuccess if non-null, recorded as the episode's terminal outcome in the same transaction as the
-     *                             append, which is what makes the confirm-close row and its outcome atomic
-     * @return whether the episode ended up terminal by someone else's hand (nothing of this call's was kept), and the
-     *         saved message when one was written
-     */
+    // Bounded retry on transient failures, and deliberately never propagates a persistence failure: both callers
+    // still have to emit their completion frame, and an exception escaping here would strand the client's slot. The
+    // session is a parameter rather than resolved here, because the active path needs its id even for a dropped
+    // message. A non-null outcomeOnSuccess is recorded in the same transaction as the append.
     private ProactiveAppend saveProactiveMessageWithRetry(IrisChatSession session, User user, long exerciseId, String result, @Nullable String episodeId,
             @Nullable IrisProactiveOutcome outcomeOnSuccess) {
         int maxAttempts = proactiveProperties.getPersistMaxAttempts();
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             try {
-                // One repository transaction: it takes the episode's registry lock, re-checks the terminal state
-                // under it, appends, and records the outcome without ever letting go of that lock. The lock is what
-                // the cheap pre-check in the callers cannot give: that one reads outside any lock, so an outcome can
-                // commit between it and this write.
+                // One repository transaction: registry lock, terminal re-check under it, append, outcome. The
+                // callers' cheap pre-check reads outside any lock, so an outcome can commit between it and this.
                 var appended = irisProactiveEpisodeRepository.appendProactiveMessageWithOutcome(session.getId(), user.getId(), exerciseId, result, episodeId, outcomeOnSuccess);
                 return appended.terminal() ? ProactiveAppend.alreadyTerminal() : ProactiveAppend.of(appended.message());
             }
             catch (IrisEpisodeWentTerminalException terminal) {
-                // The append was rolled back because a foreign terminal outcome won under the lock. Not a persistence
-                // failure and not retryable: the episode has ended, and it did not end this call's way.
+                // Rolled back because a foreign terminal outcome won under the lock. Not retryable.
                 return ProactiveAppend.alreadyTerminal();
             }
             catch (TransientDataAccessException ex) {
-                // The retry wraps the WHOLE transaction, never an operation inside one: a failed statement marks its
-                // transaction rollback-only, so retrying within it would only surface as an UnexpectedRollbackException
-                // at commit. Each attempt therefore starts a fresh transaction and re-takes the registry lock.
+                // The retry wraps the whole transaction, never an operation inside one: a failed statement marks
+                // its transaction rollback-only, so each attempt starts fresh and re-takes the registry lock.
                 log.warn("Transient proactive persist failure attempt {}/{} for exercise={} user={}", attempt + 1, maxAttempts, exerciseId, user.getId(), ex);
             }
             catch (DataAccessException ex) {
-                // Non-transient failure (e.g. DataIntegrityViolationException): no point retrying.
+                // Non-transient, so there is no point retrying.
                 log.warn("Permanent proactive persist failure for exercise={} user={}", exerciseId, user.getId(), ex);
                 return ProactiveAppend.of(null);
             }
@@ -564,16 +441,8 @@ public class IrisStruggleInterventionService {
         return ProactiveAppend.of(null);
     }
 
-    /**
-     * The result of an append attempt. {@code terminal} and a null {@code message} are different outcomes and the
-     * caller has to tell them apart: a terminal episode completes silently, while a dropped message still emits its
-     * control event with {@code messageId=null} so the client's in-flight request clears.
-     *
-     * @param terminal whether the episode was already terminal, so nothing was written on purpose - either seen
-     *                     before the append, or found by the outcome write afterwards, in which case the append was
-     *                     rolled back
-     * @param message  the persisted message, null when it could not be written
-     */
+    // terminal and a null message are different outcomes: a terminal episode completes silently, while a dropped
+    // message still emits its control event with messageId=null.
     private record ProactiveAppend(boolean terminal, @Nullable IrisMessage message) {
 
         static ProactiveAppend alreadyTerminal() {
@@ -585,13 +454,7 @@ public class IrisStruggleInterventionService {
         }
     }
 
-    /**
-     * Run state to broadcast alongside a persisted proactive message. Both call sites run on the terminal frame
-     * (a decision or a confirmed close), so a frame that omits the run state is still a completed run.
-     *
-     * @param statusUpdate the Pyris status update that produced the message
-     * @return the frame's run state, or {@link PyrisRunState#FINISHED} when it carries none
-     */
+    // Both call sites run on the terminal frame, so a frame that omits the run state is still a completed run.
     private static PyrisRunState terminalRunStateOf(PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
         return statusUpdate.runState() != null ? statusUpdate.runState() : PyrisRunState.FINISHED;
     }

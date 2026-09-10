@@ -193,10 +193,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @Override
     public void checkHasAccessTo(User user, IrisChatSession session) {
-        // No LLM opt-in check here. IrisSessionService#checkHasAccessToIrisSession owns that gate for every
-        // session type (the tutor-suggestion implementation of this method does not carry one either), and it is
-        // the only caller of this method. A second, unconditional copy took the decision away from it: a caller
-        // that must record an already-delivered hint's outcome without demanding a live opt-in could not do so.
+        // No LLM opt-in check here. IrisSessionService#checkHasAccessToIrisSession owns that gate for every session
+        // type and is the only caller. A second, unconditional copy would stop a caller from recording an
+        // already-delivered hint's outcome without a live opt-in.
 
         // Session ownership check (uniform across all contexts)
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -443,31 +442,24 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param user        the requesting user
      */
     public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
-        // Deliberately NO pre-check on the caller's copy here. It looks like a cheap way to skip a no-op, but the
-        // caller's copy can be stale in both directions: if it still says A while another request has moved the
-        // session to B, a request to switch to A would return early and leave the session on B - silently doing
-        // nothing where a real transition was asked for. The only check that decides is the one under the lock.
-        //
-        // Depends only on the target and the user, never on the session's current state, so it stays outside the lock.
+        // No pre-check on the caller's copy: it can be stale in both directions, so a switch to A while another
+        // request has moved the session to B would return early and leave it on B. Only the check under the lock
+        // decides. This one depends on the target and the user alone, so it stays outside that lock.
         var resolved = resolveAndAuthorize(newMode, newEntityId, user);
 
-        // Append the marker and update the context fields under ONE session write lock, which is a repository
-        // operation: the append takes that lock itself, but if it were the only holder it would release it on its own
-        // commit, and the context update would then cascade-merge a message list a concurrent append may already have
-        // added to. orphanRemoval would delete that new row. The marker is built there too, because it records the
-        // mode the session is moving away from and that is only known once the session is locked and refreshed.
+        // Marker append and context update under one session write lock, in the repository. If the append were the
+        // only holder it would release the lock on its own commit, and the context update would cascade-merge a
+        // stale message list that orphanRemoval then prunes.
         IrisMessage savedMarker = irisSessionRepository.switchContextAndAppendMarker(session.getId(), newMode, newEntityId, resolved.course().getId(), resolved.entityName());
 
         if (savedMarker == null) {
-            // Lost the race to an identical switch. The session already carries the target context, so mirror it and
-            // stay quiet rather than announcing a transition this call did not make.
+            // Lost the race to an identical switch, so mirror the context and stay quiet.
             session.setMode(newMode);
             session.setEntityId(newEntityId);
             return;
         }
 
-        // Mirror onto the caller's instance: callers read the mode straight after this call - resolveProactiveSession
-        // gates the entire proactive flow on it - and the locked instance they never see is the one that was updated.
+        // Callers read the mode straight after this call, and the locked instance they never see is the updated one.
         session.setMode(newMode);
         session.setEntityId(newEntityId);
         sendOverWebsocket(session, savedMarker);

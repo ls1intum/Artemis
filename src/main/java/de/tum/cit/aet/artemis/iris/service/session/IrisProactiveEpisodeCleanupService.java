@@ -30,22 +30,15 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
  * defeats the global {@code spring.main.lazy-initialization} flag and leaves an explicit {@code @Lazy} standing.
  *
  * <p>
- * Two kinds of row are kept. A terminal outcome is what suppresses a late message for an episode, so deleting one
- * would resurrect the very race the registry exists to close. A consumed ambient offer is what makes a repeated
- * reveal return the first reveal's message rather than write a second one, and what stops a spent offer from being
- * revealed again.
+ * Two kinds of row are kept, and neither is this job's business: a terminal outcome suppresses a late message, and a
+ * consumed ambient offer makes a repeated reveal return the first reveal's message. Both go with the course's
+ * student-data reset ({@code IrisProactiveEpisodeRepository#deleteAllByCourseId}), which is where Artemis already
+ * decides how long student data lives.
  *
  * <p>
- * Those two kinds are not this job's business: they go with the course's student-data reset, which is where Artemis
- * already decides how long student data lives (within that reset's own scope, see
- * {@code IrisProactiveEpisodeRepository#deleteAllByCourseId}). This job only removes what no reset would ever have a
- * reason to keep.
- *
- * <p>
- * An episode that is reaped and whose id the client later reuses comes back as a new lifecycle under the same
- * identity. Episode identity is {@code (user, exercise, episodeId)} with no generation, so that aliasing is a
- * property of the natural key rather than something retention introduces; a late outcome write for a reaped episode
- * reports {@code applied=false} and is intentionally discarded.
+ * A reaped episode whose id the client later reuses comes back as a new lifecycle under the same identity. Episode
+ * identity is {@code (user, exercise, episodeId)} with no generation, so that aliasing belongs to the natural key
+ * rather than to retention; a late outcome write for a reaped episode reports {@code applied=false}.
  */
 @Lazy
 @Service

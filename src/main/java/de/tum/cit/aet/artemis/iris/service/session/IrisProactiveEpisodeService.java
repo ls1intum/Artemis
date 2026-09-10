@@ -13,14 +13,11 @@ import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeWriteRepository.OutcomeWrite;
 
 /**
- * The proactive episode's lifecycle as its callers see it: registering it, deciding whether it is terminal, and asking
- * for the writes that settle its terminal outcome and its ambient offer.
- *
- * <p>
- * The writes themselves live in {@code IrisProactiveEpisodeWriteRepository}, because each one is a multi-statement
- * unit that needs a transaction boundary, and those belong in a repository. What is left here is the part that is not
- * persistence: rejecting an unusable episode id, ordering the registration before the offer, and turning a duplicate
- * insert into a no-op.
+ * The proactive episode's lifecycle as its callers see it: registering it, deciding whether it is terminal, and
+ * asking for the writes that settle its terminal outcome and its ambient offer. The writes themselves live in
+ * {@code IrisProactiveEpisodeWriteRepository}, because each is a multi-statement unit that needs a transaction
+ * boundary. What is left here is not persistence: rejecting an unusable episode id, ordering the registration before
+ * the offer, and turning a duplicate insert into a no-op.
  */
 @Lazy
 @Service
@@ -37,22 +34,15 @@ public class IrisProactiveEpisodeService {
     }
 
     /**
-     * Register the episode so it has a row to lock and a place to hold its terminal outcome, or refresh the row a
-     * previous trigger already created for it.
+     * Register the episode so it has a row to lock, or refresh the row a previous trigger already created for it.
+     * Repeating a trigger for one episode is normal: a {@code decide} run and the {@code confirm_close} that follows
+     * carry the same id. The refresh also keeps retention honest, since it moves {@code lastTriggeredAt} forward.
      *
      * <p>
-     * Repeating a trigger for one episode is normal rather than exceptional: a {@code decide} run and the
-     * {@code confirm_close} run that follows it carry the same episode id. The refresh is also what keeps retention
-     * honest, since it moves {@code lastTriggeredAt} forward and an episode still being triggered is never reaped.
-     * The unique key decides who wins an insert race, and the loser rereads.
-     *
-     * <p>
-     * The catch sits OUTSIDE the transaction that attempted the insert, because a constraint violation marks its
-     * transaction rollback-only: catching it inside and carrying on would surface as an
-     * {@code UnexpectedRollbackException} at commit rather than as the handled duplicate it is. That is why both
-     * repository methods below open their own {@code REQUIRES_NEW} transaction, and why the catch stays here. The
-     * reread rethrows the original failure if it finds nothing, since not every integrity violation is a duplicate
-     * key.
+     * The catch sits outside the transaction that attempted the insert, because a constraint violation marks its
+     * transaction rollback-only and catching it inside would surface as an {@code UnexpectedRollbackException} at
+     * commit. That is why both repository methods open their own {@code REQUIRES_NEW} transaction. The reread
+     * rethrows the original failure if it finds nothing, since not every integrity violation is a duplicate key.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the run belongs to
@@ -63,31 +53,22 @@ public class IrisProactiveEpisodeService {
             irisProactiveEpisodeRepository.registerOrTouchInNewTransaction(userId, exerciseId, episodeId);
         }
         catch (DataIntegrityViolationException duplicate) {
-            // Another trigger for the same episode won the insert race. The row it created is the one every later
-            // path locks, so there is nothing left to do here; only a violation that is NOT a duplicate key must
-            // surface, which the reread distinguishes.
+            // Another trigger won the insert race, and its row is the one every later path locks. Only a violation
+            // that is not a duplicate key must surface, which the reread distinguishes.
             irisProactiveEpisodeRepository.findInNewTransaction(userId, exerciseId, episodeId).orElseThrow(() -> duplicate);
         }
     }
 
     /**
-     * Returns true when the episode already has a terminal outcome persisted. Every value of the outcome enum is
-     * terminal (DISMISSED, RECOVERED, ABANDONED, INTERRUPTED); both branches below decide on presence, not on which
-     * one it is. Used by the branches that would deliver something, to skip what arrived after the episode ended.
+     * Whether the episode already has a terminal outcome persisted. Every value of the outcome enum is terminal, so
+     * both branches decide on presence rather than on which one it is. Reads episode-wide across all rows tagged with
+     * the episode id, so the result is stable under out-of-order persistence.
      *
      * <p>
-     * Reads episode-wide: checks ALL rows tagged with the episodeId, not just the earliest, so the result is
-     * stable under out-of-order persistence.
-     *
-     * <p>
-     * This is the cheap, unlocked read: a fast path that lets a caller complete silently without opening a
-     * transaction. It is not the decision. Every path that goes on to write re-checks inside the same transaction as
-     * its write, holding the episode's registry row locked where there is one. An episode with no registry row has no
-     * row to lock, so that re-check is only as atomic as the guarded update it precedes.
-     *
-     * <p>
-     * An episode with no registry row falls back to the message rows, which is exactly how this worked before the
-     * registry existed, so a job still in flight across the deployment that introduced it is unaffected.
+     * The cheap, unlocked read: a fast path that lets a caller complete silently without opening a transaction, not
+     * the decision. Every path that goes on to write re-checks inside the same transaction as its write, holding the
+     * registry row locked where there is one. An episode with no registry row falls back to the message rows, as this
+     * worked before the registry existed.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the job's owning user; only outcomes on rows in this user's sessions are considered
@@ -99,21 +80,15 @@ public class IrisProactiveEpisodeService {
         if (registered.isPresent() && registered.get().getOutcome() != null) {
             return true;
         }
-        // An open registry row is not on its own proof that the episode is open. Registration reads the message rows
-        // unlocked before it inserts, so an outcome committing in that window is not carried over and leaves the row
-        // open while a message row already says otherwise. Reading both and taking either as terminal is the
-        // fail-closed answer, and it is the same read an episode with no registry row has always used.
+        // An open registry row is not proof on its own: registration reads the message rows unlocked before it
+        // inserts, so an outcome committing in that window leaves the row open while a message row says otherwise.
         return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
     }
 
     /**
-     * Episode-wide first-terminal-wins outcome write. Returns {@code true} whenever a terminal outcome is established
-     * for the episode, whether THIS call wrote it or a prior one did.
-     *
-     * <p>
-     * A registered episode can always record an outcome, even before its first message exists, so the only
-     * {@code false} comes from the pre-registry fallback: an episode with no registry row has nowhere but a message
-     * row to put the outcome, and defers until one exists.
+     * Episode-wide first-terminal-wins outcome write. Returns {@code true} whenever a terminal outcome is
+     * established, whether this call wrote it or a prior one did. A registered episode can always record one, so the
+     * only {@code false} comes from the pre-registry fallback, which defers until a message row exists.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param outcome    the terminal outcome to write
@@ -124,26 +99,22 @@ public class IrisProactiveEpisodeService {
      */
     public boolean writeEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome, long userId, long exerciseId) {
         if (episodeId == null || episodeId.isBlank()) {
-            // A blank id is not an episode identity, and treating it as one is how distinct episodes end up sharing
-            // an outcome. The trigger endpoint rejects blank ids outright, but this method is also reached from the
-            // {episodeId} path variable, which validation does not cover.
+            // A blank id is not an episode identity, and treating it as one makes distinct episodes share an
+            // outcome. Reached from the {episodeId} path variable, which the trigger endpoint's validation misses.
             return false;
         }
         var verdict = irisProactiveEpisodeRepository.recordOutcomeUnderLock(episodeId, userId, exerciseId, outcome);
-        // "Established", not "written by this call": a terminal outcome that another call put there ends the
-        // episode just as well, and the client has nothing left to back-fill. Only DEFERRED keeps it back-filling.
+        // Established, not written by this call: another call's outcome ends the episode just as well. Only
+        // DEFERRED keeps the client back-filling.
         return verdict != OutcomeWrite.DEFERRED;
     }
 
     /**
-     * Register the episode and record the ambient hint Artemis is about to offer for it, so a later reveal persists
-     * the server's own text rather than whatever the caller sends back.
-     *
-     * <p>
-     * The registration runs FIRST and on its own transaction, before the offer transaction opens. Registering from
-     * inside that transaction would be worse than useless: it commits independently, so the row the offer then wrote
-     * to would be one that transaction never locked, and the terminal check and the write would stop being atomic.
-     * That ordering is why these stay two calls here rather than one repository method.
+     * Register the episode and record the ambient hint Artemis is about to offer, so a later reveal persists the
+     * server's own text rather than whatever the caller sends back. The registration runs first and on its own
+     * transaction: registering from inside the offer's transaction commits independently, so the offer would write to
+     * a row that transaction never locked. That ordering is why these stay two calls rather than one repository
+     * method.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the run belongs to
