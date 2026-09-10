@@ -7,8 +7,6 @@ import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
-import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -46,8 +44,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     readonly quizExercise = signal<QuizExercise>(undefined!);
     readonly question = signal<QuizQuestion>(undefined!);
-    quizPointStatistic?: QuizPointStatistic;
-    questionStatistic?: MultipleChoiceQuestionStatistic;
     questionIdParam!: number; // set in ngOnInit() from the route params before loadQuiz() reads it
     // timer
     readonly waitingForQuizStart = signal(false);

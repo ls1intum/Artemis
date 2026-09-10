@@ -39,6 +39,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
+    /**
+     * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
+     * entropy source on every call.
+     */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final DistributedDataProvider distributedDataProvider;
 
     @Nullable
@@ -262,9 +268,8 @@ public class PyrisJobService {
         randomStringBuilder.append('-');
         randomStringBuilder.append(System.currentTimeMillis());
         randomStringBuilder.append('-');
-        var secureRandom = new SecureRandom();
         for (int i = 0; i < 10; i++) {
-            var randomChar = secureRandom.nextInt(62);
+            var randomChar = SECURE_RANDOM.nextInt(62);
             if (randomChar < 10) {
                 randomStringBuilder.append(randomChar);
             }

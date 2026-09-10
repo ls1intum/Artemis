@@ -9,7 +9,6 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
-import codeEditor from './assets/programming/CodeEditor.png';
 import onlineEditor from './assets/programming/OnlineEditor.png';
 
 ## Overview
@@ -38,19 +37,17 @@ Participating in a programming exercise involves the following steps:
 
 ## Online Code Editor
 
-Artemis provides an integrated online code editor that allows you to work on programming exercises directly in your browser without needing to install any additional software.
+Artemis has an editor in the browser, so you can work on an exercise without installing anything. It holds four
+things at once:
 
-<Image src={codeEditor} alt="Code Editor" size={ImageSize.large} caption="Online Code Editor" />
+- the **file browser** on the left, with the files of your own repository,
+- the **editor** in the middle, with syntax highlighting,
+- the **problem statement** on the right, whose tasks turn green as the tests behind them pass,
+- the **build output** underneath, with the compiler and test messages of your last submission.
 
-The online editor features:
+**Submit** commits what you have written and starts a build. Saving on its own does not hand anything in.
 
-1. **File browser**: Navigate through your code files and see the project structure
-2. **Interactive problem statement**: View exercise instructions with dynamic task indicators that update from red to green as you pass tests
-3. **Code editor**: Write and edit your code with syntax highlighting
-4. **Build output**: See compilation results and test feedback
-5. **Submit button**: Submit your solution for automated testing
-
-<Image src={onlineEditor} alt="Online Editor with Instructions" size={ImageSize.large} caption="Online Editor with Interactive Instructions" />
+<Image src={onlineEditor} alt="Online code editor with the file browser, the code and the tasks" size={ImageSize.large} caption="The online code editor" />
 
 ### Task Indicators
 
@@ -77,8 +74,8 @@ If you prefer to work on your local machine, you can clone your personal reposit
 
 ### Cloning Your Repository
 
-1. Navigate to the exercise in Artemis
-2. Click on the **Clone Repository** button to get your personal repository URL
+1. Open the exercise in Artemis
+2. **Code**, in the exercise header, shows your personal repository address
 3. Clone the repository using your Git client:
    ```bash
    git clone <your-repository-url>

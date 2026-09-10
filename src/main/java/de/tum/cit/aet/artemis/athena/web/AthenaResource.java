@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
@@ -61,6 +62,8 @@ public class AthenaResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
@@ -77,13 +80,15 @@ public class AthenaResource {
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, UserAiPreferenceService userAiPreferenceService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, CourseAthenaConfigRepository courseAthenaConfigRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
@@ -110,6 +115,8 @@ public class AthenaResource {
         final var exercise = exerciseFetcher.apply(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
+        // Athena's own entry point, so this is where its configuration is read; the layers below keep asking the exercise
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new BadRequestAlertException("Athena grading feedback is not enabled for this course", "Course", "athenaGradingFeedbackNotEnabled");
         }
