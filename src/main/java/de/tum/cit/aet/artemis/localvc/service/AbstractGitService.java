@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -188,7 +189,7 @@ public abstract class AbstractGitService {
      * @return true if the key did not already hold that value
      */
     private static boolean setInt(StoredConfig config, String section, String key, int value) {
-        if (config.getInt(section, null, key, Integer.MIN_VALUE) == value) {
+        if (readsBackAs(config, section, key, () -> config.getInt(section, null, key, value), value)) {
             return false;
         }
         config.setInt(section, null, key, value);
@@ -205,11 +206,39 @@ public abstract class AbstractGitService {
      * @return true if the key did not already hold that value
      */
     private static boolean setBoolean(StoredConfig config, String section, String key, boolean value) {
-        if (config.getString(section, null, key) != null && config.getBoolean(section, null, key, !value) == value) {
+        if (readsBackAs(config, section, key, () -> config.getBoolean(section, null, key, !value), value)) {
             return false;
         }
         config.setBoolean(section, null, key, value);
         return true;
+    }
+
+    /**
+     * Whether the key is already stored with the value it has to hold, so that writing it would change nothing.
+     * <p>
+     * A key that is absent, or whose stored value JGit refuses to parse, reads back as something else and therefore has
+     * to be written. JGit throws rather than falling back to the given default when it cannot parse a value, so a
+     * repository carrying {@code gc.auto = invalid} would otherwise fail here instead of being repaired - the
+     * unconditional setters this check replaced overwrote such an entry.
+     *
+     * @param config        the repository configuration
+     * @param section       the configuration section
+     * @param key           the configuration key
+     * @param storedValue   reads the stored value in the type the key is written in
+     * @param requiredValue the value the key has to hold
+     * @param <T>           the type the key is written in
+     * @return true if the key already holds that value
+     */
+    private static <T> boolean readsBackAs(StoredConfig config, String section, String key, Supplier<T> storedValue, T requiredValue) {
+        if (config.getString(section, null, key) == null) {
+            return false;
+        }
+        try {
+            return requiredValue.equals(storedValue.get());
+        }
+        catch (IllegalArgumentException malformedValue) {
+            return false;
+        }
     }
 
     /**
