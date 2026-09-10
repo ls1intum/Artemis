@@ -128,8 +128,8 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     }
 
     /**
-     * The other half of the same invariant: a message with no destination would be stored but never returned, because
-     * retrieval groups messages by their destination.
+     * The other half of the same invariant. Nothing rejects a message with no destination before the insert, so
+     * without this validation it reaches the check constraint that ForwardedMessage declares and fails there.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

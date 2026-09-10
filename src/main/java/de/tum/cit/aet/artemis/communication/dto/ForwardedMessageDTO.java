@@ -32,10 +32,10 @@ public record ForwardedMessageDTO(Long id, Long sourceId, PostingType sourceType
      * @return the ForwardedMessage entity
      */
     public ForwardedMessage toEntity() {
-        // A forwarded message points at exactly one destination, and both ways of getting that wrong come from the
-        // client. Two ids set makes the second setter below throw IllegalStateException, which surfaces as a 500.
-        // Neither id set is not rejected anywhere, so it persists a row that the retrieval endpoint can never return,
-        // because that groups messages by their destination. Both are reported here as the one malformed request.
+        // A forwarded message points at exactly one destination, which ForwardedMessage states twice: its setters
+        // reject a second destination with an IllegalStateException, and its @Check constraint requires exactly one.
+        // So two ids set trips the setter and neither id set trips the constraint, and both answer 500 for what is
+        // the client naming the wrong number of destinations. Both are rejected here instead.
         if ((this.destinationPostId == null) == (this.destinationAnswerPostId == null)) {
             throw new BadRequestAlertException("A forwarded message must have exactly one destination, either a destination post or a destination answer post", "forwardedMessage",
                     "forwardedMessageNeedsExactlyOneDestination");
