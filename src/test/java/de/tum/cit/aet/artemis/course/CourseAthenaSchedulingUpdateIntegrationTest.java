@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigUpdateDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -50,6 +51,9 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private CourseAthenaConfigRepository courseAthenaConfigRepository;
 
     private Course course;
 
@@ -165,5 +169,27 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
                 .isTrue();
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_courseWithoutConfig_initializesItSoALaterSwitchSurvives() throws Exception {
+        // A course from before the configuration existed has a null athena_config_id. The course update gives it a
+        // configuration before loading the course, because saving a course loaded without one would write the null
+        // back and detach a configuration that a concurrent first switch had attached in between.
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+
+        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
+        updateCourse(loaded);
+
+        var configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
+        assertThat(configId).isPresent();
+
+        // The switch reuses that configuration, and saving the course again leaves it attached.
+        updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
+        JsonNode updated = updateCourse(loaded);
+
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(configId);
+        assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
     }
 }

@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.course.service.CourseAthenaConfigService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -32,6 +33,9 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     private CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    @Autowired
+    private CourseAthenaConfigService courseAthenaConfigService;
 
     private Course course;
 
@@ -135,9 +139,27 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void updateAthenaConfig_concurrentSwitchesOfDifferentFeaturesBothSurvive() throws Exception {
         persistAthenaConfig(false, false);
 
-        // Each request names only its own feature, so neither can carry the other's stale value back into the database.
-        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
-        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
+        // Each update names only its own feature, so neither can carry the other's stale value back into the database.
+        // Called on the service because the mocked user of an HTTP request does not carry over to another thread.
+        var barrier = new CyclicBarrier(2);
+        Callable<CourseAthenaConfigDTO> enableGrading = () -> {
+            barrier.await();
+            return courseAthenaConfigService.updateConfig(course.getId(), new CourseAthenaConfigUpdateDTO(true, null));
+        };
+        Callable<CourseAthenaConfigDTO> enableFormative = () -> {
+            barrier.await();
+            return courseAthenaConfigService.updateConfig(course.getId(), new CourseAthenaConfigUpdateDTO(null, true));
+        };
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            for (Future<CourseAthenaConfigDTO> result : executor.invokeAll(List.of(enableGrading, enableFormative))) {
+                result.get();
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
 
         assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
     }

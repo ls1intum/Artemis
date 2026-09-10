@@ -126,7 +126,11 @@ public class CourseUpdateResource {
         User user = userRepository.getUserWithAuthorities();
 
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
-        // from loading (and potentially modifying) a different course than the URL indicates
+        // from loading (and potentially modifying) a different course than the URL indicates.
+        // Give a course that predates the Athena configuration one before loading it: saving the course writes back the
+        // configuration it was loaded with, so a course loaded without one would detach a configuration that a concurrent
+        // first Athena switch attached in between, and that switch would silently be lost.
+        courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
