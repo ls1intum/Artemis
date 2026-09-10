@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Completes the staged deletion started by 20260827174007, which renamed the persisted quiz-statistics schema to
+        legacy_* instead of dropping it. Nothing maps these structures since #13551: statistics are recalculated from
+        result and submitted_answer on demand. The counter values are irrecoverable after this changelog and unneeded.
+
+        00000000000000_initial_schema.xml still creates the originals and cannot be edited without invalidating a
+        recorded checksum, so fresh installations create, rename, then drop them.
+
+        Order is required: MySQL rejects DROP COLUMN while a foreign key uses the column, and rejects dropping the only
+        index backing a foreign key. Hence foreign key, then unique index, then column - and the counter table before
+        legacy_quiz_statistic, which it references. PostgreSQL drops the id sequence with its table.
+    -->
+
+    <!-- exercise.legacy_quiz_point_statistic_id, foreign key into legacy_quiz_statistic -->
+
+    <changeSet id="20260910120000-01-drop-exercise-quiz-point-statistic-fk" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
+    </changeSet>
+
+    <!-- Explicit name added by 20260728220917-14, replacing three environment-specific auto-generated names. -->
+    <changeSet id="20260910120000-02-drop-exercise-quiz-point-statistic-unique" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/>
+        </preConditions>
+        <dropUniqueConstraint tableName="exercise" constraintName="uk_exercise_quiz_point_statistic"/>
+    </changeSet>
+
+    <changeSet id="20260910120000-03-drop-exercise-legacy-quiz-point-statistic-id" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="legacy_quiz_point_statistic_id"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="legacy_quiz_point_statistic_id"/>
+    </changeSet>
+
+    <!-- quiz_question.legacy_quiz_question_statistic_id, foreign key into legacy_quiz_statistic -->
+
+    <changeSet id="20260910120000-04-drop-quiz-question-statistic-fk" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
+    </changeSet>
+
+    <changeSet id="20260910120000-05-drop-quiz-question-statistic-unique-index" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
+        </preConditions>
+        <dropIndex tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
+    </changeSet>
+
+    <changeSet id="20260910120000-06-drop-quiz-question-legacy-statistic-id" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_question" columnName="legacy_quiz_question_statistic_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_question" columnName="legacy_quiz_question_statistic_id"/>
+    </changeSet>
+
+    <!-- Counter table first: it holds the last foreign key into legacy_quiz_statistic, and nothing references it. -->
+    <changeSet id="20260910120000-07-drop-legacy-quiz-statistic-counter" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="legacy_quiz_statistic_counter"/>
+        </preConditions>
+        <dropTable tableName="legacy_quiz_statistic_counter"/>
+    </changeSet>
+
+    <changeSet id="20260910120000-08-drop-legacy-quiz-statistic" author="Nihad74">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="legacy_quiz_statistic"/>
+        </preConditions>
+        <dropTable tableName="legacy_quiz_statistic"/>
+    </changeSet>
+
+</databaseChangeLog>
