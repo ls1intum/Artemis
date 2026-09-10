@@ -84,6 +84,16 @@ export class TutorialGroupHolidaysComponent {
     protected readonly dialogVisible = signal(false);
     protected readonly editedHoliday = signal<Holiday | undefined>(undefined);
     protected readonly dialogInitialDay = signal<dayjs.Dayjs | undefined>(undefined);
+    /**
+     * Counts each time the dialog is opened on something new.
+     *
+     * Cancelling stays available while a save is in flight, so a reader can dismiss the dialog, open another holiday
+     * and start typing before the first answer arrives. The answer carries the number the dialog had when it was sent,
+     * and closes the dialog only while that is still the one on screen - otherwise it would shut a dialog it never saw
+     * and take the reader's input with it.
+     */
+    private dialogGeneration = 0;
+
     /** Sessions the span in the dialog covers, so the warning follows the dates the reader picks. */
     protected readonly dialogSessionCount = signal(0);
     /**
@@ -282,6 +292,7 @@ export class TutorialGroupHolidaysComponent {
     }
 
     protected openCreateDialog(day?: dayjs.Dayjs): void {
+        this.dialogGeneration++;
         this.editedHoliday.set(undefined);
         this.dialogInitialDay.set(day ?? this.today());
         this.dialogSessionCount.set(0);
@@ -289,6 +300,7 @@ export class TutorialGroupHolidaysComponent {
     }
 
     protected openEditDialog(holiday: Holiday): void {
+        this.dialogGeneration++;
         this.editedHoliday.set(holiday);
         this.dialogInitialDay.set(undefined);
         this.dialogSessionCount.set(0);
@@ -318,6 +330,7 @@ export class TutorialGroupHolidaysComponent {
         const edited = this.editedHoliday();
 
         this.isSaving.set(true);
+        const savedGeneration = this.dialogGeneration;
         const request = edited?.period.id
             ? this.freePeriodService.update(courseId, configurationId, edited.period.id, payload)
             : this.freePeriodService.create(courseId, configurationId, payload);
@@ -329,7 +342,10 @@ export class TutorialGroupHolidaysComponent {
             )
             .subscribe({
                 next: () => {
-                    this.dialogVisible.set(false);
+                    // The holiday is saved either way, so the list is reloaded either way; only the dialog is spared.
+                    if (savedGeneration === this.dialogGeneration) {
+                        this.dialogVisible.set(false);
+                    }
                     this.loadConfiguration();
                 },
                 error: (response: HttpErrorResponse) => onError(this.alertService, response),

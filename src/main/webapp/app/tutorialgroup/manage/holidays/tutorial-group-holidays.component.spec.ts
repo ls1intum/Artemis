@@ -146,6 +146,55 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect((query('holiday-reason').nativeElement as HTMLInputElement).value).toBe('');
     });
 
+    it('should not close a dialog opened after the save it is still waiting on', async () => {
+        // Cancelling stays available while saving, so the reader can dismiss one dialog and start another meanwhile.
+        const pending = new Subject<HttpResponse<TutorialGroupFreePeriod>>();
+        vi.spyOn(freePeriodService, 'create').mockReturnValue(pending);
+
+        fixture.debugElement.query(By.css('[data-day="2025-12-04"]')).nativeElement.click();
+        await settle();
+        const firstReason = query('holiday-reason').nativeElement as HTMLInputElement;
+        firstReason.value = 'First';
+        firstReason.dispatchEvent(new Event('input'));
+        await settle();
+        query('holiday-submit').nativeElement.click();
+
+        // Dismissed while still in flight, then a second holiday started.
+        query('holiday-cancel').nativeElement.click();
+        await settle();
+        fixture.debugElement.query(By.css('[data-day="2025-12-05"]')).nativeElement.click();
+        await settle();
+        const secondReason = query('holiday-reason').nativeElement as HTMLInputElement;
+        secondReason.value = 'Second';
+        secondReason.dispatchEvent(new Event('input'));
+        await settle();
+
+        pending.next(new HttpResponse({ body: new TutorialGroupFreePeriod() }));
+        await settle();
+
+        // The first save must not shut a dialog it never saw, nor take what has been typed into it.
+        expect(component['dialogVisible']()).toBe(true);
+        expect((query('holiday-reason').nativeElement as HTMLInputElement).value).toBe('Second');
+    });
+
+    it('should close the dialog when its own save completes', async () => {
+        const pending = new Subject<HttpResponse<TutorialGroupFreePeriod>>();
+        vi.spyOn(freePeriodService, 'create').mockReturnValue(pending);
+
+        fixture.debugElement.query(By.css('[data-day="2025-12-04"]')).nativeElement.click();
+        await settle();
+        const reason = query('holiday-reason').nativeElement as HTMLInputElement;
+        reason.value = 'Dies Academicus';
+        reason.dispatchEvent(new Event('input'));
+        await settle();
+        query('holiday-submit').nativeElement.click();
+
+        pending.next(new HttpResponse({ body: new TutorialGroupFreePeriod() }));
+        await settle();
+
+        expect(component['dialogVisible']()).toBe(false);
+    });
+
     it('should update the holiday being edited instead of creating another', async () => {
         const update = vi.spyOn(freePeriodService, 'update').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
         const create = vi.spyOn(freePeriodService, 'create');
