@@ -7,8 +7,8 @@ sidebar_label: Exam Participation Checker
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import verifyAttendanceVerificationMissing from './assets/verify_attendance_verification_missing.png';
-import verifyAttendanceVerificationSuccessful from './assets/verify_attendance_verification_successful.png';
+import verifyAttendanceMissing from './assets/verify-attendance-missing.png';
+import verifyAttendanceComplete from './assets/verify-attendance-complete.png';
 import examOverview from './assets/exam_overview.png';
 import studentListView from './assets/student_list_view.png';
 import studentListViewExportSignatures from './assets/student_list_view_export_signatures.png';
@@ -39,11 +39,16 @@ Using the Artemis Exam Participation Checker iPad application requires additiona
   Seats and rooms can currently only be assigned via the CSV import of students by defining the `seat` and `room` in the CSV file.
 </Callout>
 
-You can also verify the attendance in the web application by choosing **Verify attendance** in the same menu. This button opens a new view that shows which students have started the exam in Artemis but still need to complete the check-in with a teaching assistant.
+**Verify attendance**, in the same **Logistics** menu, opens the web counterpart of the app: the list of students who
+have started the exam in Artemis but whose check-in is not finished. A student leaves the list once all four
+identity checks are ticked and a signature has been recorded, so the count beside the heading is the work the room
+has left.
 
-<Image src={verifyAttendanceVerificationMissing} alt="Verify Attendance View: One student did not complete the check-in" size={ImageSize.large} caption="Verify Attendance View: One student did not complete the check-in" />
+<Image src={verifyAttendanceMissing} alt="Verify attendance list with one student still to check in" size={ImageSize.large} caption="One student has still to be checked in" />
 
-<Image src={verifyAttendanceVerificationSuccessful} alt="Verify Attendance View: All students have been successfully checked in" size={ImageSize.large} caption="Verify Attendance View: All students have been successfully checked in" />
+Once the last student is done the list is empty and says so, which is the state to look for before the exam starts.
+
+<Image src={verifyAttendanceComplete} alt="Verify attendance view reporting that every student has been checked" size={ImageSize.large} caption="Every student checked in" />
 
 ## Download App
 
