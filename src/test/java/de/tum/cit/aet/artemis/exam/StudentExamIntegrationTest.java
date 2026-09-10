@@ -1916,7 +1916,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             case QuizExercise quizExercise -> {
                 assertThat(quizExercise.getQuizQuestions()).hasSize(3);
                 quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-                    assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
                     assertThat(quizQuestion.getExplanation()).isNull();
                     switch (quizQuestion) {
                         case MultipleChoiceQuestion mcQuestion -> mcQuestion.getAnswerOptions().forEach(answerOption -> {
@@ -2142,7 +2141,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     }
                     if (question != null) {
                         assertThat(question.getExplanation()).isNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
@@ -2201,7 +2199,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     QuizQuestion question = submittedAnswer.getQuizQuestion();
                     if (question != null) {
                         assertThat(question.getExplanation()).isNotNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();
@@ -3441,19 +3438,37 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         }
 
         assertThat(quizExercise).isNotNull();
+        assertThat(quizSubmission).isNotNull();
+        ZonedDateTime oldSubmissionDate = ZonedDateTime.now().minusDays(1);
+        QuizSubmission persistedQuizSubmission = quizSubmissionTestRepository.findById(quizSubmission.getId()).orElseThrow();
+        persistedQuizSubmission.setSubmissionDate(oldSubmissionDate);
+        quizSubmissionTestRepository.saveAndFlush(persistedQuizSubmission);
+
+        Instant beforeInitialEvaluation = Instant.now();
         request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+        Instant afterInitialEvaluation = Instant.now();
         testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRunResponse.getId() + "/summary",
                 HttpStatus.OK, StudentExam.class);
 
-        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        Result initialResult = checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        assertThat(initialResult.getCompletionDate().toInstant()).isBetween(beforeInitialEvaluation, afterInitialEvaluation).isNotEqualTo(oldSubmissionDate.toInstant());
+
+        ZonedDateTime staleCompletionDate = ZonedDateTime.now().minusHours(1);
+        initialResult.setCompletionDate(staleCompletionDate);
+        resultRepository.saveAndFlush(initialResult);
 
         // reconnect references so that the following method works
         testRunResponse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(studentParticipation -> studentParticipation.setExercise(exercise)));
         // invoke a second time to test the else case in this method
         SecurityUtils.setAuthorizationObject();
+        Instant beforeCompletionDateRepair = Instant.now();
         examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(testRunResponse);
-        // make sure that no second result is created
-        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        Instant afterCompletionDateRepair = Instant.now();
+
+        // make sure that the existing result is repaired and no second result is created
+        Result repairedResult = checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+        assertThat(repairedResult.getId()).isEqualTo(initialResult.getId());
+        assertThat(repairedResult.getCompletionDate().toInstant()).isBetween(beforeCompletionDateRepair, afterCompletionDateRepair).isNotEqualTo(staleCompletionDate.toInstant());
     }
 
     @Test
@@ -3544,7 +3559,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(testRunExam.getExerciseGroups().size());
     }
 
-    private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
+    private Result checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
 
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
 
@@ -3552,6 +3567,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
+        assertThat(result.getCompletionDate()).isNotNull();
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
@@ -3569,6 +3585,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             }
         }
+        return result;
     }
 
     @Test
