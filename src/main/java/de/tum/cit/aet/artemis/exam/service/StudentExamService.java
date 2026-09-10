@@ -705,7 +705,8 @@ public class StudentExamService {
         // Which students are already set up, asked once per exercise rather than once per student and exercise
         var startedStudentIdsByExerciseId = testExam ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
         // LinkedHashMap so the student exams are prepared in the order the query returned them
-        var rowsByStudentExamId = exerciseStartData.stream().collect(Collectors.groupingBy(StudentExamExerciseStartDTO::studentExamId, LinkedHashMap::new, Collectors.toList()));
+        var rowsByStudentExamId = exerciseStartData.stream()
+                .collect(Collectors.groupingBy(StudentExamExerciseStartDTO::studentExamId, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
         int studentExamCount = rowsByStudentExamId.size();
 
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
