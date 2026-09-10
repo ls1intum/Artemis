@@ -401,17 +401,6 @@ public class ExerciseService {
     /**
      * Updates the points of related exercises if the points of exercises have changed
      *
-     * @param originalExercise the original exercise
-     * @param updatedExercise  the updatedExercise
-     */
-    @Async
-    public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        updatePointsInRelatedParticipantScores(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
-    }
-
-    /**
-     * Updates the points of related exercises if the points of exercises have changed
-     *
      * @param originalMaxPoints   the original max points
      * @param originalBonusPoints the original bonus points
      * @param updatedExercise     the updatedExercise
@@ -617,7 +606,7 @@ public class ExerciseService {
             if (!feedbackToBeDeleted.isEmpty()) {
                 Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
-                    existingFeedback.removeAll(feedbackToBeDeleted);
+                    feedbackToBeDeleted.forEach(existingFeedback::remove);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
                 List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));
