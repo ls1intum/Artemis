@@ -10,10 +10,11 @@
     height: var(--title-bar-content-height);
     padding-inline: 0.5rem;
 
-    /* Outlined in the body colour, so the box reads as a plain outline in either theme rather than tinting with
-       the urgency: the number carries that, in the same red the result percentage uses. */
-    border: 1px solid var(--bs-body-color);
-    border-radius: var(--bs-border-radius);
+    /* The same outline the information boxes carry, so the countdown reads as one of them rather than a separate
+       kind of thing: their `border border-1 rounded-3` resolves to these two values. The urgency stays on the
+       number, in the red the result percentage uses. */
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
     white-space: nowrap;
 
     &__label {
