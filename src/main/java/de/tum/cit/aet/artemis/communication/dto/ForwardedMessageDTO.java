@@ -8,6 +8,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * Data Transfer Object for ForwardedMessage.
@@ -31,6 +32,13 @@ public record ForwardedMessageDTO(Long id, Long sourceId, PostingType sourceType
      * @return the ForwardedMessage entity
      */
     public ForwardedMessage toEntity() {
+        // A forwarded message points at exactly one destination. Both setters below reject the second one with an
+        // IllegalStateException to keep that invariant, which would leave a request carrying both ids as a 500.
+        // Rejecting it here reports it as what it is: a malformed request.
+        if (this.destinationPostId != null && this.destinationAnswerPostId != null) {
+            throw new BadRequestAlertException("A forwarded message must have either a destination post or a destination answer post, not both", "forwardedMessage",
+                    "forwardedMessageHasTwoDestinations");
+        }
         ForwardedMessage message = new ForwardedMessage();
         message.setId(this.id);
         message.setSourceId(this.sourceId);
