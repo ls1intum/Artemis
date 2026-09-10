@@ -274,7 +274,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
         toBeImported.setProjectType(template.getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
-        toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
         toBeImported.setReleaseDate(template.getReleaseDate());
         toBeImported.setExampleSolutionPublicationDate(null);

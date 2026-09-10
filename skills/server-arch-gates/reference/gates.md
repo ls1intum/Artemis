@@ -10,13 +10,37 @@ check instead of the problem.
 controllers. Transaction boundaries may only be defined inside repositories, typically for
 modifying queries.
 
-**Enforced by.** `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`,
-which each module's `*RepositoryArchitectureTest` subclass runs.
+**Enforced by.** Three rules in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`, all checked over
+the whole code base rather than per module:
+
+- `testTransactionBoundariesOnlyInRepositories` — a `@Transactional` method must be declared in a
+  repository interface, and no class outside one may carry the annotation.
+- `testNoProgrammaticTransactionManagement` — production code may not touch anything in
+  `org.springframework.transaction` except the annotation package, which is what covers
+  `TransactionTemplate` and `PlatformTransactionManager`. Tests are exempt: one may legitimately
+  open a transaction to seed data, or hold a row lock while asserting the code under test waits.
+- `testNoTransactionSynchronization` — nothing anywhere may use `TransactionSynchronizationManager`
+  or a `TransactionSynchronization`. Without a boundary the callbacks never fire and nothing is
+  logged, so the code silently does not run.
+
+`AbstractModuleRepositoryArchitectureTest` carries the first rule per module as well, but only
+modules with a `*RepositoryArchitectureTest` subclass get it, which is why the global rules exist.
 
 **Consequence for you.** A REST call is not one transaction. Do not write code that assumes reads
 later in the call see writes from earlier in the call rolled into one atomic unit, and do not
 attempt to coordinate cache eviction across a request boundary that does not exist.
+
+**What to write instead.** Two patterns cover nearly every boundary that looked necessary:
+
+- To make a check and a write atomic, move the check into the `WHERE` clause of a `@Modifying`
+  query and act on the row count — `AnswerPostRepository.verifyIfUnverified`,
+  `LectureUnitProcessingStateRepository.claimIdleForDispatch`. This also replaces
+  `SELECT ... FOR UPDATE SKIP LOCKED`.
+- To undo work when a later step fails, compensate in a `catch` block —
+  `SlideSplitterService.SlideOperation`.
+
+Full reasoning: `documentation/docs/developer/guidelines/performance.mdx` (Avoid Transactions).
 
 ## Persistence access
 
@@ -46,21 +70,21 @@ jobs, and `@Cacheable` caches, goes through `DistributedDataProvider` in
 
 **Enforced by.**
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`,
-which fails the build if a production class outside a small named set of backend adapters depends
+which fails the build if a production class outside a small named set of provider adapters depends
 on `com.hazelcast..`, `org.redisson..`, or `org.springframework.data.redis..`.
 
-**Why it is not merely stylistic.** The backend is selected by `artemis.distributed-data.provider`.
-With the Redis backend, no Hazelcast instance is created at all, so a direct Hazelcast call does not
-throw. It silently writes state nowhere.
+**Why it is not merely stylistic.** The provider is selected by `artemis.distributed-data.provider`.
+With the Redis provider, no Hazelcast instance is created at all, so a direct Hazelcast call
+does not throw. It silently writes state nowhere.
 
 **Adding a capability.** Add it to `DistributedDataProvider`, implement it for Hazelcast, Redis, and
 Local, and add a case to
 `src/test/java/de/tum/cit/aet/artemis/core/service/distributed/AbstractDistributedDataTest.java`.
-That suite is the only thing keeping the three backends in agreement.
+That suite is the only thing keeping the three providers in agreement.
 
 **Entry lifetimes.** Request them at the call site with `getExpiringMap(name, ttl)`. `getMap(name)`
-rejects a per-entry TTL on purpose: a backend map configuration only applies to that backend, so a
-TTL configured there would silently not apply under a different provider.
+rejects a per-entry TTL on purpose: a provider-level map configuration only applies to that one
+provider, so a TTL configured there would silently not apply under a different provider.
 
 Full guidance: `documentation/docs/developer/guidelines/distributed-data.mdx`.
 

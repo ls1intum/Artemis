@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +65,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -157,10 +159,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("exercise")
-    private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
@@ -366,8 +364,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
      * the course class member
      *
-     * @return Course of the exercise
+     * @return Course of the exercise, or null when it cannot be resolved from a masked exam graph
      */
+    @Nullable
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
@@ -413,14 +412,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
         this.exampleSubmissions = exampleSubmissions;
-    }
-
-    public Set<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
     }
 
     public Set<PlagiarismCase> getPlagiarismCases() {
@@ -869,20 +860,32 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
         }
 
-        // at least one is set, so we have to check the three possible errors
-        //@formatter:off
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
-                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
-                && isNotAfterAndNotNull(getStartDate(), getDueDate())
-                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
-                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
-        //@formatter:on
+        boolean releaseDateValid = validateStrictDateSequence(List.of(), getReleaseDate(),
+                Arrays.asList(getStartDate(), getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+        boolean startDateValid = validateStrictDateSequence(Collections.singletonList(getReleaseDate()), getStartDate(),
+                Arrays.asList(getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+        boolean dueDateValid = validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate()), getDueDate(),
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+        boolean assessmentDueDateValid = validateAssessmentDueDate();
+        boolean exampleSolutionPublicationDateValid = validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate(), getAssessmentDueDate()),
+                getExampleSolutionPublicationDate(), List.of());
+
+        boolean areDatesValid = releaseDateValid && startDateValid && dueDateValid && assessmentDueDateValid && exampleSolutionPublicationDateValid;
 
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
+    }
+
+    private boolean validateAssessmentDueDate() {
+        if (getAssessmentDueDate() == null) {
+            return true;
+        }
+        if (getDueDate() == null) {
+            return false;
+        }
+        return validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), getAssessmentDueDate(),
+                Collections.singletonList(getExampleSolutionPublicationDate()));
     }
 
     /**
@@ -958,8 +961,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
-                .forEach(Collection::clear);
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, plagiarismCases).filter(Objects::nonNull).forEach(Collection::clear);
     }
 
     /**

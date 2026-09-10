@@ -118,8 +118,8 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
@@ -130,7 +130,7 @@ class AttachmentVideoUnitServiceTest {
         service.saveAttachmentVideoUnit(unit, null, null, false);
 
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        verify(irisLectureUnitSyncService).markVisibilityDirty(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
         assertThat(snapshotCaptor.getValue().releaseDate().toInstant()).isEqualTo(unit.getReleaseDate().toInstant());
         verify(contentProcessingService).triggerProcessing(unit);
@@ -152,8 +152,8 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         verify(contentProcessingService, never()).triggerProcessing(any());
-        verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markMetadataDirty(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
@@ -174,7 +174,7 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         verify(contentProcessingService, never()).triggerProcessing(any());
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
     }
 
     @Test
@@ -198,7 +198,7 @@ class AttachmentVideoUnitServiceTest {
                 Set.of());
 
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        verify(irisLectureUnitSyncService).markVisibilityDirty(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsOnlyKeys(1);
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(1).toInstant()).isEqualTo(hiddenUntil.toInstant());
     }
@@ -221,7 +221,7 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
         verify(contentProcessingService, never()).triggerProcessing(any());
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markVisibilityDirty(any(LectureContentUpdateSnapshot.class));
     }
 
     @Test
@@ -232,8 +232,8 @@ class AttachmentVideoUnitServiceTest {
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
         verify(contentProcessingService).triggerProcessing(unit);
-        verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markMetadataDirty(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
     }
 
     @Test
@@ -245,7 +245,7 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
     }
 
     @Test
@@ -256,8 +256,8 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markVisibilityDirty(any(LectureContentUpdateSnapshot.class));
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 

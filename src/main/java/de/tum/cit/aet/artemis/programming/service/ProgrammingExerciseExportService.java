@@ -23,13 +23,13 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.SecureXmlFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -92,6 +93,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
+
+    /** A space in a Maven artifact id, which has to be a hyphen. */
+    private static final Pattern SPACE = Pattern.compile(" ");
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
@@ -142,7 +146,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
-        super(fileService, springMvcJacksonConverter, null);
+        super(springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -700,8 +704,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            var tempRepositoryPath = Objects.requireNonNull(checkoutDir, "A checkout directory is required for the selected export options")
-                    .resolve(String.valueOf(participation.getId()));
+            var tempRepositoryPath = checkoutDir.resolve(String.valueOf(participation.getId()));
             // Checkout the repository
             Repository repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
             if (repository == null) {
@@ -870,12 +873,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 nameNode.setTextContent(nameNode.getTextContent() + " " + participantIdentifier);
             }
             if (artifactIdNode != null) {
-                String artifactId = (artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll(" ", "-").toLowerCase(Locale.ROOT);
+                String artifactId = SPACE.matcher(artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll("-").toLowerCase(Locale.ROOT);
                 artifactIdNode.setTextContent(artifactId);
             }
 
             // 4- Save the result to a new XML doc
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Transformer xformer = SecureXmlFactory.transformer();
             xformer.transform(new DOMSource(doc), new StreamResult(pomFile));
 
         }
@@ -906,7 +909,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             // 4- Save the result to a new XML doc
-            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Transformer xformer = SecureXmlFactory.transformer();
             xformer.transform(new DOMSource(doc), new StreamResult(eclipseProjectFile));
 
         }

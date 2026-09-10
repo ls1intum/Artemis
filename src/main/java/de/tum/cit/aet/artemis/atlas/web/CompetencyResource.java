@@ -187,8 +187,7 @@ public class CompetencyResource {
     @PostMapping("courses/{courseId}/competencies/bulk")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId,
-            @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies)
-            throws URISyntaxException {
+            @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
         return createCompetencies(courseId, competencies, false, "competency creation");
     }
 

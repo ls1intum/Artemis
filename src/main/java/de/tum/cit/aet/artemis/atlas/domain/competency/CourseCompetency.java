@@ -135,7 +135,6 @@ public abstract class CourseCompetency extends BaseCompetency {
         this.generatedByAi = generatedByAi;
     }
 
-    @ManyToOne
     public Course getCourse() {
         return course;
     }
