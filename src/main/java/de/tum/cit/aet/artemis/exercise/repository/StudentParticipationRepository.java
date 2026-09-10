@@ -650,21 +650,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") long participationId);
 
-    @Query("""
-            SELECT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.exercise ex
-                LEFT JOIN FETCH ex.course
-                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
-                LEFT JOIN FETCH p.student
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-            """)
-    List<StudentParticipation> findWithSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
     /**
      * The student's participations in an exercise, as far as the exam submission gate needs them.
      *
@@ -709,21 +694,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
-    /**
-     * The participations of a student in an exercise, with their submissions, one entry per participation.
-     * <p>
-     * De-duplicated here rather than with SELECT DISTINCT: Hibernate passes that through to SQL, where it becomes a sort
-     * over rows carrying the whole exercise, problem statement included. Hibernate returns the same instance for each
-     * repeated row and {@code DomainObject} compares on id, so collapsing them in Java is exact and far cheaper.
-     *
-     * @param exerciseId the id of the exercise
-     * @param studentId  the id of the student
-     * @return the student's participations in that exercise, each once
-     */
-    default List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(long exerciseId, long studentId) {
-        return findWithSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(exerciseId, studentId).stream().distinct().toList();
-    }
-
     @Query("""
             SELECT p
             FROM StudentParticipation p
@@ -733,23 +703,29 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<StudentParticipation> findWithResultsAndSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.team.id = :teamId
-            """)
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerSubmissions(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    /**
+     * The student's participations in an exercise, with their submissions and results, one entry per participation.
+     * <p>
+     * De-duplicated in Java rather than with SELECT DISTINCT, which Hibernate passes through to SQL where it becomes a
+     * sort over every selected column. Hibernate returns the same instance for each repeated row and
+     * {@code DomainObject} compares on id, so collapsing them here is exact and far cheaper.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the student's participations in that exercise, each once
+     */
+    default List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(long exerciseId, long studentId) {
+        return findWithResultsAndSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(exerciseId, studentId).stream().distinct().toList();
+    }
 
     @Query("""
             SELECT DISTINCT p

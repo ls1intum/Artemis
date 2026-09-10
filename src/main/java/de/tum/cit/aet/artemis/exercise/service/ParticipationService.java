@@ -901,13 +901,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get all exercise participations belonging to exercise and student with eager submissions.
-     *
-     * @param exercise  the exercise
-     * @param studentId the id of student
-     * @return the list of exercise participations belonging to exercise and student
-     */
-    /**
      * What the exam submission gate needs to know about a student's participations in an exercise, without loading the
      * participation entity and the whole exercise graph that hangs off it.
      *
@@ -921,14 +914,6 @@ public class ParticipationService {
                     .map(team -> studentParticipationRepository.findExamSubmissionGateByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
         }
         return studentParticipationRepository.findExamSubmissionGateByExerciseIdAndStudentId(exercise.getId(), studentId);
-    }
-
-    public List<StudentParticipation> findByExerciseAndStudentIdWithEagerSubmissions(Exercise exercise, Long studentId) {
-        if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerSubmissions(exercise.getId(), team.getId())).orElse(List.of());
-        }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(exercise.getId(), studentId);
     }
 
     /**

@@ -63,8 +63,8 @@ import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -96,6 +96,8 @@ public class StudentExamService {
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final ProgrammingTriggerService programmingTriggerService;
 
@@ -135,7 +137,7 @@ public class StudentExamService {
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager,
             WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
-            StudentExamSubmitMapper studentExamSubmitMapper) {
+            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -148,6 +150,7 @@ public class StudentExamService {
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
@@ -211,9 +214,9 @@ public class StudentExamService {
         examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExamFromClient);
 
         // Trigger build for all programing participations
-        var currentStudentParticipations = studentExamFromClient.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(exercise.getId(), currentUser.getId()).stream())
-                .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
+        var currentStudentParticipations = studentExamFromClient.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).flatMap(
+                exercise -> programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), currentUser.getId()).stream())
+                .toList();
 
         if (!currentStudentParticipations.isEmpty()) {
             // Delay to ensure that "Building and testing" is shown in the client
