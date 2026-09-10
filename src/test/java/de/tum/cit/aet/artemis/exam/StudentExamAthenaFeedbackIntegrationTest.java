@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -298,6 +299,26 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             studentExamAthenaFeedbackService.requestAthenaFeedback(testRun, instructor);
 
             verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(testRunParticipation), any(Result.class));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void requestAthenaFeedback_shouldRejectTestRunWhileAnotherTestRunIsUnsubmitted() {
+            Exam realExam = createRunningRealExam();
+            TextExercise textExercise = addTextExerciseToExam(realExam);
+            attachAthenaEnabledCourseTo(textExercise);
+
+            StudentExam submittedTestRun = createSubmittedTestRun(realExam, textExercise, "Meaningful text answer from the instructor.");
+            // a second, still open run of the same exam shares the participation and can overwrite its submission
+            StudentExam openTestRun = ExamFactory.generateExamTestRun(realExam);
+            openTestRun.setUser(instructor);
+            openTestRun.addExercise(textExercise);
+            openTestRun.setSubmitted(false);
+            studentExamRepository.save(openTestRun);
+
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedback(submittedTestRun, instructor))
+                    .withMessageContaining("other test runs");
+            verifyNoInteractions(resultWebsocketService);
         }
 
         @Test

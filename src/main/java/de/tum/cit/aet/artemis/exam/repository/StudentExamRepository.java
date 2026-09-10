@@ -133,6 +133,28 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findWithExercisesParticipationsSubmissionsById(@Param("studentExamId") long studentExamId, @Param("isTestRun") boolean isTestRun);
 
+    /**
+     * Counts the user's other test runs of the same exam that are not submitted yet.
+     * <p>
+     * Test-run participations are shared between the user's runs of an exercise, so an unsubmitted run can still
+     * overwrite the submission an already submitted run points at.
+     *
+     * @param examId        the id of the exam the test runs belong to
+     * @param userId        the id of the user owning the test runs
+     * @param studentExamId the test run to exclude, i.e. the one being acted on
+     * @return how many other test runs of this user and exam are still unsubmitted
+     */
+    @Query("""
+            SELECT COUNT(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND se.user.id = :userId
+                AND se.testRun = TRUE
+                AND se.id <> :studentExamId
+                AND (se.submitted IS NULL OR se.submitted = FALSE)
+            """)
+    long countOtherUnsubmittedTestRuns(@Param("examId") long examId, @Param("userId") long userId, @Param("studentExamId") long studentExamId);
+
     @Query("""
             SELECT se
             FROM StudentExam se

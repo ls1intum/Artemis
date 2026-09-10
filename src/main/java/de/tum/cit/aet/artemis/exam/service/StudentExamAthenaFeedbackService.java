@@ -99,6 +99,12 @@ public class StudentExamAthenaFeedbackService {
         if (athenaFeedbackApi.isEmpty() || (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty())) {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
         }
+        // Unlike a test exam attempt, a test run shares its participations with the user's other runs of the same
+        // exercise, so an unsubmitted run can still replace the submission this request would generate feedback for.
+        // Requiring the other runs to be submitted first keeps the feedback tied to the attempt it was requested for.
+        if (studentExam.isTestRun() && studentExamRepository.countOtherUnsubmittedTestRuns(studentExam.getExam().getId(), currentUser.getId(), studentExam.getId()) > 0) {
+            throw new BadRequestAlertException("Submit your other test runs of this exam before requesting AI feedback", "StudentExam", "otherTestRunNotSubmitted", true);
+        }
 
         // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
         // avoiding lazy-load traversal through StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
