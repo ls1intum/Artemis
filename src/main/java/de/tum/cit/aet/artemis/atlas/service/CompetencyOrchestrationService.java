@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -582,6 +583,7 @@ public class CompetencyOrchestrationService {
         toolContext.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, toolSequence);
         toolContext.put(OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY, OrchestratorToolContextKeys.newSequenceMarker());
         toolContext.put(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY, OrchestratorToolContextKeys.newSequenceMarker());
+        toolContext.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
         ChatResponse chatResponse = delegationService.delegateOrchestratorRound(systemPrompt,
                 "Plan the competency-management work, delegate semantic batches in dependency order, verify the final index, and terminate explicitly.", options, toolContext,
                 orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, orchestratorDelegationToolCallbackProvider,

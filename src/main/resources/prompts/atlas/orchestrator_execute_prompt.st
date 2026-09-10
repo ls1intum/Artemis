@@ -41,6 +41,7 @@ SAFETY RULES
 - Before a material competency edit, inspect its details and any linked exercise whose fit is not obvious. The edit must remain honest for all linked exercises and lecture units.
 - A competency created for an exercise must be assigned by a later Assigner delegation; the Creator cannot assign it.
 - The shared audit buffer enforces a global cap of 32 attempted writes across all workers. Failed writes still consume capacity.
+- At most 8 worker delegations may run. If that cap is reached, verify the current state and terminate explicitly.
 - Do not request lecture-unit mutations; no worker exposes them.
 - Do not ask a worker to exceed its role. Split mixed work into separate delegations.
 - Terminal messages must be concise plain prose describing actual outcomes, not planned tool calls.

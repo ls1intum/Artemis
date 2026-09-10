@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -180,6 +182,34 @@ class OrchestratorDelegationToolsServiceTest {
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class));
     }
 
+    @Test
+    void repeatedReadOnlyDelegationsStopAtRequestScopedCap() {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = response("worker response");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> workerContext = invocation.getArgument(3);
+                    ToolContext workerToolContext = new ToolContext(workerContext);
+                    OrchestratorToolHelpers.markWorkerRead(workerToolContext);
+                    workerTerminal.completeWorkerTask(true, "Course state already satisfies the task", workerToolContext);
+                    return response;
+                });
+
+        for (int i = 0; i < OrchestratorToolContextKeys.MAX_DELEGATION_CALLS; i++) {
+            WorkerResultDTO result = service.delegateToCreator("Inspect whether creation is needed", new ToolContext(parent));
+            assertThat(result.success()).isTrue();
+            assertThat(result.appliedActions()).isEmpty();
+        }
+
+        WorkerResultDTO overflow = service.delegateToCreator("Inspect once more", new ToolContext(parent));
+
+        assertThat(overflow.success()).isFalse();
+        assertThat(overflow.message()).contains("Worker delegation cap (" + OrchestratorToolContextKeys.MAX_DELEGATION_CALLS + ")");
+        assertThat(overflow.appliedActions()).isEmpty();
+        verify(delegationService, times(OrchestratorToolContextKeys.MAX_DELEGATION_CALLS)).delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class),
+                anyMap(), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class));
+    }
+
     private static Map<String, Object> parentContext() {
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
@@ -187,6 +217,7 @@ class OrchestratorDelegationToolsServiceTest {
         context.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>())));
         context.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY, new AtomicLong());
+        context.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
         return context;
     }
 

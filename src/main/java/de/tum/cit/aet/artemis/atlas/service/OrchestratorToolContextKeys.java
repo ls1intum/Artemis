@@ -59,6 +59,9 @@ public final class OrchestratorToolContextKeys {
     /** Sequence of the most recently completed worker delegation. */
     public static final String LAST_DELEGATION_SEQUENCE_KEY = "lastDelegationSequence";
 
+    /** Request-scoped counter reserving one slot per nested worker model round. */
+    public static final String DELEGATION_COUNT_KEY = "delegationCount";
+
     /** Count of successful course-scoped read calls made by the current worker. */
     public static final String WORKER_READ_COUNT_KEY = "workerReadCount";
 
@@ -73,6 +76,9 @@ public final class OrchestratorToolContextKeys {
      * hallucinating model cannot spend more than this many writes regardless of what the prompt says.
      */
     public static final int MAX_WRITE_CALLS = 32;
+
+    /** Hard cap on nested worker model rounds per orchestrator run. */
+    public static final int MAX_DELEGATION_CALLS = 8;
 
     private OrchestratorToolContextKeys() {
     }

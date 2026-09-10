@@ -126,6 +126,23 @@ public final class OrchestratorToolHelpers {
         return buffer == null || buffer.tryReserveSlot(OrchestratorToolContextKeys.MAX_WRITE_CALLS);
     }
 
+    /** Atomically reserves one nested worker round against the request-scoped delegation cap. */
+    static boolean tryReserveDelegationSlot(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.DELEGATION_COUNT_KEY);
+        if (!(value instanceof AtomicInteger counter)) {
+            return false;
+        }
+        while (true) {
+            int current = counter.get();
+            if (current >= OrchestratorToolContextKeys.MAX_DELEGATION_CALLS) {
+                return false;
+            }
+            if (counter.compareAndSet(current, current + 1)) {
+                return true;
+            }
+        }
+    }
+
     /** Records one successful course-scoped read when invoked inside a worker request. */
     static void markWorkerRead(@Nullable ToolContext toolContext) {
         Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY);

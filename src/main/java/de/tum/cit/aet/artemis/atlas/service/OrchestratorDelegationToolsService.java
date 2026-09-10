@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isWorkerCompletionTerminal;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markDelegation;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveDelegationSlot;
 
 import java.util.HashMap;
 import java.util.List;
@@ -116,6 +117,10 @@ public class OrchestratorDelegationToolsService {
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = OrchestratorToolHelpers.appliedActionsBufferFromContext(parentContext);
         if (courseId == null || buffer == null) {
             return new WorkerResultDTO(false, "Worker delegation context is incomplete.", List.of());
+        }
+        if (!tryReserveDelegationSlot(parentContext)) {
+            return new WorkerResultDTO(false, "Worker delegation cap (" + OrchestratorToolContextKeys.MAX_DELEGATION_CALLS + ") reached for this run; verify and terminate.",
+                    List.of());
         }
 
         int actionStart = buffer.actions().size();
