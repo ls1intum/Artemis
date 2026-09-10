@@ -28,4 +28,10 @@
     &:disabled {
         cursor: default;
     }
+
+    // Bootstrap sets cursor:pointer on every enabled button from outside any cascade layer, which beats the
+    // aria-disabled utility in @layer utilities. The blocked state has to be stated here to win.
+    &[aria-disabled='true'] {
+        cursor: not-allowed;
+    }
 }
