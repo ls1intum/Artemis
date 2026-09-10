@@ -59,12 +59,14 @@ describe('QuizExerciseCountdownComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="quiz-countdown-value"]')).toBeNull();
     });
 
-    it('should announce the remaining time politely', () => {
+    it('should expose the remaining time as a timer without announcing every tick', () => {
         fixture.componentRef.setInput('info', { showRemainingTime: true, remainingTimeText: '1 min', showResultsAvailable: false });
         fixture.detectChanges();
 
         const host = fixture.nativeElement.querySelector('[data-testid="quiz-countdown"]');
         expect(host.getAttribute('role')).toBe('timer');
-        expect(host.getAttribute('aria-live')).toBe('polite');
+        // Deliberately not a live region: the value ticks once a second near the end of a quiz, and announcing
+        // every change would talk over the questions. role="timer" implies aria-live="off".
+        expect(host.getAttribute('aria-live')).toBeNull();
     });
 });
