@@ -77,15 +77,10 @@ public class TextExerciseFeedbackService {
     /**
      * Asynchronously triggers non-graded Athena feedback for a text submission in a test exam.
      *
-     * @param participation        the student participation associated with the exercise
-     * @param textExercise         the text exercise
-     * @param expectedSubmissionId the id of the submission that was validated as eligible for feedback before
-     *                                 dispatch; if the participation's latest submission no longer matches (a
-     *                                 concurrent autosave replaced it, e.g. from a later test-run attempt reusing
-     *                                 the same participation), the request is skipped instead of generating
-     *                                 feedback for the wrong submission
+     * @param participation the student participation associated with the exercise
+     * @param textExercise  the text exercise
      */
-    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, TextExercise textExercise, Long expectedSubmissionId) {
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, TextExercise textExercise) {
         if (this.athenaFeedbackApi.isEmpty()) {
             return;
         }
@@ -103,11 +98,6 @@ public class TextExerciseFeedbackService {
         if (!(submissionOptional.get() instanceof TextSubmission textSubmission)) {
             log.warn("Skipping Athena feedback for participation {} on text exercise {}: latest submission {} is not a TextSubmission", participation.getId(), textExercise.getId(),
                     submissionOptional.get().getId());
-            return;
-        }
-        if (!textSubmission.getId().equals(expectedSubmissionId)) {
-            log.warn("Skipping Athena feedback for participation {} on text exercise {}: latest submission {} no longer matches the validated submission {}", participation.getId(),
-                    textExercise.getId(), textSubmission.getId(), expectedSubmissionId);
             return;
         }
         if (textSubmission.isEmpty()) {

@@ -36,16 +36,12 @@ public class ModelingFeedbackApi extends AbstractModelingApi {
 
     /**
      * Triggers automatic Athena feedback for a modeling exercise submission inside a test exam. Soft-skips instead
-     * of throwing when Athena is unavailable, the submission is missing/empty, no longer the participation's latest
-     * submission, or already has an Athena result.
+     * of throwing when Athena is unavailable, the submission is missing/empty or already has an Athena result.
      *
-     * @param participation        the student participation associated with the modeling exercise
-     * @param modelingExercise     the modeling exercise
-     * @param expectedSubmissionId the id of the submission that was validated as eligible for feedback; a
-     *                                 concurrently saved later submission on the same participation is skipped
-     *                                 instead of dispatched
+     * @param participation    the student participation associated with the modeling exercise
+     * @param modelingExercise the modeling exercise
      */
-    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise, Long expectedSubmissionId) {
-        modelingExerciseFeedbackService.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, expectedSubmissionId);
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
+        modelingExerciseFeedbackService.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
     }
 }

@@ -72,15 +72,10 @@ public class ModelingExerciseFeedbackService {
     /**
      * Asynchronously triggers non-graded Athena feedback for a modeling submission in a test exam.
      *
-     * @param participation        the student participation associated with the exercise
-     * @param modelingExercise     the modeling exercise
-     * @param expectedSubmissionId the id of the submission that was validated as eligible for feedback before
-     *                                 dispatch; if the participation's latest submission no longer matches (a
-     *                                 concurrent autosave replaced it, e.g. from a later test-run attempt reusing
-     *                                 the same participation), the request is skipped instead of generating
-     *                                 feedback for the wrong submission
+     * @param participation    the student participation associated with the exercise
+     * @param modelingExercise the modeling exercise
      */
-    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise, Long expectedSubmissionId) {
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
         if (this.athenaFeedbackApi.isEmpty()) {
             return;
         }
@@ -98,11 +93,6 @@ public class ModelingExerciseFeedbackService {
         if (!(submissionOptional.get() instanceof ModelingSubmission modelingSubmission)) {
             log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: latest submission {} is not a ModelingSubmission", participation.getId(),
                     modelingExercise.getId(), submissionOptional.get().getId());
-            return;
-        }
-        if (!modelingSubmission.getId().equals(expectedSubmissionId)) {
-            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: latest submission {} no longer matches the validated submission {}",
-                    participation.getId(), modelingExercise.getId(), modelingSubmission.getId(), expectedSubmissionId);
             return;
         }
         if (modelingSubmission.isEmpty()) {

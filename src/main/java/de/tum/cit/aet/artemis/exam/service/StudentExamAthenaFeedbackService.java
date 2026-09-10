@@ -143,14 +143,11 @@ public class StudentExamAthenaFeedbackService {
 
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();
-            // Pass the id of the submission validated above so the generator can detect a concurrent autosave (e.g. from
-            // a later test-run attempt reusing the same participation) and skip instead of generating feedback for it.
-            Long expectedSubmissionId = participation.findLatestSubmission().map(Submission::getId).orElseThrow();
             if (exercise instanceof TextExercise textExercise) {
-                textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, expectedSubmissionId));
+                textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise));
             }
             else if (exercise instanceof ModelingExercise modelingExercise) {
-                modelingFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, expectedSubmissionId));
+                modelingFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise));
             }
         }
     }
