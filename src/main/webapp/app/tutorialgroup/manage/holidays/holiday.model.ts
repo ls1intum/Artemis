@@ -77,23 +77,59 @@ export function toHolidays(periods: readonly TutorialGroupFreePeriod[], timeZone
 }
 
 /**
+ * What one holiday cancels on one calendar day.
+ *
+ * A span's own times describe its two ends, not each day in between: a break from 25 December 00:00 to 28 December
+ * 04:59 cancels the 26th and 27th completely and only part of the 28th. Each day therefore carries the slice of the
+ * span that actually falls on it, so no day claims times belonging to another.
+ */
+export interface HolidayDaySegment {
+    readonly holiday: Holiday;
+    /** True when the span covers this day from 00:00 to 23:59, whether or not it also covers its neighbours. */
+    readonly wholeDay: boolean;
+    /** Set only when the span starts partway through this day. */
+    readonly startTime?: string;
+    /** Set only when the span ends partway through this day. */
+    readonly endTime?: string;
+    /** The same holiday also covers the previous day, so the calendar can draw the two as one band. */
+    readonly continuesBefore: boolean;
+    readonly continuesAfter: boolean;
+}
+
+/**
  * Indexes the holidays by every day they touch, so the calendar can look a day up without scanning the list.
  *
  * A holiday spanning several days appears under each of them, which is what puts a two-week break on all of its days
  * while keeping it a single entry in the list beside the calendar.
  */
-export function holidaysByDay(holidays: readonly Holiday[]): Map<string, Holiday[]> {
-    const byDay = new Map<string, Holiday[]>();
+export function holidaysByDay(holidays: readonly Holiday[]): Map<string, HolidayDaySegment[]> {
+    const byDay = new Map<string, HolidayDaySegment[]>();
     for (const holiday of holidays) {
-        let day = holiday.start.startOf('day');
+        const firstDay = holiday.start.startOf('day');
         const lastDay = holiday.end.startOf('day');
+        let day = firstDay;
         while (!day.isAfter(lastDay)) {
+            const isFirstDay = day.isSame(firstDay, 'day');
+            const isLastDay = day.isSame(lastDay, 'day');
+            // Clip the span to this day: only its own ends can start or finish partway through.
+            const startsPartway = isFirstDay && !(holiday.start.hour() === 0 && holiday.start.minute() === 0);
+            const endsPartway = isLastDay && !(holiday.end.hour() === 23 && holiday.end.minute() === 59);
+
+            const segment: HolidayDaySegment = {
+                holiday,
+                wholeDay: !startsPartway && !endsPartway,
+                startTime: startsPartway ? holiday.startTime : undefined,
+                endTime: endsPartway ? holiday.endTime : undefined,
+                continuesBefore: !isFirstDay,
+                continuesAfter: !isLastDay,
+            };
+
             const key = day.format(DAY_KEY_FORMAT);
             const existing = byDay.get(key);
             if (existing) {
-                existing.push(holiday);
+                existing.push(segment);
             } else {
-                byDay.set(key, [holiday]);
+                byDay.set(key, [segment]);
             }
             day = day.add(1, 'day');
         }

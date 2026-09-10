@@ -2,19 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, mo
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumUiButtonDirective,
-    TumUiDatePickerComponent,
-    TumUiDialogComponent,
-    TumUiFormFieldComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiToggleSwitchComponent,
-} from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiDialogComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { Holiday, coversWholeDays, endOfHolidayDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, endOfHolidayDay } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** What the dialog hands back on save: the span exactly as it will be stored. */
 export interface HolidaySubmission {
@@ -23,17 +15,13 @@ export interface HolidaySubmission {
     readonly reason: string;
 }
 
-/** Where a holiday narrowed to part of a day starts and ends when the reader first turns "whole day" off. */
-const DEFAULT_START_HOUR = 9;
-const DEFAULT_END_HOUR = 12;
-
 /**
  * Creates and edits a holiday.
  *
  * The reader picks when it starts and when it ends, and that one span expresses every shape the old page made them
- * choose a kind for first: a single day, a run of days such as a two-week break, and a slot within one day. **Whole
- * day** is a shortcut over the same two fields - it snaps the start to 00:00 and the end to 23:59 - rather than a
- * separate mode, so switching it off leaves the dates alone and only opens up the times.
+ * choose a kind for first: a single day, a run of days such as a two-week break, and a slot within one day. It opens on
+ * 00:00 to 23:59, so the whole-day case - by far the common one - is already filled in and needs no switch of its own;
+ * narrowing a holiday to part of a day is a matter of editing the times the fields already carry.
  */
 @Component({
     selector: 'jhi-holiday-dialog',
@@ -49,7 +37,6 @@ const DEFAULT_END_HOUR = 12;
         TumUiFormFieldComponent,
         TumUiInputDirective,
         TumUiMessageComponent,
-        TumUiToggleSwitchComponent,
     ],
 })
 export class HolidayDialogComponent {
@@ -75,13 +62,6 @@ export class HolidayDialogComponent {
 
     protected readonly isEditMode = computed(() => this.holiday() !== undefined);
 
-    /** Derived rather than stored: the switch reflects the span, so editing a time cannot leave the two disagreeing. */
-    protected readonly wholeDay = computed(() => {
-        const start = this.start();
-        const end = this.end();
-        return !start || !end ? true : coversWholeDays(start, end);
-    });
-
     protected readonly spansMultipleDays = computed(() => {
         const start = this.start();
         const end = this.end();
@@ -91,12 +71,6 @@ export class HolidayDialogComponent {
     /** Names the days rather than repeating the dates, which the fields already show. */
     protected readonly startWeekday = computed(() => this.start()?.locale(this.locale()).format('dddd') ?? '');
     protected readonly endWeekday = computed(() => this.end()?.locale(this.locale()).format('dddd') ?? '');
-
-    protected readonly dayCount = computed(() => {
-        const start = this.start();
-        const end = this.end();
-        return !start || !end ? 0 : end.startOf('day').diff(start.startOf('day'), 'day') + 1;
-    });
 
     protected readonly endIsBeforeStart = computed(() => {
         const start = this.start();
@@ -143,7 +117,7 @@ export class HolidayDialogComponent {
         // Moving the start carries a single-day holiday with it, so the common case needs one edit rather than two.
         const end = this.end();
         if (end && previousStart && previousStart.isSame(end, 'day') && !value.isSame(end, 'day')) {
-            this.end.set(this.wholeDay() ? endOfHolidayDay(value) : value.startOf('day').set('hour', end.hour()).set('minute', end.minute()));
+            this.end.set(value.startOf('day').set('hour', end.hour()).set('minute', end.minute()));
         } else if (end && !end.isAfter(value)) {
             this.end.set(endOfHolidayDay(value));
         }
@@ -152,28 +126,6 @@ export class HolidayDialogComponent {
 
     protected onEndChange(value: dayjs.Dayjs | undefined): void {
         this.end.set(value);
-        this.emitSpan();
-    }
-
-    /**
-     * Turns the span into whole days, or opens it up to times.
-     *
-     * Switching on keeps the days and widens them; switching off keeps the days and narrows the first one to a default
-     * slot, so neither direction silently moves the holiday to another date.
-     */
-    protected onWholeDayChange(wholeDay: boolean): void {
-        const start = this.start();
-        const end = this.end();
-        if (!start || !end) {
-            return;
-        }
-        if (wholeDay) {
-            this.start.set(start.startOf('day'));
-            this.end.set(endOfHolidayDay(end));
-        } else {
-            this.start.set(start.startOf('day').set('hour', DEFAULT_START_HOUR));
-            this.end.set(end.startOf('day').set('hour', DEFAULT_END_HOUR));
-        }
         this.emitSpan();
     }
 

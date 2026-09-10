@@ -64,16 +64,29 @@
                         }
                     </div>
 
-                    @for (holiday of day.holidays; track holiday.period.id) {
-                        <div class="holiday-grid-event" data-testid="holiday-calendar-event">
-                            <span class="holiday-grid-event-title">{{ holiday.reason }}</span>
-                            <span class="holiday-grid-event-time">
-                                @if (holiday.wholeDay) {
-                                    <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.wholeDay"></span>
-                                } @else {
-                                    {{ holiday.startTime }}–{{ holiday.endTime }}
-                                }
-                            </span>
+                    @for (segment of day.holidays; track segment.holiday.period.id) {
+                        <!-- Consecutive days of one holiday drop the corners and the bar between them, so the run reads as one band. -->
+                        <div
+                            class="holiday-grid-event"
+                            data-testid="holiday-calendar-event"
+                            [class.holiday-grid-event-continues-before]="segment.continuesBefore"
+                            [class.holiday-grid-event-continues-after]="segment.continuesAfter"
+                            [attr.data-continues-before]="segment.continuesBefore ? true : null"
+                            [attr.data-continues-after]="segment.continuesAfter ? true : null"
+                        >
+                            <span class="holiday-grid-event-title">{{ segment.holiday.reason }}</span>
+                            <!-- Only the end that actually falls on this day is named; a fully covered day says nothing. -->
+                            @if (!segment.wholeDay) {
+                                <span class="holiday-grid-event-time" data-testid="holiday-calendar-event-time">
+                                    @if (segment.startTime && segment.endTime) {
+                                        {{ segment.startTime }}–{{ segment.endTime }}
+                                    } @else if (segment.startTime) {
+                                        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.fromTime' | artemisTranslate: { time: segment.startTime } }}
+                                    } @else {
+                                        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.untilTime' | artemisTranslate: { time: segment.endTime } }}
+                                    }
+                                </span>
+                            }
                         </div>
                     }
                 </div>

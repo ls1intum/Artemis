@@ -324,7 +324,6 @@
                 "wholeDay": "Whole day",
                 "noHolidays": "No holidays yet.",
                 "sessionsCancelled": "{{ count }} sessions",
-                "actionsFor": "Actions for {{ reason }}",
                 "pastHidden": "{{ count }} holidays in the past are hidden from the upcoming filter.",
                 "filter": {
                     "upcoming": "Upcoming",
@@ -334,7 +333,9 @@
                     "today": "Today",
                     "previousMonth": "Previous month",
                     "nextMonth": "Next month",
-                    "sessionsShort": "{{ count }} sess."
+                    "sessionsShort": "{{ count }} sess.",
+                    "fromTime": "from {{ time }}",
+                    "untilTime": "until {{ time }}"
                 },
                 "form": {
                     "from": "From",
@@ -342,9 +343,7 @@
                     "create": "Create",
                     "reason": "Reason",
                     "reasonPlaceholder": "e.g. Christmas holidays",
-                    "wholeDayHint": "Cancels every session on these dates. Switch off to cancel only part of the day.",
                     "invalidRange": "The end must be after the start.",
-                    "spansDays": "Covers {{ count }} days.",
                     "sessionsWillBeCancelled": "{{ count }} sessions in this period will be cancelled."
                 },
                 "deleteDialog": {

@@ -25,6 +25,9 @@
     /* Room for the day number plus one holiday; a day with more simply grows, so an empty month stays compact. */
     min-height: 5.5rem;
     padding: 0.375rem 0.5rem;
+
+    /* The event stretches past this padding to meet the cell edge, so a run of days joins without a visible seam. */
+    overflow: hidden;
     border-right: 1px solid var(--tumaet-ui-border-color);
     border-bottom: 1px solid var(--tumaet-ui-border-color);
     cursor: pointer;
@@ -98,4 +101,24 @@
     font-family: monospace;
     font-size: 0.75rem;
     opacity: 0.75;
+}
+
+/*
+ * A holiday covering several days is one band rather than a row of separate chips: the days it continues across lose
+ * the rounded corner and the accent bar on that side, and reach into the cell's padding so neighbouring cells meet.
+ * The cells are separated by a one-pixel border, which the negative margin covers.
+ */
+.holiday-grid-event-continues-before {
+    margin-left: calc(-0.5rem - 1px);
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding-left: calc(0.5rem + 1px);
+}
+
+.holiday-grid-event-continues-after {
+    margin-right: -0.5rem;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-right: 0.5rem;
 }

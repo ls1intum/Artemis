@@ -42,11 +42,10 @@ describe('HolidayDialogComponent', () => {
         fixture.detectChanges();
     }
 
-    it('should start a new holiday as one whole day', async () => {
+    it('should open a new holiday on the whole day, so the common case needs no further input', async () => {
         fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
         await open();
 
-        expect(component['wholeDay']()).toBe(true);
         expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 00:00');
         expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 23:59');
     });
@@ -57,34 +56,16 @@ describe('HolidayDialogComponent', () => {
 
         expect(component['start']()!.format('YYYY-MM-DD')).toBe('2025-12-17');
         expect(component['end']()!.format('YYYY-MM-DD')).toBe('2025-12-31');
-        expect(component['dayCount']()).toBe(15);
+        expect(component['spansMultipleDays']()).toBe(true);
     });
 
-    it('should derive the whole-day switch from the span, so a time edit cannot leave the two disagreeing', async () => {
+    it('should keep the times when a holiday narrowed to part of a day moves to another date', async () => {
         fixture.componentRef.setInput('holiday', holidayOf('2025-12-04T08:15:00', '2025-12-04T12:45:00', 'Dies Academicus'));
         await open();
 
-        expect(component['wholeDay']()).toBe(false);
-    });
+        component['onStartChange'](dayjs('2025-12-10').startOf('day').set('hour', 9).set('minute', 15));
 
-    it('should widen the span to whole days when the switch goes on, keeping the dates', async () => {
-        fixture.componentRef.setInput('holiday', holidayOf('2025-12-04T08:15:00', '2025-12-05T12:45:00', 'Break'));
-        await open();
-
-        component['onWholeDayChange'](true);
-
-        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 00:00');
-        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-05 23:59');
-    });
-
-    it('should narrow to default times when the switch goes off, keeping the dates', async () => {
-        fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
-        await open();
-
-        component['onWholeDayChange'](false);
-
-        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 09:00');
-        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 12:00');
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-10 13:45');
     });
 
     it('should carry a single-day holiday along when its start moves', async () => {
@@ -164,6 +145,6 @@ describe('HolidayDialogComponent', () => {
         await open();
 
         expect(component['reason']()).toBe('');
-        expect(component['wholeDay']()).toBe(true);
+        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-20 00:00');
     });
 });

@@ -3,7 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { finalize } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { debounceTime, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
@@ -22,6 +23,9 @@ import { Holiday, holidaysByDay, inCourseZone, toHolidays } from 'app/tutorialgr
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 import { HolidayListComponent, HolidayListFilter } from 'app/tutorialgroup/manage/holidays/holiday-list/holiday-list.component';
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
+
+/** Long enough that typing a date or stepping through a month settles before the count is asked for. */
+const SESSION_COUNT_DEBOUNCE_MS = 300;
 
 /**
  * The holidays of a course: a month calendar of everything that is cancelled, and the list of holidays beside it.
@@ -71,6 +75,13 @@ export class TutorialGroupHolidaysComponent {
     protected readonly dialogInitialDay = signal<dayjs.Dayjs | undefined>(undefined);
     /** Sessions the span in the dialog covers, so the warning follows the dates the reader picks. */
     protected readonly dialogSessionCount = signal(0);
+    /**
+     * Spans chosen in the dialog, debounced before they reach the server.
+     *
+     * Typing a date emits on every keystroke and dragging through a month emits per day, so the raw stream would ask
+     * for a count the reader never sees. switchMap also drops the answer to a span they have already moved past.
+     */
+    private readonly dialogSpanRequests = new Subject<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
 
     private readonly timeZone = computed(() => this.course()?.timeZone);
 
@@ -82,6 +93,17 @@ export class TutorialGroupHolidaysComponent {
     protected readonly holidaysByDay = computed(() => holidaysByDay(this.holidays()));
 
     constructor() {
+        this.dialogSpanRequests
+            .pipe(
+                debounceTime(SESSION_COUNT_DEBOUNCE_MS),
+                switchMap((span) => this.freePeriodService.getSessionCounts(this.course()!.id!, span.start, span.end)),
+                takeUntilDestroyed(),
+            )
+            .subscribe({
+                next: (counts) => this.dialogSessionCount.set(counts.reduce((total, count) => total + count.count, 0)),
+                error: (response: HttpErrorResponse) => onError(this.alertService, response),
+            });
+
         this.activatedRoute.data.pipe(takeUntilDestroyed()).subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
@@ -163,17 +185,10 @@ export class TutorialGroupHolidaysComponent {
      * month the calendar happens to show and a partial count would understate what saving does.
      */
     protected onDialogSpanChange(span: { start: dayjs.Dayjs; end: dayjs.Dayjs }): void {
-        const courseId = this.course()?.id;
-        if (courseId === undefined) {
+        if (this.course()?.id === undefined) {
             return;
         }
-        this.freePeriodService
-            .getSessionCounts(courseId, span.start, span.end)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (counts) => this.dialogSessionCount.set(counts.reduce((total, count) => total + count.count, 0)),
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
+        this.dialogSpanRequests.next(span);
     }
 
     protected onSave(submission: HolidaySubmission): void {

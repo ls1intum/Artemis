@@ -324,7 +324,6 @@
                 "wholeDay": "Ganztägig",
                 "noHolidays": "Noch keine Feiertage.",
                 "sessionsCancelled": "{{ count }} Termine",
-                "actionsFor": "Aktionen für {{ reason }}",
                 "pastHidden": "{{ count }} vergangene Feiertage werden im Filter „Bevorstehend“ ausgeblendet.",
                 "filter": {
                     "upcoming": "Bevorstehend",
@@ -334,7 +333,9 @@
                     "today": "Heute",
                     "previousMonth": "Vorheriger Monat",
                     "nextMonth": "Nächster Monat",
-                    "sessionsShort": "{{ count }} Term."
+                    "sessionsShort": "{{ count }} Term.",
+                    "fromTime": "ab {{ time }}",
+                    "untilTime": "bis {{ time }}"
                 },
                 "form": {
                     "from": "Von",
@@ -342,9 +343,7 @@
                     "create": "Erstellen",
                     "reason": "Grund",
                     "reasonPlaceholder": "z. B. Weihnachtsferien",
-                    "wholeDayHint": "Sagt alle Termine an diesen Tagen ab. Ausschalten, um nur einen Teil des Tages abzusagen.",
                     "invalidRange": "Das Ende muss nach dem Beginn liegen.",
-                    "spansDays": "Umfasst {{ count }} Tage.",
                     "sessionsWillBeCancelled": "{{ count }} Termine in diesem Zeitraum werden abgesagt."
                 },
                 "deleteDialog": {

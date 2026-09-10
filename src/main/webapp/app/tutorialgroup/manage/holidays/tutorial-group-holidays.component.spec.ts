@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -56,6 +56,10 @@ describe('TutorialGroupHolidaysComponent', () => {
         fixture = TestBed.createComponent(TutorialGroupHolidaysComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('should load the holidays of the course', () => {
@@ -125,6 +129,7 @@ describe('TutorialGroupHolidaysComponent', () => {
     });
 
     it('should count the sessions of the span the dialog is showing, not just of the loaded month', () => {
+        vi.useFakeTimers();
         vi.mocked(freePeriodService.getSessionCounts).mockClear();
         vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(
             of([
@@ -134,12 +139,29 @@ describe('TutorialGroupHolidaysComponent', () => {
         );
 
         component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2026-01-05T23:59') });
+        vi.advanceTimersByTime(500);
 
         // The span is asked for directly, so a holiday running past the displayed month is still counted in full.
         const [, from, to] = vi.mocked(freePeriodService.getSessionCounts).mock.calls[0];
         expect(from.format('YYYY-MM-DD')).toBe('2025-12-22');
         expect(to.format('YYYY-MM-DD')).toBe('2026-01-05');
         expect(component['dialogSessionCount']()).toBe(7);
+    });
+
+    it('should ask for the count once when the reader moves through several dates', () => {
+        vi.useFakeTimers();
+        vi.mocked(freePeriodService.getSessionCounts).mockClear();
+        vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(of([{ date: '2025-12-24', count: 2 }]));
+
+        // Typing a date emits per keystroke, so only the span the reader settled on should reach the server.
+        for (const day of ['2025-12-22', '2025-12-23', '2025-12-24']) {
+            component['onDialogSpanChange']({ start: dayjs(`${day}T00:00`), end: dayjs(`${day}T23:59`) });
+            vi.advanceTimersByTime(50);
+        }
+        vi.advanceTimersByTime(500);
+
+        expect(freePeriodService.getSessionCounts).toHaveBeenCalledOnce();
+        expect(vi.mocked(freePeriodService.getSessionCounts).mock.calls[0][1].format('YYYY-MM-DD')).toBe('2025-12-24');
     });
 
     it('should keep a holiday covering several days as one entry and mark each of its days', () => {

@@ -5,17 +5,12 @@
     [header]="(isEditMode() ? 'artemisApp.pages.tutorialFreePeriodsManagement.editHoliday' : 'artemisApp.pages.tutorialFreePeriodsManagement.addHoliday') | artemisTranslate"
 >
     <form class="flex flex-col gap-4" (ngSubmit)="onSubmit()">
-        <label class="flex items-start gap-3 rounded-md border border-solid p-3" style="border-color: var(--tumaet-ui-border-color)">
-            <tum-ui-toggle-switch data-testid="holiday-whole-day" [ngModel]="wholeDay()" [ngModelOptions]="{ standalone: true }" (changed)="onWholeDayChange($event)" />
-            <span class="flex flex-col">
-                <span class="font-semibold" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.wholeDay"></span>
-                <span class="text-sm opacity-70" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.form.wholeDayHint"></span>
-            </span>
-        </label>
-
         <div class="flex flex-col gap-3 sm:flex-row">
             <tum-ui-form-field class="flex-1" [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate">
-                <!-- The picker carries the date and the time together, so a holiday within a day needs no extra field. -->
+                <!--
+                    The picker carries the date and the time together, so one pair of fields covers a single day, a run
+                    of days and a slot within a day. It opens on 00:00 to 23:59, which is the whole-day case.
+                -->
                 <tum-ui-date-picker
                     data-testid="holiday-start"
                     [hideLabelName]="true"
@@ -42,13 +37,6 @@
 
         @if (endIsBeforeStart()) {
             <tum-ui-message severity="error" data-testid="holiday-range-error" [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.invalidRange' | artemisTranslate" />
-        } @else if (spansMultipleDays()) {
-            <!-- A run of days is easy to get wrong by a day, so the dialog says how many it currently covers. -->
-            <tum-ui-message
-                severity="info"
-                data-testid="holiday-span-summary"
-                [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.spansDays' | artemisTranslate: { count: dayCount() }"
-            />
         }
 
         <tum-ui-form-field [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reason' | artemisTranslate">
