@@ -2604,6 +2604,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         quiz.setAllowedNumberOfAttempts(5);
         quiz.setDuration(999);
         quiz.setQuizMode(QuizMode.BATCHED);
+        // The caller-owned settings are copied off the quiz branch's own eager fetch, not off a generic lookup, so pin them here too.
+        quiz.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        quiz.setPresentationScoreEnabled(true);
+        quiz.setSecondCorrectionEnabled(true);
+        quiz.setAllowComplaintsForAutomaticAssessments(true);
         quizExerciseRepository.save(quiz);
         Exam targetExam = examUtilService.addExam(course1);
 
@@ -2617,6 +2622,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(importedQuiz.getAllowedNumberOfAttempts()).isEqualTo(5);
         assertThat(importedQuiz.getDuration()).isEqualTo(999);
         assertThat(importedQuiz.getQuizMode()).isEqualTo(QuizMode.BATCHED);
+        assertThat(importedQuiz.getIncludedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        assertThat(importedQuiz.getPresentationScoreEnabled()).isTrue();
+        assertThat(importedQuiz.getSecondCorrectionEnabled()).isTrue();
+        assertThat(importedQuiz.getAllowComplaintsForAutomaticAssessments()).isTrue();
     }
 
     @Test
