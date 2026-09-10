@@ -22,28 +22,17 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionWriteRepositoryImpl;
  * Wires mocked Iris repositories to the REAL implementations of their custom write fragments.
  *
  * <p>
- * The multi-statement writes moved out of the services and into repository fragments, so a plain
- * {@code mock(IrisProactiveEpisodeRepository.class)} answers {@code recordOutcomeUnderLock} with null and the logic
- * under test never runs. Mockito cannot compose a mock with a partial real implementation, so each fragment method is
- * stubbed to delegate into the fragment implementation built over the very same mocks. What the unit tests then
- * exercise is the real first-terminal-wins logic, the real reveal guards and the real list compaction, against stubbed
- * queries - which is what they asserted before the move.
- *
- * <p>
- * Stubs are {@link org.mockito.Mockito#lenient() lenient} because no single test drives all of them.
+ * A plain mock answers {@code recordOutcomeUnderLock} with null, and Mockito cannot compose a mock with a partial
+ * real implementation, so each fragment method is stubbed to delegate into the fragment implementation built over
+ * the same mocks. The unit tests then exercise the real first-terminal-wins logic, reveal guards and list
+ * compaction against stubbed queries. Stubs are lenient because no single test drives all of them.
  */
 final class IrisWriteFragments {
 
     private IrisWriteFragments() {
     }
 
-    /**
-     * Attach both write fragments to the given mocks.
-     *
-     * @param sessions the mocked session repository
-     * @param messages the mocked message repository
-     * @param episodes the mocked proactive episode repository
-     */
+    /** Attach both write fragments to the given mocks. */
     static void attachTo(IrisSessionRepository sessions, IrisMessageRepository messages, IrisProactiveEpisodeRepository episodes) {
         // Only the context switch writes through the chat session repository, and no caller of this helper drives one.
         var sessionFragment = new IrisSessionWriteRepositoryImpl(providerOf(sessions), mock(IrisChatSessionRepository.class), messages);

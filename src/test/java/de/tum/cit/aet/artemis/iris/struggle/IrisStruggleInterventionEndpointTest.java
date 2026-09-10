@@ -40,10 +40,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * and a non-null {@code jobId}, and the async pipeline fires; an opted-out student is rejected with {@code 403}
  * by the server-side AI opt-in gate before any pipeline work.
  * <p>
- * SAME_THREAD overrides the CONCURRENT mode inherited from the base class, for the same reason as
- * {@link IrisLegacyTriggerFlagTest}: one test here disables a feature toggle that lives on a singleton shared by
- * every method in this class. Run in parallel, a sibling would see the mechanism off and assert against a dispatch
- * that never happens.
+ * SAME_THREAD overrides the inherited CONCURRENT mode for the same reason as {@link IrisLegacyTriggerFlagTest}: one
+ * test disables a toggle on a singleton every method here shares.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
@@ -60,15 +58,13 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        // addUsers deterministically (re-run safe) seeds student1 + student2 with the course student group ("tumuser").
-        // The factory defaults every generated user to CLOUD_AI, so student1 is already opted in; student2 is the
+        // The factory defaults every generated user to CLOUD_AI, so student1 is opted in and student2 is the
         // opt-out case below.
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
 
         // The AI decision moved out of jhi_user into its own table (#13546).
         userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), AiSelectionDecision.CLOUD_AI);
-        // The opted-out student: addUsers records CLOUD_AI by default, so NO_AI has to be set explicitly for
-        // the opt-in gate to reject them with 403.
+        // NO_AI has to be set explicitly, because addUsers records CLOUD_AI by default.
         userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), AiSelectionDecision.NO_AI);
 
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
@@ -77,8 +73,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        // activateIrisFor leaves proactive struggle off, which is the default. The accepted-path test needs it on;
-        // the course-off test below flips it back off for its own case.
+        // activateIrisFor leaves proactive struggle off, and the accepted-path test needs it on.
         setProactiveStruggleFor(course, true);
     }
 
@@ -126,8 +121,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void installationDisabled_answersLikeACourseThatIsOff() throws Exception {
-        // The runtime toggle sits ahead of the course flag, so a course that opted in still gets nothing. Answered
-        // in the shape the client already knows, because for it both mean the same thing: stop asking.
+        // The runtime toggle sits ahead of the course flag, answered in the shape that tells the client to stop.
         featureToggleService.disableFeature(Feature.IrisProactiveStruggle);
         try {
             var body = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
@@ -153,8 +147,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
                 IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.supportLevel(), new IrisRateLimitConfiguration(0, 1), true),
                 true);
 
-        // NOT an unaccepted 202. That body reads to the editor as "a run is already going, await its websocket
-        // frame", and a budget rejection starts no run, so the client would wait for a frame nobody owes it.
+        // Not an unaccepted 202, which reads as "a run is going, await its frame" for a run that never started.
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), HttpStatus.TOO_MANY_REQUESTS);
 
         verify(pyrisPipelineService, never()).executeStruggleInterventionPipeline(any(), any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(),
@@ -170,8 +163,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void missingStruggleSignal_isBadRequest() throws Exception {
-        // @Valid + @NotNull on the request body rejects a null struggleSignal synchronously (400) instead of
-        // returning 202 and only failing later in the async send (which would leak the single-flight slot).
+        // Rejected synchronously, rather than 202 and a later async failure that leaks the single-flight slot.
         var invalid = new IrisStruggleInterventionRequestDTO(null, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
     }
@@ -179,8 +171,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void overlongEpisodeId_isBadRequest() throws Exception {
-        // @Valid cascade + @Size(max=64) on the episode id rejects a client-supplied id wider than the
-        // proactive_episode_id column synchronously (400), before the single-flight slot is reserved.
+        // An id wider than the column is rejected before the single-flight slot is reserved.
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
                 List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
         var episode = new StruggleEpisodeDTO("e".repeat(65), true, List.of());
@@ -191,9 +182,8 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void blankEpisodeId_isBadRequest() throws Exception {
-        // A blank id passes @Size but would be persisted verbatim by an active decision and then key the
-        // terminal-outcome gate: once one blank-id episode ended, every later blank-id intervention for this student
-        // would be read as that same finished episode and suppressed. Reject it at the boundary (400) instead.
+        // A blank id passes @Size but would key the terminal-outcome gate, so once one blank-id episode ended every
+        // later one would read as that same finished episode.
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
                 List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
         var episode = new StruggleEpisodeDTO("   ", true, List.of());
@@ -215,8 +205,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void episodeWithoutId_isStillAccepted() throws Exception {
-        // The episode object stays optional as a whole: a null id keeps the legacy no-episode behaviour and must not
-        // be swept up by the blank rejection above.
+        // The episode object stays optional: a null id keeps the no-episode behaviour.
         irisRequestMockProvider.mockStruggleInterventionResponse(dto -> assertThat(dto.struggleSignal()).isNotNull());
 
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),

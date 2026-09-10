@@ -25,10 +25,8 @@ import org.springframework.context.annotation.Lazy;
 public class IrisProactiveProperties {
 
     /**
-     * How long an episode survives without a trigger before the nightly cleanup removes it. Only episodes that
-     * reached no terminal outcome and carry no revealed offer are eligible; everything else goes with the course's
-     * student-data reset. Every trigger refreshes {@code lastTriggeredAt}, so an episode still in use is never
-     * reaped out from under a run in flight.
+     * How long an episode survives without a trigger before the nightly cleanup removes it. Only episodes with no
+     * terminal outcome and no revealed offer are eligible; everything else goes with the student-data reset.
      */
     private Duration abandonedEpisodeRetention = Duration.ofDays(7);
 
@@ -39,8 +37,7 @@ public class IrisProactiveProperties {
     private String cleanupCron = "0 30 3 * * *";
 
     /**
-     * A USER reply counts as engagement with a proactive hint only if it follows the hint within this window.
-     * Bounds how far apart a hint and a reply may sit before the reply is more plausibly about something else.
+     * A user reply counts as engagement with a proactive hint only if it follows the hint within this window.
      */
     private Duration engagedReplyWindow = Duration.ofMinutes(10);
 
@@ -56,11 +53,9 @@ public class IrisProactiveProperties {
     private boolean legacyBuildTriggers = true;
 
     /**
-     * How long an accepted trigger blocks the next one for the same student, exercise and intent. This is the
-     * charge the Iris budget cannot make: that budget counts persisted messages, and a run ending silent,
-     * ambient-unrevealed or in a quiet close persists none. The default sits well below the editor's own
-     * detector cooldown rather than matching it: at equal values the two beat against each other and ordinary
-     * automatic triggers land inside the window whenever the client's timer drifts a second early.
+     * How long an accepted trigger blocks the next one for the same student, exercise and intent. This is the charge
+     * the Iris budget cannot make, since that budget counts persisted messages and a silent run persists none. The
+     * default sits below the editor's own detector cooldown, because at equal values the two beat against each other.
      */
     private Duration triggerCooldown = Duration.ofSeconds(60);
 
@@ -74,15 +69,10 @@ public class IrisProactiveProperties {
     private int jobTimeoutSeconds;
 
     /**
-     * Rejects a configuration that would let the cleanup reap an episode a run could still write to.
-     * <p>
-     * The retention has to stay far above the Pyris job lifetime, because that lifetime is how long a job entry
-     * survives an idle gap, and a callback whose job entry is gone is rejected anyway. A retention below it would
-     * delete the row a still-answerable callback needs to lock, so the run would lose the terminal state it was
-     * about to record. The factor of ten is a margin, not a proof: a non-terminal callback refreshes the job entry,
-     * so a run that keeps reporting progress can outlive any single TTL. What bounds that case is
-     * {@code lastTriggeredAt}, which every trigger refreshes, so only an episode nobody has triggered for the whole
-     * retention window is ever eligible.
+     * Rejects a configuration that would let the cleanup reap an episode a run could still write to. The retention
+     * has to stay far above the Pyris job lifetime, or the row a still-answerable callback needs to lock is deleted
+     * under it. The factor of ten is a margin rather than a proof; what actually bounds a long-running job is
+     * {@code lastTriggeredAt}, which every trigger refreshes.
      */
     @PostConstruct
     public void validate() {
@@ -106,9 +96,8 @@ public class IrisProactiveProperties {
         if (persistMaxAttempts < 1) {
             throw new IllegalArgumentException("artemis.iris.proactive.persist-max-attempts must be >= 1");
         }
-        // NaN needs naming: it fails both comparisons, so a range check alone lets it through, and a threshold of NaN
-        // then reads as "not below" for every confidence there is, which is the gate open rather than closed. The
-        // infinities are already covered, one by each side of the range.
+        // NaN fails both comparisons, so a range check alone lets it through and the gate then reads as open for
+        // every confidence there is. The infinities are already covered by the range.
         double confidenceThreshold = struggle.getConfidenceThreshold();
         if (Double.isNaN(confidenceThreshold) || confidenceThreshold < 0 || confidenceThreshold > 1) {
             throw new IllegalArgumentException("artemis.iris.proactive.struggle.confidence-threshold must be within [0, 1]");

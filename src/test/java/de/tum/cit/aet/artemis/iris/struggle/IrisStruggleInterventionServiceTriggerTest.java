@@ -144,8 +144,7 @@ class IrisStruggleInterventionServiceTriggerTest {
                 irisRateLimitService);
         lenient().when(irisSettingsService.isGlobalStruggleEnabled()).thenReturn(true);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
-        // Every trigger charges the admission cooldown first; a Mockito Optional defaults to empty, which would
-        // reject them all with a 429. The cooldown's own cases stub this explicitly.
+        // Every trigger charges the cooldown first, and a Mockito Optional defaults to empty, which would 429.
         lenient().when(pyrisJobService.chargeStruggleCooldown(anyLong(), anyLong(), any())).thenReturn(Optional.of("cool"));
     }
 
@@ -164,8 +163,7 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     @Test
     void examExercise_rejectsBeforeAnythingReachesPyris() {
-        // Iris serves no exam exercise, and the rejection has to land here rather than in the callback: past this
-        // point the exercise, the latest submission and the student's uncommitted files would go out.
+        // The exam rejection has to land here: past this point the student's uncommitted files would go out.
         exercise.setCourse(null);
         exercise.setExerciseGroup(new ExerciseGroup());
 
@@ -212,12 +210,10 @@ class IrisStruggleInterventionServiceTriggerTest {
         doThrow(new IrisRateLimitExceededException(new IrisRateLimitService.IrisRateLimitInformation(5, 5, 1))).when(irisRateLimitService).checkRateLimitElseThrow(eq(COURSE),
                 eq(user));
 
-        // Propagated, not converted into an unaccepted 202: that body means "a run is already going, await its
-        // frame", and no run is going here, so the client would wait for a frame nobody owes it.
+        // Propagated rather than turned into an unaccepted 202, which reads as "a run is going, await its frame".
         assertThatExceptionOfType(IrisRateLimitExceededException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null));
 
-        // Nothing may be left behind, which is why the check sits ahead of the reservation: no slot is taken, so no
-        // job entry and no episode row (both of which are written only after a successful reservation) can leak.
+        // The check sits ahead of the reservation, so no slot, job entry or episode row can leak.
         verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any());
         verifyNoInteractions(irisProactiveEpisodeRepository);
     }
@@ -228,13 +224,11 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(pyrisJobService.chargeStruggleCooldown(eq(USER_ID), eq(EX), any())).thenReturn(Optional.empty());
         when(pyrisJobService.getStruggleCooldownSeconds()).thenReturn(120L);
 
-        // The retry hint has to be the cooldown the charge actually enforces, so the client is not told to come back
-        // while the key it collided with is still held.
+        // The retry hint has to be the cooldown the charge enforces, or the client comes back too early.
         assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> service.prepareTrigger(EX, user, null, null, null, null, null))
                 .satisfies(exception -> assertThat(exception.getRetryAfterSeconds()).isEqualTo(120L));
 
-        // The charge runs ahead of the reservation, so a rejected trigger never publishes an in-flight marker that
-        // a concurrent trigger would read as "a run is going, wait for its frame".
+        // The charge runs ahead of the reservation, so a rejected trigger publishes no in-flight marker.
         verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any());
         verifyNoInteractions(irisProactiveEpisodeRepository);
     }
@@ -287,8 +281,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null));
 
-        // The marker is shared by every intent and is what a concurrent trigger reads to decide it may wait for
-        // someone else's frame, so it has to go first; the charge is keyed per intent and read by nobody else.
+        // The marker is shared by every intent and read by concurrent triggers, so it goes first.
         InOrder inOrder = inOrder(pyrisJobService);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
         inOrder.verify(pyrisJobService).refundStruggleCooldown("cool", USER_ID, EX, null);
@@ -301,8 +294,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         doThrow(new IllegalStateException("db down")).when(irisProactiveEpisodeRepository).registerOrTouchInNewTransaction(anyLong(), anyLong(), any());
         doThrow(new IllegalStateException("map down")).when(pyrisJobService).refundStruggleCooldown(any(), anyLong(), anyLong(), any());
 
-        // The registration failure is the real error and must survive; a failing refund must not replace it, nor
-        // strand the reservation until its TTL.
+        // The registration failure is the real error; a failing refund must not replace it.
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> service.prepareTrigger(EX, user, null, new StruggleEpisodeDTO("ep-1", true, List.of()), null, null, null)).withMessage("db down")
                 .satisfies(thrown -> assertThat(thrown.getSuppressed()).singleElement().extracting(Throwable::getMessage).isEqualTo("map down"));
@@ -330,8 +322,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         var result = service.prepareTrigger(EX, user, null, null, null, null, "pull");
 
         assertThat(result.accepted()).isTrue();
-        // the mode is stamped on the immutable trigger snapshot AND on the Hazelcast job, so the async
-        // terminal callback (handleDecision) can deterministically enforce Pull.
+        // Stamped on both the snapshot and the job, so the terminal callback can enforce Pull.
         assertThat(result.trigger().proactivityMode()).isEqualTo("pull");
         verify(pyrisJobService).addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), eq("pull"));
     }
@@ -349,8 +340,8 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     @Test
     void sendToPyris_dispatchesOnlyFromInsideTheJobLock() {
-        // Mockito's default runWithJobLock returns null WITHOUT running the supplier, so a dispatch that still
-        // reached Pyris here would be sitting beside the lock rather than inside it, racing the scoped cancel.
+        // Mockito's default runWithJobLock never runs the supplier, so a dispatch reaching Pyris here would be
+        // sitting beside the lock rather than inside it.
         var prepared = optedInTrigger();
         var signal = struggleSignal();
 
@@ -362,9 +353,7 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     @Test
     void sendToPyris_cancelledBeforeDispatch_sendsNothingToPyris() {
-        // The student cancelled between the 202 and this dispatch, so scoped cancel removed the job under the same
-        // lock. Sending anyway would export the student's code and chat history for a request they revoked, and the
-        // slot cancel freed would already be open for a second run.
+        // Cancel removed the job under the same lock, so sending anyway would export code for a revoked request.
         runTheJobLockInline();
         when(pyrisJobService.getJob("tok")).thenReturn(null);
         var prepared = optedInTrigger();
@@ -390,9 +379,8 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     @Test
     void dispatchFailure_releasesTheSlotEvenWhenTheJobReadThrows() {
-        // Nothing observes the handler's future: requestStruggleIntervention discards it. A throw from the job read
-        // inside it would therefore be swallowed silently and leave the (user, exercise) slot reserved for the whole
-        // job timeout, rejecting every later trigger for this student on this exercise until it expired.
+        // The handler's future is discarded, so a throw from the job read inside it would silently leave the slot
+        // reserved for the whole job timeout.
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
         // Fails the async dispatch, so the handler under test runs...
@@ -408,8 +396,7 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     @Test
     void sendToPyris_buildsTheHistoryAgainstTheRunningEpisode() {
-        // The tagger needs to know which episode is running to tell an old hint from a current one, and it is
-        // sendToPyris that knows it.
+        // The tagger needs the running episode to tell an old hint from a current one.
         runTheJobLockInline();
         when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", "ep-9", null, null, null));
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
@@ -425,8 +412,7 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     @Test
     void sendToPyris_normalizesAnUnusableEpisodeIdBeforeComparingHistory() {
-        // A blank id is not an identity. Handing it to the tagger would make every episode-stamped hint look like it
-        // came from somewhere else, which is exactly the licence to repeat that the qualifier must not hand out.
+        // A blank id would make every episode-stamped hint look foreign, which is the licence to repeat.
         runTheJobLockInline();
         when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", null, null, null, null));
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
