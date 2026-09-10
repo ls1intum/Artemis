@@ -119,6 +119,36 @@ class SpecFidelityCriticServiceTest {
                 Map.of("test-names.txt", testNames.isEmpty() ? "(no test names)" : String.join("\n", testNames)));
     }
 
+    @Test
+    void identicalRepositoryContentDoesNotExhaustTheReviewBudget() {
+        String sharedContent = "// Shared build support\n" + "unchanged support\n".repeat(2_000);
+        Map<RepositoryRole, Map<String, String>> artifacts = Map.of(RepositoryRole.SOLUTION, Map.of("build-support.txt", sharedContent), RepositoryRole.TEMPLATE,
+                Map.of("build-support.txt", sharedContent), RepositoryRole.TESTS, Map.of("build-support.txt", sharedContent));
+        var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
+
+        SpecFidelityReport report = critique(scripted.critic(), "Implement the requested behavior.", "# Task", List.of(), artifacts, null);
+
+        assertThat(report.findings()).isEmpty();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getContents()).containsOnlyOnce(sharedContent).contains("SOLUTION: build-support.txt",
+                "TEMPLATE: build-support.txt", "TESTS: build-support.txt"));
+    }
+
+    @Test
+    void reviewRetainsDifferentContentsAtTheSameRepositoryPath() {
+        var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
+        Map<RepositoryRole, Map<String, String>> artifacts = Map.of(RepositoryRole.SOLUTION, Map.of("build-support.txt", "reference support"), RepositoryRole.TEMPLATE,
+                Map.of("build-support.txt", "modified starter support"), RepositoryRole.TESTS, Map.of("build-support.txt", "different grading support"));
+
+        critique(scripted.critic(), "Implement the requested behavior.", "# Task", List.of(), artifacts, null);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getContents()).contains("--- SOLUTION: build-support.txt ---\nreference support",
+                "--- TEMPLATE: build-support.txt ---\nmodified starter support", "--- TESTS: build-support.txt ---\ndifferent grading support"));
+    }
+
     private static SpecFidelityReport critique(SpecFidelityCriticService critic, String brief, String problemStatement, List<String> testNames) {
         return critique(critic, brief, problemStatement, testNames, null);
     }
