@@ -89,7 +89,7 @@ class TextExerciseFeedbackServiceTest {
     void shouldSkipWhenAthenaApiIsNotPresent() {
         TextExerciseFeedbackService service = newService(Optional.empty());
 
-        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, 1L);
 
         // Nothing should be looked up if Athena is not configured at all.
         verifyNoInteractions(participationService, resultWebsocketService, resultRepository, submissionService);
@@ -103,7 +103,7 @@ class TextExerciseFeedbackServiceTest {
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithoutSubmissions);
 
         TextExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, 1L);
 
         // No submission → no websocket broadcast, no athena call, no result saved.
         verifyNoInteractions(resultWebsocketService, resultRepository);
@@ -113,6 +113,7 @@ class TextExerciseFeedbackServiceTest {
     @Test
     void shouldSkipWhenLatestSubmissionIsEmpty() throws Exception {
         TextSubmission emptySubmission = new TextSubmission();
+        emptySubmission.setId(200L);
         emptySubmission.setText("");
         emptySubmission.setSubmitted(true);
         emptySubmission.setSubmissionDate(java.time.ZonedDateTime.now());
@@ -124,7 +125,7 @@ class TextExerciseFeedbackServiceTest {
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithEmpty);
 
         TextExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, 200L);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
         verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false), any());
@@ -133,6 +134,7 @@ class TextExerciseFeedbackServiceTest {
     @Test
     void shouldSkipWhenLatestSubmissionAlreadyHasAthenaResult() throws Exception {
         TextSubmission submission = new TextSubmission();
+        submission.setId(300L);
         submission.setText("some student answer");
         submission.setSubmitted(true);
         submission.setSubmissionDate(java.time.ZonedDateTime.now());
@@ -149,7 +151,7 @@ class TextExerciseFeedbackServiceTest {
         when(athenaFeedbackApi.submissionHasAthenaResult(submission)).thenReturn(true);
 
         TextExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, 300L);
 
         // Already rated by Athena → do not re-trigger to avoid duplicate results and extra Athena traffic.
         verifyNoInteractions(resultWebsocketService, resultRepository);
@@ -157,8 +159,32 @@ class TextExerciseFeedbackServiceTest {
     }
 
     @Test
+    void shouldSkipWhenLatestSubmissionNoLongerMatchesExpectedSubmission() throws Exception {
+        // Simulates a concurrent autosave (e.g. from a later test-run attempt reusing the same participation)
+        // replacing the submission that was validated as eligible before this call was dispatched.
+        TextSubmission newerSubmission = new TextSubmission();
+        newerSubmission.setId(999L);
+        newerSubmission.setText("a newer answer saved after the validated one");
+        newerSubmission.setSubmitted(true);
+        newerSubmission.setSubmissionDate(java.time.ZonedDateTime.now());
+
+        StudentParticipation participationWithNewerSubmission = new StudentParticipation();
+        participationWithNewerSubmission.setId(PARTICIPATION_ID);
+        participationWithNewerSubmission.setExercise(textExercise);
+        participationWithNewerSubmission.addSubmission(newerSubmission);
+        when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithNewerSubmission);
+
+        TextExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
+        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, 300L);
+
+        verifyNoInteractions(resultWebsocketService, resultRepository);
+        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false), any());
+    }
+
+    @Test
     void shouldTriggerAsyncAthenaCallWhenSubmissionIsNonEmptyAndHasNoAthenaResult() throws Exception {
         TextSubmission submission = new TextSubmission();
+        submission.setId(400L);
         submission.setText("Student wrote a meaningful answer here");
         submission.setSubmitted(true);
         submission.setSubmissionDate(java.time.ZonedDateTime.now());
@@ -178,7 +204,7 @@ class TextExerciseFeedbackServiceTest {
         // We only need to verify that we actually entered the async path, which the two awaits below assert.
 
         TextExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise, 400L);
 
         // The generation runs asynchronously via CompletableFuture.runAsync(); wait for the initial broadcast which
         // happens at the very start of generateAutomaticNonGradedFeedback.

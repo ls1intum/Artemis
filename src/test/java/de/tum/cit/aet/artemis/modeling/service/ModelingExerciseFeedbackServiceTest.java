@@ -89,7 +89,7 @@ class ModelingExerciseFeedbackServiceTest {
     void shouldSkipWhenAthenaApiIsNotPresent() {
         ModelingExerciseFeedbackService service = newService(Optional.empty());
 
-        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, 1L);
 
         verifyNoInteractions(participationService, resultWebsocketService, resultRepository, submissionService);
     }
@@ -102,7 +102,7 @@ class ModelingExerciseFeedbackServiceTest {
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithoutSubmissions);
 
         ModelingExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, 1L);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
         verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
@@ -111,6 +111,7 @@ class ModelingExerciseFeedbackServiceTest {
     @Test
     void shouldSkipWhenLatestSubmissionIsEmpty() throws Exception {
         ModelingSubmission emptySubmission = new ModelingSubmission();
+        emptySubmission.setId(200L);
         emptySubmission.setModel(null);
         emptySubmission.setExplanationText(null);
         emptySubmission.setSubmitted(true);
@@ -123,7 +124,7 @@ class ModelingExerciseFeedbackServiceTest {
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithEmpty);
 
         ModelingExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, 200L);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
         verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
@@ -132,6 +133,7 @@ class ModelingExerciseFeedbackServiceTest {
     @Test
     void shouldSkipWhenLatestSubmissionAlreadyHasAthenaResult() throws Exception {
         ModelingSubmission submission = new ModelingSubmission();
+        submission.setId(300L);
         submission.setModel(NON_EMPTY_MODEL);
         submission.setSubmitted(true);
         submission.setSubmissionDate(ZonedDateTime.now());
@@ -148,7 +150,30 @@ class ModelingExerciseFeedbackServiceTest {
         when(athenaFeedbackApi.submissionHasAthenaResult(submission)).thenReturn(true);
 
         ModelingExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, 300L);
+
+        verifyNoInteractions(resultWebsocketService, resultRepository);
+        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
+    }
+
+    @Test
+    void shouldSkipWhenLatestSubmissionNoLongerMatchesExpectedSubmission() throws Exception {
+        // Simulates a concurrent autosave (e.g. from a later test-run attempt reusing the same participation)
+        // replacing the submission that was validated as eligible before this call was dispatched.
+        ModelingSubmission newerSubmission = new ModelingSubmission();
+        newerSubmission.setId(999L);
+        newerSubmission.setModel(NON_EMPTY_MODEL);
+        newerSubmission.setSubmitted(true);
+        newerSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        StudentParticipation participationWithNewerSubmission = new StudentParticipation();
+        participationWithNewerSubmission.setId(PARTICIPATION_ID);
+        participationWithNewerSubmission.setExercise(modelingExercise);
+        participationWithNewerSubmission.addSubmission(newerSubmission);
+        when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithNewerSubmission);
+
+        ModelingExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
+        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, 300L);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
         verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
@@ -157,6 +182,7 @@ class ModelingExerciseFeedbackServiceTest {
     @Test
     void shouldTriggerAsyncAthenaCallWhenSubmissionIsNonEmptyAndHasNoAthenaResult() throws Exception {
         ModelingSubmission submission = new ModelingSubmission();
+        submission.setId(400L);
         submission.setModel(NON_EMPTY_MODEL);
         submission.setSubmitted(true);
         submission.setSubmissionDate(ZonedDateTime.now());
@@ -174,7 +200,7 @@ class ModelingExerciseFeedbackServiceTest {
         // We only need to verify that we actually entered the async path, which the two awaits below assert.
 
         ModelingExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
-        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+        service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, 400L);
 
         // Generation is asynchronous via CompletableFuture.runAsync(); wait for the broadcast that opens
         // generateAutomaticNonGradedFeedback and the actual Athena call to confirm we entered the success path.
