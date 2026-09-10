@@ -331,26 +331,29 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
     /**
-     * What deciding a student's exam working period needs, for their latest student exam in an exam.
+     * What deciding a student's exam working period needs, for their newest student exam in an exam.
      * <p>
      * A projection rather than the entity: {@code StudentExam.exam} is a {@code @ManyToOne} and therefore eager, and so
      * is that exam's course and the course's Athena configuration, so reading two booleans off the entity cost four
-     * further selects. A student can take a test exam more than once, so the newest one wins, exactly as
-     * {@link #findFirstByExamIdAndUserIdOrderByCreatedDateDesc} does.
+     * further selects. A student can take a test exam more than once; the newest attempt is picked by id inside the
+     * query, so the database returns one row rather than every attempt for the caller to discard.
      *
      * @param examId the id of the exam
      * @param userId the id of the student
-     * @return the values for the student's latest student exam, newest first
+     * @return the values for the student's newest student exam, or empty when they have none
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO(
                 se.submitted, se.testRun, se.started, se.startedDate, se.workingTime)
             FROM StudentExam se
-            WHERE se.exam.id = :examId
-                AND se.user.id = :userId
-            ORDER BY se.createdDate DESC
+            WHERE se.id = (
+                SELECT MAX(se2.id)
+                FROM StudentExam se2
+                WHERE se2.exam.id = :examId
+                    AND se2.user.id = :userId
+            )
             """)
-    List<StudentExamWorkingPeriodDTO> findWorkingPeriodsByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+    Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
             SELECT se

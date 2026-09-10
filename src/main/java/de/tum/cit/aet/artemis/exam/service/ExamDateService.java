@@ -104,8 +104,8 @@ public class ExamDateService {
         // For real exams, we aim to find the only existing student exam.
         // A projection: the caller already holds the exam, and reading the two values off the student exam entity pulled
         // its eager exam, that exam's course and the course configuration in behind them, on every exam submission.
-        Optional<StudentExamWorkingPeriodDTO> workingPeriod = studentExamRepository.findWorkingPeriodsByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId())
-                .stream().findFirst();
+        Optional<StudentExamWorkingPeriodDTO> workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(),
+                studentParticipation.getParticipant().getId());
 
         if (workingPeriod.isPresent()) {
             return workingPeriod.get().isWorkingPeriodOver(exam);
