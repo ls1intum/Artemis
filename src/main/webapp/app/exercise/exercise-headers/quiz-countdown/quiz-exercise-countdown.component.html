@@ -7,6 +7,12 @@
     -->
     <span data-testid="quiz-countdown" class="quiz-countdown" [attr.data-severity]="display.severity ?? null" role="timer">
         <span class="quiz-countdown__label" [jhiTranslate]="display.labelKey"></span>
-        <span data-testid="quiz-countdown-value" class="quiz-countdown__value">{{ display.value }}</span>
+        <span
+            data-testid="quiz-countdown-value"
+            class="quiz-countdown__value"
+            [class.text-state-danger]="display.severity === 'danger'"
+            [class.text-state-warning]="display.severity === 'warning'"
+            >{{ display.value }}</span
+        >
     </span>
 }

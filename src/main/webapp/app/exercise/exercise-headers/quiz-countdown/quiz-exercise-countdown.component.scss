@@ -9,7 +9,10 @@
     gap: 0.375rem;
     height: var(--title-bar-content-height);
     padding-inline: 0.5rem;
-    border: 1px solid var(--bs-border-color);
+
+    /* Outlined in the body colour, so the box reads as a plain outline in either theme rather than tinting with
+       the urgency: the number carries that, in the same red the result percentage uses. */
+    border: 1px solid var(--bs-body-color);
     border-radius: var(--bs-border-radius);
     white-space: nowrap;
 
@@ -21,25 +24,5 @@
         /* Tabular figures so the box does not jitter as the digits change. */
         font-variant-numeric: tabular-nums;
         font-weight: 600;
-    }
-
-    /*
-     * The border carries the urgency alongside the digits. No fill: a filled box in the title bar pulled the eye away
-     * from the submit button next to it, which is where the student actually has to go.
-     */
-    &[data-severity='warning'] {
-        border-color: var(--bs-warning-border-subtle);
-
-        .quiz-countdown__value {
-            color: var(--bs-warning-text-emphasis);
-        }
-    }
-
-    &[data-severity='danger'] {
-        border-color: var(--bs-danger-border-subtle);
-
-        .quiz-countdown__value {
-            color: var(--bs-danger-text-emphasis);
-        }
     }
 }
