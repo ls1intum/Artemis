@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, viewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, model, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -36,7 +36,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExercise = model.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 

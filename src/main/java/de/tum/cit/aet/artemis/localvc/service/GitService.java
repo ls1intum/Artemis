@@ -338,6 +338,12 @@ public class GitService extends AbstractGitService {
                 Thread.sleep(1000);
             }
             catch (InterruptedException ex) {
+                // The interrupt status is deliberately not restored here, which is what java:S2142 would ask for.
+                // CanceledException is a GitAPIException, and callers catch it per element and carry on: the
+                // plagiarism check maps over participations in a parallel stream, and a ForkJoinPool worker does not
+                // clear a leftover flag between elements the way a ThreadPoolExecutor worker does. A restored flag
+                // would make every later clone on that worker fail inside interruptible NIO and delete its working
+                // copy, turning one abandoned clone into a whole worker's worth of them.
                 throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
             }
 
@@ -814,7 +820,6 @@ public class GitService extends AbstractGitService {
         try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
 
             targetRepo.create(true); // true for bare
-            ObjectInserter inserter = targetRepo.newObjectInserter();
 
             // Get the HEAD tree of the source
             ObjectId commitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
@@ -822,39 +827,43 @@ public class GitService extends AbstractGitService {
                 throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
             }
 
-            RevWalk walk = new RevWalk(sourceRepo);
-            RevCommit headCommit = walk.parseCommit(commitId);
-            walk.markStart(headCommit);
+            // Both the inserter and the walk hold open pack files and buffers, so they belong in the try-with-resources
+            // rather than being left to the garbage collector: this method runs once per exercise creation on the git
+            // server, and a leaked descriptor there accumulates for the lifetime of the node.
+            try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk walk = new RevWalk(sourceRepo)) {
+                RevCommit headCommit = walk.parseCommit(commitId);
+                walk.markStart(headCommit);
 
-            RevTree headTree = headCommit.getTree();
+                RevTree headTree = headCommit.getTree();
 
-            // Get PersonIdent from the very first commit
-            ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
-            // TODO: consider to have a back up here, e.g. the first instructor of the course
-            PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
+                // Get PersonIdent from the very first commit
+                ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
+                // TODO: consider to have a back up here, e.g. the first instructor of the course
+                PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
 
-            // Walk the tree, insert blobs into target repo, and build a new tree
-            ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
-            log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
-            inserter.flush();
+                // Walk the tree, insert blobs into target repo, and build a new tree
+                ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
+                log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
+                inserter.flush();
 
-            // Create commit with the clean tree
-            CommitBuilder commitBuilder = new CommitBuilder();
-            commitBuilder.setTreeId(newTreeId);
-            commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+                // Create commit with the clean tree
+                CommitBuilder commitBuilder = new CommitBuilder();
+                commitBuilder.setTreeId(newTreeId);
+                commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
 
-            // Set author and committer information based on the first commit in the source repo
-            commitBuilder.setAuthor(personIdent);
-            commitBuilder.setCommitter(personIdent);
-            ObjectId newCommitId = inserter.insert(commitBuilder);
-            inserter.flush();
+                // Set author and committer information based on the first commit in the source repo
+                commitBuilder.setAuthor(personIdent);
+                commitBuilder.setCommitter(personIdent);
+                ObjectId newCommitId = inserter.insert(commitBuilder);
+                inserter.flush();
 
-            // Update refs/heads/main in new bare repo
-            RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
-            refUpdate.setNewObjectId(newCommitId);
-            refUpdate.setForceUpdate(true);
-            verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
-            return getBareRepository(targetRepoUri, true);
+                // Update refs/heads/main in new bare repo
+                RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                refUpdate.setNewObjectId(newCommitId);
+                refUpdate.setForceUpdate(true);
+                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
+                return getBareRepository(targetRepoUri, true);
+            }
         }
     }
 
@@ -1030,10 +1039,14 @@ public class GitService extends AbstractGitService {
             String name = treeWalk.getNameString();
 
             if (mode == FileMode.TREE) {
-                // Recursively copy subtrees
-                RevTree subTree = new RevWalk(sourceRepo).parseTree(objectId);
-                ObjectId newSubTreeId = buildCleanTreeFromSource(sourceRepo, inserter, subTree);
-                treeFormatter.append(name, FileMode.TREE, newSubTreeId);
+                // Recursively copy subtrees. The walk is closed per subtree: this method recurses once per directory,
+                // so an unclosed walk here leaks a descriptor for every directory of every copied repository rather
+                // than just one.
+                try (RevWalk subTreeWalk = new RevWalk(sourceRepo)) {
+                    RevTree subTree = subTreeWalk.parseTree(objectId);
+                    ObjectId newSubTreeId = buildCleanTreeFromSource(sourceRepo, inserter, subTree);
+                    treeFormatter.append(name, FileMode.TREE, newSubTreeId);
+                }
             }
             else {
                 // Read blob from source and insert into target

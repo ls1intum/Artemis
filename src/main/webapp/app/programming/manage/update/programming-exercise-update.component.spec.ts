@@ -1901,6 +1901,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         }
     });
 
+    it('should propagate customizeBuildPlan changes from custom build plan component through language component to update component', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const languageComp = comp.exerciseLanguageComponent();
+        expect(languageComp).toBeDefined();
+
+        const customBuildPlanComp = languageComp?.programmingExerciseCustomBuildPlanComponent();
+        expect(customBuildPlanComp).toBeDefined();
+
+        expect(comp.programmingExercise.customizeBuildPlan).toBeFalsy();
+
+        customBuildPlanComp!.onCustomizeBuildPlanChange(true);
+        fixture.detectChanges();
+
+        expect(comp.programmingExercise.customizeBuildPlan).toBe(true);
+
+        customBuildPlanComp!.onCustomizeBuildPlanChange(false);
+        fixture.detectChanges();
+
+        expect(comp.programmingExercise.customizeBuildPlan).toBe(false);
+    });
+
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();
         expect(comp.programmingExercise.id).toBeUndefined();

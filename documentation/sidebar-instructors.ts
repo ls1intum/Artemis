@@ -59,7 +59,10 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'lectures/index',
             },
-            items: ['lectures/lectures', 'lectures/lecture-series'],
+            items: [
+                'lectures/lectures',
+                'lectures/lecture-series',
+            ],
         },
         {
             type: 'category',
@@ -86,7 +89,11 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'communication-support/index',
             },
-            items: ['communication-support/communication', 'communication-support/faq', 'communication-support/tutorial-groups'],
+            items: [
+                'communication-support/communication',
+                'communication-support/faq',
+                'communication-support/tutorial-groups',
+            ],
         },
         {
             type: 'category',
@@ -95,7 +102,12 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'assessment-grading/index',
             },
-            items: ['assessment-grading/assessment', 'assessment-grading/grading', 'assessment-grading/plagiarism-check', 'assessment-grading/deimos'],
+            items: [
+                'assessment-grading/assessment',
+                'assessment-grading/grading',
+                'assessment-grading/plagiarism-check',
+                'assessment-grading/deimos',
+            ],
         },
         {
             type: 'category',
@@ -104,7 +116,10 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'analytics/index',
             },
-            items: ['analytics/learning-analytics', 'analytics/adaptive-learning'],
+            items: [
+                'analytics/learning-analytics',
+                'analytics/adaptive-learning',
+            ],
         },
         {
             type: 'category',
@@ -113,7 +128,12 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'integrations/index',
             },
-            items: ['integrations/integrated-code-lifecycle', 'integrations/sharing', 'integrations/lti-configuration', 'integrations/deimos'],
+            items: [
+                'integrations/integrated-code-lifecycle',
+                'integrations/sharing',
+                'integrations/lti-configuration',
+                'integrations/deimos',
+            ],
         },
     ],
 };
