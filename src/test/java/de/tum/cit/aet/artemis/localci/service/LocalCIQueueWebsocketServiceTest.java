@@ -1,16 +1,21 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,6 +24,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.user.SimpSubscription;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -45,6 +52,9 @@ class LocalCIQueueWebsocketServiceTest {
     @Mock
     private DistributedDataAccessService distributedDataAccessService;
 
+    @Mock
+    private SimpUserRegistry simpUserRegistry;
+
     @InjectMocks
     private LocalCIQueueWebsocketService localCIQueueWebsocketService;
 
@@ -59,6 +69,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldCollapseABurstOfQueueChangesIntoOneBroadcast() {
+        withSubscribers();
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"), queuedJob("2"))));
 
         for (int change = 0; change < 50; change++) {
@@ -80,6 +91,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldSendAgainAfterTheNextChange() {
+        withSubscribers();
         when(distributedDataAccessService.getProcessingJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
 
         localCIQueueWebsocketService.processingJobsChanged(COURSE_ID);
@@ -93,6 +105,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldSendOnlyTheJobsOfTheCourseToTheCourseTopic() {
+        withSubscribers();
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("mine"), queuedJobOfOtherCourse("theirs"))));
 
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
@@ -109,6 +122,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldRetryOnTheNextRunAfterAFailedBroadcast() {
+        withSubscribers();
         when(distributedDataAccessService.getQueuedJobs()).thenThrow(new IllegalStateException("valkey is away")).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
 
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
@@ -123,6 +137,7 @@ class LocalCIQueueWebsocketServiceTest {
 
     @Test
     void shouldSendTheAdminSnapshotOnceWhenSeveralCoursesChanged() {
+        withSubscribers();
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("mine"), queuedJobOfOtherCourse("theirs"))));
 
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
@@ -134,6 +149,16 @@ class LocalCIQueueWebsocketServiceTest {
         verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobs(anyList());
         verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
         verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID + 1), anyList());
+    }
+
+    /** Makes the registry answer "somebody is subscribed" for every destination. */
+    private void withSubscribers() {
+        lenient().when(simpUserRegistry.findSubscriptions(any())).thenReturn(Set.of(mock(SimpSubscription.class)));
+    }
+
+    /** Makes the registry answer "nobody is subscribed" for every destination. */
+    private void withoutSubscribers() {
+        lenient().when(simpUserRegistry.findSubscriptions(any())).thenReturn(Set.of());
     }
 
     private static BuildJobQueueItem queuedJob(String id) {
@@ -149,5 +174,38 @@ class LocalCIQueueWebsocketServiceTest {
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(SUBMISSION_DATE, null, null, null, 0),
                 new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+    }
+
+    @Test
+    void shouldNotTouchTheDistributedQueueWhenNobodyIsSubscribed() {
+        withoutSubscribers();
+
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
+        localCIQueueWebsocketService.processingJobsChanged(COURSE_ID);
+        localCIQueueWebsocketService.buildAgentSummaryChanged();
+        localCIQueueWebsocketService.broadcastPendingChanges();
+
+        // the read is what costs during an exam, so it must not happen when no queue page is open
+        verify(distributedDataAccessService, never()).getQueuedJobs();
+        verify(distributedDataAccessService, never()).getProcessingJobs();
+        verify(distributedDataAccessService, never()).getBuildAgentInformation();
+        verifyNoInteractions(localCIWebsocketMessagingService);
+    }
+
+    @Test
+    void shouldSendTheCurrentStateOnceSomebodySubscribes() {
+        withoutSubscribers();
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
+        localCIQueueWebsocketService.broadcastPendingChanges();
+        verifyNoInteractions(localCIWebsocketMessagingService);
+
+        // the change marker has to survive the skipped runs, otherwise whoever opens the page sees nothing until the
+        // next build job happens to change the queue
+        withSubscribers();
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
+        localCIQueueWebsocketService.broadcastPendingChanges();
+
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobs(anyList());
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
     }
 }

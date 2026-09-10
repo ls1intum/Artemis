@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.LongFunction;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +42,18 @@ public class LocalCIQueueWebsocketService {
     private final DistributedDataAccessService distributedDataAccessService;
 
     /**
+     * Who is currently subscribed to what, across the cluster.
+     * <p>
+     * The broker relay is configured with {@code setUserRegistryBroadcast}, so Spring aggregates the registries of all
+     * nodes here rather than only this one's - which matters because the node that broadcasts the queue is the
+     * scheduling node, and the admin watching the queue page is usually connected to another one. The remote half is
+     * refreshed periodically, so a new subscriber becomes visible within a few seconds rather than instantly; the
+     * change markers below are deliberately kept until a broadcast actually happens, so that subscriber then gets the
+     * current state on the next run instead of waiting for the next build job.
+     */
+    private final SimpUserRegistry simpUserRegistry;
+
+    /**
      * Courses whose queued jobs changed since the last broadcast, and the same for the jobs being processed.
      * <p>
      * Each of these payloads is the whole collection, so broadcasting one per queue change costs a read of the whole
@@ -60,9 +75,11 @@ public class LocalCIQueueWebsocketService {
      *
      * @param localCIWebsocketMessagingService the local ci build queue websocket service
      */
-    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, DistributedDataAccessService distributedDataAccessService) {
+    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, DistributedDataAccessService distributedDataAccessService,
+            SimpUserRegistry simpUserRegistry) {
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.simpUserRegistry = simpUserRegistry;
     }
 
     /**
@@ -99,15 +116,25 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void broadcastQueuedJobs() {
-        Set<Long> courseIds = drain(coursesWithQueuedJobChanges);
-        if (courseIds.isEmpty()) {
+        if (coursesWithQueuedJobChanges.isEmpty()) {
             return;
         }
+        boolean admin = hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_QUEUED_JOBS_TOPIC);
+        Set<Long> watched = watchedCourses(coursesWithQueuedJobChanges, LocalCIWebsocketMessagingService::queuedJobsTopicForCourse);
+        if (!admin && watched.isEmpty()) {
+            // Nobody has a queue open. The markers stay so that whoever opens one is served on the next run.
+            return;
+        }
+        Set<Long> courseIds = drain(coursesWithQueuedJobChanges);
         try {
             var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
-            localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+            if (admin) {
+                localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+            }
             for (Long courseId : courseIds) {
-                localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                if (watched.contains(courseId)) {
+                    localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                }
             }
         }
         catch (Exception e) {
@@ -117,15 +144,24 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void broadcastProcessingJobs() {
-        Set<Long> courseIds = drain(coursesWithProcessingJobChanges);
-        if (courseIds.isEmpty()) {
+        if (coursesWithProcessingJobChanges.isEmpty()) {
             return;
         }
+        boolean admin = hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_RUNNING_JOBS_TOPIC);
+        Set<Long> watched = watchedCourses(coursesWithProcessingJobChanges, LocalCIWebsocketMessagingService::runningJobsTopicForCourse);
+        if (!admin && watched.isEmpty()) {
+            return;
+        }
+        Set<Long> courseIds = drain(coursesWithProcessingJobChanges);
         try {
             var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
-            localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
+            if (admin) {
+                localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
+            }
             for (Long courseId : courseIds) {
-                localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                if (watched.contains(courseId)) {
+                    localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
+                }
             }
         }
         catch (Exception e) {
@@ -135,9 +171,10 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void broadcastBuildAgentSummary() {
-        if (!buildAgentSummaryNeedsBroadcast.getAndSet(false)) {
+        if (!buildAgentSummaryNeedsBroadcast.get() || !hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_BUILD_AGENTS_TOPIC)) {
             return;
         }
+        buildAgentSummaryNeedsBroadcast.set(false);
         try {
             localCIWebsocketMessagingService.sendBuildAgentSummary(removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation()));
         }
@@ -155,6 +192,27 @@ public class LocalCIQueueWebsocketService {
      * @param pending the set of course ids to drain
      * @return what was pending
      */
+    /**
+     * Whether anyone anywhere in the cluster is subscribed to a destination.
+     *
+     * @param destination the topic to check
+     * @return true if at least one session is subscribed to it
+     */
+    private boolean hasSubscribers(String destination) {
+        return !simpUserRegistry.findSubscriptions(subscription -> destination.equals(subscription.getDestination())).isEmpty();
+    }
+
+    /**
+     * Of the courses that changed, the ones whose topic somebody is subscribed to.
+     *
+     * @param courseIds the courses that changed
+     * @param topic     how to build the destination for a course
+     * @return the subset that is worth sending
+     */
+    private Set<Long> watchedCourses(Set<Long> courseIds, LongFunction<String> topic) {
+        return courseIds.stream().filter(courseId -> hasSubscribers(topic.apply(courseId))).collect(Collectors.toSet());
+    }
+
     private static Set<Long> drain(Set<Long> pending) {
         Set<Long> drained = new HashSet<>();
         for (Iterator<Long> courses = pending.iterator(); courses.hasNext();) {
