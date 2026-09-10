@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -40,7 +40,7 @@ class AthenaScheduleServiceTest {
     private ExerciseLifecycleService exerciseLifecycleService;
 
     @Mock
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     @Mock
     private ProfileService profileService;
