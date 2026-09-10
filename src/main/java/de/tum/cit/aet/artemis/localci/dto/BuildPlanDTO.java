@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 /**
  * Build plan script of a programming exercise as shown in the build plan editor.
  *
- * @param id        the id of the build plan (null in write requests)
+ * @param id        the id of the build plan
  * @param buildPlan the build plan script
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanRequestDTO;
 
 class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -49,7 +50,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     private void testWriteAccessForbidden() throws Exception {
-        BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, null);
+        BuildPlanRequestDTO someOtherBuildPlan = new BuildPlanRequestDTO(null);
         request.put("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
     }
 
@@ -61,7 +62,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     private void testWriteAccess() throws Exception {
-        BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, "Content");
+        BuildPlanRequestDTO someOtherBuildPlan = new BuildPlanRequestDTO("Content");
 
         final BuildPlanDTO newBuildPlan = request.putWithResponseBody("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan,
                 BuildPlanDTO.class, HttpStatus.OK);
@@ -167,7 +168,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testBuildTrigger() throws Exception {
-        BuildPlanDTO someOtherBuildPlan = new BuildPlanDTO(null, "Content");
+        BuildPlanRequestDTO someOtherBuildPlan = new BuildPlanRequestDTO("Content");
 
         request.put("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.OK);
         verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());

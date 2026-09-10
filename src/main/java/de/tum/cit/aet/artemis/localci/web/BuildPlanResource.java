@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.localci.dto.BuildPlanDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
@@ -84,7 +85,7 @@ public class BuildPlanResource {
      */
     @PutMapping("programming-exercises/{exerciseId}/build-plan")
     @EnforceAtLeastEditor
-    public ResponseEntity<BuildPlanDTO> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanDTO buildPlan) {
+    public ResponseEntity<BuildPlanDTO> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanRequestDTO buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
