@@ -14,15 +14,13 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 /**
  * The multi-statement writes against a chat session's ordered message list. A custom fragment of
- * {@link IrisSessionRepository}, so the transaction boundaries these writes need live in a repository rather than in
- * a service.
+ * {@link IrisSessionRepository}, so these transaction boundaries live in a repository rather than a service.
  *
  * <p>
- * Every method here is more than one statement and every one of them is only correct as a unit: the session's
- * {@code @OrderColumn} list is maintained from the owner side, so appending or removing an element means reading the
- * committed list, changing it and writing it back, and two writers doing that concurrently lose each other's row
- * unless they serialize on the session. That is what {@link IrisSessionRepository#findByIdWithWriteLock} is for, and
- * holding it for the whole unit is what the {@code @Transactional} annotations below express.
+ * Every method here is only correct as a unit: the session's {@code @OrderColumn} list is maintained from the owner
+ * side, so appending or removing an element means reading the committed list, changing it and writing it back, and
+ * two writers doing that concurrently lose each other's row unless they serialize on
+ * {@link IrisSessionRepository#findByIdWithWriteLock}.
  */
 @Lazy
 @Repository
@@ -42,11 +40,8 @@ public interface IrisSessionWriteRepository {
 
     /**
      * Move the session to a new context and append the CTXSWAP marker recording the transition, under one write lock.
-     *
-     * <p>
-     * The marker is built here rather than by the caller because it records the mode the session is moving AWAY from,
-     * and that is only known once the session is locked and refreshed: a concurrent switch that took the lock first
-     * has already moved the session on, so a marker built before the lock would name a previous mode that never was.
+     * The marker is built here rather than by the caller because it records the mode the session is moving away from,
+     * which is only known once the session is locked and refreshed.
      *
      * @param sessionId        the session to switch
      * @param newMode          the mode to move to
@@ -61,13 +56,9 @@ public interface IrisSessionWriteRepository {
     IrisMessage switchContextAndAppendMarker(long sessionId, IrisChatMode newMode, long newEntityId, long expectedCourseId, String entityName);
 
     /**
-     * Append a proactive struggle message to the session, re-checking the session's exercise binding under the write
-     * lock immediately before the append.
-     *
-     * <p>
-     * The re-check is not redundant with whatever the caller validated: a session is born a course chat and only ever
-     * points at an exercise through a context switch, so a run for a DIFFERENT exercise can move this same session
-     * between the caller's resolution and this write, and the hint would land in that other exercise's history.
+     * Append a proactive struggle message, re-checking the session's exercise binding under the write lock
+     * immediately before the append. The re-check is not redundant with whatever the caller validated: a run for
+     * another exercise can move this same session between the caller's resolution and this write.
      *
      * @param sessionId  the resolved exercise-chat session
      * @param exerciseId the exercise the message was decided for
@@ -80,12 +71,9 @@ public interface IrisSessionWriteRepository {
     IrisMessage appendProactiveMessage(long sessionId, long exerciseId, String text, @Nullable String episodeId);
 
     /**
-     * Delete a superseded proactive message and close the gap it leaves in the session's list indices.
-     *
-     * <p>
-     * The guarded delete decides WHETHER the row goes; it cannot also keep the ordered list intact, because it never
-     * goes through the collection that owns {@code iris_message_order}. Reading the index, deleting and compacting
-     * therefore happen together, under the same session write lock every append takes.
+     * Delete a superseded proactive message and close the gap it leaves in the session's list indices. The guarded
+     * delete decides whether the row goes; it cannot keep the ordered list intact, because it never goes through the
+     * collection that owns {@code iris_message_order}. Read, delete and compact therefore share the session lock.
      *
      * @param messageId the message to delete
      * @param userId    the requesting user; only rows in this user's own sessions are touched

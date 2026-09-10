@@ -40,13 +40,9 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
 
     /**
      * The same lookup, taking a write lock on the episode row. This is the mutex the whole feature serializes on:
-     * every path that decides something from the terminal state and then writes (the active append, the ambient
-     * offer, the reveal, the confirm-close row, and the outcome write itself) takes this lock first and holds it
-     * until its transaction commits, so no two of them can interleave between their check and their write.
-     *
-     * <p>
-     * Deliberately no join fetch. A fetch join would make this an outer join, and PostgreSQL rejects
-     * {@code FOR UPDATE} on the nullable side of one.
+     * every path that decides from the terminal state and then writes takes this lock first and holds it until its
+     * transaction commits. Deliberately no join fetch, because that would make this an outer join and PostgreSQL
+     * rejects {@code FOR UPDATE} on the nullable side of one.
      *
      * @param userId     the student the episode belongs to
      * @param exerciseId the exercise the episode belongs to
@@ -58,18 +54,10 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     Optional<IrisProactiveEpisode> findForUpdate(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId);
 
     /**
-     * Refresh {@code last_triggered_at} on an existing episode, keyed on the natural key. This is the first half of
-     * the registration upsert: it replaces a read followed by a write, which could interleave with the retention
-     * delete and then update a row that no longer exists.
-     *
-     * <p>
-     * Deliberately no {@code outcome} predicate. Touching an episode that already ended is harmless, because rows
-     * carrying an outcome are never reaped, and a predicate here would make a zero result mean two different things.
-     *
-     * <p>
-     * Zero affected rows means "attempt the insert", not "provably absent": some databases report changed rather
-     * than matched rows, so a refresh landing on the same timestamp can report zero. The insert's duplicate-key
-     * recovery is what makes that safe.
+     * Refresh {@code last_triggered_at} on an existing episode, the first half of the registration upsert. No
+     * {@code outcome} predicate, because touching an ended episode is harmless and a predicate would make a zero
+     * result mean two things. Zero affected rows means "attempt the insert", not "provably absent": some databases
+     * report changed rather than matched rows, and the insert's duplicate-key recovery is what makes that safe.
      *
      * @param userId      the student the episode belongs to
      * @param exerciseId  the exercise the episode belongs to
@@ -84,18 +72,10 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
             @Param("triggeredAt") ZonedDateTime triggeredAt);
 
     /**
-     * First-terminal-wins in one statement: sets the outcome only if the row does not already carry one. The guard
-     * references only the target row, so it is portable and needs no same-table subquery.
-     *
-     * <p>
-     * Callers hold {@link #findForUpdate} while calling this, so the guard is belt and braces rather than the
-     * primary defence. It still matters for the paths that reach the episode without the lock.
-     *
-     * <p>
-     * Clears the offered hint in the same statement. An episode that ends without ever being revealed keeps no
-     * reader for that text: the reveal refuses a terminal episode outright, so the column would only carry the
-     * largest payload of a row that survives the episode. Nulling it here covers the ending-before-reveal case the
-     * way {@code consumeOfferInCurrentTransaction} covers the revealed one.
+     * First-terminal-wins in one statement: sets the outcome only if the row does not already carry one. Callers
+     * hold {@link #findForUpdate} while calling this, so the guard matters for the paths that reach the episode
+     * without the lock. Clears the offered hint in the same statement, because an episode that ends without being
+     * revealed keeps no reader for that text.
      *
      * @param id      the episode row
      * @param outcome the terminal outcome to record
@@ -107,17 +87,10 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     int setOutcomeIfNull(@Param("id") long id, @Param("outcome") IrisProactiveOutcome outcome);
 
     /**
-     * Deletes the proactive episodes of a course's own exercises, for the student-data reset.
-     *
-     * <p>
-     * The reset preserves the course's exercises, so the {@code exercise} foreign key never fires and these rows
-     * would otherwise outlive the student data they belong to: an episode carries {@code user_id} and the shape of
-     * one student's struggle. Joining through {@code exercise} rather than storing a course id keeps the row narrow
-     * and the binding single-sourced.
-     *
-     * <p>
-     * Scoped to exercises that hold the course directly. An exercise can also reach a course indirectly, and such an
-     * exercise's episodes are deliberately out of scope here.
+     * Deletes the proactive episodes of a course's own exercises, for the student-data reset. The reset preserves the
+     * exercises, so the {@code exercise} foreign key never fires and these rows would otherwise outlive the student
+     * data they carry. Scoped to exercises that hold the course directly; an exercise reaching a course indirectly is
+     * deliberately out of scope.
      *
      * @param courseId the course whose student data is being reset
      * @return number of rows deleted
@@ -131,27 +104,12 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     int deleteAllByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Retention for episodes that went quiet: a trigger whose callback never arrived leaves an open row behind, and
-     * nothing on a request path would ever remove it. Two kinds of row are kept:
-     *
-     * <ul>
-     * <li>rows carrying an {@code outcome}, since deleting one would lose the terminal state that suppresses a late
-     * message;</li>
-     * <li>rows carrying a consumed offer, since {@code consumed_message_id} is what makes a repeated reveal return
-     * the first reveal message instead of writing a second one, and the row itself is what stops a spent offer from
-     * being revealed again.</li>
-     * </ul>
-     *
-     * <p>
-     * The cutoff is measured from {@code last_triggered_at}, which every trigger refreshes, so an episode that is
-     * still in use is never reaped out from under a run in flight.
-     *
-     * <p>
-     * Neither kind is kept indefinitely. Both go with the course's student-data reset (see
-     * {@link #deleteAllByCourseId}, whose own scope note applies), which is the horizon Artemis already sets for
-     * student data; there is no episode-specific expiry on top of it. What a retained row costs is bounded in the meantime: the offered hint
-     * is cleared as soon as the episode is revealed or ends, so a kept row is the identifiers plus its terminal
-     * state, never the hint text.
+     * Retention for episodes that went quiet: a trigger whose callback never arrived leaves an open row behind that
+     * nothing on a request path would remove. Rows carrying an {@code outcome} are kept, because deleting one loses
+     * the terminal state that suppresses a late message, and rows carrying a consumed offer are kept, because
+     * {@code consumed_message_id} is what makes a repeated reveal return the first reveal message. Both go with the
+     * course's student-data reset ({@link #deleteAllByCourseId}). The cutoff reads {@code last_triggered_at}, which
+     * every trigger refreshes, so an episode still in use is never reaped out from under a run in flight.
      *
      * @param triggeredBefore rows last triggered before this are removed
      * @return number of rows deleted

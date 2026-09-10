@@ -31,12 +31,9 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<IrisMessage> findAllBySessionIdOrderBySentAtAscIdAsc(long sessionId);
 
     /**
-     * Counts the number of final LLM responses the user got within the given timeframe.
-     * <p>
-     * Proactive responses count like any other, which is what the legacy proactive triggers (a failed build, a
-     * stalled progress trajectory) already do: they check the same budget before dispatching and their messages
-     * carry no origin, so they have always been counted. An origin-based exemption would have given one proactive
-     * feature a rule none of the others has.
+     * Counts the number of final LLM responses the user got within the given timeframe. Proactive responses count
+     * like any other, which is what the legacy proactive triggers already do; an origin-based exemption would give
+     * one proactive feature a rule none of the others has.
      *
      * @param userId the id of the user
      * @param start  the start of the timeframe
@@ -55,27 +52,18 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int countFinalLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     /**
-     * Stable write-target finder for the pre-registry outcome write, SCOPED to the requesting user's own sessions.
-     * Returns the episode's rows ordered by id ascending; the caller takes the first (smallest-id / first-persisted)
-     * element as the target. JPQL has no {@code LIMIT}, so the ordered list is returned rather than a single row.
-     * Unlike ordering by {@code sentAt} (which is unstable - a delivery row that persists late can carry an earlier
-     * {@code sentAt} but a larger id, shifting the "earliest-sentAt" target after a concurrent insert), the smallest
-     * id is monotonic and therefore stable: a row inserted later always gets a larger id, so it can never become the
-     * target. Two concurrent outcome writes thus pick the SAME target row, and the row-scoped
+     * Stable write-target finder for the pre-registry outcome write. Returns the episode's rows ordered by id
+     * ascending; the caller takes the smallest-id element as the target. Ordering by {@code sentAt} would be
+     * unstable, since a delivery row that persists late can carry an earlier {@code sentAt} but a larger id. The
+     * smallest id is monotonic, so two concurrent outcome writes pick the SAME target row and the row-scoped
      * {@link #setProactiveOutcomeIfNull} guard makes first-terminal-wins atomic without a same-table subquery or a
-     * pessimistic lock. The physical target row is immaterial to readers, since outcomes are read episode-wide
-     * ({@link #findEpisodeOutcomes}).
+     * pessimistic lock.
      * <p>
      * The user scope is a security guard: {@code episodeId} is a client-generated UUID, so an unscoped lookup would
-     * let any student write an outcome onto another student's episode by guessing/replaying the id (IDOR). Scoping by
-     * the owning session's {@code userId} closes that hole - a foreign episode id returns an empty list, never a
-     * foreign row.
-     * <p>
-     * The exercise scope closes the remaining hole INSIDE one user: the same client-generated id can be sent for two
-     * exercises, and without this predicate an outcome written for one of them would make the episode terminal for
-     * the other. It matches on {@code proactiveExerciseId} rather than the session's {@code entityId} because a
-     * session's mode/entityId change on every context switch, so only the row's own stamp is a durable binding.
-     * The match is strict: a row that carries no exercise (written before this column existed) is never returned.
+     * let any student write an outcome onto another student's episode by guessing or replaying the id. The exercise
+     * scope closes the same reuse inside one user, and it matches on {@code proactiveExerciseId} rather than the
+     * session's {@code entityId} because a session's mode and entityId change on every context switch. The match is
+     * strict: a row that carries no exercise is never returned.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only rows in this user's sessions are returned
@@ -113,19 +101,12 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<Long> findEpisodeRowIdsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
-     * Episode-wide outcome read, SCOPED to the requesting user's own sessions: returns ALL non-null
-     * {@code proactive_outcome} values across every row tagged with the given episode id that belongs to this user.
-     * By first-terminal-wins, at most one such value exists. Reading across ALL episode rows (not just the
-     * earliest) makes the result stable under out-of-order persistence: if the delivery row's persist is still
-     * pending while a later row already persisted its outcome, this query still finds it.
-     * Callers that only need to know whether the episode is terminal check the result for emptiness; the one that
-     * needs the value takes the first element.
+     * Episode-wide outcome read: returns all non-null {@code proactive_outcome} values across every row tagged with
+     * the given episode id. By first-terminal-wins, at most one such value exists. Reading across all episode rows
+     * rather than the earliest makes the result stable under out-of-order persistence: if the delivery row's persist
+     * is still pending while a later row already persisted its outcome, this query still finds it.
      * <p>
-     * The user scope is a security guard: an unscoped
-     * read would let any student probe or read the outcome of another student's episode by guessing/replaying the
-     * client-generated episode id (IDOR). Scoping by the owning session's {@code userId} closes that hole.
-     * The exercise scope keeps one user's two exercises apart when the client reuses an episode id across them; see
-     * {@link #findEpisodeRowsForUserOrderByIdAsc} for why the binding is read from the row and not from the session.
+     * User- and exercise-scoped for the reasons given on {@link #findEpisodeRowsForUserOrderByIdAsc}.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only outcomes on rows in this user's sessions are returned
@@ -150,15 +131,13 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * Only for the caller that has to classify a guarded outcome write which came back with zero affected rows. Under
      * REPEATABLE READ a plain read there can still miss the outcome the write just lost to, and the two answers lead
      * to opposite client behaviour: an outcome that stands means there is nothing left to back-fill, while a target
-     * row that merely vanished (superseded-row suppression) leaves the episode open and the client has to write the
-     * outcome again onto a later row. Guessing that from a stale snapshot silently drops a student's dismiss.
+     * row that merely vanished leaves the episode open and the client has to write the outcome again onto a later row.
      *
      * <p>
-     * Ordered by id so concurrent callers take the row locks in the same order. The user scope is a SUBQUERY on the
-     * session table rather than the navigation {@code m.session.userId} that {@link #findEpisodeOutcomes} uses: that
-     * navigation joins {@code iris_session} into the FROM list, and a {@code FOR UPDATE} over a join locks the joined
-     * session row too on dialects that cannot restrict the lock to one table. This query has no business locking a
-     * session, and the append path holds that very row's write lock.
+     * Ordered by id so concurrent callers take the row locks in the same order. The user scope is a subquery on the
+     * session table rather than the navigation {@link #findEpisodeOutcomes} uses, because that navigation joins
+     * {@code iris_session} into the FROM list and a {@code FOR UPDATE} over a join locks the joined session row too
+     * on dialects that cannot restrict the lock to one table.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only outcomes on rows in this user's sessions are returned
@@ -178,12 +157,10 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<IrisProactiveOutcome> findEpisodeOutcomesForUpdate(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
-     * Row-scoped first-write-wins update: sets {@code proactiveOutcome} on the target row ONLY IF that row currently
-     * has a null outcome. The guard references only the target row (no same-table subquery), so it is portable across
-     * H2, MySQL, and PostgreSQL (a {@code WHERE NOT EXISTS (SELECT ... FROM iris_message ...)} guard would trip MySQL
-     * error 1093, "can't specify target table for update in FROM clause"). The episode-wide first-terminal-wins
-     * decision is made by the caller via an episode-wide existence pre-check ({@link #findEpisodeOutcomes}); this
-     * statement only guarantees that the chosen target row is written at most once.
+     * Row-scoped first-write-wins update: sets {@code proactiveOutcome} on the target row only if that row currently
+     * has a null outcome. The guard references only the target row, because a {@code WHERE NOT EXISTS (SELECT ...
+     * FROM iris_message ...)} guard would trip MySQL error 1093. The episode-wide first-terminal-wins decision is the
+     * caller's ({@link #findEpisodeOutcomes}); this statement only guarantees the chosen row is written at most once.
      *
      * @param messageId the id of the target row (the episode's first-persisted / smallest-id row, chosen by the caller)
      * @param outcome   the outcome to write

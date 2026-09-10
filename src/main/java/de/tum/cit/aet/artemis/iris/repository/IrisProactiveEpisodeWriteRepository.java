@@ -15,48 +15,36 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 
 /**
- * The multi-statement writes that settle a proactive episode: registering its row, recording its terminal outcome,
- * recording and consuming its ambient offer, and the appends that have to happen under its lock. A custom fragment of
- * {@link IrisProactiveEpisodeRepository}, so these transaction boundaries live in a repository rather than in a
- * service.
+ * The multi-statement writes that settle a proactive episode. A custom fragment of
+ * {@link IrisProactiveEpisodeRepository}, so these transaction boundaries live in a repository rather than a service.
  *
  * <p>
- * The registry row exists so an episode has an identity that can be locked before its first message is written.
- * Without it a terminal decision is a check-then-act with nothing to serialize on, and a dismiss committing between
- * the check and the write surfaces a hint the student has already dismissed. First-terminal-wins is decided here;
- * {@code iris_message.proactive_outcome} is only a mirror of it, kept for the history replayed to Pyris.
+ * The registry row gives an episode an identity that can be locked before its first message exists. Without it a
+ * terminal decision is a check-then-act with nothing to serialize on. First-terminal-wins is decided here;
+ * {@code iris_message.proactive_outcome} only mirrors it for the history replayed to Pyris.
  *
  * <p>
- * Lock order runs episode, then session, then message rows, and it has to. A registered episode is locked first
- * ({@link IrisProactiveEpisodeRepository#findForUpdate}); an unregistered one has no row to lock and starts at the
- * session. No operation that goes on to append reads or writes a message row before the session row is held,
- * because
- * {@link IrisSessionWriteRepository#deleteSupersededProactiveMessageAndCompact} takes the session first and the
- * message row second, and the opposite order deadlocks against it on InnoDB: a locking read over the
- * {@code (episode, exercise)} index holds every row it scanned under REPEATABLE READ, including the ones the
- * unindexed outcome predicate rejects. That is why the terminal check reads the message rows plainly and only once
- * the session lock is held.
+ * Lock order runs episode, then session, then message rows. No operation that goes on to append touches a message
+ * row before the session row is held, because
+ * {@link IrisSessionWriteRepository#deleteSupersededProactiveMessageAndCompact} takes them in that order and the
+ * opposite order deadlocks against it on InnoDB: a locking read over the {@code (episode, exercise)} index holds
+ * every row it scanned under REPEATABLE READ, including the ones the unindexed outcome predicate rejects.
  */
 @Lazy
 @Repository
 @Conditional(IrisEnabled.class)
 public interface IrisProactiveEpisodeWriteRepository {
 
-    /**
-     * What an outcome write achieved for the episode. The distinction {@link #APPLIED} vs {@link #LOST} is what a
-     * caller needs before it commits anything it wrote alongside the outcome: only APPLIED means the episode ended
-     * the way this caller says it did.
-     */
+    /** What an outcome write achieved for the episode. */
     enum OutcomeWrite {
 
         /** This call wrote the outcome that now stands for the episode. */
         APPLIED,
 
         /**
-         * The outcome did not take. Either a terminal outcome was already there, or the target row it would have been
-         * written to no longer exists. An outcome equal to this call's own counts as LOST too: it is someone else's
-         * write, so nothing this call did alongside it may be kept on the strength of it. Both cases are fail-closed
-         * for a caller that wanted to end the episode its own way, and neither may be reported as success.
+         * The outcome did not take: one was already there, or the target row is gone. An outcome equal to this call's
+         * own counts as LOST too, because it is someone else's write and nothing this call did alongside it may be
+         * kept on the strength of it.
          */
         LOST,
 
@@ -74,21 +62,10 @@ public interface IrisProactiveEpisodeWriteRepository {
     }
 
     /**
-     * Register the episode so it has a row to lock and a place to hold its terminal outcome, or refresh the row a
-     * previous trigger already created for it.
-     *
-     * <p>
-     * An upsert rather than a read followed by a write. Reading first and then updating leaves a window in which
-     * retention deletes the row in between, and the update lands on nothing. The refresh is therefore a single
-     * guarded statement keyed on the natural key, and only a zero result falls through to the insert. Zero does not
-     * prove the row is absent - some databases report changed rather than matched rows - which is exactly why the
-     * caller keeps duplicate-key recovery around this.
-     *
-     * <p>
-     * {@code REQUIRES_NEW} because it can hit the unique constraint, and a constraint violation marks its transaction
-     * rollback-only: catching it inside the caller's transaction would turn a handled duplicate into an
-     * {@code UnexpectedRollbackException} at that transaction's commit. The catch therefore has to sit outside this
-     * boundary, which is only possible while this boundary is its own.
+     * Register the episode so it has a row to lock, or refresh the row a previous trigger already created for it.
+     * An upsert, so retention cannot delete the row between a read and a write; a zero result does not prove absence,
+     * which is why the caller keeps duplicate-key recovery around this. {@code REQUIRES_NEW} because a constraint
+     * violation marks its transaction rollback-only, so the catch has to sit outside this boundary.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the run belongs to
@@ -98,11 +75,8 @@ public interface IrisProactiveEpisodeWriteRepository {
     void registerOrTouchInNewTransaction(long userId, long exerciseId, String episodeId);
 
     /**
-     * Re-read the episode row on a transaction of its own, after an insert lost the race to a concurrent one.
-     *
-     * <p>
-     * A second transaction for the same reason the first one was its own: the caller reaches this from a catch block
-     * whose transaction, if it were shared, would already be marked rollback-only by the violation it is handling.
+     * Re-read the episode row on a transaction of its own, after an insert lost the race to a concurrent one. The
+     * caller reaches this from a catch block whose transaction, if shared, would already be rollback-only.
      *
      * @param userId     the owning user
      * @param exerciseId the exercise the episode belongs to
@@ -114,13 +88,9 @@ public interface IrisProactiveEpisodeWriteRepository {
 
     /**
      * Episode-wide first-terminal-wins outcome write. Takes the episode's registry row under a write lock, records
-     * {@code outcome} only if none stands yet, and mirrors it onto the episode's message row.
-     *
-     * <p>
-     * SCOPED to the given user's own episode rows in the given exercise: {@code episodeId} is a client-generated
-     * UUID, so an unscoped write would let any student write an outcome onto another student's episode by guessing or
-     * replaying the id. The {@code exerciseId} scope closes the same reuse inside one student, whose client can send
-     * one id for two exercises.
+     * {@code outcome} only if none stands yet, and mirrors it onto the episode's message row. The user and exercise
+     * scope is a security guard: {@code episodeId} is client-generated, so an unscoped write would let any student
+     * write an outcome onto another student's episode by replaying the id.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the requesting user; only this user's own episode rows are read or written
@@ -134,13 +104,9 @@ public interface IrisProactiveEpisodeWriteRepository {
 
     /**
      * Record the ambient hint Artemis is about to offer for this episode, under the episode's write lock, so a later
-     * reveal persists the server's own text rather than whatever the caller sends back.
-     *
-     * <p>
-     * The caller must have registered the episode BEFORE calling this, on the registration's own transaction.
-     * Registering from inside this one would be worse than useless: it commits independently, so the row this write
-     * then targets would be one this transaction never locked, and the terminal check and the write would stop being
-     * atomic.
+     * reveal persists the server's own text rather than whatever the caller sends back. The caller must register the
+     * episode first, on the registration's own transaction: registering from inside this one commits independently,
+     * so this write would target a row it never locked.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the run belongs to
@@ -156,12 +122,8 @@ public interface IrisProactiveEpisodeWriteRepository {
 
     /**
      * Take the offered ambient hint under the episode's write lock, persist the message carrying the server-authored
-     * text, and mark the offer consumed. All three commit together, so a failure anywhere leaves neither a message
-     * nor a consumed offer behind.
-     *
-     * <p>
-     * The pessimistic lock is what makes the unconsumed check and the claim indivisible. Without it two concurrent
-     * reveals of the same offer could both read it as unconsumed and both insert a message.
+     * text, and mark the offer consumed. The lock makes the unconsumed check and the claim indivisible; without it
+     * two concurrent reveals could both read the offer as unconsumed and both insert.
      *
      * @param userId     the student performing the reveal
      * @param exerciseId the programming exercise the episode belongs to
@@ -177,16 +139,12 @@ public interface IrisProactiveEpisodeWriteRepository {
 
     /**
      * Append a proactive message under the episode's write lock and, when asked to, record the episode's terminal
-     * outcome in the same transaction.
+     * outcome in the same transaction, which is what makes a confirm-close row and its outcome atomic.
      *
      * <p>
-     * The lock is the authoritative terminal check. A caller's cheap pre-check reads outside any lock, so an outcome
-     * can commit between it and this write; here the registry row stays locked until this transaction commits, so no
-     * REGISTRY outcome can be established between the check and the append. The pre-registry path writes onto a
-     * message row instead and does not take that lock, so an outcome arriving through it can still commit alongside an
-     * append already under way. What that leaves behind is caught by the terminal check reading both records. Recording the outcome in the same transaction is
-     * what makes a confirm-close row and its outcome atomic - splitting the two is what let a concurrent dismiss land
-     * between a committed close row and its own outcome.
+     * The lock is the authoritative terminal check. The pre-registry path writes onto a message row and takes no such
+     * lock, so an outcome arriving through it can still commit alongside an append already under way, which is why
+     * the terminal check reads both records.
      *
      * @param sessionId        the resolved exercise-chat session to persist into
      * @param userId           the student the message belongs to
