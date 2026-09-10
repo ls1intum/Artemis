@@ -89,7 +89,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
      * to be checked since the oracle would not create structural tests for invalid names.
      */
-    private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
+    private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class|GenericApi)\\[.+]");
 
     private static final String LONG_MESSAGE_TRUNCATION_MARKER = "\n\n[Feedback truncated: exceeded maximum length]";
 
