@@ -26,18 +26,6 @@ enrollment.
 
 </Callout>
 
-## Athena AI Feedback Configuration
-
-Athena provides AI-generated feedback on submissions. Like Iris, it is configured from the course overview page rather than from the course settings page, and each switch takes effect as soon as you set it. The same two switches also appear in the general step of the course onboarding wizard.
-
-**Formative feedback requests** lets students request preliminary AI feedback on their submissions before the due date, for text, programming, and modeling exercises. When it is off, the button to request AI feedback disappears for students in this course.
-
-**Grading feedback suggestions** shows tutors Athena's feedback suggestions while they assess submissions. Tutors decide which suggestions to accept, adapt, or discard; nothing is applied automatically. Turning this switch on or off also starts or stops Athena's processing of submissions for the course's exercises at their due date.
-
-<Callout variant={CalloutVariant.info}>
-Both switches are course-wide. They are only shown when the Athena service is enabled on the Artemis instance.
-</Callout>
-
 ## General Information
 
 <Image src={generalInformation} alt="General information section of the course settings" size={ImageSize.large} caption="General information" />
@@ -182,14 +170,16 @@ course overview, next to Iris, and each takes effect as soon as you set it — t
 appears only where an administrator has configured Athena for the instance. The general step of the course onboarding
 wizard offers the same two switches.
 
-**Formative feedback requests** lets students ask Athena for preliminary feedback on a draft *before* the due date, for
-text, programming and modeling exercises. It is feedback to learn from rather than a mark, and it does not replace the
-assessment that follows. With it off, students in the course no longer see the button to request AI feedback.
+**Formative feedback requests** lets students ask Athena for preliminary feedback on a draft *before* the due date. It
+is feedback to learn from rather than a mark, and it does not replace the assessment that follows. With it off,
+students in the course no longer see the button to request AI feedback.
 
-**Grading feedback suggestions** offers Athena's suggestions to tutors while they mark text, programming and modeling
-submissions. A suggestion is a starting point a person accepts, edits or ignores; nothing reaches a student without a
-reviewer submitting it. Turning it on or off also starts or stops Athena's processing of the course's submissions at
+**Grading feedback suggestions** offers Athena's suggestions to tutors while they mark submissions. A suggestion is a
+starting point a person accepts, edits or ignores; nothing reaches a student without a reviewer submitting it. For
+programming and text exercises, turning it on or off also starts or stops Athena's processing of the submissions at
 each exercise's due date.
 
-There is no per-exercise switch: every exercise in the course follows these two, as far as its type supports them.
-See [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for which exercise types support which.
+Both switches cover text, modeling and programming exercises, but a programming exercise only where it is assessed
+semi-automatically, with manual assessment enabled alongside the tests. There is no per-exercise switch: every
+exercise in the course follows these two, as far as its type supports them. See
+[AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for the details.
