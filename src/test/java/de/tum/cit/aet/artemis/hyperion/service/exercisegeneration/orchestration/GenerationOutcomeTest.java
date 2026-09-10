@@ -65,11 +65,25 @@ class GenerationOutcomeTest {
     }
 
     @Test
-    void unverifiedRepositoryCaptureStillRequiresCanonicalBinaries() {
+    void unverifiedRepositoryCaptureStillRequiresItsCanonicalBinaries() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
-        var output = unverifiedOutput(List.of(text("template/src/App.java", "class App {}")));
+        var output = unverifiedOutput(List.of(text("tests/src/AppTest.java", "class AppTest {}")));
         assertThatThrownBy(() -> GenerationOutcome.received(output, seed(List.of(binary)), false)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("canonical binary scaffolding");
+    }
+
+    @Test
+    void unverifiedPartialCaptureMayOmitUnchangedRepositories() {
+        var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
+        var files = List.of(text("template/src/App.java", "class App {}"));
+        var outcome = GenerationOutcome.received(unverifiedOutput(files), seed(List.of(binary)), false);
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        assertThat(outcome.producedFiles(RepositoryType.TEMPLATE)).containsExactlyEntriesOf(Map.of("src/App.java", "class App {}"));
+        assertThat(outcome.producedFiles(RepositoryType.TESTS)).isEmpty();
+        assertThatThrownBy(() -> GenerationOutcome.received(output(files), seed(List.of(binary)), false)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("canonical binary scaffolding");
+        assertThatThrownBy(() -> GenerationOutcome.received(unverifiedOutput(List.of(binary)), seed(List.of()), false)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Generated binaries cannot replace");
     }
 
     @Test
@@ -102,8 +116,8 @@ class GenerationOutcomeTest {
 
     private static GenerationOutput unverifiedOutput(List<WorkspaceFile> files) {
         var snapshot = new WorkspaceSnapshot(files);
-        return new GenerationOutput(snapshot, new VerificationResult(false, false, false, 0, List.of("Specification gate failed")), snapshot.sha256(), SpecFidelityReport.empty(),
-                "RUN_FAILED", null, GenerationOutput.AccountingState.INCOMPLETE, "default");
+        return new GenerationOutput(snapshot, new VerificationResult(false, false, false, 0, List.of("Specification gate failed")), null, SpecFidelityReport.empty(), "RUN_FAILED",
+                null, GenerationOutput.AccountingState.INCOMPLETE, "default");
     }
 
     private static GenerationOutput output(List<WorkspaceFile> files) {
