@@ -6,17 +6,24 @@ sidebar_label: Course Configuration
 
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-Once a course has been created (either through a [course request](/instructor/course-management/course-requests) or by an administrator), you can configure it by clicking the **Settings** button in the bottom-left corner of the course sidebar. The settings page is organized into four sections: general information, exercises and grading, additional course features, and student enrollment. Additionally, the Iris AI tutor and Athena AI feedback can be configured separately from the course overview page.
+import generalInformation from './assets/course-configuration/general-information.png';
+import exercisesAndGrading from './assets/course-configuration/exercises-and-grading.png';
+import additionalFeatures from './assets/course-configuration/additional-features.png';
+import studentEnrollment from './assets/course-configuration/student-enrollment.png';
 
-## Iris Configuration
-
-Iris is Artemis's AI-powered virtual tutor that provides context-aware assistance to students. The Iris configuration is not part of the course settings page but is accessible separately from the course overview page. Instructors can enable or disable individual Iris features for their course and customize the behavior of each feature.
-
-When Iris is enabled, students gain access to an AI chatbot that can help them understand exercise problem statements, guide them through programming tasks, and answer questions about lecture content, with more features being implemented in the near future. Iris is designed to guide students toward solutions rather than providing direct answers, maintaining academic integrity while offering personalized support.
+Once a course exists — from a [course request](/instructor/course-management/course-requests) or from an
+administrator — **Settings** at the foot of the course sidebar opens everything you can change about it. The page is
+one long form in four sections: general information, exercises and grading, additional course features, and student
+enrollment.
 
 <Callout variant={CalloutVariant.info}>
-Enabling Iris has a direct impact on the student experience in Artemis. When opting-in, students will see a chat icon allowing them to interact with the AI tutor in relevant contexts such as programming exercises and lectures. See [Iris](/student/learning-content/iris) for a detailed overview of what students experience when Iris is active.
+
+  Some settings only appear when the instance supports them. **Online Course** is shown only where LTI is enabled, and
+  the Iris settings only where an Iris service is configured. A setting you cannot find is usually one your instance
+  does not offer rather than one that has moved.
+
 </Callout>
 
 ## Athena AI Feedback Configuration
@@ -33,88 +40,157 @@ Both switches are course-wide. They are only shown when the Athena service is en
 
 ## General Information
 
-**Title** is the course name visible to all users across the platform. It appears on the dashboard, in course headers, and in notifications.
+<Image src={generalInformation} alt="General information section of the course settings" size={ImageSize.large} caption="General information" />
 
-**Color** sets the accent color used throughout the course UI, helping students distinguish between courses on their dashboard.
+**Title** is the course name everywhere it appears — the dashboard, course headers, notifications. **Color** sets the
+accent used throughout the course, which is what lets a student tell two courses apart at a glance.
 
-**Short Name** is a unique identifier consisting of 3 to 7 letters and numbers. It is used in URLs, repository names, and group names throughout the system.
-
-<Callout variant={CalloutVariant.warning}>
-The short name cannot be changed after course creation. Choose it carefully, as it will be permanently associated with all repositories and groups created for this course.
-</Callout>
-
-**Description** is shown to students during registration and in the course header. Use it to provide a brief overview of the course content and goals.
-
-**Start Date** and **End Date** define the active period of the course. Exercises and enrollment are typically expected to fall within this window.
-
-**Test Course** hides the course and its exercises and exams from regular users when enabled. Use this for testing purposes only, as test courses do not appear on the student dashboard.
-
-**Semester** is used for grouping courses on the student dashboard (e.g. WS25, SS26). Students see their courses organized by semester.
-
-**Time Zone** is used for tutorial group scheduling and affects how scheduled sessions are displayed.
+**Short Name** is the identifier: 3 to 7 letters and digits, used in URLs, repository names and group names.
 
 <Callout variant={CalloutVariant.warning}>
-Changing the time zone on an existing course can shift the displayed times of already scheduled tutorial group sessions. Review your tutorial group schedule after changing this setting.
+
+  The short name cannot be changed after the course is created. Everything named after it — every repository, every
+  group — keeps that name for the life of the course.
+
 </Callout>
 
-## Exercises & Grading
+**Course Description** is what students read when they enroll and in the course header. **Start** and **End** bound
+the course; exercises and enrollment are expected to fall inside that window, and the end date is also what makes the
+course archivable.
 
-**Max. Points for Course** is used for example calculations in the [grading key](/instructor/assessment-grading/grading). This value does not directly influence student grades, which are determined by the sum of exercise points and the grading key configuration.
+**Test Course** marks a course as one used for trying things out. It is kept apart from the real ones rather than
+hidden: a student enrolled in it sees it on their dashboard under **Current test courses**, separate from the courses
+that count, and the same separation is made in their course archive.
 
-**Decimal Places for Score Calculations** controls the precision of score calculations throughout the course. The default is 1 decimal place, and the allowed range is 0 to 5.
+**Semester** groups courses on the student dashboard — `WS25`, `SS26` — so a student's older courses fall away from
+the current ones.
 
-**Default Programming Language** pre-selects the programming language when instructors create new programming exercises. This is a convenience setting and can be overridden for each exercise individually.
+**Tutorial Group Time Zone** is the zone tutorial group sessions are scheduled in and displayed against.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Changing the time zone on a course that already has tutorial group sessions shifts the times those sessions display
+  at. Check the schedule afterwards.
+
+</Callout>
+
+### Data Retention
+
+Two settings decide how long Artemis keeps this course's student data, and they exist because the answer is a legal
+one rather than a preference.
+
+**Grade-relevant course** marks a course whose results count towards official grades or exam records. Its student
+data is then kept for the legally required period — five years by default. Turn it off for a course that is not
+grade-relevant and the data is deleted sooner, a year by default.
+
+**Data-retention hold** suspends that deletion entirely. Turn it on while an objection or legal proceeding about the
+course is pending, because a pending proceeding extends the retention period by law: a course on hold is never warned
+about, and never included in, the automatic deletion of old student data. Turn it off once the matter is settled.
+
+## Exercises and Grading
+
+<Image src={exercisesAndGrading} alt="Exercises and grading section, with the complaint settings" size={ImageSize.large} caption="Exercises and grading" />
+
+**Max. Points for Course** is used for the example calculations in the [grading key](/instructor/assessment-grading/grading).
+It does not itself decide anyone's grade — that comes from the exercise points and the key.
+
+**Decimal Places for Score Calculations** is the precision scores are calculated to, from 0 to 5 places, and defaults
+to 1.
+
+**Default Programming Language** pre-selects the language on the programming exercise form. It is a convenience only
+and can be changed per exercise.
 
 ### Complaints
 
-**Enable Complaints** activates the complaint system, which allows students to dispute assessment results within a configurable time window. When enabled, the following sub-options become available:
+**Enable Complaints** lets students dispute an assessment. It opens five further settings.
 
-**Max individual complaints** (default 3) and **Max team complaints** (default 3) limit the number of complaints each student or team can submit per course. **Complaint time window** (default 7 days) defines how many days after receiving an assessment a student can file a complaint. **Max complaint text length** and **Max response text length** (both default 2000 characters) control the maximum length of complaint submissions and tutor responses.
+| Setting | Default | Effect |
+|---------|---------|--------|
+| **Max. Number of Complaints per Student** | 3 | How many complaints a student may have open or rejected at once |
+| **Max. Number of Complaints per Team** | 3 | The same limit for a team |
+| **Complaint Due Date in Days After Result Date** | 7 | How long after their result a student may complain |
+| **Max. Number of Characters per Complaint** | 2000 | How much a student may write |
+| **Max. Number of Characters per Response** | 2000 | How much the reviewer may write back |
 
-When complaints are enabled, students see a "Complain" button on their assessed submissions within the configured time window. Tutors then review the complaint and can adjust the assessment. See [Assessment](/instructor/assessment-grading/assessment) for details on handling complaints.
+An accepted complaint stops counting against the limit, so the cap only restrains students whose complaints are not
+upheld. See [Assessment and Grading](/instructor/assessment-grading/assessment#complaints) for how a reviewer answers
+one.
 
 ### More Feedback Requests
 
-**Enable More Feedback Requests** allows students to request additional feedback on their assessed submissions without filing a formal complaint. The **time window** (default 7 days) defines how long after receiving an assessment a student can request more feedback.
+**Enable More Feedback Requests** lets a student ask for their marks to be explained rather than changed, with
+**More feedback request due date in days after result date** setting the window, again seven days by default.
 
-Unlike complaints, more feedback requests do not allow score changes. Tutors can only add additional comments. These requests do not count toward the complaint limit, making them a lower-barrier option for students who want clarification on their assessment.
+These requests do not count against the complaint limit and cannot change a score, which makes them the cheaper
+option for a student who is confused rather than aggrieved. They are also exclusive with complaints — Artemis keeps
+one or the other per result — so it is worth telling students which one they want before they choose.
 
 ## Additional Course Features
 
-Each feature in this section can be toggled independently. The info buttons next to each feature in the UI provide additional context.
+<Image src={additionalFeatures} alt="Additional course features, with the communication settings" size={ImageSize.large} caption="Additional course features" />
 
-### FAQ
+**Learning Paths Enabled** builds each student an individual path through the course's competencies and the material
+linked to them. See [Adaptive Learning](/instructor/analytics/adaptive-learning) for defining those competencies.
 
-**FAQ Enabled** activates a knowledge base where instructors can compile frequently asked questions and their answers. When enabled, students get access to a searchable FAQ section where they can find answers to common questions independently before reaching out to instructors or tutors. See [FAQ](/instructor/communication-support/faq) for details on creating and managing FAQ entries.
+**Communication Enabled** turns on course channels: staff create channels per topic, and students ask questions on
+exercise and lecture pages. Enabling it opens two more settings.
 
-### Learning Paths
+**Direct Messages / Group Chats Enabled** allows private conversations, one to one or in groups of up to ten. With it
+off, communication is limited to channels everyone can see.
 
-**Learning Paths Enabled** generates individualized learning paths consisting of competencies and linked learning materials. When enabled, students see a personalized learning path that guides them through the course content based on their progress and mastery of defined competencies. See [Adaptive Learning](/instructor/analytics/adaptive-learning) for details on defining competencies and linking learning materials.
+**Code of Conduct** is the rules for messaging in the course, written in markdown. A newly created course starts from
+a template, which is worth reading before you edit it — it is also what the iOS and Android clients show for a course
+that has none of its own. Every participant sees whatever is in it.
 
-### Communication
-
-**Communication Enabled** activates course communication through private and public channels. Instructors and tutors can create channels for different topics, and students can ask questions on exercise and lecture pages and participate in discussions with peers and course staff.
-
-When communication is enabled, two additional options become available:
-
-**Direct Messages / Group Chats Enabled** allows private one-to-one messages and group chats with up to 10 members. Disabling this option restricts communication to public channels only.
-
-**Code of Conduct** is a markdown editor where you can define conduct rules for messaging within the course. A default template is loaded automatically when communication is first enabled, which you can customize. The code of conduct is displayed to all users participating in course communication.
-
-See [Communication](/instructor/communication-support/communication) for details on channel management and moderation.
+See [Communication](/instructor/communication-support/communication) for managing and moderating channels.
 
 ## Student Course Enrollment
 
-### Online Course
+<Image src={studentEnrollment} alt="Student course enrollment section" size={ImageSize.large} caption="Student enrollment" />
 
-**Online Course** marks the course as an external online course (e.g. hosted on edX or Moodle) using the LTI interface. This option is only visible when LTI is enabled on the Artemis instance and self-enrollment is turned off. When enabled, accounts are created automatically for students accessing the course through the LTI interface. This option is mutually exclusive with self-enrollment. See [LTI Configuration](/instructor/integrations/lti-configuration) for setup details.
+**Student Course Enrollment Enabled** lets students join the course themselves while it is active. It opens four
+further settings.
 
-### Self-Enrollment
+**Enrollment Start** and **Enrollment End** bound the window in which students may join; left empty, they follow the
+course's own start and end.
 
-**Student Course Enrollment Enabled** allows students to self-enroll in the course while it is active. When enabled, the following sub-options become available:
+**Enrollment Confirmation Message** is markdown a student must confirm as they enroll — terms of participation, an
+honor code, anything they should acknowledge before joining.
 
-**Enrollment Start Date** and **Enrollment End Date** define the window during which students can enroll. These default to the course start and end dates if not specified.
+**Student Course Unenrollment Enabled** lets students leave again, and **Latest Date to Unenroll** is the last day
+they may; left empty, it is the end of the course.
 
-**Enrollment Confirmation Message** is an optional markdown message that students must confirm during enrollment. Use this for terms of participation, honor codes, or other information students should acknowledge before joining the course.
+**Online Course** marks the course as one run through an external platform over LTI, so accounts are created
+automatically for students arriving that way. It appears only when LTI is enabled on the instance and self-enrollment
+is off, because the two are mutually exclusive. See
+[LTI Configuration](/instructor/integrations/lti-configuration).
 
-**Student Course Unenrollment Enabled** allows students to leave the course on their own. When enabled, the **Unenrollment End Date** defines the latest date by which students can unenroll, defaulting to the course end date.
+## Iris
+
+Iris, the AI tutor, has its own settings page rather than a section on this form: **Iris** in the course management,
+not **Settings**. One switch decides whether the whole course has Iris, and a **Level of Instructional Support**
+decides how much it gives away.
+
+See [Iris](/instructor/communication-support/iris) for those settings, and
+[Iris for students](/student/learning-content/iris) for what a student meets — including the choice each student
+makes for themselves about whether to use AI at all.
+
+## AI-Assisted Feedback
+
+Athena's AI feedback is not on this form either. Its two switches sit in the **Athena AI Feedback** panel on the
+course overview, next to Iris, and each takes effect as soon as you set it — there is nothing to save. The panel
+appears only where an administrator has configured Athena for the instance. The general step of the course onboarding
+wizard offers the same two switches.
+
+**Formative feedback requests** lets students ask Athena for preliminary feedback on a draft *before* the due date, for
+text, programming and modeling exercises. It is feedback to learn from rather than a mark, and it does not replace the
+assessment that follows. With it off, students in the course no longer see the button to request AI feedback.
+
+**Grading feedback suggestions** offers Athena's suggestions to tutors while they mark text, programming and modeling
+submissions. A suggestion is a starting point a person accepts, edits or ignores; nothing reaches a student without a
+reviewer submitting it. Turning it on or off also starts or stops Athena's processing of the course's submissions at
+each exercise's due date.
+
+Each exercise then has its own switch as well, so enabling these here makes the feature possible rather than
+universal. See [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for which exercise types support
+which, and where each switch lives.

@@ -19,8 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
@@ -97,7 +97,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     private JsonNode updateCourse(Course courseToUpdate, HttpStatus expectedStatus) throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
@@ -166,7 +166,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         loaded.setDescription("Unrelated description change");
         JsonNode updated = updateCourse(loaded);
 
-        assertThat(updated.get("description").asText()).isEqualTo("Unrelated description change");
+        assertThat(updated.get("description").asString()).isEqualTo("Unrelated description change");
         // The response must still report the stored flag, so the client does not cache a course that claims Athena is off
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
         assertThat(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled())
