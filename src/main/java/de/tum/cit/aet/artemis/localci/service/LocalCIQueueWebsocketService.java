@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -84,36 +85,83 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
-     * Sends one snapshot per collection that changed since the last run. Removing a course before reading its jobs
-     * rather than after means a change that arrives while this is sending is picked up by the next run instead of
-     * being dropped; the cost of that ordering is at most one redundant broadcast.
+     * Sends one snapshot per collection that changed since the last run.
+     * <p>
+     * Each collection is read and sanitized once per run, not once per affected course, and the admin topic gets one
+     * message rather than one per course. A failed run puts the courses it drained back so the next one retries them;
+     * without that a broadcast that throws would leave the queue views stale until the next unrelated queue event.
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.build-queue-broadcast-interval-milliseconds:1000}")
     public void broadcastPendingChanges() {
+        broadcastQueuedJobs();
+        broadcastProcessingJobs();
+        broadcastBuildAgentSummary();
+    }
+
+    private void broadcastQueuedJobs() {
+        Set<Long> courseIds = drain(coursesWithQueuedJobChanges);
+        if (courseIds.isEmpty()) {
+            return;
+        }
         try {
-            for (Iterator<Long> courses = coursesWithQueuedJobChanges.iterator(); courses.hasNext();) {
-                long courseId = courses.next();
-                courses.remove();
-                var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
-                localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+            var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
+            localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+            for (Long courseId : courseIds) {
                 localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobs.stream().filter(job -> job.courseId() == courseId).toList());
-            }
-            for (Iterator<Long> courses = coursesWithProcessingJobChanges.iterator(); courses.hasNext();) {
-                long courseId = courses.next();
-                courses.remove();
-                var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
-                localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
-                localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
-            }
-            if (buildAgentSummaryNeedsBroadcast.getAndSet(false)) {
-                localCIWebsocketMessagingService
-                        .sendBuildAgentSummary(removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation()));
             }
         }
         catch (Exception e) {
-            // A failed broadcast must not stop the scheduled task, or the queue views would freeze until the next restart
-            log.warn("Failed to broadcast the pending build queue changes", e);
+            coursesWithQueuedJobChanges.addAll(courseIds);
+            log.warn("Failed to broadcast the queued build jobs, retrying on the next run", e);
         }
+    }
+
+    private void broadcastProcessingJobs() {
+        Set<Long> courseIds = drain(coursesWithProcessingJobChanges);
+        if (courseIds.isEmpty()) {
+            return;
+        }
+        try {
+            var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
+            localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
+            for (Long courseId : courseIds) {
+                localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobs.stream().filter(job -> job.courseId() == courseId).toList());
+            }
+        }
+        catch (Exception e) {
+            coursesWithProcessingJobChanges.addAll(courseIds);
+            log.warn("Failed to broadcast the running build jobs, retrying on the next run", e);
+        }
+    }
+
+    private void broadcastBuildAgentSummary() {
+        if (!buildAgentSummaryNeedsBroadcast.getAndSet(false)) {
+            return;
+        }
+        try {
+            localCIWebsocketMessagingService.sendBuildAgentSummary(removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation()));
+        }
+        catch (Exception e) {
+            buildAgentSummaryNeedsBroadcast.set(true);
+            log.warn("Failed to broadcast the build agent summary, retrying on the next run", e);
+        }
+    }
+
+    /**
+     * Takes everything currently pending, leaving the set empty for the changes that arrive while this run is sending.
+     * Removing each element as it is read rather than clearing at the end means a change that lands mid-drain is either
+     * taken now or still pending afterwards, never dropped.
+     *
+     * @param pending the set of course ids to drain
+     * @return what was pending
+     */
+    private static Set<Long> drain(Set<Long> pending) {
+        Set<Long> drained = new HashSet<>();
+        for (Iterator<Long> courses = pending.iterator(); courses.hasNext();) {
+            drained.add(courses.next());
+            courses.remove();
+        }
+        return drained;
     }
 
     /**

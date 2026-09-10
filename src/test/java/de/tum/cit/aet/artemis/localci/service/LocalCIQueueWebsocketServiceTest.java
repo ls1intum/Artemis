@@ -37,6 +37,8 @@ class LocalCIQueueWebsocketServiceTest {
 
     private static final long COURSE_ID = 1L;
 
+    private static final ZonedDateTime SUBMISSION_DATE = ZonedDateTime.parse("2024-01-01T00:00:00Z");
+
     @Mock
     private LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
@@ -106,15 +108,32 @@ class LocalCIQueueWebsocketServiceTest {
     }
 
     @Test
-    void shouldKeepBroadcastingAfterAFailedRead() {
-        when(distributedDataAccessService.getQueuedJobs()).thenThrow(new IllegalStateException("valkey is away"));
+    void shouldRetryOnTheNextRunAfterAFailedBroadcast() {
+        when(distributedDataAccessService.getQueuedJobs()).thenThrow(new IllegalStateException("valkey is away")).thenReturn(new ArrayList<>(List.of(queuedJob("1"))));
 
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
         localCIQueueWebsocketService.broadcastPendingChanges();
-
         verify(localCIWebsocketMessagingService, never()).sendQueuedBuildJobs(anyList());
-        // the scheduled method has to survive the failure, otherwise the queue views freeze until the next restart
+
+        // the change has to survive the failed run, otherwise the queue views stay stale until an unrelated queue event
         localCIQueueWebsocketService.broadcastPendingChanges();
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobs(anyList());
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
+    }
+
+    @Test
+    void shouldSendTheAdminSnapshotOnceWhenSeveralCoursesChanged() {
+        when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(queuedJob("mine"), queuedJobOfOtherCourse("theirs"))));
+
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
+        localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID + 1);
+        localCIQueueWebsocketService.broadcastPendingChanges();
+
+        // the admin topic carries the whole queue, so it is the same message for every course that changed
+        verify(distributedDataAccessService, times(1)).getQueuedJobs();
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobs(anyList());
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID), anyList());
+        verify(localCIWebsocketMessagingService, times(1)).sendQueuedBuildJobsForCourse(eq(COURSE_ID + 1), anyList());
     }
 
     private static BuildJobQueueItem queuedJob(String id) {
@@ -128,7 +147,7 @@ class LocalCIQueueWebsocketServiceTest {
     private static BuildJobQueueItem job(String id, long courseId) {
         return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), 1L, courseId, 3L, 0, 1, BuildStatus.QUEUED,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
-                new JobTimingInfo(ZonedDateTime.now(), null, null, null, 0),
+                new JobTimingInfo(SUBMISSION_DATE, null, null, null, 0),
                 new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
     }
 }
