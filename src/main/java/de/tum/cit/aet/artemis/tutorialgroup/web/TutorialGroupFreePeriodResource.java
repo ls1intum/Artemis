@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodRequestDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -257,6 +260,58 @@ public class TutorialGroupFreePeriodResource {
         }
         ZoneId timeZone = ZoneId.of(configuration.getCourse().getTimeZone());
         return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsPerDay(configuration.getCourse(), from, to, timeZone));
+    }
+
+    /**
+     * GET courses/:courseId/tutorial-free-periods/overlapping-session-count : how many sessions a span would cancel.
+     * <p>
+     * Counted by overlap, the same test the cancellation applies, so the warning the dialog shows before a holiday is
+     * saved matches what saving it does. The per-day counts the calendar is labelled with cannot answer this: a holiday
+     * narrowed to part of a day would be credited with the whole day's sessions.
+     *
+     * @param courseId the id of the course whose sessions are counted
+     * @param from     the start of the span, read as a wall clock in the time zone of the course
+     * @param to       the end of the span
+     * @return ResponseEntity with status 200 (OK) and how many sessions the span covers
+     */
+    @GetMapping("courses/{courseId}/tutorial-free-periods/overlapping-session-count")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Long> getOverlappingSessionCount(@PathVariable Long courseId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        log.debug("REST request to count sessions between {} and {} of course: {}", from, to, courseId);
+        if (!from.isBefore(to)) {
+            throw new BadRequestAlertException("The start of the span must be before its end", ENTITY_NAME, "invalidDateRange");
+        }
+        if (ChronoUnit.DAYS.between(from.toLocalDate(), to.toLocalDate()) > MAX_SESSION_COUNT_SPAN_DAYS) {
+            throw new BadRequestAlertException("The span must not cover more than " + MAX_SESSION_COUNT_SPAN_DAYS + " days", ENTITY_NAME, "spanTooLong");
+        }
+        TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+        String timeZone = configuration.getCourse().getTimeZone();
+        ZonedDateTime start = interpretInTimeZone(from.toLocalDate(), from.toLocalTime(), timeZone);
+        ZonedDateTime end = interpretInTimeZone(to.toLocalDate(), to.toLocalTime(), timeZone);
+        return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsOverlapping(configuration.getCourse(), start, end));
+    }
+
+    /**
+     * GET courses/:courseId/tutorial-free-periods/session-counts-per-period : how many sessions each free period covers.
+     * <p>
+     * One request for the whole list beside the calendar, rather than one per holiday, and counted by the same overlap
+     * so a holiday reports the same number before and after it is saved.
+     *
+     * @param courseId the id of the course whose free periods are counted
+     * @return ResponseEntity with status 200 (OK) and one entry per free period of the course
+     */
+    @GetMapping("courses/{courseId}/tutorial-free-periods/session-counts-per-period")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<TutorialGroupFreePeriodSessionCountDTO>> getSessionCountsPerFreePeriod(@PathVariable Long courseId) {
+        log.debug("REST request to count sessions per free period of course: {}", courseId);
+        TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
+        return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsPerFreePeriod(configuration.getCourse()));
     }
 
     private TutorialGroupsConfiguration getConfigurationElseThrow(Long courseId) {

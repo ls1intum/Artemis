@@ -23,7 +23,7 @@
         <section class="rounded-lg border border-solid" style="border-color: var(--tumaet-ui-border-color)" data-testid="holiday-panel">
             <jhi-holiday-list
                 [holidays]="holidays()"
-                [sessionCountsByDay]="sessionCountsByDay()"
+                [sessionCountsByHoliday]="sessionCountsByHoliday()"
                 [today]="today()"
                 [filter]="filter()"
                 (filterChange)="filter.set($event)"

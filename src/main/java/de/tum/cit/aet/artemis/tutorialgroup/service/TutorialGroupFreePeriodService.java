@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -60,6 +61,28 @@ public class TutorialGroupFreePeriodService {
                 .collect(Collectors.groupingBy(start -> start.withZoneSameInstant(timeZone).toLocalDate(), TreeMap::new, Collectors.counting()));
 
         return countsPerDay.entrySet().stream().map(entry -> new TutorialGroupSessionCountDTO(entry.getKey(), entry.getValue())).toList();
+    }
+
+    /**
+     * Counts the sessions a span would cancel, by the same overlap the cancellation itself uses.
+     *
+     * @param course the course whose sessions are counted
+     * @param start  the start of the span, already an instant in the course's zone
+     * @param end    the end of the span
+     * @return how many sessions the span covers
+     */
+    public long countSessionsOverlapping(Course course, ZonedDateTime start, ZonedDateTime end) {
+        return tutorialGroupSessionRepository.countOverlappingSessions(course, start, end);
+    }
+
+    /**
+     * Counts, for every free period of a course, how many sessions it covers.
+     *
+     * @param course the course whose free periods are counted
+     * @return one entry per free period, including the ones covering nothing
+     */
+    public List<TutorialGroupFreePeriodSessionCountDTO> countSessionsPerFreePeriod(Course course) {
+        return tutorialGroupSessionRepository.countOverlappingSessionsPerFreePeriod(course);
     }
 
     /**

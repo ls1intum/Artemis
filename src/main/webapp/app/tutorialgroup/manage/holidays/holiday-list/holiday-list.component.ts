@@ -7,7 +7,7 @@ import { TumUiButtonDirective, TumUiTagComponent, TumUiTooltipDirective } from '
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { DAY_KEY_FORMAT, Holiday } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** Which holidays the list shows. */
 export type HolidayListFilter = 'upcoming' | 'all';
@@ -48,7 +48,8 @@ interface HolidayListEntry {
 })
 export class HolidayListComponent {
     readonly holidays = input.required<readonly Holiday[]>();
-    readonly sessionCountsByDay = input.required<Map<string, number>>();
+    /** Sessions each holiday covers, keyed by free period id and counted by overlap rather than by whole days. */
+    readonly sessionCountsByHoliday = input.required<Map<number, number>>();
     /** Today in the course's time zone, so "upcoming" is measured against the course's day. */
     readonly today = input.required<dayjs.Dayjs>();
     readonly filter = input.required<HolidayListFilter>();
@@ -81,7 +82,7 @@ export class HolidayListComponent {
 
     protected readonly entries = computed<HolidayListEntry[]>(() => {
         const locale = this.locale();
-        const sessionCountsByDay = this.sessionCountsByDay();
+        const sessionCountsByHoliday = this.sessionCountsByHoliday();
         const today = this.today().startOf('day');
         const wholeDayLabel = this.translateService.instant('artemisApp.pages.tutorialFreePeriodsManagement.wholeDay');
 
@@ -98,25 +99,8 @@ export class HolidayListComponent {
                 whenLabel: holiday.spansMultipleDays ? `${start.format('D MMM')} – ${end.format('D MMM')}` : start.format('dddd'),
                 accessibleDate: holiday.spansMultipleDays ? `${start.format('LL')} – ${end.format('LL')}` : start.format('LL'),
                 timeLabel: holiday.wholeDay ? wholeDayLabel : `${holiday.startTime}–${holiday.endTime}`,
-                sessionCount: this.countSessionsIn(holiday, sessionCountsByDay),
+                sessionCount: sessionCountsByHoliday.get(holiday.period.id!) ?? 0,
             };
         });
     });
-
-    /**
-     * Adds up the sessions on every day the holiday touches.
-     *
-     * Counts are only loaded for the month the calendar shows, so a holiday reaching beyond it contributes what is
-     * known and no more. The number is a hint about what a holiday cancels rather than a figure anything depends on.
-     */
-    private countSessionsIn(holiday: Holiday, sessionCountsByDay: Map<string, number>): number {
-        let total = 0;
-        let day = holiday.start.startOf('day');
-        const lastDay = holiday.end.startOf('day');
-        while (!day.isAfter(lastDay)) {
-            total += sessionCountsByDay.get(day.format(DAY_KEY_FORMAT)) ?? 0;
-            day = day.add(1, 'day');
-        }
-        return total;
-    }
 }

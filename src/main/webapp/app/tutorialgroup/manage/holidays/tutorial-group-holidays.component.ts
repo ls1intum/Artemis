@@ -66,6 +66,8 @@ export class TutorialGroupHolidaysComponent {
     protected readonly configuration = signal<TutorialGroupsConfiguration | undefined>(undefined);
     protected readonly freePeriods = signal<TutorialGroupFreePeriod[]>([]);
     protected readonly sessionCountsByDay = signal<Map<string, number>>(new Map());
+    /** Sessions each holiday covers, by overlap - the per-day totals would overstate a holiday within a day. */
+    protected readonly sessionCountsByHoliday = signal<Map<number, number>>(new Map());
     protected readonly isLoading = signal(false);
     protected readonly isSaving = signal(false);
 
@@ -110,12 +112,12 @@ export class TutorialGroupHolidaysComponent {
                 // resolves is dropped instead of throwing inside the stream and killing it for the rest of the page.
                 switchMap((span) => {
                     const courseId = this.course()?.id;
-                    return courseId === undefined ? EMPTY : this.freePeriodService.getSessionCounts(courseId, span.start, span.end);
+                    return courseId === undefined ? EMPTY : this.freePeriodService.getOverlappingSessionCount(courseId, span.start, span.end);
                 }),
                 takeUntilDestroyed(),
             )
             .subscribe({
-                next: (counts) => this.dialogSessionCount.set(counts.reduce((total, count) => total + count.count, 0)),
+                next: (count) => this.dialogSessionCount.set(count),
                 error: (response: HttpErrorResponse) => onError(this.alertService, response),
             });
     }
@@ -149,6 +151,7 @@ export class TutorialGroupHolidaysComponent {
                     this.configuration.set(configuration);
                     this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
                     this.loadSessionCounts();
+                    this.loadSessionCountsPerHoliday();
                 },
                 error: (response: HttpErrorResponse) => onError(this.alertService, response),
             });
@@ -172,6 +175,21 @@ export class TutorialGroupHolidaysComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (counts) => this.sessionCountsByDay.set(new Map(counts.map((count) => [count.date, count.count]))),
+                error: (response: HttpErrorResponse) => onError(this.alertService, response),
+            });
+    }
+
+    /** One request for the whole list, so a page of holidays does not become a request per row. */
+    private loadSessionCountsPerHoliday(): void {
+        const courseId = this.course()?.id;
+        if (courseId === undefined) {
+            return;
+        }
+        this.freePeriodService
+            .getSessionCountsPerFreePeriod(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (counts) => this.sessionCountsByHoliday.set(new Map(counts.map((count) => [count.freePeriodId, count.count]))),
                 error: (response: HttpErrorResponse) => onError(this.alertService, response),
             });
     }

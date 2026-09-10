@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrat
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionCountDTO;
 
 /**
@@ -177,6 +179,83 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSessionCounts_withAnExtremeEndDate_shouldReturnBadRequest() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.BAD_REQUEST, TutorialGroupSessionCountDTO.class, span(MONDAY, LocalDate.MAX));
+    }
+
+    private String overlapCountPath() {
+        return "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-free-periods/overlapping-session-count";
+    }
+
+    private String countsPerPeriodPath() {
+        return "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-free-periods/session-counts-per-period";
+    }
+
+    private MultiValueMap<String, String> span(LocalDateTime from, LocalDateTime to) {
+        var parameters = new LinkedMultiValueMap<String, String>();
+        parameters.add("from", from.toString());
+        parameters.add("to", to.toString());
+        return parameters;
+    }
+
+    /** The reason the per-day counts cannot answer this: a morning holiday must not be credited with the afternoon. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_shouldCountOnlyTheSessionsTheSpanCovers() throws Exception {
+        // createSessionOn runs two hours, so these are 06:00-08:00, 09:00-11:00 and 14:00-16:00.
+        createSessionOn(MONDAY, 6);
+        createSessionOn(MONDAY, 9);
+        createSessionOn(MONDAY, 14);
+
+        Long morning = request.get(overlapCountPath(), HttpStatus.OK, Long.class, span(MONDAY.atTime(9, 0), MONDAY.atTime(10, 0)));
+        Long wholeDay = request.get(overlapCountPath(), HttpStatus.OK, Long.class, span(MONDAY.atTime(0, 0), MONDAY.atTime(23, 59)));
+
+        // Only the session running inside the span: the one before it has finished, the one after has not begun.
+        assertThat(morning).isOne();
+        assertThat(wholeDay).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_shouldReadTheSpanInTheTimeZoneOfTheCourse() throws Exception {
+        createSessionOn(MONDAY.plusDays(1), 1);
+
+        Long count = request.get(overlapCountPath(), HttpStatus.OK, Long.class, span(MONDAY.plusDays(1).atTime(0, 0), MONDAY.plusDays(1).atTime(2, 0)));
+
+        assertThat(count).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOverlappingSessionCount_withAnEndBeforeItsStart_shouldReturnBadRequest() throws Exception {
+        request.get(overlapCountPath(), HttpStatus.BAD_REQUEST, Long.class, span(MONDAY.atTime(10, 0), MONDAY.atTime(9, 0)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getOverlappingSessionCount_asStudent_shouldReturnForbidden() throws Exception {
+        request.get(overlapCountPath(), HttpStatus.FORBIDDEN, Long.class, span(MONDAY.atTime(9, 0), MONDAY.atTime(10, 0)));
+    }
+
+    /** The list beside the calendar shows one number per holiday, so it has to be counted the same way. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSessionCountsPerFreePeriod_shouldCountByOverlapAndKeepEmptyPeriods() throws Exception {
+        createSessionOn(MONDAY, 6);
+        createSessionOn(MONDAY, 9);
+        createSessionOn(MONDAY, 14);
+        var morningOnly = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.atTime(9, 0), MONDAY.atTime(10, 0), "Morning");
+        var quietDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, MONDAY.plusDays(3).atTime(0, 0), MONDAY.plusDays(3).atTime(23, 59), "Quiet");
+
+        List<TutorialGroupFreePeriodSessionCountDTO> counts = request.getList(countsPerPeriodPath(), HttpStatus.OK, TutorialGroupFreePeriodSessionCountDTO.class);
+
+        assertThat(counts).contains(new TutorialGroupFreePeriodSessionCountDTO(morningOnly.getId(), 1));
+        // A holiday covering nothing still answers, rather than dropping out and leaving the list without a row.
+        assertThat(counts).extracting(TutorialGroupFreePeriodSessionCountDTO::freePeriodId).contains(quietDay.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSessionCountsPerFreePeriod_asStudent_shouldReturnForbidden() throws Exception {
+        request.getList(countsPerPeriodPath(), HttpStatus.FORBIDDEN, TutorialGroupFreePeriodSessionCountDTO.class);
     }
 
     @Test

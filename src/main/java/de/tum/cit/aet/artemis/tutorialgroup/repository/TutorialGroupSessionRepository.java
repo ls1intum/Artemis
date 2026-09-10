@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 
 @Conditional(TutorialGroupEnabled.class)
@@ -142,6 +143,48 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             ORDER BY session.start
             """)
     List<ZonedDateTime> findSessionStartsBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
+
+    /**
+     * Counts the sessions of a course that a span would cancel.
+     *
+     * By overlap, which is the same test {@code cancelOverlappingSessions} applies, so what a holiday is said to cancel
+     * before it is saved is what it then cancels. Counting whole days instead would overstate a holiday narrowed to
+     * part of one.
+     *
+     * @param course the course whose sessions are counted
+     * @param start  the start of the span
+     * @param end    the end of the span
+     * @return how many sessions overlap the span
+     */
+    @Query("""
+            SELECT COUNT(session)
+            FROM TutorialGroupSession session
+            WHERE session.tutorialGroup.course = :course
+                AND session.start < :end
+                AND session.end > :start
+            """)
+    long countOverlappingSessions(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
+
+    /**
+     * Counts, for every free period of a course, how many of its sessions that period covers.
+     *
+     * One query rather than one per holiday, and a left join so a period covering nothing still answers with zero
+     * instead of dropping out of the result.
+     *
+     * @param course the course whose free periods and sessions are counted
+     * @return one entry per free period of the course
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodSessionCountDTO(period.id, COUNT(session))
+            FROM TutorialGroupFreePeriod period
+                LEFT JOIN TutorialGroupSession session
+                    ON session.tutorialGroup.course = period.tutorialGroupsConfiguration.course
+                    AND session.start < period.end
+                    AND session.end > period.start
+            WHERE period.tutorialGroupsConfiguration.course = :course
+            GROUP BY period.id
+            """)
+    List<TutorialGroupFreePeriodSessionCountDTO> countOverlappingSessionsPerFreePeriod(@Param("course") Course course);
 
     @Transactional // ok because of delete
     @Modifying

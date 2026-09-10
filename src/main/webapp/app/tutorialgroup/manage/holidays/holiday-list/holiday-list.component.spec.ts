@@ -42,7 +42,7 @@ describe('HolidayListComponent', () => {
 
         fixture = TestBed.createComponent(HolidayListComponent);
         fixture.componentRef.setInput('holidays', holidays);
-        fixture.componentRef.setInput('sessionCountsByDay', new Map([['2025-12-17', 7]]));
+        fixture.componentRef.setInput('sessionCountsByHoliday', new Map([[2, 7]]));
         fixture.componentRef.setInput('today', today);
         fixture.componentRef.setInput('filter', 'upcoming');
         fixture.detectChanges();
@@ -109,21 +109,22 @@ describe('HolidayListComponent', () => {
         expect(items[0].nativeElement.textContent).toContain('–');
     });
 
-    it('should add up the sessions across every day a holiday covers', () => {
+    it('should show the sessions a holiday actually covers, as counted by the server', () => {
         const twoDays = toHolidays([period(7, '2025-12-16T23:00:00', '2025-12-18T22:59:00', 'Break')], TIME_ZONE);
         fixture.componentRef.setInput('holidays', twoDays);
-        fixture.componentRef.setInput(
-            'sessionCountsByDay',
-            new Map([
-                ['2025-12-17', 7],
-                ['2025-12-18', 5],
-            ]),
-        );
+        // Counted by overlap on the server, so a holiday within a day is not credited with the whole day's sessions.
+        fixture.componentRef.setInput('sessionCountsByHoliday', new Map([[7, 12]]));
         fixture.detectChanges();
 
         expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-sessions"]'))).toHaveLength(1);
-        // The count itself, not just the tag: dropping either day would leave the tag rendered and the number wrong.
         expect(fixture.componentInstance['entries']()[0].sessionCount).toBe(12);
+    });
+
+    it('should show no badge for a holiday the server counted no sessions for', () => {
+        fixture.componentRef.setInput('sessionCountsByHoliday', new Map());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-sessions"]'))).toHaveLength(0);
     });
 
     it('should give a screen reader the full date, which the date block beside the row hides', () => {

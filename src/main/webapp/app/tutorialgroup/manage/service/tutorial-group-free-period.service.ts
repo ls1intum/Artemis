@@ -26,6 +26,12 @@ export class TutorialGroupFreePeriodDTO {
     public reason?: string;
 }
 
+/** How many sessions one free period covers, counted by overlap rather than by whole days. */
+export interface TutorialGroupFreePeriodSessionCount {
+    freePeriodId: number;
+    count: number;
+}
+
 /** How many sessions a course holds on one day, as counted in the time zone of the tutorial groups configuration. */
 export interface TutorialGroupSessionCount {
     /** `YYYY-MM-DD`, so it can be used as a map key without a zone conversion on the client. */
@@ -91,6 +97,22 @@ export class TutorialGroupFreePeriodService {
     getSessionCounts(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs): Observable<TutorialGroupSessionCount[]> {
         const params = new HttpParams().set('from', from.format(SERVER_DATE_FORMAT)).set('to', to.format(SERVER_DATE_FORMAT));
         return this.httpClient.get<TutorialGroupSessionCount[]>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/session-counts`, { params });
+    }
+
+    /**
+     * Counts the sessions a span would cancel.
+     *
+     * Separate from the per-day counts the calendar is labelled with, because cancellation goes by overlap: a holiday
+     * from 09:00 to 10:00 leaves that afternoon's sessions alone, and the day's total would say otherwise.
+     */
+    getOverlappingSessionCount(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs): Observable<number> {
+        const params = new HttpParams().set('from', from.format(SERVER_DATE_TIME_FORMAT)).set('to', to.format(SERVER_DATE_TIME_FORMAT));
+        return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/overlapping-session-count`, { params });
+    }
+
+    /** Counts the sessions every free period of the course covers, in one request rather than one per holiday. */
+    getSessionCountsPerFreePeriod(courseId: number): Observable<TutorialGroupFreePeriodSessionCount[]> {
+        return this.httpClient.get<TutorialGroupFreePeriodSessionCount[]>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/session-counts-per-period`);
     }
 
     private convertTutorialGroupFreePeriodResponseDatesFromServer(res: HttpResponse<TutorialGroupFreePeriod>): HttpResponse<TutorialGroupFreePeriod> {

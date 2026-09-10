@@ -66,6 +66,8 @@ describe('TutorialGroupHolidaysComponent', () => {
 
         vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configurationDto as never })));
         vi.spyOn(freePeriodService, 'getSessionCounts').mockReturnValue(of([{ date: '2025-12-17', count: 7 }]));
+        vi.spyOn(freePeriodService, 'getOverlappingSessionCount').mockReturnValue(of(7));
+        vi.spyOn(freePeriodService, 'getSessionCountsPerFreePeriod').mockReturnValue(of([{ freePeriodId: 11, count: 7 }]));
 
         fixture = TestBed.createComponent(TutorialGroupHolidaysComponent);
         component = fixture.componentInstance;
@@ -193,28 +195,25 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(freePeriodService.getSessionCounts).toHaveBeenCalledOnce();
     });
 
-    it('should count the sessions of the span the dialog is showing, not just of the loaded month', () => {
-        vi.mocked(freePeriodService.getSessionCounts).mockClear();
-        vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(
-            of([
-                { date: '2025-12-22', count: 4 },
-                { date: '2025-12-23', count: 3 },
-            ]),
-        );
+    it('should count what the span would actually cancel, by overlap rather than by whole days', () => {
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockClear();
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValue(of(2));
 
-        component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2026-01-05T23:59') });
+        // A holiday within one day: counting the day would credit it with sessions it does not touch.
+        component['onDialogSpanChange']({ start: dayjs('2025-12-22T09:00'), end: dayjs('2025-12-22T10:00') });
         vi.advanceTimersByTime(500);
 
-        // Asked for the span itself, so a holiday running past the displayed month is still counted in full.
-        const [, from, to] = vi.mocked(freePeriodService.getSessionCounts).mock.calls[0];
-        expect(from.format('YYYY-MM-DD')).toBe('2025-12-22');
-        expect(to.format('YYYY-MM-DD')).toBe('2026-01-05');
-        expect(component['dialogSessionCount']()).toBe(7);
+        const [, from, to] = vi.mocked(freePeriodService.getOverlappingSessionCount).mock.calls[0];
+        expect(from.format('YYYY-MM-DDTHH:mm')).toBe('2025-12-22T09:00');
+        expect(to.format('YYYY-MM-DDTHH:mm')).toBe('2025-12-22T10:00');
+        expect(component['dialogSessionCount']()).toBe(2);
+        // The per-day endpoint labels the calendar and must not be what the warning is built from.
+        expect(freePeriodService.getSessionCounts).not.toHaveBeenCalledWith(42, expect.anything(), dayjs('2025-12-22T10:00'));
     });
 
     it('should ask for the count once when the reader moves through several dates', () => {
-        vi.mocked(freePeriodService.getSessionCounts).mockClear();
-        vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(of([{ date: '2025-12-24', count: 2 }]));
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockClear();
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValue(of(2));
 
         // Typing a date emits per keystroke, so only the span the reader settled on should reach the server.
         for (const day of ['2025-12-22', '2025-12-23', '2025-12-24']) {
@@ -223,7 +222,7 @@ describe('TutorialGroupHolidaysComponent', () => {
         }
         vi.advanceTimersByTime(500);
 
-        expect(freePeriodService.getSessionCounts).toHaveBeenCalledOnce();
-        expect(vi.mocked(freePeriodService.getSessionCounts).mock.calls[0][1].format('YYYY-MM-DD')).toBe('2025-12-24');
+        expect(freePeriodService.getOverlappingSessionCount).toHaveBeenCalledOnce();
+        expect(vi.mocked(freePeriodService.getOverlappingSessionCount).mock.calls[0][1].format('YYYY-MM-DD')).toBe('2025-12-24');
     });
 });
