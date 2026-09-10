@@ -3,16 +3,28 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-        Completes the staged deletion started by 20260827174007, which renamed the persisted quiz-statistics schema to
-        legacy_* instead of dropping it. Nothing maps these structures since #13551: statistics are recalculated from
-        result and submitted_answer on demand. The counter values are irrecoverable after this changelog and unneeded.
+        Contract half of the expand/contract started by 20260827174007. That changelog moved quiz statistics to
+        on-demand calculation from result and submitted_answer, stopped mapping the persisted statistics schema, and
+        renamed it to legacy_* instead of dropping it. This changelog drops it.
+
+        MUST NOT be deployed before 20260827174007. On a database that has not run the predecessor these structures
+        still carry their original names, every precondition below evaluates to false, all changesets are marked as
+        ran, and the obsolete schema survives with no further changelog able to reach it.
+
+        Rolling the application back to the release before this one stays safe: that release already does not map any
+        of these structures, so the schema this changelog leaves behind still accepts everything it reads and writes.
+
+        Rollback re-creates the structures but not their rows. The counters they held are derivable again from result
+        and submitted_answer, so an empty legacy_quiz_statistic is not a silent data loss for the application; nothing
+        reads it. Recovering the historical counter values themselves needs a backup taken before this migration.
 
         00000000000000_initial_schema.xml still creates the originals and cannot be edited without invalidating a
-        recorded checksum, so fresh installations create, rename, then drop them.
+        checksum recorded on every installation, so fresh installations create, rename, then drop them.
 
-        Order is required: MySQL rejects DROP COLUMN while a foreign key uses the column, and rejects dropping the only
-        index backing a foreign key. Hence foreign key, then unique index, then column - and the counter table before
-        legacy_quiz_statistic, which it references. PostgreSQL drops the id sequence with its table.
+        Statement order is required. MySQL rejects DROP COLUMN while a foreign key uses the column, and rejects
+        dropping the only index backing a foreign key. Hence foreign key, then unique index, then column - and the
+        counter table before legacy_quiz_statistic, which it references. PostgreSQL drops the id sequence with its
+        table and re-creates it from the identity column on rollback.
     -->
 
     <!-- exercise.legacy_quiz_point_statistic_id, foreign key into legacy_quiz_statistic -->
@@ -22,6 +34,11 @@
             <foreignKeyConstraintExists foreignKeyName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
         </preConditions>
         <dropForeignKeyConstraint baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
+        <rollback>
+            <addForeignKeyConstraint baseColumnNames="legacy_quiz_point_statistic_id" baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42"
+                                     deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
+                                     referencedTableName="legacy_quiz_statistic" validate="true"/>
+        </rollback>
     </changeSet>
 
     <!-- Explicit name added by 20260728220917-14, replacing three environment-specific auto-generated names. -->
@@ -30,6 +47,9 @@
             <indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/>
         </preConditions>
         <dropUniqueConstraint tableName="exercise" constraintName="uk_exercise_quiz_point_statistic"/>
+        <rollback>
+            <addUniqueConstraint tableName="exercise" columnNames="legacy_quiz_point_statistic_id" constraintName="uk_exercise_quiz_point_statistic"/>
+        </rollback>
     </changeSet>
 
     <changeSet id="20260910120000-03-drop-exercise-legacy-quiz-point-statistic-id" author="Nihad74">
@@ -37,6 +57,11 @@
             <columnExists tableName="exercise" columnName="legacy_quiz_point_statistic_id"/>
         </preConditions>
         <dropColumn tableName="exercise" columnName="legacy_quiz_point_statistic_id"/>
+        <rollback>
+            <addColumn tableName="exercise">
+                <column name="legacy_quiz_point_statistic_id" type="BIGINT"/>
+            </addColumn>
+        </rollback>
     </changeSet>
 
     <!-- quiz_question.legacy_quiz_question_statistic_id, foreign key into legacy_quiz_statistic -->
@@ -46,6 +71,11 @@
             <foreignKeyConstraintExists foreignKeyName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
         </preConditions>
         <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
+        <rollback>
+            <addForeignKeyConstraint baseColumnNames="legacy_quiz_question_statistic_id" baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"
+                                     deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
+                                     referencedTableName="legacy_quiz_statistic" validate="true"/>
+        </rollback>
     </changeSet>
 
     <changeSet id="20260910120000-05-drop-quiz-question-statistic-unique-index" author="Nihad74">
@@ -53,6 +83,11 @@
             <indexExists tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
         </preConditions>
         <dropIndex tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
+        <rollback>
+            <createIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question" unique="true">
+                <column name="legacy_quiz_question_statistic_id"/>
+            </createIndex>
+        </rollback>
     </changeSet>
 
     <changeSet id="20260910120000-06-drop-quiz-question-legacy-statistic-id" author="Nihad74">
@@ -60,21 +95,91 @@
             <columnExists tableName="quiz_question" columnName="legacy_quiz_question_statistic_id"/>
         </preConditions>
         <dropColumn tableName="quiz_question" columnName="legacy_quiz_question_statistic_id"/>
+        <rollback>
+            <addColumn tableName="quiz_question">
+                <column name="legacy_quiz_question_statistic_id" type="BIGINT"/>
+            </addColumn>
+        </rollback>
     </changeSet>
 
-    <!-- Counter table first: it holds the last foreign key into legacy_quiz_statistic, and nothing references it. -->
+    <!--
+        Counter table first: it holds the last foreign key into legacy_quiz_statistic, and nothing references it. Its
+        six surviving columns are what 20260707080319-16g to 16l left behind; the other six were dropped there when the
+        per-question counters moved into JSON.
+    -->
     <changeSet id="20260910120000-07-drop-legacy-quiz-statistic-counter" author="Nihad74">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="legacy_quiz_statistic_counter"/>
         </preConditions>
         <dropTable tableName="legacy_quiz_statistic_counter"/>
+        <rollback>
+            <createTable tableName="legacy_quiz_statistic_counter">
+                <column name="discriminator" type="varchar(31)">
+                    <constraints nullable="false"/>
+                </column>
+                <column autoIncrement="true" name="id" type="bigint">
+                    <constraints nullable="false" primaryKey="true"/>
+                </column>
+                <column name="rated_counter" type="int"/>
+                <column name="un_rated_counter" type="int"/>
+                <column name="points" type="double"/>
+                <column name="quiz_point_statistic_id" type="bigint"/>
+            </createTable>
+            <createIndex indexName="FK3bqk45run356e20sqmf3sak1o" tableName="legacy_quiz_statistic_counter">
+                <column name="quiz_point_statistic_id"/>
+            </createIndex>
+            <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="legacy_quiz_statistic_counter"
+                                     constraintName="FK3bqk45run356e20sqmf3sak1o" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT"
+                                     onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="legacy_quiz_statistic" validate="true"/>
+        </rollback>
     </changeSet>
 
-    <changeSet id="20260910120000-08-drop-legacy-quiz-statistic" author="Nihad74">
+    <!--
+        Split by dbms only because of the counters column that 20260707080319-5a/5b added: json on MySQL and H2, jsonb
+        on PostgreSQL. A single rollback cannot spell both.
+    -->
+    <changeSet id="20260910120000-08-drop-legacy-quiz-statistic-mysql" author="Nihad74" dbms="mysql,h2">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="legacy_quiz_statistic"/>
         </preConditions>
         <dropTable tableName="legacy_quiz_statistic"/>
+        <rollback>
+            <createTable tableName="legacy_quiz_statistic">
+                <column name="discriminator" type="varchar(31)">
+                    <constraints nullable="false"/>
+                </column>
+                <column autoIncrement="true" name="id" type="bigint">
+                    <constraints nullable="false" primaryKey="true"/>
+                </column>
+                <column name="participants_rated" type="int"/>
+                <column name="participants_unrated" type="int"/>
+                <column name="rated_correct_counter" type="int"/>
+                <column name="un_rated_correct_counter" type="int"/>
+                <column name="counters" type="json"/>
+            </createTable>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260910120000-09-drop-legacy-quiz-statistic-postgresql" author="Nihad74" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="legacy_quiz_statistic"/>
+        </preConditions>
+        <dropTable tableName="legacy_quiz_statistic"/>
+        <rollback>
+            <createTable tableName="legacy_quiz_statistic">
+                <column name="discriminator" type="varchar(31)">
+                    <constraints nullable="false"/>
+                </column>
+                <column autoIncrement="true" name="id" type="bigint">
+                    <constraints nullable="false" primaryKey="true"/>
+                </column>
+                <column name="participants_rated" type="int"/>
+                <column name="participants_unrated" type="int"/>
+                <column name="rated_correct_counter" type="int"/>
+                <column name="un_rated_correct_counter" type="int"/>
+                <column name="counters" type="jsonb"/>
+            </createTable>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>
