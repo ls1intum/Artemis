@@ -15,7 +15,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faFileAlt, faPlay, faPlus, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -27,6 +27,9 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -42,6 +45,9 @@ import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model'
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
 })
 export class TestRunManagementComponent implements OnInit {
@@ -79,6 +85,11 @@ export class TestRunManagementComponent implements OnInit {
     // Icons
     faSort = faSort;
     faTimes = faTimes;
+    faPlus = faPlus;
+    faCheck = faCheck;
+    faPlay = faPlay;
+    faFileAlt = faFileAlt;
+    faClock = faClock;
 
     ngOnInit(): void {
         this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), true).subscribe({

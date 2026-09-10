@@ -909,6 +909,11 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.unsavedChanges.set(true);
     }
 
+    // Bound once and handed to the question components by reference. `onSelectionChanged.bind(this)` in the template
+    // created a new function on every change-detection pass, so every question component saw a changed input on every
+    // pass. Three bindings per question made this the busiest churn site in the participation view.
+    readonly selectionChangedCallback = () => this.onSelectionChanged();
+
     triggerSave(resetAutoSaveTimer = true): void {
         if (resetAutoSaveTimer) {
             this.autoSaveTimer = 0;

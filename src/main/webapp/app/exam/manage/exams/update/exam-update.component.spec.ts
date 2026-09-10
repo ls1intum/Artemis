@@ -1,3 +1,4 @@
+import { EmbeddedViewRef } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -18,8 +19,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -34,7 +36,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -63,8 +64,23 @@ describe('ExamUpdateComponent', () => {
         { path: 'course-management/:courseId/exams/:examId/import', component: DummyComponent },
     ];
 
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderActions(): HTMLElement {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = service.actionsTemplate();
+        expect(template, 'the exam-update page does not project a title bar actions template').toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        const host = document.createElement('div');
+        view.rootNodes.forEach((node) => host.appendChild(node));
+        return host;
+    }
+
     afterEach(() => {
         vi.restoreAllMocks();
+        projectedViews.splice(0).forEach((view) => view.destroy());
     });
 
     describe('create and edit exams', () => {
@@ -72,6 +88,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises = new Exam();
             examWithoutExercises.id = 1;
             examWithoutExercises.examMode = ExamMode.REAL;
+            examWithoutExercises.title = 'Test Exam';
             course = new Course();
             course.id = 1;
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -147,6 +164,23 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
             expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.workingTime).toBe(0);
+        });
+
+        it('should show the title validation message for a missing or whitespace-only title and hide it once a title is set', () => {
+            fixture.detectChanges();
+            const titleValidationSelector = By.css('[data-testid="title-validation-message"]');
+
+            const examWithBlankTitle = deepClone(component.exam);
+            examWithBlankTitle.title = '   ';
+            component.exam = examWithBlankTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).not.toBeNull();
+
+            const examWithTitle = deepClone(component.exam);
+            examWithTitle.title = 'A valid exam title';
+            component.exam = examWithTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
         });
 
         it('should validate the dates correctly', () => {
@@ -260,6 +294,7 @@ describe('ExamUpdateComponent', () => {
         it('should validate the example solution publication date correctly', () => {
             const newExamWithoutExercises = new Exam();
             newExamWithoutExercises.id = 2;
+            newExamWithoutExercises.title = 'Test Exam';
             component.exam = newExamWithoutExercises;
             component.timelineStatus.set({ valid: true, empty: false });
 
@@ -281,6 +316,7 @@ describe('ExamUpdateComponent', () => {
         it('should validate the exam summary publication date correctly', () => {
             const newExam = new Exam();
             newExam.id = 3;
+            newExam.title = 'Test Exam';
             component.exam = newExam;
             component.timelineStatus.set({ valid: true, empty: false });
 
@@ -317,6 +353,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const calendarService = TestBed.inject(CalendarService);
             const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
@@ -340,6 +378,8 @@ describe('ExamUpdateComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving()).toBe(false);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -461,6 +501,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should create', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const navigateSpy = vi.spyOn(router, 'navigate');
             examWithoutExercises.id = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -482,6 +524,8 @@ describe('ExamUpdateComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(createSpy).toHaveBeenCalledOnce();
             expect(component.isSaving()).toBe(false);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
         });
 
         it('should correctly catch HTTPError when creating the examWithoutExercises', async () => {
@@ -507,15 +551,20 @@ describe('ExamUpdateComponent', () => {
             createStub.mockRestore();
         });
 
-        it('should call the back method on the nav util service on previousState', () => {
-            const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
-            const spy = vi.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation(() => undefined);
+        it('should call router navigate on resetToPreviousState', () => {
+            const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             component.course = course;
             component.exam = examWithoutExercises;
             examWithoutExercises.id = 1;
             component.resetToPreviousState();
-            expect(spy).toHaveBeenCalledOnce();
-            expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], examWithoutExercises.id!.toString());
+            expect(routerSpy).toHaveBeenCalledOnce();
+            expect(routerSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examWithoutExercises.id]);
+
+            routerSpy.mockClear();
+            delete (examWithoutExercises as any).id;
+            component.resetToPreviousState();
+            expect(routerSpy).toHaveBeenCalledOnce();
+            expect(routerSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams']);
         });
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
@@ -657,30 +706,37 @@ describe('ExamUpdateComponent', () => {
             expect(component.validateWorkingTime).toBe(false);
         });
 
-        it('should bind correct title into jhi-button and compute correct save title text', () => {
+        it('should compute correct save title text', () => {
             fixture.detectChanges();
             expect(component.saveTitle).toBe('entity.action.save');
-            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.title()).toBe('entity.action.save');
+            const actionsHost = renderActions();
+            const button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button).toBeTruthy();
         });
 
-        it('should bind isSaving into jhi-button isLoading', () => {
+        it('should disable save button when isSaving is true', async () => {
+            const now = dayjs().startOf('minute');
+            examWithoutExercises.visibleDate = now.add(1, 'hours');
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+
             fixture.detectChanges();
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
 
             component.isSaving.set(true);
-            fixture.changeDetectorRef.detectChanges();
-
-            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading()).toBe(true);
+            let actionsHost = renderActions();
+            let button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
 
             component.isSaving.set(false);
-            fixture.changeDetectorRef.detectChanges();
-
-            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading()).toBe(false);
+            actionsHost = renderActions();
+            button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(false);
         });
 
-        it('should toggle save button disabled state based on form validity and configuration validity', async () => {
+        it('should toggle save button disabled state based on form validity and configuration validity', () => {
             const now = dayjs().startOf('minute');
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
@@ -693,37 +749,50 @@ describe('ExamUpdateComponent', () => {
             const invalidSpy = vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
 
-            // The `[disabled]` binding reads the non-signal `isValidConfiguration` getter and the `editForm.form.invalid`
-            // template ref. Under Angular's zoneless change detection, mutating the (non-signal) exam object does not mark
-            // the view for refresh, so `detectChanges()` alone leaves the host binding stale. `markForCheck()` dirties the
-            // view and `whenStable()` flushes the zoneless scheduler so the binding is re-evaluated.
-            const refreshBinding = async () => {
-                fixture.changeDetectorRef.markForCheck();
-                await fixture.whenStable();
-            };
-
             //Step 1: Test case where the configuration and the form are valid
             expect(component.isValidConfiguration).toBe(true);
-            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBe(false);
+            let actionsHost = renderActions();
+            let button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(false);
 
             // Step 2: Test case where the configuration is invalid
             timeline.startDate.set(now.add(5, 'hours'));
-            await refreshBinding();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isValidConfiguration).toBe(false);
-            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBe(true);
+            actionsHost = renderActions();
+            button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
 
             // Step 3: Test case where the configuration is valid again, but the form is invalid
             timeline.startDate.set(now.add(2, 'hours'));
             timeline.endDate.set(now.add(3, 'hours'));
             invalidSpy.mockReturnValue(true);
-            await refreshBinding();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isValidConfiguration).toBe(true);
-            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled()).toBe(true);
+            actionsHost = renderActions();
+            button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
+        });
+
+        it('should disable the save button when the title is only whitespace', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.title = '   ';
+
+            fixture.changeDetectorRef.detectChanges();
+            // Force the reactive form itself to report valid, so only the whitespace-only title can disable the save button
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBe(false);
+            const actionsHost = renderActions();
+            const button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
         });
 
         it('should open the confirmation dialog when dates changed for an ongoing exam', async () => {
@@ -1016,6 +1085,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should perform import of an examWithoutExercises with exercises successfully', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
             const alertSpy = vi.spyOn(alertService, 'error');
@@ -1034,6 +1105,8 @@ describe('ExamUpdateComponent', () => {
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
             expect(alertSpy).not.toHaveBeenCalled();
         });
 
@@ -1155,11 +1228,12 @@ describe('ExamUpdateComponent', () => {
             expect(alertSpy).toHaveBeenCalledOnce();
         });
 
-        it('should bind correct title into jhi-button and compute correct save title text', () => {
+        it('should compute correct save title text when importing', () => {
             fixture.detectChanges();
             expect(component.saveTitle).toBe('entity.action.import');
-            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.title()).toBe('entity.action.import');
+            const actionsHost = renderActions();
+            const button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button).toBeTruthy();
         });
     });
 });

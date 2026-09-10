@@ -43,7 +43,29 @@ export abstract class Submission implements BaseEntity {
  * @param submission
  */
 export function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
-    return submission?.results?.last();
+    return getNewestResult(submission?.results);
+}
+
+/**
+ * The newest of the given results, which is the one with the highest id.
+ *
+ * Deliberately not the last element: the server holds a submission's results in a set, so their order in the response
+ * is not something the client can build on. A result without an id has just been created here and has not reached the
+ * server yet, which makes it the newest one.
+ *
+ * @param results the results to pick from, in any order
+ * @returns the newest result, or undefined if there is none
+ */
+export function getNewestResult(results: (Result | undefined)[] | undefined): Result | undefined {
+    return results?.reduce<Result | undefined>((newest, candidate) => {
+        if (!candidate) {
+            return newest;
+        }
+        if (!newest || candidate.id === undefined) {
+            return candidate;
+        }
+        return newest.id === undefined || newest.id > candidate.id ? newest : candidate;
+    }, undefined);
 }
 
 /**
@@ -54,10 +76,10 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    if (submission?.results && submission?.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
-        return submission.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
-    }
-    return undefined;
+    // Matched on the result's own correction round. This used to index into the results array, which only worked because
+    // the server padded the array with nulls for rounds the tutor had not assessed. Nothing has to line up positionally
+    // any more, so a missing round is simply a result that is not there.
+    return submission?.results?.find((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && result?.correctionRound === correctionRound);
 }
 
 /**
@@ -72,8 +94,13 @@ export function getSubmissionResultById(submission: Submission | undefined, resu
 }
 
 /**
- * Used to set / override the latest result in the results list, and set / override the
- * var latestResult
+ * Sets the given result as the submission's latest result and makes sure it is part of the results list.
+ *
+ * A result that is already in the list (same object or same id) is updated in place, so the other results stay where
+ * they are. The server does not order results by id, so the last element is not necessarily the newest one, and
+ * overwriting it would drop an older result from the history. A result without an id is a draft the client just
+ * created; it replaces the last entry, as it always did, so a draft never sits next to the result it stands in for.
+ * A result with an id that is not in the list yet is appended, so a persisted result is never dropped.
  *
  * @param submission
  * @param result
@@ -83,11 +110,17 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
         return;
     }
 
-    if (submission.results?.length) {
-        submission.results[submission.results.length - 1] = result;
+    const results = submission.results ?? [];
+    const index = results.findIndex((existing) => existing === result || (existing?.id !== undefined && existing.id === result.id));
+    if (index >= 0) {
+        results[index] = result;
+    } else if (result.id === undefined && results.length) {
+        // A draft the client just created replaces the result it stands in for, so the two never sit side by side.
+        results[results.length - 1] = result;
     } else {
-        submission.results = [result];
+        results.push(result);
     }
+    submission.results = results;
     // make sure relationship is correct
     result.submission = submission;
     submission.latestResult = result;
@@ -97,9 +130,16 @@ export function setSubmissionResultByCorrectionRound(submission: Submission, res
     if (!submission || !result || !submission.results) {
         return;
     }
-    submission.results[correctionRound] = result;
+    result.correctionRound = correctionRound;
+    // Replace the result of that round if the submission already carries one, rather than writing to a fixed position.
+    const existingIndex = submission.results.findIndex((existing) => existing?.correctionRound === correctionRound);
+    if (existingIndex >= 0) {
+        submission.results[existingIndex] = result;
+    } else {
+        submission.results = [...submission.results, result];
+    }
 
-    if (submission.results.length === correctionRound + 1) {
+    if (correctionRound === Math.max(...submission.results.map((existing) => existing?.correctionRound ?? -1))) {
         submission.latestResult = result;
     }
 }

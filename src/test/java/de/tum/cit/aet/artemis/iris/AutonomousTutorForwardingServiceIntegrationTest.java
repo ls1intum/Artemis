@@ -155,7 +155,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewMessage_skipsWhenUserChoseNoAi() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
 
         Post post = createPostInChannel(student, "Explain recursion.");
@@ -204,7 +204,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewAnswerMessage_skipsWhenReplyAuthorChoseNoAi() {
         Post post = createPostInChannel(student, "What is inheritance?");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
         AnswerPost answerPost = createAnswerPost(post, student2, "It is a mechanism for code reuse.");
         channel.setCourse(course);
@@ -220,7 +220,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewAnswerMessage_skipsWhenParentPostAuthorChoseNoAi() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createPostInChannel(student, "Explain encapsulation.");
         AnswerPost answerPost = createAnswerPost(post, student2, "It hides internal state.");
@@ -287,7 +287,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         Post post = createPostInChannel(student, "How do generics work?");
 
         // student2 opts out of AI and replies first
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
         createAnswerPost(post, student2, "This should be redacted.");
 

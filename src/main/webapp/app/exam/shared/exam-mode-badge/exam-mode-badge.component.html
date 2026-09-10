@@ -1,3 +1,13 @@
-<tum-ui-tag [severity]="isRealExam() ? 'success' : 'info'" class="text-nowrap" data-testid="exam-mode-tag">
-    <span [class.text-xs]="!isLarge()" [class.text-xl]="isLarge()" [jhiTranslate]="translationKey()"></span>
+<tum-ui-tag class="inline-flex items-center" severity="secondary" data-testid="exam-mode-tag">
+    @if (examMode() !== ExamMode.REAL) {
+        <span class="flex items-center gap-1 font-bold text-state-info text-xs">
+            <fa-icon [icon]="faVial" />
+            <span [jhiTranslate]="translationKey()"></span>
+        </span>
+    } @else {
+        <span class="flex items-center gap-1 font-bold text-state-success text-xs">
+            <fa-icon [icon]="faGraduationCap" />
+            <span jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
+        </span>
+    }
 </tum-ui-tag>

@@ -694,8 +694,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         oldResult.setExerciseId(examTextExercise.getId());
         oldResult.setFeedbacks(oldFeedbacks);
 
+        // Copying the feedback saves the new result, so it needs the submission it belongs to.
+        Submission submission = participationUtilService.addSubmission(examTextExercise, new TextSubmission(), TEST_PREFIX + "student1");
         Result newResult = new Result();
         newResult.setExerciseId(examTextExercise.getId());
+        newResult.setSubmission(submission);
 
         Set<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 

@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
@@ -85,6 +87,9 @@ public class CourseStudentDataExportService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseStudentDataExportService.class);
 
+    /** Everything an exam title may not contribute to a file name, replaced by an underscore. */
+    private static final Pattern UNSAFE_TITLE_CHARACTER = Pattern.compile("[^a-zA-Z0-9-_]");
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ParticipationRepository participationRepository;
@@ -113,11 +118,13 @@ public class CourseStudentDataExportService {
 
     private final ObjectMapper objectMapper;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            ObjectMapper objectMapper) {
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -131,6 +138,7 @@ public class CourseStudentDataExportService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -218,6 +226,13 @@ public class CourseStudentDataExportService {
                 log.info("No participations found for course {}", courseId);
                 return Optional.empty();
             }
+
+            // the automatic test-case and SCA feedback of programming results lives in JSON-ignored typed
+            // tables - attach the synthesized legacy views (two grouped queries for all results) so the
+            // exported CSV keeps containing the automatic feedback
+            List<Result> latestResults = participations.stream().map(this::getLatestSubmission).filter(Objects::nonNull).map(this::getLatestResult).filter(Objects::nonNull)
+                    .toList();
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(latestResults);
 
             List<String> lines = new ArrayList<>();
             lines.add("ExerciseId,ExerciseTitle,ParticipantLogin,ParticipantName,ParticipationType,SubmissionDate,Score,Rated,Successful,FeedbackCount,FeedbackDetails");
@@ -889,7 +904,7 @@ public class CourseStudentDataExportService {
             lines.add(String.join(",", createStatisticsRow("Std Dev", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateStandardDeviation,
                     allOverallPoints, maxPointsDouble, course)));
 
-            String sanitizedExamTitle = examScores.title() != null ? examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_") : "unnamed";
+            String sanitizedExamTitle = examScores.title() != null ? UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_") : "unnamed";
             Path outputFile = outputDir.resolve("exam-scores-" + examId + "-" + sanitizedExamTitle + ".csv");
             exportedFiles.add(writeLinesToFile(lines, outputFile));
 
@@ -1072,7 +1087,7 @@ public class CourseStudentDataExportService {
             // Score interval distribution
             writeIntervalDistributionRows(lines, overallScores, totalStudents);
 
-            String sanitizedExamTitle = examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_");
+            String sanitizedExamTitle = UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_");
             Path outputFile = outputDir.resolve("exam-" + examId + "-" + sanitizedExamTitle + "-grade-distribution.csv");
             return Optional.of(writeLinesToFile(lines, outputFile));
         }

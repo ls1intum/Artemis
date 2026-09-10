@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -23,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +46,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Info;
+import com.github.dockerjava.api.model.PullResponseItem;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -92,7 +95,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         doReturn(defaultPullImageCmd).when(defaultPullImageCmd).withPlatform(anyString());
         BuildAgentDockerService.MyPullImageResultCallback defaultCallback = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
         doReturn(defaultCallback).when(defaultPullImageCmd).exec(any(BuildAgentDockerService.MyPullImageResultCallback.class));
-        lenient().when(defaultCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        lenient().when(defaultCallback.awaitFinished(anyLong(), any(TimeUnit.class))).thenReturn(true);
     }
 
     @Test
@@ -166,9 +169,9 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     @Test
     void testPullDockerImageFailsFastWhenPullMakesNoProgress() throws InterruptedException, IOException {
         var build = mockPendingImagePull();
-        // A pull that is not getting through at all: the await never completes and the daemon reports nothing, so the
+        // A pull that is not getting through at all: it never finishes and the daemon reports nothing, so the
         // progress counter never moves.
-        when(pullImageCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(false);
+        when(pullImageCallback.awaitFinished(anyLong(), any(TimeUnit.class))).thenReturn(false);
         when(pullImageCallback.progressCount()).thenReturn(0L);
         int originalStallTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullStallTimeoutSeconds");
         ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", 1);
@@ -194,7 +197,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     void testPullDockerImageFailsWhenAProgressingPullExceedsTheTotalTimeout() throws InterruptedException {
         var build = mockPendingImagePull();
         // A pull that keeps reporting progress but never arrives, so only the overall budget can stop it.
-        when(pullImageCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(false);
+        when(pullImageCallback.awaitFinished(anyLong(), any(TimeUnit.class))).thenReturn(false);
         AtomicLong reportedProgress = new AtomicLong();
         when(pullImageCallback.progressCount()).thenAnswer(invocation -> reportedProgress.incrementAndGet());
         int originalTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullTimeoutSeconds");
@@ -214,6 +217,119 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
+    void testPullDockerImageClosesCallbackAndRestoresInterruptStatusWhenInterrupted() throws InterruptedException, IOException {
+        var build = mockPendingImagePull();
+        doThrow(new InterruptedException()).when(pullImageCallback).awaitFinished(anyLong(), any(TimeUnit.class));
+
+        try {
+            assertThatThrownBy(() -> buildAgentDockerService.pullDockerImage(build, buildLogsMap)).isInstanceOf(LocalCIException.class).rootCause()
+                    .isInstanceOf(InterruptedException.class);
+
+            verify(pullImageCallback).close();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            assertThat(buildAgentDockerService.isImagePullInProgress(build.id())).isFalse();
+        }
+        finally {
+            Thread.interrupted();
+            buildLogsMap.removeBuildLogs(build.id());
+        }
+    }
+
+    @Test
+    void testProgressingPullThatOutlastsThePollIntervalIsNotAborted() throws Exception {
+        // Regression test: a healthy pull that keeps reporting progress and takes longer than a single poll interval must
+        // run to completion. Before the fix, awaitPullCompletion sliced the wait with docker-java's
+        // ResultCallbackTemplate.awaitCompletion(timeout, unit), which closes (aborts) the pull stream in its finally
+        // block on every call. The first timed-out slice therefore killed any pull longer than the poll interval, and the
+        // build failed with "Could not pull Docker image ...". This test drives a real callback, so it exercises that
+        // real docker-java behaviour rather than a mock.
+
+        // Shorten the slice so the pull only has to outlast a few tens of milliseconds instead of the 5s default.
+        long originalPollInterval = (long) ReflectionTestUtils.getField(buildAgentDockerService, "pullProgressPollIntervalMillis");
+        ReflectionTestUtils.setField(buildAgentDockerService, "pullProgressPollIntervalMillis", 20L);
+
+        AtomicBoolean pullCompleted = new AtomicBoolean(false);
+        AtomicBoolean streamClosed = new AtomicBoolean(false);
+        AtomicInteger inspectCount = new AtomicInteger();
+
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        InspectImageResponse pulledImage = new InspectImageResponse().withArch("amd64");
+        // The first two inspects miss, which is what drives the code into the pull. The inspect after the pull only finds
+        // the image if the pull was actually allowed to finish - a prematurely aborted pull leaves nothing behind, exactly
+        // as on a real daemon.
+        doAnswer(invocation -> {
+            if (inspectCount.incrementAndGet() <= 2) {
+                throw new NotFoundException("");
+            }
+            if (pullCompleted.get()) {
+                return pulledImage;
+            }
+            throw new NotFoundException("");
+        }).when(inspectImageCmd).exec();
+
+        var realCallback = new BuildAgentDockerService.MyPullImageResultCallback();
+        PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
+        doReturn(pullImageCmd).when(pullImageCmd).withPlatform(anyString());
+
+        Thread pullFeeder = new Thread(() -> {
+            try {
+                // Report progress for longer than one poll interval, then finish successfully.
+                for (int i = 0; i < 8 && !streamClosed.get(); i++) {
+                    realCallback.onNext(progressItem("Downloading layer " + i));
+                    Thread.sleep(15);
+                }
+                if (!streamClosed.get()) {
+                    realCallback.onNext(progressItem("Status: Downloaded newer image for test-image-name"));
+                    pullCompleted.set(true);
+                    realCallback.onComplete();
+                }
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }, "test-pull-feeder");
+
+        doAnswer(invocation -> {
+            // Mirror the real daemon: the pull starts on exec and reports back through the callback. onStart wires the
+            // stream docker-java closes on abort, so the feeder can tell when the pull was cut short.
+            realCallback.onStart(() -> streamClosed.set(true));
+            pullFeeder.start();
+            return realCallback;
+        }).when(pullImageCmd).exec(any(BuildAgentDockerService.MyPullImageResultCallback.class));
+
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
+        BuildAgentDTO buildAgent = new BuildAgentDTO("buildagent1", "address1", "buildagent1");
+        var build = new BuildJobQueueItem("progressing-pull-job", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+
+        try {
+            buildAgentDockerService.pullDockerImage(build, buildLogsMap);
+
+            assertThat(pullCompleted).as("the pull was allowed to run to completion instead of being aborted mid-pull").isTrue();
+            assertThat(buildAgentDockerService.isImagePullInProgress(build.id())).isFalse();
+        }
+        finally {
+            pullFeeder.interrupt();
+            pullFeeder.join(1000);
+            ReflectionTestUtils.setField(buildAgentDockerService, "pullProgressPollIntervalMillis", originalPollInterval);
+            buildLogsMap.removeBuildLogs(build.id());
+        }
+    }
+
+    /**
+     * Builds a pull response item carrying the given status, the way the Docker daemon reports pull progress.
+     *
+     * @param status the status line, e.g. a layer download step or the final success message
+     * @return a pull response item with that status
+     */
+    private static PullResponseItem progressItem(String status) {
+        PullResponseItem item = new PullResponseItem();
+        ReflectionTestUtils.setField(item, "status", status);
+        return item;
+    }
+
+    @Test
     void testNonPositivePullStallTimeoutIsRejectedAtStartup() {
         int originalStallTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullStallTimeoutSeconds");
         try {
@@ -230,7 +346,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     void testImagePullIsVisibleWhileItIsRunning() throws InterruptedException {
         var build = mockPendingImagePull();
         AtomicBoolean pullInProgressDuringPull = new AtomicBoolean(false);
-        when(pullImageCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenAnswer(invocation -> {
+        when(pullImageCallback.awaitFinished(anyLong(), any(TimeUnit.class))).thenAnswer(invocation -> {
             pullInProgressDuringPull.set(buildAgentDockerService.isImagePullInProgress(build.id()));
             return true;
         });

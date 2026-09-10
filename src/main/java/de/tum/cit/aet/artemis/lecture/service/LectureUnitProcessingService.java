@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,9 +10,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
@@ -45,6 +47,12 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 public class LectureUnitProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
+
+    /** Everything a lecture unit name read off an outline slide may not contain. */
+    private static final Pattern UNSAFE_UNIT_NAME_CHARACTER = Pattern.compile("[^a-zA-Z0-9\\s()_-]");
+
+    /** Leading whitespace of a lecture unit name. */
+    private static final Pattern LEADING_WHITESPACE = Pattern.compile("^\\s*");
 
     private final FileService fileService;
 
@@ -203,8 +211,8 @@ public class LectureUnitProcessingService {
     }
 
     private boolean slideContainsKeyphrase(String slideText, List<String> keyphrasesList) {
-        String lowerCaseSlideText = slideText.toLowerCase();
-        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
+        String lowerCaseSlideText = slideText.toLowerCase(Locale.ROOT);
+        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase(Locale.ROOT)));
     }
 
     /**
@@ -244,8 +252,12 @@ public class LectureUnitProcessingService {
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
         String sanitisedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path filePath = FilePathConverter.getTempFilePath().resolve(FileUtil.generateFilename(prefix, sanitisedFilename, false));
-        FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
+        Path filePath = FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), FileUtil.generateFilename(prefix, sanitisedFilename, false));
+        // The containment check above is lexical, so it cannot see a symlink planted at the destination. Creating the
+        // file exclusively is what keeps the write inside the temp directory.
+        try (InputStream inputStream = file.getInputStream()) {
+            FileUtil.writeNewFileElseThrow(inputStream, filePath);
+        }
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
     }
@@ -259,7 +271,9 @@ public class LectureUnitProcessingService {
      */
     public Path getPathForTempFilename(long lectureId, String filename) {
         String fullFilename = "Temp_" + lectureId + "_" + FileUtil.sanitizeFilename(filename);
-        return FilePathConverter.getTempFilePath().resolve(fullFilename);
+        // The filename reaches this method straight from a path variable. Sanitising it already removes every path
+        // separator, but the containment check is what proves the result cannot leave the temp directory.
+        return FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), fullFilename);
     }
 
     /**
@@ -289,7 +303,8 @@ public class LectureUnitProcessingService {
                     String[] lines = slideText.split("\r\n|\r|\n");
 
                     // if it's the outline slide it will get the next bullet point as unit name.
-                    String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
+                    String cleanedLine = UNSAFE_UNIT_NAME_CHARACTER.matcher(lines[outlineCount + 1]).replaceAll("");
+                    String unitName = LEADING_WHITESPACE.matcher(cleanedLine).replaceFirst("");
                     outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
 
                     updatePreviousUnitEndPage(outlineCount, outlineMap, index);

@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -720,18 +721,18 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment())).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
         AttachmentVideoUnit updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnit.getId());
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalAttachmentVersion);
     }
 
     private void persistAttachmentVideoUnitWithLecture() {
-        lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
+        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentVideoUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);
-        this.attachmentVideoUnit = (AttachmentVideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream()
-                .findFirst().orElseThrow();
+        this.attachmentVideoUnit = (AttachmentVideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst()
+                .orElseThrow();
     }
 
     @Test
@@ -1028,5 +1029,57 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         persistAttachmentVideoUnitWithLecture();
         attachmentVideoUnit.setVideoSource("https://vimeo.com/123456789");
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isOk());
+    }
+
+    // The videoSource is rendered into an <iframe src> for every viewer of the lecture, so a scheme that would execute
+    // there is refused on the way in. Without this the client would be the only thing standing between an editor and
+    // stored script execution in a student's session.
+    @ParameterizedTest
+    @ValueSource(strings = { "javascript:alert(1)", "JavaScript:alert(1)", "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", "vbscript:msgbox(1)",
+            "file:///etc/passwd" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_nonEmbeddableScheme_shouldReturnBadRequest(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "javascript:alert(1)", "data:text/html,<script>alert(1)</script>" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_nonEmbeddableScheme_shouldReturnBadRequest(String videoSource) throws Exception {
+        persistAttachmentVideoUnitWithLecture();
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_httpUrl_shouldCreate() throws Exception {
+        attachmentVideoUnit.setVideoSource("http://live.rbg.tum.de/w/course/1");
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+    }
+
+    // A browser strips tabs and line breaks out of a URL before parsing it, so a scheme split across one of them
+    // reaches the page whole. The scheme check has to see what the browser will see.
+    @ParameterizedTest
+    @ValueSource(strings = { "java\nscript:alert(1)", "java\tscript:alert(1)", "java\rscript:alert(1)", " javascript:alert(1)" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_schemeHiddenByControlCharacters_shouldReturnBadRequest(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidVideoSourceScheme"));
+    }
+
+    // Validating the scheme must not turn into validating the whole URL. A recording link with a space or an umlaut in
+    // its path is ordinary, was always accepted, and has nothing to do with the scheme.
+    @ParameterizedTest
+    @ValueSource(strings = { "https://live.rbg.tum.de/w/Einführung in die Informatik/1", "https://live.rbg.tum.de/w/Übung/1", "https://example.org/a b c.mp4",
+            "https://example.org/video.mp4 " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_urlNeedingEncoding_shouldCreate(String videoSource) throws Exception {
+        attachmentVideoUnit.setVideoSource(videoSource);
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
     }
 }

@@ -9,7 +9,9 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -44,6 +46,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentInputDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadComplaintResponseInputDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadFeedbackDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadFeedbackInputDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadResultDTO;
@@ -71,9 +74,12 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
 
     private List<Feedback> exerciseWithSGI() throws Exception {
         exerciseUtilService.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
-        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
-                UpdateFileUploadExerciseDTO.of(afterReleaseFileUploadExercise), FileUploadExercise.class, HttpStatus.OK);
-        return ParticipationFactory.applySGIonFeedback(receivedFileUploadExercise);
+        FileUploadExerciseDTO receivedFileUploadExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
+                UpdateFileUploadExerciseDTO.of(afterReleaseFileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK);
+        assertThat(receivedFileUploadExercise.id()).isEqualTo(afterReleaseFileUploadExercise.getId());
+        afterReleaseFileUploadExercise
+                .setGradingCriteria(receivedFileUploadExercise.gradingCriteria().stream().map(gradingCriterionDTO -> gradingCriterionDTO.toEntity()).collect(Collectors.toSet()));
+        return ParticipationFactory.applySGIonFeedback(afterReleaseFileUploadExercise);
     }
 
     @Test
@@ -552,7 +558,10 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionWithoutSecondAssessment.id());
-        assertThat(assessedSubmissionList.getFirst().results().get(1).id()).isEqualTo(secondSubmittedManualResult.id());
+        // Only the result of the requested correction round comes back. The results used to be an ordered list whose
+        // position carried the round, so a tutor who had assessed only the second round produced a null at index 0.
+        assertThat(assessedSubmissionList.getFirst().results()).hasSize(1);
+        assertThat(assessedSubmissionList.getFirst().results().getFirst().id()).isEqualTo(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -579,14 +588,14 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(3);
-        Result firstResult = submission.getResults().getFirst();
+        Result firstResult = submission.getFirstResult();
         Result lastResult = submission.getLatestResult();
         request.delete(
                 "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+        assertThat(resultsInCreationOrder(submission).get(1)).isEqualTo(lastResult);
     }
 
     @Test
@@ -611,7 +620,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 + resultOfOtherSubmission.getId(), HttpStatus.BAD_REQUEST);
         submission1 = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission1.getId());
         assertThat(submission1.getResults()).hasSize(3);
-        assertThat(submission1.getResults().get(2)).isEqualTo(lastResult);
+        assertThat(resultsInCreationOrder(submission1).get(2)).isEqualTo(lastResult);
     }
 
     @Test
@@ -634,7 +643,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 HttpStatus.BAD_REQUEST);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+        assertThat(resultsInCreationOrder(submission).get(1)).isEqualTo(lastResult);
     }
 
     private static FileUploadAssessmentInputDTO assessmentInput(List<Feedback> feedbacks, String assessmentNote) {
@@ -651,5 +660,13 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
 
     private static FileUploadFeedbackDTO findByReference(List<FileUploadFeedbackDTO> feedbacks, String reference) {
         return feedbacks.stream().filter(f -> reference.equals(f.reference())).findFirst().orElseThrow();
+    }
+
+    /**
+     * The results of a submission in the order they were created. The submission's results are an unordered set, so a
+     * test that cares about the order of creation has to say so; ids ascend with creation.
+     */
+    private static List<Result> resultsInCreationOrder(Submission submission) {
+        return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
     }
 }

@@ -37,7 +37,7 @@
                 <hr class="mb-5" />
             }
             <jhi-programming-exercise-language
-                [programmingExercise]="programmingExercise"
+                [(programmingExercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
@@ -60,8 +60,10 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-                [lockedToGroup]="variantLock.locked()"
-                (lockedClick)="variantLock.openModal()"
+                [exercisePartOfExerciseGroup]="variantLock.locked()"
+                (editGroupDates)="variantLock.openModal()"
+                [editable]="!isSaving()"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
             />
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">

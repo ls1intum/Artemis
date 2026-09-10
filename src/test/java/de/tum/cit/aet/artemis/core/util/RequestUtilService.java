@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -192,7 +191,7 @@ public class RequestUtilService {
             return null;
         }
         assertThat(res.getResponse().containsHeader("location")).isTrue();
-        return new URI(Objects.requireNonNull(res.getResponse().getHeader("location")));
+        return new URI(res.getResponse().getHeader("location"));
     }
 
     public URI postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -203,7 +202,7 @@ public class RequestUtilService {
         content.setAll(jsonMap);
         MvcResult result = performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
-        return new URI(Objects.requireNonNull(result.getResponse().getHeader("location")));
+        return new URI(result.getResponse().getHeader("location"));
     }
 
     public void postFormWithoutLocation(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -434,7 +433,7 @@ public class RequestUtilService {
             return null;
         }
         // the header typically includes a suffix already, to prevent adding "...tmp", we use an empty string here
-        final var tmpFile = File.createTempFile(Objects.requireNonNull(res.getResponse().getHeader("filename")), "", tempPath.toFile());
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), "", tempPath.toFile());
         FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
@@ -646,9 +645,28 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
         restoreSecurityContext();
 
+        assertErrorKey(response, expectedErrorKey);
+    }
+
+    public void postAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
+        final var jsonBody = mapper.writeValueAsString(body);
+        final var response = performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+                .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
+        restoreSecurityContext();
+
+        assertErrorKey(response, expectedErrorKey);
+    }
+
+    private void assertErrorKey(MockHttpServletResponse response, String expectedErrorKey) throws Exception {
         final var fullErrorKey = "error." + expectedErrorKey;
         final var errorHeader = "X-" + APPLICATION_NAME + "-error";
-        assertThat(response.getHeader(errorHeader)).isEqualTo(fullErrorKey);
+        final var headerValue = response.getHeader(errorHeader);
+        if (headerValue != null) {
+            assertThat(headerValue).isEqualTo(fullErrorKey);
+        }
+        else {
+            assertThat(mapper.readTree(response.getContentAsString()).path("message").asText()).isEqualTo(fullErrorKey);
+        }
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
@@ -885,8 +903,8 @@ public class RequestUtilService {
     public static <V> MultiValueMap<String, String> parameters(Map<String, V> map) {
         MultiValueMap<String, String> multiMap = new LinkedMultiValueMap<>();
         map.forEach((key, value) -> {
-            Objects.requireNonNull(key, "paremeter key must not be null");
-            Objects.requireNonNull(value, "paremeter value must not be null");
+            assertThat(key).isNotNull();
+            assertThat(value).isNotNull();
             multiMap.add(key, value.toString());
         });
         return multiMap;

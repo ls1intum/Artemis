@@ -153,6 +153,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(ExamParticipationService, {
                     submissionSyncVersion: submissionSyncVersion.asReadonly(),
                     notifySubmissionSyncStateChanged: () => submissionSyncVersion.update((version) => version + 1),
+                    setSubmissionSaving: vi.fn(),
                 }),
                 MockProvider(ModelingSubmissionService),
                 MockProvider(ProgrammingSubmissionService),

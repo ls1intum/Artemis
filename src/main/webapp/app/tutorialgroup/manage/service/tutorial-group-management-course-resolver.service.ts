@@ -37,7 +37,7 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
             switchMap((course: Course) => {
                 if (!course.isAtLeastTutor) {
                     this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-                    void this.router.navigate(['/course-management']);
+                    void this.router.navigate(['/courses']);
                     return EMPTY;
                 }
                 if (course.tutorialGroupsConfiguration) {
@@ -51,7 +51,7 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                         void this.router.navigate(['/course-management', course.id, 'tutorial-groups-checklist']);
                     } else {
                         this.alertService.warning('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
-                        void this.router.navigate(['/course-management']);
+                        void this.router.navigate(['/courses']);
                     }
                     return EMPTY;
                 }
@@ -63,7 +63,7 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
             catchError((error: unknown) => {
                 if (error instanceof HttpErrorResponse && error.status === HttpStatusCode.Forbidden) {
                     this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-                    void this.router.navigate(['/course-management']);
+                    void this.router.navigate(['/courses']);
                     return EMPTY;
                 }
                 return throwError(() => error);

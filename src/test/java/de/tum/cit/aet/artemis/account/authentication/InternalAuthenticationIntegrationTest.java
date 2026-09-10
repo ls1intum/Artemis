@@ -16,6 +16,8 @@ import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -209,6 +211,30 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
         assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
+    }
+
+    /**
+     * The remember-me flag has to survive the login path, because carrying it in the token is what makes a session
+     * extendable. It used to be converted into a token lifetime in {@code JWTCookieService} and then dropped, so no token
+     * a real login produced carried the claim and no session was ever extended, while tests that built tokens directly
+     * still passed.
+     *
+     * @param rememberMe what the login form sent
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithAnonymousUser
+    void theRememberMeFlagReachesTheIssuedToken(boolean rememberMe) throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(rememberMe);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+
+        assertThat(tokenProvider.isRememberMeSession(response.getCookie("jwt").getValue())).isEqualTo(rememberMe);
     }
 
     @Test

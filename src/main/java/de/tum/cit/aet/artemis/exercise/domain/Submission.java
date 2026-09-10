@@ -2,14 +2,14 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -24,7 +24,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
@@ -88,12 +88,25 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
+     * Orders results by their id, putting a result that was not saved yet at the end: it has just been created, so it
+     * is the newest one. Without the null handling every lookup here would throw for an in-memory result.
+     */
+    private static final Comparator<Result> BY_ID = Comparator.comparing(Result::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+
+    /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
+     * <p>
+     * A set, not a list: this used to be an ordered list whose position carried the correction round, which meant every
+     * write in this area had to load and re-save the whole submission so that Hibernate could renumber the order
+     * column. The correction round now lives on {@link Result#getCorrectionRound()}, so nothing needs the position.
+     * <p>
+     * Ordered by id all the same. Nothing on the server depends on it, but the collection is serialized to the client,
+     * and a hash set would hand it the results in an order that can change between two requests for the same data.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn(name = "results_order")
+    @OrderBy("id")
     @JsonIgnoreProperties({ "submission", "participation" })
-    private List<Result> results = new ArrayList<>();
+    private Set<Result> results = new LinkedHashSet<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -127,7 +140,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -146,8 +159,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+                .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -166,19 +179,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getResultForCorrectionRound(int correctionRound) {
-        List<Result> filteredResults = filterNonAutomaticResults();
-        if (correctionRound >= 0 && filteredResults.size() > correctionRound) {
-            return filteredResults.get(correctionRound);
+        if (correctionRound < 0) {
+            return null;
         }
-        return null;
-    }
-
-    /**
-     * @return an unmodifiable list or all non-automatic results
-     */
-    @NonNull
-    private List<Result> filterNonAutomaticResults() {
-        return results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).toList();
+        // The lowest id among the matches, so that the answer does not depend on the iteration order of an unordered
+        // set. There should only ever be one result per round, and picking the earliest is what the ordered list did.
+        return getManualResults().stream().filter(result -> Objects.equals(result.getCorrectionRound(), correctionRound)).min(BY_ID).orElse(null);
     }
 
     /**
@@ -191,11 +197,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public boolean hasResultForCorrectionRound(int correctionRound) {
-        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
-        if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound) != null;
-        }
-        return false;
+        return getResultForCorrectionRound(correctionRound) != null;
     }
 
     /**
@@ -204,7 +206,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased()))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -219,22 +222,23 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
-    public List<Result> getResults() {
+    @NonNull
+    public Set<Result> getResults() {
         return results;
     }
 
     @JsonIgnore
-    public List<Result> getAutomaticResults() {
-        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getAutomaticResults() {
+        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @JsonIgnore
-    public List<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getManualResults() {
+        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -243,8 +247,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @return non athena automatic results excluding null results
      */
     @JsonIgnore
-    public List<Result> getNonAthenaResults() {
-        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getNonAthenaResults() {
+        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -267,10 +271,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (results != null && !results.isEmpty()) {
-            return results.getFirst();
+        if (results == null || results.isEmpty()) {
+            return null;
         }
-        return null;
+        return results.stream().filter(Objects::nonNull).min(BY_ID).orElse(null);
     }
 
     /**
@@ -281,10 +285,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstManualResult() {
-        // Guard on the manual results, not on all results: a submission can carry only automatic or Athena results, and
-        // getFirst() on the then empty manual list would throw instead of returning null as declared.
-        List<Result> manualResults = results == null ? List.of() : getManualResults();
-        return manualResults.isEmpty() ? null : manualResults.getFirst();
+        // The earliest manual result, which is the one of the first correction round. Guard on the manual results, not
+        // on all results: a submission can carry only automatic or Athena results and then there is none.
+        if (results == null) {
+            return null;
+        }
+        return getManualResults().stream().min(BY_ID).orElse(null);
     }
 
     /**
@@ -299,18 +305,53 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestManualResult() {
-        List<Result> manualResults = results == null ? List.of() : getManualResults();
-        return manualResults.isEmpty() ? null : manualResults.getLast();
+        // The most recent manual result, which is the one of the highest correction round.
+        if (results == null) {
+            return null;
+        }
+        return getManualResults().stream().max(BY_ID).orElse(null);
     }
 
     /**
-     * Add a result to the list.
-     * NOTE: You must make sure to correctly persist the result in the database!
+     * Adds a result to this submission and, if it is a correction-round result that does not have a round yet, assigns
+     * the next one.
+     * <p>
+     * This is where the round used to come from implicitly: the results were an ordered list and the position carried
+     * the round, so adding a result to the list decided which round it belonged to. The round now lives on the result,
+     * and this is the same moment. {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked
+     * for, and that takes precedence. Automatic and Athena results are not correction rounds and keep no round.
+     * <p>
+     * The next round is the one after the highest existing round, not the number of existing results: after a result
+     * of an earlier round is deleted the two differ, and counting would hand the new result a round that is still taken.
      *
-     * @param result the {@link Result} which should be added
+     * @param result the result to add
      */
     public void addResult(Result result) {
+        if (result != null) {
+            if (result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
+                result.setCorrectionRound(
+                        nextCorrectionRound(results.stream().filter(other -> other != null && other != result && !other.isAutomatic() && !other.isAthenaBased())));
+            }
+            // Keep both ends of the association in sync. The results are mapped on the inverse side and cascade, so
+            // without this Hibernate inserts the cascaded result with an empty submission_id and only fills it in with
+            // a follow-up update, which a not-null constraint on the column rightly rejects.
+            result.setSubmission(this);
+        }
         this.results.add(result);
+    }
+
+    /**
+     * The one definition of "next round", shared with the test fixtures so that the two cannot drift apart again.
+     * <p>
+     * A result without a round is deliberately treated as holding no round yet: the backfill in changeset
+     * {@code 20260825-02-backfill-result-correction-round} gave every persisted correction-round result its round, so
+     * none is expected here, and one that does show up must not shadow a round that is in use.
+     *
+     * @param existingCorrectionRoundResults the manual results the submission already holds, without the one being added
+     * @return the round after the highest one among them, or 0 if none holds a round
+     */
+    public static int nextCorrectionRound(Stream<Result> existingCorrectionRoundResults) {
+        return existingCorrectionRoundResults.map(Result::getCorrectionRound).filter(Objects::nonNull).mapToInt(round -> round + 1).max().orElse(0);
     }
 
     /**
@@ -320,8 +361,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @param results The list of {@link Result} which should replace the existing results of the submission
      */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(List<Result> results) {
-        this.results = results;
+    public void setResults(Set<Result> results) {
+        this.results = results != null ? results : new LinkedHashSet<>();
     }
 
     public Participation getParticipation() {
@@ -398,9 +439,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     public void removeNotNeededResults(int correctionRound, Long resultId) {
         if (correctionRound == 0 && resultId == null && getResults().size() >= 2) {
-            var resultList = new ArrayList<Result>();
-            resultList.add(getFirstManualResult());
-            setResults(resultList);
+            var remainingResults = new HashSet<Result>();
+            var firstManualResult = getFirstManualResult();
+            if (firstManualResult != null) {
+                remainingResults.add(firstManualResult);
+            }
+            setResults(remainingResults);
         }
     }
 

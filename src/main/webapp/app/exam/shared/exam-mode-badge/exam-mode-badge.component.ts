@@ -1,33 +1,25 @@
-import { Component, computed, input } from '@angular/core';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { isRealExam } from 'app/exam/overview/exam.utils';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumUiTagComponent } from '@tumaet/ui-angular';
-
-export type ExamModeBadgeSize = 'default' | 'large';
+import { faGraduationCap, faVial } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exam-mode-badge',
     templateUrl: './exam-mode-badge.component.html',
-    imports: [TranslateDirective, TumUiTagComponent],
+    imports: [TranslateDirective, TumUiTagComponent, FaIconComponent],
+    host: { class: 'inline-flex items-center' },
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamModeBadgeComponent {
-    readonly exam = input.required<Exam>();
+    examMode = input.required<ExamMode>();
 
-    readonly size = input<ExamModeBadgeSize>('default');
+    protected readonly ExamMode = ExamMode;
+    protected readonly translationKey = computed(() =>
+        this.examMode() === ExamMode.TEST_WITH_SIMULATION ? 'artemisApp.examManagement.testExam.testExamWithSimulation' : 'artemisApp.examManagement.testExam.testExam',
+    );
 
-    protected readonly translationKey = computed(() => {
-        const exam = this.exam();
-        if (isRealExam(exam)) {
-            return 'artemisApp.examManagement.testExam.realExam';
-        }
-        if (exam.examMode !== ExamMode.TEST_WITH_SIMULATION) {
-            return 'artemisApp.examManagement.testExam.testExam';
-        }
-        return 'artemisApp.examManagement.testExam.testExamWithSimulation';
-    });
-
-    protected readonly isRealExam = computed(() => isRealExam(this.exam()));
-    protected readonly isLarge = computed(() => this.size() === 'large');
+    protected readonly faGraduationCap = faGraduationCap;
+    protected readonly faVial = faVial;
 }

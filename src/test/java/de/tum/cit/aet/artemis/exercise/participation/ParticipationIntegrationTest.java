@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.participation;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
@@ -53,6 +50,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -99,7 +97,6 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
@@ -270,7 +267,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student1");
         Participation storedParticipation = participationRepo
-                .findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), TEST_PREFIX + "student1", false).orElseThrow();
+                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(modelingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), false)
+                .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -284,7 +282,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student2");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), TEST_PREFIX + "student2", false)
+        Participation storedParticipation = participationRepo
+                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(textExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId(), false)
                 .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
@@ -815,6 +814,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackExerciseNotPossibleIfOnlyAutomaticFeedbacks() throws Exception {
+        setupAthenaForExercise(programmingExercise);
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exerciseRepository.save(programmingExercise);
 
@@ -822,8 +822,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
 
-        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.BAD_REQUEST);
+        request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                HttpStatus.BAD_REQUEST, "feedbackRequest.manualAssessmentRequired");
     }
 
     @Test
@@ -831,10 +831,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestProgrammingFeedbackIfARequestAlreadySent_withAthenaSuccess() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -869,6 +872,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedback_feedbackRequestAlreadySent() throws Exception {
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
@@ -892,10 +902,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestProgrammingFeedbackSuccess_withAthenaSuccess() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -928,7 +941,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestProgrammingFeedbackWithSubmittedSubmissionWithoutResult() throws Exception {
-        setupAthenaForExercise(programmingExercise, ATHENA_MODULE_PROGRAMMING_TEST);
+        setupAthenaForExercise(programmingExercise);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -959,11 +973,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestTextFeedbackSuccess_withAthenaSuccess() throws Exception {
 
         var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        textCourse.setRestrictedAthenaModulesAccess(true);
+        var textAthenaConfig = new CourseAthenaConfig();
+        textAthenaConfig.setCourse(textCourse);
+        textAthenaConfig.setFormativeFeedbackEnabled(true);
+        textCourse.setAthenaConfig(textAthenaConfig);
         this.courseRepository.save(textCourse);
-
-        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
@@ -999,19 +1013,21 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestTextFeedbackSuccess_withAthenaSuccess_onTeamExerciseUsesRequestingUsersSelection() throws Exception {
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student1);
 
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
 
         var teamExercise = (TextExercise) createTextExerciseForTeam();
         var teamCourse = teamExercise.getCourseViaExerciseGroupOrCourseMember();
-        teamCourse.setRestrictedAthenaModulesAccess(true);
+        var teamAthenaConfig = new CourseAthenaConfig();
+        teamAthenaConfig.setCourse(teamCourse);
+        teamAthenaConfig.setFormativeFeedbackEnabled(true);
+        teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
-        teamExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         teamExercise = exerciseRepository.save(teamExercise);
 
         var team = createTeamForExercise(student1, teamExercise);
@@ -1044,19 +1060,22 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestProgrammingFeedbackSuccess_withAthenaSuccess_onTeamExerciseUsesRequestingUsersSelection() throws Exception {
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student1);
 
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
 
         var teamExercise = createProgrammingExerciseForTeam();
         var teamCourse = teamExercise.getCourseViaExerciseGroupOrCourseMember();
-        teamCourse.setRestrictedAthenaModulesAccess(true);
+        var teamAthenaConfig = new CourseAthenaConfig();
+        teamAthenaConfig.setCourse(teamCourse);
+        teamAthenaConfig.setFormativeFeedbackEnabled(true);
+        teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
-        teamExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        teamExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, teamExercise);
         teamExercise = exerciseRepository.save(teamExercise);
 
@@ -1095,11 +1114,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestModelingFeedbackSuccess_withAthenaSuccess() throws Exception {
 
         var modelingCourse = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
-        modelingCourse.setRestrictedAthenaModulesAccess(true);
+        var modelingAthenaConfig = new CourseAthenaConfig();
+        modelingAthenaConfig.setCourse(modelingCourse);
+        modelingAthenaConfig.setFormativeFeedbackEnabled(true);
+        modelingCourse.setAthenaConfig(modelingAthenaConfig);
         this.courseRepository.save(modelingCourse);
-
-        this.modelingExercise.setFeedbackSuggestionModule("module_modeling_test");
-        this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
 
@@ -1133,19 +1152,21 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestModelingFeedbackSuccess_withAthenaSuccess_onTeamExerciseUsesRequestingUsersSelection() throws Exception {
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student1);
 
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
 
         var teamExercise = createModelingExerciseForTeam();
         var teamCourse = teamExercise.getCourseViaExerciseGroupOrCourseMember();
-        teamCourse.setRestrictedAthenaModulesAccess(true);
+        var teamAthenaConfig = new CourseAthenaConfig();
+        teamAthenaConfig.setCourse(teamCourse);
+        teamAthenaConfig.setFormativeFeedbackEnabled(true);
+        teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
-        teamExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
         teamExercise = exerciseRepository.save(teamExercise);
 
         var team = createTeamForExercise(student1, teamExercise);
@@ -1181,10 +1202,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestProgrammingFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
@@ -1217,12 +1241,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestTextFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        textCourse.setRestrictedAthenaModulesAccess(true);
+        var textAthenaConfig = new CourseAthenaConfig();
+        textAthenaConfig.setCourse(textCourse);
+        textAthenaConfig.setFormativeFeedbackEnabled(true);
+        textCourse.setAthenaConfig(textAthenaConfig);
         this.courseRepository.save(textCourse);
-
-        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-
-        this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
 
@@ -1256,11 +1279,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void requestModelingFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var modelingCourse = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
-        modelingCourse.setRestrictedAthenaModulesAccess(true);
+        var modelingAthenaConfig = new CourseAthenaConfig();
+        modelingAthenaConfig.setCourse(modelingCourse);
+        modelingAthenaConfig.setFormativeFeedbackEnabled(true);
+        modelingCourse.setAthenaConfig(modelingAthenaConfig);
         this.courseRepository.save(modelingCourse);
-
-        this.modelingExercise.setFeedbackSuggestionModule("module_modeling_test");
-        this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("modeling");
 
@@ -1624,13 +1647,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         latestResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
         latestResult.setExerciseId(textExercise.getId());
         latestResult = resultRepository.save(latestResult);
-        // Attach the second result to the submission and save the submission as well: Submission#results is a list with
-        // an @OrderColumn, and that column is only written when the collection itself is flushed. Persisting a result
-        // through the result repository alone leaves results_order at its database default (0), which collides with the
-        // first result, and Hibernate then reconstructs the list by overwriting index 0 with whichever row the database
-        // happens to return last. That made this test fail non-deterministically.
+        // Saving the result is enough: the result owns the foreign key to its submission. This used to need a save of
+        // the submission as well, because the results were an ordered list whose position column was only written when
+        // the collection was flushed, so a result saved through its own repository kept the column's default of 0 and
+        // collided with the first result. That made this test fail non-deterministically.
         submission.addResult(latestResult);
-        submissionRepository.save(submission);
 
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
@@ -1702,23 +1723,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipationByExerciseAndStudentIdWithEagerSubmissionsForTeam() throws Exception {
-        var exercise = createTextExerciseForTeam();
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var team = createTeamForExercise(student, exercise);
-        exercise = addTeamToExercise(team, exercise);
-
-        var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
-        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
-
-        var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
-        assertThat(participations).hasSize(1);
-        assertThat(participations.getFirst().getId()).isEqualTo(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -1746,7 +1750,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
         assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
-        var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
+        var dbParticipation = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(exercise, student);
         assertThat(dbParticipation).isNotNull();
         assertThat(dbParticipation.getId()).isEqualTo(participation.getId());
     }
@@ -1763,7 +1767,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
         assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
-        var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
+        var participations = participationService.findOneByExerciseAndStudentAnyState(exercise, student);
         assertThat(participations).isPresent();
         assertThat(participations.get().getId()).isEqualTo(participation.getId());
     }
@@ -1830,7 +1834,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
-        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepository.save(quizExercise);
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -1849,7 +1852,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        var actualParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizExercise, TEST_PREFIX + "student1");
+        var actualParticipation = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(quizExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         actualParticipation = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(actualParticipation.getId());
         var actualResults = participationUtilService.getResultsForParticipation(actualParticipation);
 
@@ -1902,8 +1906,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedAndRateLimitExceeded_thenFail() throws Exception {
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -1996,7 +2007,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenTextFeedbackRequestedAfterDueDateWithPracticeParticipation_thenSucceed() throws Exception {
-        setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
+        setupAthenaForExercise(textExercise);
         textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(textExercise);
 
@@ -2016,7 +2027,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenModelingFeedbackRequestedAfterDueDateWithPracticeParticipation_thenSucceed() throws Exception {
-        setupAthenaForExercise(modelingExercise, "module_modeling_test");
+        setupAthenaForExercise(modelingExercise);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(modelingExercise);
 
@@ -2036,6 +2047,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedAfterDueDateOnGradedParticipation_thenFail() throws Exception {
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
         textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(textExercise);
 
@@ -2108,12 +2126,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 HttpStatus.BAD_REQUEST, "feedbackRequest.unsupportedExerciseType");
     }
 
-    private void setupAthenaForExercise(Exercise exercise, String feedbackModule) {
+    private void setupAthenaForExercise(Exercise exercise) {
         var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
-        exerciseCourse.setRestrictedAthenaModulesAccess(true);
+        var exerciseAthenaConfig = new CourseAthenaConfig();
+        exerciseAthenaConfig.setCourse(exerciseCourse);
+        exerciseAthenaConfig.setFormativeFeedbackEnabled(true);
+        exerciseCourse.setAthenaConfig(exerciseAthenaConfig);
         courseRepository.save(exerciseCourse);
-        exercise.setFeedbackSuggestionModule(feedbackModule);
-        exerciseRepository.save(exercise);
     }
 
     @Test
@@ -2150,7 +2169,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class,
                     HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-            var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
+            var participationFromServer = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(quizEx,
+                    userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
             assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
             assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
         }

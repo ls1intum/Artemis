@@ -21,9 +21,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
@@ -69,7 +69,7 @@ public class MavenCentralRateLimitNotificationService {
     /** Hosts used by Maven Central. Requiring one avoids misclassifying rate limits from private Maven-compatible registries. */
     private static final List<String> MAVEN_CENTRAL_HOSTS = List.of("repo.maven.apache.org", "repo1.maven.org");
 
-    static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise#prevent-maven-central-rate-limits-java-and-kotlin";
+    static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#prevent-maven-central-rate-limits-java-and-kotlin";
 
     private static final String NOTIFICATION_SENT_MAP = "maven-central-rate-limit-notification-sent";
 

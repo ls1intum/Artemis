@@ -15,8 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -48,6 +52,9 @@ class AthenaRepositoryExportServiceUnitTest {
     @Mock
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
+    @Mock
+    private CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
     private ProgrammingExercise programmingExercise;
@@ -59,11 +66,18 @@ class AthenaRepositoryExportServiceUnitTest {
     @BeforeEach
     void setUp() {
         athenaRepositoryExportService = new AthenaRepositoryExportService(programmingExerciseRepository, repositoryService, programmingSubmissionRepository,
-                programmingExerciseStudentParticipationRepository);
+                programmingExerciseStudentParticipationRepository, courseAthenaConfigRepository);
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(EXERCISE_ID);
-        programmingExercise.setFeedbackSuggestionModule("module");
+        // Graded Athena feedback (and thus its repository export) is only offered for manually assessed programming
+        // exercises; automatically assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        var course = new Course();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        programmingExercise.setCourse(course);
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(SUBMISSION_ID);
@@ -75,8 +89,7 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getStudentRepositoryFilesContentShouldCheckFeedbackSettings() {
-        programmingExercise.setFeedbackSuggestionModule(null);
-        programmingExercise.setAllowFeedbackRequests(false);
+        programmingExercise.setCourse(null); // disable Athena: no course → both areFeedbackSuggestionsEnabled() and getAllowFeedbackRequests() return false
 
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
 
@@ -133,8 +146,6 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getInstructorRepositoryFilesContentShouldValidateRepositoryUri() {
-        programmingExercise.setFeedbackSuggestionModule("module");
-        programmingExercise.setAllowFeedbackRequests(false);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
 
         assertThatExceptionOfType(BadRequestAlertException.class)

@@ -1,4 +1,4 @@
-<div id="exam-mode-picker" class="d-flex align-items-start">
+<div data-testid="exam-mode-picker" class="d-flex align-items-start">
     <div class="btn-group" [ngClass]="{ disabled: disableInput() }">
         <div
             id="standard-mode"
@@ -11,7 +11,7 @@
             [tumUiTooltip]="'artemisApp.examManagement.testExam.realExamTooltip' | artemisTranslate"
         ></div>
         <div
-            id="test-mode"
+            data-testid="test-mode"
             class="btn"
             [class.btn-primary]="exam().examMode === ExamMode.TEST"
             [class.btn-default]="exam().examMode !== ExamMode.TEST"

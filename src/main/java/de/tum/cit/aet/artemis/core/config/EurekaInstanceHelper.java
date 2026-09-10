@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +49,7 @@ import org.springframework.stereotype.Component;
  */
 @Lazy
 @Component
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 public class EurekaInstanceHelper {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaInstanceHelper.class);
@@ -313,7 +314,7 @@ public class EurekaInstanceHelper {
      * @return the formatted address string suitable for Hazelcast TCP/IP configuration
      * @throws NullPointerException if host is null
      */
-    public String formatAddressForHazelcast(String host, String port) {
+    public String formatAddressForHazelcast(@NonNull String host, String port) {
         // IPv6 addresses contain colons, so we need to wrap them in brackets
         // to distinguish the port separator from the IPv6 address colons
         if (host.contains(":")) {

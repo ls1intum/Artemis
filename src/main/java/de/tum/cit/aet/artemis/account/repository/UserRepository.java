@@ -42,7 +42,6 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
@@ -61,14 +60,49 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
  * Spring Data JPA repository for the User entity.<br>
  * <br>
  * <p>
- * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
+ * <b>Legacy compatibility:</b> New lifecycle operations physically delete users and never create new soft-deleted rows.
+ * Existing {@code deleted = false} filters must remain until installations have purged all tombstones created by older
+ * releases. See https://github.com/ls1intum/Artemis/issues/13614.
  * </p>
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+
+    @Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities LEFT JOIN FETCH user.learnerProfile WHERE user.id = :userId")
+    Optional<User> findByIdForDeletion(@Param("userId") long userId);
+
+    @Transactional // ok because of modifying query
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
+    void clearLearnerProfileForDeletion(@Param("userId") long userId);
+
+    /**
+     * Takes an account out of use before its deletion begins. A deactivated account is refused by every authentication
+     * provider, so nothing new can be signed in with it while its rows are being removed.
+     *
+     * @param userId the account being deleted
+     * @return how many accounts were deactivated
+     */
+    @Transactional // ok because of modifying query
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.activated = FALSE WHERE user.id = :userId")
+    int deactivateForDeletion(@Param("userId") long userId);
+
+    @Transactional // ok because of delete
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
+    int deleteUserRow(@Param("userId") long userId);
+
+    /**
+     * The tombstones left by releases that soft-deleted accounts instead of removing them. They are purged once no
+     * business-domain data points at them any more.
+     *
+     * @return the ids of the tombstones
+     */
+    @Query("SELECT user.id FROM User user WHERE user.deleted = TRUE")
+    List<Long> findLegacyDeletedUserIds();
 
     String FILTER_INTERNAL = "INTERNAL";
 
@@ -82,11 +116,29 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
-    Optional<User> findOneByResetKey(String resetKey);
-
     Optional<User> findOneByEmailIgnoreCase(String email);
 
-    List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
+
+    /**
+     * Finds the numeric identifiers of all accounts whose non-blank email address is used by at least one other account, ignoring case.
+     * Deleted users are included because the future database constraint will apply to every row.
+     *
+     * @return the affected user identifiers, ordered for a stable administrator report
+     */
+    @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+                JOIN User otherUser
+                    ON LOWER(otherUser.email) = LOWER(user.email)
+                        AND otherUser.id <> user.id
+            WHERE user.email IS NOT NULL
+                AND TRIM(user.email) <> ''
+            ORDER BY user.id
+            """)
+    List<Long> findUserIdsWithDuplicatedEmail();
 
     Optional<User> findOneByLogin(String login);
 
@@ -124,8 +176,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND u.deleted = FALSE
             """)
     Optional<Boolean> isInternalUserByEmailIgnoreCase(@Param("email") String email);
-
-    Optional<User> findOneByActivationKey(String activationKey);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Set<User> findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
@@ -202,16 +252,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * <p>
      * This query method creates a list of {@link UserRoleDTO} objects containing the user ID,
      * user login, and assigned role (INSTRUCTOR, TUTOR, or USER) for each user in the specified course. The role is determined
-     * based on the user's authorities and group memberships.
+     * based on the user's authorities and course roles.
      * </p>
      *
      * <p>
      * The role assignment follows this precedence:
      * <ul>
-     * <li>If the user has the ADMIN authority, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's instructor group, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's editor group or teaching assistant group, they are assigned the role 'TUTOR'.</li>
-     * <li>If the user belongs to the course's student group, they are assigned the role 'USER'.</li>
+     * <li>If the user has an administrator authority, they are assigned the role 'INSTRUCTOR'. This classifies arbitrary post authors and does not authorize the current
+     * caller.</li>
+     * <li>If the user has the course role INSTRUCTOR, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user has the course role EDITOR or TEACHING_ASSISTANT, they are assigned the role 'TUTOR'.</li>
+     * <li>If the user has the course role STUDENT, they are assigned the role 'USER'.</li>
      * </ul>
      * </p>
      *
@@ -924,35 +975,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
+    /**
+     * Stores the password an account is given when it completes its first LTI launch, and makes the account usable.
+     * <p>
+     * A single guarded statement rather than saving the entity the caller read: {@code save} writes every field of an
+     * instance loaded before the request, so a deactivation or soft delete that landed in between would be written back
+     * out again. The guard also means a deleted account receives no password at all.
+     *
+     * @param userId       the account
+     * @param passwordHash the hashed password to store
+     * @return the number of updated rows, 0 if the account was deleted in the meantime
+     */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.vcsAccessToken = :vcsAccessToken,
-                user.vcsAccessTokenExpiryDate = :vcsAccessTokenExpiryDate
+            SET user.password = :passwordHash,
+                user.activated = TRUE
             WHERE user.id = :userId
+                AND user.deleted = FALSE
             """)
-    void updateUserVcsAccessToken(@Param("userId") long userId, @Param("vcsAccessToken") String vcsAccessToken,
-            @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
-
-    @Modifying
-    @Transactional
-    @Query("""
-            UPDATE User user
-            SET user.aiSelectionDecision = :decision,
-                user.aiSelectionDecisionDate = :timestamp
-            WHERE user.id = :userId
-            """)
-    void updateSelectedLLMUsage(@Param("userId") long userId, @Param("decision") AiSelectionDecision decision, @Param("timestamp") ZonedDateTime timestamp);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.memirisEnabled = :memirisEnabled
-            WHERE user.id = :userId
-            """)
-    void updateMemirisEnabled(@Param("userId") long userId, @Param("memirisEnabled") boolean memirisEnabled);
+    int storeInitialPasswordAndActivate(@Param("userId") long userId, @Param("passwordHash") String passwordHash);
 
     @Query("""
             SELECT DISTINCT team.students AS student
@@ -966,9 +1009,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     /**
      * Get all logins of users that are not enrolled in any course,
-     * without administrators which are normally not enrolled in any course.
+     * without administrators or the Iris bot which are normally not enrolled in any course.
      *
-     * @return all logins of not enrolled users as a sorted list (not admins)
+     * @return all logins of not enrolled users as a sorted list (not admins or the Iris bot)
      */
     @Query("""
             SELECT user.login
@@ -977,31 +1020,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
 
     /**
-     * Records a user's last login. Set on every successful authentication (see {@code CustomAuditEventRepository}) and
-     * used as the activity signal for the data-privacy not-enrolled-user cleanup.
-     *
-     * @param login         the login of the user who just authenticated
-     * @param lastLoginDate the login timestamp to store
-     * @return the number of updated rows (0 if no user with that login exists)
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.lastLoginDate = :lastLoginDate
-            WHERE user.login = :login
-            """)
-    int updateLastLoginDate(@Param("login") String login, @Param("lastLoginDate") Instant lastLoginDate);
-
-    /**
      * Finds all not-enrolled, inactive users who have NOT yet been warned about an upcoming deletion. This is phase 1 of
      * the two-phase not-enrolled-user cleanup: these users are emailed a warning and then stamped with a
-     * {@code deletionWarningSentDate}. Administrators are excluded.
+     * {@code deletionWarningSentDate}. Administrators and the Iris bot are excluded.
      *
      * @param inactiveBefore only users whose last activity (last login, or creation date if never logged in) is strictly
      *                           before this are returned
@@ -1010,69 +1037,65 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user
             FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
             WHERE NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
-                AND user.deletionWarningSentDate IS NULL
-                AND COALESCE(user.lastLoginDate, user.createdDate) < :inactiveBefore
+                AND activity.deletionWarningSentDate IS NULL
+                AND COALESCE(activity.lastLoginDate, user.createdDate) < :inactiveBefore
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<User> findNotEnrolledUsersToWarn(@Param("inactiveBefore") Instant inactiveBefore);
 
     /**
-     * Records that a not-enrolled user has been warned about an upcoming deletion.
-     *
-     * @param login the login of the warned user
-     * @param date  the warning timestamp
-     * @return the number of updated rows
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.deletionWarningSentDate = :date
-            WHERE user.login = :login
-            """)
-    int updateDeletionWarningSentDate(@Param("login") String login, @Param("date") Instant date);
-
-    /**
      * Finds the logins of not-enrolled users who are due for deletion: they were warned, their grace period has elapsed,
      * they are still enrolled in no course, and they have NOT logged in since the warning (so they did not "come back").
-     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators are excluded.
+     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators and the Iris bot are excluded.
      *
      * @param warnedBefore only users whose warning was sent strictly before this (i.e. the grace period has elapsed) are
      *                         returned
-     * @return the logins of the users to soft-delete, sorted
+     * @return the logins of the users to evaluate for permanent deletion, sorted
      */
     @Query("""
             SELECT user.login
             FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
             WHERE NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
-                AND user.deletionWarningSentDate IS NOT NULL
-                AND user.deletionWarningSentDate < :warnedBefore
-                AND (user.lastLoginDate IS NULL OR user.lastLoginDate < user.deletionWarningSentDate)
+                AND activity.deletionWarningSentDate IS NOT NULL
+                AND activity.deletionWarningSentDate < :warnedBefore
+                AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<String> findNotEnrolledUserLoginsToDelete(@Param("warnedBefore") Instant warnedBefore);
 
     /**
-     * Clears the deletion warning of users who "came back" after being warned: they either got enrolled in a course
-     * again or logged in after the warning was sent. This prevents deleting an account the user evidently still wants,
-     * and lets them be warned afresh only if they become inactive again.
+     * The same condition as {@link #findNotEnrolledUserLoginsToDelete(Instant)} for a single login, so that the answer
+     * can be taken again immediately before the account is destroyed. A login that arrives after the batch was
+     * resolved updates {@code lastLoginDate} without clearing the warning, and the deletion service itself only checks
+     * authorities and reference counts, so without this a user who has just come back would still be deleted.
      *
-     * @return the number of users whose warning was cleared
+     * @param login        the account to re-check
+     * @param warnedBefore only a warning sent strictly before this counts as elapsed
+     * @return 1 if the account is still due for deletion, 0 otherwise
      */
-    @Modifying
-    @Transactional // ok because of modifying query
     @Query("""
-            UPDATE User user
-            SET user.deletionWarningSentDate = NULL
-            WHERE user.deletionWarningSentDate IS NOT NULL
-                AND (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) OR (user.lastLoginDate IS NOT NULL AND user.lastLoginDate >= user.deletionWarningSentDate))
+            SELECT COUNT(user)
+            FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
+            WHERE user.login = :login
+                AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
+                AND activity.deletionWarningSentDate IS NOT NULL
+                AND activity.deletionWarningSentDate < :warnedBefore
+                AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             """)
-    int clearDeletionWarningForReturnedUsers();
+    long countNotEnrolledUserStillDueForDeletion(@Param("login") String login, @Param("warnedBefore") Instant warnedBefore);
 
     /**
      * Get all managed users
@@ -1505,6 +1528,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
+                    AND user.activated = TRUE
+                    AND user.deleted = FALSE
                     AND (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                         OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
@@ -1515,6 +1540,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
+                    AND user.activated = TRUE
+                    AND user.deleted = FALSE
                     AND :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             )
             """)
@@ -1524,29 +1551,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
-                    AND (
-                        EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
-                    )
+                    AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInCourseWithMinRoleOrAdmin(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInCourseWithMinRole(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1557,26 +1580,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     LEFT JOIN exercise.exerciseGroup.exam.course examCourse
                 WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
                     OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
-    boolean existsByLoginInExerciseWithMinRoleOrAdmin(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInExerciseWithMinRole(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1588,27 +1609,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     LEFT JOIN exercise.exerciseGroup.exam.course examCourse
                 WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
                     OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
-    boolean existsByLoginInParticipationWithMinRoleOrAdmin(@Param("login") String login, @Param("participationId") long participationId,
-            @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInParticipationWithMinRole(@Param("login") String login, @Param("participationId") long participationId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1616,27 +1634,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 FROM User user
                     INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                     LEFT JOIN lectureUnit.lecture.course course
-                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInLectureUnitWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInLectureUnitWithMinRole(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1644,27 +1660,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 FROM User user
                     INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                     LEFT JOIN lecture.course course
-                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInLectureWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInLectureWithMinRole(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1675,6 +1689,23 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE store.token = :token
             """)
     Optional<User> findOneWithAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
+
+    /**
+     * Get the IDs of all users flagged as test users.
+     * <p>
+     * Statistics that count active users have to ignore test users. Joining {@code jhi_user} into those aggregations
+     * only to evaluate the flag makes the optimizer abandon the selective {@code submission_date} range scan, so the
+     * (small) set of test user ids is fetched separately and applied in Java instead. Soft-deleted test users are
+     * included: they must never be counted as active either.
+     *
+     * @return the ids of all users whose {@code isTestUser} flag is set
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.isTestUser = TRUE
+            """)
+    Set<Long> findAllTestUserIds();
 
     /**
      * Get the IDs of users who have submitted at least one submission since the given date.

@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMin
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -88,15 +88,22 @@ public class TextPlagiarismDetectionService {
      * @return a zip file that can be returned to the client
      */
     public PlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
-        // Only one plagiarism check per course allowed
+        // Decide whether there is anything to compare before claiming the course: a request that cannot run must not
+        // occupy the course for the instructor who could have started a real check instead.
+        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
+        if (textSubmissions.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Inform the client with a bad request response.");
+            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
+        }
+
+        // Only one plagiarism check per course allowed. Claiming happens before the try block because the finally below
+        // releases the course, and a caller that was refused must not release the check somebody else is running.
         var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        if (!plagiarismCacheService.tryStartPlagiarismCheck(courseId)) {
+            throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+        }
 
         try {
-            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
-            }
-            plagiarismCacheService.setActivePlagiarismCheck(courseId);
-
             long start = System.nanoTime();
             String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
 
@@ -105,20 +112,14 @@ public class TextPlagiarismDetectionService {
             final var submissionFolderFile = Path.of(submissionsFolderName).toFile();
             submissionFolderFile.mkdirs();
 
-            final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
             final var submissionsSize = textSubmissions.size();
             log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
-
-            if (textSubmissions.size() < 2) {
-                log.info("Insufficient amount of submissions for plagiarism detection. Inform the client with a bad request response.");
-                throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
-            }
 
             AtomicInteger processedSubmissionCount = new AtomicInteger(1);
             textSubmissions.forEach(submission -> {
                 var progressMessage = "Getting submission: " + processedSubmissionCount + "/" + textSubmissions.size();
                 plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
-                submission.setResults(new ArrayList<>());
+                submission.setResults(new HashSet<>());
 
                 StudentParticipation participation = (StudentParticipation) submission.getParticipation();
                 participation.setExercise(null);
@@ -170,7 +171,7 @@ public class TextPlagiarismDetectionService {
             throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
         }
         finally {
-            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
+            plagiarismCacheService.finishPlagiarismCheck(courseId);
         }
     }
 }

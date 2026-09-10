@@ -52,6 +52,26 @@ public class LoggingAspect {
     }
 
     /**
+     * Pointcut excluding the services whose arguments or return values are live credentials.
+     * <p>
+     * {@link #logAround} prints every argument and every return value, so a service that takes or produces a secret
+     * would write it into the log of every node running the development profile, from where it spreads to log
+     * aggregation and support bundles. The token is deliberately masked in {@code BuildJobQueueItem.toString()} for the
+     * same reason; these exclusions close the other ways out, and both are needed:
+     * <ul>
+     * <li>{@code BuildJobCloneTokenService} mints a build job's clone token and receives the presented one to compare
+     * against, so it appears as both a return value and an argument.</li>
+     * <li>{@code BuildJobGitService} takes the token as the argument of {@code setCloneTokenForCurrentThread}, which
+     * runs once per build job on any node carrying both the core and buildagent profiles - the standard single node
+     * development setup, which is exactly where this aspect is active.</li>
+     * </ul>
+     */
+    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService) && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)")
+    public void notACredentialHandlingBean() {
+        // Method is empty as this is just a Pointcut, the implementations are in the advices.
+    }
+
+    /**
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
@@ -92,7 +112,7 @@ public class LoggingAspect {
      * @return result.
      * @throws Throwable throws {@link IllegalArgumentException}.
      */
-    @Around("applicationPackagePointcut() && springBeanPointcut()")
+    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),

@@ -39,6 +39,7 @@ public class AnswerPost extends Posting {
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author" })
+    @JoinColumn(nullable = false)
     private Post post;
 
     @Transient

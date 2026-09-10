@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -143,6 +147,99 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         storedExampleSubmission = exampleSubmissionRepository.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+    }
+
+    /**
+     * The example-submission edit page loads the exercise from the modeling detail endpoint and echoes that response
+     * verbatim as {@code exampleSubmission.exercise} in its save PUT. The detail response embeds the exercise's example
+     * submissions, so the echoed JSON must stay deserializable into the entity graph - in particular the nested
+     * polymorphic {@link Submission} needs its {@code submissionExerciseType} discriminator on the wire.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleModelingSubmission_acceptsEchoedExerciseDetailResponse() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+
+        String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseDetailJson));
+        body.set("submission", mapper.valueToTree(created.getSubmission()));
+
+        ExampleSubmission updated = request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", body, ExampleSubmission.class,
+                HttpStatus.OK);
+
+        assertThat(updated.getId()).isEqualTo(created.getId());
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updated.getSubmission().getId(), validModel);
+    }
+
+    /**
+     * Once an example assessment exists, the edit page attaches the result it loaded from the (migrated, DTO-shaped)
+     * example-assessment endpoint to the submission before the save PUT. The echoed result must keep every column the
+     * server-side cascade merge writes back - {@code Result.exerciseId} is a primitive non-null FK column, so a wire
+     * shape without it merges {@code exercise_id = 0} and the save dies on the foreign-key constraint.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleModelingSubmission_acceptsEchoedDtoShapedExampleAssessment() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        // Example submissions have no participation, so build the example result directly (the fixture helpers
+        // derive exerciseId from the participation and would NPE).
+        Result exampleResult = new Result().submission(created.getSubmission()).assessmentType(AssessmentType.MANUAL).completionDate(ZonedDateTime.now()).score(50D).rated(true);
+        exampleResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        exampleResult.setExerciseId(modelingExercise.getId());
+        exampleResult.setExampleResult(true);
+        Feedback feedback = new Feedback();
+        feedback.setCredits(2.0);
+        feedback.setText("element:1");
+        feedback.setDetailText("Good relation");
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setResult(exampleResult);
+        exampleResult.addFeedback(feedback);
+        exampleResult = resultRepository.save(exampleResult);
+
+        // Every ingredient exactly as the page loads it: the (migrated) exercise detail, the example-submission
+        // GET the page reads its submission from, and the (migrated) example-assessment wire shape.
+        String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
+        String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + created.getId(), HttpStatus.OK, String.class);
+        String exampleAssessmentJson = request.get(
+                "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + created.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
+                String.class);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseDetailJson));
+        // The submission node the page holds: the example-submission GET's nested submission, mutated the way the
+        // component mutates it before saving (model edit + explanation + example flag), with the loaded example
+        // assessment attached via setLatestSubmissionResult and its own submission reference deleted.
+        ObjectNode submissionNode = (ObjectNode) mapper.readTree(exampleSubmissionJson).get("submission");
+        submissionNode.put("model", validModel);
+        submissionNode.put("explanationText", "updated explanation");
+        submissionNode.put("exampleSubmission", true);
+        ObjectNode resultNode = (ObjectNode) mapper.readTree(exampleAssessmentJson);
+        resultNode.remove("submission");
+        submissionNode.set("results", mapper.createArrayNode().add(resultNode));
+        body.set("submission", submissionNode);
+
+        request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", body, ExampleSubmission.class, HttpStatus.OK);
+
+        // Reload through a fresh lookup and assert the columns the cascade merge wrote back: the FK that broke
+        // (exerciseId) and the feedbacks that were on the wire. (assessor/assessmentNote/longFeedbackText are NOT
+        // fetched by the example-assessment query, were never on the wire in the entity era either, and their
+        // merge behavior is pre-existing - deliberately not pinned here.)
+        Result reloaded = resultRepository.findDistinctWithFeedbackBySubmissionId(created.getSubmission().getId()).orElseThrow();
+        assertThat(reloaded.getExerciseId()).isEqualTo(modelingExercise.getId());
+        assertThat(reloaded.getFeedbacks()).hasSize(1);
+        assertThat(reloaded.getFeedbacks().iterator().next().getDetailText()).isEqualTo("Good relation");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -289,6 +386,86 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
 
+    /**
+     * Once an example assessment exists, the edit page attaches the result it loaded from the (migrated, DTO-shaped)
+     * example-result endpoint to the submission before the save PUT. That wire shape does not carry
+     * {@code Result.exerciseId}, a primitive non-null FK column the cascade merge writes back, so the server must derive
+     * it from the path instead of the payload - otherwise the merge writes {@code exercise_id = 0} and the save dies on
+     * the foreign-key constraint.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleTextSubmission_acceptsEchoedDtoShapedExampleResult() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        Submission submissionWithResult = participationUtilService.addResultToSubmission(created.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
+        Result exampleResult = submissionWithResult.getLatestResult();
+
+        String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
+        // The result exactly as the page loads it: the migrated example-result endpoint's wire shape.
+        String exampleResultJson = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                String.class);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseDetailJson));
+        // The submission the page holds, with the result attached the way setLatestSubmissionResult does: the
+        // echoed example-result payload, its own submission reference deleted by the client.
+        ObjectNode submissionNode = (ObjectNode) mapper.valueToTree(created.getSubmission());
+        ObjectNode resultNode = (ObjectNode) mapper.readTree(exampleResultJson);
+        resultNode.remove("submission");
+        submissionNode.set("results", mapper.createArrayNode().add(resultNode));
+        body.set("submission", submissionNode);
+
+        request.putWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body, ExampleSubmission.class, HttpStatus.OK);
+
+        Result reloaded = resultRepository.findById(exampleResult.getId()).orElseThrow();
+        assertThat(reloaded.getExerciseId()).isEqualTo(textExercise.getId());
+    }
+
+    /**
+     * Same echo, other load path: within one session the page keeps the response of the example-assessment save
+     * (a {@link ResultDTO}) and attaches that to the next example-submission save PUT. {@link ResultDTO} happens to carry
+     * {@code exerciseId}, so this passes regardless of the server-side stamping; it pins the second echo shape so a
+     * future change to either side keeps the save working.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleTextSubmission_acceptsEchoedExampleAssessmentResponse() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        participationUtilService.addResultToSubmission(created.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
+        final TextExampleResultDTO exampleResult = request.get(
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.getSubmission().getId() + "/example-result", HttpStatus.OK, TextExampleResultDTO.class);
+        List<Feedback> feedbacks = List
+                .of(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(exampleResult.submission().blocks().iterator().next().id()));
+        var assessmentDto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
+        ResultDTO assessmentResponse = request.putWithResponseBody(
+                "/api/text/exercises/" + textExercise.getId() + "/example-submissions/" + created.getId() + "/example-text-assessment", assessmentDto, ResultDTO.class,
+                HttpStatus.OK);
+
+        String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseDetailJson));
+        ObjectNode submissionNode = (ObjectNode) mapper.valueToTree(created.getSubmission());
+        ObjectNode resultNode = mapper.valueToTree(assessmentResponse);
+        resultNode.remove("submission");
+        submissionNode.set("results", mapper.createArrayNode().add(resultNode));
+        body.set("submission", submissionNode);
+
+        request.putWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body, ExampleSubmission.class, HttpStatus.OK);
+
+        Result reloaded = resultRepository.findById(assessmentResponse.id()).orElseThrow();
+        assertThat(reloaded.getExerciseId()).isEqualTo(textExercise.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleTextAssessmentNotExistentId() throws Exception {
@@ -400,7 +577,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
-        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacks().iterator().next().getGradingInstruction().getId())
+        assertThat(exampleSubmission.getSubmission().getFirstResult().getFeedbacks().iterator().next().getGradingInstruction().getId())
                 .isEqualTo(orginalResult.orElseThrow().getFeedbacks().iterator().next().getGradingInstruction().getId());
     }
 

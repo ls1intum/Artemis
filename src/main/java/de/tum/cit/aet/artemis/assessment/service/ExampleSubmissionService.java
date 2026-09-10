@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
@@ -72,14 +73,26 @@ public class ExampleSubmissionService {
      */
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
         Submission submission = exampleSubmission.getSubmission();
-        if (submission != null) {
-            submission.setExampleSubmission(true);
-            // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-            if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
-                submission.getLatestResult().setSubmission(submission);
-            }
-            submissionRepository.save(submission);
+        if (submission == null) {
+            // An example submission is the submission it shows, so one without a submission says nothing. The column
+            // requires it, and answering the request tells the caller what is wrong instead of failing on the insert.
+            throw new BadRequestAlertException("An example submission must reference a submission", "exampleSubmission", "submissionMissing");
         }
+        submission.setExampleSubmission(true);
+        // Result.exerciseId is a non-null FK column the cascade merge writes back. Clients echo results they loaded from
+        // DTO-shaped endpoints that do not carry it, so derive it from the example submission's (already checked) exercise
+        // instead of trusting the payload.
+        Long exerciseId = exampleSubmission.getExercise().getId();
+        for (Result result : submission.getResults()) {
+            if (result != null) {
+                result.setExerciseId(exerciseId);
+            }
+        }
+        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
+        if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
+            submission.getLatestResult().setSubmission(submission);
+        }
+        submissionRepository.save(submission);
         return exampleSubmissionRepository.save(exampleSubmission);
     }
 
@@ -137,10 +150,16 @@ public class ExampleSubmissionService {
 
             newExampleSubmission.setSubmission(api.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
-        if (exercise instanceof TextExercise) {
+        else if (exercise instanceof TextExercise) {
             var api = textSubmissionImportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
             TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
             newExampleSubmission.setSubmission(textSubmission);
+        }
+        else {
+            // Only modeling and text exercises can copy a student submission into an example submission. For anything
+            // else there is nothing to copy, and the example submission would be stored without the submission it is
+            // supposed to show.
+            throw new BadRequestAlertException("Example submissions cannot be imported for this exercise type", "exampleSubmission", "exerciseTypeNotSupported");
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }

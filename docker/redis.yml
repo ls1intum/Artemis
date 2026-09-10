@@ -1,0 +1,40 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Redis-protocol base service, running Valkey
+#
+# Alternative distributed data provider to the embedded Hazelcast cluster. Artemis reaches it through the
+# DistributedDataProvider abstraction, selected with `artemis.distributed-data.provider: Redis`, so nothing else about a
+# deployment changes when this container is used instead of Hazelcast.
+#
+# The image is Valkey, which implements the Redis protocol: the provider, the Redisson client and the `redis` service
+# name here all stay as they are, and a deployment is free to point them at Redis 8 instead. Valkey is what this repo
+# pins and tests because it is BSD-3-Clause, where redis-stack-server was RSALv2/SSPL only. The healthcheck therefore
+# deliberately calls `redis-cli`, which both images provide, rather than `valkey-cli`, which only Valkey provides.
+#
+# Only started by the multi-node E2E runners when `--middleware redis` is passed; the default stays Hazelcast.
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    redis:
+        container_name: artemis-redis
+        image: "valkey/valkey:${VALKEY_VERSION}"
+        pull_policy: missing
+        # Bound to the loopback interface, like Postgres: the host JVMs of the fast runner connect through it, and it must
+        # not be reachable from outside the machine.
+        ports:
+            - "127.0.0.1:6379:6379"
+        # expose the port so containers on the artemis network reach it even if the published port changes
+        expose:
+            - "6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 30
+            start_period: 60s
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

@@ -34,7 +34,7 @@
                             <a [routerLink]="['/course-management', exam.course?.id, 'exams', exam.id]">{{ exam.title }}</a>
                         </td>
                         <td>
-                            <jhi-exam-mode-badge [exam]="exam" />
+                            <jhi-exam-mode-badge [examMode]="exam.examMode!" />
                         </td>
                         @if (exam.course; as course) {
                             <td>

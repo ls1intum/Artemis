@@ -42,6 +42,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -743,6 +744,55 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
+    @ParameterizedTest(name = "title=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+        // A missing (null), empty or whitespace-only title has to be rejected with a clean 400, not persisted and not failing while mapping the null title to the entity
+        ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examTitleValidationTest")), title);
+
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    @ParameterizedTest(name = "title=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+        ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(exam1), title);
+
+        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    @ParameterizedTest(name = "title=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+        ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), title);
+
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    /**
+     * Serialises the given exam DTO and overwrites its title, so a missing (null), empty or whitespace-only title can be sent as a raw request body.
+     *
+     * @param examDto the exam create/update/import DTO to serialise
+     * @param title   the title to set, or null to omit it
+     * @return the request body as a JSON object with the adjusted title
+     */
+    private ObjectNode examBodyWithTitle(Object examDto, String title) {
+        ObjectNode examJson = request.getObjectMapper().valueToTree(examDto);
+        if (title == null) {
+            examJson.putNull("title");
+        }
+        else {
+            examJson.put("title", title);
+        }
+        return examJson;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_failsWithGracePeriodTooHigh() throws Exception {
@@ -1181,7 +1231,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         // The plain (withExerciseGroups=false) response is served as ExamDTO and must not trigger an eager fan-out.
         ExamDTO returnedExam = assertThatDb(() -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, ExamDTO.class))
-                .hasBeenCalledAtMostTimes(10);
+                .hasBeenCalledAtMostTimes(8);
         assertThat(returnedExam.id()).isEqualTo(exam1.getId());
         assertThat(returnedExam.course()).isNotNull();
         assertThat(returnedExam.course().id()).isEqualTo(course1.getId());
@@ -1226,7 +1276,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         ExamWithExerciseGroupsDTO returnedExam = assertThatDb(
                 () -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, ExamWithExerciseGroupsDTO.class))
-                .hasBeenCalledAtMostTimes(40);
+                .hasBeenCalledAtMostTimes(24);
 
         // Transient set by setExamProperties on the detailed path.
         assertThat(returnedExam.numberOfExamUsers()).isNotNull();
@@ -1343,6 +1393,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             }
         }
         assertThat(exerciseIds).isNotEmpty();
+
+        // Creating the test run starts a participation for every picked exercise, so the programming exercise reaches the continuous integration service.
+        // The mock server rejects new expectations once requests have been made, so reset it before registering them.
+        jenkinsRequestMockProvider.reset();
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var examWithExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        mockConnectorRequestsForStartParticipation(ExerciseUtilService.getFirstExerciseWithType(examWithExercises, ProgrammingExercise.class),
+                instructor.getParticipantIdentifier(), Set.of(instructor), true);
 
         StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
                 new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
@@ -1530,9 +1588,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         simulationExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         examRepository.save(simulationExam);
 
-        // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
-        // select for its course, so this guards the data-economy fix rather than just the response shape.
-        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(3);
+        // Two queries: one resolving the authenticated admin against the database, which @EnforceAdmin does on every
+        // admin request, and one for the exams (the course is fetch-joined). Without the join, each exam row would
+        // trigger a secondary select for its course, so this still guards the data-economy fix rather than just the
+        // response shape.
+        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(2);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
             UpcomingExamDTO exam = exams.get(i);
@@ -2048,10 +2108,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         StudentExam studentExam = new StudentExam();
         studentExam.setUser(student1);
         studentExam.setTestRun(false);
-        studentExam = studentExamRepository.save(studentExam);
-
-        // Add student exam to exam and save into database
+        // A student exam belongs to an exam, so the link is set before it is stored
         exam2.addStudentExam(studentExam);
+        studentExam = studentExamRepository.save(studentExam);
         exam2 = examRepository.save(exam2);
 
         // Get the latest exam end date DTO from server -> This returns the endDate as no specific student working time is set
@@ -3073,8 +3132,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExerciseGroupsToExistingExam_preservesAllContent() throws Exception {
-        // Regression guard for the import-exercise-group path (which binds full request entities), where a quiz previously
-        // failed to import because of a detached QuizPointStatistic. Verify every exercise type preserves its content here.
+        // Regression guard for the import-exercise-group path (which binds full request entities). Verify every
+        // exercise type preserves its content here.
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         Exam targetExam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(targetExam, "import-eg-content");
@@ -3104,7 +3163,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             case TextExercise text -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(text.getId());
             case ModelingExercise modeling -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(modeling.getId());
             case FileUploadExercise fileUpload -> fileUploadExerciseRepository.findWithGradingCriteriaByIdElseThrow(fileUpload.getId());
-            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
+            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
             default -> exercise;
         };
     }

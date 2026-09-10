@@ -130,7 +130,7 @@ public class QuizScheduleService {
      */
     void executeQuizStartNowTask(Long quizExerciseId) {
         log.debug("Sending quiz {} start", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
 
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();
@@ -144,7 +144,7 @@ public class QuizScheduleService {
 
         quizBatchRepository.save(quizBatch);
 
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, START_NOW);
     }
 
@@ -158,7 +158,7 @@ public class QuizScheduleService {
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;
             }
-            SecurityUtils.setAuthorizationObject();
+            SecurityUtils.setSystemAuthorizationObject();
 
             List<QuizExercise> exercisesToBeScheduled = quizExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
             exercisesToBeScheduled.forEach(this::scheduleQuizStart);

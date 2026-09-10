@@ -87,7 +87,7 @@
         </div>
     }
     @if (!reEvaluationInProgress()) {
-        <button id="add-mc-answer-option" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
+        <button data-testid="add-mc-answer-option" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle"></span>
         </button>

@@ -16,9 +16,9 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
  * <p>
  * Mirrors the wire shape produced today by the polymorphic {@code @JsonTypeInfo}/{@code @JsonSubTypes}
  * configuration on {@code Conversation}: {@code type} is the discriminator string used by the
- * frontend ({@code "channel"}, {@code "groupChat"}, {@code "oneToOneChat"}). The channel-only
+ * client ({@code "channel"}, {@code "groupChat"}, {@code "oneToOneChat"}). The channel-only
  * fields ({@code isCourseWide}, {@code isAnnouncementChannel}, {@code isArchived}, {@code isPublic})
- * are carried because the frontend reads them off {@code post.conversation} directly for the
+ * are carried because the client reads them off {@code post.conversation} directly for the
  * "course-wide filter" path, announcement-channel reaction gating, archived-banner rendering, and
  * channel-moderation permission checks. {@code lastMessageDate} feeds the unread-marker logic in
  * the course-wide search view. None of these fields can introduce a JSON cycle.

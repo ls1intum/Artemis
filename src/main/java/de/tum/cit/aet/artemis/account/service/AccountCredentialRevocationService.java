@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 
 /**
@@ -54,14 +55,17 @@ public class AccountCredentialRevocationService {
 
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
     public AccountCredentialRevocationService(UserRepository userRepository, PasskeyCredentialCleanupRepository passkeyCredentialCleanupRepository,
             UserSshPublicKeyService userSshPublicKeyService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
-            RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            RepositoryVcsAccessTokenService repositoryVcsAccessTokenService, UserVcsAccessTokenService userVcsAccessTokenService) {
         this.userRepository = userRepository;
         this.passkeyCredentialCleanupRepository = passkeyCredentialCleanupRepository;
         this.userSshPublicKeyService = userSshPublicKeyService;
         this.participationVcsAccessTokenService = participationVcsAccessTokenService;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -115,14 +119,9 @@ public class AccountCredentialRevocationService {
      * read and write the user's repositories.
      */
     private void clearPersonalVcsAccessToken(User user) {
-        if (user.getVcsAccessToken() == null && user.getVcsAccessTokenExpiryDate() == null) {
-            return;
-        }
-        user.setVcsAccessToken(null);
-        user.setVcsAccessTokenExpiryDate(null);
-        // Saved here rather than left to the caller: every caller happens to save the user afterwards today, but a
-        // revocation that silently depends on that would be easy to defeat by a later refactor.
-        userRepository.save(user);
+        // Deleting the row rather than nulling columns keeps "no row" the single representation of "no token", and needs no
+        // save of the user afterwards, since the token lives in its own table.
+        userVcsAccessTokenService.revoke(user.getId());
     }
 
     /**

@@ -29,10 +29,23 @@ public record ParticipationDTO(Long id, boolean testRun, String type, Initializa
     public record ParticipationExerciseDTO(Long id, ExerciseType exerciseType, String type, AssessmentType assessmentType, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
             Double maxPoints, CourseDTO course) implements Serializable {
 
+        /**
+         * Maps an {@link Exercise} to a {@link ParticipationExerciseDTO}.
+         * <p>
+         * Student-facing endpoints mask exam exercises by stripping {@code exerciseGroup.exam} before mapping (the
+         * masked-exam state). In that state {@link Exercise#getCourseViaExerciseGroupOrCourseMember()} would dereference the
+         * now-missing exam and throw, so the course is resolved to {@code null} instead.
+         *
+         * @param exercise the exercise to convert (may be {@code null})
+         * @return the corresponding DTO, or {@code null} if the input was {@code null}
+         */
         @Nullable
         public static ParticipationExerciseDTO of(Exercise exercise) {
-            return Optional.ofNullable(exercise).map(e -> new ParticipationExerciseDTO(e.getId(), e.getExerciseType(), e.getType(), e.getAssessmentType(), e.getDueDate(),
-                    e.getAssessmentDueDate(), e.getMaxPoints(), CourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()))).orElse(null);
+            return Optional.ofNullable(exercise).map(e -> {
+                Course course = e.isExamExercise() && (e.getExerciseGroup() == null || e.getExerciseGroup().getExam() == null) ? null : e.getCourseViaExerciseGroupOrCourseMember();
+                return new ParticipationExerciseDTO(e.getId(), e.getExerciseType(), e.getType(), e.getAssessmentType(), e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(),
+                        CourseDTO.of(course));
+            }).orElse(null);
         }
     }
 

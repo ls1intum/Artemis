@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -34,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -59,6 +64,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotif
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
+@FeatureUsage("participation/submissions")
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
@@ -66,6 +72,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
+
+    /** Any whitespace inside a file pattern, removed before the pattern is split into its endings. */
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -117,7 +126,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private ResponseEntity<FileUploadSubmissionDTO> handleFileUploadSubmission(long exerciseId, FileUploadSubmissionInputDTO fileUploadSubmissionInput, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);
-        final var user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionInput.toEntity();
 
@@ -136,15 +148,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
         validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
 
+        StudentParticipation participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
-            // Prevent multiple submissions (currently only for exam submissions)
-            fileUploadSubmission = (FileUploadSubmission) api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
         }
 
         final FileUploadSubmission submission;
         try {
-            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user);
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user, participationFromExamGate);
         }
         catch (IOException e) {
             throw new BadRequestAlertException("The uploaded file could not be saved on the server", ENTITY_NAME, "cantSaveFile");
@@ -180,9 +194,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private static void checkFilePattern(MultipartFile file, FileUploadExercise exercise) {
         // Check the pattern
         final String[] splittedFileName = file.getOriginalFilename().split("\\.");
-        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
-        if (!fileSuffix.matches(filePattern)) {
+        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase(Locale.ROOT);
+        // The pattern is a comma separated list of plain file endings, so the check is a membership test. Joining
+        // them into an alternation and matching against that would let a metacharacter in instructor input decide what
+        // the expression means. Set.copyOf rather than Set.of, because the exercise validation accepts a pattern that
+        // names the same ending twice and Set.of rejects duplicates.
+        Set<String> allowedFileEndings = Set.copyOf(Arrays.asList(WHITESPACE.matcher(exercise.getFilePattern().toLowerCase(Locale.ROOT)).replaceAll("").split(",")));
+        if (!allowedFileEndings.contains(fileSuffix)) {
             throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
         }
     }
@@ -209,6 +227,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
         fileUploadSubmissionService.checkThatAssessmentIsPossibleElseThrow(fileUploadExercise, studentParticipation);
+        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
 
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
@@ -286,6 +305,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -366,7 +386,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.setResults(List.of());
+                fileUploadSubmission.setResults(Set.of());
             }
         }
 

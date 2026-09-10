@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -197,7 +198,7 @@ describe('ExamParticipationService', () => {
             endDate,
             workingTime: 7200,
             examMaxPoints: 100,
-            testExam: false,
+            examMode: ExamMode.REAL,
         };
         let received: ExamForOverview[] | undefined;
 
@@ -207,7 +208,7 @@ describe('ExamParticipationService', () => {
         request.flush([serverExam]);
 
         expect(received).toHaveLength(1);
-        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, testExam: false });
+        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, examMode: ExamMode.REAL });
         expect(dayjs.isDayjs(received?.[0].visibleDate)).toBe(true);
         expect(dayjs.isDayjs(received?.[0].startDate)).toBe(true);
         expect(dayjs.isDayjs(received?.[0].endDate)).toBe(true);

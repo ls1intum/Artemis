@@ -90,21 +90,21 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
         var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
         BuildLogEntry buildLogEntryTemplate = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var templateSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryTemplate), templateSubmission);
-        templateSubmission.setBuildLogEntries(templateSavedBuildLogs);
+        templateSubmission.setBuildLogEntries(new java.util.LinkedHashSet<>(templateSavedBuildLogs));
         programmingSubmissionRepository.save(templateSubmission);
 
         var solutionParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
         BuildLogEntry buildLogEntrySolution = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var solutionSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntrySolution), solutionSubmission);
-        solutionSubmission.setBuildLogEntries(solutionSavedBuildLogs);
+        solutionSubmission.setBuildLogEntries(new java.util.LinkedHashSet<>(solutionSavedBuildLogs));
         programmingSubmissionRepository.save(solutionSubmission);
 
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var studentSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true);
         BuildLogEntry buildLogEntryStudent = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var studentSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryStudent), studentSubmission);
-        studentSubmission.setBuildLogEntries(studentSavedBuildLogs);
+        studentSubmission.setBuildLogEntries(new java.util.LinkedHashSet<>(studentSavedBuildLogs));
         programmingSubmissionRepository.save(studentSubmission);
 
         // Delete and assert removal

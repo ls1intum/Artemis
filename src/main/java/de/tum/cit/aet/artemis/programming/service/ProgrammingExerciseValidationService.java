@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_DOCKER_FLAGS_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -44,6 +46,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
+
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
     private static final int MIN_DOCKER_MEMORY_MB = 6;
@@ -131,8 +136,9 @@ public class ProgrammingExerciseValidationService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
+        // Check the build config field lengths before the configuration is parsed
+        validateBuildConfigSize(programmingExercise);
         validateBuildPhaseNames(programmingExercise);
         validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
@@ -299,6 +305,30 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
+     * Validates that the build config text fields do not exceed their maximum allowed length.
+     * The limits are character limits (see {@link String#length()}), not byte limits.
+     *
+     * @param programmingExercise the programming exercise whose build config should be validated
+     */
+    public void validateBuildConfigSize(ProgrammingExercise programmingExercise) {
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        if (buildConfig == null) {
+            return;
+        }
+
+        String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        if (buildPlanConfiguration != null && buildPlanConfiguration.length() > MAX_BUILD_PLAN_CONFIGURATION_LENGTH) {
+            throw new BadRequestAlertException("The build plan configuration is too long. Max " + MAX_BUILD_PLAN_CONFIGURATION_LENGTH + " characters", "Exercise",
+                    "buildPlanConfigurationTooLong");
+        }
+
+        String dockerFlags = buildConfig.getDockerFlags();
+        if (dockerFlags != null && dockerFlags.length() > MAX_DOCKER_FLAGS_LENGTH) {
+            throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
+        }
+    }
+
+    /**
      * Validates custom build phase names in phases-based build plan configurations.
      * Phase names must match the configured pattern and be unique case-insensitively.
      *
@@ -378,7 +408,7 @@ public class ProgrammingExerciseValidationService {
      * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey = (courseShortName + programmingExercise.getShortName().replaceAll("\\s+", "")).toUpperCase();
+        String projectKey = (courseShortName + WHITESPACE_RUN.matcher(programmingExercise.getShortName()).replaceAll("")).toUpperCase(Locale.ROOT);
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);

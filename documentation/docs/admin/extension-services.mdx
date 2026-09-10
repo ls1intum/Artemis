@@ -12,8 +12,6 @@ import sharingButton1 from './assets/sharing/sharingButtonArtemis.png';
 import sharingButton2 from './assets/sharing/sharingButtonSharing.png';
 import Callout from '../../src/components/Callout/Callout';
 
-# Setup of Extension Services
-
 This section describes the required setup for various extension services that can be used to activate additional functionality in your Artemis instance.
 
 ---
@@ -197,29 +195,6 @@ artemis:
 This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
 
 </Callout>
-
----
-
-### Aeolus Service
-
-Aeolus is a service that provides a REST API for the Artemis platform to generate custom build plans for programming exercises. It is designed to be used in combination with the Artemis platform to provide build plans in multiple CI systems, currently Jenkins and LocalCI.
-
-This section outlines how to set up Aeolus in your own Artemis instance.
-
-#### Prerequisites
-
-- Ensure you have a running instance of Artemis.
-- Set up a running instance of Aeolus. See the <a href="https://ls1intum.github.io/Aeolus/">Aeolus documentation</a> for more information.
-
-#### Enable the aeolus Spring profile
-
-```
---spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,aeolus
-```
-
-#### Configure the Aeolus Endpoint
-
-The Aeolus service can run on a dedicated machine since Artemis accesses it via a REST API call. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` to include the Aeolus endpoint. How to do this is described in the configuration documentation for Aeolus.
 
 ---
 

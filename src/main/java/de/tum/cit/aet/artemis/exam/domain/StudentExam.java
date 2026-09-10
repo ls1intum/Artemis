@@ -55,8 +55,16 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "test_run")
     private Boolean testRun;
 
+    /**
+     * When this test-exam attempt reserved its slot against the cross-attempt Athena feedback request cap (see
+     * {@link de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService}). Null means the attempt has not requested
+     * Athena feedback yet.
+     */
+    @Column(name = "athena_feedback_requested_date")
+    private ZonedDateTime athenaFeedbackRequestedDate;
+
     @ManyToOne
-    @JoinColumn(name = "exam_id")
+    @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
     @ManyToOne
@@ -130,6 +138,14 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setSubmissionDate(ZonedDateTime submissionDate) {
         this.submissionDate = submissionDate;
+    }
+
+    public ZonedDateTime getAthenaFeedbackRequestedDate() {
+        return athenaFeedbackRequestedDate;
+    }
+
+    public void setAthenaFeedbackRequestedDate(ZonedDateTime athenaFeedbackRequestedDate) {
+        this.athenaFeedbackRequestedDate = athenaFeedbackRequestedDate;
     }
 
     public Exam getExam() {
@@ -232,13 +248,43 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
-        if (isTestStudentExam()) {
-            if (this.startedDate == null) {
+        return individualEndDate(exam, startedDate, workingTime);
+    }
+
+    /**
+     * Returns the individual exam end date for the given exam, start date and working time, without needing a
+     * {@link StudentExam} instance. Callers that only read a projection of those three values (rather than loading the
+     * whole student exam) share this computation so it cannot drift from {@link #getIndividualEndDate()}.
+     *
+     * @param exam        the exam the student exam belongs to
+     * @param startedDate the date the student started the exam, only relevant for test exams
+     * @param workingTime the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDate(Exam exam, ZonedDateTime startedDate, int workingTime) {
+        return individualEndDate(exam.getExamMode(), exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION ? exam.getSimulationEndDate() : null, exam.getStartDate(), startedDate,
+                workingTime);
+    }
+
+    /**
+     * Scalar form of {@link #individualEndDate(Exam, ZonedDateTime, int)} for callers that read the exam as a
+     * projection rather than loading the entity.
+     *
+     * @param examMode          the exam mode
+     * @param simulationEndDate the end of the simulation phase
+     * @param examStartDate     the start date of the exam
+     * @param startedDate       the date the student started the exam, only relevant for test exams
+     * @param workingTime       the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDate(ExamMode examMode, ZonedDateTime simulationEndDate, ZonedDateTime examStartDate, ZonedDateTime startedDate, int workingTime) {
+        if (examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && startedDate != null && !startedDate.isBefore(simulationEndDate)) {
+            if (startedDate == null) {
                 return null;
             }
-            return this.startedDate.plusSeconds(workingTime);
+            return startedDate.plusSeconds(workingTime);
         }
-        return exam.getStartDate().plusSeconds(workingTime);
+        return examStartDate.plusSeconds(workingTime);
     }
 
     /**
@@ -248,20 +294,45 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
-        int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
-        if (isTestStudentExam()) {
-            if (this.startedDate == null) {
-                return null;
-            }
-            return this.startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
-        }
-        return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+        return individualEndDateWithGracePeriod(exam, startedDate, workingTime);
     }
 
-    @JsonIgnore
-    private boolean isTestStudentExam() {
-        return exam.getExamMode() == ExamMode.TEST
-                || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && startedDate != null && !startedDate.isBefore(exam.getSimulationEndDate());
+    /**
+     * Returns the individual exam end date including the exam's grace period, without needing a {@link StudentExam}
+     * instance. See {@link #individualEndDate(Exam, ZonedDateTime, int)} for why this is static.
+     *
+     * @param exam        the exam the student exam belongs to
+     * @param startedDate the date the student started the exam, only relevant for test exams
+     * @param workingTime the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student including the grace period, or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDateWithGracePeriod(Exam exam, ZonedDateTime startedDate, int workingTime) {
+        return individualEndDateWithGracePeriod(exam.getExamMode(), exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION ? exam.getSimulationEndDate() : null, exam.getStartDate(),
+                exam.getGracePeriod(), startedDate, workingTime);
+    }
+
+    /**
+     * Scalar form of {@link #individualEndDateWithGracePeriod(Exam, ZonedDateTime, int)} for callers that read the exam
+     * as a projection rather than loading the entity.
+     *
+     * @param examMode          the exam mode
+     * @param simulationEndDate the end of the simulation phase
+     * @param examStartDate     the start date of the exam
+     * @param gracePeriod       the grace period of the exam in seconds, may be null
+     * @param startedDate       the date the student started the exam, only relevant for test exams
+     * @param workingTime       the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student including the grace period, or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDateWithGracePeriod(ExamMode examMode, ZonedDateTime simulationEndDate, ZonedDateTime examStartDate, Integer gracePeriod,
+            ZonedDateTime startedDate, int workingTime) {
+        int gracePeriodInSeconds = Objects.requireNonNullElse(gracePeriod, 0);
+        if (examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && startedDate != null && !startedDate.isBefore(simulationEndDate)) {
+            if (startedDate == null) {
+                return null;
+            }
+            return startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
+        }
+        return examStartDate.plusSeconds(workingTime + gracePeriodInSeconds);
     }
 
     /**

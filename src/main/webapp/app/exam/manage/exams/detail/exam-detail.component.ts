@@ -27,13 +27,18 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
-import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
     imports: [
+        ArtemisTranslatePipe,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
@@ -42,7 +47,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         ExamChecklistComponent,
         DetailOverviewListComponent,
         FeatureOverlayComponent,
-        ExamModeBadgeComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
@@ -56,6 +63,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+    private eventManager = inject(EventManager);
 
     protected readonly isRealExam = isRealExam;
 
@@ -186,6 +194,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         this.examManagementService.delete(this.exam().course!.id!, examId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
+                this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
                 void this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

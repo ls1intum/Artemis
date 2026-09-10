@@ -232,7 +232,7 @@ describe('PostingsMarkdownEditor', () => {
     it('should initialize markdown correctly with post content', () => {
         fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
-        expect(mockMarkdownEditorComponent.markdown).toEqual(component.content());
+        expect(mockMarkdownEditorComponent.markdown()).toEqual(component.content());
     });
 
     it('should update value if markdown change is emitted', () => {

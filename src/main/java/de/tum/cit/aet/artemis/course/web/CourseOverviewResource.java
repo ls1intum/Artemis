@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("student-view/course-overview")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
@@ -140,9 +142,15 @@ public class CourseOverviewResource {
      * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
      * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
      *         exercise type for each exercise, and the participation result for each participation.
+     * @deprecated The web client no longer uses this endpoint. It loads the course shell through
+     *             {@code courses/&#123;courseId&#125;/for-overview} and each tab's content through
+     *             {@code courses/&#123;courseId&#125;/available-tabs}, {@code .../exercises-for-overview},
+     *             {@code .../lectures-for-overview} and {@code .../exams-for-overview}, so entering a course no longer
+     *             pays for content the user may never open (16 database queries and 37 KB here, against 6 queries on
+     *             entry after the split). This endpoint is kept for the iOS, Android and VS Code clients, which still
+     *             load everything at once, and can be removed once those have migrated.
      */
-    // TODO: we should rename this into courses/{courseId}/details
-    @Deprecated(since = "8.7.0")
+    @Deprecated(since = "9.7")
     @GetMapping("courses/{courseId}/for-dashboard")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -309,8 +317,8 @@ public class CourseOverviewResource {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
-        log.debug("courseService.findAllActiveWithExercisesForUser done");
+        Set<Course> courses = courseService.findAllForDashboardWithExercisesForUser(user);
+        log.debug("courseService.findAllForDashboardWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
 
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");

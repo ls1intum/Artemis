@@ -117,7 +117,7 @@
             @let programmingExerciseValue = programmingExercise();
             @let exampleSolutionPublicationDateSet =
                 !!programmingExerciseValue.exampleSolutionPublicationDate || !!programmingExerciseValue.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-            <jhi-programming-exercise-update-timeline
+            <jhi-programming-exercise-timeline
                 id="timeline"
                 [isExamMode]="programmingExerciseCreationConfig().isExamMode"
                 [complaintsInCourseEnabled]="programmingExerciseValue.course?.complaintsEnabled ?? false"
@@ -125,8 +125,9 @@
                 [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
                 [customizeBuildPlan]="programmingExerciseValue.customizeBuildPlan"
                 [exercise]="programmingExerciseValue"
-                [lockedToGroup]="lockedToGroup()"
-                (lockedClick)="lockedClick.emit()"
+                [exercisePartOfExerciseGroup]="exercisePartOfExerciseGroup()"
+                (editGroupDates)="editGroupDates.emit()"
+                (timelineStatus)="onTimelineStatusChange($event)"
                 [(releaseDate)]="programmingExerciseValue.releaseDate"
                 [(startDate)]="programmingExerciseValue.startDate"
                 [(dueDate)]="programmingExerciseValue.dueDate"
@@ -134,11 +135,9 @@
                 [(assessmentDueDate)]="programmingExerciseValue.assessmentDueDate"
                 [(exampleSolutionPublicationDate)]="programmingExerciseValue.exampleSolutionPublicationDate"
                 [(assessmentType)]="programmingExerciseValue.assessmentType"
-                [(allowFeedbackRequests)]="programmingExerciseValue.allowFeedbackRequests"
                 [(setTestCaseVisibilityToAfterDueDate)]="importOptions().setTestCaseVisibilityToAfterDueDate"
                 [(allowComplaintsForAutomaticAssessments)]="programmingExerciseValue.allowComplaintsForAutomaticAssessments"
                 [(releaseTestsWithExampleSolution)]="programmingExerciseValue.releaseTestsWithExampleSolution"
-                [(feedbackSuggestionModule)]="programmingExerciseValue.feedbackSuggestionModule"
                 [(showTestNamesToStudents)]="programmingExerciseValue.showTestNamesToStudents"
             />
         </div>
@@ -146,7 +145,7 @@
     @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" />
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" [editable]="editable()" (criteriaGenerated)="criteriaGenerated.emit()" />
         </div>
     }
     @if (isEditFieldDisplayedRecord().presentationScore) {

@@ -1,0 +1,43 @@
+{{- /*
+Gateway API Gateway with two listeners:
+  - HTTPS/443 (terminated here, routed to Artemis HTTP by the HTTPRoute)
+  - TCP/7921 (git-over-SSH, routed by the TCPRoute) - only when ssh.mode=tcproute
+Set gateway.create=false to attach the routes to an existing Gateway instead.
+*/ -}}
+{{- if and .Values.gateway.enabled .Values.gateway.create }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "artemis.fullname" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+  {{- if .Values.gateway.tls.certManagerClusterIssuer }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.gateway.tls.certManagerClusterIssuer | quote }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ required "gateway.className is required when gateway.create=true" .Values.gateway.className }}
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: {{ required "gateway.hostname is required" .Values.gateway.hostname | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ .Values.gateway.tls.secretName | default (printf "%s-tls" (include "artemis.fullname" .)) }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- if eq .Values.gateway.ssh.mode "tcproute" }}
+    - name: ssh
+      protocol: TCP
+      port: {{ .Values.gateway.ssh.port }}
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Same
+    {{- end }}
+{{- end }}

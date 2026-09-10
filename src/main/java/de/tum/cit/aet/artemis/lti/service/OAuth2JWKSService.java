@@ -8,7 +8,6 @@ import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
@@ -16,14 +15,14 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
@@ -37,17 +36,17 @@ public class OAuth2JWKSService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
     private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
-    private IMap<String, JWK> clientRegistrationIdToJwk;
+    private DistributedMap<String, JWK> clientRegistrationIdToJwk;
 
-    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService, DistributedDataProvider distributedDataProvider) {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -56,9 +55,9 @@ public class OAuth2JWKSService {
      *
      * @return the Hazelcast map containing JWKs
      */
-    public IMap<String, JWK> getClientRegistrationIdToJwk() {
+    public DistributedMap<String, JWK> getClientRegistrationIdToJwk() {
         if (this.clientRegistrationIdToJwk == null) {
-            this.clientRegistrationIdToJwk = this.hazelcastInstance.getMap("ltiJwkMap");
+            this.clientRegistrationIdToJwk = this.distributedDataProvider.getMap("ltiJwkMap");
         }
         return this.clientRegistrationIdToJwk;
     }
@@ -84,7 +83,7 @@ public class OAuth2JWKSService {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
 
         if (clientRegistration == null) {
-            getClientRegistrationIdToJwk().delete(clientRegistrationId);
+            getClientRegistrationIdToJwk().remove(clientRegistrationId);
         }
         else {
             getClientRegistrationIdToJwk().put(clientRegistrationId, generateKey(clientRegistration));

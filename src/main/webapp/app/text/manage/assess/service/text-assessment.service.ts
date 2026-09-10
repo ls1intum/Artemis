@@ -167,9 +167,9 @@ export class TextAssessmentService {
                     const submission = participation.submissions!.last()!;
                     let result;
                     if (resultId) {
-                        result = getSubmissionResultById(submission, resultId)!;
+                        result = getSubmissionResultById(submission, resultId);
                     } else {
-                        result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
+                        result = getSubmissionResultByCorrectionRound(submission, correctionRound);
                     }
                     TextAssessmentService.reconnectResultsParticipation(participation, submission, result);
                 }),
@@ -261,9 +261,13 @@ export class TextAssessmentService {
      *  @param submission
      *  @param result
      */
-    private static reconnectResultsParticipation(participation: Participation, submission: Submission, result: Result) {
+    private static reconnectResultsParticipation(participation: Participation, submission: Submission, result: Result | undefined) {
         setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
         submission.participation = participation;
+        // A correction round the tutor has not assessed yet simply has no result, so there is nothing to reconnect.
+        if (!result) {
+            return;
+        }
         result.submission = submission;
         // Make sure Feedbacks Array is initialized
         result.feedbacks = result.feedbacks || [];

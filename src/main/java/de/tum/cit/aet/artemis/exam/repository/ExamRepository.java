@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -42,6 +43,22 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
+
+    /**
+     * Reads only the schedule and mode that decide whether a submission is in time.
+     * <p>
+     * The submission gate runs on every autosave of every student and reads nothing from the exam but these
+     * values, so loading the entity (and with it the course, through an eager association) is wasted work.
+     *
+     * @param examId the id of the exam
+     * @return the exam's dates, grace period, mode and simulation end date
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.examMode, exam.startDate + exam.workingTime * 1 second)
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<ExamScheduleDTO> findScheduleById(@Param("examId") long examId);
 
     List<Exam> findByCourseId(long courseId);
 
@@ -264,9 +281,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
-    Optional<Exam> findWithStudentExamsExercisesById(long id);
 
     @Query("""
             SELECT DISTINCT e

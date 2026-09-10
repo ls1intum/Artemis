@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -16,7 +17,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { EXAM_TEXT_MAX_LENGTH, EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
-import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -29,10 +29,12 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
@@ -44,6 +46,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './exam-update.component.html',
     styleUrl: './exam-update.component.scss',
     imports: [
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumUiButtonDirective,
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
@@ -57,7 +62,6 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        ButtonComponent,
         ConfirmEntityNameComponent,
         Dialog,
         ExamImportProgressDialogComponent,
@@ -68,16 +72,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
     private calendarService = inject(CalendarService);
     private router = inject(Router);
+    private eventManager = inject(EventManager);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly documentationType: DocumentationType = 'Exams';
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly EXAM_TEXT_MAX_LENGTH = EXAM_TEXT_MAX_LENGTH;
     protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
 
@@ -193,12 +195,15 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state, and we edited an existing exam
-     * Returns to the overview page if there is no previous state, and we created a new exam
+     * Returns to the detail page if we edited an existing exam
+     * Returns to the overview page if we created a new exam
      */
     resetToPreviousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
+        if (this.exam.id) {
+            void this.router.navigate(['course-management', this.course.id, 'exams', this.exam.id]);
+        } else {
+            void this.router.navigate(['course-management', this.course.id, 'exams']);
+        }
     }
 
     /**
@@ -347,6 +352,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving.set(false);
+        this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
         this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
@@ -386,7 +392,16 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         return !!(this.exam.id && this.originalStartDate && this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate));
     }
 
+    /**
+     * Returns whether the exam title is present after trimming. The title input is required, but Angular's required validator
+     * accepts a whitespace-only value, so the trimmed check is needed to keep the save button in sync with the title validation message.
+     */
+    get isValidTitle(): boolean {
+        return !!this.exam.title?.trim();
+    }
+
     get isValidConfiguration(): boolean {
+        const examTitleValid = this.isValidTitle;
         const examConductionDatesValid = this.timelineStatus().valid;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
@@ -397,6 +412,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         const examValidGracePeriod = this.isValidGracePeriod;
         return (
+            examTitleValid &&
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&

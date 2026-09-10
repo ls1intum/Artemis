@@ -15,10 +15,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,6 +42,12 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 
+// Isolated because setUp repoints the process-wide FilePathConverter upload path at this class's @TempDir.
+// Nothing can take that back while other tests are in flight: every integration test resolves upload paths
+// through the same static, so one running in parallel wrote into this temp directory and then failed with a
+// NoSuchFileException once JUnit deleted it. Running alone keeps the redirected path invisible to everything
+// else, and AbstractArtemisIntegrationTest re-asserts the real path for every integration test afterwards.
+@Isolated
 @ExtendWith(MockitoExtension.class)
 class AttachmentVideoUnitServiceTest {
 
@@ -79,14 +87,28 @@ class AttachmentVideoUnitServiceTest {
 
     private AttachmentVideoUnitService service;
 
+    private Path originalFileUploadPath;
+
     @BeforeEach
     void setUp() {
+        // Remember what was there: the path is a process-wide static that the integration test base sets once per JVM,
+        // so leaving it pointed at this class's @TempDir made every later integration test resolve uploads into a
+        // directory JUnit had already deleted.
+        originalFileUploadPath = FilePathConverter.getFileUploadPath();
+        // Fail here rather than in some later test: with nothing to put back, the restore below would leave this
+        // class's @TempDir in the process-wide static, which is exactly the leak this setup exists to avoid.
+        assertThat(originalFileUploadPath).as("the file upload path has to be configured before this test can swap it").isNotNull();
         FilePathConverter.setFileUploadPath(tempDir);
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository,
                 irisLectureUnitSyncService);
         when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
+    }
+
+    @AfterEach
+    void restoreFileUploadPath() {
+        FilePathConverter.setFileUploadPath(originalFileUploadPath);
     }
 
     @Test
@@ -96,8 +118,8 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
@@ -108,7 +130,7 @@ class AttachmentVideoUnitServiceTest {
         service.saveAttachmentVideoUnit(unit, null, null, false);
 
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        verify(irisLectureUnitSyncService).markVisibilityDirty(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
         assertThat(snapshotCaptor.getValue().releaseDate().toInstant()).isEqualTo(unit.getReleaseDate().toInstant());
         verify(contentProcessingService).triggerProcessing(unit);
@@ -130,8 +152,8 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         verify(contentProcessingService, never()).triggerProcessing(any());
-        verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markMetadataDirty(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
@@ -152,7 +174,7 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         verify(contentProcessingService, never()).triggerProcessing(any());
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
     }
 
     @Test
@@ -176,7 +198,7 @@ class AttachmentVideoUnitServiceTest {
                 Set.of());
 
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        verify(irisLectureUnitSyncService).markVisibilityDirty(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsOnlyKeys(1);
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(1).toInstant()).isEqualTo(hiddenUntil.toInstant());
     }
@@ -199,7 +221,7 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
         verify(contentProcessingService, never()).triggerProcessing(any());
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markVisibilityDirty(any(LectureContentUpdateSnapshot.class));
     }
 
     @Test
@@ -210,8 +232,8 @@ class AttachmentVideoUnitServiceTest {
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
         verify(contentProcessingService).triggerProcessing(unit);
-        verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
-        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markMetadataDirty(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
     }
 
     @Test
@@ -223,7 +245,7 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
     }
 
     @Test
@@ -234,8 +256,8 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markVisibilityDirty(any(LectureContentUpdateSnapshot.class));
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 

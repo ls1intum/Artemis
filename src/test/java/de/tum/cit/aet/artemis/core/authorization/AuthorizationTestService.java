@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.authorization;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.annotation.Annotation;
@@ -11,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -152,7 +152,9 @@ public class AuthorizationTestService {
      */
     private void checkForPath(RequestMappingInfo info, HandlerMethod method, Map<Method, Set<String>> methodReports) {
         Method javaMethod = method.getMethod();
-        Set<String> patterns = Objects.requireNonNull(info.getPathPatternsCondition()).getPatternValues();
+        var pathPatternsCondition = info.getPathPatternsCondition();
+        assertThat(pathPatternsCondition).isNotNull();
+        Set<String> patterns = pathPatternsCondition.getPatternValues();
         Annotation annotation = getSingleAuthAnnotation(javaMethod);
         if (annotation == null) {
             // We already logged an error in this case

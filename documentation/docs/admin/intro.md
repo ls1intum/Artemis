@@ -4,8 +4,6 @@ title: Welcome to the Administrator Guide
 sidebar_label: Introduction
 ---
 
-# 🔐 Administrator Setup & Security Guide
-
 Welcome to the Artemis **Administrator Guide**, designed for system administrators who deploy and manage Artemis instances.
 
 This documentation covers:
@@ -17,3 +15,5 @@ This documentation covers:
 - Monitoring, scaling, and integrating external services
 
 Begin with the **[Security Configuration](./production-setup/security.mdx)** section to ensure your deployment follows secure setup practices.
+
+If you are planning a deployment rather than operating one, start with **[Scaling Artemis](./scaling.mdx)**. It covers how many servers an installation needs and how much CPU and memory each one needs, and it explains which component to add capacity to when the platform is slow.

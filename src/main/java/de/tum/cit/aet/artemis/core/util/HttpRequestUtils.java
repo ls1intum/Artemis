@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -50,6 +51,75 @@ public final class HttpRequestUtils {
         final String ipString = getIpStringFromRequest(request);
         final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
         return Optional.ofNullable(ipAddress);
+    }
+
+    /**
+     * Resolves the address a request actually came from, believing forwarding headers only from a trusted proxy.
+     * <p>
+     * Prefer this over {@link #getIpStringFromRequest} wherever the address decides an authorization outcome. That
+     * method returns the first {@code X-Forwarded-For} value whenever the header is present, so a caller names whatever
+     * address it likes. Here the header is consulted only when {@link HttpServletRequest#getRemoteAddr()} is a reverse
+     * proxy the installation operates, and the list is then walked from the right, taking the last entry that did not
+     * come from a trusted proxy: entries further left were supplied by the client, because a proxy appends to the
+     * header rather than replacing it.
+     * <p>
+     * <b>This is a second filter, not the only one, and it cannot repair the first.</b> Artemis runs with
+     * {@code server.forward-headers-strategy: native}, so Tomcat's {@code RemoteIpValve} has already rewritten
+     * {@code getRemoteAddr()} from {@code X-Forwarded-For} before this method sees anything, for any peer matching
+     * {@code server.tomcat.remoteip.internal-proxies} - which defaults to the private ranges and loopback. The starting
+     * point is therefore not the TCP peer but Tomcat's conclusion about it, and a caller connecting <em>from</em> one
+     * of those ranges can put an arbitrary private address in that header and have it become the value returned here.
+     * <p>
+     * So the effective set of addresses whose forwarding headers are believed is the union of that regex and
+     * {@code trustedProxies}, and an origin check built on this value is only as strong as the narrower of the two. An
+     * installation that relies on the address for authorization has to narrow {@code server.tomcat.remoteip.internal-proxies}
+     * to its own proxies; {@link de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy} says so at startup when it
+     * sees an allowlist configured against the default.
+     *
+     * @param request        the HTTP request
+     * @param isTrustedProxy tells whether an address is a reverse proxy this installation operates
+     * @return the resolved client address, never null; falls back to the TCP peer whenever no forwarded entry can be
+     *         trusted
+     */
+    @NonNull
+    public static String getPeerIpString(@NonNull HttpServletRequest request, @NonNull Predicate<String> isTrustedProxy) {
+        String peer = request.getRemoteAddr();
+        if (peer == null || !isTrustedProxy.test(peer)) {
+            // Either the request reached this node directly, or it came through a proxy we do not operate. Both mean
+            // any forwarding header is unverified input, so the peer itself is the most that can be established.
+            return peer == null ? "" : peer;
+        }
+
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor == null || forwardedFor.isBlank()) {
+            return peer;
+        }
+
+        String[] entries = forwardedFor.split(",");
+        for (int index = entries.length - 1; index >= 0; index--) {
+            String candidate = entries[index].trim();
+            if (candidate.isEmpty()) {
+                continue;
+            }
+            if (!isTrustedProxy.test(candidate)) {
+                return candidate;
+            }
+        }
+
+        // Every entry named a trusted proxy, so the original client is not recorded in the header.
+        return peer;
+    }
+
+    /**
+     * Resolves the address a request actually came from, as an {@link IPAddress}.
+     *
+     * @param request        the HTTP request
+     * @param isTrustedProxy tells whether an address is a reverse proxy this installation operates
+     * @return the resolved client address, or empty if it could not be parsed
+     * @see #getPeerIpString
+     */
+    public static Optional<IPAddress> getPeerIpAddress(@NonNull HttpServletRequest request, @NonNull Predicate<String> isTrustedProxy) {
+        return Optional.ofNullable(new IPAddressString(getPeerIpString(request, isTrustedProxy)).getAddress());
     }
 
     /**

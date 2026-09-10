@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -38,6 +39,8 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 
 @Lazy
 @Service
@@ -63,9 +66,16 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
+    private final UserLtiRepository userLtiRepository;
+
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository,
+            UserRecoveryKeyService userRecoveryKeyService) {
         this.userCreationService = userCreationService;
+        this.userLtiRepository = userLtiRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -134,9 +144,13 @@ public class LtiService {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
             final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            newUser.setLtiCreated(true);
-            newUser.setActivationKey(null);
-            userRepository.save(newUser);
+            // Marked in user_lti rather than on the user row, which the lti module does not own. createUser already saved
+            // the account, so the id is available and no further save of the user itself is needed.
+            userLtiRepository.save(new UserLti(newUser.getId(), true));
+            // createUser issues an activation key for every internal account. A launch-provisioned account never receives
+            // the activation mail and must not be activatable by that key, so it is dropped again here - the account uses
+            // `activated` as its own "already initialised" marker instead. See User#activated.
+            userRecoveryKeyService.clearActivationKey(newUser.getId());
 
             log.info("Created new user {}", newUser);
             return newUser;
@@ -183,8 +197,10 @@ public class LtiService {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
 
-        if (!user.getActivated()) {
-            log.info("User is not activated. Adding initialize parameter to query.");
+        // Gated on the launch's own marker, not on `activated`: an account an administrator has deactivated is also
+        // inactive, and offering it the initialisation dialog only leads to a request the endpoint refuses.
+        if (needsInitialization(user)) {
+            log.info("User has not completed the initialization from its first launch. Adding initialize parameter to query.");
             uriComponentsBuilder.queryParam("initialize", "");
         }
 
@@ -194,13 +210,36 @@ public class LtiService {
     }
 
     /**
+     * Whether the account was provisioned by a launch and still has to complete the initialisation that hands it its
+     * password.
+     *
+     * @param user the account
+     * @return true if the account still has to be initialised
+     */
+    public boolean needsInitialization(User user) {
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId());
+    }
+
+    /**
+     * Claims the one-time initialisation of a launch-provisioned account, so that only the first caller proceeds.
+     *
+     * @param user the account
+     * @return true if this caller claimed it and may hand out a password
+     */
+    public boolean claimInitialization(User user) {
+        return user.getId() != null && userLtiRepository.claimInitialization(user.getId()) == 1;
+    }
+
+    /**
      * Checks if a user was created as part of an LTI launch.
      *
      * @param user the user to check if
      * @return true if the user was created as part of an LTI launch
      */
     public boolean isLtiCreatedUser(User user) {
-        return user.isLtiCreated();
+        // Null-checked because the marker is a row keyed on the user id, so an account that has not been persisted cannot
+        // have one. Callers do pass transient users here, and looking one up by a null id would fail.
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId());
     }
 
     /**

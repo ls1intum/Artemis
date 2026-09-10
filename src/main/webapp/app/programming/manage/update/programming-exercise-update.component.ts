@@ -2,7 +2,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
@@ -244,7 +244,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
     // Initialised here rather than left undefined, because getProgrammingExerciseCreationConfig() must hand the child
     // components a stable array identity. See the comment on that getter.
     exerciseCategories: ExerciseCategory[] = [];
@@ -284,7 +283,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is a wrapper to allow modifications from the other subcomponents
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
-        updateTemplate: false,
         setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
@@ -916,13 +914,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.isSaving.set(true);
 
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
-
         /*
          If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
          Creating or deleting new auxiliary repositories works automatically and does not throw a warning.
@@ -1162,10 +1153,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onStaticCodeAnalysisChanged() {
-        // On import: If SCA mode changed, activate recreation of build plans and update of the template
+        // On import: If SCA mode changed, activate recreation of build plans
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.importOptions.recreateBuildPlans = true;
-            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -1173,8 +1163,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
+    onRecreateBuildPlanChange() {
+        if (!this.importOptions.recreateBuildPlans) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1260,6 +1250,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExercisePlagiarism(validationErrorReasons);
         this.validateGradingSection(validationErrorReasons);
         this.validateBuildPhaseNames(validationErrorReasons);
+        this.validateBuildConfigSize(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1308,6 +1299,37 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!phasesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
+                translateValues: {},
+            });
+        }
+    }
+
+    /**
+     * Validates that the build config text fields do not exceed their maximum allowed length, mirroring the server-side
+     * limits so the user gets immediate feedback instead of an HTTP 400. The build plan configuration is checked against
+     * its live serialized value (the same accessor used when saving), the docker flags against the value stored on the
+     * build config (which is updated on every edit).
+     *
+     * @param validationErrorReasons the list of validation reasons to append to
+     */
+    private validateBuildConfigSize(validationErrorReasons: ValidationReason[]): void {
+        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+            return;
+        }
+
+        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
+        const buildPlanConfiguration = customBuildPlanComponent?.getBuildPlanPhasesJSON();
+        if (buildPlanConfiguration !== undefined && buildPlanConfiguration.length > BUILD_PLAN_CONFIGURATION_MAX_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        }
+
+        const dockerFlags = this.programmingExercise.buildConfig?.dockerFlags;
+        if (dockerFlags !== undefined && dockerFlags.length > DOCKER_FLAGS_MAX_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
                 translateValues: {},
             });
         }
@@ -1709,9 +1731,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.validOnlineIdeSelection = this.validOnlineIdeSelection;
         config.inProductionEnvironment = this.inProductionEnvironment;
         config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
-        config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
-        config.updateTemplate = this.importOptions.updateTemplate;
-        config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.recreateBuildPlanChange = this.onRecreateBuildPlanChange;
         config.buildPlanLoaded = this.buildPlanLoaded;
         return config as ProgrammingExerciseCreationConfig;
     }

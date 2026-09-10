@@ -94,7 +94,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
      * Normalizes a CalendarEventDTO by converting all ZonedDateTime fields to UTC and truncating to milliseconds.
      * This is necessary because PostgreSQL normalizes TIMESTAMP WITH TIME ZONE to UTC on storage,
      * while H2 preserves the original zone. Normalizing both actual (from API/DB) and expected (from in-memory
-     * entities) to UTC ensures assertions work regardless of the database backend.
+     * entities) to UTC ensures assertions work regardless of the database system.
      */
     static CalendarEventDTO normalizeEvent(CalendarEventDTO dto) {
         return new CalendarEventDTO(dto.id(), dto.type(), dto.title(), normalizeTimestamp(dto.startDate()), normalizeTimestamp(dto.endDate()), dto.location(), dto.facilitator());
@@ -124,11 +124,16 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     static final String FIXED_DATE_MONTH_STRING = YearMonth.from(FIXED_DATE).toString();
 
-    static final ZonedDateTime PAST_DATE = now(TEST_TIMEZONE).minusMonths(1).withDayOfMonth(15).withHour(12);
+    // Minute, second and nano are pinned so no sub-second component derived from the wall clock ever reaches the
+    // database. The columns are datetime(3), so a value carrying nanos comes back rounded to the nearest
+    // millisecond while the expected value keeps its nanos; normalizeTimestamp then truncates both to whole
+    // seconds, which does not absorb that difference but amplifies it into a full second whenever the class
+    // happens to load just below a second boundary - poisoning every test in the class at once.
+    static final ZonedDateTime PAST_DATE = now(TEST_TIMEZONE).minusMonths(1).withDayOfMonth(15).withHour(12).withMinute(0).withSecond(0).withNano(0);
 
     static final String PAST_DATE_MONTH_STRING = YearMonth.from(PAST_DATE).toString();
 
-    static final ZonedDateTime FUTURE_DATE = now(TEST_TIMEZONE).plusMonths(1).withDayOfMonth(15).withHour(12);
+    static final ZonedDateTime FUTURE_DATE = now(TEST_TIMEZONE).plusMonths(1).withDayOfMonth(15).withHour(12).withMinute(0).withSecond(0).withNano(0);
 
     static final String FUTURE_DATE_MONTH_STRING = YearMonth.from(FUTURE_DATE).toString();
 

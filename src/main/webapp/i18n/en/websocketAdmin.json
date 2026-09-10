@@ -2,7 +2,7 @@
     "artemisApp": {
         "websocketAdmin": {
             "title": "Websocket Broker",
-            "description": "List the Hazelcast nodes and trigger a reconnect of the websocket broker relay on a specific node or on all nodes.",
+            "description": "List the core nodes of the cluster and trigger a reconnect of the websocket broker relay on a specific node or on all nodes.",
             "refreshNodes": "Refresh nodes",
             "reconnectAll": "Reconnect all nodes",
             "reconnectSelected": "Reconnect selected",
@@ -15,13 +15,11 @@
             "actions": "Actions",
             "thisNode": "This node",
             "coreNode": "Core node",
-            "buildAgent": "Build agent (lite)",
             "select": "Select",
             "noNodes": "No nodes found.",
             "noCoreNodes": "No core nodes available for a websocket broker reconnect.",
-            "buildAgentInfo": "Build agents are Hazelcast lite members and are not connected to the websocket broker; reconnect actions target core nodes only.",
             "autoRefreshInfo": "This page refreshes automatically every 5 seconds.",
-            "loadError": "Could not load Hazelcast nodes.",
+            "loadError": "Could not load the cluster nodes.",
             "reconnectRequested": "Reconnect request sent.",
             "reconnectFailed": "Reconnect request failed.",
             "name": "Name",

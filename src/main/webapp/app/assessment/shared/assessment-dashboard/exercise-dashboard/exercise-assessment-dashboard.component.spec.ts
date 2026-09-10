@@ -105,8 +105,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     let submissionService: SubmissionService;
 
-    const result1 = { id: 11 } as Result;
-    const result2 = { id: 12 } as Result;
+    // The correction round is stated explicitly rather than implied by the position in the results array.
+    const result1 = { id: 11, correctionRound: 0 } as Result;
+    const result2 = { id: 12, correctionRound: 1 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
     const exerciseGroup = { id: 14, exam } as ExerciseGroup;
 
@@ -581,7 +582,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         function initComponent() {
             comp.exercise.set({
-                allowFeedbackRequests: false,
                 type: fakeExerciseType,
                 numberOfAssessmentsOfCorrectionRounds: [],
                 studentAssignedTeamIdComputed: false,
@@ -717,7 +717,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('generate exercise detail link', () => {
         comp.exercise.set(modelingExercise);
         comp.courseId.set(4);
-        const exerciseDetailsLink = comp.getExerciseDetailsLink();
+        const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
     });
 

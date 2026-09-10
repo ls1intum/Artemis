@@ -279,29 +279,198 @@ describe('UserManagementComponent', () => {
         expect(component.trackIdentity(0, { id: undefined } as User)).toBe(-1);
     });
 
-    it.each([
-        { status: 200, statusText: '' },
-        { status: 400, statusText: 'Delete Failure' },
-    ])('should broadcast after user deletion (status: $status) or show error', ({ status, statusText }) => {
-        const deleteSpy = vi.spyOn(userService, 'deleteUser');
-        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
-        let errorText: string | undefined;
-        component.dialogError.subscribe((text) => (errorText = text));
-
+    it('should load the current deletion impact before allowing permanent deletion', () => {
         component.deleteUser('test');
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith('test');
 
-        const request = httpMock.expectOne('api/account/admin/users/test');
-        request.flush(null, { status, statusText });
+        const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual({ logins: ['test'] });
+        request.flush({
+            users: [
+                {
+                    userId: 42,
+                    login: 'test',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 2,
+                    impactFingerprint: 'fingerprint',
+                    categories: [
+                        { category: 'ACCOUNT', action: 'DELETE', count: 1 },
+                        { category: 'ACCOUNT', action: 'REMOVE_MEMBERSHIP', count: 1 },
+                    ],
+                },
+            ],
+            totalAffectedObjects: 2,
+            categories: [
+                { category: 'ACCOUNT', action: 'DELETE', count: 1 },
+                { category: 'ACCOUNT', action: 'REMOVE_MEMBERSHIP', count: 1 },
+            ],
+        });
 
-        if (status === 200) {
-            expect(broadcastSpy).toHaveBeenCalledOnce();
-            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deleted a user' });
-        } else {
-            expect(broadcastSpy).not.toHaveBeenCalled();
-        }
-        expect(errorText).toContain(statusText);
+        expect(component.deletionImpact()?.users).toHaveLength(1);
+        expect(component.deletionImpact()?.users[0].login).toBe('test');
+        expect(component.deletionImpact()?.totalAffectedObjects).toBe(2);
+    });
+
+    it('should name every account in the deletion dialog and report the rest as a count', () => {
+        const impacted = (index: number) => ({
+            userId: index,
+            login: `student${index}`,
+            automaticEligible: true,
+            legacyDeleted: false,
+            retentionOverrideRequired: index === 0,
+            totalAffectedObjects: index,
+            impactFingerprint: `fingerprint${index}`,
+            categories: [],
+        });
+        component.deletionImpact.set({ users: Array.from({ length: 12 }, (_, index) => impacted(index)), totalAffectedObjects: 66, categories: [] });
+
+        // An administrator has to be able to see who is about to be deleted, so the dialog names them rather than
+        // only counting them. A very long selection would push the confirmation off the screen, so it is cut off.
+        expect(component.listedDeletionAccounts()).toHaveLength(10);
+        expect(component.listedDeletionAccounts()[0].login).toBe('student0');
+        expect(component.listedDeletionAccounts()[9].login).toBe('student9');
+        expect(component.unlistedDeletionAccountCount()).toBe(2);
+    });
+
+    it('should name a short selection in full', () => {
+        component.deletionImpact.set({
+            users: [
+                {
+                    userId: 1,
+                    login: 'only',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 3,
+                    impactFingerprint: 'a',
+                    categories: [],
+                },
+            ],
+            totalAffectedObjects: 3,
+            categories: [],
+        });
+
+        expect(component.listedDeletionAccounts().map((account) => account.login)).toEqual(['only']);
+        expect(component.unlistedDeletionAccountCount()).toBe(0);
+    });
+
+    it('should clear the dialog state when the deletion dialog is closed', () => {
+        component.deletionDialogVisible.set(true);
+        component.deletionImpact.set({ users: [], totalAffectedObjects: 0, categories: [] });
+        component.deletionConfirmation.set('typed');
+
+        component.closePermanentDeletionDialog();
+
+        expect(component.deletionDialogVisible()).toBeFalsy();
+        expect(component.deletionImpact()).toBeUndefined();
+        expect(component.deletionConfirmation()).toBe('');
+    });
+
+    it('should deactivate every previewed user instead of deleting them', () => {
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        component.deletionDialogVisible.set(true);
+        component.deletionImpact.set({
+            users: [
+                {
+                    userId: 1,
+                    login: 'first',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 0,
+                    impactFingerprint: 'a',
+                    categories: [],
+                },
+                {
+                    userId: 2,
+                    login: 'second',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 0,
+                    impactFingerprint: 'b',
+                    categories: [],
+                },
+            ],
+            totalAffectedObjects: 0,
+            categories: [],
+        });
+
+        component.deactivateInstead();
+
+        // One request per previewed user, and the dialog only closes once all of them answered.
+        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' }).flush({});
+        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/2/deactivate' }).flush({});
+
+        expect(component.deletionLoading()).toBeFalsy();
+        expect(component.deletionDialogVisible()).toBeFalsy();
+        expect(component.selectedUsers()).toEqual([]);
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deactivated users' });
+    });
+
+    it('should do nothing when deactivating without a previewed user', () => {
+        component.deletionImpact.set(undefined);
+
+        component.deactivateInstead();
+
+        expect(component.deletionLoading()).toBeFalsy();
+        httpMock.expectNone({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' });
+    });
+
+    it('should re-preview only users whose deletion plan changed', () => {
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        const firstUser = new User();
+        firstUser.login = 'first';
+        const secondUser = new User();
+        secondUser.login = 'second';
+        const thirdUser = new User();
+        thirdUser.login = 'third';
+        component.selectedUsers.set([firstUser, secondUser, thirdUser]);
+
+        component.deleteAllSelectedUsers();
+        const initialImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        initialImpactRequest.flush({
+            users: [
+                { userId: 41, login: 'first', impactFingerprint: 'first-fingerprint', totalAffectedObjects: 2, categories: [] },
+                { userId: 42, login: 'second', impactFingerprint: 'second-fingerprint', totalAffectedObjects: 2, categories: [] },
+                { userId: 43, login: 'third', impactFingerprint: 'third-fingerprint', totalAffectedObjects: 2, categories: [] },
+            ],
+            totalAffectedObjects: 6,
+            categories: [],
+        });
+        component.deletionConfirmation.set('3');
+
+        component.confirmPermanentDeletion();
+        const deletionRequest = httpMock.expectOne('api/account/admin/users');
+        expect(deletionRequest.request.method).toBe('DELETE');
+        expect(deletionRequest.request.body).toEqual({
+            users: [
+                { login: 'first', impactFingerprint: 'first-fingerprint' },
+                { login: 'second', impactFingerprint: 'second-fingerprint' },
+                { login: 'third', impactFingerprint: 'third-fingerprint' },
+            ],
+        });
+        deletionRequest.flush([
+            { userId: 41, login: 'first', status: 'DELETED' },
+            { userId: 42, login: 'second', status: 'PLAN_CHANGED' },
+            { userId: 43, login: 'third', status: 'FAILED' },
+        ]);
+
+        const refreshedImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        expect(refreshedImpactRequest.request.method).toBe('POST');
+        expect(refreshedImpactRequest.request.body).toEqual({ logins: ['second'] });
+        refreshedImpactRequest.flush({
+            users: [{ userId: 42, login: 'second', impactFingerprint: 'new-fingerprint', totalAffectedObjects: 3, categories: [] }],
+            totalAffectedObjects: 3,
+            categories: [],
+        });
+
+        expect(component.deletionImpact()?.users.map((user) => user.login)).toEqual(['second']);
+        expect(component.permanentDeletionConfirmationExpected()).toBe('second');
+        expect(component.selectedUsers().map((user) => user.login)).toEqual(['second']);
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deleted users' });
     });
 
     it('should call initFilters on initialization', () => {
@@ -410,9 +579,7 @@ describe('UserManagementComponent', () => {
         expect(component.filters().authorityFilter).toEqual(new Set(component.authorityFilters));
     });
 
-    it('should delete all selected users', () => {
-        const deleteSpy = vi.spyOn(userService, 'deleteUsers').mockReturnValue(of());
-
+    it('should load one aggregated deletion impact for all selected users', () => {
         const users = [1, 2, 3].map((id) => {
             const user = new User();
             user.login = id.toString();
@@ -422,8 +589,11 @@ describe('UserManagementComponent', () => {
         component.selectedUsers.set([users[0], users[1]]);
 
         component.deleteAllSelectedUsers();
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login]);
+
+        const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual({ logins: ['1', '2'] });
+        request.flush({ users: [], totalAffectedObjects: 0, categories: [] });
     });
 
     it('should add and remove user from selected users', () => {
