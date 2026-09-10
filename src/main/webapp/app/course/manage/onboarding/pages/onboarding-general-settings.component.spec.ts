@@ -18,9 +18,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
-import { AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('OnboardingGeneralSettingsComponent', () => {
@@ -197,6 +197,22 @@ describe('OnboardingGeneralSettingsComponent', () => {
             comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
 
             expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should keep showing the stored state when a feature is switched twice and both saves fail', () => {
+            createWithAthenaActive();
+            const first = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            const second = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
+
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', false);
+            first.error(new HttpErrorResponse({ status: 400 }));
+            second.error(new HttpErrorResponse({ status: 400 }));
+
+            // Rolling the second switch back to the state it replaced would restore the first switch, which failed as
+            // well, and leave the feature shown as enabled although nothing was ever stored.
+            expect(comp.isAthenaGradingEnabled()).toBe(false);
         });
 
         it('should revert the feature and alert when saving fails', () => {

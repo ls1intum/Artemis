@@ -1,22 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AthenaCourseConfigState, AthenaFeature } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { onError } from 'app/foundation/util/global.utils';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-
-/** The two independently switchable Athena feedback features of a course. */
-export type AthenaFeature = 'formativeFeedbackEnabled' | 'gradingFeedbackEnabled';
-
-/** What a course whose Athena configuration has not loaded (yet) is treated as. */
-const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false };
 
 /**
  * Toggles for the course-level Athena feedback features, shown next to the Iris toggle on the course overview.
@@ -54,15 +46,14 @@ const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, 
 export class AthenaEnabledComponent implements OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    private athenaCourseConfigService = inject(AthenaCourseConfigService);
-    private alertService = inject(AlertService);
+    /** Loading, switching and rolling back are the same here as in the onboarding wizard, so both share this state. */
+    private readonly state = new AthenaCourseConfigState(inject(AthenaCourseConfigService), inject(AlertService));
 
     course = input.required<Course>();
 
-    config = signal<AthenaCourseConfigDTO | undefined>(undefined);
-
-    readonly formativeEnabled = computed(() => this.config()?.formativeFeedbackEnabled ?? false);
-    readonly gradingEnabled = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
+    readonly config = this.state.config;
+    readonly formativeEnabled = this.state.formativeFeedbackEnabled;
+    readonly gradingEnabled = this.state.gradingFeedbackEnabled;
 
     /** The two toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly features = [
@@ -73,62 +64,20 @@ export class AthenaEnabledComponent implements OnInit {
     ngOnInit(): void {
         const courseId = this.course()?.id;
         if (courseId) {
-            this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
-                // Applied only while nothing has been switched yet. A toggle clicked before this answers has already
-                // put the newer state here, and the load must not replace it with what the server held beforehand.
-                next: (config) => {
-                    if (this.config() === undefined) {
-                        this.config.set(config);
-                    }
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
+            this.state.load(courseId);
         }
     }
 
     /**
-     * Switch one of the two Athena features and save it. The new state is shown right away and rolled back if the
-     * request fails, so the toggle never claims a setting that was not stored.
-     *
-     * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
-     * cases are treated as "both features off" rather than blocking the toggles, so the instructor can always switch a
-     * feature on and find out from the alert if that could not be saved.
+     * Switch one of the two Athena features and save it right away.
      *
      * @param feature the feature to switch
      * @param enabled whether the feature should be enabled
      */
     setEnabled(feature: AthenaFeature, enabled: boolean) {
         const courseId = this.course()?.id;
-        const currentConfig = this.config() ?? DISABLED_CONFIG;
-
-        if (!courseId || currentConfig[feature] === enabled) {
-            return;
+        if (courseId) {
+            this.state.setEnabled(courseId, feature, enabled);
         }
-
-        const previous = currentConfig[feature];
-        this.config.set(cloneWith(currentConfig, { [feature]: enabled }));
-
-        // Only the switched feature is sent: the other one is whatever this component last read, which may be older
-        // than what is stored if someone else switched it in the meantime.
-        this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
-            // Both handlers write back this one feature only, onto whatever the current state is rather than onto the
-            // snapshot taken when it was clicked. Restoring that whole snapshot would undo a feature switched after
-            // this request went out, which is what a failure of the first of two queued switches used to do.
-            next: (response) => this.applyToFeature(feature, response.body?.[feature] ?? enabled),
-            error: (error: HttpErrorResponse) => {
-                this.applyToFeature(feature, previous);
-                onError(this.alertService, error);
-            },
-        });
-    }
-
-    /**
-     * Sets one feature to the given value, leaving the other one at whatever it currently is.
-     *
-     * @param feature the feature to set
-     * @param enabled the value to set it to
-     */
-    private applyToFeature(feature: AthenaFeature, enabled: boolean) {
-        this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [feature]: enabled }));
     }
 }

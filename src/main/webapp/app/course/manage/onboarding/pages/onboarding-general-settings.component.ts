@@ -7,7 +7,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { getSemesters } from 'app/foundation/util/semester-utils';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
@@ -22,8 +22,8 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
-import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
-import { AthenaFeature } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
+import { AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AthenaCourseConfigState, AthenaFeature } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
 
@@ -50,7 +50,8 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
-    private athenaCourseConfigService = inject(AthenaCourseConfigService);
+    /** Loading, switching and rolling back work the same here as on the course overview, so both share this state. */
+    private readonly athenaState = new AthenaCourseConfigState(inject(AthenaCourseConfigService), inject(AlertService));
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
@@ -63,9 +64,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly isIrisEnabled = computed(() => this.irisSettings()?.enabled ?? false);
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
-    readonly athenaConfig = signal<AthenaCourseConfigDTO | undefined>(undefined);
-    readonly isAthenaFormativeEnabled = computed(() => this.athenaConfig()?.formativeFeedbackEnabled ?? false);
-    readonly isAthenaGradingEnabled = computed(() => this.athenaConfig()?.gradingFeedbackEnabled ?? false);
+    readonly athenaConfig = this.athenaState.config;
+    readonly isAthenaFormativeEnabled = this.athenaState.formativeFeedbackEnabled;
+    readonly isAthenaGradingEnabled = this.athenaState.gradingFeedbackEnabled;
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [
@@ -101,16 +102,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
             });
         }
         if (this.athenaEnabled) {
-            this.athenaCourseConfigService.getCourseConfig(courseId).subscribe({
-                // Applied only while nothing has been switched yet, so a toggle clicked before this answers is not
-                // replaced by the state the server held beforehand.
-                next: (config) => {
-                    if (this.athenaConfig() === undefined) {
-                        this.athenaConfig.set(config);
-                    }
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
+            this.athenaState.load(courseId);
         }
     }
 
@@ -140,40 +132,14 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
      * Switch one of the two Athena feedback features and save it right away, like the Iris toggle above: the Athena
      * configuration is not part of the course DTO the wizard saves on step navigation.
      *
-     * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
-     * cases count as "both features off" rather than blocking the toggles.
-     *
      * @param feature the feature to switch
      * @param enabled whether the feature should be enabled
      */
     setAthenaFeatureEnabled(feature: AthenaFeature, enabled: boolean) {
         const courseId = this.course()?.id;
-        const currentConfig = this.athenaConfig() ?? { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false };
-        if (!courseId || currentConfig[feature] === enabled) {
-            return;
+        if (courseId) {
+            this.athenaState.setEnabled(courseId, feature, enabled);
         }
-        const previous = currentConfig[feature];
-        this.athenaConfig.set(cloneWith(currentConfig, { [feature]: enabled }));
-        // Only the switched feature is sent, so this cannot write back an older value of the other one. Both handlers
-        // then write back that one feature onto the current state rather than restoring the snapshot taken on click,
-        // which would undo a feature switched while this request was in flight.
-        this.athenaCourseConfigService.updateCourseConfig(courseId, { [feature]: enabled }).subscribe({
-            next: (response) => this.applyToAthenaFeature(feature, response.body?.[feature] ?? enabled),
-            error: (error: HttpErrorResponse) => {
-                this.applyToAthenaFeature(feature, previous);
-                onError(this.alertService, error);
-            },
-        });
-    }
-
-    /**
-     * Sets one Athena feature to the given value, leaving the other one at whatever it currently is.
-     *
-     * @param feature the feature to set
-     * @param enabled the value to set it to
-     */
-    private applyToAthenaFeature(feature: AthenaFeature, enabled: boolean) {
-        this.athenaConfig.update((current) => cloneWith(current ?? { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false }, { [feature]: enabled }));
     }
 
     updateField<K extends keyof Course>(field: K, value: Course[K]) {
