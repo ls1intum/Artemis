@@ -1052,7 +1052,7 @@ class GenerationTaskServiceTest {
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(sentEvents().getLast().terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
-        assertThat(sentEvents().getLast().message()).contains("AI provider request failed");
+        assertThat(sentEvents().getLast().message()).contains("Complete token accounting could not be verified");
         verify(jobService).markTokenAccountingIncomplete(JOB_ID);
         // The local stop flag already ends every further model call. A hard system cancellation would additionally mark the job cancelled, which is what used to destroy a
         // verified candidate the provider had already been paid for.
@@ -1125,7 +1125,7 @@ class GenerationTaskServiceTest {
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(sentEvents().getLast().terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
-        assertThat(sentEvents().getLast().message()).contains("AI provider request failed");
+        assertThat(sentEvents().getLast().message()).contains("Complete token accounting could not be verified");
         verify(generationBudgetService).retainReservationForBudgetWindow("reservation-provider-failed");
         verify(generationBudgetService, never()).releaseReservation("reservation-provider-failed");
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
