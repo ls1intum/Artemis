@@ -34,6 +34,40 @@ describe('TumUiTooltipDirective', () => {
         return document.querySelector('.tum-ui-tooltip-bubble');
     }
 
+    function arrow(): HTMLElement | null {
+        return bubble()?.querySelector('span[aria-hidden="true"]') ?? null;
+    }
+
+    describe('arrow placement', () => {
+        // The overlay is created with withPush, so a bubble near the viewport edge is shoved sideways. An arrow
+        // centred on the bubble then points beside the host instead of at it.
+        function showWithGeometry(host: DOMRect, bubbleRect: DOMRect): void {
+            vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(host);
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+            vi.spyOn(bubble()!, 'getBoundingClientRect').mockReturnValue(bubbleRect);
+        }
+
+        it('points the arrow at the host when the bubble has been pushed sideways', () => {
+            // Host centred on 520; the bubble was pushed left so it spans 110..670, whose middle is 390.
+            showWithGeometry(new DOMRect(490, 100, 60, 30), new DOMRect(110, 40, 560, 60));
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+
+            // 520 - 110 = 410 from the bubble's left edge, not the 280 a centred arrow would use.
+            expect(arrow()!.style.left).toBe('410px');
+        });
+
+        it('keeps the arrow clear of the corner when the host sits beyond the bubble', () => {
+            // Host far to the right of a bubble that could not follow it.
+            showWithGeometry(new DOMRect(900, 100, 60, 30), new DOMRect(110, 40, 200, 60));
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+
+            expect(arrow()!.style.left).toBe('188px');
+        });
+    });
+
     it('attaches the tooltip overlay and wires aria-describedby on mouseenter', () => {
         button.dispatchEvent(new MouseEvent('mouseenter'));
         vi.advanceTimersByTime(1);
