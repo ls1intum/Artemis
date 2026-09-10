@@ -9,6 +9,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +36,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -600,18 +602,47 @@ public class StudentExamService {
      */
     private void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations, boolean failFast) {
         User student = studentExam.getUser();
+        List<Exercise> exercises = studentExam.getExercises();
+        // A single student exam is a handful of exercises, so asking per exercise is cheap here. The bulk preparation in
+        // startExercises asks for a whole cohort at once instead.
+        Set<Long> startedExerciseIds = studentExam.isTestExam() ? Set.of()
+                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student)).map(Exercise::getId).collect(Collectors.toSet());
+        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), startedExerciseIds, generatedParticipations, failFast);
+    }
 
-        for (Exercise exercise : studentExam.getExercises()) {
+    /**
+     * Whether the student already has a participation for the exercise that reached {@link InitializationState#INITIALIZED}.
+     *
+     * @param exerciseId the id of the exercise
+     * @param student    the student
+     * @return true if such a participation exists
+     */
+    private boolean hasInitializedParticipation(long exerciseId, User student) {
+        return studentParticipationRepository.findByExerciseIdAndStudentId(exerciseId, student.getId()).stream().anyMatch(
+                participation -> participation.getInitializationState() != null && participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+    }
+
+    /**
+     * Sets up the participations and submissions for the given exercises of one student exam.
+     * <p>
+     * Takes the few values it reads rather than the student exam entity, so that the bulk preparation in
+     * {@link #startExercises(Long, List)} can feed it from a projection instead of loading the whole exam graph.
+     *
+     * @param studentExamId           the id of the student exam the participations belong to, used for logging only
+     * @param student                 the student to create the participations for
+     * @param exercises               the exercises of that student exam
+     * @param testExam                whether the student exam belongs to a test exam, in which case a new participation is always created
+     * @param startedExerciseIds      the ids of those exercises the student already has a fully initialized participation for
+     * @param generatedParticipations List of generated participations to track how many participations have been generated
+     * @param failFast                whether to rethrow the first failure instead of continuing with the next exercise
+     */
+    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, Set<Long> startedExerciseIds,
+            List<StudentParticipation> generatedParticipations, boolean failFast) {
+        for (Exercise exercise : exercises) {
             // Stands in only if no caller context reached this thread; a real user's identity is kept.
             SecurityUtils.setAuthorizationObject();
-            // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
-            // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
-            // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
-            // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
-            var studentParticipations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (studentExam.isTestExam() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
-                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+            if (testExam || !startedExerciseIds.contains(exercise.getId())) {
                 try {
                     // Load lazy property
                     if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
@@ -625,14 +656,13 @@ public class StudentExamService {
 
                     if (!participation.isAtLeastInitialized()) {
                         throw new IllegalStateException("Participation " + participation.getId() + " was not initialized after starting exercise " + exercise.getId()
-                                + " for student exam " + studentExam.getId() + " and student " + student.getParticipantIdentifier());
+                                + " for student exam " + studentExamId + " and student " + student.getParticipantIdentifier());
                     }
 
-                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
-                            student.getParticipantIdentifier());
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExamId, exercise.getId(), student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
-                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExamId, exercise.getId(),
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
                     if (failFast) {
                         throw ex;
@@ -664,16 +694,20 @@ public class StudentExamService {
     }
 
     private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
-        var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        boolean testExam = examRepository.findIsTestExamById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        Set<StudentExam> studentExams;
-        if (studentExamIds == null) {
-            studentExams = exam.getStudentExams();
-        }
-        else {
-            var studentExamsInExam = exam.getStudentExams().stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
-            studentExams = studentExamIds.stream().map(studentExamsInExam::get).filter(Objects::nonNull).collect(Collectors.toSet());
-        }
+        // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its
+        // student exams and their exercises instead would repeat the exam row and the full exercise row once per student
+        // exam, which for a large exam transfers megabytes to convey a few kilobytes of distinct data.
+        var exerciseStartData = studentExamIds == null ? studentExamRepository.findExerciseStartDataByExamId(examId)
+                : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
+        var exercisesById = loadExercisesForPreparation(exerciseStartData);
+        // Which students are already set up, asked once per exercise rather than once per student and exercise
+        var startedStudentIdsByExerciseId = testExam ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
+        // LinkedHashMap so the student exams are prepared in the order the query returned them
+        var rowsByStudentExamId = exerciseStartData.stream()
+                .collect(Collectors.groupingBy(StudentExamExerciseStartDTO::studentExamId, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
+        int studentExamCount = rowsByStudentExamId.size();
 
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
@@ -683,27 +717,78 @@ public class StudentExamService {
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExamCount, 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
-            var futures = studentExams.stream()
-                    .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true), threadPool)
-                            .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
-                                    generatedParticipations.size(), startedAt, lock))
-                            .exceptionally(throwable -> {
-                                log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
-                                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
-                                        generatedParticipations.size(), startedAt, lock);
-                                return null;
-                            }))
-                    .toArray(CompletableFuture[]::new);
+            var futures = rowsByStudentExamId.entrySet().stream().map(entry -> {
+                long studentExamId = entry.getKey();
+                var rows = entry.getValue();
+                var student = new User(rows.getFirst().userId());
+                student.setLogin(rows.getFirst().userLogin());
+                var exercises = rows.stream().map(row -> exercisesById.get(row.exerciseId())).filter(Objects::nonNull).toList();
+                var startedExerciseIds = exercises.stream().filter(exercise -> startedStudentIdsByExerciseId.getOrDefault(exercise.getId(), Set.of()).contains(student.getId()))
+                        .map(Exercise::getId).collect(Collectors.toSet());
+                return CompletableFuture
+                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, startedExerciseIds, generatedParticipations, true),
+                                threadPool)
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                                generatedParticipations.size(), startedAt, lock))
+                        .exceptionally(throwable -> {
+                            log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
+                                    generatedParticipations.size(), startedAt, lock);
+                            return null;
+                        });
+            }).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
-                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
+                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt,
                         lock);
                 return generatedParticipations.size();
             });
         }
+    }
+
+    /**
+     * Loads every distinct exercise the given student exams reference, once, rather than once per student exam.
+     * <p>
+     * Programming exercises are loaded with their template participation right away: the preparation would otherwise
+     * fetch it lazily from inside the worker threads, which all share the same exercise instance.
+     *
+     * @param exerciseStartData the rows read for the exam
+     * @return the exercises by id
+     */
+    private Map<Long, Exercise> loadExercisesForPreparation(List<StudentExamExerciseStartDTO> exerciseStartData) {
+        var exerciseIds = exerciseStartData.stream().map(StudentExamExerciseStartDTO::exerciseId).collect(Collectors.toSet());
+        Map<Long, Exercise> exercisesById = new HashMap<>();
+        for (Exercise exercise : exerciseRepository.findAllById(exerciseIds)) {
+            var loadedExercise = exercise instanceof ProgrammingExercise ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId())
+                    : exercise;
+            exercisesById.put(loadedExercise.getId(), loadedExercise);
+        }
+        if (exercisesById.size() < exerciseIds.size()) {
+            // Cannot happen while the foreign key holds, but the student exams that reference a missing exercise would
+            // otherwise be prepared one exercise short without anything saying so.
+            exerciseIds.removeAll(exercisesById.keySet());
+            log.error("Exercises {} are referenced by student exams but no longer exist, their participations are not prepared", exerciseIds);
+        }
+        return exercisesById;
+    }
+
+    /**
+     * Reads which students already have a fully initialized participation, one query per exercise instead of one per
+     * student and exercise, and ids instead of whole participation rows.
+     *
+     * @param exerciseIds the ids of the exercises of the exam
+     * @return the ids of the students already set up, by exercise id
+     */
+    private Map<Long, Set<Long>> loadStartedStudentIds(Set<Long> exerciseIds) {
+        var startedStates = InitializationState.statesThatCompleted(InitializationState.INITIALIZED);
+        Map<Long, Set<Long>> startedStudentIdsByExerciseId = new HashMap<>();
+        for (Long exerciseId : exerciseIds) {
+            startedStudentIdsByExerciseId.put(exerciseId, studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseId(exerciseId, startedStates));
+        }
+        return startedStudentIdsByExerciseId;
     }
 
     private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
