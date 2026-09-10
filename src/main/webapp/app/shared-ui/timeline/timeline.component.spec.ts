@@ -389,6 +389,22 @@ describe('ExerciseTimeline', () => {
         ]);
     });
 
+    it('should keep an item invalid when its external error key is an empty string', () => {
+        // hasExternalError is `errorStringKey !== undefined`, so an empty key still paints the field as an error.
+        // The status has to agree with that, or the form reports valid while showing red.
+        const item: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.releaseDate',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            errorStringKey: signal(''),
+        };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        expect(component.internalTimelineItems()[0].hasExternalError).toBe(true);
+        expect(component.timelineStatus().valid).toBe(false);
+        expect(component.timelineStatus().invalidItems).toHaveLength(1);
+    });
+
     it('should report an external error as an invalid item, using the key the item supplies', () => {
         const item: TimelineItem = {
             kind: 'optional',

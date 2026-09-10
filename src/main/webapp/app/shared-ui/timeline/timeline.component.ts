@@ -178,7 +178,10 @@ export class TimelineComponent {
         const items = this.internalTimelineItems();
         const invalidItems = items.flatMap((item) => {
             const reasonKey = this.determineInvalidReasonKey(item);
-            if (!reasonKey) {
+            // Explicitly undefined, not falsy: an item whose errorStringKey resolves to an empty string still counts
+            // as an external error and is still painted as one, so dropping it here would report the timeline valid
+            // while the field shows red.
+            if (reasonKey === undefined) {
                 return [];
             }
             return [{ labelStringKey: item.labelStringKey, reasonKey, dateName: this.translateService.instant(item.labelStringKey) }];
