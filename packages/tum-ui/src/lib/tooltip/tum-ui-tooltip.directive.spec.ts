@@ -242,3 +242,45 @@ describe('TumUiTooltipDirective with tumUiTooltipDescribesHost false', () => {
         expect(button.getAttribute('aria-describedby')).toBe('external-desc');
     });
 });
+
+@Component({
+    template: `<button [tumUiTooltip]="text()" [tumUiTooltipDescribesHost]="describes()" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
+    imports: [TumUiTooltipDirective],
+})
+class TogglingTooltipHostComponent {
+    text = signal<string | readonly string[]>('Help text');
+    describes = signal(true);
+}
+
+describe('TumUiTooltipDirective when tumUiTooltipDescribesHost changes while open', () => {
+    let fixture: ComponentFixture<TogglingTooltipHostComponent>;
+    let button: HTMLButtonElement;
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [TogglingTooltipHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(TogglingTooltipHostComponent);
+        fixture.detectChanges();
+        button = fixture.debugElement.query(By.css('button')).nativeElement;
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('takes its own id back off the host when it hides', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(button.getAttribute('aria-describedby')).toBeTruthy();
+
+        fixture.componentInstance.describes.set(false);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+
+        // The bubble is disposed, so a surviving token would point at nothing.
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+});

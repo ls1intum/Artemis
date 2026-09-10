@@ -205,10 +205,9 @@ export class TumUiTooltipDirective implements OnDestroy {
         }
         host.setAttribute('aria-describedby', tokens.join(' '));
     }
+    // Not guarded by describesHost: the filter only ever drops this instance's own id, so removing one that was
+    // never added is a no-op, while guarding would strand the id if the input turned off while the tooltip was open.
     private removeDescribedBy(): void {
-        if (!this.describesHost()) {
-            return;
-        }
         const host = this.elementRef.nativeElement;
         const tokens = (host.getAttribute('aria-describedby') ?? '').split(' ').filter((token) => token && token !== this.tooltipId);
         if (tokens.length > 0) {
