@@ -80,6 +80,7 @@ plugins {
     id "nebula.lint" version "21.2.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.2.2"
+    id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.21.0"
@@ -123,6 +124,7 @@ apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
+apply from: "gradle/sonar.gradle"
 
 // The rest of the SBOM configuration lives in gradle/sbom.gradle. Only this one property has to be set here:
 // Gradle 10 rejects the String coercion `projectType = "application"`, and the enum the property needs instead
@@ -701,7 +703,7 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
-        def pgVersion = findProperty('postgres_version') ?: '18.4'
+        def pgVersion = findProperty('postgres_version') ?: '18.6'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
         mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"
@@ -777,8 +779,14 @@ tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
 checkstyle {
     toolVersion = "${checkstyle_version}"
     configFile = file("checkstyle.xml")
-    checkstyleTest.enabled = false
     maxErrors = 0
+}
+
+// Test sources get their own configuration rather than checkstyle.xml, which requires Javadoc on public methods and
+// would therefore demand a comment on every test method. checkstyle-test.xml carries only the rules that apply to
+// test code; see the note at the top of that file.
+checkstyleTest {
+    configFile = file("checkstyle-test.xml")
 }
 
 gradleLint {
