@@ -2,7 +2,6 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { toISO8601DateTimeString } from 'app/foundation/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { convertTutorialGroupFreePeriodDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
@@ -13,9 +12,17 @@ type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 /** The server reads and writes the day of a holiday as a plain calendar date, without a zone. */
 const SERVER_DATE_FORMAT = 'YYYY-MM-DD';
 
+/**
+ * How the server takes the bounds of a free period: a wall clock with no offset, which it then reads in the course's
+ * time zone. Sending an instant instead would have the browser's zone decide the wall clock, and the server would
+ * reinterpret those digits in the course's - moving the holiday whenever the two zones differ.
+ */
+const SERVER_DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export class TutorialGroupFreePeriodDTO {
-    public startDate?: Date;
-    public endDate?: Date;
+    /** Carried as Dayjs rather than Date so the value keeps the zone it was chosen in until it is written out. */
+    public startDate?: dayjs.Dayjs;
+    public endDate?: dayjs.Dayjs;
     public reason?: string;
 }
 
@@ -93,11 +100,17 @@ export class TutorialGroupFreePeriodService {
         return res;
     }
 
+    /**
+     * Writes the bounds as the wall clock of the zone they were chosen in.
+     *
+     * Dayjs formats in its own zone, so a value read in the course's zone stays that way. Going through a Date first
+     * would hand the formatting to the browser's zone and shift the holiday for anyone not sitting in the course's.
+     */
     private convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodDTO {
         if (tutorialGroupFreePeriodDTO) {
             return cloneWith(tutorialGroupFreePeriodDTO, {
-                startDate: toISO8601DateTimeString(tutorialGroupFreePeriodDTO.startDate),
-                endDate: toISO8601DateTimeString(tutorialGroupFreePeriodDTO.endDate),
+                startDate: tutorialGroupFreePeriodDTO.startDate?.format(SERVER_DATE_TIME_FORMAT),
+                endDate: tutorialGroupFreePeriodDTO.endDate?.format(SERVER_DATE_TIME_FORMAT),
             });
         } else {
             return tutorialGroupFreePeriodDTO;

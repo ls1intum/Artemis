@@ -212,8 +212,9 @@ export class TutorialGroupHolidaysComponent {
             return;
         }
 
-        // The server reads these as wall-clock values in the course's zone, so they are sent without an offset.
-        const payload = { startDate: submission.start.toDate(), endDate: submission.end.toDate(), reason: submission.reason };
+        // Passed as Dayjs, not as instants: the service writes the wall clock of the zone these were chosen in, which
+        // is the course's, and that is what the server reads them back in.
+        const payload = { startDate: submission.start, endDate: submission.end, reason: submission.reason };
         const edited = this.editedHoliday();
 
         this.isSaving.set(true);
