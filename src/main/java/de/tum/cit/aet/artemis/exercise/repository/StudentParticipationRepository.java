@@ -705,6 +705,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
+    /**
+     * The student's participations in an exercise, with their submissions and results.
+     * <p>
+     * The collection joins repeat a participation once per submission and result, and there is deliberately no SELECT
+     * DISTINCT: Hibernate passes that through to SQL, where it becomes a sort over every selected column. Hibernate
+     * hands back the same instance for each repeated row, so the caller collapses them - see
+     * {@code ParticipationService#findByExerciseAndStudentIdWithSubmissionsAndResults}.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the student's participations in that exercise, repeated once per fetched row
+     */
     @Query("""
             SELECT p
             FROM StudentParticipation p
@@ -713,22 +725,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
-    List<StudentParticipation> findWithResultsAndSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
-    /**
-     * The student's participations in an exercise, with their submissions and results, one entry per participation.
-     * <p>
-     * De-duplicated in Java rather than with SELECT DISTINCT, which Hibernate passes through to SQL where it becomes a
-     * sort over every selected column. Hibernate returns the same instance for each repeated row and
-     * {@code DomainObject} compares on id, so collapsing them here is exact and far cheaper.
-     *
-     * @param exerciseId the id of the exercise
-     * @param studentId  the id of the student
-     * @return the student's participations in that exercise, each once
-     */
-    default List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(long exerciseId, long studentId) {
-        return findWithResultsAndSubmissionsByExerciseIdAndStudentIdAllowingDuplicates(exerciseId, studentId).stream().distinct().toList();
-    }
+    List<StudentParticipation> findWithSubmissionsAndResultsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p

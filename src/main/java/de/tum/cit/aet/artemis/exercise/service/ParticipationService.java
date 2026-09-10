@@ -897,7 +897,9 @@ public class ParticipationService {
         if (exercise.isTeamMode()) {
             return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(), studentId);
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
+        // the collection joins repeat a participation once per fetched row; distinct on the identity Hibernate already
+        // shares, rather than a SELECT DISTINCT that sorts the whole row in the database
+        return studentParticipationRepository.findWithSubmissionsAndResultsByExerciseIdAndStudentId(exercise.getId(), studentId).stream().distinct().toList();
     }
 
     /**
