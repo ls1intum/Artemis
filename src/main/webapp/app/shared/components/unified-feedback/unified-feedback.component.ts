@@ -9,6 +9,8 @@ import {
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -232,7 +234,7 @@ export class UnifiedFeedbackComponent {
     );
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
-    readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail());
+    readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback);
     readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
@@ -439,6 +441,12 @@ export class UnifiedFeedbackComponent {
         if (feedback.text) {
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return Feedback.stripSuggestionPrefix(feedback.text);
+            }
+            if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+                return feedback.text.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length);
+            }
+            if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                return feedback.text.slice(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
             }
             // Only use feedback.text as title when detailText exists as separate content;
             // otherwise text is used as content by buildFeedbackTextForReview and would duplicate here.

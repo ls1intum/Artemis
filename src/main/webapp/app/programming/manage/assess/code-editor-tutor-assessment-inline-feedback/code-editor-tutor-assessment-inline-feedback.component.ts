@@ -37,8 +37,22 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * {@link Feedback} when none is provided) and can be reassigned internally (e.g. when the user cancels an edit).
      * Using a {@link linkedSignal} preserves the original setter behavior: whenever the bound input changes, the
      * working copy resets to the new value.
+     *
+     * Manual/new feedback is fully owned by the tutor writing this assessment, so it is edited through the exact
+     * object bound via {@link feedback}, matching the live, auto-committing flow in {@link onFieldChanged}. Any
+     * other type (e.g. automatic/static-analysis) still shares that same object with {@link automaticFeedback} in
+     * the container until an explicit save, so editing it in place would leak in-progress field changes into the
+     * assessment even if the edit is later dismissed, and would duplicate the feedback into both the automatic and
+     * referenced buckets once {@link commitFeedback} retags it as manual. A working clone keeps those edits local
+     * until {@link updateFeedback} commits it.
      */
-    readonly currentFeedback = linkedSignal<Feedback>(() => this.feedback() ?? new Feedback());
+    readonly currentFeedback = linkedSignal<Feedback>(() => {
+        const feedback = this.feedback();
+        if (!feedback) {
+            return new Feedback();
+        }
+        return feedback.type === undefined || feedback.type === this.MANUAL ? feedback : deepClone(feedback);
+    });
 
     readonly selectedFile = input.required<string>();
 

@@ -369,6 +369,40 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onCancelFeedbackSpy).not.toHaveBeenCalled();
     });
 
+    it('should not mutate the bound non-manual feedback object while an edit is in progress', () => {
+        // The bound object is shared with the container's automaticFeedback list until an explicit save; an
+        // in-progress edit (or one that is later dismissed) must never leak field changes into it.
+        const boundFeedback = { id: 1, type: FeedbackType.AUTOMATIC, credits: 2, text: 'original' } as Feedback;
+        fixture.componentRef.setInput('feedback', boundFeedback);
+        fixture.detectChanges();
+
+        comp.editFeedback(codeLine);
+        expect(comp.currentFeedback()).not.toBe(boundFeedback);
+        comp.currentFeedback().credits = 5;
+        comp.currentFeedback().text = 'edited';
+
+        expect(boundFeedback.credits).toBe(2);
+        expect(boundFeedback.text).toBe('original');
+
+        comp.removeFeedback();
+
+        expect(boundFeedback.credits).toBe(2);
+        expect(boundFeedback.text).toBe('original');
+    });
+
+    it('should commit a non-manual feedback as a distinct object so the original is not left in the automatic bucket', () => {
+        const boundFeedback = { id: 1, type: FeedbackType.AUTOMATIC, credits: 2, text: 'SCAFeedbackIdentifier:Rule' } as Feedback;
+        fixture.componentRef.setInput('feedback', boundFeedback);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+
+        comp.updateFeedback();
+
+        expect(comp.currentFeedback()).not.toBe(boundFeedback);
+        expect(comp.currentFeedback().type).toBe(FeedbackType.MANUAL);
+        expect(boundFeedback.type).toBe(FeedbackType.AUTOMATIC);
+    });
+
     it('should cancel the open edit when the built-in dismiss button is clicked', () => {
         const onCancelFeedbackSpy = vi.fn();
         comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);

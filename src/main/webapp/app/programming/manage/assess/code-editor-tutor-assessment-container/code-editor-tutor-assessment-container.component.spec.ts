@@ -957,6 +957,21 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(validateFeedbackStub).toHaveBeenCalled();
     });
 
+    it('should drop a feedback from the automatic bucket once it is edited into a manual one, to avoid double-counting it', () => {
+        // Editing an inline automatic/static-analysis feedback retags it to MANUAL and emits the whole feedback
+        // array again (see CodeEditorTutorAssessmentInlineFeedbackComponent.commitFeedback). automaticFeedback must
+        // be re-derived from that same array, or the now-manual feedback would remain counted in both buckets.
+        comp.automaticFeedback.set([{ reference: 'file:src/Test.java_line:1', type: FeedbackType.AUTOMATIC, credits: 2 } as Feedback]);
+        vi.spyOn(comp, 'validateFeedback').mockReturnValue(undefined);
+
+        const editedFeedback = { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL, credits: 2 } as Feedback;
+        comp.onUpdateFeedback([editedFeedback]);
+
+        expect(comp.automaticFeedback()).toEqual([]);
+        expect(comp.referencedFeedback()).toEqual([editedFeedback]);
+        expect(comp.allAssessmentFeedbacks()).toEqual([editedFeedback]);
+    });
+
     it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
         comp.automaticFeedback.set([{ type: FeedbackType.AUTOMATIC, credits: 1 }]);
         expect(comp.hasAutomaticFeedback()).toBe(true);

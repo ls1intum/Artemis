@@ -646,6 +646,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
         this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
+        // Re-derive automatic feedback from the same emitted array: editing an inline automatic/static-analysis
+        // feedback retags it to MANUAL (see CodeEditorTutorAssessmentInlineFeedbackComponent.commitFeedback), and
+        // without this it would remain in this signal's previous, now-stale value and be counted twice.
+        this.automaticFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.type === FeedbackType.AUTOMATIC));
         this.validateFeedback();
         this.hasPendingChanges = true;
     }

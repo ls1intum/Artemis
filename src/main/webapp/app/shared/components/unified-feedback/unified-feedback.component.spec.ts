@@ -6,6 +6,9 @@ import {
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
@@ -212,6 +215,28 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check` } as any);
         fixture.detectChanges();
         expect(component.inferredTitle()).toBe('Missing null check');
+    });
+
+    it('should strip the internal identifier from a non-graded feedback suggestion title', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Consider extracting a helper method`,
+            detailText: 'It would improve readability.',
+        } as Feedback);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('Consider extracting a helper method');
+    });
+
+    it('should strip the internal identifier from a static code analysis feedback title', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.AUTOMATIC,
+            text: `${STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER}BAD_PRACTICE`,
+            detailText: 'Avoid this pattern.',
+        } as Feedback);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('BAD_PRACTICE');
     });
 
     it('should fall back to default title when mapping is present but id missing', () => {
@@ -487,6 +512,22 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackTitle.set('');
         fixture.detectChanges();
         expect(component.canDismissWithoutConfirm()).toBe(false);
+    });
+
+    it('should not mark the detail as missing for unreferenced rubric-only feedback with no free-form comment', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { gradingInstruction: { id: 1, credits: 1, feedback: 'Rubric text' } } as Feedback);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.isDetailMissing()).toBe(false);
+    });
+
+    it('should mark the detail as missing for unreferenced feedback with no grading instruction and no free-form comment', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', {} as Feedback);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.isDetailMissing()).toBe(true);
     });
 
     it('should emit onDelete directly when dismissal needs no confirmation', () => {
