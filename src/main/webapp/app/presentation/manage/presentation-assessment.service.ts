@@ -29,11 +29,9 @@ export class PresentationAssessmentService {
             .pipe(map((res) => this.convertDateResponseFromServer(res)));
     }
 
-    update(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
+    update(courseId: number, presentationAssessment: PresentationAssessment): Observable<HttpResponse<void>> {
         const copy = this.convertDateFromClient(presentationAssessment);
-        return this.http
-            .put<PresentationAssessment>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessment.id}`, copy, { observe: 'response' })
-            .pipe(map((res) => this.convertDateResponseFromServer(res)));
+        return this.http.put<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessment.id}`, copy, { observe: 'response' });
     }
 
     delete(courseId: number, presentationAssessmentId: number): Observable<HttpResponse<void>> {

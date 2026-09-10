@@ -3,8 +3,8 @@
         "presentationAssessment": {
             "home": {
                 "title": "Presentations",
-                "createLabel": "Create presentation",
-                "editLabel": "Edit presentation"
+                "createLabel": "Create Presentation",
+                "editLabel": "Edit Presentation"
             },
             "created": "The presentation assessment was successfully created",
             "updated": "The presentation assessment was successfully updated",
@@ -40,7 +40,7 @@
             "overallOverview": "Overall overview",
             "standalone": "Standalone",
             "linkedToExercise": "Linked to an exercise",
-            "enterGrade": "Enter grade",
+            "enterGrade": "Enter Grade",
             "student": "Student",
             "status": "Status",
             "assessment": "Assessment",
@@ -49,7 +49,17 @@
             "assessed": "Assessed",
             "pending": "Pending",
             "searchStudent": "Search for a student",
+            "searchOverview": "Search name, email, or presentation",
             "noMatchingStudents": "No students match your search.",
+            "date": "Date",
+            "type": "Type",
+            "typeStandalone": "Standalone",
+            "typeExercise": "Exercise",
+            "assessedBy": "Assessed by",
+            "rows": "rows",
+            "statistics": {
+                "total": "Total"
+            },
             "exercise": "Linked exercise",
             "linkedExercise": "Linked exercise:",
             "noExercise": "No exercise",
@@ -65,11 +75,15 @@
             },
             "filter": {
                 "all": "All",
-                "future": "Future"
+                "future": "Future",
+                "allPresentations": "All presentations",
+                "allTypes": "All types",
+                "presentation": "Filter by presentation",
+                "type": "Filter by type"
             },
             "instance": {
-                "createLabel": "Add presentation instance",
-                "editLabel": "Edit presentation instance"
+                "createLabel": "Add Presentation Instance",
+                "editLabel": "Edit Presentation Instance"
             },
             "noExisting": "There are no presentation assessments for this course yet.",
             "delete": {

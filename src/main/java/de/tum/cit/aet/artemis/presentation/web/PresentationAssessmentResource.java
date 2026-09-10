@@ -120,16 +120,16 @@ public class PresentationAssessmentResource {
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
      * @param dto          the updated presentation assessment data
-     * @return the ResponseEntity with status 200 (OK) and the updated presentation assessment
+     * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<PresentationAssessmentDTO> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId,
-            @Valid @RequestBody PresentationAssessmentDTO dto) {
+    public ResponseEntity<Void> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @Valid @RequestBody PresentationAssessmentDTO dto) {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
         validatePresentationAssessmentCourseId(courseId, dto);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        return ResponseEntity.ok(presentationAssessmentService.update(course, assessmentId, dto));
+        presentationAssessmentService.update(course, assessmentId, dto);
+        return ResponseEntity.ok().build();
     }
 
     /**

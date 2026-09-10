@@ -195,19 +195,15 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, 22.0,
                 ZonedDateTime.now().plusDays(21), course.getId(), List.of(TEST_PREFIX + "student1"), replacementExercise.getId(), null, List.of());
 
-        PresentationAssessmentDTO result = request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.OK);
+        request.put(getAssessmentUrl(course, presentationAssessment), dto, HttpStatus.OK);
 
-        assertThat(result.title()).isEqualTo(dto.title());
-        assertThat(result.description()).isEqualTo(dto.description());
-        assertThat(result.maxPoints()).isEqualTo(dto.maxPoints());
-        assertThat(result.resultPoints()).isEqualTo(dto.resultPoints());
-        assertThat(result.exerciseId()).isEqualTo(replacementExercise.getId());
-        assertThat(result.exerciseTitle()).isEqualTo(replacementExercise.getTitle());
-        assertThat(result.instances()).extracting(instanceDto -> instanceDto.id()).containsExactly(instance.getId());
         PresentationAssessment updatedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
         assertThat(updatedAssessment.getTitle()).isEqualTo(dto.title());
+        assertThat(updatedAssessment.getDescription()).isEqualTo(dto.description());
         assertThat(updatedAssessment.getMaxPoints()).isEqualTo(dto.maxPoints());
         assertThat(updatedAssessment.getResultPoints()).isEqualTo(dto.resultPoints());
+        assertThat(updatedAssessment.getExercise().getId()).isEqualTo(replacementExercise.getId());
+        assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.getId()).getPresentationAssessment().getId()).isEqualTo(presentationAssessment.getId());
         PresentationAssessment updatedAssessmentWithStudents = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId())
                 .orElseThrow();
         assertThat(updatedAssessmentWithStudents.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
@@ -219,9 +215,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, null,
                 ZonedDateTime.now().plusDays(21), course.getId(), null);
 
-        PresentationAssessmentDTO result = request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.OK);
+        request.put(getAssessmentUrl(course, presentationAssessment), dto, HttpStatus.OK);
 
-        assertThat(result.resultPoints()).isNull();
         PresentationAssessment updatedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
         assertThat(updatedAssessment.getResultPoints()).isNull();
     }

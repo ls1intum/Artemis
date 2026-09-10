@@ -109,7 +109,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.updateStudentSearch('STUDENT2');
 
         expect(component.viewMode()).toBe('students');
-        expect(component.filteredStudentRows()).toEqual([{ studentLogin: 'student2', presentationAssessment, instance: presentationAssessment.instances![0] }]);
+        expect(component.filteredStudentRows()).toEqual([
+            { studentLogin: 'student2', student: expect.objectContaining({ name: 'Student Two' }), presentationAssessment, instance: presentationAssessment.instances![0] },
+        ]);
     });
 
     it('should only consider an assigned numeric score as assessed', () => {

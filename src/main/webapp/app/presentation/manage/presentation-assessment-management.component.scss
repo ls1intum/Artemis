@@ -1,13 +1,11 @@
-.presentation-view-toggle {
-    display: inline-flex;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border-radius: var(--p-border-radius-md);
-    background: var(--p-surface-100);
+.presentation-page {
+    height: 100%;
+    min-height: 0;
 }
 
 .presentation-workspace {
-    min-height: calc(100vh - 8rem);
+    min-height: 0;
+    flex: 1 1 auto;
 }
 
 .presentation-sidebar {
@@ -53,7 +51,6 @@
 .presentation-summary {
     min-height: 2.75rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--p-content-border-color);
     color: var(--p-text-muted-color);
     white-space: pre-wrap;
 }
@@ -65,16 +62,25 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.5rem 1rem;
-    border-bottom: 1px solid var(--p-content-border-color);
 }
 
 .presentation-overall-toolbar {
-    padding: 0.5rem 1rem 0;
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--p-content-border-color);
+    border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.presentation-content thead th {
+    background: var(--p-surface-50);
 }
 
 .student-search {
     position: relative;
-    width: min(100%, 24rem);
+    width: min(100%, 19rem);
 }
 
 .student-search-icon {
@@ -89,6 +95,7 @@
 
 .student-search-input {
     padding-left: 2.25rem;
+    background: var(--p-surface-50);
 }
 
 .presentation-detail-row > td {
@@ -98,6 +105,90 @@
 
 .presentation-student-row-striped > td {
     background: var(--p-surface-50);
+}
+
+.presentation-overview {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.presentation-statistics {
+    display: flex;
+    min-height: 3.75rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+}
+
+.presentation-statistic {
+    display: grid;
+    min-width: 4.75rem;
+    cursor: pointer;
+    border: 0;
+    border-right: 1px solid var(--p-content-border-color);
+    background: transparent;
+    color: var(--p-text-color);
+    text-align: center;
+
+    &:last-child {
+        border-right: 0;
+    }
+
+    strong {
+        font-size: 1rem;
+        line-height: 1.25;
+    }
+
+    span {
+        color: var(--p-text-muted-color);
+        font-size: 0.6875rem;
+    }
+
+    &.active strong {
+        color: var(--p-primary-color);
+    }
+}
+
+.presentation-statistic-assessed strong {
+    color: var(--success);
+}
+
+.presentation-statistic-pending strong {
+    color: var(--warning);
+}
+
+.presentation-status-filter {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.presentation-toolbar-divider {
+    align-self: stretch;
+    border-left: 1px solid var(--p-content-border-color);
+}
+
+.presentation-filter-select {
+    width: 12rem;
+}
+
+.presentation-row-count {
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 0.75rem;
+}
+
+.presentation-table-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.presentation-paginator {
+    display: block;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: 0.5rem 1rem 0.75rem;
 }
 
 .presentation-detail-row:not(.presentation-student-row-striped) > td {
@@ -133,5 +224,23 @@
     .presentation-grading-toolbar {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .presentation-overall-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .presentation-filter-select,
+    .student-search {
+        width: 100%;
+    }
+
+    .presentation-toolbar-divider {
+        display: none;
+    }
+
+    .presentation-row-count {
+        margin-left: 0;
     }
 }

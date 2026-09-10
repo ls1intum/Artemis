@@ -82,9 +82,8 @@ public class PresentationAssessmentService {
      * @param course       the owning course
      * @param assessmentId the presentation assessment id
      * @param dto          the updated presentation assessment data
-     * @return the persisted presentation assessment data
      */
-    public PresentationAssessmentDTO update(Course course, long assessmentId, PresentationAssessmentDTO dto) {
+    public void update(Course course, long assessmentId, PresentationAssessmentDTO dto) {
         if (dto.id() == null) {
             throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
         }
