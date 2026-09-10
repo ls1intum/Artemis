@@ -185,8 +185,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (gradingCriteria) {
             for (const criterion of gradingCriteria) {
                 if (criterion.title == undefined) {
-                    // if it is a dummy criterion, leave out the action identifier
-                    markdownText += this.generateInstructionsMarkdown(criterion);
+                    // Dummy (title-less) criterion: omit the title, but keep `{id:N}` so used-feedback
+                    // round trips can reclaim the persisted criterion without inventing a title.
+                    if (criterion.id != undefined) {
+                        markdownText += `${GradingCriterionAction.IDENTIFIER} ${this.formatIdentityMarker(criterion.id)}\n\t${this.generateInstructionsMarkdown(criterion)}`;
+                    } else {
+                        markdownText += this.generateInstructionsMarkdown(criterion);
+                    }
                 } else {
                     markdownText += `${GradingCriterionAction.IDENTIFIER} ${this.formatIdentityMarker(criterion.id)}${criterion.id != undefined ? ' ' : ''}${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
                 }
@@ -394,7 +399,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         for (const { text, action } of textWithDomainActions) {
             if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
-                newCriterion.title = this.applyParsedIdentity(newCriterion, text);
+                const title = this.applyParsedIdentity(newCriterion, text);
+                // Empty remainder keeps title undefined so a marker-only dummy stays title-less.
+                if (title !== '') {
+                    newCriterion.title = title;
+                }
                 gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const arrayWithoutCriterion = textWithDomainActions.slice(1); // remove the identifier after creating its criterion object
@@ -491,7 +500,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
             }
             if (matchIndex < 0) {
-                this.clearStaleParsedId(parsedCriterion, previousCriteria, ambiguousCriterionIds);
+                // Never submit a marker id that did not reclaim a previous entity (unknown / duplicate / unused).
+                delete parsedCriterion.id;
+                parsedCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
+                    [],
+                    parsedCriterion.structuredGradingInstructions ?? [],
+                    ambiguousInstructionIds,
+                );
                 return parsedCriterion;
             }
             const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
@@ -518,7 +533,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
             }
             if (matchIndex < 0) {
-                this.clearStaleParsedId(parsedInstruction, previousInstructions, ambiguousInstructionIds);
+                delete parsedInstruction.id;
                 return parsedInstruction;
             }
             const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
@@ -551,13 +566,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return -1;
         }
         return unused.findIndex((entity) => entity.id === id);
-    }
-
-    /** Drop a marker id we could not reclaim, so a copied or stale block is saved as a new entity. */
-    private clearStaleParsedId<T extends { id?: number }>(parsed: T, previous: T[], ambiguousIds: Set<number>): void {
-        if (parsed.id != undefined && (ambiguousIds.has(parsed.id) || previous.some((entity) => entity.id === parsed.id))) {
-            delete parsed.id;
-        }
     }
 
     private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {

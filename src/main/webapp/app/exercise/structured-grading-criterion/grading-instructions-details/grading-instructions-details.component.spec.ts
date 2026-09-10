@@ -18,6 +18,7 @@ import { GradingFeedbackAction } from 'app/editor/monaco-editor/model/actions/gr
 import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -898,6 +899,65 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1]).toBe(originalInstruction);
         expect(instructions[1].id).toBe(1);
         expect(instructions[1].feedback).toBe('feedback');
+    });
+
+    it('should keep title-less criterion identity across a used-feedback text round trip', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        const instruction = {
+            id: 11,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const dummyCriterion = { id: 7, structuredGradingInstructions: [instruction] } as GradingCriterion;
+        exercise.gradingCriteria = [dummyCriterion];
+
+        const markdown = component.generateMarkdown();
+        expect(markdown).toContain(`${GradingCriterionAction.IDENTIFIER} {id:7}\n`);
+        expect(markdown).toContain(`${GradingInstructionAction.IDENTIFIER} {id:11}`);
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria![0]).toBe(dummyCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(7);
+        expect(exercise.gradingCriteria![0].title).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
+    });
+
+    it('should drop unknown criterion marker ids that do not match the previous model', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray({ criterionId: 999, instructionId: 888 });
+        domainActions[0] = { text: '{id:999} brand new criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'brand new feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).not.toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('brand new criterion');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+    });
+
+    it('should drop unknown instruction marker ids that do not match the previous model', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 999 });
+        domainActions[2] = { text: '9', action: domainActions[2].action };
+        domainActions[3] = { text: 'unknown', action: domainActions[3].action };
+        domainActions[4] = { text: 'unknown', action: domainActions[4].action };
+        domainActions[5] = { text: 'unknown feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).not.toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('unknown feedback');
     });
 
     it('should update properties for grading instruction', () => {
