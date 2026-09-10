@@ -110,13 +110,8 @@ public class PyrisStatusUpdateService {
         });
     }
 
-    /**
-     * The body of {@link #handleStatusUpdate}, running under the job lock on a job re-read from the map. Records
-     * token usage first, so spend is accounted for on every frame, including those that reach no decision handler.
-     *
-     * @param job          the struggle-intervention job, freshly read under the lock
-     * @param statusUpdate the status update received
-     */
+    // The body of #handleStatusUpdate, running under the job lock on a job re-read from the map. Records token usage first, so spend is
+    // accounted for on every frame, including those that reach no decision handler.
     private void handleClaimedStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
         // Before routing, so every frame is counted exactly once regardless of which branch claims it.
         irisStruggleInterventionService.recordTokenUsage(job, statusUpdate);

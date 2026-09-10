@@ -133,26 +133,13 @@ public class IrisSettingsService {
         return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);
     }
 
-    /**
-     * Resolves one nullable flag of an incoming payload against what is stored.
-     *
-     * @param requested the value the request carries, null if it omitted the field
-     * @param stored    the persisted value, itself null while nobody has decided
-     * @return the requested value, or the stored one where the request said nothing
-     */
+    // Resolves one nullable flag of an incoming payload against what is stored.
     private static @Nullable Boolean mergeOmitted(@Nullable Boolean requested, @Nullable Boolean stored) {
         return requested != null ? requested : stored;
     }
 
-    /**
-     * Validates that non-admin users are not trying to change restricted settings. Variant and rate limits are
-     * deployment concerns and stay admin-only; everything else on the course, the proactive toggles included, is a
-     * teaching decision its instructor owns.
-     *
-     * @param request the requested new settings
-     * @param current the current settings
-     * @throws AccessForbiddenAlertException if the request attempts to change variant or rate limits
-     */
+    // Validates that non-admin users are not trying to change restricted settings. Variant and rate limits are deployment concerns and
+    // stay admin-only; everything else on the course, the proactive toggles included, is a teaching decision its instructor owns.
     private void enforceInstructorRestrictions(IrisCourseSettings request, IrisCourseSettings current) {
         if (!Objects.equals(request.variant(), current.variant())) {
             throw new AccessForbiddenAlertException("Only administrators can change the Iris pipeline variant", "IrisSettings", "irisVariantRestricted");

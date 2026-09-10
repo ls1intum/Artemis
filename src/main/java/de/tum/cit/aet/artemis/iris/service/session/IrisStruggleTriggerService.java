@@ -144,20 +144,10 @@ public class IrisStruggleTriggerService {
         return new StruggleTriggerOutcome(true, false, p.jobToken());
     }
 
-    /**
-     * Undo an admission whose run provably never reached Pyris. The in-flight marker goes first, because it is what
-     * a concurrent trigger reads to decide it may wait for someone else's terminal frame. Each step is attempted
-     * whatever the other did and records rather than throws its own failure, since the caller is unwinding an error
-     * that matters more.
-     *
-     * @param jobToken      the reserving job token
-     * @param cooldownToken the token that paid the admission charge
-     * @param userId        the struggling student
-     * @param exerciseId    the exercise the student is struggling on
-     * @param intent        the slot intent, canonicalised into the cooldown key
-     * @param carrier       the failure being unwound, which collects any cleanup failure as a suppressed cause, or
-     *                          {@code null} on a deliberate bail, where a cleanup failure is logged instead
-     */
+    // Undo an admission whose run provably never reached Pyris. The in-flight marker goes first, because it is what a concurrent trigger
+    // reads to decide it may wait for someone else's terminal frame. Each step is attempted whatever the other did and records rather
+    // than throws its own failure, since the caller is unwinding an error that matters more. null on a deliberate bail, where a cleanup
+    // failure is logged instead
     private void undoAdmission(String jobToken, String cooldownToken, long userId, long exerciseId, @Nullable String intent, @Nullable RuntimeException carrier) {
         try {
             pyrisJobService.releaseStruggleInFlightJob(jobToken, userId, exerciseId);
@@ -168,11 +158,8 @@ public class IrisStruggleTriggerService {
         refundCooldown(cooldownToken, userId, exerciseId, intent, carrier);
     }
 
-    /**
-     * Hand back an admission charge, recording rather than throwing its own failure. See
-     * {@link #undoAdmission(String, String, long, long, String, RuntimeException)} for why cleanup failures do not
-     * propagate.
-     */
+    // Hand back an admission charge, recording rather than throwing its own failure. See #undoAdmission(String, String, long, long,
+    // String, RuntimeException) for why cleanup failures do not propagate.
     private void refundCooldown(String cooldownToken, long userId, long exerciseId, @Nullable String intent, @Nullable RuntimeException carrier) {
         try {
             pyrisJobService.refundStruggleCooldown(cooldownToken, userId, exerciseId, intent);
@@ -378,14 +365,8 @@ public class IrisStruggleTriggerService {
         pyrisJobService.removeStruggleJobIfTokenMatches(user.getId(), exerciseId, requestToken);
     }
 
-    /**
-     * Latest submission for {@code (exercise, user)}, the same resolution the chat pipeline uses. Returns empty only
-     * when the student genuinely has no submission yet, and then no live code is shipped.
-     *
-     * @param exercise the programming exercise (loaded with template/solution participations)
-     * @param user     the student
-     * @return the latest submission with eager results/feedback/build logs, or empty if none exists
-     */
+    // Latest submission for (exercise, user), the same resolution the chat pipeline uses. Returns empty only when the student genuinely
+    // has no submission yet, and then no live code is shipped.
     private Optional<ProgrammingSubmission> latestSubmission(ProgrammingExercise exercise, User user) {
         return irisChatSessionService.getLatestSubmissionIfExists(exercise, user);
     }

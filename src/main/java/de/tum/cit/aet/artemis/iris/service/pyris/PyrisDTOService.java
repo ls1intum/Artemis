@@ -131,19 +131,10 @@ public class PyrisDTOService {
                 submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 
-    /**
-     * The committed version of only the code files the client changed locally, so Pyris can diff live against
-     * submitted. A changed existing file contributes its committed content, a genuinely new one contributes
-     * {@code ""}, and unchanged files are skipped. An unreadable committed set returns an empty map rather than
-     * fabricating an all-added diff. Readability is passed in rather than inferred from an empty map, because a
-     * repository holding no file of the exercise language is readable and empty.
-     *
-     * @param committedFiles    the (language-filtered) committed repository contents
-     * @param uncommittedFiles  the student's live working-copy files from the client
-     * @param language          the exercise programming language (may be null)
-     * @param committedReadable whether the committed repository was fetched successfully
-     * @return the committed side of the changed code files, keyed by path; empty if nothing diffable
-     */
+    // The committed version of only the code files the client changed locally, so Pyris can diff live against submitted. A changed
+    // existing file contributes its committed content, a genuinely new one contributes "", and unchanged files are skipped. An unreadable
+    // committed set returns an empty map rather than fabricating an all-added diff. Readability is passed in rather than inferred from an
+    // empty map, because a repository holding no file of the exercise language is readable and empty.
     static Map<String, String> buildSubmittedRepository(Map<String, String> committedFiles, Map<String, String> uncommittedFiles, ProgrammingLanguage language,
             boolean committedReadable) {
         Map<String, String> submittedRepository = new HashMap<>();
@@ -219,10 +210,8 @@ public class PyrisDTOService {
         return out;
     }
 
-    /**
-     * The wire tag for a proactive message based on its persisted outcome, its neighbour, whether a later proactive
-     * message exists, and whether it belongs to an episode other than the one running now.
-     */
+    // The wire tag for a proactive message based on its persisted outcome, its neighbour, whether a later proactive message exists, and
+    // whether it belongs to an episode other than the one running now.
     private String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded, @Nullable String currentEpisodeId) {
         // "from an earlier episode" is a qualifier on the reaction, not a replacement for it. Dropping the reaction
         // here would tell the gate that a hint the student explicitly rejected is merely old, which is the one thing
@@ -240,23 +229,16 @@ public class PyrisDTOService {
         return superseded ? "(" + origin + ", ignored) " : "(" + origin + ") ";
     }
 
-    /**
-     * Whether this hint was given during a different bout of being stuck than the one running now.
-     *
-     * <p>
-     * Both ids have to be known for the question to have an answer. A message from before episodes existed carries
-     * none, and a caller without one (an older client, or an id too malformed to serve as an identity) cannot say
-     * what "earlier" would even be relative to. Both answer false, which leaves the hint under the tags it has
-     * today: the fail-safe direction, since the gate then keeps treating it as a repeat.
-     */
+    // Whether this hint was given during a different bout of being stuck than the one running now. Both ids have to be known for the
+    // question to have an answer. A message from before episodes existed carries none, and a caller without one (an older client, or an
+    // id too malformed to serve as an identity) cannot say what "earlier" would even be relative to. Both answer false, which leaves the
+    // hint under the tags it has today: the fail-safe direction, since the gate then keeps treating it as a repeat.
     private static boolean isFromAnEarlierEpisode(IrisMessage m, @Nullable String currentEpisodeId) {
         return currentEpisodeId != null && m.getProactiveEpisodeId() != null && !currentEpisodeId.equals(m.getProactiveEpisodeId());
     }
 
-    /**
-     * True when the reply follows the hint within {@code artemis.iris.proactive.engaged-reply-window} (so a
-     * much-later manual message is not misread as engagement with this hint).
-     */
+    // True when the reply follows the hint within artemis.iris.proactive.engaged-reply-window (so a much-later manual message is not
+    // misread as engagement with this hint).
     private boolean isWithinEngagedWindow(ZonedDateTime hintAt, ZonedDateTime replyAt) {
         if (hintAt == null || replyAt == null) {
             return false;
@@ -267,14 +249,9 @@ public class PyrisDTOService {
         return !delta.isNegative() && delta.compareTo(proactiveProperties.getEngagedReplyWindow()) <= 0;
     }
 
-    /**
-     * Build the wire DTO for a proactive message WITHOUT touching the stored entity: the message as
-     * {@link PyrisMessageDTO#of} maps it, with the first text content prefixed by {@code tag}.
-     *
-     * <p>
-     * Built ON TOP of that factory rather than beside it: a second copy of the content mapping is a copy of the rule
-     * for which content subtypes travel at all, and the two would decide differently the day a third subtype exists.
-     */
+    // Build the wire DTO for a proactive message WITHOUT touching the stored entity: the message as PyrisMessageDTO#of maps it, with the
+    // first text content prefixed by tag. Built ON TOP of that factory rather than beside it: a second copy of the content mapping is a
+    // copy of the rule for which content subtypes travel at all, and the two would decide differently the day a third subtype exists.
     private static PyrisMessageDTO annotatedProactiveDTO(IrisMessage m, String tag) {
         var base = PyrisMessageDTO.of(m);
         List<PyrisMessageContentBaseDTO> contents = new ArrayList<>(base.contents());
@@ -320,17 +297,10 @@ public class PyrisDTOService {
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
     }
 
-    /**
-     * A participation's language-filtered repository contents together with whether the repository could be read at
-     * all. The two are not the same thing: a repository that checks out fine but holds no file of the exercise
-     * language filters down to an empty map while still being perfectly readable. Deriving readability from the map
-     * being empty would report that as "the submitted code could not be read" and suppress the all-added baseline for
-     * the student's new local files, so Pyris would see no diff for a valid repository state.
-     *
-     * @param readable whether the repository was fetched successfully (an empty {@code files} map is then a fact
-     *                     about its contents, not about the fetch)
-     * @param files    the contents that match the exercise language, empty if none do
-     */
+    // A participation's language-filtered repository contents together with whether the repository could be read at all. The two are not
+    // the same thing: a repository that checks out fine but holds no file of the exercise language filters down to an empty map while
+    // still being perfectly readable. Deriving readability from the map being empty would report that as "the submitted code could not be
+    // read" and suppress the all-added baseline for the student's new local files, so Pyris would see no diff for a valid repository
     private record RepositoryContents(boolean readable, Map<String, String> files) {
 
         private static final RepositoryContents UNREADABLE = new RepositoryContents(false, Map.of());
@@ -350,16 +320,10 @@ public class PyrisDTOService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
-    /**
-     * Helper method to get & checkout the repository contents for a given repository URI.
-     * This is an exception-safe way to fetch the repository contents: it returns {@code null}
-     * if {@code repositoryUri} is null or if the repository could not be fetched.
-     * This is useful, as the Pyris call should not fail if the repository is not available.
-     * {@code null} rather than an empty map so callers can tell an unreadable repository apart from an empty one.
-     *
-     * @param repositoryUri the repositoryUri of the repository
-     * @return the repository contents, or {@code null} if the URI is null or the fetch fails
-     */
+    // Helper method to get & checkout the repository contents for a given repository URI. This is an exception-safe way to fetch the
+    // repository contents: it returns null if repositoryUri is null or if the repository could not be fetched. This is useful, as the
+    // Pyris call should not fail if the repository is not available. null rather than an empty map so callers can tell an unreadable
+    // repository apart from an empty one.
     private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
         if (repositoryUri == null) {
             return null;

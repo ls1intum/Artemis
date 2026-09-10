@@ -33,21 +33,11 @@ public class IrisProactiveEpisodeService {
         this.irisMessageRepository = irisMessageRepository;
     }
 
-    /**
-     * Register the episode so it has a row to lock, or refresh the row a previous trigger already created for it.
-     * Repeating a trigger for one episode is normal: a {@code decide} run and the {@code confirm_close} that follows
-     * carry the same id. The refresh also keeps retention honest, since it moves {@code lastTriggeredAt} forward.
-     *
-     * <p>
-     * The catch sits outside the transaction that attempted the insert, because a constraint violation marks its
-     * transaction rollback-only and catching it inside would surface as an {@code UnexpectedRollbackException} at
-     * commit. That is why both repository methods open their own {@code REQUIRES_NEW} transaction. The reread
-     * rethrows the original failure if it finds nothing, since not every integrity violation is a duplicate key.
-     *
-     * @param userId     the struggling student
-     * @param exerciseId the exercise the run belongs to
-     * @param episodeId  the client-allocated episode id, already validated as usable
-     */
+    // Registers the episode or refreshes the row a previous trigger created; repeating a trigger for one episode is
+    // normal, and the refresh keeps retention honest. The catch sits outside the transaction that attempted the
+    // insert, because a constraint violation marks its transaction rollback-only, which is why both repository
+    // methods open their own REQUIRES_NEW transaction. The reread rethrows when it finds nothing, since not every
+    // integrity violation is a duplicate key.
     void registerEpisode(long userId, long exerciseId, String episodeId) {
         try {
             irisProactiveEpisodeRepository.registerOrTouchInNewTransaction(userId, exerciseId, episodeId);
@@ -59,22 +49,9 @@ public class IrisProactiveEpisodeService {
         }
     }
 
-    /**
-     * Whether the episode already has a terminal outcome persisted. Every value of the outcome enum is terminal, so
-     * both branches decide on presence rather than on which one it is. Reads episode-wide across all rows tagged with
-     * the episode id, so the result is stable under out-of-order persistence.
-     *
-     * <p>
-     * The cheap, unlocked read: a fast path that lets a caller complete silently without opening a transaction, not
-     * the decision. Every path that goes on to write re-checks inside the same transaction as its write, holding the
-     * registry row locked where there is one. An episode with no registry row falls back to the message rows, as this
-     * worked before the registry existed.
-     *
-     * @param episodeId  the client-allocated episode UUID
-     * @param userId     the job's owning user; only outcomes on rows in this user's sessions are considered
-     * @param exerciseId the exercise the job ran for; an episode id reused for another exercise is not this episode
-     * @return true if a terminal outcome exists for this episode
-     */
+    // Whether a terminal outcome stands, read episode-wide so the answer is stable under out-of-order persistence.
+    // The cheap unlocked fast path, not the decision: every path that goes on to write re-checks inside the same
+    // transaction as its write, holding the registry row locked where there is one.
     boolean isEpisodeTerminal(String episodeId, long userId, long exerciseId) {
         var registered = irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId);
         if (registered.isPresent() && registered.get().getOutcome() != null) {
@@ -109,21 +86,10 @@ public class IrisProactiveEpisodeService {
         return verdict != OutcomeWrite.DEFERRED;
     }
 
-    /**
-     * Register the episode and record the ambient hint Artemis is about to offer, so a later reveal persists the
-     * server's own text rather than whatever the caller sends back. The registration runs first and on its own
-     * transaction: registering from inside the offer's transaction commits independently, so the offer would write to
-     * a row that transaction never locked. That ordering is why these stay two calls rather than one repository
-     * method.
-     *
-     * @param userId     the struggling student
-     * @param exerciseId the exercise the run belongs to
-     * @param episodeId  the client-allocated episode id, already validated as usable
-     * @param hintText   the hint as authored by Pyris
-     * @return {@code true} when the episode now carries a revealable offer the client may be pointed at,
-     *         {@code false} when the student already revealed this episode's previous offer, and {@code null} when
-     *         the episode went terminal (or lost its row to retention) before the offer could be recorded
-     */
+    // Registers the episode and records the ambient hint, so a later reveal persists the server's own text. The
+    // registration runs first and on its own transaction, because registering from inside the offer's transaction
+    // commits independently and the offer would then write to a row it never locked. Returns true when a revealable
+    // offer now stands, false when the previous one was already revealed, and null when the episode went terminal.
     @Nullable
     Boolean offerAmbientHint(long userId, long exerciseId, String episodeId, String hintText) {
         registerEpisode(userId, exerciseId, episodeId);

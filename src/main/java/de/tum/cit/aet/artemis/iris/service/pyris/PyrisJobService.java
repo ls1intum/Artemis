@@ -90,13 +90,9 @@ public class PyrisJobService {
         return this.jobMap;
     }
 
-    /**
-     * The single-flight in-flight markers for struggle runs, keyed by {@link #struggleInFlightKey(long, long)}. The
-     * entry lifetime is a crash self-heal backstop, requested here rather than configured on the provider because a
-     * map-level TTL is not expressible on every one of them.
-     *
-     * @return the map of {@code (userId:exerciseId) -> token} reservations
-     */
+    // The single-flight in-flight markers for struggle runs, keyed by #struggleInFlightKey(long, long). The entry lifetime is a crash
+    // self-heal backstop, requested here rather than configured on the provider because a map-level TTL is not expressible on every one
+    // of them.
     private DistributedMap<String, String> getStruggleInFlightMap() {
         if (this.struggleInFlightMap == null) {
             this.struggleInFlightMap = this.distributedDataProvider.getExpiringMap("struggle-inflight-map", Duration.ofSeconds(jobTimeout));
@@ -108,13 +104,8 @@ public class PyrisJobService {
         return userId + ":" + exerciseId;
     }
 
-    /**
-     * The struggle admission charges, keyed by {@link #struggleCooldownKey(long, long, String)}. Deliberately not the
-     * in-flight map, whose marker a scoped cancel clears, which would make the charge refundable by the very client
-     * it bounds.
-     *
-     * @return the map of {@code (userId:exerciseId:intent) -> token} charges
-     */
+    // The struggle admission charges, keyed by #struggleCooldownKey(long, long, String). Deliberately not the in-flight map, whose marker
+    // a scoped cancel clears, which would make the charge refundable by the very client it bounds.
     private DistributedMap<String, String> getStruggleCooldownMap() {
         if (this.struggleCooldownMap == null) {
             this.struggleCooldownMap = this.distributedDataProvider.getExpiringMap("struggle-cooldown-map", proactiveProperties.getTriggerCooldown());
@@ -122,11 +113,8 @@ public class PyrisJobService {
         return this.struggleCooldownMap;
     }
 
-    /**
-     * Per student, exercise AND intent, so a {@code confirm_close} legitimately following its own {@code decide} is
-     * not blocked. The intent is canonicalised because it comes from the client: raw, it would be an unbounded set
-     * of lanes.
-     */
+    // Per student, exercise AND intent, so a confirm_close legitimately following its own decide is not blocked. The intent is
+    // canonicalised because it comes from the client: raw, it would be an unbounded set of lanes.
     private static String struggleCooldownKey(long userId, long exerciseId, @Nullable String intent) {
         return userId + ":" + exerciseId + ":" + IrisStruggleInterventionRequestDTO.canonicalIntent(intent);
     }
@@ -265,17 +253,10 @@ public class PyrisJobService {
         return Optional.of(token);
     }
 
-    /**
-     * Undo a half-written struggle reservation, keeping the failure that caused it as the one that escapes. Both
-     * removals are conditional on what this call wrote, so neither can touch a newer run, and both are attempted
-     * independently, because a provider failing the first would otherwise leave the second undone. Cleanup failures
-     * are recorded on the carrier rather than thrown, so the caller still sees the original cause.
-     *
-     * @param token   the token this call minted
-     * @param job     the job this call wrote, or would have written
-     * @param key     the in-flight key of the reserved pair
-     * @param carrier the failure being unwound, which collects any cleanup failure as a suppressed cause
-     */
+    // Undo a half-written struggle reservation, keeping the failure that caused it as the one that escapes. Both removals are conditional
+    // on what this call wrote, so neither can touch a newer run, and both are attempted independently, because a provider failing the
+    // first would otherwise leave the second undone. Cleanup failures are recorded on the carrier rather than thrown, so the caller still
+    // sees the original cause.
     private void undoReservation(String token, StruggleInterventionJob job, String key, RuntimeException carrier) {
         try {
             getPyrisJobMap().remove(token, job);
