@@ -1,0 +1,50 @@
+---
+id: text-exercise
+title: Text Exercise
+sidebar_label: Text Exercise
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import exerciseCard from './assets/text/exercise-card.png';
+import textEditor from './assets/text/text-editor.png';
+
+A text exercise asks you to write an answer in prose — an explanation, an argument, a comparison. You write it in
+Artemis, in an editor beside the task, and a tutor reads and marks it after the due date.
+
+## Start the Exercise
+
+The exercise appears on the course's exercise list once it is released, with its due date and the points it is
+worth. **Start exercise** creates your participation; until you do that there is nothing to write into.
+
+<Image src={exerciseCard} alt="Text exercise before starting, with the task and the due date" size={ImageSize.large} caption="A text exercise before you start it" />
+
+## Write and Submit
+
+Once you have started, opening the exercise takes you straight to the editor: the task on one side, your answer
+on the other, with a running word and character count above the box.
+
+Nothing is stored while you type. **Submit** stores what you have written, and you can submit again as often as
+you like before the due date — the last version is the one that is marked.
+
+Leaving the exercise inside Artemis stores what is in the box as well, and closing the tab asks you first. Either
+way, anything that reaches Artemis before the due date counts as your submission, so there is no such thing as a
+draft you saved but forgot to hand in.
+
+<Image src={textEditor} alt="Text editor with the answer box beside the task" size={ImageSize.large} caption="Writing an answer" />
+
+<Callout variant={CalloutVariant.warning}>
+
+  After the due date nothing you write is counted any more. Submit before it passes, and do not rely on leaving the
+  page to save the work for you.
+
+</Callout>
+
+## Your Result
+
+Text answers are marked by a person, so nothing appears straight away. Once the assessment is published you see the
+points, and the feedback attached to the parts of your answer it refers to.
+
+Where your instructor has turned it on, you can ask for preliminary AI feedback on a draft before the due date. It
+is a guide, not a grade: the mark that counts is the one a tutor writes afterward.

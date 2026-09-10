@@ -19,9 +19,11 @@ const sidebars: SidebarsConfig = {
             label: 'Exercises',
             link: { type: 'doc', id: 'exercises/intro' },
             items: [
+                'exercises/programming-exercise',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
-                'exercises/programming-exercise',
+                'exercises/text-exercise',
+                'exercises/file-upload-exercise',
                 'exercises/quiz-training',
             ],
         },
