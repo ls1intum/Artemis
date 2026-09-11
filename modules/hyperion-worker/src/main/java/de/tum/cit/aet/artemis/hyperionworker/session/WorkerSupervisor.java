@@ -61,7 +61,7 @@ public class WorkerSupervisor implements AutoCloseable {
 
     private final ExecutorService executor;
 
-    private final ExecutorService cancellationExecutor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("hyperion-cancel").factory());
+    private final ExecutorService cancellationExecutor;
 
     private final LongSupplier nanoTime;
 
@@ -119,6 +119,7 @@ public class WorkerSupervisor implements AutoCloseable {
 
     WorkerSupervisor(WorkerSettings settings, WorkerEventPublisher publisher, Supplier<@Nullable GenerationEngine> engine, Consumer<ExecutionIdentity> cancelSandboxes,
             Supplier<String> prepareSandbox, LongSupplier nanoTime) {
+        this.cancellationExecutor = Executors.newFixedThreadPool(settings.maxConcurrentGenerations(), Thread.ofPlatform().name("hyperion-cancel-", 0).factory());
         this.executor = Executors.newFixedThreadPool(settings.maxConcurrentGenerations(), Thread.ofPlatform().name("hyperion-generation-", 0).factory());
         this.nanoTime = nanoTime;
         this.settings = settings;
