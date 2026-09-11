@@ -31,7 +31,7 @@ class SecureXmlFactoryTest {
         // The hardening must not break the export it protects.
         var transformer = SecureXmlFactory.transformer();
         var writer = new java.io.StringWriter();
-        var source = new javax.xml.transform.stream.StreamSource(new java.io.StringReader("<project><name>Artemis</name></project>"));
+        var source = new javax.xml.transform.stream.StreamSource(java.io.Reader.of("<project><name>Artemis</name></project>"));
 
         transformer.transform(source, new javax.xml.transform.stream.StreamResult(writer));
 
