@@ -101,7 +101,7 @@
                                         {{ openComplaints() }} <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
                                     </a>
                                 } @else if (!isExamMode() && course()?.isAtLeastInstructor) {
-                                    <a id="open-complaints" [routerLink]="complaintsLink()" class="font-semibold text-state-danger">
+                                    <a data-testid="open-complaints" [routerLink]="complaintsLink()" class="font-semibold text-state-danger">
                                         {{ openComplaints() }} <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
                                     </a>
                                 } @else {
