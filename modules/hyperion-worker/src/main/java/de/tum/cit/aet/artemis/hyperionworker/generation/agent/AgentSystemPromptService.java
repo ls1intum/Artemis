@@ -490,7 +490,7 @@ public class AgentSystemPromptService {
         }
         StringBuilder section = new StringBuilder(
                 "\n\nTHIS EXERCISE'S BUILD CONTEXT (resolved by Artemis — the grader runs exactly this; do NOT change how it builds or where reports are written):");
-        section.append("\n- Project type: GRADLE_GRADLE");
+        section.append("\n- Build tool: Gradle (Java); the template and solution keep their own build.gradle, and the tests project is the immutable harness");
         String packageName = exercise.packageName();
         if (packageName != null && !packageName.isBlank()) {
             section.append("\n- Module / package name: ").append(packageName).append("  (use this EXACT name across solution, template, and tests so the shared tests resolve)");

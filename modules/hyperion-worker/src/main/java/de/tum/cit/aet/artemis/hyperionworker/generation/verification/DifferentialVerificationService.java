@@ -328,8 +328,8 @@ public class DifferentialVerificationService {
             if (!result.timedOut() && result.exitCode() == 0 && result.failures() == 0 && trustedTestsRan) {
                 return Optional.empty();
             }
-            log.warn("Sandbox build-environment readiness probe failed for project type {} (exit {}, parsed tests {}, failures {}). Build output: {}", "GRADLE_GRADLE",
-                    result.exitCode(), result.tests(), result.failures(), boundedReadinessDiagnostic(execution.process().combinedOutput()));
+            log.warn("Sandbox build-environment readiness probe failed for the Java Gradle harness (exit {}, parsed tests {}, failures {}). Build output: {}", result.exitCode(),
+                    result.tests(), result.failures(), boundedReadinessDiagnostic(execution.process().combinedOutput()));
             if (result.timedOut()) {
                 return Optional.of("The sandbox build-environment readiness probe timed out before authoring began. Fix the build image or exercise scaffold; the authoring agent "
                         + "was not started.");
@@ -338,7 +338,7 @@ public class DifferentialVerificationService {
                     + ", " + result.tests() + " parsed tests, " + result.failures() + " failures). Fix the build image or exercise scaffold; the authoring agent was not started.");
         }
         catch (RuntimeException exception) {
-            log.warn("Could not run the sandbox build-environment readiness probe for project type {} ({}): {}", "GRADLE_GRADLE", exception.getClass().getSimpleName(),
+            log.warn("Could not run the sandbox build-environment readiness probe for the Java Gradle harness ({}): {}", exception.getClass().getSimpleName(),
                     boundedReadinessDiagnostic(exception.getMessage()));
             return Optional.of("The sandbox build environment could not be prepared before authoring began. Fix the build image or sandbox runtime; the authoring agent was not "
                     + "started.");
