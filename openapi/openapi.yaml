@@ -1869,6 +1869,11 @@ components:
         startedAt: {type: string, format: date-time}
         cancellable: {type: boolean}
         cancellationRequested: {type: boolean}
+        mode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        exerciseTitle: {type: string}
+        courseId: {type: integer, format: int64}
     QuizBatchWithPassword:
       type: object
       properties:
