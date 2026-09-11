@@ -51,10 +51,10 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * values, so loading the entity (and with it the course, through an eager association) is wasted work.
      *
      * @param examId the id of the exam
-     * @return the exam's dates, grace period, mode and simulation end date
+     * @return the exam's dates, grace period, mode and working time
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.examMode, exam.startDate + exam.workingTime * 1 second)
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.examMode, exam.workingTime)
             FROM Exam exam
             WHERE exam.id = :examId
             """)

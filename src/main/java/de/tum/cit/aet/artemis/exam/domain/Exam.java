@@ -541,11 +541,34 @@ public class Exam extends DomainObject {
      */
     @JsonIgnore
     public boolean isTestOrPractice(ZonedDateTime now) {
-        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && !now.isBefore(getSimulationEndDate());
+        return isTestOrPractice(examMode, getSimulationEndDate(), now);
+    }
+
+    /**
+     * Checks whether an exam mode behaves like a test exam at the given time.
+     *
+     * @param examMode          the configured exam mode
+     * @param simulationEndDate the end of the simulation phase
+     * @param now               the time to check
+     * @return true if this is a test exam or the simulation phase has ended
+     */
+    public static boolean isTestOrPractice(ExamMode examMode, ZonedDateTime simulationEndDate, ZonedDateTime now) {
+        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && !now.isBefore(simulationEndDate);
     }
 
     @JsonIgnore
     public ZonedDateTime getSimulationEndDate() {
+        return simulationEndDate(startDate, workingTime);
+    }
+
+    /**
+     * Calculates the end of a test exam's simulation phase.
+     *
+     * @param startDate   the start of the simulation phase
+     * @param workingTime the configured working time in seconds
+     * @return the end of the simulation phase
+     */
+    public static ZonedDateTime simulationEndDate(ZonedDateTime startDate, int workingTime) {
         return startDate.plusSeconds(workingTime);
     }
 

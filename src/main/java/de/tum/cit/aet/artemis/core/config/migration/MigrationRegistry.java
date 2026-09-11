@@ -29,7 +29,6 @@ public class MigrationRegistry {
 
     public MigrationRegistry(MigrationService migrationService) {
         this.migrationService = migrationService;
-        // Here we define the order of the ChangeEntries
     }
 
     /**

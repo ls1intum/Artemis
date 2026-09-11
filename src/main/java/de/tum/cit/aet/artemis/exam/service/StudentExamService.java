@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
@@ -703,8 +702,7 @@ public class StudentExamService {
     private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
         var examSchedule = examRepository.findScheduleById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         boolean testExam = !examSchedule.examMode().isReal();
-        boolean createNewParticipations = examSchedule.examMode() == ExamMode.TEST
-                || examSchedule.examMode() == ExamMode.TEST_WITH_SIMULATION && !ZonedDateTime.now().isBefore(examSchedule.simulationEndDate());
+        boolean createNewParticipations = examSchedule.isTestOrPractice(ZonedDateTime.now());
 
         // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its
         // student exams and their exercises instead would repeat the exam row and the full exercise row once per student
