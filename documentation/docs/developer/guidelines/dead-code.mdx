@@ -78,6 +78,35 @@ from other dead code only once that code is gone (so dead code peels off in laye
 collides with an unrelated identifier anywhere in the repository counts as a reference. A missed
 detection costs nothing; a false positive would block an unrelated pull request.
 
+## Unused methods (advisory)
+
+The class-level check cannot see a method that lost its last production caller: the class stays alive as long as
+anything names it. `UnusedMethodArchitectureTest` reports production methods that **only the tests call** — code kept
+alive by a test asserting behaviour nothing asks for any more.
+
+```bash
+./gradlew test --tests UnusedMethodArchitectureTest -x webapp
+```
+
+It is deliberately advisory: it logs a report and never fails. Method-level reachability has a false-positive floor
+that class-level reachability does not, because frameworks invoke methods with no bytecode reference — Hibernate reads
+entity properties, Jackson reads DTO accessors, JPQL names properties as strings, AspectJ weaves advice. The rule
+removes the categories it can recognise:
+
+- methods carrying an entry-point annotation (Spring MVC mappings, `@Scheduled`, `@EventListener`, `@Bean`, AspectJ
+  advice, JPA lifecycle callbacks, Jackson annotations, Actuator operations);
+- overrides and interface implementations, which are invoked through the supertype, so ArchUnit records the call
+  against the supertype's declaration and the override itself looks uncalled. Reflection decides this rather than
+  ArchUnit's class graph, because supertypes outside the Artemis packages import as stubs carrying no methods;
+- accessors, in all three shapes Artemis uses: `getX()`/`setX(v)`, the record-style `x()`, and the fluent `x(v)`
+  returning `this`. They carry no signal, since reflective access reaches exactly that shape without a call site.
+
+Entries name the full signature, parameters included — two overloads where production still calls one and only a test
+calls the other are otherwise indistinguishable.
+
+Treat each entry as a candidate, not a verdict. When the report has been triaged and its false-positive rate is
+understood, it can become a gate with a recorded baseline.
+
 ## The client check
 
 `knip`, configured in `knip.json`, reports TypeScript files that nothing imports. Run it with:
