@@ -753,9 +753,9 @@ To enforce minimal access for external tools, Artemis provides `@AllowedTools`. 
 **Example:**
 ```java
 @AllowedTools(ToolTokenType.SCORPIO)
-public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
+public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
     [...]
-    return ResponseEntity.ok(courseForDashboardDTO);
+    return ResponseEntity.ok(vcsAccessToken);
 }
 ```
 
