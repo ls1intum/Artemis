@@ -270,17 +270,21 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * The exact Ares dynamic-test names the seeded providers report at runtime: every retained class has {@code testClass[<ClassName>]}, while member names exist only where that
+     * The exact Ares dynamic-test names the seeded providers report at runtime, mirroring the providers' own rules: {@code testClass[<ClassName>]} exists only for a class whose
+     * {@code class} node carries a property beyond {@code name} and {@code package} (Ares' {@code ClassTestProvider} skips the others), while member names exist only where that
      * oracle section is non-empty. Reconstructed from the oracle rather than matched by name shape, which the agent could imitate.
      */
     private static Set<String> structuralTestNames(String oracle) throws IOException {
         Set<String> names = new LinkedHashSet<>();
         for (JsonNode entry : (ArrayNode) MAPPER.readTree(oracle)) {
-            String className = entry.path("class").path("name").asText("");
+            JsonNode classNode = entry.path("class");
+            String className = classNode.path("name").asText("");
             if (className.isEmpty()) {
                 continue;
             }
-            names.add("testClass[" + className + "]");
+            if (hasAdditionalClassProperties(classNode)) {
+                names.add("testClass[" + className + "]");
+            }
             if (entry.has("genericApi")) {
                 names.add("testGenericApi[" + className + "]");
             }
@@ -297,11 +301,19 @@ public class StructuralOracleSeedingService {
         return names;
     }
 
-    /** Only providers with at least one dynamic test to create (see class javadoc on the shared factory name). */
+    /**
+     * Only providers with at least one dynamic test to create (see class javadoc on the shared factory name). {@code ClassTest.java} is included only when at least one class
+     * qualifies for {@code testClass[...]}, because Ares' {@code ClassTest} fails with "No tests for classes available" otherwise.
+     */
     private static List<String> requiredStructuralClasses(String oracle) throws IOException {
         ArrayNode entries = (ArrayNode) MAPPER.readTree(oracle);
         List<String> classes = new ArrayList<>();
-        classes.add("ClassTest.java");
+        for (JsonNode entry : entries) {
+            if (hasAdditionalClassProperties(entry.path("class"))) {
+                classes.add("ClassTest.java");
+                break;
+            }
+        }
         for (JsonNode entry : entries) {
             if (entry.has("genericApi")) {
                 classes.add("GenericTypeTest.java");
@@ -318,6 +330,17 @@ public class StructuralOracleSeedingService {
             classes.add("ConstructorTest.java");
         }
         return List.copyOf(classes);
+    }
+
+    /**
+     * Ares' {@code ClassTestProvider} generates {@code testClass[...]} only for a class whose {@code class} node specifies something to check beyond its identity, such as
+     * {@code modifiers}, {@code superclass}, {@code interfaces}, {@code isInterface}, {@code isEnum}, {@code isAbstract} or {@code annotations}.
+     */
+    private static boolean hasAdditionalClassProperties(JsonNode classNode) {
+        if (!classNode.isObject()) {
+            return false;
+        }
+        return classNode.properties().stream().map(Map.Entry::getKey).anyMatch(property -> !"name".equals(property) && !"package".equals(property));
     }
 
     private static boolean hasEntries(JsonNode entries, String field) {

@@ -1049,6 +1049,23 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
+    void renderAuthoringBrief_keepsTheGenerateWordingExactly_andFramesAdaptAsAChangeRequest() {
+        String sourceBrief = "Build a bubble sort exercise.";
+
+        assertThat(GenerationOrchestrationService.renderAuthoringBrief(sourceBrief, Mode.GENERATE)).isEqualTo("""
+                PRIMARY SOURCE REQUIREMENTS (authoritative; preserve every explicit requirement):
+                Build a bubble sort exercise.
+
+                Choose only the minimal API and behavior needed to implement these requirements. Do not add graded purity, immutability, thread-safety, exception, or architecture \
+                requirements unless the source explicitly requests them. Keep the statement, starter, solution, tests, examples, and task bindings consistent.""");
+
+        String adapt = GenerationOrchestrationService.renderAuthoringBrief(sourceBrief, Mode.ADAPT);
+        assertThat(adapt).startsWith("ADAPTATION REQUEST (authoritative; everything this request does not mention is preserved as it is):\n" + sourceBrief)
+                .contains("Keep the statement, starter, solution, tests, examples, and task bindings consistent.")
+                .doesNotContain("PRIMARY SOURCE REQUIREMENTS", "Choose only the minimal API");
+    }
+
+    @Test
     void nullAndEmptyProblemStatements_doNotCreateAHeaderOnlyAdaptationChange() {
         String changes = GenerationOrchestrationService.renderAdaptationChanges(null, "", Map.of(), Map.of());
 

@@ -195,7 +195,7 @@ public class GenerationOrchestrationService {
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (an empty probe leaves the prompt unchanged) and first-attempt only: retries
             // already operate on a workspace the agent has explored.
-            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), renderAuthoringBrief(sourceBrief));
+            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), renderAuthoringBrief(sourceBrief, mode));
 
             attemptLoop = new GenerationAttemptLoop(this, runDependencies,
                     new GenerationAttemptLoop.RunContext(exercise, mode, jobId, sandbox, sessionId, workspaceSeed, testsSeedSnapshot, placeholderReplacements,
@@ -310,7 +310,16 @@ public class GenerationOrchestrationService {
                 + "\n\nSTARTING PROBLEM STATEMENT (preserve every requirement where the run instruction is silent):\n" + startingProblemStatement.strip();
     }
 
-    static String renderAuthoringBrief(String sourceBrief) {
+    /**
+     * Renders the instructor's brief as the first user prompt. GENERATE frames it as the source requirements to design a minimal API from; ADAPT frames it as a change request
+     * against an exercise that already exists, so it must not invite the agent to re-derive the API or shrink what the request does not mention.
+     */
+    static String renderAuthoringBrief(String sourceBrief, Mode mode) {
+        if (mode == Mode.ADAPT) {
+            return "ADAPTATION REQUEST (authoritative; everything this request does not mention is preserved as it is):\n" + sourceBrief
+                    + "\n\nDo not add graded purity, immutability, thread-safety, exception, or architecture requirements unless the request explicitly asks for them. "
+                    + "Keep the statement, starter, solution, tests, examples, and task bindings consistent.";
+        }
         return "PRIMARY SOURCE REQUIREMENTS (authoritative; preserve every explicit requirement):\n" + sourceBrief
                 + "\n\nChoose only the minimal API and behavior needed to implement these requirements. Do not add graded purity, immutability, thread-safety, exception, or architecture "
                 + "requirements unless the source explicitly requests them. Keep the statement, starter, solution, tests, examples, and task bindings consistent.";

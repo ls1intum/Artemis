@@ -38,6 +38,21 @@ class AgentSystemPromptServiceTest {
         }
     }
 
+    @Test
+    void adaptPromptBoundsInspectionAndKeepsTheExistingLayoutAuthoritative() {
+        String adapt = prompts.build(input(false), Mode.ADAPT);
+        String generate = prompts.build(input(false), Mode.GENERATE);
+
+        assertThat(adapt)
+                .contains("1. Read `problem-statement.md` and only the files the feedback names.", "2. Call `verify` once before editing", "3. Make the edits.",
+                        "4. Call `verify`, then `submit`.", "Do not read the Gradle harness, the wrapper, or the Ares structural providers",
+                        "Spend at most about a quarter of your steps on inspection before the first edit.",
+                        "The existing layout and package are authoritative; keep every file where it is.")
+                .doesNotContain("Read the existing Gradle harness to learn its source layout");
+        assertThat(generate).contains("Read the existing Gradle harness to learn its source layout, package, and expected test filenames")
+                .doesNotContain("The existing layout and package are authoritative", "Call `verify` once before editing");
+    }
+
     @ParameterizedTest
     @EnumSource(GenerationStage.class)
     void stagedPromptsExposeOnlyTheRelevantBuildGuidance(GenerationStage stage) {

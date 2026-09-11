@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.hyperionworker.generation.GenerationInput;
 import de.tum.cit.aet.artemis.hyperionworker.generation.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperionworker.generation.workspace.GenerationWorkspaceService;
@@ -414,7 +416,7 @@ class StructuralOracleSeedingServiceTest {
     @Test
     void preservesAValidRawBaselineByteForByte_andFreezesItOnce() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        String oracle = "[{\"class\":{\"name\":\"X\"}}]";
+        String oracle = "[{\"class\":{\"name\":\"X\",\"modifiers\":[\"public\"]}}]";
         String classProvider = "class ClassTest extends ClassTestProvider { String raw = \"${studentWorkingDirectory}\"; void load(){ retrieveStructureOracleJSON(null); } }";
         Map<String, String> baseline = Map.of("test/x/test.json", oracle, "test/x/ClassTest.java", classProvider);
         StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
@@ -429,7 +431,7 @@ class StructuralOracleSeedingServiceTest {
     @Test
     void restoresADeletedBaselineBundleExactly() throws Exception {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        String oracle = "[{\"class\":{\"name\":\"X\"}}]";
+        String oracle = "[{\"class\":{\"name\":\"X\",\"modifiers\":[\"public\"]}}]";
         String classProvider = "class ClassTest extends ClassTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
         Map<String, String> baseline = Map.of("test/x/test.json", oracle, "test/x/ClassTest.java", classProvider);
         StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), Map.of());
@@ -439,6 +441,73 @@ class StructuralOracleSeedingServiceTest {
         ArgumentCaptor<InputStream> tar = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tar.capture());
         assertThat(readTar(tar.getValue())).containsEntry("tests/test/x/test.json", oracle).containsEntry("tests/test/x/ClassTest.java", classProvider);
+    }
+
+    @Test
+    void baselineTestNames_mirrorAresClassTestProvider_whichSkipsClassesWithOnlyNameAndPackage() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        // A template-style oracle as instructors author it: Context and Policy carry only their identity, MergeSort declares an interface relationship.
+        String oracle = """
+                [
+                  {"class": {"name": "Context", "package": "sorting"}, "methods": [{"name": "sort", "modifiers": ["public"], "returnType": "void"}]},
+                  {"class": {"name": "Policy", "package": "sorting"}},
+                  {"class": {"name": "MergeSort", "package": "sorting", "interfaces": ["Policy"]}, "methods": [{"name": "perform", "modifiers": ["public"], "returnType": "void"}]}
+                ]
+                """;
+        String classProvider = "class ClassTest extends ClassTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
+        String methodProvider = "class MethodTest extends MethodTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
+        Map<String, String> baseline = Map.of("test/sorting/test.json", oracle, "test/sorting/ClassTest.java", classProvider, "test/sorting/MethodTest.java", methodProvider);
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
+        seeder.captureBaseline("s", baseline);
+
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise()).testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]",
+                "testMethods[Context]");
+    }
+
+    @Test
+    void baselineWithoutAnyClassPropertyDoesNotRequireClassTest() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        // Ares' ClassTest fails with "No tests for classes available" for such an oracle, so a bundle that omits ClassTest.java is complete.
+        String oracle = "[{\"class\":{\"name\":\"Context\",\"package\":\"sorting\"},\"methods\":[{\"name\":\"sort\",\"modifiers\":[\"public\"],\"returnType\":\"void\"}]}]";
+        String methodProvider = "class MethodTest extends MethodTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
+        Map<String, String> baseline = Map.of("test/sorting/test.json", oracle, "test/sorting/MethodTest.java", methodProvider);
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
+        seeder.captureBaseline("s", baseline);
+
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise()).testNames()).containsExactly("testMethods[Context]");
+    }
+
+    @Test
+    void approvedContractOracleStillYieldsTestClassForEveryClass() throws Exception {
+        // toOracle always writes isInterface/isEnum/isAbstract, so every generated class keeps its testClass[...] under the Ares rule.
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public interface Sorter {
+                    int[] sort(int[] values);
+                }
+                public enum Order {
+                    ASCENDING, DESCENDING;
+                }
+                public class MergeSort implements Sorter {
+                    public int[] sort(int[] values);
+                }
+                ```
+                """, Set.of("Sorter", "Order", "MergeSort"));
+        assertThat(parsed.errors()).isEmpty();
+        String oracle = parsed.contract().toOracle("sorting", new ObjectMapper());
+        assertThat(oracle).contains("\"isInterface\"", "\"isEnum\"", "\"isAbstract\"");
+
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> baseline = new LinkedHashMap<>();
+        baseline.put("test/sorting/test.json", oracle);
+        for (String provider : java.util.List.of("ClassTest", "MethodTest", "AttributeTest", "ConstructorTest")) {
+            baseline.put("test/sorting/" + provider + ".java", "class " + provider + " extends " + provider + "Provider { void load(){ retrieveStructureOracleJSON(null); } }");
+        }
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
+        seeder.captureBaseline("s", baseline);
+
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise()).testNames()).contains("testClass[Sorter]", "testClass[Order]", "testClass[MergeSort]");
     }
 
     @Test

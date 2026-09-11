@@ -70,6 +70,18 @@ final class RepairPromptComposer {
     }
 
     /**
+     * The prompt after an ADAPT attempt that spent its whole step budget inspecting and never edited. There is no verdict to answer, so it restates the adaptation request and
+     * puts the edit first: the agent is told which files it may open, and that the harness and structural providers are not among them.
+     */
+    String editBeforeInspecting(int completedAttempt) {
+        return attemptFraming(completedAttempt) + "Your previous attempt reached its step limit before making any change; the workspace is still the unmodified seeded exercise. "
+                + "Edit first: open only `problem-statement.md` and the file(s) the adaptation request names, apply the requested change with write_file or edit_file, then call the "
+                + "structured `verify` tool and submit when it reports MECHANICAL PRECHECK: PASS. Do not read the Gradle harness, the wrapper, or the Ares structural providers "
+                + "(`ClassTest`, `MethodTest`, `AttributeTest`, `ConstructorTest`, `test.json`); they are immutable. Everything the request does not mention stays as it is.\n\n"
+                + authoringBrief;
+    }
+
+    /**
      * @param precedingRepair the quality repair this rejection followed, or {@code null} if no repair round had started; a new assertion from that repair is the likeliest cause
      *                            of the rejection, so it is audited before production code is touched
      */
