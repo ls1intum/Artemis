@@ -85,10 +85,18 @@ class GenerationRequestServiceTest {
 
     @ParameterizedTest
     @EnumSource(ProjectType.class)
-    void onlyCanonicalGradleIsQualified(ProjectType type) {
+    void onlyGradleIsQualified(ProjectType type) {
         var exercise = exercise();
         exercise.setProjectType(type);
-        assertThat(service.isGenerationSupported(exercise)).isEqualTo(type == ProjectType.GRADLE_GRADLE);
+        // Both Gradle types share the test harness the sandbox verifies against; PLAIN_GRADLE is what the create form assigns to a Java exercise by default.
+        assertThat(service.isGenerationSupported(exercise)).isEqualTo(type == ProjectType.GRADLE_GRADLE || type == ProjectType.PLAIN_GRADLE);
+    }
+
+    @Test
+    void unsetProjectTypeIsNotQualified() {
+        var exercise = exercise();
+        exercise.setProjectType(null);
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
     }
 
     @Test

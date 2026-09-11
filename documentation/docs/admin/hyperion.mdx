@@ -253,10 +253,10 @@ the broker certificate. Worker IDs must match explicitly provisioned broker
 addresses. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
-Generation accepts only unreleased Java `GRADLE_GRADLE` exercises without
-auxiliary repositories, sequential test runs, or static code analysis. Maven
-projects are not supported. The worker receives a frozen, bounded repository
-snapshot, not credentials or repository paths. Core validates returned artifacts
+Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
+`GRADLE_GRADLE`; both share the Gradle test harness) without auxiliary
+repositories, sequential test runs, or static code analysis. Maven projects are
+not supported. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
