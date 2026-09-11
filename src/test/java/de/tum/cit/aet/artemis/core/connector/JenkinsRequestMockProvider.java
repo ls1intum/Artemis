@@ -14,6 +14,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.mockito.MockitoAnnotations;
@@ -29,7 +30,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
@@ -54,7 +55,7 @@ public class JenkinsRequestMockProvider {
     private MockRestServiceServer shortTimeoutMockServer;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     private AutoCloseable closeable;
 
@@ -248,13 +249,13 @@ public class JenkinsRequestMockProvider {
 
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
+        final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase(Locale.ROOT));
         mockUpdatePlanRepository(projectKey, planKey, true);
         mockEnablePlan(projectKey, planKey, true, false);
     }
 
     private String getCleanPlanName(String planName) {
-        return planName.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return planName.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 
     public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException {
@@ -306,7 +307,7 @@ public class JenkinsRequestMockProvider {
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
+        final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase(Locale.ROOT));
         mockCopyBuildPlanFromTemplateIntoExistingTargetFolder(projectKey, projectKey, planKey);
     }
 

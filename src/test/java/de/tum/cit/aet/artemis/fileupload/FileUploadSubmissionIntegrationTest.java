@@ -135,9 +135,18 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(TEST_PREFIX + "student3")
     void submitFileSpecialExtensions() throws Exception {
-        releasedFileUploadExercise.setFilePattern("ipynb");
-        exerciseRepository.save(releasedFileUploadExercise);
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "ipynb");
         submitFile("test.ipynb", false, MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    @WithMockUser(TEST_PREFIX + "student3")
+    void submitFileWithAFilePatternThatRepeatsAnEnding() throws Exception {
+        // The exercise validation accepts a pattern that names the same ending twice, so the check on submission has
+        // to tolerate the duplicate rather than reject an upload that the pattern allows.
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "png,png");
+
+        submitFile("file.png", false);
     }
 
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
@@ -626,7 +635,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         final MockMultipartFile tooLargeFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsTooLarge).getBytes());
         request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
                 submissionInput(submittedFileUploadSubmission, releasedFileUploadExercise.getId()), "submission", tooLargeFile, FileUploadSubmissionDTO.class,
-                HttpStatus.PAYLOAD_TOO_LARGE);
+                HttpStatus.CONTENT_TOO_LARGE);
     }
 
     @Test

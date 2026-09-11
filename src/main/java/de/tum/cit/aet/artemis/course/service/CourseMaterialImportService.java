@@ -289,7 +289,7 @@ public class CourseMaterialImportService {
         newExercise.forceNewProjectKey();
 
         try {
-            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false, false));
+            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
         }
         catch (Exception e) {
             log.error("Failed to import programming exercise: {}", e.getMessage());
@@ -298,7 +298,7 @@ public class CourseMaterialImportService {
     }
 
     private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
-        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
+        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }

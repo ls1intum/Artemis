@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
@@ -59,7 +60,7 @@ public class MessageSpecs {
             }
 
             List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
-            Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
+            Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
             Predicate baseTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
             Predicate baseAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
             Predicate baseCombined = criteriaBuilder.and(baseTextPredicate, baseAuthorPredicate);
@@ -93,7 +94,7 @@ public class MessageSpecs {
             }
             else {
                 // regular search on content
-                Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
+                Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase(Locale.ROOT) + "%");
 
                 Predicate searchInMessageContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
                 Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);

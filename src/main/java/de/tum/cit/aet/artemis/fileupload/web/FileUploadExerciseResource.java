@@ -7,10 +7,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -87,11 +90,15 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
+
+    /** A run of whitespace inside a file pattern, removed before the pattern is split into its endings. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     private static final String ENTITY_NAME = "fileUploadExercise";
 
@@ -311,7 +318,7 @@ public class FileUploadExerciseResource {
         if (exercise.getFilePattern() == null) {
             return false;
         }
-        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var filePattern = WHITESPACE_RUN.matcher(exercise.getFilePattern().toLowerCase(Locale.ROOT)).replaceAll("");
         var allowedFileEndings = filePattern.split(",");
         var isValid = true;
         for (var allowedFileEnding : allowedFileEndings) {
@@ -853,16 +860,12 @@ public class FileUploadExerciseResource {
         if (updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments());
         }
-        if (updateFileUploadExerciseDTO.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(updateFileUploadExerciseDTO.allowFeedbackRequests());
-        }
         if (updateFileUploadExerciseDTO.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(updateFileUploadExerciseDTO.presentationScoreEnabled());
         }
         if (updateFileUploadExerciseDTO.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(updateFileUploadExerciseDTO.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(updateFileUploadExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateFileUploadExerciseDTO.gradingInstructions());
 
         exercise.setExampleSolution(updateFileUploadExerciseDTO.exampleSolution());

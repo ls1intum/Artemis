@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -17,7 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
@@ -213,7 +214,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
     }
 
     private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -228,7 +229,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
             List<String> failedTests, List<String> logs, List<CommitDTO> commits) {
-        var repoName = (projectKey + "-" + loginName).toUpperCase();
+        var repoName = (projectKey + "-" + loginName).toUpperCase(Locale.ROOT);
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
         return ProgrammingExerciseFactory.generateTestResultDTO(fullName, repoName, null, programmingLanguage, false, successfulTests, failedTests, logs, commits, null);

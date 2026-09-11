@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,8 +36,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
@@ -665,22 +666,22 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         private ProgrammingExerciseStudentParticipation provisionProgrammingRepositories(ProgrammingExercise exercise) throws GitAPIException, IOException, URISyntaxException {
             String projectKey = exercise.getProjectKey();
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
             programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
             programmingExerciseRepository.save(exercise);
             ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
 
-            String templateSlug = projectKey.toLowerCase() + "-exercise";
+            String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
             templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateSlug + ".git");
             templateProgrammingExerciseParticipationRepository.save(templateParticipation);
 
-            String solutionSlug = projectKey.toLowerCase() + "-solution";
+            String solutionSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
             SolutionProgrammingExerciseParticipation solutionParticipation = reloaded.getSolutionParticipation();
             solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionSlug + ".git");
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-            String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+            String assignmentSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(reloaded,
                     TEST_PREFIX + "student1");
             participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
@@ -688,10 +689,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentSlug);
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
             localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
 
             return studentParticipation;
@@ -701,32 +702,32 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 throws GitAPIException, IOException, URISyntaxException {
             String projectKey = exercise.getProjectKey();
             exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
             programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
             programmingExerciseRepository.save(exercise);
             ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
 
-            String templateSlug = projectKey.toLowerCase() + "-exercise";
+            String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
             templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateSlug + ".git");
             templateProgrammingExerciseParticipationRepository.save(templateParticipation);
 
-            String solutionSlug = projectKey.toLowerCase() + "-solution";
+            String solutionSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
             SolutionProgrammingExerciseParticipation solutionParticipation = reloaded.getSolutionParticipation();
             solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionSlug + ".git");
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-            String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "team1";
+            String assignmentSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "team1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(reloaded, team);
             participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
             studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentSlug);
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
             localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
 
             return studentParticipation;
@@ -786,7 +787,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var content = sendAndGetLlmResponseContent(mcqJson).getFirst();
 
             assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
-            assertThat(((IrisJsonMessageContent) content).getJsonNode().get("type").asText()).isEqualTo("mcq");
+            assertThat(((IrisJsonMessageContent) content).getJsonNode().get("type").asString()).isEqualTo("mcq");
         }
 
         @Test
@@ -822,7 +823,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(3);
             assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asText()).isEqualTo("mcq");
+            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq");
             assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
         }
 
@@ -836,7 +837,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var contents = sendAndGetLlmResponseContent(mixed);
 
             assertThat(contents).hasSize(3);
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asText()).isEqualTo("mcq-set");
+            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq-set");
         }
 
         @Test
@@ -857,8 +858,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(1);
             var jsonContent = (IrisJsonMessageContent) contents.getFirst();
-            assertThat(jsonContent.getJsonNode().get("type").asText()).isEqualTo("mcq");
-            assertThat(jsonContent.getJsonNode().get("question").asText()).isEqualTo("What is 2+2?");
+            assertThat(jsonContent.getJsonNode().get("type").asString()).isEqualTo("mcq");
+            assertThat(jsonContent.getJsonNode().get("question").asString()).isEqualTo("What is 2+2?");
         }
 
         @Test

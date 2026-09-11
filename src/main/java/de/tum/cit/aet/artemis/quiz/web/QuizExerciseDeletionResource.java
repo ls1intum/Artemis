@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseDeletionResource {

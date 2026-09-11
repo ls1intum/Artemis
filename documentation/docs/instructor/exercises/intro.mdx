@@ -1,39 +1,44 @@
+---
+id: intro
+title: General Information
+sidebar_label: General Information
+---
+
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import generalMenuExercise from './assets/general/general-menu-exercise.png';
-import sidebarCollapseExercise from './assets/general/sidebar-collapse-exercise.png';
-import exerciseOverviewCurrent from './assets/general/exercise-overview-current.png';
-import exerciseOverviewPast from './assets/general/exercise-overview-past.png';
+import exerciseSidebar from './assets/general/exercise-sidebar.png';
 
-# General Information
+Artemis has five exercise types — [programming](/instructor/exercises/programming-exercise/),
+[quiz](/instructor/exercises/quiz-exercise), [modeling](/instructor/exercises/modeling-exercise),
+[text](/instructor/exercises/text-exercise) and [file upload](/instructor/exercises/file-upload-exercise) — and they
+have the same skeleton. What differs is what a student hands in and how it is marked.
 
-## Overview
+## What Every Exercise Has
 
-Artemis offers different exercise types that have these things in common:
+- **Release Date** — when the exercise becomes visible. An exercise without one is visible immediately.
+- **Start Date** — when students may begin working. Without one, they may begin as soon as it is released.
+- **Due Date** — when submission closes. Assessment cannot start before it has passed.
+- **Assessment Due Date** — when the assessments are published. Everything marked before it is released at once on
+  that date, so no student sees their result before the others.
+- **Points** and **Bonus Points** — what the exercise is worth, and **Include this exercise in the course score
+  calculation**, which decides whether those points count toward the course score, count as bonus, or not at all.
 
-- **Release Date:** The date at which the exercise is released to the students. When an exercise does not have a release date, it is shown to the students immediately.
-- **Due Date:** The date until the students can submit their solution.
-- **Assessment Due Date:** The date until the tutors should finish the assessment of the student submissions. All assessments prior to this date will be released on the assessment due date.
-- **Points:** You can achieve points in each exercise. Depending on the exercise configuration these points are not included in the course score, count towards the course score or are used as bonus points.
+## How Students Find an Exercise
 
-## Exercise Organization and Navigation
+**Exercises** in the course navigation opens the course's exercise list. The sidebar groups the exercises by where
+they are in time, so a student sees what needs doing before what is finished:
 
-Users can reach the exercise overview by clicking on the tab labeled *Exercises*.
+- **Future** — has not begun: its start date, or its release date when it has no start date, is still ahead. An
+  exercise in this group stays here whatever its due date says.
+- **Due Soon** — has begun and is due within three days.
+- **Current** — has begun and is due more than three days from now.
+- **Past** — the due date has passed.
+- **No Date** — has no due date. An exercise that has begun belongs here even when it has a release date and a
+  start date; it is the missing due date that decides.
 
-<Image src={generalMenuExercise} alt="Exercise Menu" size={ImageSize.small} caption={"Exercise Tab in Sidebar"}></Image>
+A quiz is grouped a little more generously: one whose release, start or due date is today, or that is open now, or
+that is released without a due date, counts as **Current**.
 
-The exercise overview provides an organized view of all course exercises. The sidebar displays exercises categorized by time periods to help students navigate course content efficiently:
+A group holding more than five exercises is split into weekly subsections, so a long-running course stays
+navigable. Searching turns the subsections off and lists the matches flat.
 
-- **Future:** Upcoming exercises that haven't been released yet (start date is in the future)
-- **Due Soon:** Exercises that are currently active and due within the next 3 days
-- **Current:** Exercises that are currently available for participation (released but not due within 3 days)
-- **Past:** Completed exercises that are no longer available for submission (due date has passed)
-- **No Date:** Exercises without specific dates assigned
-
-<Image src={sidebarCollapseExercise} alt="Sidebar Collapse Exercise" size={ImageSize.small} caption={"Exercise Sidebar with collapsed categories"}></Image>
-
-When a section (e.g., No date) contains more than 5 exercises, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on exercise dates and distribution across weeks.
-
-<div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
-    <Image src={exerciseOverviewCurrent} alt="Current Exercises Overview" size={ImageSize.small} caption={"Exercise Overview uncollapsed (1)"}></Image>
-    <Image src={exerciseOverviewPast} alt="Past Exercises Overview" size={ImageSize.small} caption={"Exercise Overview uncollapsed (2)"}></Image>
-</div>
+<Image src={exerciseSidebar} alt="Exercise sidebar grouping the course's exercises by time" size={ImageSize.small} caption="The exercise sidebar" />

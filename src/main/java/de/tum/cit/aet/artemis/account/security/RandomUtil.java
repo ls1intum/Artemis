@@ -42,4 +42,8 @@ public final class RandomUtil {
     public static String generateResetKeySecret() {
         return generateRandomAlphanumericString();
     }
+
+    public static String generateExchangeCode() {
+        return generateRandomAlphanumericString();
+    }
 }

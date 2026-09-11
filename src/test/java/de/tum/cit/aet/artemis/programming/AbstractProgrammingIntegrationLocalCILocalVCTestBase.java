@@ -4,6 +4,7 @@ import static org.mockito.Mockito.lenient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.AfterEach;
@@ -13,8 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.DockerClient;
+
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -174,7 +176,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected abstract String getTestPrefix();
 
     @BeforeEach
-    void initUsersAndExercise() throws JsonProcessingException {
+    void initUsersAndExercise() throws JacksonException {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
@@ -197,7 +199,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
-        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-tests.git");
         var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
         var defaultDockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
         var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);

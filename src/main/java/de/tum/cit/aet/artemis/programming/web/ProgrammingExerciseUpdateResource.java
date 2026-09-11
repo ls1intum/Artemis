@@ -24,11 +24,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -37,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -51,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -64,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseUpdateResource {
@@ -88,8 +88,6 @@ public class ProgrammingExerciseUpdateResource {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<SlideApi> slideApi;
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
@@ -109,7 +107,7 @@ public class ProgrammingExerciseUpdateResource {
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
             CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -121,7 +119,6 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseService = exerciseService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
-        this.athenaApi = athenaApi;
         this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
@@ -142,8 +139,8 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
         if (updateDTO.id() == null || updateDTO.id() == 0) {
@@ -190,7 +187,6 @@ public class ProgrammingExerciseUpdateResource {
         final String originalTestCheckoutPath = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getTestCheckoutPath()
                 : null;
         final String originalBranch = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getBranch() : null;
-        final String originalFeedbackSuggestionModule = programmingExerciseBeforeUpdate.getFeedbackSuggestionModule();
         final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
         final ZonedDateTime originalReleaseDate = programmingExerciseBeforeUpdate.getReleaseDate();
         final ZonedDateTime originalAssessmentDueDate = programmingExerciseBeforeUpdate.getAssessmentDueDate();
@@ -276,20 +272,13 @@ public class ProgrammingExerciseUpdateResource {
         // Note: conversion between exam/course exercise is already validated above (lines 148-154)
         // by comparing courseId and exerciseGroupId before the entity is mutated.
 
-        // Check that only allowed Athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
-        // Changing Athena module after the due date has passed is not allowed
-        // Use a proxy exercise with the old module for comparison since update() mutates the original
-        ProgrammingExercise exerciseWithOldModule = new ProgrammingExercise();
-        exerciseWithOldModule.setFeedbackSuggestionModule(originalFeedbackSuggestionModule);
-        exerciseWithOldModule.setDueDate(originalDueDate);
-        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedProgrammingExercise, ENTITY_NAME));
-
         // Ignore changes to the default branch - preserve the original
         if (updatedProgrammingExercise.getBuildConfig() != null) {
             updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
         }
+
+        // Validate the effective LocalCI timeline before auxiliary repository handlers can cause DB or VCS side effects.
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, originalBuildAndTestOffset);
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
@@ -321,7 +310,7 @@ public class ProgrammingExerciseUpdateResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, originalDueDate);
         slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
-        return ResponseEntity.ok(savedProgrammingExercise);
+        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedProgrammingExercise));
     }
 
     /**
@@ -370,9 +359,6 @@ public class ProgrammingExerciseUpdateResource {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
@@ -380,7 +366,6 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
 
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields
@@ -398,12 +383,16 @@ public class ProgrammingExerciseUpdateResource {
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+        if (exercise.isCourseExercise() && exercise.getDueDate() == null) {
+            exercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        }
 
         if (dto.testCasesChanged() != null) {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
 
-        exercise.setSubmissionPolicy(dto.submissionPolicy());
+        // toEntity() copies the id through, so an existing policy keeps its identity instead of inserting a second row
+        exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 
@@ -415,6 +404,9 @@ public class ProgrammingExerciseUpdateResource {
 
         // Update build config
         updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
+
+        // Update plagiarism detection config
+        PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Update grading criteria
         updateGradingCriteria(dto, exercise);
@@ -509,8 +501,8 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
         // Load the exercise with all associations needed by update() and reEvaluateExercise()
@@ -539,9 +531,12 @@ public class ProgrammingExerciseUpdateResource {
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
+
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, originalBuildAndTestOffset);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
@@ -557,6 +552,6 @@ public class ProgrammingExerciseUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
         exerciseVersionService.createExerciseVersion(savedExercise, user);
 
-        return ResponseEntity.ok(savedExercise);
+        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedExercise));
     }
 }

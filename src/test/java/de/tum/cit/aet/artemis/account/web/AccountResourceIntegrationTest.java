@@ -23,6 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
@@ -307,11 +309,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
 
-        // Serialize with a plain ObjectMapper (no Hibernate module) to simulate Jackson 3,
-        // which does not have the Hibernate7Module registered. If the DTO still holds an
-        // uninitialized PersistentSet, this will throw LazyInitializationException.
-        var plainMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        plainMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        // Serialize with a bare mapper that has no Hibernate module, so nothing papers over an uninitialized
+        // proxy. If the DTO still holds an uninitialized PersistentSet, this throws LazyInitializationException.
+        var plainMapper = new JsonMapper();
         assertThatCode(() -> plainMapper.writeValueAsString(dto)).doesNotThrowAnyException();
     }
 
@@ -450,6 +450,39 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setEmail(userSameEmail.getEmail());
 
         request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAllowsAnUnchangedLegacyDuplicateEmail() throws Exception {
+        String sharedEmail = "legacy-duplicate@test.de";
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setEmail(sharedEmail);
+        userTestRepository.save(user);
+        User duplicate = userUtilService.createAndSaveUser("legacyduplicate");
+        duplicate.setEmail(sharedEmail);
+        userTestRepository.save(duplicate);
+
+        UserDTO update = new UserDTO(user);
+        update.setEmail(sharedEmail.toUpperCase(Locale.ROOT));
+        update.setFirstName("Updated");
+        request.put("/api/account/basic-information", update, HttpStatus.OK);
+
+        User updated = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updated.getFirstName()).isEqualTo("Updated");
+        assertThat(updated.getEmail()).isEqualTo(sharedEmail);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAllowsRemovingAnEmail() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        UserDTO update = new UserDTO(user);
+        update.setEmail(null);
+
+        request.put("/api/account/basic-information", update, HttpStatus.OK);
+
+        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isNull();
     }
 
     @Test

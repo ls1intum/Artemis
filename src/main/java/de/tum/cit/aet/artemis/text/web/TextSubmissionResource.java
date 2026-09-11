@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -62,6 +64,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("participation/submissions")
 @RestController
 @RequestMapping("api/text/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
@@ -99,11 +102,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ResultRepository resultRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
             Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -117,6 +122,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
         this.resultRepository = resultRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -317,10 +323,14 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        textSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
 
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // assessment editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
                 skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
 

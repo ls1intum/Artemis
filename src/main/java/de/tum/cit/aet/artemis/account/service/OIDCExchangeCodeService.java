@@ -83,7 +83,7 @@ public class OIDCExchangeCodeService {
             return null;
         }
         try {
-            String code = RandomUtil.generateResetKey();
+            String code = RandomUtil.generateExchangeCode();
             codeToEntryMap.put(code, new ExchangeCodeEntry(jwtToken, codeChallenge), EXCHANGE_CODE_TIME_TO_LIVE);
             return code;
         }

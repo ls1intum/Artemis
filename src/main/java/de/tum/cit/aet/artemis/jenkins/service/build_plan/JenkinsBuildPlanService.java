@@ -4,7 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +24,6 @@ import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
@@ -47,6 +49,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class JenkinsBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);
+
+    /** Everything a build plan name may not contain. */
+    private static final Pattern NON_PLAN_NAME_CHARACTER = Pattern.compile("[^A-Z0-9]");
 
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
@@ -166,7 +171,7 @@ public class JenkinsBuildPlanService {
      * @param newRepoUri      the repository uri that will replace the old url
      * @param existingRepoUri the old repository uri that will be replaced
      */
-    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUri, String existingRepoUri) {
+    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, @NonNull String newRepoUri, String existingRepoUri) {
         newRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUri);
         existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
@@ -222,7 +227,7 @@ public class JenkinsBuildPlanService {
      * @param testResultsDTO the test results from Jenkins
      * @return the build plan key
      */
-    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JsonProcessingException {
+    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) {
         final var nameParams = testResultsDTO.fullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
@@ -265,7 +270,7 @@ public class JenkinsBuildPlanService {
     }
 
     private String getCleanPlanName(String name) {
-        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return NON_PLAN_NAME_CHARACTER.matcher(name.toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     /**

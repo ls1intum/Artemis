@@ -6,6 +6,7 @@ import type { DropLocation } from './drop-location';
 import type { ShortAnswerSolution } from './short-answer-solution';
 
 export interface QuizQuestionWithSolution {
+    type: string;
     id?: number;
     title?: string;
     text?: string;
@@ -14,7 +15,6 @@ export interface QuizQuestionWithSolution {
     scoringType?: QuizQuestionWithSolutionScoringTypeEnum;
     randomizeOrder?: boolean;
     invalid?: boolean;
-    type?: string;
     explanation?: string;
     answerOptions?: Array<AnswerOptionWithSolution>;
     singleChoice?: boolean;

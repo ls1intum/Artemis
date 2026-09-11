@@ -1,7 +1,11 @@
+---
+id: rest-api
+title: REST API Guidelines
+sidebar_label: REST API Guidelines
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-
-# REST API Guidelines
 
 This document covers best practices for designing and implementing REST APIs in Artemis, with a focus on Data Transfer Objects (DTOs) and proper API design.
 
@@ -634,12 +638,12 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
 
 1. **Implicit pre- and post-authorization annotations:**
    - `@AllowedTools(ToolTokenType.__)` ensures tool-based requests can only access specific endpoints following the Principle of Least Privilege
-   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations block users with wrong or missing authorization roles without querying the database
-   - If necessary, these annotations check for access rights to individual resources via lightweight queries
-   - Currently available: `@EnforceRoleInCourse` and `@EnforceRoleInExercise`
+   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations require an authenticated caller at the method-security layer and enforce the role in the authorization aspect, using a lightweight indexed query for the caller's role in that resource
+   - The role in the resource is what decides access; a matching global authority is deliberately not required, because a course role does not always come with one
+   - Currently available: `@EnforceRoleInCourse`, `@EnforceRoleInExercise`, `@EnforceRoleInLecture` and `@EnforceRoleInLectureUnit`
 
 2. **Explicit authorization checks (two-step process):**
-   - `@EnforceAtLeastRole` (e.g., `@EnforceAtLeastInstructor`) blocks users with wrong or missing authorization roles without database queries
+   - `@EnforceAtLeastRole` (e.g., `@EnforceAtLeastInstructor`) blocks users with wrong or missing global authorities without a database query, and additionally accepts request-bound administrator elevation
    - The `AuthorizationCheckService` checks access rights to individual resources by querying the database (must be performed explicitly)
 
 <Callout variant={CalloutVariant.info}>
@@ -767,4 +771,23 @@ public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable
 
 ## JSON Serialization
 
-Always use ObjectMapper (Jackson) for JSON serialization and deserialization. Do not use other libraries.
+Always use Jackson for JSON serialization and deserialization. Do not use other libraries.
+
+Artemis is on **Jackson 3**, whose packages live under `tools.jackson`. In a Spring bean, inject the
+auto-configured `tools.jackson.databind.json.JsonMapper`. Outside one — in a domain class, a JPA converter, a
+static context — use `JsonObjectMapper.get()`, which applies the same configuration so a value serialized there
+matches one serialized by a controller.
+
+Two things are easy to get wrong:
+
+- **The annotations stayed on Jackson 2.** `jackson-annotations` never moved to the `tools.jackson` group, so
+  `@JsonInclude`, `@JsonProperty`, `@JsonIgnore`, `@JsonTypeInfo` and the rest are still imported from
+  `com.fasterxml.jackson.annotation`. That is correct and must not be "fixed". Everything else under
+  `com.fasterxml.jackson` is Jackson 2 and is rejected by `ArchitectureTest.testNoJackson2InProductionCode`.
+- **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper. Derive one
+  with `JsonMapper.builder()`, or `existingMapper.rebuild()` to start from an existing configuration.
+
+`ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper. It pins the Jackson 3
+defaults that would otherwise change the JSON on the wire, each with a TODO describing what has to happen before
+it can be dropped. `JacksonSerializationContractTest` records the payloads those pins protect: remove a pin, run
+that test, and the fixture that fails is the payload the change would alter.

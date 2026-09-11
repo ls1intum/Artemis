@@ -52,20 +52,10 @@ test.describe('Passkey', () => {
     test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
         // Ensure the passkey setup modal is shown on every navigation, including the post-login redirect.
-        // The autoTestFixture init script suppresses the modal globally via localStorage AND CSS;
-        // this overrides both by removing the suppression key and re-enabling the dialog.
+        // The shared init script suppresses it by storing a far-future reminder date, and the component
+        // reads that date in ngOnInit, so removing the key is all it takes to get the modal back.
         await page.addInitScript(() => {
             localStorage.removeItem('earliestSetupPasskeyReminderDate');
-            const injectOverride = () => {
-                const style = document.createElement('style');
-                style.textContent = '.p-dialog-mask:has(.passkey-setup-dialog) { display: flex !important; }';
-                document.head.appendChild(style);
-            };
-            if (document.head) {
-                injectOverride();
-            }
-            // Also register for DOMContentLoaded to override any deferred CSS from the context init script
-            document.addEventListener('DOMContentLoaded', injectOverride);
         });
         // Clear the admin session from beforeEach so we land on the sign-in page
         await page.context().clearCookies();
@@ -75,7 +65,7 @@ test.describe('Passkey', () => {
         // Register passkey via the modal
         await page.getByRole('button', { name: 'Set Up Passkey' }).click();
 
-        const successAlert = page.locator('.alert-inner').getByText('Your passkey has been successfully registered.');
+        const successAlert = page.locator('[data-testid="alert"]').getByText('Your passkey has been successfully registered.');
         await expect(successAlert).toBeVisible();
         await page.waitForURL('**/courses**');
 
@@ -131,8 +121,8 @@ test.describe('Passkey', () => {
         await page.goto('/sign-in');
 
         // Wait for the passkey login button to be stable before clicking
-        await page.locator('#passkey-login-button').waitFor({ state: 'visible' });
-        await page.locator('#passkey-login-button').click();
+        await page.locator('[data-testid="passkey-login-button"]').waitFor({ state: 'visible' });
+        await page.locator('[data-testid="passkey-login-button"]').click();
 
         // Verify login succeeded by checking navigation to courses
         await page.waitForURL('**/courses**');
@@ -170,11 +160,11 @@ test.describe('Passkey', () => {
         await page.goto('/sign-in');
 
         // Wait for the passkey login button to be stable before clicking
-        await page.locator('#passkey-login-button').waitFor({ state: 'visible' });
-        await page.locator('#passkey-login-button').click();
+        await page.locator('[data-testid="passkey-login-button"]').waitFor({ state: 'visible' });
+        await page.locator('[data-testid="passkey-login-button"]').click();
 
         // Verify login fails with an error
-        const errorAlert = page.locator('.alert-inner').getByText('No passkey was found for Artemis.');
+        const errorAlert = page.locator('[data-testid="alert"]').getByText('No passkey was found for Artemis.');
         await expect(errorAlert).toBeVisible();
 
         // Verify user is still on the sign-in page

@@ -1,16 +1,20 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiButtonDirective,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiInputGroupAddonComponent,
+    TumUiInputGroupComponent,
+    TumUiInputNumberComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { TooltipModule } from 'primeng/tooltip';
 import dayjs from 'dayjs/esm';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -25,15 +29,17 @@ export interface UpdateTutorialGroupSessionData {
 @Component({
     selector: 'jhi-tutorial-session-create-or-edit-modal',
     imports: [
-        DialogModule,
         FormsModule,
+        // Contained PrimeNG fallback: the date and the two time inputs have no TUM UI equivalent yet.
         DatePickerModule,
-        InputGroupModule,
-        InputTextModule,
-        ButtonModule,
-        InputGroupAddonModule,
-        TooltipModule,
-        InputNumberModule,
+        FaIconComponent,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+        TumUiInputDirective,
+        TumUiInputGroupAddonComponent,
+        TumUiInputGroupComponent,
+        TumUiInputNumberComponent,
+        TumUiTooltipDirective,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
@@ -42,6 +48,7 @@ export interface UpdateTutorialGroupSessionData {
 })
 export class TutorialSessionCreateOrEditModalComponent {
     protected readonly ValidationStatus = ValidationStatus;
+    protected readonly faCircleInfo = faCircleInfo;
 
     private translateService = inject(TranslateService);
     private session = signal<TutorialGroupSession | undefined>(undefined);

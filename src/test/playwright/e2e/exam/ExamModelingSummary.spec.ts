@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import dayjs, { Dayjs } from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { admin, instructor, studentOne, studentOneName, tutor } from '../../support/users';
+import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { test } from '../../support/fixtures';
 import { SEED_COURSES } from '../../support/seedData';
 import { ExerciseType } from '../../support/constants';
@@ -35,7 +35,7 @@ test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
         exerciseAssessment,
     }) => {
         await login(instructor);
-        await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+        await examManagement.verifySubmitted(course.id!, exam.id!, studentOne.displayName!);
         await waitForExamEnd(exam, page);
 
         await login(tutor);

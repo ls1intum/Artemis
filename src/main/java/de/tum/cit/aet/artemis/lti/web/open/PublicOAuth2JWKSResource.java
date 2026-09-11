@@ -9,10 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
+@FeatureUsage("lti/oauth2-keys")
 @RestController
 public class PublicOAuth2JWKSResource {
 
@@ -46,7 +48,7 @@ public class PublicOAuth2JWKSResource {
         try {
             keysAsJson = JsonObjectMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
         }
-        catch (JsonProcessingException exception) {
+        catch (JacksonException exception) {
             log.debug("Error occurred parsing jwkSet: {}", exception.getMessage());
         }
         return new ResponseEntity<>(keysAsJson, HttpStatus.OK);

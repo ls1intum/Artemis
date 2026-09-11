@@ -37,6 +37,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import * as DownloadUtils from 'app/foundation/util/download.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
@@ -601,25 +602,8 @@ describe('CourseLectureDetailsComponent', () => {
     });
 
     describe('loadData branches', () => {
-        it('should prefix attachment links with the public file prefix', async () => {
-            const attachment = new Attachment();
-            attachment.id = 42;
-            attachment.link = 'files/attachments/lecture/1/slides.pdf';
-            const lectureWithAttachment = { ...lecture, attachments: [attachment], lectureUnits: [] };
-            const responseWithAttachment = of(new HttpResponse({ body: lectureWithAttachment, status: 200 }));
-            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(responseWithAttachment);
-
-            courseLecturesDetailsComponent.ngOnInit();
-            fixture.changeDetectorRef.detectChanges();
-            await fixture.whenStable();
-
-            expect(attachment.linkUrl).toBeDefined();
-            expect(attachment.linkUrl).toContain(attachment.link!);
-            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
-        });
-
         it('should build information boxes only for the dates that are present', async () => {
-            const lectureStartOnly = { ...lecture, startDate: dayjs(), endDate: undefined, attachments: [], lectureUnits: [] };
+            const lectureStartOnly = cloneWith(lecture, { startDate: dayjs(), endDate: undefined, lectureUnits: [] });
             const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
 

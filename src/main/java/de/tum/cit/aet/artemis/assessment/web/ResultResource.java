@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -76,6 +77,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("grading/results")
 @RestController
 @RequestMapping("api/assessment/")
 public class ResultResource {
@@ -286,7 +288,7 @@ public class ResultResource {
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentAnyStateWithEagerResults(exercise, student.get());
         if (optionalParticipation.isPresent() && optionalParticipation.get().getSubmissions().stream().anyMatch(submission -> !submission.getResults().isEmpty())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))

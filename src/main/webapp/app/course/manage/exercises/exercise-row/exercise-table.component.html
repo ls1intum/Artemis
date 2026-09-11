@@ -62,7 +62,7 @@
                                 />
                             </td>
                         }
-                        <td class="col-title">
+                        <td class="col-title" data-testid="exercise-row-title">
                             @if (showTypeIcon()) {
                                 <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
                             }
@@ -90,7 +90,7 @@
                                 }
                             </div>
                         </td>
-                        <td class="text-nowrap col-points">
+                        <td class="text-nowrap col-points" data-testid="exercise-row-points">
                             <div class="d-flex flex-column">
                                 <span>
                                     {{ row.exercise.maxPoints }}pts

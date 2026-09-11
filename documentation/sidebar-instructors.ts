@@ -26,7 +26,23 @@ const sidebars: SidebarsConfig = {
                 id: 'exercises/intro',
             },
             items: [
-                'exercises/programming-exercise',
+                {
+                    type: 'category',
+                    label: 'Programming Exercise',
+                    link: {
+                        type: 'doc',
+                        id: 'exercises/programming-exercise/index',
+                    },
+                    items: [
+                        'exercises/programming-exercise/create-an-exercise',
+                        'exercises/programming-exercise/write-code-and-tests',
+                        'exercises/programming-exercise/configure-the-build',
+                        'exercises/programming-exercise/grade-and-verify',
+                        'exercises/programming-exercise/ai-assisted-authoring',
+                        'exercises/programming-exercise/static-analysis-rules',
+                        'exercises/programming-exercise/repository-access',
+                    ],
+                },
                 'exercises/consistency-check',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
@@ -55,7 +71,16 @@ const sidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'exams/intro',
             },
-            items: ['exams/exam-timeline', 'exams/participation-checker'],
+            items: [
+                'exams/create-an-exam',
+                'exams/add-exercises',
+                'exams/prepare-and-test',
+                'exams/conduct-an-exam',
+                'exams/assess-an-exam',
+                'exams/grade-and-publish',
+                'exams/review-and-complaints',
+                'exams/participation-checker',
+            ],
         },
         {
             type: 'category',
@@ -68,6 +93,7 @@ const sidebars: SidebarsConfig = {
                 'communication-support/communication',
                 'communication-support/faq',
                 'communication-support/tutorial-groups',
+                'communication-support/iris',
             ],
         },
         {
@@ -80,6 +106,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'assessment-grading/assessment',
                 'assessment-grading/grading',
+                'assessment-grading/ai-feedback',
                 'assessment-grading/plagiarism-check',
                 'assessment-grading/deimos',
             ],

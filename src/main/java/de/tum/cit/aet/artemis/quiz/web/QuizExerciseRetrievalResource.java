@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -40,9 +41,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("authoring/exercise-management")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseRetrievalResource {
@@ -157,11 +159,11 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> getQuizExercise(@PathVariable long quizExerciseId) {
+    public ResponseEntity<QuizExerciseDetailsDTO> getQuizExercise(@PathVariable long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
@@ -175,7 +177,7 @@ public class QuizExerciseRetrievalResource {
         setQuizBatches(user, quizExercise);
         boolean isEditable = quizExerciseService.isEditable(quizExercise);
         boolean effectiveQuizEnded = computeEffectiveQuizEnded(quizExercise);
-        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise, isEditable, effectiveQuizEnded);
+        QuizExerciseDetailsDTO quizExerciseDTO = QuizExerciseDetailsDTO.of(quizExercise, isEditable, effectiveQuizEnded);
         return ResponseEntity.ok(quizExerciseDTO);
     }
 

@@ -17,7 +17,7 @@ describe('GradingInfoModalComponent', () => {
         })
             .overrideComponent(GradingInfoModalComponent, {
                 remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
-                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key)] },
             })
             .compileComponents()
             .then(() => {
@@ -42,6 +42,12 @@ describe('GradingInfoModalComponent', () => {
 
         it('should initialize with dialog not visible', () => {
             expect(component.visible()).toBe(false);
+        });
+
+        it('should have an accessible aria-label on the open button', () => {
+            const button = fixture.debugElement.nativeElement.querySelector('button[tumUiButton]');
+            expect(button).not.toBeNull();
+            expect(button.getAttribute('aria-label')).toBe('artemisApp.gradingSystem.info.title');
         });
     });
 

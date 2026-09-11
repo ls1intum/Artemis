@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -31,7 +31,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
     private static final String TEST_PREFIX = "ucntest";
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private UserCourseNotificationSettingPresetTestRepository userCourseNotificationSettingPresetRepository;
@@ -105,12 +105,12 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
 
         assertThat(savedSpecs).isNotEmpty();
 
-        var spec = savedSpecs.stream().filter(s -> s.getCourseNotificationType() == 1).findFirst();
+        var spec = savedSpecs.stream().filter(s -> s.courseNotificationType() == 1).findFirst();
 
         assertThat(spec).isPresent();
-        assertThat(spec.get().isEmail()).isTrue();
-        assertThat(spec.get().isWebapp()).isTrue();
-        assertThat(spec.get().isPush()).isFalse();
+        assertThat(spec.get().email()).isTrue();
+        assertThat(spec.get().webapp()).isTrue();
+        assertThat(spec.get().push()).isFalse();
     }
 
     @Test

@@ -8,6 +8,7 @@ const meta = {
     args: {
         ariaLabel: 'Course completion',
         severity: 'primary',
+        size: 'default',
         value: 60,
         showValue: true,
         unit: '%',
@@ -16,6 +17,10 @@ const meta = {
         severity: {
             control: 'select',
             options: ['primary', 'success', 'warn', 'danger', 'info'],
+        },
+        size: {
+            control: 'inline-radio',
+            options: ['small', 'default'],
         },
         value: {
             control: {
@@ -46,5 +51,12 @@ export const Empty: Story = {
 export const Complete: Story = {
     args: {
         value: 100,
+    },
+};
+
+export const Small: Story = {
+    args: {
+        size: 'small',
+        severity: 'success',
     },
 };

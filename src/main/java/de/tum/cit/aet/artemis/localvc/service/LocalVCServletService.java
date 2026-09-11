@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -57,6 +58,8 @@ import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -69,6 +72,8 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -104,6 +109,12 @@ public class LocalVCServletService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
+    /** A carriage return or a line feed, replaced so that a logged path cannot forge a second log line. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\\r\\n]");
+
+    /** The git service suffix of a request path, which is not part of the repository path. */
+    private static final Pattern GIT_SERVICE_SUFFIX = Pattern.compile("/(info/refs|git-(upload|receive)-pack)$");
+
     private final AuthenticationManager authenticationManager;
 
     private final UserRepository userRepository;
@@ -138,6 +149,10 @@ public class LocalVCServletService {
     private final ExerciseVersionService exerciseVersionService;
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final MailSendingService mailSendingService;
+
+    private final DistributedDataProvider distributedDataProvider;
 
     // Optional: a node running LocalVC with Jenkins has no local CI, so it has neither build jobs nor a registry
     private final Optional<DistributedDataAccessService> distributedDataAccessService;
@@ -181,11 +196,17 @@ public class LocalVCServletService {
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
+    public static final String HTTPS_CLONE_EMAIL_CACHE = "httpsCloneWarningEmailCache";
+
     /**
      * Marks a request that was authorized as a build agent cloning for one of its build jobs. Set once the credential
      * has been accepted, so later stages can recognise build agent traffic without guessing from the username.
      */
     private static final String BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE = "artemis.buildAgentClone";
+
+    private static final String AUTHENTICATED_USER_REQUEST_ATTRIBUTE = "artemis.authenticatedUser";
+
+    private static final String AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE = "artemis.authenticationMechanism";
 
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
@@ -195,11 +216,7 @@ public class LocalVCServletService {
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
-        this.distributedDataAccessService = distributedDataAccessService;
-        this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
-        this.buildJobCloneTokenService = buildJobCloneTokenService;
-        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -217,6 +234,12 @@ public class LocalVCServletService {
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
+        this.distributedDataAccessService = distributedDataAccessService;
+        this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
+        this.buildJobCloneTokenService = buildJobCloneTokenService;
+        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.mailSendingService = mailSendingService;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -235,7 +258,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Sanitize once for all log statements to prevent CRLF injection
-        String sanitizedPath = repositoryPath.replaceAll("[\\r\\n]", "_");
+        String sanitizedPath = LINE_BREAK.matcher(repositoryPath).replaceAll("_");
 
         // Find the local repository depending on the name.
         Path normalizedBasePath = localVCBasePath.normalize();
@@ -361,6 +384,8 @@ public class LocalVCServletService {
 
         var authenticated = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
         User user = authenticated.user();
+        request.setAttribute(AUTHENTICATED_USER_REQUEST_ATTRIBUTE, user);
+        request.setAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE, authenticated.mechanism());
 
         // Check that offline IDE usage is allowed.
         try {
@@ -958,7 +983,7 @@ public class LocalVCServletService {
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         String path = request.getRequestURI();
-        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        String normalizedPath = GIT_SERVICE_SUFFIX.matcher(path).replaceFirst("");
         return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 
@@ -1618,13 +1643,50 @@ public class LocalVCServletService {
             if (userName.equals(BUILD_USER_NAME)) {
                 return;
             }
+
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
+
+            if (repositoryActionType == RepositoryActionType.CLONE) {
+                User user = (User) request.getAttribute(AUTHENTICATED_USER_REQUEST_ATTRIBUTE);
+                AuthenticationMechanism mechanism = (AuthenticationMechanism) request.getAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE);
+                if (mechanism == AuthenticationMechanism.PASSWORD && user != null) {
+                    try {
+                        checkAndSendHttpsCloneEmail(user);
+                    }
+                    catch (Exception e) {
+                        log.warn("Could not send HTTPS clone tip email for user {}: {}", user.getId(), e.getMessage());
+                    }
+                }
+            }
         }
         catch (Exception e) {
             log.debug("Could not update VCS access log for HTTPS clone/pull: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Sends an email tip about using Token/SSH authentication instead of HTTPS password,
+     * limited to at most once per 24 hours per user using Hazelcast cache.
+     *
+     * @param user The user performing the clone operation.
+     */
+    private void checkAndSendHttpsCloneEmail(User user) {
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return;
+        }
+
+        DistributedMap<Long, Boolean> cache = distributedDataProvider.getExpiringMap(HTTPS_CLONE_EMAIL_CACHE, Duration.ofHours(24));
+        // putIfAbsent returns null if cache is empty
+        boolean isFirstTimeIn24Hours = cache.putIfAbsent(user.getId(), Boolean.TRUE, Duration.ofHours(24)) == null;
+
+        // If cache was empty then send an email
+        if (isFirstTimeIn24Hours) {
+            MailRecipientDTO mailRecipient = new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
+
+            mailSendingService.buildAndSendAsync(mailRecipient, "email.httpsCloneTip.title", "mail/httpsCloneTipEmail", Map.of());
         }
     }
 
@@ -1641,10 +1703,17 @@ public class LocalVCServletService {
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullSSH(ServerSession session, int clientOffered) {
         try {
-            if (session.getAttribute(SshConstants.USER_KEY).getName().equals(BUILD_USER_NAME)) {
+            // Both attributes are absent on a session that never got that far, which is a normal case rather than a
+            // failure. They used to be dereferenced straight away, so the absence arrived as a NullPointerException
+            // caught below and logged at debug, indistinguishable from an actual problem with the access log.
+            var user = session.getAttribute(SshConstants.USER_KEY);
+            if (user == null || user.getName().equals(BUILD_USER_NAME)) {
                 return;
             }
             var accessLog = session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+            if (accessLog == null) {
+                return;
+            }
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
             accessLog.setRepositoryActionType(repositoryActionType);
             vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));

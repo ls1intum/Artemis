@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -73,6 +75,23 @@ public final class ZipTestUtil {
                 }
             }
         }
+    }
+
+    /**
+     * Lists the names of all entries of a zip file, so that a test can assert on what an archive does and does not contain.
+     *
+     * @param zipContent the zip file content
+     * @return the names of all entries, in the order they appear in the archive
+     */
+    public static List<String> listEntryNames(byte[] zipContent) throws IOException {
+        List<String> entryNames = new ArrayList<>();
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                entryNames.add(entry.getName());
+            }
+        }
+        return entryNames;
     }
 
     /**

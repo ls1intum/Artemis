@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for the autonomous competency management orchestrator.
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("ai/competency-orchestration")
 @RestController
 @RequestMapping("api/atlas/orchestrator/")
 public class CompetencyOrchestrationResource {
@@ -69,7 +71,7 @@ public class CompetencyOrchestrationResource {
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
 
-    /** Maps orchestration outcome to HTTP status so frontend error handling does not need to parse the response body. */
+    /** Maps orchestration outcome to HTTP status so client error handling does not need to parse the response body. */
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
             case SUCCESS, NO_OP -> HttpStatus.OK;

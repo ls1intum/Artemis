@@ -8,11 +8,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -70,11 +73,15 @@ import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("participation/teams")
 @RestController
 @RequestMapping("api/exercise/")
 public class TeamResource {
 
     private static final Logger log = LoggerFactory.getLogger(TeamResource.class);
+
+    /** Everything a team short name may not contain. */
+    private static final Pattern NON_SHORT_NAME_CHARACTER = Pattern.compile("[^0-9a-z]");
 
     public static final String ENTITY_NAME = "team";
 
@@ -148,7 +155,7 @@ public class TeamResource {
             throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Remove all special characters and check if the resulting shortname is valid
-        var shortName = dto.shortName().replaceAll("[^0-9a-z]", "").toLowerCase();
+        var shortName = NON_SHORT_NAME_CHARACTER.matcher(dto.shortName()).replaceAll("").toLowerCase(Locale.ROOT);
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(shortName);
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The team name must start with a letter.", ENTITY_NAME, "teamShortNameInvalid");

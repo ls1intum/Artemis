@@ -59,6 +59,9 @@ public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);
 
+    /** The team destination of a participation, with its id as the one group. Derived from the destination itself, so the two cannot drift apart. */
+    private static final Pattern TEAM_DESTINATION = Pattern.compile("^" + getDestination("(\\d*)"));
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final SimpUserRegistry simpUserRegistry;
@@ -394,8 +397,7 @@ public class ParticipationTeamWebsocketService {
      * @return participation id
      */
     public static Long getParticipationIdFromDestination(String destination) {
-        Pattern pattern = Pattern.compile("^" + getDestination("(\\d*)"));
-        Matcher matcher = pattern.matcher(destination);
+        Matcher matcher = TEAM_DESTINATION.matcher(destination);
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 

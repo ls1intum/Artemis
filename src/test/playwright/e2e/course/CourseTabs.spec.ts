@@ -79,7 +79,7 @@ async function expectLoadsOnceAndRefreshesOnReselect(page: Page, courseId: numbe
 
 /** A sidebar entry of a tab's own inner sidebar (lectures, exams, exercises and tutorial groups all use these cards). */
 function sidebarCard(page: Page, title: string) {
-    return page.locator('#test-sidebar-card-title', { hasText: title });
+    return page.getByTestId('sidebar-card-title').filter({ hasText: title });
 }
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
@@ -309,13 +309,13 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         // On a student's very first visit the tab asks whether to appear in the leaderboard, behind a modal mask that
         // blocks every other click until it is confirmed. The dialog is appended to the body, not to its host element,
         // and whether it appears depends on whether this student ever answered it, so wait for either outcome.
-        const confirmButton = page.locator('.p-dialog-footer button');
+        const confirmButton = page.getByTestId('quiz-training-confirm-button');
         const leagueBadge = page.locator('jhi-league-badge');
         await expect(confirmButton.or(leagueBadge).first()).toBeVisible({ timeout: 20_000 });
         if (await confirmButton.isVisible()) {
             await confirmButton.click();
         }
-        await expect(page.locator('.p-dialog-mask')).toHaveCount(0);
+        await expect(page.getByTestId('quiz-training-dialog-mask')).toHaveCount(0);
         await expect(leagueBadge).toBeVisible({ timeout: 20_000 });
 
         await expect.poll(() => leaderboardRequests.length, { timeout: 20_000 }).toBeGreaterThan(0);

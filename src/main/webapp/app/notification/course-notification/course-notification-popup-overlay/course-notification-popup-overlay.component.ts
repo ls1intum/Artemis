@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
+import { CourseNotification, payloadOf } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subscription } from 'rxjs';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
@@ -113,9 +113,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         }
 
         const routeParams = this.route.snapshot.queryParamMap;
-        const notificationParams = notification.parameters;
-        if (!notificationParams) {
-            // No filtering possible without parameters
+        if (!notification.payload) {
+            // Nothing to compare the open view against
             return true;
         }
 
@@ -127,16 +126,15 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
             return true;
         }
 
-        const isAnnouncementOrPost = ['newPostNotification', 'newAnnouncementNotification'].includes(notification.notificationType ?? '');
-        const isCorrespondingChannelOpen = 'channelId' in notificationParams && openConversationId == notificationParams['channelId'];
-        if (isAnnouncementOrPost && isCorrespondingChannelOpen) {
+        // The channel a post was written in, read from the payload of the type that carries it.
+        const openedChannelId = payloadOf(notification, 'newPostNotification')?.channelId ?? payloadOf(notification, 'newAnnouncementNotification')?.channelId;
+        if (openedChannelId !== undefined && openConversationId == String(openedChannelId)) {
             return false;
         }
 
-        const threadId = this.communicationState.openPostId();
-        const isAnswerNotification = notification.notificationType === 'newAnswerNotification';
-        const isCorrespondingThreadOpen = 'postId' in notificationParams && threadId == notificationParams['postId'];
-        if (isAnswerNotification && isCorrespondingThreadOpen) {
+        const openThreadId = this.communicationState.openPostId();
+        const answeredPostId = payloadOf(notification, 'newAnswerNotification')?.postId;
+        if (answeredPostId !== undefined && openThreadId == answeredPostId) {
             return false;
         }
 

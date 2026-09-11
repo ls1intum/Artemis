@@ -13,6 +13,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -41,8 +42,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.FilePathInformation;
@@ -53,6 +55,18 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 public class FileUtil {
 
     private static final Logger log = LoggerFactory.getLogger(FileUtil.class);
+
+    /** Everything a file name may not contain, replaced by an underscore. */
+    private static final Pattern UNSAFE_FILENAME_CHARACTER = Pattern.compile("[^a-zA-Z\\d.\\-]");
+
+    /** A run of dots in a file name, collapsed into one. */
+    private static final Pattern DOT_RUN = Pattern.compile("\\.+");
+
+    /** The characters of a timestamp that a file name may not contain, replaced by a hyphen. */
+    private static final Pattern TIMESTAMP_SEPARATOR = Pattern.compile("[:.]");
+
+    /** A line ending, in either of the two forms that need normalizing to a line feed. */
+    private static final Pattern LINE_ENDING = Pattern.compile("\\r\\n?");
 
     public static final String DEFAULT_FILE_SUBPATH = "temp/";
 
@@ -93,7 +107,7 @@ public class FileUtil {
      * @return the sanitized filename, with invalid characters replaced
      */
     public static String sanitizeFilename(String filename) {
-        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
+        return DOT_RUN.matcher(UNSAFE_FILENAME_CHARACTER.matcher(filename).replaceAll("_")).replaceAll(".");
     }
 
     /**
@@ -231,10 +245,19 @@ public class FileUtil {
      */
     public static String generateFilename(String filenamePrefix, String sanitizedFilename, boolean keepFilename) {
         if (keepFilename) {
-            return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + sanitizedFilename;
+            return filenamePrefix + timestampForFilename() + "_" + sanitizedFilename;
         }
         String fileExtension = FilenameUtils.getExtension(sanitizedFilename);
-        return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+        return filenamePrefix + timestampForFilename() + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+    }
+
+    /**
+     * The current time in the form a file name can carry it, with the characters a file name may not hold replaced.
+     *
+     * @return the timestamp
+     */
+    private static String timestampForFilename() {
+        return TIMESTAMP_SEPARATOR.matcher(ZonedDateTime.now().toString().substring(0, 23)).replaceAll("-");
     }
 
     /**
@@ -386,7 +409,6 @@ public class FileUtil {
             case PROFILE_PICTURE -> "ProfilePicture_";
             case EXAM_USER_SIGNATURE -> "ExamUserSignature_";
             case EXAM_USER_IMAGE -> "ExamUserImage_";
-            case LECTURE_ATTACHMENT -> "LectureAttachment_";
             case ATTACHMENT_UNIT -> "AttachmentUnit_";
             case SLIDE -> "AttachmentUnitSlide_";
             case STUDENT_VERSION_SLIDES -> "StudentVersionSlides_";
@@ -522,6 +544,29 @@ public class FileUtil {
         File targetDirectory = targetDirectoryPath.toFile();
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * Publishes a file or directory that was written under a temporary name by renaming it into place in one step.
+     *
+     * <p>
+     * The point is that the target never exists half written: either the rename happened or it did not. Apache's
+     * {@code FileUtils.moveFile} and {@code moveDirectory} cannot promise that, because they fall back to copying and
+     * deleting when the rename fails, and a copy that fails part way leaves an incomplete target behind that the
+     * caller's cleanup does not cover. This is the one place in the code base that is allowed to call
+     * {@link Files#move}, which {@code ArchitectureTest.testFileWriteUsage} otherwise rejects.
+     *
+     * <p>
+     * Both paths have to live on the same file store, which callers get by keeping the temporary name a sibling of the
+     * final one. They are not on the same store if that is not the case, and the move fails rather than silently
+     * copying.
+     *
+     * @param temporaryPath the path the content was written to
+     * @param targetPath    the path it should appear under, in the same directory
+     * @throws IOException if the rename fails, including when the two paths do not share a file store
+     */
+    public static void publishAtomically(Path temporaryPath, Path targetPath) throws IOException {
+        Files.move(temporaryPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
     }
 
     /**
@@ -781,7 +826,7 @@ public class FileUtil {
         }
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
         String fileContent = Files.readString(filePath, UTF_8);
-        fileContent = fileContent.replaceAll("\\r\\n?", "\n");
+        fileContent = LINE_ENDING.matcher(fileContent).replaceAll("\n");
         FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
     }
 
@@ -865,7 +910,9 @@ public class FileUtil {
      * @param path         The path where the file will be written to
      * @return Path to the written file
      */
-    public static Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) throws IOException {
+    // No throws clause: Jackson 3 raises unchecked JacksonException, so callers that want to degrade rather than
+    // unwind have to name it explicitly.
+    public static Path writeObjectToJsonFile(Object object, JsonMapper objectMapper, Path path) {
         objectMapper.writeValue(path.toFile(), object);
         return path;
     }
