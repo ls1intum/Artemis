@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -1726,6 +1727,81 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(reloadEditor).toHaveBeenCalledOnce();
     });
 
+    it('explains the active-run restriction and restores adaptation when the run finishes', () => {
+        const running = signal(true);
+        vi.spyOn(comp['generationActivity'], 'running').mockImplementation(running);
+        expect(comp['adaptBlockedReason']()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        comp['openAdaptDialog']();
+        expect(comp.adaptDialogVisible()).toBe(false);
+        running.set(false);
+        expect(comp['adaptBlockedReason']()).toBeUndefined();
+        comp['openAdaptDialog']();
+        expect(comp.adaptDialogVisible()).toBe(true);
+    });
+
+    it('keeps the dialog open if a run starts between opening and confirmation', () => {
+        const running = signal(false);
+        vi.spyOn(comp['generationActivity'], 'running').mockImplementation(running);
+        comp['openAdaptDialog']();
+        running.set(true);
+        confirmAdaptDialog('Do not lose this request');
+        expect(comp.adaptDialogVisible()).toBe(true);
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('keeps the dialog and selected feedback on request failure and closes only after a successful retry', () => {
+        reviewCommentService.threads.set([userThread(7)]);
+        comp['openAdaptDialog']();
+        const pending = new Subject<{ jobId: string }>();
+        generationService.generate.mockReturnValueOnce(pending);
+        comp['onAdaptDialogConfirmed']({ instructions: 'Clarify examples', selectedFeedbackThreadIds: [7] });
+        expect(comp.adaptDialogVisible()).toBe(true);
+        expect(comp['generationStartPending']()).toBe(true);
+        comp['onAdaptDialogConfirmed']({ instructions: 'Duplicate', selectedFeedbackThreadIds: [] });
+        expect(generationService.generate).toHaveBeenCalledTimes(1);
+        pending.error(new Error('Unavailable'));
+        expect(comp.adaptDialogVisible()).toBe(true);
+        expect(comp.adaptSubmissionError()).toBe('artemisApp.review.adaptExercise.startFailed');
+        expect(selectedIds()).toEqual([7]);
+        comp['onAdaptDialogConfirmed']({ instructions: 'Clarify examples', selectedFeedbackThreadIds: [7] });
+        expect(generationService.generate).toHaveBeenLastCalledWith(42, { mode: 'ADAPT', prompt: 'Clarify examples', selectedFeedbackThreadIds: [7] });
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(comp.adaptSubmissionError()).toBeUndefined();
+    });
+
+    it('does not silently reload away a draft when another run saves changes', () => {
+        const reloadEditor = vi.fn();
+        comp['reloadEditor'] = reloadEditor;
+        comp['openAdaptDialog']();
+        comp['onHyperionGenerationCompleted']({ jobId: 'other-run', mode: 'ADAPT', liveExerciseChanged: true });
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect(comp.adaptDialogVisible()).toBe(true);
+        expect(comp['adaptBlockedReason']()).toBe('artemisApp.review.adaptExercise.reloadDraftRequired');
+        confirmAdaptDialog('My instructions');
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['statusLoading', 'checkingStatus'],
+        ['statusLoadFailed', 'statusUnavailable'],
+    ] as const)('explains %s without submitting an adaptation', (state, reason) => {
+        vi.spyOn(comp['generationActivity'], state).mockReturnValue(true);
+        expect(comp['adaptBlockedReason']()).toBe('artemisApp.review.adaptExercise.' + reason);
+        comp['openAdaptDialog']();
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it.each(['generationCapacityUnavailable', 'exerciseGenerationRunning'])('explains %s while retaining the feedback for retry', (errorKey) => {
+        generationService.generate.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503, error: { errorKey } })));
+        reviewCommentService.threads.set([userThread(7)]);
+        comp['openAdaptDialog']();
+        comp['onAdaptDialogConfirmed']({ instructions: 'Keep my request', selectedFeedbackThreadIds: [7] });
+        expect(comp.adaptDialogVisible()).toBe(true);
+        expect(comp.adaptSubmissionError()).toBe('error.' + errorKey);
+        expect(selectedIds()).toEqual([7]);
+    });
+
     it('offers unselected instructor comments in the dialog and submits only the chosen threads', () => {
         reviewCommentService.threads.set([userThread(7), userThread(8)]);
         selectedIds.set([]);
@@ -1822,7 +1898,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
-    it('surfaces an alert and does not attach when starting the ADAPT run fails', () => {
+    it('shows an inline error without a duplicate toast when starting the ADAPT run fails', () => {
         generationService.generate.mockReturnValue(throwError(() => new Error('boom')));
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'error');
@@ -1832,7 +1908,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(generationService.generate).toHaveBeenCalledOnce();
         expect(attachToJob).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.adaptStartFailed');
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(comp.adaptSubmissionError()).toBe('artemisApp.review.adaptExercise.startFailed');
     });
 
     it('does not start duplicate ADAPT runs while the start request is pending', () => {

@@ -47,6 +47,8 @@ describe('HyperionRunLinkComponent', () => {
     it('offers re-entry to an active generation', async () => {
         await render();
         expect(link()?.textContent).toContain('viewRun');
+        expect(link()?.textContent).toContain('generation.status.running');
+        expect(link()?.querySelector('tum-ui-status-dot')).not.toBeNull();
         expect(link()?.getAttribute('href')).toBe('/generation');
         expect(service.getStatus).toHaveBeenCalledWith(42);
     });
@@ -85,5 +87,17 @@ describe('HyperionRunLinkComponent', () => {
         service.getStatus.mockReturnValue(throwError(() => new Error('unavailable')));
         await render();
         expect(link()).toBeNull();
+    });
+    it.each([
+        ['DONE', 'SUCCESS', 'saved', 'success'],
+        ['DONE', 'NEEDS_REVIEW', 'needsReview', 'warning'],
+        ['DONE', 'PARTIAL', 'partial', 'warning'],
+        ['ERROR', undefined, 'failed', 'danger'],
+        ['CANCELLED', undefined, 'cancelled', 'neutral'],
+    ])('shows the outcome status for %s / %s', async (type, completionStatus, status, dot) => {
+        service.getStatus.mockReturnValue(of({ jobId: 'job', running: false, events: [{ type, completionStatus }] }));
+        await render();
+        expect(link().textContent).toContain('generation.status.' + status);
+        expect(fixture.componentInstance['dotState']()).toBe(dot);
     });
 });

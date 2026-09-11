@@ -23,6 +23,7 @@
                         <tum-ui-checkbox
                             [inputId]="'adapt-feedback-' + finding.threadId"
                             [checked]="row.selected"
+                            [disabled]="submitting()"
                             (checkedChange)="toggleFinding(finding.threadId, $event)"
                             [ariaLabel]="finding.description"
                             data-testid="adapt-feedback-selection"
@@ -37,7 +38,7 @@
                                 <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
                             }
                             @if (finding.locationLabel) {
-                                <code class="min-w-0 text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</code>
+                                <span class="min-w-0 font-mono text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</span>
                             }
                         </div>
                         <label [attr.for]="finding.threadId !== undefined ? 'adapt-feedback-' + finding.threadId : undefined" class="block whitespace-pre-wrap text-sm">{{
@@ -80,10 +81,11 @@
         class="w-full resize-y"
         rows="3"
         [attr.maxlength]="maxInstructionsLength"
-        [tumUiInputDescribedBy]="isFreeMode() ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
+        [tumUiInputDescribedBy]="!sortedFindings().length ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
         [placeholder]="
             (isFreeMode() ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate
         "
+        [disabled]="submitting()"
         [ngModel]="instructions()"
         (ngModelChange)="instructions.set($event)"
     ></textarea>
@@ -92,11 +94,22 @@
     </small>
 
     <p class="m-0 text-sm text-muted-color" data-testid="adapt-persistence-notice" jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></p>
+    @if (blockedReason(); as reason) {
+        <p class="m-0 text-sm text-state-warning" role="status" data-testid="adapt-blocked-reason" [jhiTranslate]="reason"></p>
+    }
+    @if (submissionError(); as error) {
+        <p class="m-0 text-sm text-state-danger" role="alert" data-testid="adapt-submission-error" [jhiTranslate]="error"></p>
+    }
+    @if ((blockedReason() || submissionError()) && progressLink(); as link) {
+        <a tumUiButton severity="secondary" variant="outlined" size="small" class="self-start" [routerLink]="link" target="_blank" rel="noopener" data-testid="adapt-open-progress">
+            <span jhiTranslate="artemisApp.review.adaptExercise.viewProgress"></span>
+        </a>
+    }
     <div class="mt-2 flex justify-end gap-2 border-t border-surface pt-3">
-        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="cancelled.emit()">
+        <tum-ui-button size="small" severity="secondary" variant="outlined" [disabled]="submitting()" (clicked)="cancelled.emit()">
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
         </tum-ui-button>
-        <tum-ui-button size="small" [icon]="facArtemisIntelligence" [disabled]="confirmDisabled()" (clicked)="confirm()">
+        <tum-ui-button size="small" [icon]="facArtemisIntelligence" [loading]="submitting()" [disabled]="confirmDisabled()" data-testid="adapt-confirm" (clicked)="confirm()">
             {{ 'artemisApp.review.adaptExercise.confirm' | artemisTranslate }}
         </tum-ui-button>
     </div>
