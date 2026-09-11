@@ -32,6 +32,13 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
+    void absentProviderUsageDoesNotCreateZeroCostRecord() {
+        llmTokenUsageService.trackChatResponseTokenUsage(new org.springframework.ai.chat.model.ChatResponse(java.util.List.of()),
+                de.tum.cit.aet.artemis.admin.domain.LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(1L));
+        org.mockito.Mockito.verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+    }
+
+    @Test
     void buildLLMRequest_withDashedDateSuffix_usesConfiguredCost() {
         LLMRequest request = llmTokenUsageService.buildLLMRequest("gpt-5-mini-2025-08-07", 11, 7, "PIPE");
 

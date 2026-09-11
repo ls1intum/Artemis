@@ -151,6 +151,11 @@ public class ContentChangeScheduler {
         }
 
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
+        if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
+                || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
+            broadcastSummary(courseId, runId, exerciseCount, false);
+            return;
+        }
         switch (status) {
             case IN_PROGRESS -> {
                 // Concurrent course orchestration — requeue the whole batch and let the next tick pick

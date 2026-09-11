@@ -122,7 +122,7 @@ public class OrchestratorReadToolsService {
     @Tool(description = "Extract the learning-relevant content for an exercise that belongs to the current course. Returns a title, the learning text, and metadata. "
             + "For programming, text, modeling and file-upload exercises the learning text is the problem statement (plus example solution where available); for quizzes "
             + "it is the assembled questions with their correct answers/solutions. Metadata always carries the exercise type and, when set, difficulty / maxPoints "
-            + "(plus type-specific keys such as questionCount for quizzes). The content is extracted fresh on every call, so don't call this tool repeatedly for the same exercise id.")
+            + "(plus type-specific keys such as questionCount for quizzes). Autonomous runs reuse content within the current invocation; mapping and competency reads remain fresh. Avoid duplicate reads.")
     public String getExerciseContent(@ToolParam(description = "id of the exercise whose content should be extracted") Long exerciseId, ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
