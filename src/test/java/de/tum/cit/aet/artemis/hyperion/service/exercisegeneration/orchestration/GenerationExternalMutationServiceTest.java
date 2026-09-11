@@ -50,6 +50,29 @@ class GenerationExternalMutationServiceTest {
     }
 
     @Test
+    void generationActiveIsAReadOnlyViewOfAnySlotAndWorksWithoutTheGenerationEngine() {
+        var provider = new LocalDataProviderService();
+        var service = new GenerationExternalMutationService(provider, 1, "Local");
+        var api = new HyperionExerciseMutationApi(service);
+        DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
+        assertThat(api.isGenerationActive(42)).isFalse();
+
+        JobInfo running = new JobInfo("generation", "owner", 42, Instant.now(), null, "core", Instant.now(), true, null);
+        jobs.put("42", running);
+        assertThat(api.isGenerationActive(42)).isTrue();
+        assertThat(api.isGenerationActive(43)).isFalse();
+        // Reading must not take, alter or release the slot.
+        assertThat(jobs.get("42")).isEqualTo(running);
+        jobs.remove("42", running);
+        assertThat(api.isGenerationActive(42)).isFalse();
+
+        String token = api.claimExternalMutationSlot(42);
+        assertThat(api.isGenerationActive(42)).isTrue();
+        api.clearExternalMutationSlot(42, token);
+        assertThat(api.isGenerationActive(42)).isFalse();
+    }
+
+    @Test
     void delayedReleaseDoesNotClearReplacement() {
         var provider = new LocalDataProviderService();
         var service = new GenerationExternalMutationService(provider, 1, "Local");

@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -59,6 +60,7 @@ import de.tum.cit.aet.artemis.exercise.service.FeedbackRequestService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -114,12 +116,14 @@ public class ParticipationResource {
 
     private final FeedbackRequestService feedbackRequestService;
 
+    private final Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi;
+
     public ParticipationResource(ParticipationService participationService, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
             Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository, Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
@@ -136,6 +140,7 @@ public class ParticipationResource {
         this.studentExamApi = studentExamApi;
         this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
+        this.hyperionExerciseMutationApi = hyperionExerciseMutationApi;
     }
 
     /**
@@ -159,6 +164,7 @@ public class ParticipationResource {
                     "assignmentRepositoryNotAllowed");
         }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
+        checkNoGenerationOwnsExerciseElseThrow(exercise);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
@@ -233,6 +239,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Tried to start the practice mode based on the graded participation, but there is no graded participation", ENTITY_NAME,
                     "practiceModeNoGradedParticipation");
         }
+        checkNoGenerationOwnsExerciseElseThrow(exercise);
 
         StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
 
@@ -370,6 +377,19 @@ public class ParticipationResource {
      * @param user     attempting to start the participation
      * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
      */
+    /**
+     * A Hyperion run (generation, adaptation, or revert) rewrites the template, solution and tests of a programming exercise in place. A participation started meanwhile
+     * would copy a template that is about to change, so the start is refused before any repository is created. This is a read-only check: claiming the mutation slot here
+     * would serialize every student of the exercise behind one another.
+     *
+     * @param exercise the exercise the participation is started for
+     */
+    private void checkNoGenerationOwnsExerciseElseThrow(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise && hyperionExerciseMutationApi.isPresent() && hyperionExerciseMutationApi.get().isGenerationActive(exercise.getId())) {
+            throw new ConflictException("Exercise generation is running; wait for it to finish before starting the exercise.", ENTITY_NAME, "exerciseGenerationRunning");
+        }
+    }
+
     private void checkIfParticipationCanBeStartedElseThrow(Exercise exercise, User user) {
         // 1) Don't allow student to start before the start and release date
         ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();

@@ -385,13 +385,33 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void generateExercise_whenExerciseIsReleased_rejectsLiveMutation() {
+    void generateExercise_whenReleaseDateIsInThePast_rejectsLiveMutation() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
         testExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
 
-        assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("unreleased draft");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("exerciseAlreadyReleased"));
         verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    /** Instructors leave the release date empty while authoring, so an exercise without one must stay eligible even though {@code isReleased()} reports it as released. */
+    @Test
+    void generateExercise_withoutReleaseDateAndWithoutParticipations_startsRun() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "Tighten the tests.", null);
+        testExercise.setReleaseDate(null);
+        testExercise.setStudentParticipations(Set.of());
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
+        when(jobService.startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.ADAPT), eq(null), any(), any(), any())).thenReturn("job-no-release-date");
+
+        ResponseEntity<ExerciseGenerationJobStartDTO> response = resource.generateExercise(1L, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().jobId()).isEqualTo("job-no-release-date");
     }
 
     @Test
@@ -549,6 +569,21 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().revertAvailable()).isFalse();
+    }
+
+    @Test
+    void getExerciseGenerationStatus_withoutReleaseDate_keepsRevertCapability() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.ADAPT, List.of(), List.of(), false);
+        testExercise.setReleaseDate(null);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+        when(generationRevertService.findRevertibleRun(1L)).thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertibleRun("job-42", GenerationMode.ADAPT)));
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().revertAvailable()).isTrue();
     }
 
     @Test

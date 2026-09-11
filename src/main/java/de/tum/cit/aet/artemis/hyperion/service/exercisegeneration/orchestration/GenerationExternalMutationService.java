@@ -69,6 +69,19 @@ public class GenerationExternalMutationService {
     }
 
     /**
+     * Reports whether any slot (a generation run, a revert, or an external mutation) currently owns the exercise, with the same semantics as
+     * {@link GenerationJobService#hasActiveJob(long)} but available on every writer node, including those where generation is disabled. Callers that only need to refuse a
+     * read-modify-write against artifacts that are about to change (for example a student copying the template) consult this rather than claiming a slot of their own.
+     *
+     * @param exerciseId exercise to inspect
+     * @return whether a slot is held for the exercise
+     */
+    public boolean isGenerationActive(long exerciseId) {
+        DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
+        return jobs.get(String.valueOf(exerciseId)) != null;
+    }
+
+    /**
      * Diagnoses external slots even when whole-exercise generation is disabled on the serving core node.
      *
      * @param exerciseId exercise to inspect
