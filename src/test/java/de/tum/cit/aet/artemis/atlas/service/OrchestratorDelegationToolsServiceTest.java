@@ -31,7 +31,7 @@ import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -82,7 +82,7 @@ class OrchestratorDelegationToolsServiceTest {
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", 300, 10, 30000L, 10);
         service = new OrchestratorDelegationToolsService(templateService, delegationService, new AtlasToolSurface(readTools), new AtlasToolSurface(creatorTools),
                 new AtlasToolSurface(assignerTools), new AtlasToolSurface(editorTools), new AtlasToolSurface(terminalTools), properties, llmTokenUsageService, userRepository);
-        workerTerminal = new AtlasWorkerTerminalToolService(new ObjectMapper());
+        workerTerminal = new AtlasWorkerTerminalToolService(new JsonMapper());
         lenient().when(templateService.render(anyString(), anyMap())).thenReturn("worker system prompt");
     }
 

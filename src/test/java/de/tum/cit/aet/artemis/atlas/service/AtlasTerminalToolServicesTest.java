@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
@@ -28,7 +28,7 @@ class AtlasTerminalToolServicesTest {
 
     @BeforeEach
     void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper();
+        JsonMapper objectMapper = new JsonMapper();
         orchestratorTerminal = new AtlasOrchestratorTerminalToolService(objectMapper);
         workerTerminal = new AtlasWorkerTerminalToolService(objectMapper);
     }

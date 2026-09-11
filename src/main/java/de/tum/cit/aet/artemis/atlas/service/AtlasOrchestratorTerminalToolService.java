@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.atlas.dto.OrchestrationCompletionDTO;
 @Conditional(AtlasEnabled.class)
 public class AtlasOrchestratorTerminalToolService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public AtlasOrchestratorTerminalToolService(ObjectMapper objectMapper) {
+    public AtlasOrchestratorTerminalToolService(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
