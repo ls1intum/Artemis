@@ -33,7 +33,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         fixture.componentRef.setInput('totalNumberOfAssessments', 0);
         fixture.componentRef.setInput('numberOfSubmissions', new DueDateStat());
         fixture.componentRef.setInput('numberOfTutorAssessments', 0);
-        fixture.componentRef.setInput('totalAssessmentPercentage', 0);
         fixture.componentRef.setInput('complaints', new AssessmentDashboardInformationEntry(0, 0, undefined));
         fixture.componentRef.setInput('moreFeedbackRequests', new AssessmentDashboardInformationEntry(0, 0, undefined));
         fixture.componentRef.setInput('assessmentLocks', new AssessmentDashboardInformationEntry(0, 0, undefined));
@@ -78,8 +77,27 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.assessedSubmissions()).toBe(5);
         expect(component.inProgressSubmissions()).toBe(1);
         expect(component.openSubmissions()).toBe(2);
-        expect(component.assessedPercentage()).toBe(62.5);
-        expect(component.inProgressPercentage()).toBe(12.5);
+        expect(component.assessedPercentage()).toBe(62);
+        expect(component.inProgressPercentage()).toBe(12);
+    });
+
+    it('should floor progress percentages to whole numbers', () => {
+        const submissions = new DueDateStat();
+        submissions.inTime = 30;
+
+        fixture.componentRef.setInput('totalNumberOfAssessments', 11);
+        fixture.componentRef.setInput('numberOfSubmissions', submissions);
+
+        expect(component.assessedPercentage()).toBe(36);
+    });
+
+    it('should not render correction-round statistics when no correction rounds exist', () => {
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('numberOfCorrectionRounds', 0);
+        fixture.componentRef.setInput('numberOfAssessmentsOfCorrectionRounds', []);
+
+        expect(() => fixture.detectChanges()).not.toThrow();
+        expect(fixture.nativeElement.textContent).not.toContain('Assessments for correction rounds');
     });
 
     it('should set up links correctly', () => {

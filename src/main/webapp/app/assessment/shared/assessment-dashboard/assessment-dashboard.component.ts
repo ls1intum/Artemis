@@ -125,7 +125,6 @@ export class AssessmentDashboardComponent implements OnInit {
     readonly assessmentLocks = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly ratings = signal(new AssessmentDashboardInformationEntry(0, 0));
 
-    readonly totalAssessmentPercentage = signal(0);
     readonly hideFinishedExercises = signal<boolean>(true);
     readonly hideOptional = signal<boolean>(false);
 
@@ -248,8 +247,6 @@ export class AssessmentDashboardComponent implements OnInit {
                         }
                         this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
 
-                        const totalAssessmentSlots = stats.numberOfSubmissions.total * stats.numberOfAssessmentsOfCorrectionRounds.length;
-                        this.totalAssessmentPercentage.set(totalAssessmentSlots > 0 ? Math.floor((totalNumberOfAssessments / totalAssessmentSlots) * 100) : 0);
                         this.computeIssuesWithTutorPerformance();
                     },
                     error: (response: HttpErrorResponse) => this.onError(response),
@@ -325,10 +322,6 @@ export class AssessmentDashboardComponent implements OnInit {
                         this.ratings.set(new AssessmentDashboardInformationEntry(stats.numberOfRatings, 0));
                     }
                     this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
-
-                    if (stats.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage.set(Math.floor((stats.totalNumberOfAssessments / stats.numberOfSubmissions.total) * 100));
-                    }
 
                     this.computeIssuesWithTutorPerformance();
                 },

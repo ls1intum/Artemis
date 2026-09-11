@@ -49,7 +49,6 @@ export class AssessmentDashboardInformationComponent {
     readonly totalNumberOfAssessments = input.required<number>();
     readonly numberOfSubmissions = input.required<DueDateStat>();
     readonly numberOfTutorAssessments = input.required<number>();
-    readonly totalAssessmentPercentage = input.required<number>();
 
     readonly complaints = input.required<AssessmentDashboardInformationEntry>();
     readonly moreFeedbackRequests = input.required<AssessmentDashboardInformationEntry>();
@@ -99,6 +98,7 @@ export class AssessmentDashboardInformationComponent {
 
     private toSubmissionPercentage(submissions: number): number {
         const totalProgressItems = this.totalProgressItems();
-        return totalProgressItems > 0 ? (submissions / totalProgressItems) * 100 : 0;
+        const percentage = totalProgressItems > 0 ? (submissions / totalProgressItems) * 100 : 0;
+        return Math.floor(percentage);
     }
 }

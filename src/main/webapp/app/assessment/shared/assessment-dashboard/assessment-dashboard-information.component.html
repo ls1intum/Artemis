@@ -5,7 +5,7 @@
             <span class="text-4xl font-bold leading-none text-color">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</span>
             <span class="text-base text-muted-color">
                 <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
-                ({{ totalAssessmentPercentage() }}%)
+                ({{ assessedPercentage() }}%)
             </span>
         </div>
         <div
@@ -18,7 +18,7 @@
                 'artemisApp.assessmentDashboard.progressDescription'
                     | artemisTranslate
                         : {
-                              percentageAssessed: totalAssessmentPercentage(),
+                              percentageAssessed: assessedPercentage(),
                               numberAssessed: assessedSubmissions(),
                               numberSubmissions: totalProgressItems(),
                           }
@@ -164,7 +164,7 @@
                             <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ ratings().tutor }}</td>
                         </tr>
                     }
-                    @if (isExamMode()) {
+                    @if (isExamMode() && numberOfAssessmentsOfCorrectionRounds().length > 0) {
                         <tr>
                             <th
                                 class="px-6 py-2.5 text-start font-normal align-middle"
