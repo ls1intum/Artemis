@@ -7,8 +7,6 @@ sidebar_label: Nightly CI Runs
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
-# Nightly CI Runs
-
 Most of Artemis's test suites run on every pull request, where a failure blocks the merge. A few cannot work that
 way, either because they boot an external system that takes minutes to install, or because they test Artemis against
 a moving target in another repository. Those run once a night against `develop` instead.

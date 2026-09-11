@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 class IrisCourseSettingsTest {
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
     void of_trimsBlankInstructionsAndDefaultsVariantAndSupportLevel() {
@@ -35,7 +35,7 @@ class IrisCourseSettingsTest {
     }
 
     @Test
-    void jsonRoundtrip_preservesSanitizedPayload() throws JsonProcessingException {
+    void jsonRoundtrip_preservesSanitizedPayload() throws JacksonException {
         var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, IrisSupportLevel.LOW, new IrisRateLimitConfiguration(10, 5));
 
         String serialized = objectMapper.writeValueAsString(original);
@@ -49,14 +49,14 @@ class IrisCourseSettingsTest {
     }
 
     @Test
-    void deserialization_withoutSupportLevel_defaultsToModerate() throws JsonProcessingException {
+    void deserialization_withoutSupportLevel_defaultsToModerate() throws JacksonException {
         var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
 
         assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
     }
 
     @Test
-    void deserialization_withHighSupportLevel_isPreserved() throws JsonProcessingException {
+    void deserialization_withHighSupportLevel_isPreserved() throws JacksonException {
         var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\",\"supportLevel\":\"high\"}", IrisCourseSettings.class);
 
         assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.HIGH);

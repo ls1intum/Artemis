@@ -1,4 +1,5 @@
 ---
+id: lectures
 title: Lectures
 sidebar_label: Lectures
 slug: lectures
@@ -9,30 +10,21 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
-import lecturesManagementBtn from './assets/lectures/lectures-management-button.png';
 import lecturesManagement from './assets/lectures/lectures-management.png';
-import createLectureBtn from './assets/lectures/create-lecture-button.png';
 import createLecture from './assets/lectures/create-lecture.png';
-import processUnitsCheckbox from './assets/lectures/process-units-checkbox.png';
-import processUnitsBtn from './assets/lectures/process-units-btn.png';
 import automaticUnitProcessing from './assets/lectures/automatic-unit-processing.png';
 import processedLectureUnits from './assets/lectures/processed-lecture-units.png';
-import switchToGuidedModeBtn from './assets/lectures/switch-to-guided-mode-button.png';
-import importLectureBtn from './assets/lectures/import-lecture-button.png';
 import importLecture from './assets/lectures/import-lecture.png';
 import unitsManagementEmpty from './assets/lectures/units-management-empty.png';
 import unitsManagement from './assets/lectures/units-management.png';
 import createAttachmentVideoUnit from './assets/lectures/create-attachment-video-unit.png';
 import sendAllLecturesToIris from './assets/lectures/send-all-lectures-to-iris.png';
 import sendOneUnitIris from './assets/lectures/send-one-unit-iris.png';
-import viewAttachmentUnitBtn from './assets/lectures/view-attachment-unit-btn.png';
 import viewAttachmentUnit from './assets/lectures/view-attachment-unit.png';
 import createExerciseUnit from './assets/lectures/create-exercise-unit.png';
 import createOnlineUnit from './assets/lectures/create-online-unit.png';
 import createTextUnit from './assets/lectures/create-text-unit.png';
 import lectureDetails from './assets/lectures/lecture-details.png';
-
-# Lectures
 
 ## Overview
 
@@ -41,7 +33,7 @@ Lecture units can consist of files, text, external links, videos or livestreams 
 To directly link the necessary knowledge to its application, regular course exercises can be added to the lecture as a unit, too.
 Instructors can also define learning goals so that students can keep track of the knowledge they should have after working with those lecture materials.
 
-On the course management site, clicking on <img src={lecturesManagementBtn} alt="Lectures Management Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the lecture management page.
+The **Lectures** page in the course management holds every lecture of the course.
 
 <Image src={lecturesManagement} alt="Lectures Management" size={ImageSize.large} caption={"Lecture Management Page"}></Image>
 
@@ -51,13 +43,17 @@ Instructors have two options for creating a lecture.
 
 ### Option 1: Create from Scratch
 
-Create a new lecture from scratch by clicking on <img src={createLectureBtn} alt="Create Lecture Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. Lectures consist of a title, a description, optionally a start and end date, and the selection of automatic unit processing.
+**Create Lecture** opens the creation form. A lecture needs a title, and takes a description and a start and
+end date; the content is added afterwards.
 
 <Image src={createLecture} alt="Create Lecture" size={ImageSize.large} caption={"Lecture Creation Form"}></Image>
 
 #### Automatic Unit Processing
 
-If instructors decide to process units automatically by clicking on the <img src={processUnitsCheckbox} alt="Process Units Checkbox" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> checkbox, additional information will be displayed and they can click on <img src={processUnitsBtn} alt="Process Units Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to process the lecture PDF into multiple units.
+Artemis can split one lecture PDF into several units instead of adding them one at a time. The option belongs to
+an existing lecture rather than to the creation form, so save the lecture first, reopen it, and check **Automatic
+content processing**. Artemis then explains what it looks for in the file, asks for the PDF, and splits it when you
+click **Process content**.
 
 <Image src={automaticUnitProcessing} alt="Automatic Unit Processing" size={ImageSize.large}></Image>
 
@@ -67,11 +63,12 @@ Once the units are processed, instructors can view how the units are split, begi
 
 The following video shows how to split a lecture PDF into multiple units.
 
-<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/40577" title="Splitting lecture PDF into multiple units" />
+<TumLiveVideo src="40577" title="Splitting lecture PDF into multiple units" />
 
 ### Option 2: Import Lecture
 
-Alternatively, instructors can also import a lecture from any other course where they at least have *editor* access. Clicking on <img src={importLectureBtn} alt="Import Lecture Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the import modal, where instructors can search for an existing lecture and import it.
+A lecture can also be copied from any other course you have at least editor access to. **Import Lecture** opens
+a search over those courses' lectures, and the one you pick is recreated in this course with its content.
 
 <Image src={importLecture} alt="Import Lecture" size={ImageSize.large} caption={"Lecture Import"}></Image>
 
@@ -127,7 +124,7 @@ Those transcriptions can be used to answer students' questions in the Iris chat.
 
 #### Attachment Unit Management
 
-Instructors can preview the Attachment Unit by clicking the <img src={viewAttachmentUnitBtn} alt="View Attachment Unit Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+The **View** button on an attachment video unit opens its slides for editing.
 
 <Image src={viewAttachmentUnit} alt="View Attachment Unit" size={ImageSize.large} caption={"Attachment Unit View"}></Image>
 
@@ -136,14 +133,14 @@ This feature enables instructors to easily edit lecture materials within the pla
 
 The following video shows how to use all of the mentioned features effectively.
 
-<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/59823" title="Attachment unit management" />
+<TumLiveVideo src="59823" title="Attachment unit management" />
 
 Pages can be hidden indefinitely, until a specific date, or until an exercise's due date.
 Hidden pages are invisible to students and cannot be referenced in the Communication section.
 
 The following video shows how to observe the effects of hidden pages on the Student Version and slide references.
 
-<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/59826" title="Effects of hidden pages" />
+<TumLiveVideo src="59826" title="Effects of hidden pages" />
 
 ### Exercise Unit
 

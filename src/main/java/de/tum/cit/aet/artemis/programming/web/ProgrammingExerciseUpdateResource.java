@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -142,7 +140,7 @@ public class ProgrammingExerciseUpdateResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
         if (updateDTO.id() == null || updateDTO.id() == 0) {
@@ -279,6 +277,9 @@ public class ProgrammingExerciseUpdateResource {
             updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
         }
 
+        // Validate the effective LocalCI timeline before auxiliary repository handlers can cause DB or VCS side effects.
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, originalBuildAndTestOffset);
+
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
@@ -382,6 +383,9 @@ public class ProgrammingExerciseUpdateResource {
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+        if (exercise.isCourseExercise() && exercise.getDueDate() == null) {
+            exercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        }
 
         if (dto.testCasesChanged() != null) {
             exercise.setTestCasesChanged(dto.testCasesChanged());
@@ -400,6 +404,9 @@ public class ProgrammingExerciseUpdateResource {
 
         // Update build config
         updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
+
+        // Update plagiarism detection config
+        PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Update grading criteria
         updateGradingCriteria(dto, exercise);
@@ -495,7 +502,7 @@ public class ProgrammingExerciseUpdateResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
         // Load the exercise with all associations needed by update() and reEvaluateExercise()
@@ -524,9 +531,12 @@ public class ProgrammingExerciseUpdateResource {
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
+
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, originalBuildAndTestOffset);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 

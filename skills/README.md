@@ -28,7 +28,7 @@ Claude Code, as a versioned plugin with namespaced skills (`/artemis:e2e-pr-chec
 | `e2e-pr-check`        | Runs only the Playwright specs a change affects, and reads the result correctly |
 | `ci-triage`           | Classifies a red build before anyone changes code                               |
 | `server-arch-gates`   | Maps a server change to the architectural rules it must satisfy                 |
-| `liquibase-migration` | Writes a changelog that survives a rolling deploy on both databases             |
+| `liquibase-migration` | Writes a changelog that applies cleanly on both PostgreSQL and MySQL           |
 | `client-conventions`  | Angular signal APIs, cloning, template control flow, TUM UI styling             |
 | `write-tests`         | Base class selection, and the test commands that silently do the wrong thing    |
 | `local-setup`         | Fresh clone to a running server and client                                      |

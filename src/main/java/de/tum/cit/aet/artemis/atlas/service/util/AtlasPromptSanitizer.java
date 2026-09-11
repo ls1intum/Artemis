@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.util;
 
+import java.util.regex.Pattern;
+
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -11,6 +13,18 @@ import org.jspecify.annotations.Nullable;
  * and surrogate-safe hard truncation — is identical, so it lives here once.
  */
 public final class AtlasPromptSanitizer {
+
+    /** Every control character, the newline and the tab included, which the single-line form turns into spaces. */
+    private static final Pattern CONTROL_CHARACTER = Pattern.compile("\\p{Cntrl}");
+
+    /** Two or more whitespace characters in a row, which the single-line form collapses. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s{2,}");
+
+    /** Every control character except the newline and the tab, which the multi-line form keeps. */
+    private static final Pattern CONTROL_CHARACTER_TO_STRIP = Pattern.compile("[\\p{Cntrl}&&[^\\n\\t]]");
+
+    /** Three or more newlines in a row, which the multi-line form collapses into one blank line. */
+    private static final Pattern NEWLINE_RUN = Pattern.compile("\\n{3,}");
 
     private static final String TRUNCATION_MARKER = " …[truncated]";
 
@@ -41,10 +55,12 @@ public final class AtlasPromptSanitizer {
         }
         String normalized = raw.replace('\u00A0', ' ').replace('\u200B', ' ').replace('\u200C', ' ').replace('\u200D', ' ').replace('\uFEFF', ' ');
         if (singleLine) {
-            normalized = normalized.replaceAll("\\p{Cntrl}", " ").replaceAll("\\s{2,}", " ").strip();
+            normalized = CONTROL_CHARACTER.matcher(normalized).replaceAll(" ");
+            normalized = WHITESPACE_RUN.matcher(normalized).replaceAll(" ").strip();
         }
         else {
-            normalized = normalized.replaceAll("[\\p{Cntrl}&&[^\\n\\t]]", "").replaceAll("\\n{3,}", "\n\n").strip();
+            normalized = CONTROL_CHARACTER_TO_STRIP.matcher(normalized).replaceAll("");
+            normalized = NEWLINE_RUN.matcher(normalized).replaceAll("\n\n").strip();
         }
         if (normalized.isEmpty()) {
             return emptyPlaceholder;
