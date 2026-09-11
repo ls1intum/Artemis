@@ -17,14 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason;
-import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -47,9 +45,6 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @MockitoSpyBean
-    private CompetencyOrchestrationService orchestrationService;
 
     private Course course;
 
