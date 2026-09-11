@@ -93,7 +93,8 @@ export const routes: Routes = [
         },
         data: {
             authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.hyperion.generation.run.title',
+            // Neutral: the same page follows a generation and an adaptation; the run header names which one.
+            pageTitle: 'artemisApp.hyperion.generation.run.breadcrumb',
         },
         canActivate: [UserRouteAccessService],
     },

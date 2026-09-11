@@ -153,6 +153,14 @@ export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent
 
 export interface AdaptFinding {
     threadId?: number;
+    /** Where the thread sits, so the dialog can group findings by repository. */
+    targetType?: CommentThreadLocationType;
+    /** The line the thread is anchored to, for ordering inside a group. */
+    lineNumber?: number;
+    /** An automated review finding, or a comment an instructor wrote. */
+    source: 'finding' | 'comment';
+    /** The instructor who opened a comment thread; absent for automated findings. */
+    authorName?: string;
     category?: ConsistencyIssueCommentContent['category'];
     severity?: ConsistencyIssueCommentContent['severity'];
     /** The {@code tum-ui-tag} severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
@@ -168,6 +176,7 @@ export interface AdaptFinding {
 /** Builds the structured {@link AdaptFinding} shown in the adapt dialog for a single consistency-issue content. */
 export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locationLabel: string | undefined): AdaptFinding {
     return {
+        source: 'finding',
         category: issueContent.category,
         severity: issueContent.severity,
         tagSeverity: adaptFindingTagSeverity(issueContent.severity),
@@ -184,14 +193,24 @@ export function selectedThreadsFindings(threads: CommentThread[], translate: Tra
     return threads
         .map((thread): AdaptFinding | undefined => {
             const issue = firstConsistencyIssueContent(thread);
+            const location = { threadId: thread.id, targetType: thread.targetType, lineNumber: thread.lineNumber ?? thread.initialLineNumber };
             if (issue) {
-                return cloneWith(adaptFinding(issue, threadLocationLabel(thread, translate)), { threadId: thread.id });
+                return cloneWith(adaptFinding(issue, threadLocationLabel(thread, translate)), location);
             }
-            const description = sortCommentsByCreatedDateThenId(thread.comments)
+            const comments = sortCommentsByCreatedDateThenId(thread.comments);
+            const description = comments
                 .map((comment) => (comment.content?.contentType === CommentContentType.USER ? comment.content.text : ''))
                 .filter(Boolean)
                 .join('\n\n');
-            return description ? { threadId: thread.id, description, locationLabel: threadLocationLabel(thread, translate), tagSeverity: 'info' as const } : undefined;
+            return description
+                ? cloneWith(location, {
+                      source: 'comment' as const,
+                      authorName: comments[0]?.authorName,
+                      description,
+                      locationLabel: threadLocationLabel(thread, translate),
+                      tagSeverity: 'info' as const,
+                  })
+                : undefined;
         })
         .filter((finding): finding is AdaptFinding => !!finding);
 }

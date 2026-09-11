@@ -246,6 +246,7 @@ describe('adaptFinding', () => {
         } as any;
 
         expect(adaptFinding(issue, 'loc:3')).toEqual({
+            source: 'finding',
             category: ConsistencyIssueCategoryEnum.AttributeTypeMismatch,
             severity: ConsistencyIssueSeverityEnum.Medium,
             tagSeverity: 'warn',
@@ -304,6 +305,17 @@ describe('selectedThreadsFindings', () => {
             targetType: CommentThreadLocationType.SOLUTION_REPO,
             comments: [{ id: 9, createdDate: '2024-01-01T00:00:00Z', type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'note' } }],
         } as any;
-        expect(selectedThreadsFindings([plainThread], translate)).toEqual([{ description: 'note', locationLabel: undefined, tagSeverity: 'info' }]);
+        expect(selectedThreadsFindings([plainThread], translate)).toEqual([
+            {
+                threadId: undefined,
+                targetType: CommentThreadLocationType.SOLUTION_REPO,
+                lineNumber: undefined,
+                source: 'comment',
+                authorName: undefined,
+                description: 'note',
+                locationLabel: undefined,
+                tagSeverity: 'info',
+            },
+        ]);
     });
 });

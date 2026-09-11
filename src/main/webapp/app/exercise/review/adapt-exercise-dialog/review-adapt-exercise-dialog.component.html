@@ -8,68 +8,170 @@
         }
     </p>
 
-    @if (sortedFindings().length) {
-        <p
-            id="adaptExerciseFindingsHeading"
-            class="-mb-1 text-base font-semibold"
-            jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"
-            [translateValues]="{ count: selectedCount() }"
-        ></p>
-        <ul class="m-0 flex max-h-[35vh] list-none flex-col gap-2 overflow-y-auto ps-0 pe-1 sm:max-h-[min(45vh,26rem)]" aria-labelledby="adaptExerciseFindingsHeading">
-            @for (row of selectionRows(); track row.finding) {
-                @let finding = row.finding;
-                <li class="flex min-w-0 items-start gap-3 rounded-md border border-surface px-3 py-2">
-                    @if (finding.threadId !== undefined) {
-                        <tum-ui-checkbox
-                            [inputId]="'adapt-feedback-' + finding.threadId"
-                            [checked]="row.selected"
-                            [disabled]="submitting()"
-                            (checkedChange)="toggleFinding(finding.threadId, $event)"
-                            [ariaLabel]="finding.description"
-                            data-testid="adapt-feedback-selection"
-                        />
-                    }
-                    <div class="min-w-0 flex-1">
-                        <div class="mb-1 flex flex-wrap items-center gap-1.5">
-                            @if (finding.severity) {
-                                <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
-                            }
-                            @if (finding.category) {
-                                <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
-                            }
-                            @if (finding.locationLabel) {
-                                <span class="min-w-0 font-mono text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</span>
-                            }
-                        </div>
-                        <label [attr.for]="finding.threadId !== undefined ? 'adapt-feedback-' + finding.threadId : undefined" class="block whitespace-pre-wrap text-sm">{{
-                            finding.description
-                        }}</label>
-                        @if (finding.suggestedFix; as fix) {
-                            @if (fix.replacementCode) {
-                                <div class="mt-1.5">
-                                    <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
-                                    @if (fix.expectedCode) {
-                                        <pre
-                                            class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                            >{{ fix.expectedCode }}</pre>
-                                    }
-                                    <pre
-                                        class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-success/40 bg-state-success/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                        >{{ fix.replacementCode }}</pre>
-                                </div>
-                            } @else if (fix.expectedCode) {
-                                <div class="mt-1.5">
-                                    <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
-                                    <pre
-                                        class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                        >{{ fix.expectedCode }}</pre>
-                                </div>
-                            }
+    @if (totalCount()) {
+        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <p
+                id="adaptExerciseFindingsHeading"
+                class="m-0 text-base font-semibold"
+                jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"
+                [translateValues]="{ count: selectedCount(), total: totalCount() }"
+            ></p>
+            <div class="flex items-center gap-1">
+                <button
+                    tumUiButton
+                    type="button"
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    [disabled]="submitting() || visibleCount() === 0"
+                    (click)="selectVisible()"
+                    data-testid="adapt-select-visible"
+                >
+                    <span [jhiTranslate]="showTriageTools() ? 'artemisApp.review.adaptExercise.selectShown' : 'artemisApp.review.adaptExercise.selectAll'"></span>
+                </button>
+                <button
+                    tumUiButton
+                    type="button"
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    [disabled]="submitting() || selectedCount() === 0"
+                    (click)="clearSelection()"
+                    data-testid="adapt-clear-selection"
+                >
+                    <span jhiTranslate="artemisApp.review.adaptExercise.clearSelection"></span>
+                </button>
+            </div>
+        </div>
+        @if (showTriageTools()) {
+            <!-- Only worth its space once the list stops fitting on one screen; the selection is never filtered, only the view. -->
+            <div class="flex flex-wrap items-center gap-2" data-testid="adapt-triage-tools">
+                <tum-ui-select-button
+                    size="small"
+                    [options]="filterOptions()"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                    [itemTemplate]="filterOptionTemplate"
+                    [ngModel]="filter()"
+                    (ngModelChange)="onFilterChange($event)"
+                    [disabled]="submitting()"
+                    [attr.aria-label]="'artemisApp.review.adaptExercise.filter.label' | artemisTranslate"
+                />
+                <ng-template #filterOptionTemplate let-option>
+                    <span [jhiTranslate]="option.labelKey"></span>
+                    <span class="ms-1 tabular-nums text-muted-color">{{ option.count }}</span>
+                </ng-template>
+                <tum-ui-search-field
+                    class="min-w-48 flex-1"
+                    size="small"
+                    placeholder="artemisApp.review.adaptExercise.searchPlaceholder"
+                    [value]="query()"
+                    (valueChange)="query.set($event)"
+                    [disabled]="submitting()"
+                    data-testid="adapt-search"
+                />
+            </div>
+        }
+        <div class="flex max-h-[35vh] flex-col gap-3 overflow-y-auto pe-1 sm:max-h-[min(45vh,28rem)]" role="group" aria-labelledby="adaptExerciseFindingsHeading">
+            @for (group of groups(); track group.targetType) {
+                <section class="flex flex-col gap-1.5" [attr.data-testid]="'adapt-group-' + (group.targetType ?? 'other')">
+                    <div class="flex items-center gap-2">
+                        @if (group.selectableCount) {
+                            <tum-ui-checkbox
+                                [inputId]="'adapt-group-' + (group.targetType ?? 'other')"
+                                [checked]="group.selectedCount === group.selectableCount"
+                                [indeterminate]="group.selectedCount > 0 && group.selectedCount < group.selectableCount"
+                                [disabled]="submitting()"
+                                (checkedChange)="toggleGroup(group, $event)"
+                                [ariaLabel]="group.label"
+                                data-testid="adapt-group-selection"
+                            />
                         }
+                        <label class="m-0 text-sm font-semibold" [attr.for]="group.selectableCount ? 'adapt-group-' + (group.targetType ?? 'other') : undefined">{{
+                            group.label
+                        }}</label>
+                        <span class="text-sm tabular-nums text-muted-color">{{ group.selectedCount }} / {{ group.rows.length }}</span>
                     </div>
-                </li>
+                    <ul class="m-0 flex list-none flex-col gap-1.5 ps-0">
+                        @for (row of group.rows; track row.key) {
+                            @let finding = row.finding;
+                            <li class="flex min-w-0 items-start gap-3 rounded-md border border-surface px-3 py-2" [class.bg-highlight-background]="row.selected">
+                                @if (finding.threadId !== undefined) {
+                                    <tum-ui-checkbox
+                                        [inputId]="'adapt-feedback-' + finding.threadId"
+                                        [checked]="row.selected"
+                                        [disabled]="submitting()"
+                                        (checkedChange)="toggleFinding(finding.threadId, $event)"
+                                        [ariaLabel]="finding.description"
+                                        data-testid="adapt-feedback-selection"
+                                    />
+                                }
+                                <div class="min-w-0 flex-1">
+                                    <div class="mb-1 flex flex-wrap items-center gap-1.5">
+                                        @if (finding.severity) {
+                                            <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                                        }
+                                        @if (finding.category) {
+                                            <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                                        } @else if (finding.authorName) {
+                                            <span class="font-semibold">{{ finding.authorName }}</span>
+                                        }
+                                        @if (finding.locationLabel) {
+                                            <span class="min-w-0 font-mono text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</span>
+                                        }
+                                    </div>
+                                    <label
+                                        [attr.for]="finding.threadId !== undefined ? 'adapt-feedback-' + finding.threadId : undefined"
+                                        class="block whitespace-pre-wrap text-sm"
+                                        [class.line-clamp-3]="row.clampable && !row.expanded"
+                                        >{{ finding.description }}</label
+                                    >
+                                    @if (row.clampable || finding.suggestedFix) {
+                                        <button
+                                            tumUiButton
+                                            type="button"
+                                            severity="secondary"
+                                            variant="text"
+                                            size="small"
+                                            class="mt-0.5 -ms-2.5"
+                                            (click)="toggleExpanded(row.key)"
+                                            [attr.aria-expanded]="row.expanded"
+                                            data-testid="adapt-finding-expand"
+                                        >
+                                            <span [jhiTranslate]="row.expanded ? 'artemisApp.review.adaptExercise.showLess' : 'artemisApp.review.adaptExercise.showMore'"></span>
+                                        </button>
+                                    }
+                                    @if (row.expanded && finding.suggestedFix; as fix) {
+                                        @if (fix.replacementCode) {
+                                            <div class="mt-1.5">
+                                                <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                                                @if (fix.expectedCode) {
+                                                    <pre
+                                                        class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                                        >{{ fix.expectedCode }}</pre>
+                                                }
+                                                <pre
+                                                    class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-success/40 bg-state-success/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                                    >{{ fix.replacementCode }}</pre>
+                                            </div>
+                                        } @else if (fix.expectedCode) {
+                                            <div class="mt-1.5">
+                                                <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
+                                                <pre
+                                                    class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                                    >{{ fix.expectedCode }}</pre>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            } @empty {
+                <p class="m-0 text-sm text-muted-color" data-testid="adapt-no-match" jhiTranslate="artemisApp.review.adaptExercise.noMatch"></p>
             }
-        </ul>
+        </div>
     } @else {
         <small class="text-muted-color" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
     }
@@ -81,7 +183,7 @@
         class="w-full resize-y"
         rows="3"
         [attr.maxlength]="maxInstructionsLength"
-        [tumUiInputDescribedBy]="!sortedFindings().length ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
+        [tumUiInputDescribedBy]="!totalCount() ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
         [placeholder]="
             (isFreeMode() ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate
         "

@@ -5,6 +5,7 @@ import { DOCUMENT, DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin, interval } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ActiveGeneration } from 'app/openapi/model/active-generation';
 import { AdminHyperionGenerationMonitoringApi } from 'app/openapi/api/admin-hyperion-generation-monitoring-api';
@@ -28,6 +29,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './hyperion-workers.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        RouterLink,
         FormsModule,
         TumUiDialogComponent,
         TumUiInputDirective,
@@ -52,7 +54,15 @@ export class HyperionWorkersComponent implements OnInit {
         this.generations().map((run) => {
             const worker = this.workers().find((candidate) => candidate.executions?.some((execution) => execution.jobId === run.jobId));
             const execution = worker?.executions?.find((candidate) => candidate.jobId === run.jobId);
-            return { run, workerId: worker?.workerId, slot: execution?.slot !== undefined ? execution.slot + 1 : undefined };
+            const exerciseLink =
+                run.courseId !== undefined && run.exerciseId !== undefined ? ['/course-management', run.courseId, 'programming-exercises', run.exerciseId] : undefined;
+            return {
+                run,
+                workerId: worker?.workerId,
+                slot: execution?.slot !== undefined ? execution.slot + 1 : undefined,
+                exerciseLink,
+                runLink: exerciseLink ? [...exerciseLink, 'generation'] : undefined,
+            };
         }),
     );
     protected readonly cancelTarget = signal<ActiveGeneration | undefined>(undefined);

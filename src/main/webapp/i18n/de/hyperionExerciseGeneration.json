@@ -256,12 +256,12 @@
                     "NOT_STARTED": "Der Durchlauf ist nie gestartet."
                 },
                 "actions": {
-                    "cancel": "Generierung abbrechen",
+                    "cancel": "Lauf abbrechen",
                     "cancelling": "Wird abgebrochen…",
-                    "cancelConfirmHeader": "Diese Generierung abbrechen?",
-                    "cancelConfirmMessage": "Artemis stoppt sofort, und in deine Aufgabe wird nichts geschrieben. Der Aufgabenentwurf bleibt in deinem Kurs.",
-                    "cancelConfirmAccept": "Generierung abbrechen",
-                    "cancelConfirmReject": "Weiter generieren",
+                    "cancelConfirmHeader": "Diesen Lauf abbrechen?",
+                    "cancelConfirmMessage": "Artemis stoppt sofort und schreibt nichts in deine Aufgabe. Die Aufgabe bleibt, wie sie ist.",
+                    "cancelConfirmAccept": "Lauf abbrechen",
+                    "cancelConfirmReject": "Weiterlaufen lassen",
                     "runAgain": "Erneut ausführen",
                     "openEditor": "Code-Editor öffnen",
                     "openRun": "Generierungsansicht öffnen",
@@ -281,7 +281,6 @@
                     "staticCodeAnalysis": "Deaktiviere zuerst die statische Codeanalyse in den Aufgabeneinstellungen. Die KI-Prüfung bildet deren Abzüge nicht ab.",
                     "sequentialTestRuns": "Deaktiviere zuerst sequenzielle Testläufe in den Aufgabeneinstellungen. Die KI-Prüfung führt alle Tests in einem Durchlauf aus.",
                     "auxiliaryRepositories": "Entferne zuerst die zusätzlichen Repositories. KI-Erstellung schreibt nur in Vorlage, Lösung und Tests.",
-                    "noReleaseDate": "Setze zuerst ein Veröffentlichungsdatum in der Zukunft. KI-Erstellung ändert nur Aufgaben, die Studierende noch nicht sehen können.",
                     "released": "Diese Aufgabe ist bereits veröffentlicht. Verschiebe zuerst das Veröffentlichungsdatum in die Zukunft; KI-Erstellung ändert nur Aufgaben, die Studierende noch nicht sehen können.",
                     "studentParticipations": "Studierende haben diese Aufgabe bereits begonnen. KI-Erstellung ändert nur Aufgaben ohne Teilnahmen.",
                     "problemStatementBusy": "Warte, bis die laufende Verfeinerung der Aufgabenstellung abgeschlossen ist.",
@@ -439,7 +438,13 @@
                 "cancelReason": "Grund (wird im Admin-Protokoll erfasst)",
                 "cancelFailed": "Der Abbruch wurde nicht angenommen. Der Lauf ist möglicherweise beendet oder speichert bereits. Aktualisiere die Übersicht; dein Grund bleibt erhalten.",
                 "keepRunning": "Weiterlaufen lassen",
-                "workerSlot": "Worker / Slot"
+                "workerSlot": "Worker / Slot",
+                "kind": "Lauf",
+                "openRun": "Lauf öffnen",
+                "mode": {
+                    "GENERATE": "Erstellen",
+                    "ADAPT": "Anpassen"
+                }
             }
         }
     }

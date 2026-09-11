@@ -64,7 +64,7 @@
                 "threadAction": "Mit Feedback anpassen",
                 "summary": "Wähle die zu bearbeitenden Kommentare aus und ergänze bei Bedarf Anweisungen.",
                 "freeSummary": "Wähle unten Review-Kommentare aus oder beschreibe die gewünschte Änderung.",
-                "findingsListLabel": "Review-Kommentare · {{ count }} ausgewählt",
+                "findingsListLabel": "Review-Kommentare · {{ count }} von {{ total }} ausgewählt",
                 "freeHelp": "Es sind keine Review-Kommentare ausgewählt. Beschreibe die gewünschte Änderung für Artemis Intelligence.",
                 "instructionsLabel": "Zusätzliche Anweisungen",
                 "instructionsPlaceholder": "Optional: zusätzliche Hinweise für die Anpassung…",
@@ -82,7 +82,21 @@
                 "reloadRequired": "Lade die gespeicherte Aufgabe neu, bevor du sie erneut anpasst.",
                 "startFailed": "Die Anpassung konnte nicht starten. Deine Kommentare und Anweisungen bleiben hier erhalten. Prüfe den KI-Fortschritt auf einen aktiven Lauf oder versuche es erneut.",
                 "reloadDraftRequired": "Ein KI-Lauf hat Änderungen gespeichert, während dieser Dialog geöffnet war. Dein Entwurf ist noch hier. Kopiere die Anweisungen, die du behalten möchtest. Schließe dann diesen Dialog und lade die gespeicherte Aufgabe vor dem Anpassen neu.",
-                "opensInNewTab": "(öffnet in einem neuen Tab)"
+                "opensInNewTab": "(öffnet in einem neuen Tab)",
+                "selectAll": "Alle auswählen",
+                "selectShown": "Angezeigte auswählen",
+                "clearSelection": "Auswahl aufheben",
+                "filter": {
+                    "label": "Anzeigen",
+                    "all": "Alle",
+                    "findings": "KI-Befunde",
+                    "comments": "Kommentare von Lehrenden",
+                    "selected": "Ausgewählt"
+                },
+                "searchPlaceholder": "Kommentare durchsuchen…",
+                "showMore": "Mehr anzeigen",
+                "showLess": "Weniger anzeigen",
+                "noMatch": "Kein Kommentar passt zum aktuellen Filter."
             }
         }
     }
