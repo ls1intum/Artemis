@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
  * DTO for the {@link AttachmentVideoUnit} REST boundary.
@@ -25,11 +26,23 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, String description, String videoSource, Set<CompetencyLinkDTO> competencyLinks,
-        AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, AttachmentDTO.LectureReferenceDTO lecture,
-        AttachmentUpdateIntent attachmentUpdateIntent, @JsonProperty("type") String type) implements LectureUnitDTO {
+        AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, LectureReferenceDTO lecture, AttachmentUpdateIntent attachmentUpdateIntent,
+        @JsonProperty("type") String type) implements LectureUnitDTO {
 
     public AttachmentVideoUnitDTO {
         type = "attachment";
+    }
+
+    /**
+     * The lecture an attachment video unit belongs to, reduced to its id.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record LectureReferenceDTO(Long id) {
+
+        public static LectureReferenceDTO of(Lecture lecture) {
+            return lecture == null ? null : new LectureReferenceDTO(lecture.getId());
+        }
     }
 
     /**
@@ -56,7 +69,7 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
         List<SlideDTO> slides = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides()) ? unit.getSlides().stream().map(SlideDTO::from).toList() : List.of();
         AttachmentDTO attachment = unit.getAttachment() != null ? AttachmentDTO.of(unit.getAttachment()) : null;
         // The PDF preview reads attachmentVideoUnit.lecture.id when saving/updating, so keep the lightweight lecture reference.
-        AttachmentDTO.LectureReferenceDTO lecture = AttachmentDTO.LectureReferenceDTO.of(unit.getLecture());
+        LectureReferenceDTO lecture = LectureReferenceDTO.of(unit.getLecture());
         return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), competencyLinks, attachment, slides,
                 unit.isCompleted(), unit.isVisibleToStudents(), lecture, intent, unit.getType());
     }

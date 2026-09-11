@@ -1,6 +1,6 @@
 ---
 id: local-database-tests
-title: Running Database Tests Locally
+title: Running Server Tests Locally
 sidebar_label: Local Database Tests
 ---
 
@@ -8,8 +8,6 @@ import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 import postgresTestsConfig from './assets/intellij-postgres-tests-run-configuration.png';
-
-# Running Server Tests Locally
 
 Server integration tests run against PostgreSQL by default using Docker containers managed by Testcontainers. No additional flags are needed — `./gradlew test -x webapp` uses PostgreSQL automatically. The Gradle test task pulls the necessary Docker images and starts the containers.
 

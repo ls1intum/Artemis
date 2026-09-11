@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -125,11 +126,14 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * Retrieve a set containing all organizations with an emailPattern matching the
      * provided user's email.
      *
-     * @param userEmail the email of the user to match
+     * @param userEmail the email of the user to match, may be {@code null} for an account without an address
      * @return a set of all matching organizations
      */
     @NonNull
-    default Set<Organization> getAllMatchingOrganizationsByUserEmail(String userEmail) {
+    default Set<Organization> getAllMatchingOrganizationsByUserEmail(@Nullable String userEmail) {
+        if (userEmail == null || userEmail.isBlank()) {
+            return Set.of();
+        }
         Set<Organization> matchingOrganizations = new HashSet<>();
         // TODO: we should avoid findAll() and instead try to filter this directly in the database
         findAll().forEach(organization -> {

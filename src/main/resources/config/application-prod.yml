@@ -100,10 +100,17 @@ server:
 
 jhipster:
     http:
-        cache: # Used by the CachingHttpHeadersFilter
-            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
-            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+        cache:
+            # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
+            # replaced logo or an edited about-us page is the same URL — so this bounds how long a correction takes to
+            # reach a browser that already has the old one. 7 days balances caching against that.
             timeToLiveInDays: 7
+            # Used by the CachingHttpHeadersFilter for the client bundle (*.js, *.css, /i18n/*). Those are versioned in
+            # their URL — a content hash for JavaScript and CSS, a build hash query parameter for translations — so a
+            # new build is a new URL and a cached response cannot go stale. Caching them longer costs nothing and
+            # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
+            # page at once.
+            versionedAssetsTimeToLiveInDays: 30
     security:
         authentication:
             jwt:

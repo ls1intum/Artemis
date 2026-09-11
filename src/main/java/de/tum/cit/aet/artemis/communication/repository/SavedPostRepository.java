@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
+import de.tum.cit.aet.artemis.communication.dto.SavedPostDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
@@ -84,14 +85,14 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      * @return List of saved posts of the given user, filtered by the given status.
      */
     @Query("""
-            SELECT new SavedPost(sp.user, sp.postId, sp.postType, sp.status, sp.completedAt)
+            SELECT new de.tum.cit.aet.artemis.communication.dto.SavedPostDTO(sp.postId, sp.postType, sp.status)
             FROM SavedPost sp
             WHERE sp.user.id = :userId
                 AND sp.status = :status
             ORDER BY sp.completedAt DESC, sp.id DESC
             """)
     @Cacheable(key = "'saved_post_status_' + #status + '_' + #userId")
-    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") long userId, @Param("status") SavedPostStatus status);
+    List<SavedPostDTO> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") long userId, @Param("status") SavedPostStatus status);
 
     /***
      * Query all SavedPosts for a certain user. Not cached.

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DialogModule } from 'primeng/dialog';
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Modal dialog shown to external/SSO users who attempt to reset their password.
@@ -10,7 +11,7 @@ import { DialogModule } from 'primeng/dialog';
 @Component({
     selector: 'jhi-external-user-password-reset-modal',
     templateUrl: './external-user-password-reset-modal.component.html',
-    imports: [TranslateDirective, DialogModule],
+    imports: [TranslateDirective, TumUiButtonComponent, TumUiDialogComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExternalUserPasswordResetModalComponent {

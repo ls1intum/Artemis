@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -61,10 +62,8 @@ class SharedQueueStaleJobCleanupTest {
         when(distributedDataAccessService.getDistributedProcessingJobs()).thenReturn(processingJobs);
 
         sharedQueueProcessingService = new SharedQueueProcessingService(mock(BuildAgentConfiguration.class), buildJobManagementService, mock(BuildLogsMap.class),
-                mock(TaskScheduler.class), mock(BuildAgentDockerService.class), mock(BuildJobContainerService.class), mock(BuildAgentInformationService.class),
-                distributedDataAccessService);
+                mock(TaskScheduler.class), mock(BuildJobRunner.class), mock(BuildAgentInformationService.class), distributedDataAccessService);
         ReflectionTestUtils.setField(sharedQueueProcessingService, "buildAgentShortName", AGENT_NAME);
-        ReflectionTestUtils.setField(sharedQueueProcessingService, "buildContainerPrefix", "local-ci-");
     }
 
     private static BuildJobQueueItem claimedJob(String id, ZonedDateTime claimedAt) {

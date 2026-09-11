@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -150,6 +151,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exam-management")
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -264,6 +266,7 @@ public class ExamResource {
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        checkExamTitleIsPresentElseThrow(examDTO.title());
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
@@ -297,6 +300,7 @@ public class ExamResource {
         if (examUpdateDTO.id() == null) {
             throw new BadRequestAlertException("An exam update must have an ID", ENTITY_NAME, "idMissing");
         }
+        checkExamTitleIsPresentElseThrow(examUpdateDTO.title());
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examUpdateDTO.id());
 
@@ -475,6 +479,7 @@ public class ExamResource {
     public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO,
             @RequestParam(required = false) String importId) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
+        checkExamTitleIsPresentElseThrow(examImportDTO.title());
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
@@ -555,6 +560,18 @@ public class ExamResource {
         if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
             throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
                     "examTitleTooLong");
+        }
+    }
+
+    /**
+     * Checks that the exam title is present, so an exam is never created or updated with a missing or blank title. The client marks this too, but crafted requests and import
+     * payloads bypass the UI. This validates the raw request title before it is mapped to an entity, because {@link Exam#setTitle} would throw on a null title during mapping.
+     *
+     * @param title the exam title from the request
+     */
+    private void checkExamTitleIsPresentElseThrow(String title) {
+        if (title == null || title.isBlank()) {
+            throw new BadRequestAlertException("The exam title must not be empty.", ENTITY_NAME, "examTitleEmpty");
         }
     }
 
@@ -966,7 +983,7 @@ public class ExamResource {
     public ResponseEntity<List<ExamForQuestionPoolDTO>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithAuthorities();
         final List<Exam> exams;
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             exams = examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
         }
         else {
@@ -1391,7 +1408,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         User user = userRepository.getUserWithAuthorities();
 
-        List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
+        List<Submission> submissions = submissionService.getLockedSubmissions(examRepository.findExerciseIdsByExamId(examId), user);
         // one batched query for the submission counts the assessment-locks table renders; never one query per row
         List<Long> participationIds = submissions.stream().map(submission -> submission.getParticipation().getId()).distinct().toList();
         Map<Long, Integer> submissionCounts = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(participationIds);

@@ -24,6 +24,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -41,6 +42,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         Dialog,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {

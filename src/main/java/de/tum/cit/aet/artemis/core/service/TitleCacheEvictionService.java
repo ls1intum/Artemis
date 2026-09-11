@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -44,10 +45,13 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     private final CacheManager cacheManager;
 
+    private final PerNodeCacheEvictionService perNodeCacheEvictionService;
+
     private final EntityManagerFactory entityManagerFactory;
 
-    public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager) {
+    public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager, PerNodeCacheEvictionService perNodeCacheEvictionService) {
         this.cacheManager = cacheManager;
+        this.perNodeCacheEvictionService = perNodeCacheEvictionService;
         this.entityManagerFactory = entityManagerFactory;
     }
 
@@ -143,17 +147,17 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
      * Removes the given id from the given title cache
      *
      * @param cacheName the title cache to evict the entry from
-     * @param entityId  the entry to evict from
+     * @param entityId  the id whose title is no longer valid
      */
-    private void evictIdFromCache(String cacheName, Object entityId) {
-        var cache = cacheManager.getCache(cacheName);
-        if (cache == null) {
+    private void evictIdFromCache(String cacheName, Long entityId) {
+        if (cacheManager.getCache(cacheName) == null) {
             log.warn("Unable to evict entry in title cache: Cache {} not found", cacheName);
             return;
         }
 
-        cache.evict(entityId);
-        log.info("Evicted entry '{}' from title cache '{}'", entityId, cacheName);
+        // The title caches are per-node, so evicting here would leave every other node answering with the old title.
+        perNodeCacheEvictionService.evictEverywhere(cacheName, entityId);
+        log.info("Evicted entry '{}' from title cache '{}' on every node", entityId, cacheName);
     }
 
     @Override

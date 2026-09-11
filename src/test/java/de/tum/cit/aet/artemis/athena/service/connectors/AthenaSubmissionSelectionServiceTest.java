@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service.connectors;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -15,9 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -62,16 +62,25 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        var course = courseUtilService.createCourse();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        course = courseRepository.save(course);
+
+        textExercise = textExerciseUtilService.createSampleTextExercise(course);
         textExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         textExerciseRepository.save(textExercise);
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setCourse(course);
         programmingExercise.setGradingCriteria(Set.of(new GradingCriterion()));
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
         programmingSubmission1 = new ProgrammingSubmission();
         programmingSubmission1.setId(3L);
@@ -155,7 +164,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        textExercise.setFeedbackSuggestionModule(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -163,7 +172,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testProgrammingSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        programmingExercise.setFeedbackSuggestionModule(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }

@@ -67,10 +67,8 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         await courseOverview.startExercise(textExercise.id!);
 
         const splitter = page.locator('jhi-resizable-panels p-splitter').first();
-        const gutter = splitter.locator('.p-splitter-gutter').first();
-        // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
-        // changed across PrimeNG majors, so revisit this selector when upgrading PrimeNG.
-        const leftPanel = splitter.locator('.p-splitterpanel').first();
+        const gutter = splitter.getByTestId('splitter-gutter').first();
+        const leftPanel = splitter.getByTestId('splitter-panel').first();
 
         await expect(gutter).toBeVisible({ timeout: 30_000 });
         await expect(leftPanel).toBeVisible();
@@ -88,9 +86,13 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         }).toPass({ timeout: 10_000 });
         const leftAfterGrow = (await leftPanel.boundingBox())!.width;
 
-        // Drag the gutter back to the left -> the left panel shrinks again.
-        await dragGutter(page, gutter, -240);
-        const leftAfterShrink = (await leftPanel.boundingBox())!.width;
-        expect(leftAfterShrink).toBeLessThan(leftAfterGrow - 60);
+        // Drag the gutter back to the left -> the left panel shrinks again. Polled for the same reason as the grow
+        // drag above: a pointerdown can land while the splitter is re-laying out, and the gesture is then lost. The
+        // observed failure was exactly that - the panel moved about 20px instead of 240.
+        await expect(async () => {
+            await dragGutter(page, gutter, -240);
+            const width = (await leftPanel.boundingBox())!.width;
+            expect(width).toBeLessThan(leftAfterGrow - 60);
+        }).toPass({ timeout: 10_000 });
     });
 });

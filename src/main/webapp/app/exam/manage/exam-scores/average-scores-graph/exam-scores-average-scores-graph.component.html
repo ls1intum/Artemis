@@ -5,17 +5,17 @@
             jhiTranslate="artemisApp.examScores.exerciseGroupTitle"
             [translateValues]="{ groupTitle: this.averageScores().title }"
         ></h5>
-        <!-- Flex (not a plain block) so `p-chart` stretches to the explicit height: with `maintainAspectRatio: false`
-             Chart.js sizes the canvas from its parent, and a block parent leaves the canvas at its 150px default,
-             which overflowed the box and covered the next chart's title. The height grows with the bar count so
-             every bar keeps a readable label. -->
+        <!-- Flex (not a plain block) so the chart stretches to the explicit height: it fills its container in
+             both dimensions, and a container without a definite height would collapse it. The height grows with
+             the bar count so every bar keeps a readable label. -->
         <div class="flex" [style.height.px]="chartHeight()">
-            <p-chart
+            <tum-ui-bar-chart
                 class="w-full"
-                type="bar"
-                [data]="chartData()"
-                [options]="chartOptions()"
-                (onDataSelect)="onSelect($event)"
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig()"
+                interactive
+                (dataSelect)="onSelect($event)"
                 [ariaLabel]="'artemisApp.examScores.exerciseGroupTitle' | artemisTranslate: { groupTitle: averageScores().title }"
             />
         </div>

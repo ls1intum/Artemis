@@ -1,0 +1,112 @@
+// SonarQube Cloud analysis of the deployed Artemis application (server + client in one project).
+//
+// WHY THIS EXISTS: the README's code-quality badge is served by Codacy, whose grade is computed from
+// a narrow SAST-only pattern set — 9 issues over ~925k LOC, which reads "A" without saying much about
+// the quality system Artemis actually enforces (Spotless, Checkstyle, Modernizer, ArchUnit, ~14
+// custom ESLint rules, Stylelint, the over-fetch detector, per-module coverage floors). Sonar is set
+// up alongside it, not instead of it, so the two grades can be compared on the same code before any
+// badge decision is made. Nothing here feeds a README badge yet; see `.github/workflows/README.md`.
+//
+// SCOPE IS A CONTRACT WITH `.codacy.yaml`. The exclusion list below mirrors that file's repository-wide
+// `exclude_paths` floor, so neither tool grades exercise starter code, test code or internal tooling.
+// Change one, change the other, or the two grades quietly diverge.
+//
+// The two scopes are not identical, and the difference is deliberate. `.codacy.yaml` sets no
+// `include_paths`, so Codacy analyses whatever it supports across the whole repository minus that floor —
+// CI workflows, shell scripts, the ESLint rule sources. Sonar analyses the four application source roots
+// named below. The overlap is the deployed application, which is what the two grades are compared on;
+// Codacy simply also reports on the surrounding tooling.
+//
+// Analysis is CI-only (`.github/workflows/ci-sonar.yml`) and needs `SONAR_TOKEN`. Running `./gradlew
+// sonar` locally without that token fails at the upload step, which is why nothing wires `sonar` into
+// `check` or `build`.
+
+// Paths excluded from analysis, mirroring the `exclude_paths` floor in `.codacy.yaml`.
+//
+// Sonar's Ant-style globs are not Codacy's, so the two lists are spelled differently for the same
+// intent: Codacy needs both `dir/**` and `dir/**/*` to cover a tree, Sonar covers it with `dir/**`.
+def sharedExclusions = [
+    // Programming-exercise templates: sample/starter code shipped for exercises, not application code.
+    "src/main/resources/templates/**",
+    // Test code and test resources: hardcoded test credentials, non-literal fs/regexp in helpers and
+    // sample payloads are intentional fixtures, not defects.
+    "src/test/**",
+    "**/*.spec.ts",
+    // Storybook stories and the Angular wrapper decorators: static examples that trip the
+    // html-in-template-string rule through Storybook's rendering API.
+    "**/*.stories.ts",
+    "packages/tum-ui/.storybook/story-decorators.ts",
+    // Internal developer/CI tooling (coverage reporting, course setup, transcription, benchmarks).
+    // Not part of the deployed application and not exposed to untrusted end-user input.
+    "supporting_scripts/**",
+    // Throwaway OIDC test identity provider used only by the local E2E stack.
+    "docker/oidc-test/**",
+]
+
+sonar {
+    properties {
+        property "sonar.projectKey", "ls1intum_Artemis"
+        property "sonar.organization", "ls1intum"
+        // Explicit rather than relying on the plugin's default. The default host is a local
+        // SonarQube Server, so omitting this turns a misconfigured CI run into a confusing
+        // connection error against localhost instead of an auth error against the real service.
+        // SonarQube Cloud's EU instance is the default region, so `sonar.region` is deliberately unset.
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.projectName", "Artemis"
+        property "sonar.projectVersion", project.version
+        property "sonar.sourceEncoding", "UTF-8"
+
+        // The plugin derives `sonar.sources` from the Java source sets alone, which would leave the
+        // entire Angular client unanalyzed. Naming the roots explicitly brings the client and the
+        // TUM UI package in. `sonar.java.binaries` / `sonar.java.libraries` are set by the plugin
+        // independently of this property, so overriding it does not disturb the Java analysis.
+        property "sonar.sources", [
+            "src/main/java",
+            "src/main/resources",
+            "src/main/webapp",
+            "packages/tum-ui/src",
+        ].join(",")
+
+        property "sonar.exclusions", sharedExclusions.join(",")
+
+        // Clear the test root the plugin derives from the `test` source set. Test code is out of scope
+        // by the agreement above, and leaving the root declared while `sonar.exclusions` removes the
+        // same tree makes the scanner warn about every file it is told to index and then cannot.
+        //
+        // Coverage is unaffected: JaCoCo and LCOV report against the main files, not the test files.
+        // Sonar would also keep test findings out of the project's ratings on its own — test files get
+        // test-specific rules and never move the maintainability/reliability/security grades — so this
+        // is about scan scope and comparability with Codacy, not about protecting the grade. It is not
+        // free either way: `src/test` holds ~285k lines of Java and ~304k of specs.
+        properties["sonar.tests"] = []
+
+        // Coverage comes from the reports the `test` job already uploads as artifacts, so Sonar never
+        // re-runs a suite. `ci-sonar.yml` downloads them to exactly these paths.
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/aggregated/jacocoTestReport.xml"
+        property "sonar.javascript.lcov.reportPaths", "build/test-results/vitest/coverage/lcov.info"
+
+        // Generated code is analyzed (it is shipped) but excluded from the coverage ratio: the OpenAPI
+        // client is regenerated from the server contract and is deliberately left untested, exactly as
+        // `vitest.config.ts` already excludes it from the client coverage floor.
+        //
+        // The list mirrors that file's `coverage.exclude`, and it has to: Sonar computes the ratio over
+        // whatever it indexed, so a file the LCOV report never mentions counts as fully uncovered
+        // rather than as absent. The same reasoning excludes `packages/tum-ui/src` — it is in
+        // `sonar.sources` because the package ships, but the only LCOV report imported here covers
+        // `src/main/webapp/app/**/*.ts` (`vitest.config.ts`, `coverage.include`). TUM UI is tested by
+        // its own run (`pnpm run tum-ui:test:coverage`, `ng test tum-ui --coverage`), which neither
+        // emits LCOV nor uploads an artifact for `ci-sonar.yml` to download. Leaving it in the
+        // denominator would report a tested package as 0% covered. Drop this entry as soon as that run
+        // publishes a report the Sonar job imports.
+        property "sonar.coverage.exclusions", [
+            "src/main/webapp/app/openapi/**",
+            "src/main/webapp/app/**/*.route.ts",
+            "src/main/webapp/app/**/*.routes.ts",
+            "src/main/webapp/app/**/*.model.ts",
+            "src/main/webapp/app/core/config/dayjs.ts",
+            "src/main/webapp/app/core/config/monaco.config.ts",
+            "src/main/webapp/app/core/config/prod.config.ts",
+            "packages/tum-ui/src/**",
+        ].join(",")
+    }
+}

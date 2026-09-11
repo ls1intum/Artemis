@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -64,8 +64,7 @@ public record GradingScaleForBonusDTO(Long id, GradeType gradeType, BonusStrateg
      * @param includeGradeSteps whether the grade steps of this grading scale should be serialized
      * @return a DTO representation of the grading scale for use in a bonus response
      */
-    public static GradingScaleForBonusDTO of(GradingScale scale, boolean includeGradeSteps) {
-        Objects.requireNonNull(scale, "grading scale must exist");
+    public static GradingScaleForBonusDTO of(@NonNull GradingScale scale, boolean includeGradeSteps) {
 
         Set<GradeStepDTO> gradeSteps = Set.of();
         if (includeGradeSteps && scale.getGradeSteps() != null && Hibernate.isInitialized(scale.getGradeSteps())) {

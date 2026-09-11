@@ -242,9 +242,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        SecurityUtils.setAuthorizationObject();
 
         final ZonedDateTime now = TimeUtil.now();
 
@@ -307,7 +305,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleParticipationWithIndividualDueDate(ZonedDateTime now, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
             boolean isScoreUpdateNeeded) {
-        final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
+        // Only reached from the branch in scheduleParticipationTasks that has already established a non-null individual
+        // due date, which is what the method name promises. Read once rather than through three getter calls.
+        final ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+        final boolean isBeforeDueDate = now.isBefore(individualDueDate);
         // Update scores on due date
         if (isBeforeDueDate) {
             scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
@@ -319,7 +320,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // Build and test after individual due date:
         // only special scheduling if the individual due date is after the build and test date
         if (isBeforeDueDate && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && participation.getIndividualDueDate().isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+                && individualDueDate.isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleBuildAndTestAfterDueDateForParticipation(participation);
         }
         else {
@@ -383,8 +384,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     @NonNull
     private Runnable buildAndTestRunnableForExercise(ProgrammingExercise exercise) {
-        return () -> {
-            SecurityUtils.setAuthorizationObject();
+        // Handed to a scheduler, so this lambda is its own entry point on a pooled thread.
+        return () -> SecurityUtils.runAsSystem(() -> {
             try {
                 log.info("Invoking scheduled task programming exercise with id {}.", exercise.getId());
                 programmingTriggerService.triggerInstructorBuildForExercise(exercise.getId());
@@ -392,7 +393,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", exercise.getId());
             }
-        };
+        });
     }
 
     /**
@@ -413,10 +414,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NonNull
     public Runnable updateStudentScoresRegularDueDate(final ProgrammingExercise exercise) {
-        return () -> {
-            SecurityUtils.setAuthorizationObject();
+        // Handed to a scheduler, so this lambda is its own entry point on a pooled thread.
+        return () -> SecurityUtils.runAsSystem(() -> {
             final List<Result> updatedResults = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(exercise);
             resultRepository.saveAll(updatedResults);
-        };
+        });
     }
 }

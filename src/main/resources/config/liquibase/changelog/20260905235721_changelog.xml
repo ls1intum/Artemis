@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Turn every attachment that hangs off a lecture directly into an attachment video unit of that lecture.
+
+        Such an attachment is one with a lecture_id but no attachment_unit_id. It used to be reachable through a section
+        of the lecture that no longer exists, so without this migration its file would still sit on disk with nothing in
+        the user interface pointing at it. An attachment that belongs to an attachment video unit already has
+        attachment_unit_id set and is left alone.
+
+        The new unit carries the attachment's name and release date and is appended after the units the lecture already
+        has, ordered by attachment id so that two attachments of the same lecture keep their relative order. Appending
+        after the highest order the lecture holds is what keeps the new units out of the way of the existing ones even
+        when those are not numbered from zero and leave gaps; Lecture.updateLectureUnitOrder renumbers the whole lecture
+        from zero the next time it is saved, and reads the units back in the order this changelog wrote them. The
+        attachment itself is not rewritten beyond the new attachment_unit_id: it keeps its link, its version and its
+        lecture_id, so the file it names keeps resolving from where it already lies, under
+        uploads/attachments/lecture/{lectureId}. That is also why FileResource keeps serving
+        files/attachments/lectures/{lectureId}/{name}: links to those files appear in markdown written years ago, and
+        moving the files is not something a changelog can do.
+
+        lecture_id stays populated for exactly that reason. It resolves the course for the authorization check on the
+        endpoint above and it names the directory the file lives in, so it is not stale state and is not dropped here.
+        Nothing else in the schema falls out of use: attachment.exercise_id still backs Exercise.attachments, and the
+        lecture side of the association was a mappedBy collection rather than a table of its own.
+
+        migrated_from_attachment_id exists only to carry the generated unit id back to the attachment row and is dropped
+        again at the end of this changelog. It is indexed while it exists because the statement that reads it back is
+        correlated per attachment row, and without the index that statement degrades from a fraction of a second to
+        half a minute on PostgreSQL and to several minutes on MySQL for a table holding twenty thousand of these
+        attachments, all of it with the attachment table locked.
+
+        During a rolling deployment a node on the previous version keeps listing these attachments in the lecture while
+        also showing the new units, and its lecture attachment section still offers to delete one, which would leave the
+        unit created here without its attachment. That window closes as soon as every node is on this version.
+
+        No endpoint on either version creates an attachment that names a lecture, with one exception: importing a
+        lecture on a node of the previous version copies lecture.attachments into the new lecture, and since this
+        changelog leaves lecture_id populated, the attachments of the units it created are copied that way too. A
+        lecture imported on an old node during the deployment window can therefore end up with attachments that name a
+        lecture and no unit, which the new version does not show. They are found with
+
+            SELECT id FROM attachment WHERE lecture_id IS NOT NULL AND attachment_unit_id IS NULL
+
+        which returns nothing once every node is on this version, since no code path left on this version writes such a
+        row. A later changelog can convert whatever that query returns the same way this one does.
+    -->
+    <changeSet id="20260905235721-01-add-migration-helper-column" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit" columnName="migrated_from_attachment_id"/>
+            </not>
+        </preConditions>
+        <comment>
+            Temporary column that maps a created lecture unit back to the attachment it was created for.
+
+            The precondition is what makes this changeset safe to run again. Adding a column commits on its own on
+            MySQL, so a run that is killed between the statement and the databasechangelog row leaves the column behind
+            without a record of it, and an unguarded addColumn would then fail on every following start and keep the
+            whole application down.
+        </comment>
+        <addColumn tableName="lecture_unit">
+            <column name="migrated_from_attachment_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260905235721-01b-index-migration-helper-column" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="lecture_unit" indexName="lecture_unit_migrated_from_attachment"/>
+            </not>
+        </preConditions>
+        <comment>Index the helper column, so that reading it back per attachment row is a lookup rather than a scan.</comment>
+        <createIndex tableName="lecture_unit" indexName="lecture_unit_migrated_from_attachment">
+            <column name="migrated_from_attachment_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260905235721-02-create-units-for-lecture-attachments" author="krusche">
+        <comment>Create one attachment video unit per attachment that is attached to a lecture directly.</comment>
+        <sql>
+            INSERT INTO lecture_unit (discriminator, name, release_date, lecture_id, lecture_unit_order, migrated_from_attachment_id)
+            SELECT 'A',
+                   attachment.name,
+                   attachment.release_date,
+                   attachment.lecture_id,
+                   COALESCE(existing.highest_order, -1) + ROW_NUMBER() OVER (PARTITION BY attachment.lecture_id ORDER BY attachment.id),
+                   attachment.id
+            FROM attachment
+                LEFT JOIN (SELECT lecture_id, MAX(lecture_unit_order) AS highest_order FROM lecture_unit GROUP BY lecture_id) existing
+                    ON existing.lecture_id = attachment.lecture_id
+            WHERE attachment.lecture_id IS NOT NULL
+              AND attachment.attachment_unit_id IS NULL
+        </sql>
+        <rollback>
+            <!--
+                Deleting a unit takes its generated state with it: the ingestion state, the transcription and the Iris
+                sync row are removed by their own cascades and a slide that names the unit loses that reference. All of
+                it is derived from the attachment and is produced again once the unit is created a second time. Which
+                units this deletes is decided in the rollback of the last changeset, which is what fills the column
+                again; when it runs there, the units that carry something a rollback must not destroy are left out.
+            -->
+            <sql>DELETE FROM lecture_unit WHERE migrated_from_attachment_id IS NOT NULL</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260905235721-03-attach-migrated-attachments-to-units" author="krusche">
+        <comment>Point each migrated attachment at the lecture unit that was created for it.</comment>
+        <sql>
+            UPDATE attachment
+            SET attachment_unit_id = (SELECT unit.id FROM lecture_unit unit WHERE unit.migrated_from_attachment_id = attachment.id)
+            WHERE attachment.attachment_unit_id IS NULL
+              AND EXISTS (SELECT 1 FROM lecture_unit unit WHERE unit.migrated_from_attachment_id = attachment.id)
+        </sql>
+        <rollback>
+            <sql>
+                UPDATE attachment
+                SET attachment_unit_id = NULL
+                WHERE attachment_unit_id IN (SELECT unit.id FROM lecture_unit unit WHERE unit.migrated_from_attachment_id IS NOT NULL)
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260905235721-04-drop-migration-helper-column" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="lecture_unit" columnName="migrated_from_attachment_id"/>
+        </preConditions>
+        <comment>
+            Drop the temporary column now that every migrated attachment names its unit. Dropping a column commits on
+            its own on MySQL, so the precondition is here for the same reason as the one on the changeset that added it.
+        </comment>
+        <dropColumn tableName="lecture_unit" columnName="migrated_from_attachment_id"/>
+        <rollback>
+            <addColumn tableName="lecture_unit">
+                <column name="migrated_from_attachment_id" type="bigint"/>
+            </addColumn>
+            <createIndex tableName="lecture_unit" indexName="lecture_unit_migrated_from_attachment">
+                <column name="migrated_from_attachment_id"/>
+            </createIndex>
+            <!--
+                Recover the mapping from what the rows themselves still say. A unit this changelog created is the only
+                kind whose attachment names both the unit and the unit's own lecture: an attachment that was uploaded
+                into a unit never carried a lecture id, and the copy that importing a lecture makes carries the id of
+                the unit in its link but no lecture id either. The link is only used to tell whether the file is still
+                the one the migration left in place; a unit whose file was replaced through the unit editor names the
+                unit directory instead and is left alone, because its file has moved there and deleting the unit would
+                strand it. An attachment with no link at all still counts, since nothing has moved its file.
+
+                Units that carry something a rollback must not destroy are left out: a competency link and a completion
+                are the two references to a lecture unit the schema refuses to delete, so leaving those units in place
+                is what keeps the rollback of the previous changesets from failing halfway and leaving the database
+                between the two states. Their attachments stay attached, which is the same position a rolling
+                deployment leaves them in, and is the one this changelog is designed around.
+
+                The subquery takes the lowest id rather than the only one, because nothing in the schema stops two
+                attachments from naming the same unit, and a rollback that fails on a row like that would be worse than
+                one that picks the first.
+            -->
+            <sql>
+                UPDATE lecture_unit
+                SET migrated_from_attachment_id = (SELECT MIN(attachment.id)
+                                                   FROM attachment
+                                                   WHERE attachment.attachment_unit_id = lecture_unit.id
+                                                     AND attachment.lecture_id = lecture_unit.lecture_id
+                                                     AND (attachment.jhi_link IS NULL OR attachment.jhi_link LIKE 'attachments/lecture/%'))
+                WHERE lecture_unit.discriminator = 'A'
+                  AND NOT EXISTS (SELECT 1 FROM competency_lecture_unit link WHERE link.lecture_unit_id = lecture_unit.id)
+                  AND NOT EXISTS (SELECT 1 FROM lecture_unit_user completion WHERE completion.lecture_unit_id = lecture_unit.id)
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

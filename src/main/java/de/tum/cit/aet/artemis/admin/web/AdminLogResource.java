@@ -20,6 +20,7 @@ import ch.qos.logback.classic.LoggerContext;
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.dto.vm.LoggerVM;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * Controller for view and managing Log Level at runtime.
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("monitoring/server-logs")
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })

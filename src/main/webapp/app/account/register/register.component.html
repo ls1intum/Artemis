@@ -1,200 +1,214 @@
 @if (isRegistrationEnabled()) {
     <div>
-        <div class="row justify-content-center">
-            <div class="col-md-8">
+        <div class="flex justify-center">
+            <div class="w-full md:w-2/3">
                 <h1 jhiTranslate="register.title"></h1>
                 @if (success()) {
-                    <div class="alert alert-success" jhiTranslate="register.messages.success"><strong>Registration saved!</strong> Please check your email for confirmation.</div>
+                    <tum-ui-message severity="success">
+                        <span jhiTranslate="register.messages.success"><strong>Registration saved!</strong> Please check your email for confirmation.</span>
+                    </tum-ui-message>
                 }
                 @if (error()) {
-                    <div class="alert alert-danger" jhiTranslate="register.messages.error.fail"><strong>Registration failed!</strong> Please try again later.</div>
+                    <tum-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.fail"><strong>Registration failed!</strong> Please try again later.</span>
+                    </tum-ui-message>
                 }
                 @if (errorUserExists()) {
-                    <div class="alert alert-danger" jhiTranslate="register.messages.error.userExists">
-                        <strong>Login name already registered!</strong> Please choose another one.
-                    </div>
+                    <tum-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.userExists"><strong>Login name already registered!</strong> Please choose another one.</span>
+                    </tum-ui-message>
                 }
                 @if (errorEmailExists()) {
-                    <div class="alert alert-danger" jhiTranslate="register.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</div>
+                    <tum-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</span>
+                    </tum-ui-message>
                 }
                 @if (errorAccountRegistrationBlocked()) {
-                    <div class="alert alert-danger" jhiTranslate="register.messages.error.blocked"><strong>Account Registration blocked! </strong> Please try again later.</div>
+                    <tum-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.blocked"><strong>Account Registration blocked! </strong> Please try again later.</span>
+                    </tum-ui-message>
                 }
                 @if (doNotMatch()) {
-                    <div class="alert alert-danger" jhiTranslate="global.messages.error.dontmatch"></div>
+                    <tum-ui-message severity="error">
+                        <span jhiTranslate="global.messages.error.dontmatch"></span>
+                    </tum-ui-message>
                 }
             </div>
         </div>
-        <div class="row justify-content-center">
-            <div class="col-md-8">
+        <div class="flex justify-center">
+            <div class="w-full md:w-2/3">
                 @if (!success()) {
                     <form name="form" role="form" (ngSubmit)="register()" [formGroup]="registerForm">
-                        <div class="form-group">
-                            <label class="form-control-label" for="firstName" jhiTranslate="global.form.firstname"></label>
+                        <tum-ui-form-field class="mb-3" controlId="firstName" required>
+                            <span tumUiFormFieldLabel jhiTranslate="global.form.firstname"></span>
                             <input
                                 type="text"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="firstName"
                                 name="firstName"
                                 autocomplete="given-name"
                                 placeholder="{{ 'global.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
+                                required
                             />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-control-label" for="lastName" jhiTranslate="global.form.lastname"></label>
+                        </tum-ui-form-field>
+                        <tum-ui-form-field class="mb-3" controlId="lastName" required>
+                            <span tumUiFormFieldLabel jhiTranslate="global.form.lastname"></span>
                             <input
                                 type="text"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="lastName"
                                 name="lastName"
                                 autocomplete="family-name"
                                 placeholder="{{ 'global.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
+                                required
                             />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-control-label" for="login" jhiTranslate="register.form.login"></label>
+                        </tum-ui-form-field>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="login"
+                            required
+                            [invalid]="registerForm.controls.login.invalid && (registerForm.controls.login.dirty || registerForm.controls.login.touched)"
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="register.form.login"></span>
                             <input
                                 type="text"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="login"
                                 name="login"
                                 autocomplete="username"
                                 placeholder="{{ 'register.form.login.placeholder' | artemisTranslate }}"
                                 formControlName="login"
                                 #login
+                                required
                             />
-                            @if (registerForm.controls.login.invalid && (registerForm.controls.login.dirty || registerForm.controls.login.touched)) {
-                                <div>
-                                    @if (registerForm.controls.login.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="register.messages.validate.login.required"></small>
-                                    }
-                                    @if (registerForm.controls.login.errors?.minlength) {
-                                        <small
-                                            class="form-text text-danger"
-                                            jhiTranslate="register.messages.validate.login.minlength"
-                                            [translateValues]="{ min: USERNAME_MIN_LENGTH }"
-                                        ></small>
-                                    }
-                                    @if (registerForm.controls.login.errors?.maxlength) {
-                                        <small
-                                            class="form-text text-danger"
-                                            jhiTranslate="register.messages.validate.login.maxlength"
-                                            [translateValues]="{ max: USERNAME_MAX_LENGTH }"
-                                        ></small>
-                                    }
-                                    @if (registerForm.controls.login.errors?.pattern) {
-                                        <small class="form-text text-danger" jhiTranslate="register.messages.validate.login.pattern"></small>
-                                    }
-                                </div>
-                            }
-                        </div>
+                            <ng-container tumUiFormFieldError>
+                                @if (registerForm.controls.login.errors?.required) {
+                                    <small jhiTranslate="register.messages.validate.login.required"></small>
+                                }
+                                @if (registerForm.controls.login.errors?.minlength) {
+                                    <small jhiTranslate="register.messages.validate.login.minlength" [translateValues]="{ min: USERNAME_MIN_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.login.errors?.maxlength) {
+                                    <small jhiTranslate="register.messages.validate.login.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.login.errors?.pattern) {
+                                    <small jhiTranslate="register.messages.validate.login.pattern"></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
                         @if (allowedEmailPatternReadable()) {
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <strong jhiTranslate="global.form.email.pattern"></strong>
                                 {{ allowedEmailPatternReadable() }}
                             </div>
                         }
-                        <div class="form-group">
-                            <label class="form-control-label" for="email" jhiTranslate="global.form.email"></label>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="email"
+                            required
+                            [invalid]="registerForm.controls.email.invalid && (registerForm.controls.email.dirty || registerForm.controls.email.touched)"
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="global.form.email"></span>
                             <input
                                 type="email"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="email"
                                 name="email"
                                 autocomplete="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
+                                required
                             />
-                            @if (registerForm.controls.email.invalid && (registerForm.controls.email.dirty || registerForm.controls.email.touched)) {
-                                <div>
-                                    @if (registerForm.controls.email.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.required"></small>
-                                    }
-                                    @if (registerForm.controls.email.errors?.email) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.invalid"></small>
-                                    }
-                                    @if (registerForm.controls.email.errors?.minlength) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.minlength"></small>
-                                    }
-                                    @if (registerForm.controls.email.errors?.maxlength) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.maxlength"></small>
-                                    }
-                                    @if (registerForm.controls.email.errors?.pattern) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.pattern"></small>
-                                    }
-                                </div>
-                            }
-                        </div>
-                        <div class="form-group">
-                            <label class="form-control-label" for="password" jhiTranslate="global.form.newpassword"></label>
+                            <ng-container tumUiFormFieldError>
+                                @if (registerForm.controls.email.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.email.required"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.email) {
+                                    <small jhiTranslate="global.messages.validate.email.invalid"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.email.minlength"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.email.maxlength"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.pattern) {
+                                    <small jhiTranslate="global.messages.validate.email.pattern"></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="password"
+                            required
+                            [invalid]="registerForm.controls.password.invalid && (registerForm.controls.password.dirty || registerForm.controls.password.touched)"
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="global.form.newpassword"></span>
                             <input
                                 type="password"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="password"
                                 name="password"
                                 autocomplete="new-password"
                                 placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
                                 formControlName="password"
+                                required
                             />
-                            @if (registerForm.controls.password.invalid && (registerForm.controls.password.dirty || registerForm.controls.password.touched)) {
-                                <div>
-                                    @if (registerForm.controls.password.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.newpassword.required"></small>
-                                    }
-                                    @if (registerForm.controls.password.errors?.minlength) {
-                                        <small
-                                            class="form-text text-danger"
-                                            jhiTranslate="global.messages.validate.newpassword.minlength"
-                                            [translateValues]="{ min: PASSWORD_MIN_LENGTH }"
-                                        ></small>
-                                    }
-                                    @if (registerForm.controls.password.errors?.maxlength) {
-                                        <small
-                                            class="form-text text-danger"
-                                            jhiTranslate="global.messages.validate.newpassword.maxlength"
-                                            [translateValues]="{ max: PASSWORD_MAX_LENGTH }"
-                                        ></small>
-                                    }
-                                </div>
-                            }
+                            <ng-container tumUiFormFieldError>
+                                @if (registerForm.controls.password.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.required"></small>
+                                }
+                                @if (registerForm.controls.password.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.minlength" [translateValues]="{ min: PASSWORD_MIN_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.password.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.maxlength" [translateValues]="{ max: PASSWORD_MAX_LENGTH }"></small>
+                                }
+                            </ng-container>
                             <jhi-password-strength-bar [passwordToCheck]="registerForm.controls.password.value" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-control-label" for="confirmPassword" jhiTranslate="global.form.confirmpassword"></label>
+                        </tum-ui-form-field>
+                        <tum-ui-form-field
+                            class="mb-3"
+                            controlId="confirmPassword"
+                            required
+                            [invalid]="
+                                registerForm.controls.confirmPassword.invalid && (registerForm.controls.confirmPassword.dirty || registerForm.controls.confirmPassword.touched)
+                            "
+                        >
+                            <span tumUiFormFieldLabel jhiTranslate="global.form.confirmpassword"></span>
                             <input
                                 type="password"
-                                class="form-control"
+                                tumUiInput
+                                class="w-full"
                                 id="confirmPassword"
                                 name="confirmPassword"
                                 autocomplete="new-password"
                                 placeholder="{{ 'global.form.confirmpassword.placeholder' | artemisTranslate }}"
                                 formControlName="confirmPassword"
+                                required
                             />
-                            @if (registerForm.controls.confirmPassword.invalid && (registerForm.controls.confirmPassword.dirty || registerForm.controls.confirmPassword.touched)) {
-                                <div>
-                                    @if (registerForm.controls.confirmPassword.errors?.required) {
-                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.confirmpassword.required"></small>
-                                    }
-                                    @if (registerForm.controls.confirmPassword.errors?.minlength) {
-                                        <small
-                                            class="form-text text-danger"
-                                            jhiTranslate="global.messages.validate.confirmpassword.minlength"
-                                            [translateValues]="{ min: PASSWORD_MIN_LENGTH }"
-                                        ></small>
-                                    }
-                                    @if (registerForm.controls.confirmPassword.errors?.maxlength) {
-                                        <small
-                                            class="form-text text-danger"
-                                            jhiTranslate="global.messages.validate.confirmpassword.maxlength"
-                                            [translateValues]="{ max: PASSWORD_MAX_LENGTH }"
-                                        ></small>
-                                    }
-                                </div>
-                            }
-                        </div>
-                        <button type="submit" [disabled]="registerForm.invalid" class="btn btn-primary" jhiTranslate="register.form.button"></button>
+                            <ng-container tumUiFormFieldError>
+                                @if (registerForm.controls.confirmPassword.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.confirmpassword.required"></small>
+                                }
+                                @if (registerForm.controls.confirmPassword.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.confirmpassword.minlength" [translateValues]="{ min: PASSWORD_MIN_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.confirmPassword.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.confirmpassword.maxlength" [translateValues]="{ max: PASSWORD_MAX_LENGTH }"></small>
+                                }
+                            </ng-container>
+                        </tum-ui-form-field>
+                        <tum-ui-button type="submit" [disabled]="registerForm.invalid">
+                            <span jhiTranslate="register.form.button"></span>
+                        </tum-ui-button>
                     </form>
                 }
             </div>

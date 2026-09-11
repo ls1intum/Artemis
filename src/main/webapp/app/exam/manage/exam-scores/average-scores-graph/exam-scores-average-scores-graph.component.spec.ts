@@ -14,6 +14,7 @@ import { LocaleConversionService } from 'app/foundation/service/locale-conversio
 import { RouterModule } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumUiChartSelectEvent } from '@tumaet/ui-angular';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -116,7 +117,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     describe('test exercise navigation', () => {
         // index 1 corresponds to the entry '2 StrategyPattern' in the chart data
-        const event = { element: { datasetIndex: 0, index: 1 } };
+        const event: TumUiChartSelectEvent = { seriesIndex: 0, index: 1, label: '2 StrategyPattern' };
         it('should navigate if event is valid', () => {
             component.lookup['2 StrategyPattern'] = { exerciseId: 42, exerciseType: ExerciseType.QUIZ };
 
@@ -143,7 +144,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         });
 
         it('should not navigate if the click did not hit a bar', () => {
-            component.onSelect({});
+            component.onSelect({ seriesIndex: 0, index: 0 });
 
             expect(navigateToExerciseMock).not.toHaveBeenCalled();
         });

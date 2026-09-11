@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Service;
  *
  * @see de.tum.cit.aet.artemis.core.architecture.TempFileArchitectureTest
  */
-@Profile(PROFILE_CORE)
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Lazy
 @Service
 public class TempFileUtilService {

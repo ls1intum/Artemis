@@ -228,12 +228,6 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             (exercise, value) => (exercise.allowComplaintsForAutomaticAssessments = value),
         ),
         baseHandler(
-            'allowFeedbackRequests',
-            'artemisApp.course.requestMoreFeedbackEnabled.title',
-            (exercise) => exercise.allowFeedbackRequests,
-            (exercise, value) => (exercise.allowFeedbackRequests = value),
-        ),
-        baseHandler(
             'includedInOverallScore',
             'artemisApp.exercise.includedInOverallScore',
             (exercise) => exercise.includedInOverallScore,
@@ -271,12 +265,6 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             'artemisApp.exam.secondCorrectionColumn',
             (exercise) => exercise.secondCorrectionEnabled,
             (exercise, value) => (exercise.secondCorrectionEnabled = (value as boolean | undefined) ?? false),
-        ),
-        baseHandler(
-            'feedbackSuggestionModule',
-            'artemisApp.exercise.feedbackSuggestionsEnabled',
-            (exercise) => exercise.feedbackSuggestionModule,
-            (exercise, value) => (exercise.feedbackSuggestionModule = value),
         ),
         {
             key: 'gradingCriteria',

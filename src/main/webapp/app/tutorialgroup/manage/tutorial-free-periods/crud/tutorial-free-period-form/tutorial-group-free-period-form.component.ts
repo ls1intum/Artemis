@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -6,6 +6,8 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
+import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonDirective, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectButtonComponent } from '@tumaet/ui-angular';
 
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
@@ -32,10 +34,23 @@ export enum TimeFrame {
     selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        FormDateTimePickerComponent,
+        TumUiButtonDirective,
+        TumUiFormFieldComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+        TumUiSelectButtonComponent,
+    ],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit {
     private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
     protected readonly DateTimePickerType = DateTimePickerType;
 
     readonly formData = input<TutorialGroupFreePeriodFormData>({
@@ -67,6 +82,14 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
     // Enum Object to be used for Comparing different TimeFrames in the template.
     protected readonly TimeFrame = TimeFrame;
 
+    // The three time frames as segmented-control options. Computed so the labels re-translate on a language
+    // change rather than being frozen at construction.
+    protected readonly timeFrameOptions = computed(() => [
+        { label: this.translateService.instant('artemisApp.forms.tutorialFreePeriodForm.timeFrame.period'), value: TimeFrame.Period },
+        { label: this.translateService.instant('artemisApp.forms.tutorialFreePeriodForm.timeFrame.day'), value: TimeFrame.Day },
+        { label: this.translateService.instant('artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay'), value: TimeFrame.PeriodWithinDay },
+    ]);
+
     constructor() {
         // Effect to handle formData changes (replaces ngOnChanges)
         effect(() => {
@@ -85,6 +108,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
      * Sets the time frame for the form and resets the necessary date controls.
      * @param {TimeFrame} timeFrame - The time frame to set. This should be one of the values from the TimeFrame enum.
      */
+    /** Handles the segmented control, which emits the chosen option value untyped. */
+    onTimeFrameSelected(value: unknown) {
+        this.setTimeFrame(value as TimeFrame);
+    }
+
     setTimeFrame(timeFrame: TimeFrame) {
         // Snapshot the values of controls that are visible in the CURRENT tab before switching
         // away. Always store the value — even undefined — so an explicit user clear is recorded

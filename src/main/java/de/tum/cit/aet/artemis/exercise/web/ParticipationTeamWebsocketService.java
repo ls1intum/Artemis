@@ -59,6 +59,9 @@ public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);
 
+    /** The team destination of a participation, with its id as the one group. Derived from the destination itself, so the two cannot drift apart. */
+    private static final Pattern TEAM_DESTINATION = Pattern.compile("^" + getDestination("(\\d*)"));
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final SimpUserRegistry simpUserRegistry;
@@ -237,7 +240,7 @@ public class ParticipationTeamWebsocketService {
      * @param syncTeammates   flag whether to send the updated submission to all teammates
      */
     private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath, boolean syncTeammates) {
-        // Without this, custom jpa repository methods don't work in websocket channel.
+        // The websocket message carries a real principal, which this keeps; it only stands in if one is missing.
         SecurityUtils.setAuthorizationObject();
 
         final StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
@@ -253,10 +256,16 @@ public class ParticipationTeamWebsocketService {
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
             ModelingSubmissionApi api = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));
             submission = api.handleModelingSubmission(modelingSubmission, modelingExercise, user);
+            // The save wrote the foreign key from an id, so the saved submission carries no participation. Both the
+            // filtering below and the teammates' payload read one, and this handler loaded it with its team above.
+            submission.setParticipation(participation);
             api.hideDetails(submission, user);
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
-            submission = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).handleTextSubmission(textSubmission, textExercise, user);
+            TextSubmissionApi api = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
+            submission = api.handleTextSubmission(textSubmission, textExercise, user);
+            submission.setParticipation(participation);
+            api.hideDetails(submission, user);
         }
         else {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
@@ -281,7 +290,7 @@ public class ParticipationTeamWebsocketService {
      * @param topicPath       path of websocket destination topic where to send the new submission
      */
     private void patchSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal, String topicPath) {
-        // Without this, custom jpa repository methods don't work in websocket channel.x
+        // The websocket message carries a real principal, which this keeps; it only stands in if one is missing.
         SecurityUtils.setAuthorizationObject();
 
         // user must belong to the team who owns the participation in order to update a submission
@@ -394,8 +403,7 @@ public class ParticipationTeamWebsocketService {
      * @return participation id
      */
     public static Long getParticipationIdFromDestination(String destination) {
-        Pattern pattern = Pattern.compile("^" + getDestination("(\\d*)"));
-        Matcher matcher = pattern.matcher(destination);
+        Matcher matcher = TEAM_DESTINATION.matcher(destination);
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 

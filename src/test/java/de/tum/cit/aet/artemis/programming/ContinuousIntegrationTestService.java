@@ -3,14 +3,8 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -22,12 +16,8 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -39,18 +29,7 @@ public class ContinuousIntegrationTestService {
     @Value("${artemis.continuous-integration.url}")
     private URI ciServerUrl;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCBasePath;
-
-    private final LocalRepository localRepo = new LocalRepository(defaultBranch);
-
     private ProgrammingExerciseStudentParticipation participation;
-
-    @Autowired
-    private GitService gitService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -68,7 +47,7 @@ public class ContinuousIntegrationTestService {
     public ProgrammingExercise programmingExercise;
 
     /**
-     * This method initializes the test case by setting up a local repo
+     * Initializes the test case with a programming exercise and a student participation whose repository is a real LocalVC repository.
      */
     public void setup(String testPrefix, MockDelegate mockDelegate, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         this.mockDelegate = mockDelegate;
@@ -78,30 +57,9 @@ public class ContinuousIntegrationTestService {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(testPrefix);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
 
-        // init local repo
-        String currentLocalFileName = "currentFileName";
-        String currentLocalFileContent = "testContent";
-        String currentLocalFolderName = "currentFolderName";
         String login = testPrefix + "student1";
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo-" + login, "testOriginRepo-" + login);
-        // add file to the repository folder
-        Path filePath = Path.of(localRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
-        File file = Files.createFile(filePath).toFile();
-        // write content to the created file
-        FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
-        // add folder to the repository folder
-        filePath = Path.of(localRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(filePath);
-
-        var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, localVCBasePath));
-        // create a participation
-
-        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, login, localRepoUri.getURI());
+        participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, login);
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
-    }
-
-    public void tearDown() throws IOException {
-        localRepo.resetLocalRepo();
     }
 
     public ProgrammingExerciseStudentParticipation getParticipation() {

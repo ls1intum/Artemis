@@ -106,7 +106,7 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseEditor.saveExampleSubmission();
             const saveResponse = await savePromise;
             expect(saveResponse.status()).toBe(200);
-            await expect(page.locator('jhi-alert-overlay .alert-inner.danger')).toHaveCount(0);
+            await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toHaveCount(0);
         });
 
         test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {

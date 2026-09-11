@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -43,8 +45,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -212,11 +217,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // Create feedback with duplicate content for test1 and test3
         // This mimics that two new testcases are going to be found as testcases but those are duplicate
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(testCases.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(testCases.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(testCases.get("test2")).positive(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(testCases.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(testCases.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, testCases.get("test1"), true);
+        addTestCaseFeedback(result, testCases.get("test1"), true);
+        addTestCaseFeedback(result, testCases.get("test2"), false);
+        addTestCaseFeedback(result, testCases.get("test3"), false);
+        addTestCaseFeedback(result, testCases.get("test3"), false);
         result.feedbacks(feedbacks);
         int originalFeedbackSize = result.getFeedbacks().size();
 
@@ -231,16 +236,49 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
     }
 
+    /**
+     * The duplicate-test-case warnings are the only automatic feedback the grading flow still writes to the legacy
+     * feedback table, and re-evaluating an exercise runs that flow again on a result that already carries them.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotAccumulateDuplicateTestCaseFeedbackOverSeveralRuns() {
+        var testCases = getTestCases(programmingExercise);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCaseRepository.saveAll(testCases.values());
+        testCases = getTestCases(programmingExercise);
+
+        // the build reported test1 twice
+        addTestCaseFeedback(result, testCases.get("test1"), true);
+        addTestCaseFeedback(result, testCases.get("test1"), true);
+        addTestCaseFeedback(result, testCases.get("test2"), false);
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+        long afterFirstRun = countDuplicateTestCaseFeedback(result);
+
+        // a re-evaluation grades the very same result again
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        assertThat(afterFirstRun).isEqualTo(1);
+        assertThat(countDuplicateTestCaseFeedback(result)).isEqualTo(afterFirstRun);
+    }
+
+    private static long countDuplicateTestCaseFeedback(Result result) {
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getText() != null && feedback.getText().endsWith(" - Duplicate Test Case!")).count();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         var tests = getTestCases(programmingExercise);
         tests.put("test4", programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get("test4")).positive(false).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, tests.get("test1"), true);
+        addTestCaseFeedback(result, tests.get("test2"), true);
+        addTestCaseFeedback(result, tests.get("test3"), false);
+        addTestCaseFeedback(result, tests.get("test4"), false);
         result.setFeedbacks(feedbacks);
         result.setSuccessful(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -261,7 +299,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     void shouldSetScoreToZeroForExerciseWithoutMaxPoints() {
         var tests = getTestCases(programmingExercise);
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, tests.get("test1"), true);
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setMaxPoints(0.0);
@@ -279,10 +317,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         tests.add(programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
-        feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(3)).positive(false).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, tests.getFirst(), true);
+        addTestCaseFeedback(result, tests.get(1), true);
+        addTestCaseFeedback(result, tests.get(2), false);
+        addTestCaseFeedback(result, tests.get(3), false);
         feedbacks.add(new Feedback().text("manual").positive(false).type(FeedbackType.MANUAL_UNREFERENCED));
         result.feedbacks(feedbacks);
         result.successful(false);
@@ -313,8 +351,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         var submission = participationUtilService.addSubmission(programmingExercise, new ProgrammingSubmission(), student1);
         var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
-        result.addFeedback(new Feedback().result(result).testCase(testCases.get("test1")).positive(false).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).testCase(testCases.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, testCases.get("test1"), false);
+        addTestCaseFeedback(result, testCases.get("test2"), true);
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isZero();
@@ -379,40 +417,39 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var resultMF = new Result();
         Submission submissionMF = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         resultMF.setSubmission(submissionMF);
-        var feedbackMF = new Feedback().result(result).testCase(testCases.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
-        resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
-                .rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        addTestCaseFeedback(resultMF, testCases.get("test3"), true);
+        resultMF.rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         gradingService.calculateScoreForResult(resultMF, programmingExercise, true);
 
         // Assertions result1 - calculated
         assertThat(result1.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
         assertThat(result1.isSuccessful()).isFalse();
-        assertThat(result1.getFeedbacks()).hasSize(3);
+        assertThat(result1.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
         assertThat(result2.getScore()).isEqualTo(66.7);
         assertThat(result2.isSuccessful()).isFalse();
-        assertThat(result2.getFeedbacks()).hasSize(3);
+        assertThat(result2.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result3 - calculated
         assertThat(result3.getScore()).isEqualTo(40D);
         assertThat(result3.isSuccessful()).isFalse();
-        assertThat(result3.getFeedbacks()).hasSize(3);
+        assertThat(result3.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result4 - calculated
         assertThat(result4.getScore()).isEqualTo(95D, Offset.offset(offsetByTenThousandth));
         assertThat(result4.isSuccessful()).isFalse();
-        assertThat(result4.getFeedbacks()).hasSize(3);
+        assertThat(result4.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result5 - capped to 100
         assertThat(result5.getScore()).isEqualTo(100D);
         assertThat(result5.isSuccessful()).isTrue();
-        assertThat(result5.getFeedbacks()).hasSize(3);
+        assertThat(result5.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result6 - only negative feedback
         assertThat(result6.getScore()).isZero();
         assertThat(result6.isSuccessful()).isFalse();
-        assertThat(result6.getFeedbacks()).hasSize(3);
+        assertThat(result6.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions resultBF - build failure
         assertThat(resultBF.getScore()).isZero();
@@ -422,7 +459,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // Assertions resultMF - missing feedback will be created but is negative
         assertThat(resultMF.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
         assertThat(resultMF.isSuccessful()).isFalse();
-        assertThat(resultMF.getFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
+        assertThat(resultMF.getTestCaseFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
     }
 
     @Test
@@ -461,22 +498,22 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // Assertions result1 - calculated
         assertThat(result1.getScore()).isEqualTo(93.3);
         assertThat(result1.isSuccessful()).isFalse();
-        assertThat(result1.getFeedbacks()).hasSize(3);
+        assertThat(result1.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
         assertThat(result2.getScore()).isEqualTo(133.3);
         assertThat(result2.isSuccessful()).isTrue();
-        assertThat(result2.getFeedbacks()).hasSize(3);
+        assertThat(result2.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result3 - calculated
         assertThat(result3.getScore()).isEqualTo(180D, Offset.offset(offsetByTenThousandth));
         assertThat(result3.isSuccessful()).isTrue();
-        assertThat(result3.getFeedbacks()).hasSize(3);
+        assertThat(result3.getTestCaseFeedbacks()).hasSize(3);
 
         // Assertions result4 - capped at 200%
         assertThat(result4.getScore()).isEqualTo(200D);
         assertThat(result4.isSuccessful()).isTrue();
-        assertThat(result4.getFeedbacks()).hasSize(3);
+        assertThat(result4.getTestCaseFeedbacks()).hasSize(3);
     }
 
     @Test
@@ -487,9 +524,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, tests.getFirst(), true);
+        addTestCaseFeedback(result, tests.get(1), true);
+        addTestCaseFeedback(result, tests.get(2), false);
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -504,7 +541,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must still be there but have its visibility set to AFTER_DUE_DATE.
-        assertThat(result.getFeedbacks().stream().filter(feedback -> feedback.getVisibility() == Visibility.AFTER_DUE_DATE).map(Feedback::getTestCase))
+        assertThat(result.getTestCaseFeedbacks().stream().filter(feedback -> feedback.getVisibility() == Visibility.AFTER_DUE_DATE).map(TestCaseFeedback::getTestCase))
                 .containsExactly(tests.get(2));
     }
 
@@ -516,9 +553,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.getFirst()).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(1)).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get(2)).positive(false).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, tests.getFirst(), true);
+        addTestCaseFeedback(result, tests.get(1), true);
+        addTestCaseFeedback(result, tests.get(2), false);
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -532,8 +569,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.ALWAYS)).hasSize(1);
-        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
+        assertThat(result.getTestCaseFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.ALWAYS)).hasSize(1);
+        assertThat(result.getTestCaseFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
     }
 
     @Test
@@ -545,9 +582,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         var tests = getTestCases(programmingExercise);
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().testCase(tests.get("test1")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().testCase(tests.get("test3")).positive(false).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, tests.get("test1"), true);
+        addTestCaseFeedback(result, tests.get("test2"), true);
+        addTestCaseFeedback(result, tests.get("test3"), false);
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -562,7 +599,44 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks()).anyMatch(feedback -> "test3".equals(feedback.getTestCase().getTestName()));
+        assertThat(result.getTestCaseFeedbacks()).anyMatch(feedback -> "test3".equals(feedback.getTestCase().getTestName()));
+    }
+
+    /**
+     * Re-evaluating the exercise itself (the endpoint behind a grading-criteria change) recalculates the score of every
+     * result from the typed automatic feedback, which is lazy and therefore has to be loaded first. Scoring a result
+     * whose typed collections were not loaded is refused outright, so this would fail rather than compute silently.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldKeepScoresWhenReEvaluatingTheExerciseItself() throws Exception {
+        programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
+                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
+        createTestCases(false);
+        final Participation[] participations = createTestParticipations();
+
+        final Map<Long, Double> scoresBefore = scoresOfLatestResults(participations);
+        assertThat(scoresBefore.values()).anyMatch(score -> score > 0);
+
+        final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+
+        // nothing about the grading configuration changed, so every score has to come out the same
+        assertThat(scoresOfLatestResults(participations)).isEqualTo(scoresBefore);
+    }
+
+    private Map<Long, Double> scoresOfLatestResults(Participation[] participations) {
+        final Map<Long, Double> scores = new HashMap<>();
+        for (Participation participation : participations) {
+            // read the results back from the database: the participations were built before the re-evaluation and are detached
+            resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId()).stream().findFirst()
+                    .ifPresent(result -> scores.put(participation.getId(), result.getScore()));
+        }
+        return scores;
     }
 
     @Test
@@ -758,11 +832,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(updatedStudentResults).hasSize(5);
 
         for (final var result : updatedStudentResults) {
-            result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
-                    .forEach(feedback -> {
-                        double bonusPoints = feedback.getTestCase().getBonusPoints();
-                        assertThat(feedback.getCredits()).isEqualTo(bonusPoints);
-                    });
+            var pointsByTestCaseId = gradingService.calculateTestCasePoints(programmingExercise, result);
+            result.getTestCaseFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).forEach(feedback -> {
+                double bonusPoints = feedback.getTestCase().getBonusPoints();
+                assertThat(pointsByTestCaseId.get(feedback.getTestCase().getId())).isEqualTo(bonusPoints);
+            });
         }
     }
 
@@ -788,16 +862,20 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         feedback.setDetailText("long feedback".repeat(1000));
         result = participationUtilService.addFeedbackToResult(feedback, result);
 
-        // Code Style (coding for checkstyle) is visible by default
-        final Feedback scaFeedback = new Feedback().text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"coding\"}")
-                .type(FeedbackType.AUTOMATIC).positive(false);
-        participationUtilService.addFeedbackToResult(scaFeedback, result);
+        // Code Style (coding for checkstyle) is visible by default; the stored row carries the already
+        // resolved Artemis category, exactly like a row persisted after result processing
+        final ScaFeedback scaFeedback = new ScaFeedback();
+        scaFeedback.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
+        scaFeedback.setCategory("Code Style");
+        result.addScaFeedback(scaFeedback);
+        result = resultRepository.save(result);
 
         var updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
 
         assertThat(updatedResults).hasSize(1);
         var updatedResult = updatedResults.getFirst();
-        assertThat(updatedResult.getFeedbacks()).hasSize(2);
+        assertThat(updatedResult.getFeedbacks()).hasSize(1);
+        assertThat(updatedResult.getScaFeedbacks()).hasSize(1);
 
         programmingExercise.getStaticCodeAnalysisCategories().stream().filter(category -> category.getName().equals("Code Style")).findFirst()
                 .ifPresent(category -> category.setState(CategoryState.INACTIVE));
@@ -808,7 +886,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(updatedResults).hasSize(1);
         updatedResult = updatedResults.getFirst();
         assertThat(updatedResult.getFeedbacks()).hasSize(1);
-        // only one feedback since the inactive sca feedback got removed
+        // the inactive sca feedback got removed
+        assertThat(updatedResult.getScaFeedbacks()).isEmpty();
     }
 
     private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {
@@ -886,12 +965,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
         var tests = getTestCases(programmingExercise);
-        var feedback1 = new Feedback().result(result).testCase(tests.get("test1")).positive(test1Passes).type(FeedbackType.AUTOMATIC);
-        result.addFeedback(feedback1);
-        var feedback2 = new Feedback().result(result).testCase(tests.get("test2")).positive(test2Passes).type(FeedbackType.AUTOMATIC);
-        result.addFeedback(feedback2);
-        var feedback3 = new Feedback().result(result).testCase(tests.get("test3")).positive(test3Passes).type(FeedbackType.AUTOMATIC);
-        result.addFeedback(feedback3);
+        addTestCaseFeedback(result, tests.get("test1"), test1Passes);
+        addTestCaseFeedback(result, tests.get("test2"), test2Passes);
+        addTestCaseFeedback(result, tests.get("test3"), test3Passes);
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         result.setExerciseId(programmingExercise.getId());
         gradingService.calculateScoreForResult(result, programmingExercise, true);
@@ -953,9 +1029,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             var result2b = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2b);
             var tests = getTestCases(programmingExercise);
             result2b = result2b.score(61D).successful(false).rated(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.SEMI_AUTOMATIC);
-            result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test1")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
-            result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test2")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
-            result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).credits(50.00));
+            addTestCaseFeedback(result2b, tests.get("test1"), false);
+            addTestCaseFeedback(result2b, tests.get("test2"), false);
+            addTestCaseFeedback(result2b, tests.get("test3"), true);
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done referenced!").credits(1.00).type(FeedbackType.MANUAL));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done unreferenced!").credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done general!").credits(0.00));
@@ -1025,22 +1101,19 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         result1 = result.successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
         result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        var gatingTestCase = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test1").orElseThrow();
+        addTestCaseFeedback(result1, gatingTestCase, true);
         // Add feedback which belongs to INACTIVE category
-        var feedback1 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
-                .detailText("{\"category\": \"miscellaneous\"}").type(FeedbackType.AUTOMATIC);
-        result1.addFeedback(feedback1);
+        addScaFeedback(result1, StaticCodeAnalysisTool.CHECKSTYLE, "miscellaneous");
         // Add feedback without category
-        var feedback2 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("").type(FeedbackType.AUTOMATIC);
-        result1.addFeedback(feedback2);
+        addScaFeedback(result1, StaticCodeAnalysisTool.CHECKSTYLE, "");
         // Add feedback with unsupported rule
-        var feedback3 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
-                .detailText("{\"category\": \"doesNotExist\"}").type(FeedbackType.AUTOMATIC);
-        result1.addFeedback(feedback3);
+        addScaFeedback(result1, StaticCodeAnalysisTool.CHECKSTYLE, "doesNotExist");
 
         Result updatedResult = gradingService.calculateScoreForResult(result1, programmingExerciseSCAEnabled, true);
 
         assertThat(updatedResult.getFeedbacks()).hasSize(1);
-        assertThat(updatedResult.getFeedbacks()).doesNotContain(feedback1, feedback2, feedback3);
+        assertThat(updatedResult.getScaFeedbacks()).isEmpty();
     }
 
     @Test
@@ -1290,7 +1363,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
     }
 
@@ -1299,7 +1372,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
         var allResults = resultRepository.findAllBySubmissionParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);
@@ -1434,11 +1507,26 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     private void testParticipationResult(Result result, Double score, int feedbackSize, AssessmentType assessmentType) {
         assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
-        assertThat(result.getFeedbacks()).hasSize(feedbackSize);
+        int typedFeedbackCount = testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())).size()
+                + scaFeedbackRepository.findByResultIds(List.of(result.getId())).size();
+        // A loader that promises feedback attaches the synthesized view of the typed rows to getFeedbacks(), so adding
+        // both counts would count those rows twice. A synthesized view carries a negative (synthetic) id, which is what
+        // tells it apart from feedback that genuinely lives in the feedback table.
+        long ownFeedbackCount = result.getFeedbacks().stream()
+                .filter(feedback -> feedback.getId() == null || !ProgrammingFeedbackSynthesizerService.isSyntheticId(feedback.getId())).count();
+        assertThat(ownFeedbackCount + typedFeedbackCount).isEqualTo(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
 
         Exercise exercise = result.getSubmission().getParticipation().getExercise();
-        double calculatedScore = result.calculateTotalPointsForProgrammingExercises() / exercise.getMaxPoints() * 100.;
+        // Re-derive the score from the stored rows: the typed collections supply the automatic points, so the
+        // synthesized views a feedback-promising loader attached to getFeedbacks() must be dropped first -
+        // otherwise the same automatic feedback would be counted twice.
+        result.setFeedbacks(
+                result.getFeedbacks().stream().filter(feedback -> feedback.getId() == null || !ProgrammingFeedbackSynthesizerService.isSyntheticId(feedback.getId())).toList());
+        result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
+        result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
+        double calculatedScore = result.calculateTotalPointsForProgrammingExercises(gradingService.calculateTestCasePoints((ProgrammingExercise) exercise, result))
+                / exercise.getMaxPoints() * 100.;
         calculatedScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculatedScore, exercise.getCourseViaExerciseGroupOrCourseMember());
         assertThat(calculatedScore).isEqualTo(score);
     }
@@ -1453,24 +1541,20 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test2").orElseThrow();
         var test3 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test3").orElseThrow();
 
-        result.addFeedback(new Feedback().result(result).testCase(test1).positive(test1Passes).positive(test1Passes).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).testCase(test2).positive(test2Passes).positive(test2Passes).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).testCase(test3).positive(test3Passes).positive(test3Passes).type(FeedbackType.AUTOMATIC));
+        addTestCaseFeedback(result, test1, test1Passes);
+        addTestCaseFeedback(result, test2, test2Passes);
+        addTestCaseFeedback(result, test3, test3Passes);
 
         for (int i = 0; i < issuesCategory1; i++) {
-            result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS")
-                    .detailText("{\"category\": \"BAD_PRACTICE\"}").type(FeedbackType.AUTOMATIC).positive(false));
+            addScaFeedback(result, StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE");
         }
         for (int i = 0; i < issuesCategory2; i++) {
-            result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"STYLE\"}")
-                    .type(FeedbackType.AUTOMATIC).positive(false));
+            addScaFeedback(result, StaticCodeAnalysisTool.SPOTBUGS, "STYLE");
         }
 
-        var feedbackForInactiveCategory = ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
-        result.addFeedback(feedbackForInactiveCategory);
+        ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
 
-        result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"CORRECTNESS\"}")
-                .type(FeedbackType.AUTOMATIC).positive(false));
+        addScaFeedback(result, StaticCodeAnalysisTool.SPOTBUGS, "CORRECTNESS");
 
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(completionDate).assessmentType(AssessmentType.AUTOMATIC);
         result.setExerciseId(programmingExerciseSCAEnabled.getId());
@@ -1478,6 +1562,21 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         gradingService.calculateScoreForResult(result, programmingExerciseSCAEnabled, true);
 
         resultRepository.save(result);
+    }
+
+    private static TestCaseFeedback addTestCaseFeedback(Result result, ProgrammingExerciseTestCase testCase, Boolean positive) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(positive);
+        result.addTestCaseFeedback(feedback);
+        return feedback;
+    }
+
+    private static void addScaFeedback(Result result, StaticCodeAnalysisTool tool, String toolCategory) {
+        ScaFeedback scaFeedback = new ScaFeedback();
+        scaFeedback.setTool(tool);
+        scaFeedback.setToolCategory(toolCategory);
+        result.addScaFeedback(scaFeedback);
     }
 
     private void createStudentExam(ProgrammingExercise exercise, String student) {

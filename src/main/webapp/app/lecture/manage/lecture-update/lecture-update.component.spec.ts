@@ -26,7 +26,6 @@ import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { signal } from '@angular/core';
@@ -69,7 +68,6 @@ describe('LectureUpdateComponent', () => {
                 MockComponent(LectureTitleChannelNameComponent),
                 MockComponent(TitleChannelNameComponent),
                 MockComponent(FormDateTimePickerComponent),
-                MockComponent(LectureAttachmentsComponent),
                 MockComponent(LectureUpdateUnitsComponent),
                 MockComponent(LectureTimelineComponent),
                 MockComponent(LectureUnitManagementComponent),

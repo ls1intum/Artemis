@@ -79,7 +79,8 @@ public class ContentChangeScheduler {
      */
     @Scheduled(fixedRateString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}", initialDelayString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}")
     public void tick() {
-        SecurityUtils.setAuthorizationObject();
+        // Entry point on a pooled scheduler thread: install the system principal rather than inherit a leftover.
+        SecurityUtils.setSystemAuthorizationObject();
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasAgent)) {
             return;
         }
@@ -182,6 +183,6 @@ public class ContentChangeScheduler {
     private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {
         AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount,
                 Instant.now(clock));
-        websocketMessagingService.sendMessage(String.format(TOPIC_TEMPLATE, courseId), summary);
+        websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
     }
 }

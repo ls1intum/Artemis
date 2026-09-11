@@ -22,7 +22,7 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
  * Encapsulates the orchestrator button, the run lifecycle (calling {@link CompetencyOrchestrationApiService})
  * and the result dialog so that host components (e.g. the exercise detail pages) stay decoupled
  * from Atlas-specific logic. Works for any supported exercise type (programming, text, modeling,
- * file-upload, quiz); the backend resolves the exercise generically.
+ * file-upload, quiz); the server resolves the exercise generically.
  */
 @Component({
     selector: 'jhi-atlas-orchestration-trigger',
@@ -64,7 +64,7 @@ export class AtlasOrchestrationTriggerComponent {
         }
         this.orchestrationRunning.set(true);
         try {
-            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
+            // The server returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.

@@ -74,7 +74,8 @@
         }
     }
 
-    // Beats the global `a:not(.btn):not(.tab-link):hover` rule.
+    // Beats the hover underline from `global.scss` — see the comment there rather than restating its selector, which
+    // has already gone stale twice.
     a.variant-card__link:hover,
     a.variant-card__link:focus,
     a.variant-card__link:active {

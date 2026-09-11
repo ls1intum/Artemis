@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.exception.failureAnalyzer;
 
+import java.util.Locale;
+
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
@@ -49,6 +51,6 @@ public class InsecureDefaultCredentialFailureAnalyzer extends AbstractFailureAna
      * @return the corresponding environment variable name
      */
     private static String toEnvironmentVariableName(String propertyPath) {
-        return propertyPath.replace("-", "").replace(".", "_").toUpperCase();
+        return propertyPath.replace("-", "").replace(".", "_").toUpperCase(Locale.ROOT);
     }
 }

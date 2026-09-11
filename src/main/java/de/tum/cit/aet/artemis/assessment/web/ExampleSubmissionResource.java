@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("tutor-training/example-submissions")
 @RestController
 @RequestMapping("api/assessment/")
 public class ExampleSubmissionResource {

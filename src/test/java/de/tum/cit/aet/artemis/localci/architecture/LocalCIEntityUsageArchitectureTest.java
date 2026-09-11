@@ -21,10 +21,9 @@ class LocalCIEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
         return 2;
     }
 
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 1;
+        return 0;
     }
 
     @Override

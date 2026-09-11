@@ -115,7 +115,7 @@ describe('CourseLecturesComponent', () => {
 
         component.ngOnInit();
         firstLectures.next([{ id: 11, title: 'Old lecture' }]);
-        component.setPageTitle('Old lecture');
+        component.setPageTitle('overview.lectures');
         expect(component.lectures()?.[0].title).toBe('Old lecture');
         expect(component.accordionLectureGroups).toBe(oldGroups);
         expect(firstLectures.observed).toBe(true);
@@ -130,7 +130,9 @@ describe('CourseLecturesComponent', () => {
         expect(component.sortedLectures).toEqual([]);
         expect(component.sidebarLectures).toEqual([]);
         expect(Object.values(component.accordionLectureGroups).every((group) => group.entityData.length === 0)).toBe(true);
-        expect(component.pageTitle()).toBe('');
+        // The sidebar heading is set once by the parent when the tab is activated, before this component reloads its
+        // course-specific state; resetting it here would leave the sidebar without a "Lectures" heading.
+        expect(component.pageTitle()).toBe('overview.lectures');
         expect(firstLectures.observed).toBe(false);
         expect(firstCourseUpdates.observed).toBe(false);
         expect(secondLectures.observed).toBe(true);

@@ -12,12 +12,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-group-free-period-row-buttons',
     templateUrl: './tutorial-group-free-period-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe, EditTutorialGroupFreePeriodComponent],
+    imports: [TumUiButtonDirective, FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe, EditTutorialGroupFreePeriodComponent],
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     protected readonly faWrench = faWrench;

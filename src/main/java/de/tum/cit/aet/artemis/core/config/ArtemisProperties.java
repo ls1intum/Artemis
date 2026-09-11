@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.cors.CorsConfiguration;
+
+import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
 
 /**
  * Inlined replacement for {@code tech.jhipster.config.JHipsterProperties}.
@@ -76,7 +79,20 @@ public class ArtemisProperties {
 
         public static class Cache {
 
+            /**
+             * How long files under {@code /public} may be cached. Those are not versioned in their URL — a changed
+             * logo or an edited about-us page keeps its path — so this bounds how long a correction takes to reach a
+             * browser that already has one.
+             */
             private int timeToLiveInDays = 1461; // 4 years (default from JHipster)
+
+            /**
+             * How long the client bundle may be cached. Separate from the above because those files <em>are</em>
+             * versioned in their URL, by a content hash for JavaScript and CSS and by a build hash query parameter for
+             * translations, so a new build is a new URL and a cached response cannot go stale. The reason to keep the
+             * lifetime above short — that a mistake would otherwise persist in browsers — does not apply here.
+             */
+            private int versionedAssetsTimeToLiveInDays = CachingHttpHeadersFilter.DEFAULT_DAYS_TO_LIVE;
 
             public int getTimeToLiveInDays() {
                 return timeToLiveInDays;
@@ -84,6 +100,14 @@ public class ArtemisProperties {
 
             public void setTimeToLiveInDays(int timeToLiveInDays) {
                 this.timeToLiveInDays = timeToLiveInDays;
+            }
+
+            public int getVersionedAssetsTimeToLiveInDays() {
+                return versionedAssetsTimeToLiveInDays;
+            }
+
+            public void setVersionedAssetsTimeToLiveInDays(int versionedAssetsTimeToLiveInDays) {
+                this.versionedAssetsTimeToLiveInDays = versionedAssetsTimeToLiveInDays;
             }
         }
     }
@@ -147,6 +171,9 @@ public class ArtemisProperties {
 
                 private long tokenValidityInSecondsForRememberMe = 2592000; // 30 days
 
+                @Nullable
+                private Boolean cookieSecure;
+
                 public String getSecret() {
                     return secret;
                 }
@@ -177,6 +204,15 @@ public class ArtemisProperties {
 
                 public void setTokenValidityInSecondsForRememberMe(long tokenValidityInSecondsForRememberMe) {
                     this.tokenValidityInSecondsForRememberMe = tokenValidityInSecondsForRememberMe;
+                }
+
+                @Nullable
+                public Boolean getCookieSecure() {
+                    return cookieSecure;
+                }
+
+                public void setCookieSecure(@Nullable Boolean cookieSecure) {
+                    this.cookieSecure = cookieSecure;
                 }
             }
         }

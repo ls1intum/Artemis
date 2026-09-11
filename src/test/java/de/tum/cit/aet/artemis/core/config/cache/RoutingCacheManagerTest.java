@@ -12,8 +12,8 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 
 /**
  * Verifies that caches reach the manager appropriate to their value shape. Routing the wrong way is not a visible
- * failure: a blob cache on the distributed manager just quietly transfers megabytes per read, and a small cache on the
- * per-node manager quietly goes incoherent across nodes.
+ * failure: a blob cache on the distributed manager just quietly transfers megabytes per read, and a cache that has to
+ * be identical on every node quietly goes incoherent on the per-node manager.
  */
 class RoutingCacheManagerTest {
 
@@ -21,13 +21,16 @@ class RoutingCacheManagerTest {
 
     private CacheManager blobCacheManager;
 
+    private CacheManager titleCacheManager;
+
     private RoutingCacheManager routingCacheManager;
 
     @BeforeEach
     void setUp() {
-        distributedCacheManager = new ConcurrentMapCacheManager("courseTitle", "exerciseTitle");
+        distributedCacheManager = new ConcurrentMapCacheManager("notificationParameters", "userCourseNotificationSettingPreset");
         blobCacheManager = new ConcurrentMapCacheManager(BlobCacheConfiguration.BLOB_CACHE_NAMES.toArray(String[]::new));
-        routingCacheManager = new RoutingCacheManager(distributedCacheManager, blobCacheManager);
+        titleCacheManager = new ConcurrentMapCacheManager(TitleCacheConfiguration.TITLE_CACHE_NAMES.toArray(String[]::new));
+        routingCacheManager = new RoutingCacheManager(distributedCacheManager, blobCacheManager, titleCacheManager);
     }
 
     @Test
@@ -40,17 +43,27 @@ class RoutingCacheManagerTest {
     }
 
     @Test
-    void shouldRouteEveryOtherCacheToTheDistributedManager() {
-        Cache cache = routingCacheManager.getCache("courseTitle");
+    void shouldRouteTitleCachesToThePerNodeManager() {
+        for (String titleCacheName : TitleCacheConfiguration.TITLE_CACHE_NAMES) {
+            Cache cache = routingCacheManager.getCache(titleCacheName);
 
-        assertThat(cache).isSameAs(distributedCacheManager.getCache("courseTitle"));
+            assertThat(cache).as("%s must be served by the per-node manager", titleCacheName).isSameAs(titleCacheManager.getCache(titleCacheName));
+        }
     }
 
     @Test
-    void shouldReportCacheNamesOfBothManagersSorted() {
+    void shouldRouteEveryOtherCacheToTheDistributedManager() {
+        Cache cache = routingCacheManager.getCache("notificationParameters");
+
+        assertThat(cache).isSameAs(distributedCacheManager.getCache("notificationParameters"));
+    }
+
+    @Test
+    void shouldReportCacheNamesOfEveryManagerSorted() {
         List<String> names = List.copyOf(routingCacheManager.getCacheNames());
 
-        assertThat(names).contains("courseTitle", "exerciseTitle").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES);
+        assertThat(names).contains("notificationParameters", "userCourseNotificationSettingPreset").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES)
+                .containsAll(TitleCacheConfiguration.TITLE_CACHE_NAMES);
         assertThat(names).as("a stable order keeps the admin cache overview from reshuffling").isSorted();
     }
 }

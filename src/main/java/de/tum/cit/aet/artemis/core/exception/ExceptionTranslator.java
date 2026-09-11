@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.BadRequestException;
@@ -43,6 +44,9 @@ import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 public class ExceptionTranslator extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
+
+    /** The DTO suffix of a rejected object's class name, which the client is not shown. */
+    private static final Pattern DTO_SUFFIX = Pattern.compile("DTO$");
 
     private static final String FIELD_ERRORS_KEY = "fieldErrors";
 
@@ -90,8 +94,8 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex, @NonNull HttpHeaders headers, @NonNull HttpStatusCode status,
             @NonNull WebRequest request) {
         BindingResult result = ex.getBindingResult();
-        List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
-                .toList();
+        List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream()
+                .map(f -> new FieldErrorVM(DTO_SUFFIX.matcher(f.getObjectName()).replaceFirst(""), f.getField(), f.getCode())).toList();
 
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE);
@@ -145,11 +149,21 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(detail);
     }
 
+    /**
+     * Handles structured bad-request alerts.
+     *
+     * @param ex      the exception
+     * @param request the request
+     * @return the error response
+     */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
-        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getBody().getTitle());
         ProblemDetail detail = ex.getBody();
         postProcess(detail, request);
+        if (detail.getProperties() != null && Boolean.TRUE.equals(detail.getProperties().get("skipAlert"))) {
+            return ResponseEntity.status(ex.getStatusCode()).body(detail);
+        }
+        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), detail.getTitle());
         return ResponseEntity.status(ex.getStatusCode()).headers(headers).body(detail);
     }
 
@@ -169,8 +183,16 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(detail);
     }
 
+    /**
+     * Handles concurrent persistence failures.
+     *
+     * @param ex      the exception
+     * @param request the request
+     * @return the error response
+     */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
+        log.warn("Concurrent modification rejected: {}", ex.getMessage(), ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         detail.setProperty(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE);
         postProcess(detail, request);

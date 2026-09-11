@@ -103,7 +103,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         await fixture.whenStable();
         expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
         expect(comp.repositoryExportOptions.anonymizeRepository).toBe(true);
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
@@ -118,8 +118,92 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.exportRepos();
         await fixture.whenStable();
         expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
+    });
+
+    // Reached from the exercise scores page, where the dialog opens with no preselected participations: exporting
+    // then sent an empty participant list and the server answered 404. Nothing is selected, so there is nothing to
+    // request in the first place.
+    it('should not send a request when neither participations nor participants are selected', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = '';
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        const byParticipations = vi.spyOn(repoExportService, 'exportReposByParticipations');
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers');
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byParticipations).not.toHaveBeenCalled();
+        expect(byIdentifiers).not.toHaveBeenCalled();
+        expect(comp.exportInProgress()).toBe(false);
+    });
+
+    // A list of only separators and blanks is the same as an empty selection and must not reach the server either.
+    it('should not send a request when the participant list holds only separators', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = ' , ,, ';
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers');
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byIdentifiers).not.toHaveBeenCalled();
+    });
+
+    // Blank entries around a real login must be dropped rather than sent as empty path segments.
+    it('should drop blank entries from the participant list', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = ' ab12cde, ,cd34efg ';
+        const httpResponse = createBlobHttpResponse();
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ab12cde', 'cd34efg'], comp.repositoryExportOptions);
+    });
+
+    // Same `[]` is truthy trap as the disable guard: the textarea was hidden behind `!participationIdList`, so the
+    // dialog opened from the exercise scores page - which preselects nothing - offered no way to name anyone at all.
+    it('should offer the participant field when no participation is preselected', async () => {
+        comp.participationIdList = [];
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('textarea')).not.toBeNull();
+    });
+
+    // With participations preselected the identifiers are irrelevant, so the field stays away.
+    it('should hide the participant field when participations are preselected', async () => {
+        comp.participationIdList = [1];
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+    });
+
+    // The previous guard read `!this.participationIdList`, which is never true because the list starts as an empty
+    // array, so the button was never disabled and the tail `&& !this.exportInProgress` even inverted the intent.
+    // Nothing being selected deliberately leaves the button enabled - exportRepos() explains that - but a request in
+    // flight has to lock it, and only reading a signal makes that reach the zoneless template.
+    it('should disable the export button only while an export is running', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const exportButton = fixture.nativeElement.querySelector('button[type="submit"]');
+
+        expect(exportButton.getAttribute('disabled')).toBeNull();
+
+        comp.exportInProgress.set(true);
+        fixture.detectChanges();
+
+        expect(exportButton.getAttribute('disabled')).toBe('');
     });
 
     it('Should not change the ExportOptions during export', async () => {
@@ -150,7 +234,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         await fixture.whenStable();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     });
 

@@ -28,6 +28,12 @@ public final class FilePathConverter {
     @NonNull
     private static Path fileUploadPath;
 
+    /**
+     * The second segment of an external URI whose file lies under the lecture attachment directory, as in
+     * {@code attachments/lecture/{lectureId}/{filename}}.
+     */
+    private static final String LECTURE_ATTACHMENT_URI_SEGMENT = "lecture";
+
     private FilePathConverter() {
     }
 
@@ -39,6 +45,19 @@ public final class FilePathConverter {
      */
     public static void setFileUploadPath(@NonNull Path fileUploadPath) {
         FilePathConverter.fileUploadPath = fileUploadPath;
+    }
+
+    /**
+     * The base path every upload location is resolved against.
+     * <p>
+     * Exposed so a caller that has to repoint the path can put back what it found. The value is process-wide, and the
+     * integration test base sets it once per JVM, so anything that overwrites it without restoring leaves every later
+     * caller resolving uploads under the wrong root.
+     *
+     * @return the base path for file uploads, or null if it has not been set yet
+     */
+    public static Path getFileUploadPath() {
+        return fileUploadPath;
     }
 
     /**
@@ -200,6 +219,12 @@ public final class FilePathConverter {
 
     /**
      * Generates the path for an attachment video unit file based on the provided path and filename.
+     * <p>
+     * An attachment video unit created for an attachment that used to hang off a lecture directly keeps that
+     * attachment's URI, so its file still lies under the lecture attachment directory. The URI says so, and is followed
+     * rather than the directory the unit would otherwise use, so that such a unit serves its file everywhere a unit is
+     * asked for one. Replacing the file through the unit editor writes the new one under the unit directory and rewrites
+     * the URI, after which this branch no longer applies.
      *
      * @param path     the path to the attachment video unit
      * @param filename the name of the file
@@ -208,6 +233,9 @@ public final class FilePathConverter {
      */
     @NonNull
     private static Path getAttachmentVideoUnitFileSystemPath(@NonNull Path path, @NonNull String filename) {
+        if (path.getNameCount() > 1 && LECTURE_ATTACHMENT_URI_SEGMENT.equals(path.getName(1).toString())) {
+            return getLectureAttachmentFileSystemPath(path, filename);
+        }
         try {
             String attachmentVideoUnitId = path.getName(2).toString();
             Long.parseLong(attachmentVideoUnitId);

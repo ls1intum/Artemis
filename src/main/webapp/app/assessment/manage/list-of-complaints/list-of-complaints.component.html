@@ -181,7 +181,7 @@
                             {{ calculateComplaintLockStatus(complaint) }}
                         </td>
                         <td class="text-center">
-                            <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
+                            <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" data-testid="show-complaint">
                                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                 @if (complaintType() === ComplaintType.COMPLAINT) {
                                     <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showComplaint"></span>

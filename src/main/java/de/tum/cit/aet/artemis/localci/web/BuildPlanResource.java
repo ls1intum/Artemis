@@ -18,15 +18,18 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_JENKINS)
 @Lazy
+@FeatureUsage("build-system/build-plans")
 @RestController
 @RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
 public class BuildPlanResource {
@@ -81,13 +84,13 @@ public class BuildPlanResource {
      */
     @PutMapping("programming-exercises/{exerciseId}/build-plan")
     @EnforceAtLeastEditor
-    public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan) {
+    public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanRequestDTO buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.getBuildPlan(), programmingExercise);
+        final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.buildPlan(), programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
 
         programmingTriggerService.triggerTemplateAndSolutionBuild(programmingExercise.getId());

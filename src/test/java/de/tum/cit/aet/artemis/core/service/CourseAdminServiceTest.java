@@ -17,11 +17,9 @@ import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
-import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -39,16 +37,10 @@ class CourseAdminServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
     private ConversationUtilService conversationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private BuildJobRepository buildJobRepository;
 
     @BeforeEach
     void initTestCase() {

@@ -32,7 +32,7 @@ public class ExerciseGroup extends DomainObject {
     private Boolean isMandatory = true;
 
     @ManyToOne
-    @JoinColumn(name = "exam_id")
+    @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
     @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)

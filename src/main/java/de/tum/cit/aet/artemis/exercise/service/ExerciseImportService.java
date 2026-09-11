@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,6 @@ public abstract class ExerciseImportService {
         newExercise.setStudentParticipations(new HashSet<>());
         newExercise.setTutorParticipations(new HashSet<>());
         newExercise.setExampleSubmissions(new HashSet<>());
-        newExercise.setAttachments(new HashSet<>());
         newExercise.setPlagiarismCases(new HashSet<>());
         // teams has orphanRemoval enabled; a client-supplied or source-derived entity may still reference the source's
         // teams, which would fail to persist under a new owner. An imported exercise starts without teams.
@@ -185,14 +185,14 @@ public abstract class ExerciseImportService {
 
     /**
      * This helper method does a hard copy of the result of a submission.
-     * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}
+     * To copy the feedback, it calls {@link #copyFeedback(Collection, Result, Map)}
      *
      * @param originalResult                The original result to be copied
      * @param newSubmission                 The submission in which we link the result clone
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
-    protected Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    protected Result copyExampleResult(@NonNull Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());
@@ -203,15 +203,9 @@ public abstract class ExerciseImportService {
         newResult.setScore(originalResult.getScore());
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
-        // Cut relationship to parent because result is an ordered collection
-        newResult.setSubmission(null);
-
-        newResult = resultRepository.save(newResult);
-
-        // Restore relationship to parent.
         newResult.setSubmission(newSubmission);
 
-        return newResult;
+        return resultRepository.save(newResult);
     }
 
     /**

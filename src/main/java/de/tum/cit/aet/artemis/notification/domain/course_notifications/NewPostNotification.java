@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells the user there was a new post in a channel of any type. Announcement posts and thread answers
@@ -15,23 +17,7 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(1)
 public class NewPostNotification extends CourseNotification {
 
-    protected Long postId;
-
-    protected String postMarkdownContent;
-
-    protected Long channelId;
-
-    protected String channelName;
-
-    protected String channelType;
-
-    protected String authorName;
-
-    protected String authorImageUrl;
-
-    protected Long authorId;
-
-    protected boolean authorIsBot;
+    private final NewPostPayloadDTO payload;
 
     /**
      * Default constructor used when creating a new post notification.
@@ -39,15 +25,7 @@ public class NewPostNotification extends CourseNotification {
     public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
             String channelType, String authorName, String authorImageUrl, Long authorId, boolean authorIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.postId = postId;
-        this.postMarkdownContent = postMarkdownContent;
-        this.channelName = channelName;
-        this.channelType = channelType;
-        this.authorName = authorName;
-        this.authorImageUrl = authorImageUrl;
-        this.authorId = authorId;
-        this.channelId = channelId;
-        this.authorIsBot = authorIsBot;
+        this.payload = new NewPostPayloadDTO(postId, postMarkdownContent, channelId, channelName, channelType, authorName, authorImageUrl, authorId, authorIsBot);
     }
 
     /**
@@ -55,6 +33,7 @@ public class NewPostNotification extends CourseNotification {
      */
     public NewPostNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, NewPostPayloadDTO.class);
     }
 
     @Override
@@ -74,6 +53,11 @@ public class NewPostNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId;
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId();
+    }
+
+    @Override
+    public NewPostPayloadDTO payload() {
+        return payload;
     }
 }

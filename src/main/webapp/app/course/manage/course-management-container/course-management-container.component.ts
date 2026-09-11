@@ -218,9 +218,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     closeProgress() {
         const progress = this.operationProgress();
         this.operationProgress.set(undefined);
-        // Navigate to course list after closing a completed delete operation
         if (progress?.operationType === CourseOperationType.DELETE) {
-            void this.router.navigate(['/course-management']);
+            void this.router.navigate(['/courses']);
         }
     }
 
@@ -247,6 +246,13 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     protected getHasSidebar(): boolean {
+        let activeRoute = this.route.snapshot;
+        while (activeRoute.firstChild) {
+            activeRoute = activeRoute.firstChild;
+            if (activeRoute.data?.hasSidebar) {
+                return true;
+            }
+        }
         return this.communicationRouteLoaded();
     }
 

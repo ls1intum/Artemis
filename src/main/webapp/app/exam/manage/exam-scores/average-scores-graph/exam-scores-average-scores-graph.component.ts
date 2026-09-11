@@ -8,13 +8,11 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/foundation/util/navigation.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ChartModule } from 'primeng/chart';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
-import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
-import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
 
 /** Per-bar metadata used for tooltips and click navigation, keyed by the bar's chart name. */
 interface ExamScoreLookupEntry {
@@ -34,14 +32,13 @@ const AXIS_AND_PADDING_HEIGHT_PX = 48;
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private activatedRoute = inject(ActivatedRoute);
     private localeConversionService = inject(LocaleConversionService);
     private translateService = inject(TranslateService);
-    private chartColorService = inject(ChartColorService);
 
     averageScores = input.required<AggregatedExerciseGroupResult>();
     course = input.required<Course>();
@@ -56,9 +53,9 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     readonly xScaleMax = signal(100);
     lookup: NameToValueMap = {};
 
-    private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.barColors());
+    private readonly resolvedColors = computed(() => this.barColors());
 
-    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
 
     /**
      * Height of the chart box, derived from the number of bars (the exercise group plus one bar per exercise).
@@ -66,21 +63,19 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      */
     readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + Math.max(this.chartEntries().length, 1) * BAR_HEIGHT_PX);
 
-    readonly chartOptions = computed(() =>
-        barChartOptions({
-            horizontal: true,
-            percentScale: true,
-            xAxis: { max: this.xScaleMax() },
-            tooltip: {
-                title: (items) => items[0]?.label ?? '',
-                label: (item) => {
-                    const name = item.label ?? '';
-                    const averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
-                    return `${averagePointsTooltip}: ${this.lookupAbsoluteValue(name)} (${this.roundAndPerformLocalConversion(item.parsed.x ?? 0)}%)`;
-                },
+    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+        horizontal: true,
+        percentScale: true,
+        xAxis: { max: this.xScaleMax() },
+        tooltip: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => {
+                const name = item.label;
+                const averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
+                return `${averagePointsTooltip}: ${this.lookupAbsoluteValue(name)} (${this.roundAndPerformLocalConversion(item.value)}%)`;
             },
-        }),
-    );
+        },
+    }));
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -138,15 +133,14 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     /**
      * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
-     * @param event the event that is fired by p-chart
+     * @param event the event identifying the clicked bar
      */
-    onSelect(event: { element?: unknown }) {
-        const selected = toChartSelectEvent(event, this.chartData());
-        if (!selected?.label) {
+    onSelect(event: TumUiChartSelectEvent) {
+        if (!event.label) {
             return;
         }
-        const id = this.lookup[selected.label]?.exerciseId;
-        const type = this.lookup[selected.label]?.exerciseType;
+        const id = this.lookup[event.label]?.exerciseId;
+        const type = this.lookup[event.label]?.exerciseType;
         if (id && type) {
             this.navigateToExercise(id, type);
         }

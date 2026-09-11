@@ -14,11 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -65,13 +64,21 @@ public class ProcessingStateCallbackService {
     static final int MAX_CONCURRENT_PROCESSING = 2;
 
     /**
+     * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
+     * to, and it doubles as the recovery window: a node killed mid-dispatch leaves the claim in place until it lapses,
+     * after which the row is eligible again. Matches the scheduler's no-callback timeout, which is the point at which
+     * a dispatch is no longer considered in flight.
+     */
+    private static final int RETRY_CLAIM_LEASE_MINUTES = 20;
+
+    /**
      * Lock to serialize dispatch so the count check + dispatch are atomic.
      * Without this, concurrent calls to dispatchPendingJobs() can each see the
      * same activeCount and over-dispatch beyond MAX_CONCURRENT_PROCESSING.
      */
     private final ReentrantLock dispatchLock = new ReentrantLock();
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
 
@@ -106,8 +113,12 @@ public class ProcessingStateCallbackService {
      * <li>{@link #handleIngestionComplete} — when a job finishes, filling the freed slot</li>
      * <li>{@link LectureContentProcessingScheduler#processScheduledRetries} — periodic backup every 5 minutes</li>
      * </ol>
+     * <p>
+     * Cluster safety comes from the conditional claim on each candidate rather than from a transaction spanning the
+     * read and the write: see {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}. The local
+     * {@code dispatchLock} still serializes dispatch within this node so the capacity check cannot be raced by two of
+     * its own threads.
      */
-    @Transactional
     public void dispatchPendingJobs() {
         if (irisLectureApi.isEmpty()) {
             log.debug("Iris API not available, skipping dispatch");
@@ -136,8 +147,16 @@ public class ProcessingStateCallbackService {
                 if (availableSlots <= 0) {
                     break;
                 }
+                ZonedDateTime leaseExpiry = now.plusMinutes(RETRY_CLAIM_LEASE_MINUTES);
+                if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
+                    log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
+                    continue;
+                }
                 log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-                state.clearRetryEligibility();
+                // Mirror the claim onto the loaded entity: it is saved again further down, and writing back the stale
+                // value would put the row back into the candidate list. A successful dispatch clears the lease when it
+                // transitions out of FAILED; a failed one leaves it, which is what makes the claim lapse on its own.
+                state.setRetryEligibleAt(leaseExpiry);
                 dispatchSingleJob(state);
                 availableSlots--;
             }
@@ -155,6 +174,12 @@ public class ProcessingStateCallbackService {
             }
 
             for (LectureUnitProcessingState state : idleJobs) {
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), now) == 0) {
+                    log.debug("Another node claimed the dispatch of unit {}", state.getLectureUnit().getId());
+                    continue;
+                }
+                // Mirror the claim onto the loaded entity, for the reason given on the retry loop above.
+                state.setStartedAt(now);
                 dispatchSingleJob(state);
             }
         }
@@ -321,7 +346,7 @@ public class ProcessingStateCallbackService {
 
             saveTranscription(lectureUnitId, state, checkpoint);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Failed to parse checkpoint data for unit {}: {}", lectureUnitId, e.getMessage());
         }
     }
@@ -361,7 +386,7 @@ public class ProcessingStateCallbackService {
      * Parse transcription checkpoint data from JSON.
      * Expected format: {@code {"language": "en", "segments": [...]}}
      */
-    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) throws JsonProcessingException {
+    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) {
         var tree = objectMapper.readTree(resultJson);
 
         var segmentsNode = tree.get("segments");
@@ -370,7 +395,7 @@ public class ProcessingStateCallbackService {
             return null;
         }
 
-        String language = tree.has("language") ? tree.get("language").asText("en") : "en";
+        String language = tree.has("language") ? tree.get("language").asString("en") : "en";
         List<LectureTranscriptionSegment> segments = objectMapper.convertValue(segmentsNode, new TypeReference<>() {
         });
 
@@ -452,6 +477,9 @@ public class ProcessingStateCallbackService {
     void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
+        // Undo the dispatch attempt, including the claim that started it: startedAt is what marks a job as taken, so
+        // leaving it set would keep this unit out of the idle queue for good.
+        state.setStartedAt(null);
 
         // Preserve existing transcription status in the WebSocket notification so the UI
         // does not lose it when a failure occurs after transcription already completed.
