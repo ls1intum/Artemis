@@ -27,6 +27,12 @@ class FetchJoinDeduplicationTest extends AbstractSpringIntegrationIndependentTes
 
     private static final String TEST_PREFIX = "fetchjoindedup";
 
+    private static final ZonedDateTime RELEASE_DATE = ZonedDateTime.parse("2024-01-01T00:00:00Z");
+
+    private static final ZonedDateTime DUE_DATE = RELEASE_DATE.plusDays(1);
+
+    private static final ZonedDateTime ASSESSMENT_DUE_DATE = RELEASE_DATE.plusDays(3);
+
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
@@ -40,8 +46,7 @@ class FetchJoinDeduplicationTest extends AbstractSpringIntegrationIndependentTes
     void aParticipationWithSeveralSubmissionsIsReturnedOnce() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         var course = courseUtilService.createCourse();
-        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
-                ZonedDateTime.now().plusDays(1));
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, RELEASE_DATE, DUE_DATE, ASSESSMENT_DUE_DATE);
         var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
         for (int i = 0; i < 3; i++) {
             participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("submission " + i, Language.ENGLISH, true));

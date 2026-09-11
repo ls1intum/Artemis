@@ -904,9 +904,32 @@ public class ParticipationService {
     public Optional<StudentParticipation> findSubmitTargetByExerciseAndStudent(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
             return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId()).flatMap(
-                    team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()).map(t -> t.toParticipation(exercise, team)));
+                    team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()).map(t -> toParticipation(t, exercise, team)));
         }
-        return findSubmitTargetOfStudent(exercise, student).map(target -> target.toParticipation(exercise, student));
+        return findSubmitTargetOfStudent(exercise, student).map(target -> toParticipation(target, exercise, student));
+    }
+
+    /**
+     * Puts a projected participation back together, with the exercise and participant the caller holds.
+     * <p>
+     * Carries exactly what the save and the response read - the columns, the exercise and the participant - and no
+     * submissions, so a caller that needs those must not use this.
+     *
+     * @param target      the projected participation
+     * @param exercise    the exercise the submission belongs to
+     * @param participant the student or team the participation belongs to
+     * @return the detached participation
+     */
+    private static StudentParticipation toParticipation(StudentParticipationSubmitTargetDTO target, Exercise exercise, Participant participant) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setId(target.id());
+        participation.setInitializationState(target.initializationState());
+        participation.setInitializationDate(target.initializationDate());
+        participation.setIndividualDueDate(target.individualDueDate());
+        participation.setTestRun(target.testRun());
+        participation.setExercise(exercise);
+        participation.setParticipant(participant);
+        return participation;
     }
 
     /**

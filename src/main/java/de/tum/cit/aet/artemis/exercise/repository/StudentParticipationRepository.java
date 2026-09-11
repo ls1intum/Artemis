@@ -471,31 +471,38 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("testRun") boolean testRun);
 
     /**
-     * The student's newest participation in an exercise, as far as saving a submission needs it. A test exam can be
-     * taken more than once, so the newest attempt is picked by id inside the query.
+     * The student's newest participation in an exercise, as far as saving a submission needs it.
+     * <p>
+     * A test exam can be taken more than once, so the caller asks for the first row of a descending order rather than
+     * matching a maximum in a subquery. Ordering by id as well breaks a tie between two attempts that share an
+     * initialization date, which the greatest id resolves the same way a MAX would.
      *
      * @param exerciseId the id of the exercise
      * @param studentId  the id of the student
-     * @return the projected participation, or empty when the student has none
+     * @param pageable   the page to read, {@code PageRequest.of(0, 1)} for the newest
+     * @return the projected participations, newest first
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
                 p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
             FROM StudentParticipation p
-            WHERE p.id = (
-                SELECT MAX(p2.id)
-                FROM StudentParticipation p2
-                WHERE p2.exercise.id = :exerciseId
-                    AND p2.student.id = :studentId
-                    AND p2.initializationDate = (
-                        SELECT MAX(p3.initializationDate)
-                        FROM StudentParticipation p3
-                        WHERE p3.exercise.id = :exerciseId
-                            AND p3.student.id = :studentId
-                    )
-            )
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+            ORDER BY p.initializationDate DESC, p.id DESC
             """)
-    Optional<StudentParticipationSubmitTargetDTO> findLatestSubmitTargetByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<StudentParticipationSubmitTargetDTO> findLatestSubmitTargetsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
+            Pageable pageable);
+
+    /**
+     * The student's newest participation in an exercise, as far as saving a submission needs it.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the projected participation, or empty when the student has none
+     */
+    default Optional<StudentParticipationSubmitTargetDTO> findLatestSubmitTargetByExerciseIdAndStudentId(long exerciseId, long studentId) {
+        return findLatestSubmitTargetsByExerciseIdAndStudentId(exerciseId, studentId, PageRequest.of(0, 1)).stream().findFirst();
+    }
 
     /**
      * A team's participation in an exercise, as far as saving a submission needs it.
@@ -514,35 +521,53 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     /**
-     * The student's most recently initialized participation in an exercise, with its submissions.
+     * The id of the student's most recently initialized participation in an exercise.
      * <p>
-     * Selected by id so the result is one row by construction: two participations of the same student in the same
-     * exercise can share an initialization date, and the newest id breaks that tie. No SELECT DISTINCT - Hibernate
-     * de-duplicates a fetch join itself, and passing DISTINCT through to SQL would sort rows carrying the whole
-     * exercise and course.
+     * Read on its own so the fetch join below can be addressed by id: pairing a collection fetch with a page limit
+     * makes Hibernate apply the limit in memory, and matching a maximum in a subquery is what the query guidelines ask
+     * callers to avoid. Ordering by id as well breaks a tie between two participations sharing an initialization date.
      *
      * @param exerciseId the id of the exercise
      * @param studentId  the id of the student
-     * @return the participation, or empty when the student has none
+     * @param pageable   the page to read, {@code PageRequest.of(0, 1)} for the newest
+     * @return the ids of the student's participations, newest first
+     */
+    @Query("""
+            SELECT p.id
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+            ORDER BY p.initializationDate DESC, p.id DESC
+            """)
+    List<Long> findLatestIdsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId, Pageable pageable);
+
+    /**
+     * A participation with its submissions, by id.
+     * <p>
+     * No SELECT DISTINCT - Hibernate de-duplicates a fetch join itself, and passing DISTINCT through to SQL would sort
+     * rows carrying the whole exercise and course.
+     *
+     * @param participationId the id of the participation
+     * @return the participation, or empty when there is none with that id
      */
     @Query("""
             SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.id = (
-                SELECT MAX(p2.id)
-                FROM StudentParticipation p2
-                WHERE p2.exercise.id = :exerciseId
-                    AND p2.student.id = :studentId
-                    AND p2.initializationDate = (
-                        SELECT MAX(p3.initializationDate)
-                        FROM StudentParticipation p3
-                        WHERE p3.exercise.id = :exerciseId
-                            AND p3.student.id = :studentId
-                    )
-            )
+            WHERE p.id = :participationId
             """)
-    Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    Optional<StudentParticipation> findWithSubmissionsById(@Param("participationId") long participationId);
+
+    /**
+     * The student's most recently initialized participation in an exercise, with its submissions.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the participation, or empty when the student has none
+     */
+    default Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(long exerciseId, long studentId) {
+        return findLatestIdsByExerciseIdAndStudentId(exerciseId, studentId, PageRequest.of(0, 1)).stream().findFirst().flatMap(this::findWithSubmissionsById);
+    }
 
     /**
      * The student's graded or practice participation in an exercise, with its submissions and the exercise context.
