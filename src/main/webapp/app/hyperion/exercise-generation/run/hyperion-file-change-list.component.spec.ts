@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HyperionFileChangeListComponent } from 'app/hyperion/exercise-generation/run/hyperion-file-change-list.component';
@@ -131,55 +131,11 @@ describe('HyperionFileChangeListComponent', () => {
             expect(host.querySelector('[data-recent]')!.textContent).toContain('artifacts.writtenLast');
             expect(host.textContent).not.toContain('artifacts.writingNow');
         });
-
-        it('marks the selected row as current for assistive technology', () => {
-            const host = render(THREE_REPOS, { selectedKey: THREE_REPOS[0].key });
-
-            const current = host.querySelectorAll('[aria-current="true"]');
-            expect(current).toHaveLength(1);
-            expect(current[0].textContent).toContain('Loan.java');
-        });
     });
 
-    describe('what a row can do', () => {
-        it('makes the whole row the control, and emits the file it stands for', () => {
-            const selected = vi.fn();
-            fixture.componentInstance.fileSelected.subscribe(selected);
-            const host = render(THREE_REPOS);
-
-            const row = rows(host)[0];
-            expect(row.tagName).toBe('BUTTON');
-            row.click();
-
-            expect(selected).toHaveBeenCalledTimes(1);
-            expect(selected.mock.calls[0][0]).toMatchObject({ repo: 'solution', name: 'Loan.java' });
-        });
-
-        it('renders rows the host cannot act on as plain elements rather than as dead controls', () => {
-            const selected = vi.fn();
-            fixture.componentInstance.fileSelected.subscribe(selected);
-            const host = render(THREE_REPOS, { actionableKeys: [] });
-
-            expect(rows(host).map((row) => row.tagName)).toEqual(['DIV', 'DIV', 'DIV']);
-            rows(host).forEach((row) => row.click());
-            expect(selected).not.toHaveBeenCalled();
-        });
-
-        it('acts on exactly the rows the host named', () => {
-            const selected = vi.fn();
-            fixture.componentInstance.fileSelected.subscribe(selected);
-            const host = render(THREE_REPOS, { actionableKeys: [THREE_REPOS[2].key] });
-
-            expect(rows(host).map((row) => row.tagName)).toEqual(['DIV', 'DIV', 'BUTTON']);
-            rows(host).forEach((row) => row.click());
-
-            expect(selected).toHaveBeenCalledTimes(1);
-            expect(selected.mock.calls[0][0]).toMatchObject({ name: 'LoanTest.java' });
-        });
-    });
-
-    it('takes the docked-panel density on the same rows rather than through a second component', () => {
-        expect(rows(render(THREE_REPOS, { density: 'compact' }))[0].className).toContain('hyperion-artifact-row-compact');
-        expect(rows(render(THREE_REPOS, { density: 'comfortable' }))[0].className).not.toContain('hyperion-artifact-row-compact');
+    it('lists files without exposing source-content controls', () => {
+        const host = render(THREE_REPOS);
+        expect(rows(host)).toHaveLength(3);
+        expect(host.querySelector('button, a, [aria-current]')).toBeNull();
     });
 });

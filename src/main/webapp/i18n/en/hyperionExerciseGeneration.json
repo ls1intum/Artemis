@@ -104,7 +104,7 @@
                 "run": {
                     "newRunHint": "Enter the brief or feedback for this new run. Previous instructions and selected review comments are not carried over.",
                     "feedbackLabel": "What should change?",
-                    "title": "AI generation",
+                    "title": "Generate exercise",
                     "backToExercise": "Back to the exercise",
                     "elapsed": "Elapsed",
                     "progressTitle": "Progress",
@@ -129,19 +129,30 @@
                     "notStartedWhoCanAct": "An instructor or editor of this course can start a generation.",
                     "stageAnnouncement": "Step {{position}} of {{total}}, {{stage}}.",
                     "stalledAnnouncement": "No update for {{minutes}} minutes. The run is still connected.",
-                    "stalledOfflineAnnouncement": "No update for {{minutes}} minutes, and the status of the run could not be read."
+                    "stalledOfflineAnnouncement": "No update for {{minutes}} minutes, and the status of the run could not be read.",
+                    "adaptationTitle": "Adapt exercise",
+                    "breadcrumb": "AI authoring",
+                    "generationInput": "Your brief",
+                    "adaptationInput": "Requested changes",
+                    "selectedFeedback": "Selected review feedback",
+                    "feedbackLocation": {
+                        "PROBLEM_STATEMENT": "Problem statement",
+                        "TEMPLATE_REPO": "Template",
+                        "SOLUTION_REPO": "Solution",
+                        "TEST_REPO": "Tests",
+                        "AUXILIARY_REPO": "Auxiliary repository"
+                    }
                 },
                 "live": {
                     "repairRound": "Review round {{round}} — {{blocking}} to fix, {{advisory}} to look at ({{carriedOver}} carried over, {{drained}} resolved, {{fresh}} new)",
                     "checkpoint": "A working version is secured. Even if the rest fails, you get an exercise."
                 },
                 "artifacts": {
-                    "title": "What Artemis has produced so far",
-                    "notSavedHint": "None of this is in your exercise yet. It is saved only if every check passes.",
-                    "savedHint": "Artemis saved this into your exercise. Review it before you release it.",
+                    "title": "Exercise materials",
+                    "notSavedHint": "File activity describes this run’s working material. The run outcome shows whether it was saved.",
+                    "savedHint": "Saved to the exercise. Open the code editor to review and edit the result.",
                     "loading": "Loading the retained draft…",
                     "specTitle": "Exercise design",
-                    "specHint": "What Artemis decided to build, before it wrote any code.",
                     "specPending": "No exercise design yet",
                     "specPendingHint": "Artemis is still deciding what to build.",
                     "statementTitle": "Problem statement",
@@ -254,7 +265,9 @@
                     "runAgain": "Run again",
                     "openEditor": "Open code editor",
                     "openRun": "Open the generation view",
-                    "start": "Generate this exercise"
+                    "start": "Generate this exercise",
+                    "viewRun": "View AI progress",
+                    "viewResults": "View AI results"
                 }
             },
             "jobs": {
@@ -264,7 +277,7 @@
                 "empty": "No generation runs yet.",
                 "emptyHint": "A run appears here as soon as you start one from an exercise.",
                 "dismiss": "Dismiss this run",
-                "summaryRunning": "{{count}} running",
+                "summaryRunning": "AI running: {{count}}",
                 "summaryAttention": "{{count}} to check",
                 "summaryFinished": "{{count}} finished",
                 "runningMinutes": "running for {{minutes}} min",

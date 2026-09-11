@@ -151,8 +151,8 @@ export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent
 }
 
 export interface AdaptFinding {
-    category: ConsistencyIssueCommentContent['category'];
-    severity: ConsistencyIssueCommentContent['severity'];
+    category?: ConsistencyIssueCommentContent['category'];
+    severity?: ConsistencyIssueCommentContent['severity'];
     /** The {@code tum-ui-tag} severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
     tagSeverity: AdaptFindingTagSeverity;
     /** A short {@code Repository: file:line} label, absent when the thread has no concrete line. */
@@ -176,13 +176,20 @@ export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locat
 }
 
 /**
- * The structured findings for a set of threads (only consistency-issue threads contribute), in thread order. Used for the read-only cards in the adapt dialog.
+ * The selected review feedback for a set of threads, in thread order. Used for the read-only cards in the adapt dialog.
  */
 export function selectedThreadsFindings(threads: CommentThread[], translate: TranslateService): AdaptFinding[] {
     return threads
         .map((thread) => {
             const issue = firstConsistencyIssueContent(thread);
-            return issue ? adaptFinding(issue, threadLocationLabel(thread, translate)) : undefined;
+            if (issue) {
+                return adaptFinding(issue, threadLocationLabel(thread, translate));
+            }
+            const description = sortCommentsByCreatedDateThenId(thread.comments)
+                .map((comment) => (comment.content?.contentType === CommentContentType.USER ? comment.content.text : ''))
+                .filter(Boolean)
+                .join('\n\n');
+            return description ? { description, locationLabel: threadLocationLabel(thread, translate), tagSeverity: 'info' as const } : undefined;
         })
         .filter((finding): finding is AdaptFinding => !!finding);
 }

@@ -12,6 +12,7 @@
                         @if (programmingExercise().isAtLeastEditor) {
                             <!-- Ahead of the edit buttons, mirroring the quiz detail page's button order. -->
                             <jhi-create-variant-with-ai-button [exercise]="programmingExercise()" />
+                            <jhi-hyperion-run-link [exercise]="programmingExercise()" />
                             <a [routerLink]="[baseResource(), 'edit']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"></span>

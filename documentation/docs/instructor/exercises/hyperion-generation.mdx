@@ -34,21 +34,28 @@ If starting generation fails after the draft was created, retry using that same
 draft rather than creating another exercise. The dialog also offers to delete
 an unused draft. A failure to start is not a saved generated exercise.
 
-For an existing supported draft, open the instructor code editor and choose
-**Generate exercise** from its AI controls. Save or discard your local changes
-first. Generation coordinates all three repositories and the statement; it does
-not apply independent per-repository suggestions.
+The normal **Create** programming-exercise form does not start AI generation.
+Use **Generate** to start from a brief, or adapt an existing supported exercise
+from the code editor.
 
 ## Follow a run
 
 The generation page has a stable URL. Reloading or leaving the page does not
 cancel a running job. The navbar's generation indicator lets you return to
-tracked runs. The code editor also shows an AI activity tab next to build output.
+tracked runs. The exercise details page offers **View AI progress** while a run
+is active and **View AI results** while its results remain available. During a
+run, the code editor's AI control links back to the generation page.
 
 The stages show specification, executable artifacts, problem statement,
-verification, and review progress. Inspect the specification, statement, and file
-activity as they arrive. A file shown during generation is working material, not
-necessarily a file saved to the live exercise.
+verification, and review progress. **Exercise design** is selected by default and
+shows the approved specification as soon as it is available. The original brief
+stays on the page. **Files** lists the statement and repository files without
+opening their contents. File activity describes working material, not necessarily
+files saved to the exercise.
+
+**Open code editor** appears when the run ends. Use it to review the saved
+statement, template, solution, and tests; generation does not stream source
+contents into the editor.
 
 Only the run's owner sees private run content and usage. Other authorized editors
 can see that generation is active without receiving another person's brief or
@@ -81,10 +88,12 @@ Artemis must finish or reconcile that save; closing the browser cannot interrupt
 it safely. Cancellation can retain a verified checkpoint for inspection, but
 retention does not itself save it to the exercise.
 
-To adapt a saved exercise, select relevant review findings in the code editor
-and choose **Adapt with feedback**. Inspect the selected findings and add any
-instructions before confirming. Adaptation goes through the same verification
-and guarded persistence checks as generation.
+To adapt a saved exercise, select instructor review comments or automated review
+findings in the code editor and choose **Adapt with feedback**. Save or discard
+local edits first. Inspect the selected feedback and add instructions before
+confirming. The **Adapt exercise** page shows those instructions and a snapshot
+of the selected comments, even if the review threads later change. Adaptation
+goes through the same verification and guarded persistence checks as generation.
 
 **Undo generation** or **Undo adaptation** restores the most recent complete
 Hyperion save while its guarded undo window remains available. Confirm the

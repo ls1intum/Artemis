@@ -28,8 +28,12 @@
             @for (finding of sortedFindings(); track finding) {
                 <li class="min-w-0 rounded-md border px-3 py-2">
                     <div class="mb-1 flex flex-wrap items-center gap-1.5">
-                        <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
-                        <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                        @if (finding.severity) {
+                            <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                        }
+                        @if (finding.category) {
+                            <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                        }
                         @if (finding.locationLabel) {
                             <code class="min-w-0 text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</code>
                         }

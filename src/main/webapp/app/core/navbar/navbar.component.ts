@@ -268,6 +268,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     breadcrumbTranslation: { [key: string]: string } = {
+        generation: 'artemisApp.hyperion.generation.run.breadcrumb',
         admin: 'global.menu.admin.main',
         new: 'global.generic.create',
         process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',

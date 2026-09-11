@@ -264,16 +264,16 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
     });
 
-    it('should not offer the adapt action for non-consistency threads', () => {
+    it('should offer adaptation for instructor feedback', () => {
         fixture.componentRef.setInput('showAdaptAction', true);
         fixture.detectChanges();
 
-        expect(comp.canAdaptExercise()).toBe(false);
+        expect(comp.canAdaptExercise()).toBe(true);
         const emitted: number[] = [];
         comp.adaptThread.subscribe((threadId) => emitted.push(threadId));
         comp.requestAdapt();
-        expect(emitted).toEqual([]);
-        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+        expect(emitted).toEqual([comp.thread().id]);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.threadAction');
     });
 
     it('should hide the feedback action for outdated threads', () => {

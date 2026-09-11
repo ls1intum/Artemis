@@ -1,3 +1,4 @@
+import { HyperionRunInputComponent } from './hyperion-run-input.component';
 import { filter, merge } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
@@ -93,6 +94,7 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
         ArtemisTranslatePipe,
         TranslateDirective,
         HyperionArtifactsComponent,
+        HyperionRunInputComponent,
         HyperionRunHeaderComponent,
         HyperionRunOutcomeComponent,
         HyperionRunProgressComponent,
@@ -150,6 +152,7 @@ export class HyperionRunPageComponent {
     protected readonly statusLoadFailed = this.facade.statusLoadFailed;
     protected readonly ownedByCaller = this.facade.ownedByCaller;
     protected readonly cancelRequested = this.facade.cancelRequested;
+    protected readonly runInput = this.facade.input;
     protected readonly specDocument = this.facade.specDocument;
     protected readonly repairRound = this.facade.repairRound;
     /**
@@ -277,10 +280,8 @@ export class HyperionRunPageComponent {
             : undefined;
     });
 
-    /** Whether the run actually wrote its result into the exercise, which decides where the problem statement comes from. */
-    private readonly savedToExercise = computed(() => this.terminalEvent()?.liveExerciseChanged === true);
-
-    protected readonly savedProblemStatement = computed(() => (this.savedToExercise() ? this.exercise()?.problemStatement : undefined));
+    /** Whether the run completed a save, rather than only producing working files. */
+    protected readonly savedToExercise = computed(() => this.terminalEvent()?.liveExerciseChanged === true);
 
     protected readonly outcomeView = computed<HyperionRunOutcomeView | undefined>(() => {
         const outcome = this.outcome();

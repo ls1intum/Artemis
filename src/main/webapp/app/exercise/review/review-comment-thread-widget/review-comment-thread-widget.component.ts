@@ -88,7 +88,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     /** Whether to offer the per-thread "Adapt with feedback" action: an active consistency finding on a host that permits adaptation. */
-    readonly canAdaptExercise = computed(() => this.showAdaptAction() && this.isConsistencyIssueThread() && !this.thread().resolved && !this.thread().outdated);
+    readonly canAdaptExercise = computed(() => this.showAdaptAction() && !this.thread().resolved && !this.thread().outdated);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {

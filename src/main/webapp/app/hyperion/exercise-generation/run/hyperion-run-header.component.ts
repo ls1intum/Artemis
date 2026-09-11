@@ -61,6 +61,7 @@ export class HyperionRunHeaderComponent {
     private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
+    readonly adapting = input(false);
     readonly exerciseTitle = input<string | undefined>();
     /** Translation keys for the meta line, e.g. Java · Gradle · Medium. Never raw enum values. */
     readonly metaLabelKeys = input<readonly string[]>([]);
@@ -98,8 +99,6 @@ export class HyperionRunHeaderComponent {
     readonly startRequested = output<void>();
 
     protected readonly cancelConfirmationKey = CANCEL_CONFIRMATION_KEY;
-    /** Read by the code editor to open its AI activity panel instead of the build output it defaults to. */
-    protected readonly openGenerationActivityState = { openGenerationActivity: true };
 
     private readonly now = serverTimeSignal();
 

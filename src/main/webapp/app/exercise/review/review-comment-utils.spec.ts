@@ -288,21 +288,22 @@ describe('selectedThreadsFindings', () => {
             comments: [{ id: 9, createdDate: '2024-01-01T00:00:00Z', type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'note' } }],
         } as any;
 
-        // The plain (non-consistency) thread is dropped; the two consistency threads keep the order they were passed in (B before A).
+        // Preserve selection order for both instructor comments and automated findings.
         const findings = selectedThreadsFindings([consistencyThreadB, plainThread, consistencyThreadA], translate);
 
-        expect(findings.map((f) => f.description)).toEqual(['second', 'first']);
+        expect(findings.map((f) => f.description)).toEqual(['second', 'note', 'first']);
         expect(findings.map((f) => f.locationLabel)).toEqual([
             'artemisApp.review.relatedLocationRepository.solution: src/B.java:9',
+            undefined,
             'artemisApp.review.relatedLocationRepository.solution: src/A.java:5',
         ]);
     });
 
-    it('should return an empty array when no thread is a consistency finding', () => {
+    it('should include instructor comments without inventing severity or category', () => {
         const plainThread = {
             targetType: CommentThreadLocationType.SOLUTION_REPO,
             comments: [{ id: 9, createdDate: '2024-01-01T00:00:00Z', type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'note' } }],
         } as any;
-        expect(selectedThreadsFindings([plainThread], translate)).toEqual([]);
+        expect(selectedThreadsFindings([plainThread], translate)).toEqual([{ description: 'note', locationLabel: undefined, tagSeverity: 'info' }]);
     });
 });

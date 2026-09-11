@@ -25,6 +25,7 @@ export interface ExerciseGenerationStatus {
     ownedByCaller: boolean;
     cancellable: boolean;
     specDocument?: string;
+    input?: ExerciseGenerationInput;
     usage?: ExerciseGenerationUsage;
     /** Whether the reported usage is a complete account of a generation run\'s provider spend */
     accountingState: ExerciseGenerationStatusAccountingStateEnum;

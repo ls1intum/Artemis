@@ -1,3 +1,4 @@
+import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('y-monaco', () => {
@@ -49,14 +50,11 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { TumUiConfirmationService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-
-const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
-const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
-const OPEN_GENERATION_FILE_STATE = 'openGenerationFilePath';
 
 type ComponentInternalsOverrides = {
     codeEditorContainer: Signal<any>;
@@ -163,6 +161,19 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: vi.fn() } },
         { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: vi.fn(), isLoading: () => false } },
         { provide: ExerciseEditorSyncService, useValue: { connect: vi.fn(), disconnect: vi.fn(), subscribeToUpdates: vi.fn(() => of()) } },
+        {
+            provide: HyperionGenerationActivityFacade,
+            useValue: {
+                connect: vi.fn(),
+                generationCompleted: new Subject(),
+                generationReverted: new Subject(),
+                running: signal(false),
+                statusLoading: signal(false),
+                statusLoadFailed: signal(false),
+                attachToJob: vi.fn(),
+            },
+        },
+        { provide: HyperionJobRegistryService, useValue: { track: vi.fn() } },
         ...additionalProviders,
     ];
 }
@@ -1374,7 +1385,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         attachToJob = vi.fn();
         openEditorBottomPanel = vi.fn();
         setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
-        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
+        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false };
     });
 
     afterEach(() => {
@@ -1408,136 +1419,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(reviewCommentService.clearSelectedFeedback).toHaveBeenCalledOnce();
         expect(selectedIds()).toEqual([]);
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
-        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
-    });
-
-    it('confirms automatic persistence and review responsibilities before manual generation', () => {
-        (comp as any).startGeneration();
-
-        expect(confirm).toHaveBeenCalledWith(
-            expect.objectContaining({
-                key: 'hyperionGenerateConfirmation',
-                rejectLabel: 'entity.action.cancel',
-                acceptLabel: 'artemisApp.programmingExercise.codeGeneration.generateCode',
-                accept: expect.any(Function),
-            }),
-        );
-        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
-        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'GENERATE');
-        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
-    });
-
-    it('auto-starts creation generation only after status loading and repository initialization finish', async () => {
-        fixture.destroy();
-        // The hand-over from the creation wizard arrives as router navigation state, which the component reads
-        // while the activating navigation is still running — i.e. during its own construction.
-        vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({
-            extras: { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [EXERCISE_GENERATION_PROMPT_STATE]: 'Original strategy exercise brief' } },
-        } as unknown as ReturnType<Router['currentNavigation']>);
-        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-        comp = fixture.componentInstance;
-        comp.exercise.set(
-            createMockExercise({
-                problemStatement: 'Implement the specified behavior and cover all required edge cases.',
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                projectType: ProjectType.GRADLE_GRADLE,
-                isAtLeastEditor: true,
-                releaseDate: dayjs().add(1, 'day'),
-            }),
-        );
-        let repositoryClean = false;
-        setCodeEditorContainer(comp, { ...createDefaultContainerStub(), hasCleanRepositoryState: () => repositoryClean });
-        const activity = signal<any | undefined>(undefined);
-        (comp as any).generationActivity = activity;
-
-        fixture.detectChanges();
-        expect(generationService.generate).not.toHaveBeenCalled();
-
-        activity.set({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(generationService.generate).not.toHaveBeenCalled();
-
-        repositoryClean = true;
-        comp.onRepositoryFilesLoaded();
-
-        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE', prompt: 'Original strategy exercise brief' });
-        window.history.replaceState({}, '');
-    });
-
-    describe("the artifact browser's Open in code editor", () => {
-        /** Rebuilds the component as if it had just been activated by a navigation carrying `state`. */
-        function activateWith(state: Record<string, unknown>): void {
-            fixture.destroy();
-            vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({ extras: { state } } as unknown as ReturnType<Router['currentNavigation']>);
-            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-            comp = fixture.componentInstance;
-            comp.exercise.set(createMockExercise({ isAtLeastEditor: true }));
-            setCodeEditorContainer(comp, createDefaultContainerStub());
-            fixture.detectChanges();
-        }
-
-        it('opens the file the instructor was reading rather than the top of the repository', () => {
-            // The route already selected the repository, so the path is all that has to survive the navigation.
-            activateWith({ openGenerationActivity: true, [OPEN_GENERATION_FILE_STATE]: 'src/de/tum/Loan.java' });
-
-            expect(comp.fileToJumpOn).toBe('src/de/tum/Loan.java');
-
-            comp.onEditorLoaded();
-
-            expect((comp as any).codeEditorContainer().selectedFile).toBe('src/de/tum/Loan.java');
-        });
-
-        it('opens no file when the navigation named none, so an ordinary visit is untouched', () => {
-            activateWith({ openGenerationActivity: true });
-
-            expect(comp.fileToJumpOn).toBeUndefined();
-
-            comp.onEditorLoaded();
-
-            expect((comp as any).codeEditorContainer().selectedFile).toBeUndefined();
-        });
-
-        it.each([42, '', null, {}])('ignores a file path of %j rather than trusting the untyped state bag', (filePath) => {
-            activateWith({ openGenerationActivity: true, [OPEN_GENERATION_FILE_STATE]: filePath });
-
-            expect(comp.fileToJumpOn).toBeUndefined();
-        });
-
-        afterEach(() => {
-            window.history.replaceState({}, '');
-        });
-    });
-
-    it.each(['', '   ', 'x'.repeat(39), `  ${'x'.repeat(39)}  `])('blocks manual generation when the meaningful specification is %j', (problemStatement) => {
-        comp.exercise()!.problemStatement = problemStatement;
-        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-
-        (comp as any).startGeneration();
-
-        expect(confirm).not.toHaveBeenCalled();
-        expect(generationService.generate).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
-    });
-
-    it('allows manual generation at the 40-character meaningful specification boundary', () => {
-        comp.exercise()!.problemStatement = 'x'.repeat(40);
-
-        (comp as any).startGeneration();
-
-        expect(confirm).toHaveBeenCalledOnce();
-        expect(generationService.generate).toHaveBeenCalledOnce();
-    });
-
-    it('blocks creation auto-start when navigation state has no meaningful specification', () => {
-        comp.exercise()!.problemStatement = '';
-        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-
-        (comp as any).startGeneration(true);
-
-        expect(confirm).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
-        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(TestBed.inject(HyperionJobRegistryService).track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-adapt-1', exerciseId: 42, mode: 'ADAPT' }));
+        expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/course-management', 1, 'programming-exercises', 42, 'generation']);
     });
 
     it.each([ProjectType.GRADLE_GRADLE])('supports Java generation for project type %s', (projectType) => {
@@ -1563,7 +1446,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
 
         expect((comp as any).canGenerateExercise()).toBe(false);
-        (comp as any).startGeneration();
+        (comp as any).openAdaptDialog();
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
@@ -1578,363 +1461,27 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
     });
 
-    it('reports edits made while the generation confirmation is open instead of silently doing nothing', () => {
-        confirm.mockImplementation(() => undefined);
-        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-        (comp as any).startGeneration();
-        setCodeEditorContainer(comp, { canDeactivate: () => false });
-
-        confirm.mock.calls[0][0].accept();
-
-        expect(generationService.generate).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
-    });
-
-    it('does not generate the initiating exercise after navigating away from its confirmation', () => {
-        confirm.mockImplementation(() => undefined);
-
-        (comp as any).startGeneration();
-        comp.exercise.set(createMockExercise({ id: 84 }));
-        confirm.mock.calls[0][0].accept();
-
-        expect(generationService.generate).not.toHaveBeenCalled();
-    });
-
-    it('does not generate after the editor is destroyed with confirmation open', () => {
-        confirm.mockImplementation(() => undefined);
-
-        (comp as any).startGeneration();
-        fixture.destroy();
-        confirm.mock.calls[0][0].accept();
-
-        expect(generationService.generate).not.toHaveBeenCalled();
-    });
-
-    it.each([
-        ['solution', 'solution/src/main/Solution.java', CommentThreadLocationType.SOLUTION_REPO, 'src/main/Solution.java'],
-        ['template', 'template/src/main/Template.java', CommentThreadLocationType.TEMPLATE_REPO, 'src/main/Template.java'],
-        ['tests', 'tests/src/test/ExerciseTest.java', CommentThreadLocationType.TEST_REPO, 'src/test/ExerciseTest.java'],
-    ] as const)('navigates a persisted %s file change through the authoritative editor', (repo, path, targetType, filePath) => {
-        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
-
-        (comp as any).onHyperionFileChangeSelected({ repo, path });
-
-        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType, filePath });
-    });
-
-    it('does not fake navigation for an unknown other file change', () => {
-        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
-
-        (comp as any).onHyperionFileChangeSelected({ repo: 'other', path: 'notes.txt' });
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-    });
-
-    it('opens a persisted problem statement file change in the authoritative problem editor', () => {
-        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => true });
-
-        (comp as any).onHyperionFileChangeSelected({ repo: 'other', path: 'problem-statement.md' });
-
-        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType: CommentThreadLocationType.PROBLEM_STATEMENT, filePath: 'problem-statement.md' });
-    });
-
-    it('does not navigate a file change before the activity is terminal', () => {
-        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
-        (comp as any).generationActivity = () => ({ canNavigateFileChange: () => false });
-
-        (comp as any).onHyperionFileChangeSelected({ repo: 'solution', path: 'solution/src/Main.java' });
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-    });
-
-    it('opens problem statement version history from the saved-change review', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
-
-        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 1, 'programming-exercises', 42, 'version-history']);
-    });
-
-    it('keeps dirty editor work in place instead of navigating to a saved-change review', () => {
-        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
-        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewBlockedByLocalEdits');
-    });
-
-    it('opens the exact saved problem statement version when available', () => {
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
-
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42', savedExerciseVersionId: 17 });
-
-        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 1, 'programming-exercises', 42, 'version-history'], {
-            queryParams: { versionId: 17 },
-        });
-    });
-
-    it('opens the exact Hyperion repository commit instead of assuming the latest commit', () => {
-        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
-        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
-            of([
-                { hash: 'newer-unrelated', message: 'Manual follow-up' },
-                { hash: 'similar-job', message: 'Generate exercise with Hyperion (job-420)' },
-                { hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' },
-            ]),
-        );
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
-
-        expect(retrieveSpy).toHaveBeenCalledExactlyOnceWith(42, RepositoryType.SOLUTION);
-        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([
-            '/course-management',
-            1,
-            'programming-exercises',
-            42,
-            'repository',
-            RepositoryType.SOLUTION,
-            'commit-history',
-            'hyperion-hash',
-        ]);
-    });
-
-    it('opens the persisted commit hash without searching human-readable history', () => {
-        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
-        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests');
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
-
-        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42', commitHash: 'exact-solution-commit' });
-
-        expect(retrieveSpy).not.toHaveBeenCalled();
-        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([
-            '/course-management',
-            1,
-            'programming-exercises',
-            42,
-            'repository',
-            RepositoryType.SOLUTION,
-            'commit-history',
-            'exact-solution-commit',
-        ]);
-    });
-
-    it('reports unavailable repository history without navigating', () => {
-        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
-        vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of([{ message: 'Generate exercise with Hyperion (job-42)' }]));
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'tests', jobId: 'job-42' });
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
-    });
-
-    it('rejects ambiguous exact Hyperion commit matches', () => {
-        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
-        vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
-            of([
-                { hash: 'first', message: 'Generate exercise with Hyperion (job-42)' },
-                { hash: 'second', message: 'Generate exercise with Hyperion (job-42)' },
-            ]),
-        );
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
-    });
-
-    it('keeps repository review deduplicated until navigation completes and reports a false result', async () => {
-        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
-        const retrieveSpy = vi
-            .spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests')
-            .mockReturnValue(of([{ hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' }]));
-        let resolveNavigation!: (result: boolean) => void;
-        const navigation = new Promise<boolean>((resolve) => (resolveNavigation = resolve));
-        vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(navigation);
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
-        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
-        expect(retrieveSpy).toHaveBeenCalledOnce();
-
-        resolveNavigation(false);
-        await navigation;
-        await Promise.resolve();
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
-        (comp as any).onHyperionReviewRequested({ target: 'solution', jobId: 'job-42' });
-        expect(retrieveSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it('reports failed problem-statement navigation', async () => {
-        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(false);
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
-        await Promise.resolve();
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
-    });
-
-    it('deduplicates problem-statement review while navigation is pending', () => {
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(new Promise<boolean>(() => undefined));
-
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
-
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('reports rejected problem-statement navigation', async () => {
-        vi.spyOn(TestBed.inject(Router), 'navigate').mockRejectedValue(new Error('routing failed'));
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'problem-statement', jobId: 'job-42' });
-        await Promise.resolve();
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
-    });
-
-    it('does not navigate when repository history arrives after editor destruction', () => {
-        const history = new Subject<any[]>();
-        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(history);
-        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
-
-        (comp as any).onHyperionReviewRequested({ target: 'tests', jobId: 'job-42' });
-        fixture.destroy();
-        history.next([{ hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' }]);
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-    });
-
-    it('ignores repository navigation completion after editor destruction', async () => {
-        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
-            of([{ hash: 'hyperion-hash', message: 'Generate exercise with Hyperion (job-42)' }]),
-        );
-        let resolveNavigation!: (result: boolean) => void;
-        const navigation = new Promise<boolean>((resolve) => (resolveNavigation = resolve));
-        vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(navigation);
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'tests', jobId: 'job-42' });
-        fixture.destroy();
-        resolveNavigation(false);
-        await navigation;
-        await Promise.resolve();
-
-        expect(errorSpy).not.toHaveBeenCalled();
-        expect((comp as any).reviewRequestsInFlight.size).toBe(0);
-    });
-
-    it('reports repository history request failures and ignores duplicate in-flight clicks', () => {
-        const history = new Subject<any[]>();
-        const historyService = TestBed.inject(ProgrammingExerciseParticipationService);
-        const retrieveSpy = vi.spyOn(historyService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(history);
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).onHyperionReviewRequested({ target: 'template', jobId: 'job-42' });
-        (comp as any).onHyperionReviewRequested({ target: 'template', jobId: 'job-42' });
-        expect(retrieveSpy).toHaveBeenCalledOnce();
-
-        history.error(new Error('network'));
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.reviewUnavailable');
-    });
-
     it('reopens Hyperion from the AI toolbar while status is unavailable', () => {
-        (comp as any).generationActivity = () => ({ running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
+        (comp as any).generationActivity = { running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
         (comp as any).onAiToolbarClick({} as Event, { toggle: vi.fn() });
 
-        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
-    });
-
-    it('startGeneration is blocked while another run is active or start request is pending', () => {
-        const pending = new Subject<{ jobId: string }>();
-        generationService.generate.mockReturnValue(pending);
-
-        (comp as any).startGeneration();
-        (comp as any).startGeneration();
-
-        expect(generationService.generate).toHaveBeenCalledOnce();
-        expect(attachToJob).not.toHaveBeenCalled();
-
-        pending.next({ jobId: 'job-generate-1' });
-        pending.complete();
-        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-generate-1', 'GENERATE');
-
-        (comp as any).generationActivity = () => ({ attachToJob, running: () => true, statusLoading: () => false, statusLoadFailed: () => false });
-
-        (comp as any).startGeneration();
-
-        expect(generationService.generate).toHaveBeenCalledOnce();
-    });
-
-    it('ignores a generation start response after navigating to another exercise', () => {
-        const pending = new Subject<{ jobId: string }>();
-        generationService.generate.mockReturnValue(pending);
-        vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of(createMockExercise({ id: 84 })));
-
-        (comp as any).startGeneration();
-        comp.loadExercise(84).subscribe();
-        pending.next({ jobId: 'job-for-previous-exercise' });
-        pending.complete();
-
-        expect(pending.observed).toBe(false);
-        expect(attachToJob).not.toHaveBeenCalled();
-        expect(openEditorBottomPanel).not.toHaveBeenCalled();
-    });
-
-    it('ignores a generation start failure after navigating to another exercise', () => {
-        const pending = new Subject<{ jobId: string }>();
-        generationService.generate.mockReturnValue(pending);
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        (comp as any).startGeneration();
-        comp.exercise.set(createMockExercise({ id: 84 }));
-        pending.error(new Error('late failure'));
-
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
-
-    it('unsubscribes a pending generation start when the editor is destroyed', () => {
-        const pending = new Subject<{ jobId: string }>();
-        generationService.generate.mockReturnValue(pending);
-
-        (comp as any).startGeneration();
-        fixture.destroy();
-        pending.next({ jobId: 'job-after-destroy' });
-
-        expect(attachToJob).not.toHaveBeenCalled();
-        expect(openEditorBottomPanel).not.toHaveBeenCalled();
+        expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/course-management', 1, 'programming-exercises', 42, 'generation']);
     });
 
     it('keeps the editor locked while generation status is hydrating', () => {
-        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false });
+        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false };
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(true);
     });
 
     it('keeps all exercise editing locked when generation status could not be verified', () => {
-        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
+        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(false);
         expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
 
-        (comp as any).startGeneration();
+        (comp as any).openAdaptDialog();
 
         expect(generationService.generate).not.toHaveBeenCalled();
     });
@@ -1943,12 +1490,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         ['status is loading', { statusLoading: true, statusLoadFailed: false }],
         ['status loading failed', { statusLoading: false, statusLoadFailed: true }],
     ])('disables and guards Adapt with feedback while generation %s', (_description, status) => {
-        (comp as any).generationActivity = () => ({
+        (comp as any).generationActivity = {
             attachToJob,
             running: () => false,
             statusLoading: () => status.statusLoading,
             statusLoadFailed: () => status.statusLoadFailed,
-        });
+        };
 
         expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
 
@@ -1958,43 +1505,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
         expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
-    });
-
-    it('startGeneration is blocked when local repository changes are unsaved', () => {
-        setCodeEditorContainer(comp, { canDeactivate: () => false });
-        const alertService = TestBed.inject(AlertService);
-        const warningSpy = vi.spyOn(alertService, 'warning');
-
-        (comp as any).startGeneration();
-
-        expect(generationService.generate).not.toHaveBeenCalled();
-        expect(attachToJob).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
-    });
-
-    it('startGeneration is blocked unless the repository state is verified clean', () => {
-        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => false });
-        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
-
-        (comp as any).startGeneration();
-
-        expect(generationService.generate).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
-    });
-
-    it('startGeneration is blocked when local problem statement changes are unsaved', () => {
-        comp.exercise()!.problemStatement = '';
-        setCodeEditorContainer(comp, { canDeactivate: () => true });
-        setEditableInstructions(comp, { unsavedChangesValue: () => false });
-        (comp as any).onProblemStatementUnsavedChangesChanged(true);
-        const alertService = TestBed.inject(AlertService);
-        const warningSpy = vi.spyOn(alertService, 'warning');
-
-        (comp as any).startGeneration();
-
-        expect(generationService.generate).not.toHaveBeenCalled();
-        expect(attachToJob).not.toHaveBeenCalled();
-        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
     });
 
     it('reloads a clean editor after a persisted generation changes the exercise', () => {
@@ -2013,7 +1523,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
         const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
 
-        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+        TestBed.inject(HyperionGenerationActivityFacade).generationReverted.next('2024-01-01T00:00:00Z');
 
         expect(reloadEditor).not.toHaveBeenCalled();
         expect(warning).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.refreshBlockedByLocalEdits');
@@ -2024,7 +1534,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
         setEditableInstructions(comp, { unsavedChangesValue: () => false });
 
-        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
+        TestBed.inject(HyperionGenerationActivityFacade).generationReverted.next('2024-01-01T00:00:00Z');
 
         expect(reloadEditor).toHaveBeenCalledOnce();
         expect((comp as any).generationRefreshPending()).toBe(true);
@@ -2035,8 +1545,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
         setEditableInstructions(comp, { unsavedChangesValue: () => false });
 
-        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:00Z');
-        (comp as any).onHyperionGenerationReverted('2024-01-01T00:00:01Z');
+        TestBed.inject(HyperionGenerationActivityFacade).generationReverted.next('2024-01-01T00:00:00Z');
+        TestBed.inject(HyperionGenerationActivityFacade).generationReverted.next('2024-01-01T00:00:01Z');
 
         expect(reloadEditor).toHaveBeenCalledOnce();
     });
@@ -2045,7 +1555,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
         setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
         setEditableInstructions(comp, { unsavedChangesValue: () => false });
-        (comp as any).startGeneration(true);
+        (comp as any).openAdaptDialog();
+        confirmAdaptDialog('Improve the exercise');
 
         (comp as any).problemStatementHasUnsavedChanges.set(true);
         setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
@@ -2054,7 +1565,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({ jobId: 'job-1', mode: 'ADAPT', liveExerciseChanged: true });
 
         expect(reloadEditor).not.toHaveBeenCalled();
-        expect(generationService.generate).toHaveBeenCalledWith(42, { mode: 'GENERATE' });
+        expect(generationService.generate).toHaveBeenCalledWith(42, { mode: 'ADAPT', prompt: 'Improve the exercise', selectedFeedbackThreadIds: undefined });
         expect((comp as any).generationRefreshPending()).toBe(false);
         expect((comp as any).generationRefreshFailed()).toBe(true);
     });
@@ -2215,25 +1726,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(reloadEditor).toHaveBeenCalledOnce();
     });
 
-    it('filters non-consistency, resolved, and outdated review threads out of the adapt count, dialog, and ADAPT payload', () => {
+    it('includes instructor feedback but excludes resolved and outdated threads from adaptation', () => {
         const resolvedConsistencyThread = { ...consistencyThread(9), resolved: true };
         const outdatedConsistencyThread = { ...consistencyThread(10), outdated: true };
         const activeConsistencyThread = consistencyThread(11);
         reviewCommentService.threads.set([userThread(7), resolvedConsistencyThread, outdatedConsistencyThread, activeConsistencyThread]);
         selectedIds.set([7, 9, 10, 11]);
 
-        expect(comp.selectedAdaptFeedbackCount()).toBe(1);
+        expect(comp.selectedAdaptFeedbackCount()).toBe(2);
 
         (comp as any).openAdaptDialog();
-        expect(comp.adaptDialogFindings()).toHaveLength(1);
-        expect(comp.adaptDialogFindings()[0].description).toBe('Fix method signature');
+        expect(comp.adaptDialogFindings().map((finding) => finding.description)).toEqual(['please rename', 'Fix method signature']);
 
         confirmAdaptDialog('also rename the method');
 
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
             mode: 'ADAPT',
             prompt: 'also rename the method',
-            selectedFeedbackThreadIds: [11],
+            selectedFeedbackThreadIds: [7, 11],
         });
     });
 
@@ -2247,6 +1757,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             selectedFeedbackThreadIds: undefined,
         });
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
+        expect(TestBed.inject(HyperionJobRegistryService).track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-adapt-1', exerciseId: 42, mode: 'ADAPT' }));
     });
 
     it('does not dispatch a run when the adapt dialog is dismissed', () => {
@@ -2376,12 +1887,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const jenkinsComp = jenkinsFixture.componentInstance;
         jenkinsComp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true }));
         const jenkinsAttach = vi.fn();
-        (jenkinsComp as any).generationActivity = () => ({ attachToJob: jenkinsAttach });
+        (jenkinsComp as any).generationActivity = { attachToJob: jenkinsAttach };
 
         expect((jenkinsComp as any).hyperionEnabled).toBe(true);
         expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
         expect((jenkinsComp as any).canAdaptWithFeedback()).toBe(false);
-        expect((jenkinsComp as any).showGenerationActivity()).toBe(false);
+        expect((jenkinsComp as any).generationSupported()).toBe(false);
 
         (jenkinsComp as any).openAdaptDialog();
         expect(jenkinsComp.adaptDialogVisible()).toBe(false);
@@ -2396,19 +1907,19 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         vi.spyOn(localCiProfileService, 'isProfileActive').mockReturnValue(true);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') }));
-        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
-        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [{} as any] }));
-        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, numberOfParticipations: 1 }));
-        expect((comp as any).showGenerationActivity()).toBe(true);
+        expect((comp as any).generationSupported()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [], numberOfParticipations: 1 }));
