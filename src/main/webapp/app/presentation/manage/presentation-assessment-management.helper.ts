@@ -46,20 +46,17 @@ export function createStudentRows(presentationAssessments: PresentationAssessmen
 }
 
 export function createSelectedStudentRows(presentationAssessment: PresentationAssessment | undefined, courseStudents: User[]): SelectedPresentationStudentRow[] {
-    if (!presentationAssessment) {
-        return [];
-    }
-    return createStudentRows([presentationAssessment], courseStudents);
+    return createStudentRows(presentationAssessment ? [presentationAssessment] : [], courseStudents);
 }
 
 export function filterAndSortStudentRows(rows: PresentationStudentRow[], filters: StudentRowFilters): PresentationStudentRow[] {
     const query = filters.query.trim().toLocaleLowerCase();
-    return rows.filter((row) => matchesStudentRow(row, query, filters)).sort((first, second) => compareStudentRows(first, second, filters.sortField) * filters.sortOrder);
+    return rows.filter((row) => matchesStudentRow(row, query, filters)).sort((first, second) => compareStudentRows(first, second, filters.sortField, filters.sortOrder));
 }
 
 export function filterStudentRowsBySearch(rows: PresentationStudentRow[], searchTerm: string): PresentationStudentRow[] {
     const query = searchTerm.trim().toLocaleLowerCase();
-    return query ? rows.filter((row) => matchesStudentQuery(row, query)) : rows;
+    return rows.filter((row) => matchesStudentQuery(row, query));
 }
 
 export function createPresentationSidebarData(
@@ -118,49 +115,35 @@ function mapStudentsByLogin(students: User[]): Map<string, User> {
 }
 
 function matchesStudentRow(row: PresentationStudentRow, query: string, filters: StudentRowFilters): boolean {
-    const matchesQuery = !query || matchesStudentQuery(row, query, true);
-    const matchesStatus = filters.status === 'all' || (filters.status === 'assessed' ? hasResultPoints(row.instance.resultPoints) : !hasResultPoints(row.instance.resultPoints));
-    const matchesPresentation = filters.presentation === 'all' || row.presentationAssessment.id === filters.presentation;
-    const matchesType = filters.type === 'all' || (filters.type === 'exercise' ? !!row.presentationAssessment.exerciseId : !row.presentationAssessment.exerciseId);
-    return matchesQuery && matchesStatus && matchesPresentation && matchesType;
+    const rowStatus: AssessmentStatusFilter = hasResultPoints(row.instance.resultPoints) ? 'assessed' : 'pending';
+    const rowType: PresentationTypeFilter = row.presentationAssessment.exerciseId ? 'exercise' : 'standalone';
+    return (
+        matchesStudentQuery(row, query, row.presentationAssessment.title) &&
+        ['all', rowStatus].includes(filters.status) &&
+        ['all', row.presentationAssessment.id].includes(filters.presentation) &&
+        ['all', rowType].includes(filters.type)
+    );
 }
 
-function matchesStudentQuery(row: PresentationStudentRow, query: string, includePresentation = false): boolean {
-    const values = [row.studentLogin, row.student.name, row.student.firstName, row.student.lastName, row.student.email];
-    if (includePresentation) {
-        values.push(row.presentationAssessment.title);
-    }
-    return values.filter((value): value is string => !!value).some((value) => value.toLocaleLowerCase().includes(query));
+function matchesStudentQuery(row: PresentationStudentRow, query: string, presentationTitle?: string): boolean {
+    return [row.studentLogin, row.student.name, row.student.firstName, row.student.lastName, row.student.email, presentationTitle].join(' ').toLocaleLowerCase().includes(query);
 }
 
-function compareStudentRows(first: PresentationStudentRow, second: PresentationStudentRow, field: string): number {
+function compareStudentRows(first: PresentationStudentRow, second: PresentationStudentRow, field: string, sortOrder: number): number {
     const firstValue = studentSortValue(first, field);
     const secondValue = studentSortValue(second, field);
-    if (firstValue === secondValue) {
-        return 0;
-    }
-    if (firstValue === undefined) {
-        return 1;
-    }
-    if (secondValue === undefined) {
-        return -1;
-    }
-    return firstValue < secondValue ? -1 : 1;
+    const missingValueOrder = Number(firstValue === undefined) - Number(secondValue === undefined);
+    return missingValueOrder || String(firstValue).localeCompare(String(secondValue), undefined, { numeric: true }) * sortOrder;
 }
 
 function studentSortValue(row: PresentationStudentRow, field: string): string | number | undefined {
-    switch (field) {
-        case 'studentLogin':
-            return row.studentLogin.toLocaleLowerCase();
-        case 'presentationTitle':
-            return row.presentationAssessment.title?.toLocaleLowerCase();
-        case 'presentationDate':
-            return row.instance.presentationDate?.valueOf();
-        case 'resultPoints':
-            return row.instance.resultPoints ?? undefined;
-        default:
-            return undefined;
-    }
+    const values: Record<string, string | number | undefined> = {
+        studentLogin: row.studentLogin.toLocaleLowerCase(),
+        presentationTitle: row.presentationAssessment.title?.toLocaleLowerCase(),
+        presentationDate: row.instance.presentationDate?.valueOf(),
+        resultPoints: row.instance.resultPoints ?? undefined,
+    };
+    return values[field];
 }
 
 function toSidebarItem(

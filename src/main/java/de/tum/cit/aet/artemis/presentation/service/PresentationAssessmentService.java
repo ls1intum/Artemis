@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -156,19 +155,18 @@ public class PresentationAssessmentService {
      * @param dto          the instance data to persist
      * @return all instances affected by the logical operation
      */
-    @Transactional
     public List<PresentationAssessmentInstance> saveInstances(Course course, long assessmentId, PresentationAssessmentInstanceDTO dto) {
         PresentationAssessment assessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
         if (dto.id() == null) {
             List<PresentationAssessmentInstance> instances = dto.studentLogins().stream().distinct()
                     .map(studentLogin -> createIndividualInstance(course, assessment, dto, studentLogin)).toList();
-            return presentationAssessmentInstanceRepository.saveAll(instances);
+            return presentationAssessmentInstanceRepository.saveAllAtomically(instances);
         }
 
         PresentationAssessmentInstance existingInstance = findInstanceElseThrow(course.getId(), assessmentId, dto.id());
         if (existingInstance.getStudents().size() <= 1) {
             applyInstanceDto(course, assessment, existingInstance, dto);
-            return List.of(presentationAssessmentInstanceRepository.save(existingInstance));
+            return presentationAssessmentInstanceRepository.saveAllAtomically(List.of(existingInstance));
         }
 
         if (dto.studentLogins().size() != 1) {
@@ -181,7 +179,7 @@ public class PresentationAssessmentService {
                         "studentNotInInstance"));
         existingInstance.getStudents().remove(editedStudent);
         PresentationAssessmentInstance editedInstance = createIndividualInstance(course, assessment, dto, editedStudentLogin);
-        return presentationAssessmentInstanceRepository.saveAll(List.of(existingInstance, editedInstance));
+        return presentationAssessmentInstanceRepository.saveAllAtomically(List.of(existingInstance, editedInstance));
     }
 
     public void deleteInstance(long courseId, long assessmentId, long instanceId) {

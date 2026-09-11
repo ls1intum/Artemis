@@ -54,6 +54,7 @@ describe('Presentation assessment management helpers', () => {
         expect(filterAndSortStudentRows(rows, { ...baseFilters, type: 'exercise' })).toHaveLength(2);
         expect(filterAndSortStudentRows(rows, { ...baseFilters, sortField: 'presentationDate', sortOrder: -1 })[0].studentLogin).toBe('bert');
         expect(filterAndSortStudentRows(rows, { ...baseFilters, sortField: 'resultPoints', sortOrder: 1 })[0].studentLogin).toBe('bert');
+        expect(filterAndSortStudentRows(rows, { ...baseFilters, sortField: 'resultPoints', sortOrder: -1 }).map((row) => row.studentLogin)).toEqual(['bert', 'anna', 'unknown']);
         expect(filterStudentRowsBySearch(rows, 'Anna Student').map((row) => row.studentLogin)).toEqual(['anna']);
         expect(filterStudentRowsBySearch(rows, 'bert@example.com').map((row) => row.studentLogin)).toEqual(['bert']);
     });
