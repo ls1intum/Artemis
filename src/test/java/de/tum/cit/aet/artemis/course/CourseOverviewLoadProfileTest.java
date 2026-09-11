@@ -321,11 +321,15 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         log.info("Reverse-order pass (ordering-artefact check):");
         logTable(reverseMeasurements);
 
-        // The whole point of the split: entering a course costs available-tabs + for-overview, and that pair must stay
-        // far below the cost of loading every tab, which is what entering a course used to pay up front.
-        long allTabQueries = measurements.stream().mapToLong(Measurement::queries).sum();
+        // The whole point of the split: entering a course costs available-tabs + for-overview (the first two endpoints
+        // above), and that pair must stay below what the tabs themselves load, which is what a course visit used to pay
+        // for up front. The right-hand side deliberately excludes those two: summing every measurement would put them
+        // on both sides, leaving an assertion that holds whenever the tabs issue any query at all and so could never
+        // catch a regression in the cost of entering a course.
+        int firstTabContentEndpoint = 2;
         long courseEntryQueries = measurements.get(0).queries() + measurements.get(1).queries();
-        assertThat(courseEntryQueries).as("entering a course must not scale with its content").isLessThan(allTabQueries);
+        long tabContentQueries = measurements.subList(firstTabContentEndpoint, measurements.size()).stream().mapToLong(Measurement::queries).sum();
+        assertThat(courseEntryQueries).as("entering a course must not pay for the content of every tab").isLessThan(tabContentQueries);
     }
 
     /**
