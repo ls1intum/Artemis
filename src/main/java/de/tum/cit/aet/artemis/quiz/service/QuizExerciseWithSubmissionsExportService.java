@@ -11,10 +11,10 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -36,14 +36,14 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, JsonMapper objectMapper,
             DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService) {
         this.quizExerciseRepository = quizExerciseRepository;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
     }
 
@@ -64,7 +64,10 @@ public class QuizExerciseWithSubmissionsExportService {
         try {
             FileUtil.writeObjectToJsonFile(quizExercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a serialization failure would
+        // otherwise unwind past here and drop the whole exercise from the archive instead of adding one line
+        // to exportErrors and carrying on.
+        catch (JacksonException e) {
             exportErrors.add("Failed to export quiz exercise details " + quizExercise.getTitle() + " with id " + quizExercise.getId() + " due to a JSON processing error.");
         }
         List<Path> imagesToExport = new ArrayList<>();
