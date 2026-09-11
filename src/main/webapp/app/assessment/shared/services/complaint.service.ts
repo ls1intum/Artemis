@@ -275,6 +275,8 @@ export class ComplaintService implements IComplaintService {
         complaint.complaintType = dto.complaintType;
         complaint.accepted = dto.complaintIsAccepted;
         complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
+        complaint.assessorKey = dto.assessorKey;
+        complaint.assessorLabel = dto.assessorLabel;
 
         if (dto.complaintResponse) {
             complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);

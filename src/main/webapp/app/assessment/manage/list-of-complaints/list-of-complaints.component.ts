@@ -60,7 +60,7 @@ export class ListOfComplaintsComponent implements OnInit {
     readonly allComplaintsForTutorLoaded = signal(false);
     readonly isLoadingAllComplaints = signal(false);
     readonly filterOption = signal<number | undefined>(undefined);
-    readonly assessorFilter = signal<string | undefined>(undefined); // assessor login, only meaningful once allComplaintsForTutorLoaded()
+    readonly assessorFilter = signal<string | undefined>(undefined); // assessorKey, only meaningful once allComplaintsForTutorLoaded()
 
     readonly loading = signal(true);
     // Cached so toggling "mine"/"all" after the first fetch is a pure client-side swap, no repeat request.
@@ -74,12 +74,11 @@ export class ListOfComplaintsComponent implements OnInit {
 
     /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
     readonly assessorOptions = computed(() => {
-        const byLogin = new Map<string, string>();
+        const byKey = new Map<string, string>();
         for (const complaint of this.complaints()) {
-            const assessor = complaint.result?.assessor;
-            byLogin.set(assessor?.login ?? '', assessor?.name ?? assessor?.login ?? '');
+            byKey.set(complaint.assessorKey ?? '', complaint.assessorLabel ?? '');
         }
-        return Array.from(byLogin, ([login, name]) => ({ login, name })).sort((a, b) => a.name.localeCompare(b.name));
+        return Array.from(byKey, ([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
     });
     // Icons
     faSort = faSort;
@@ -232,9 +231,9 @@ export class ListOfComplaintsComponent implements OnInit {
             filtered = this.complaints();
         }
 
-        const assessorLogin = this.assessorFilter();
-        if (assessorLogin !== undefined) {
-            filtered = filtered.filter((complaint) => (complaint.result?.assessor?.login ?? '') === assessorLogin);
+        const assessorKey = this.assessorFilter();
+        if (assessorKey !== undefined) {
+            filtered = filtered.filter((complaint) => (complaint.assessorKey ?? '') === assessorKey);
         }
 
         this.complaintsToShow.set(filtered);
@@ -333,8 +332,8 @@ export class ListOfComplaintsComponent implements OnInit {
         );
     }
 
-    onAssessorFilterChange(login: string | undefined) {
-        this.assessorFilter.set(login);
+    onAssessorFilterChange(key: string | undefined) {
+        this.assessorFilter.set(key);
         this.applyComplaintFilter();
     }
 

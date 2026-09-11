@@ -36,8 +36,8 @@
                     (ngModelChange)="onAssessorFilterChange($event)"
                 >
                     <option [ngValue]="undefined" jhiTranslate="artemisApp.complaint.listOfComplaints.allAssessors"></option>
-                    @for (assessor of assessorOptions(); track assessor.login) {
-                        <option [ngValue]="assessor.login">{{ assessor.name || ('artemisApp.complaint.listOfComplaints.unknownAssessor' | artemisTranslate) }}</option>
+                    @for (assessor of assessorOptions(); track assessor.key) {
+                        <option [ngValue]="assessor.key">{{ assessor.label || ('artemisApp.complaint.listOfComplaints.unknownAssessor' | artemisTranslate) }}</option>
                     }
                 </select>
             }
@@ -139,7 +139,7 @@
                             <span>{{ complaint.result?.submission?.id }}</span>
                         </td>
                         <td>
-                            <span>{{ complaint.result?.assessor?.name }}</span>
+                            <span>{{ complaint.result?.assessor?.name || complaint.assessorLabel }}</span>
                         </td>
                         @if (course()?.isAtLeastInstructor) {
                             <td>

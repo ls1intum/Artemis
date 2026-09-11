@@ -345,6 +345,23 @@ describe('ListOfComplaintsComponent', () => {
         expect(comp.filterOption()).toBeUndefined();
     });
 
+    it('assessorOptions and filter use privacy-safe assessorKey and assessorLabel for multiple foreign tutors', () => {
+        const foreignTutorA = { id: 1, assessorKey: '101', assessorLabel: 'Tutor Two' } as Complaint;
+        const foreignTutorB = { id: 2, assessorKey: '102', assessorLabel: 'Instructor One' } as Complaint;
+        const foreignTutorAAgain = { id: 3, assessorKey: '101', assessorLabel: 'Tutor Two' } as Complaint;
+        // accepted undefined so default addressed-filter keeps them visible
+        comp.complaints.set([foreignTutorA, foreignTutorB, foreignTutorAAgain]);
+
+        expect(comp.assessorOptions()).toEqual([
+            { key: '102', label: 'Instructor One' },
+            { key: '101', label: 'Tutor Two' },
+        ]);
+
+        comp.onAssessorFilterChange('101');
+
+        expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([1, 3]);
+    });
+
     function verifyNotCalled(...instances: MockInstance[]) {
         for (const spyInstance of instances) {
             expect(spyInstance).not.toHaveBeenCalled();
