@@ -7,7 +7,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -658,7 +657,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextExercise examExercise = examUtilService.addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(TEST_PREFIX);
         final TextSubmission submission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        final Result result = Objects.requireNonNull(submission.getLatestResult());
+        final Result result = submission.getLatestResult();
+        assertThat(result).isNotNull();
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         resultRepository.save(result);
         final var requestDto = new ComplaintRequestDTO(result.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examExercise.getExam().getId()));
@@ -781,7 +781,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 AssessmentType.MANUAL, false);
         courseRepository.save(course);
         complaintUtilService.addComplaintToSubmission(programmingSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
-        var programmingComplaint = complaintRepo.findByResultId(Objects.requireNonNull(programmingSubmission.getResultWithComplaint()).getId()).orElseThrow();
+        var programmingResultWithComplaint = programmingSubmission.getResultWithComplaint();
+        assertThat(programmingResultWithComplaint).isNotNull();
+        var programmingComplaint = complaintRepo.findByResultId(programmingResultWithComplaint.getId()).orElseThrow();
         programmingComplaint.setComplaintText("Programming exercise complaint");
         complaintRepo.save(programmingComplaint);
 
@@ -807,7 +809,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 TEST_PREFIX + "tutor1");
         courseRepository.save(course);
         complaintUtilService.addComplaintToSubmission(fileUploadSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
-        var fileUploadComplaint = complaintRepo.findByResultId(Objects.requireNonNull(fileUploadSubmission.getResultWithComplaint()).getId()).orElseThrow();
+        var fileUploadResultWithComplaint = fileUploadSubmission.getResultWithComplaint();
+        assertThat(fileUploadResultWithComplaint).isNotNull();
+        var fileUploadComplaint = complaintRepo.findByResultId(fileUploadResultWithComplaint.getId()).orElseThrow();
         fileUploadComplaint.setComplaintText("File upload complaint");
         complaintRepo.save(fileUploadComplaint);
 
@@ -907,8 +911,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        final var examExerciseComplaint = new ComplaintRequestDTO(Objects.requireNonNull(textSubmission.getLatestResult()).getId(), "This is not fair", ComplaintType.COMPLAINT,
-                Optional.of(examId));
+        final var latestResult = textSubmission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        final var examExerciseComplaint = new ComplaintRequestDTO(latestResult.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examId));
 
         final String url = "/api/assessment/complaints";
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
@@ -943,8 +948,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        var examExerciseComplaint = new ComplaintRequestDTO(Objects.requireNonNull(textSubmission.getLatestResult()).getId(), "This is not fair", ComplaintType.COMPLAINT,
-                Optional.empty());
+        var latestResult = textSubmission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        var examExerciseComplaint = new ComplaintRequestDTO(latestResult.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
         // The complaint is about an exam exercise, but the REST-Call for course exercises is used
         request.post("/api/assessment/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
@@ -984,8 +990,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final long courseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        final var examExerciseComplaint = new ComplaintRequestDTO(Objects.requireNonNull(textSubmission.getLatestResult()).getId(), "This is not fair", ComplaintType.COMPLAINT,
-                Optional.of(examId));
+        final var latestResult = textSubmission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        final var examExerciseComplaint = new ComplaintRequestDTO(latestResult.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examId));
 
         final String url = "/api/assessment/complaints";
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
@@ -1077,8 +1084,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         var examId = examExercise.getExam().getId();
-        final var examExerciseComplaint = new ComplaintRequestDTO(Objects.requireNonNull(textSubmission.getLatestResult()).getId(), complaintText, ComplaintType.COMPLAINT,
-                Optional.of(examId));
+        final var latestResult = textSubmission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        final var examExerciseComplaint = new ComplaintRequestDTO(latestResult.getId(), complaintText, ComplaintType.COMPLAINT, Optional.of(examId));
 
         String url = "/api/assessment/complaints";
         request.post(url, examExerciseComplaint, expectedStatus);

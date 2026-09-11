@@ -8,11 +8,8 @@ import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
-import checkoutPathsPreview from '../assets/programming/checkout-paths-preview.png';
-import checkoutPathsEdit from '../assets/programming/checkout-paths-edit.png';
-import timeoutSlider from '../assets/programming/timeout-slider.png';
-import dockerFlagsEdit from '../assets/programming/docker-flags-edit.png';
 import buildPlanPhases from '../assets/programming/build-plan-phases.png';
+import containerConfiguration from '../assets/programming/build-container-configuration.png';
 
 Every push to a student repository triggers a build, and the build is what turns code into a result. A new exercise starts with a working build for its language, so most exercises need nothing from this page. Come here when you need to change what the build runs, how long it may take, what the container it runs in is allowed to do, or when you want to add code quality checks.
 
@@ -26,7 +23,7 @@ Instructors can configure the build phases.
 To do this, check the **Customize Build Configuration** option in the exercise creation, edit, or import screen. All changes apply to all builds (template, solution, and student submissions).
 You can view the configured build plan on the exercise's detail or edit page.
 
-<Image src={buildPlanPhases} alt="Build Plan Configuration" size={ImageSize.large} caption="Build Plan Configuration" />
+<Image src={buildPlanPhases} alt="Build phases with their scripts and result paths" size={ImageSize.large} caption="The build phases" />
 
 The build plan consists of multiple phases. Each phase can be customized in the following ways:
 
@@ -80,11 +77,7 @@ Preconfigured checkout paths usually don't need changes.
 
 Checkout paths depend on the programming language and project type:
 
-<Image src={checkoutPathsPreview} alt="Checkout Paths Preview" size={ImageSize.medium} caption="Checkout Paths Preview (Java)" />
-
 To change checkout paths, click **edit repositories checkout path**:
-
-<Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths (Java)" />
 
 Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-phases-optional) section).
 
@@ -108,7 +101,7 @@ The default maximum build duration (120 seconds) usually doesn't need changes.
 
 Use the slider to adjust the time limit for build plan execution:
 
-<Image src={timeoutSlider} alt="Timeout Slider" size={ImageSize.large} caption="Maximum Build Duration Slider" />
+<Image src={containerConfiguration} alt="Docker image, build duration and container limits" size={ImageSize.large} caption="The container the build runs in" />
 
 ## Edit Container Configuration (Optional)
 
@@ -117,8 +110,6 @@ Use the slider to adjust the time limit for build plan execution:
 In most cases, the default container configuration does not need to be changed.
 
 Currently, instructors can change which network the container joins, add additional environment variables, and configure resource limits such as CPU and memory.
-
-<Image src={dockerFlagsEdit} alt="Docker Flags Edit" size={ImageSize.large} caption="Container Configuration" />
 
 **Use custom network** selects the container's network: the default bridge, one of the networks your administrators have configured, or **None**, which cuts the container off from the network entirely.
 Choosing **None** is how you stop students downloading additional dependencies during the build. The dependencies must then already be present in the Docker image.
@@ -133,6 +124,77 @@ If set too high, the specified values may be overwritten by the maximum restrict
 Contact the administrators for more information.
 
 We plan to add more options to the container configuration in the future.
+
+## Customize Online IDE Run Configuration (Optional)
+
+The **Template** repository of several languages ships a `.vscode/tasks.json` and a `.vscode/launch.json`, so students can press **Run** or start a debug session in the online IDE without setting anything up first, provided the exercise has [**Allow Online IDE**](/instructor/exercises/programming-exercise/create-an-exercise#mode-and-participation) enabled. Student repositories inherit both files when they are created from the template.
+
+<Callout variant={CalloutVariant.info}>
+
+  This applies to the **Online IDE**, not to the Artemis **Online Code Editor**. The Online Code Editor does not execute code and ignores these files.
+
+</Callout>
+
+The following defaults ship with the templates:
+
+| Programming Language | Run command             | Debug configuration                             |
+|----------------------|-------------------------|-------------------------------------------------|
+| C (GCC)              | `make run`              | CodeLLDB, attached to `helloWorld.out`&nbsp;\*  |
+| Java (Gradle)        | `./gradlew run`         | Java debugger, attached to the `Client` class   |
+| Java (Maven)         | `mvn compile exec:java` | Java debugger, attached to the `Client` class   |
+| JavaScript           | `npm start`             | Node.js debugger, attached to `src/client.js`   |
+| Rust                 | `cargo run`             | CodeLLDB, target located through cargo          |
+
+**Run** does not require a debug extension, but it does require the template's runtime and build command to be available in the online IDE image. **Debug** additionally requires the matching debug extension.
+
+\* The C configuration debugs the binary produced by the last build, so students press **Run** (or **Build**) once before **Debug**, and again after changing the code. The online IDE currently ignores a `preLaunchTask`, which is why the configuration does not build automatically.
+
+<Callout variant={CalloutVariant.info}>
+
+  The **Run** and **Debug** buttons live in the editor toolbar, so they only appear once a file is open. **Run** executes the first task defined in `tasks.json`.
+
+</Callout>
+
+Some templates intentionally leave the entry point to the student, which means **Run** and **Debug** report an error until it is written:
+
+- The C template's `helloWorld.c` contains no `main` function, so the build fails to link.
+- The Java DejaGnu (blackbox) template's `Client` class contains no `main` method.
+
+The templates define no **Test** task, because the tests live in the separate **Test** repository and are therefore not available in a student repository.
+
+To adapt the configuration to your own exercise, edit `.vscode/tasks.json` (the run command) and `.vscode/launch.json` (the debug entry point) in the **Template** repository, then commit and push. Student repositories created afterwards pick up the change; repositories that already exist keep the configuration they were created with.
+
+### Adding a Run Configuration to a Template Without One
+
+Not every template ships a run configuration. The Python template, for example, contains sorting algorithms but no entry point that orchestrates them. To enable **Run** for such an exercise, add an entry point (e.g. `main.py`) to the **Template** repository and create a `.vscode/tasks.json` next to your sources. A `.vscode/launch.json` for **Debug** is optional.
+
+`.vscode/tasks.json`:
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run",
+            "type": "shell",
+            "command": "python3 main.py",
+            "group": { "kind": "build", "isDefault": true },
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared" }
+        }
+    ]
+}
+```
+
+Add a `.vscode/launch.json` as well if the online IDE image used by your course ships a debug extension for the language. The `type` of a debug configuration is defined by that extension, so check its documentation for the correct value and the options it expects.
+
+The same pattern applies to any language: put the run command into `tasks.json`, and the entry point into `launch.json` where a debug extension is available, both inside a `.vscode` directory in the **Template** repository.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Some templates deny all files by default in their `.gitignore` (the C template, for instance). In that case, allow-list the two configuration files explicitly, otherwise they never reach the student repositories.
+
+</Callout>
 
 ## Configure Static Code Analysis
 

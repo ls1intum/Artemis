@@ -25,8 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -261,19 +261,17 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         JsonNode testCaseJson = dtoJson.findValue("testCase");
         assertThat(testCaseJson).isNotNull();
         assertThat(testCaseJson.get("id").asLong()).isEqualTo(testCase.getId());
-        assertThat(testCaseJson.get("testName").asText()).isEqualTo("goldenTest");
+        assertThat(testCaseJson.get("testName").asString()).isEqualTo("goldenTest");
         assertThat(testCaseJson.get("weight").asDouble()).isEqualTo(testCase.getWeight());
         assertThat(testCaseJson.get("active").asBoolean()).isEqualTo(testCase.isActive());
-        assertThat(testCaseJson.get("visibility").asText()).isEqualTo(testCase.getVisibility().name());
+        assertThat(testCaseJson.get("visibility").asString()).isEqualTo(testCase.getVisibility().name());
         assertThat(testCaseJson.get("bonusMultiplier").asDouble()).isEqualTo(testCase.getBonusMultiplier());
         assertThat(testCaseJson.get("bonusPoints").asDouble()).isEqualTo(testCase.getBonusPoints());
-        assertThat(testCaseJson.get("type").asText()).isEqualTo(testCase.getType().name());
+        assertThat(testCaseJson.get("type").asString()).isEqualTo(testCase.getType().name());
     }
 
     private static Set<String> keysOf(JsonNode node) {
-        Set<String> keys = new HashSet<>();
-        node.fieldNames().forEachRemaining(keys::add);
-        return keys;
+        return new HashSet<>(node.propertyNames());
     }
 
     @Test
