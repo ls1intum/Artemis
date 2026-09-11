@@ -40,7 +40,6 @@ import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-w
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import {
-    firstConsistencyIssueContent,
     getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
     mapRepositoryToThreadLocationType,
@@ -259,6 +258,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         });
 
         effect(() => {
+            this.adaptReviewCommentThreadEnabled();
             this.commitState();
             this.reviewCommentManager?.updateDraftInputs();
             const threads = this.exerciseReviewCommentService.threads();
@@ -847,13 +847,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onAdaptThread: (threadId) => this.onAdaptReviewCommentThread.emit(threadId),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
                 showFeedbackAction: (thread) =>
-                    !!firstConsistencyIssueContent(thread) &&
+                    this.adaptReviewCommentThreadEnabled() &&
                     (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                         thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                         thread.targetType === CommentThreadLocationType.TEST_REPO),
                 showAdaptAction: (thread) =>
                     this.adaptReviewCommentThreadEnabled() &&
-                    !!firstConsistencyIssueContent(thread) &&
                     (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                         thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                         thread.targetType === CommentThreadLocationType.TEST_REPO),

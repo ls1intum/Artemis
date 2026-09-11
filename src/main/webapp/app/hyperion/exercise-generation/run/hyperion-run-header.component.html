@@ -73,7 +73,7 @@
             </tum-ui-button>
         }
         @if (terminal() && editorLink(); as link) {
-            <a tumUiButton severity="primary" [routerLink]="link" data-testid="hyperion-run-open-editor">
+            <a tumUiButton severity="primary" size="small" [routerLink]="link" data-testid="hyperion-run-open-editor">
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
             </a>
         }

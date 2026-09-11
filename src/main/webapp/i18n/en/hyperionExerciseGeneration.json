@@ -383,14 +383,25 @@
                 "heartbeat": "Last heartbeat",
                 "image": "Sandbox image digest",
                 "execution": "Active execution",
-                "snapshotHint": "This is a read-only snapshot, not a capacity reservation. Refresh to see changes. An offline worker can still have a core reservation; recovery is not performed here.",
+                "snapshotHint": "Refreshes every 15 seconds while this page is visible. Capacity is one generation per worker, not a reservation or throughput guarantee. CPU, memory, and model-provider performance require deployment telemetry.",
                 "state": {
                     "OFFLINE": "Offline",
                     "NOT_READY": "Not ready",
                     "AVAILABLE": "Available",
                     "RESERVED": "Reserved by core",
                     "BUSY": "Running"
-                }
+                },
+                "updated": "Last updated:",
+                "configured": "Configured",
+                "occupied": "Running / reserved",
+                "unavailable": "Unavailable",
+                "reservation": "Core reservation",
+                "reserved": "Held",
+                "notReserved": "None",
+                "diagnostics": "Technical details",
+                "incarnation": "Worker instance",
+                "empty": "No generation workers are configured. Configure worker identities and start their services to provide capacity.",
+                "retainedReservations": "{{ count }} offline worker(s) still hold a core reservation. Inspect the execution and ownership before recovery; do not treat these slots as available."
             }
         }
     }

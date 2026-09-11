@@ -1289,7 +1289,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(config.canSubmit()).toBe(false);
     });
 
-    it('offers the per-thread adapt action only for consistency findings in solution/template/test threads when enabled', () => {
+    it('offers feedback selection and adaptation for instructor comments as well as consistency findings', () => {
         fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
         fixture.changeDetectorRef.detectChanges();
@@ -1311,12 +1311,15 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('adaptReviewCommentThreadEnabled', false);
         fixture.changeDetectorRef.detectChanges();
         expect(config.showAdaptAction(templateThread)).toBe(false);
+        expect(config.showFeedbackAction(normalReviewThread)).toBe(false);
 
-        // Enabled (Hyperion + LocalCI): offered for consistency findings on repository threads, never for regular review or auxiliary-repository threads.
+        // Both ordinary comments and AI findings are eligible; auxiliary repositories are not.
         fixture.componentRef.setInput('adaptReviewCommentThreadEnabled', true);
         fixture.changeDetectorRef.detectChanges();
         expect(config.showAdaptAction(templateThread)).toBe(true);
-        expect(config.showAdaptAction(normalReviewThread)).toBe(false);
+        expect(config.showAdaptAction(normalReviewThread)).toBe(true);
+        expect(config.showFeedbackAction(normalReviewThread)).toBe(true);
+        expect(config.showFeedbackAction(auxiliaryThread)).toBe(false);
         expect(config.showAdaptAction(auxiliaryThread)).toBe(false);
     });
 

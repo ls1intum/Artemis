@@ -56,7 +56,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(3);
         // The notice is present from the moment the dialog opens, so it is read in document order rather than
         // announced: this message delegates announcements to its surrounding dialog.
-        const notice = fixture.nativeElement.querySelector('tum-ui-message[data-severity="warn"]');
+        const notice = fixture.nativeElement.querySelector('[data-testid="adapt-persistence-notice"]');
         expect(notice).not.toBeNull();
         expect(notice.getAttribute('role')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('adaptExercise.persistenceNotice');
@@ -86,6 +86,24 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         confirmButton.click();
 
         expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: undefined } satisfies ReviewAdaptExerciseDialogResult);
+    });
+
+    it('lets the instructor select and deselect existing comments without typing instructions', async () => {
+        const { fixture, component, confirmed } = await setup([{ threadId: 7, description: 'Clarify empty input', tagSeverity: 'info' }]);
+        fixture.componentRef.setInput('selectedFeedbackThreadIds', []);
+        fixture.detectChanges();
+        const [, confirm] = actionButtons(fixture);
+        expect(confirm.disabled).toBe(true);
+        const checkbox = fixture.nativeElement.querySelector('[data-testid="adapt-feedback-selection"] input') as HTMLInputElement;
+        checkbox.click();
+        fixture.detectChanges();
+        expect(confirm.disabled).toBe(false);
+        confirm.click();
+        expect(confirmed).toHaveBeenCalledWith({ instructions: undefined, selectedFeedbackThreadIds: [7] });
+        checkbox.click();
+        fixture.detectChanges();
+        expect(confirm.disabled).toBe(true);
+        expect(component.selectedIds()).toEqual([]);
     });
 
     it('reports a cancellation without a result', async () => {

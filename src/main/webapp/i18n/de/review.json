@@ -60,13 +60,13 @@
             },
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest.",
             "adaptExercise": {
-                "title": "Aufgabe mit Artemis Intelligence anpassen",
+                "title": "Aufgabe anpassen",
                 "menuItemEmpty": "Aufgabe anpassen…",
                 "menuItemSelected": "Mit {{ count }} ausgewählten Kommentaren anpassen",
                 "threadAction": "Mit Feedback anpassen",
-                "summary": "Artemis Intelligence passt die Aufgabe an, um die ausgewählten Review-Kommentare zu berücksichtigen.",
-                "freeSummary": "Artemis Intelligence passt die Aufgabe gemäß deinen Anweisungen an.",
-                "findingsListLabel": "Ausgewählte Kommentare ({{ count }})",
+                "summary": "Wähle die zu bearbeitenden Kommentare aus und ergänze bei Bedarf Anweisungen.",
+                "freeSummary": "Wähle unten Review-Kommentare aus oder beschreibe die gewünschte Änderung.",
+                "findingsListLabel": "Review-Kommentare · {{ count }} ausgewählt",
                 "freeHelp": "Es sind keine Review-Kommentare ausgewählt. Beschreibe die gewünschte Änderung für Artemis Intelligence.",
                 "instructionsLabel": "Zusätzliche Anweisungen",
                 "instructionsPlaceholder": "Optional: zusätzliche Hinweise für die Anpassung…",
@@ -75,7 +75,7 @@
                 "suggestedFixRemoveLabel": "Entfernen",
                 "cancel": "Abbrechen",
                 "confirm": "Aufgabe anpassen",
-                "persistenceNotice": "Akzeptierte Ergebnisse werden automatisch in Aufgabenstellung, Template, Musterlösung und Tests gespeichert. Prüfe alle Bestandteile vor der Freigabe. Rückgängig ist nur möglich, solange der temporäre In-Memory-Ausgangsstand verfügbar ist und keine späteren Repository-Änderungen im Konflikt stehen.",
+                "persistenceNotice": "Verifizierte Änderungen werden automatisch in Aufgabenstellung und allen Repositorys gespeichert. Prüfe sie vor der Freigabe. Rückgängig ist nur vorübergehend möglich und kann nach weiteren Änderungen entfallen.",
                 "charactersRemaining": "Noch {{ count }} Zeichen"
             }
         }

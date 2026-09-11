@@ -146,6 +146,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly showPreview = input<boolean>(true);
     readonly forceRender = input<Observable<void> | undefined>();
     readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly adaptReviewCommentThreadEnabled = input(false);
 
     readonly isGeneratingOrRefining = input<boolean>(false);
 
@@ -164,6 +165,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    readonly onAdaptReviewCommentThread = output<number>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);

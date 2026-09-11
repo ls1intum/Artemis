@@ -1,3 +1,4 @@
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -151,6 +152,7 @@ export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent
 }
 
 export interface AdaptFinding {
+    threadId?: number;
     category?: ConsistencyIssueCommentContent['category'];
     severity?: ConsistencyIssueCommentContent['severity'];
     /** The {@code tum-ui-tag} severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
@@ -180,16 +182,16 @@ export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locat
  */
 export function selectedThreadsFindings(threads: CommentThread[], translate: TranslateService): AdaptFinding[] {
     return threads
-        .map((thread) => {
+        .map((thread): AdaptFinding | undefined => {
             const issue = firstConsistencyIssueContent(thread);
             if (issue) {
-                return adaptFinding(issue, threadLocationLabel(thread, translate));
+                return cloneWith(adaptFinding(issue, threadLocationLabel(thread, translate)), { threadId: thread.id });
             }
             const description = sortCommentsByCreatedDateThenId(thread.comments)
                 .map((comment) => (comment.content?.contentType === CommentContentType.USER ? comment.content.text : ''))
                 .filter(Boolean)
                 .join('\n\n');
-            return description ? { description, locationLabel: threadLocationLabel(thread, translate), tagSeverity: 'info' as const } : undefined;
+            return description ? { threadId: thread.id, description, locationLabel: threadLocationLabel(thread, translate), tagSeverity: 'info' as const } : undefined;
         })
         .filter((finding): finding is AdaptFinding => !!finding);
 }

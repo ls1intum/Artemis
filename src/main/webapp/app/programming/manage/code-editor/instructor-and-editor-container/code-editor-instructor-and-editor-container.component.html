@@ -282,105 +282,111 @@
 
                         <!-- Refinement Prompt Popover -->
                         <!-- Prompt is intentionally preserved on dismiss so users don't lose typed text -->
-                        <p-popover #refinementPopover [dismissable]="true" [style]="{ width: 'min(32rem, 90vw)' }" styleClass="border-1 border-primary">
-                            <div class="d-flex justify-content-between align-items-center p-3 bg-primary text-primary-contrast fw-medium">
-                                <span
-                                    [jhiTranslate]="
-                                        shouldShowGenerateButton()
-                                            ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
-                                            : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
-                                    "
-                                ></span>
-                                <button pButton type="button" severity="secondary" text rounded (click)="refinementPopover.hide()" aria-label="Close">
-                                    <fa-icon [icon]="faTimes" />
-                                </button>
-                            </div>
-                            <div class="p-3">
+                        <tum-ui-popover #refinementPopover [ariaLabel]="'artemisApp.programmingExercise.problemStatement.refinementAssistance' | artemisTranslate">
+                            <div class="flex w-[min(28rem,80vw)] flex-col gap-3" data-testid="hyperion-refinement-panel">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span
+                                        class="text-sm font-semibold"
+                                        [jhiTranslate]="
+                                            shouldShowGenerateButton()
+                                                ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                                : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                        "
+                                    ></span>
+                                    <button
+                                        tumUiButton
+                                        type="button"
+                                        severity="secondary"
+                                        variant="text"
+                                        size="small"
+                                        (click)="refinementPopover.close()"
+                                        [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                </div>
                                 <textarea
+                                    tumUiTextarea
+                                    class="w-full resize-y"
+                                    rows="5"
                                     [ngModel]="refinementPrompt()"
                                     (ngModelChange)="refinementPrompt.set($event)"
-                                    pTextarea
-                                    class="refinement-textarea"
-                                    rows="5"
-                                    cdkTrapFocus
-                                    cdkTrapFocusAutoCapture
                                     [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                     [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                     [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
                                     [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
                                 ></textarea>
-                                <div class="text-end small mt-1" [class.text-danger]="isPromptNearLimit()" [class.text-muted]="!isPromptNearLimit()">
-                                    {{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-xs text-muted-color" [class.text-state-danger]="isPromptNearLimit()"
+                                        >{{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</span
+                                    >
+                                    <button
+                                        tumUiButton
+                                        type="button"
+                                        size="small"
+                                        [disabled]="!refinementPrompt().trim() || isAiApplying() || isExerciseGenerationActionBlocked()"
+                                        (click)="submitRefinement()"
+                                    >
+                                        <fa-icon [icon]="faPaperPlane" />
+                                        <span
+                                            [jhiTranslate]="
+                                                shouldShowGenerateButton()
+                                                    ? 'artemisApp.programmingExercise.problemStatement.generate'
+                                                    : 'artemisApp.programmingExercise.problemStatement.refine'
+                                            "
+                                        ></span>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-end p-3 refinement-popup-footer">
-                                <button
-                                    pButton
-                                    type="button"
-                                    size="small"
-                                    [disabled]="!refinementPrompt().trim() || isAiApplying() || isExerciseGenerationActionBlocked()"
-                                    (click)="submitRefinement()"
-                                >
-                                    <fa-icon [icon]="faPaperPlane" class="me-1" />
-                                    <span
-                                        [jhiTranslate]="
-                                            shouldShowGenerateButton()
-                                                ? 'artemisApp.programmingExercise.problemStatement.generate'
-                                                : 'artemisApp.programmingExercise.problemStatement.refine'
-                                        "
-                                    ></span>
-                                </button>
-                            </div>
-                        </p-popover>
+                        </tum-ui-popover>
                     </div>
                 }
 
                 <!-- Consistency Issue Navigator Toolbar -->
                 @if (showConsistencyIssuesToolbar() && sortedIssues().length) {
-                    <div class="btn-group ms-2">
+                    <nav
+                        class="ml-2 flex min-w-0 items-center gap-1"
+                        [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.issues' | artemisTranslate"
+                        data-testid="consistency-issue-navigation"
+                    >
                         <button
-                            pButton
+                            tumUiButton
                             type="button"
+                            size="small"
                             severity="secondary"
-                            outlined
+                            variant="text"
                             (click)="navigateGlobal(-1)"
-                            [pTooltip]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
-                        <button pButton type="button" severity="secondary" outlined class="consistency-issue-nav-btn" disabled>
-                            @if (selectedIssue()) {
-                                <fa-icon [icon]="getSeverityIcon(selectedIssue()!.severity)" [class]="getSeverityColor(selectedIssue()!.severity) + ' me-1'" />
-                                <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + selectedIssue()!.category"></span>
-                                <span class="ms-1 fw-bold">({{ currentGlobalIndex }} / {{ totalLocationsCount() }})</span>
-                            } @else {
-                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
-                            }
-                        </button>
+                        <span class="text-sm whitespace-nowrap" aria-live="polite">
+                            <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
+                            <span class="ml-1 tabular-nums">{{ currentGlobalIndex }} / {{ totalLocationsCount() }}</span>
+                        </span>
                         <button
-                            pButton
+                            tumUiButton
                             type="button"
+                            size="small"
                             severity="secondary"
-                            outlined
+                            variant="text"
                             (click)="navigateGlobal(1)"
-                            [pTooltip]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowRight" />
                         </button>
                         <button
-                            pButton
+                            tumUiButton
                             type="button"
+                            size="small"
                             severity="secondary"
-                            outlined
+                            variant="text"
                             (click)="toggleConsistencyIssuesToolbar()"
-                            [pTooltip]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
                         >
                             <fa-icon [icon]="faTimes" />
                         </button>
-                    </div>
+                    </nav>
                 }
             </div>
             <div editorToolbar class="ms-auto d-flex align-items-center">
@@ -465,6 +471,8 @@
                         [enableResize]="false"
                         [showPreview]="false"
                         [enableExerciseReviewComments]="true"
+                        [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback() && !isExerciseGenerationActionBlocked()"
+                        (onAdaptReviewCommentThread)="adaptFromThread($event)"
                         [isGeneratingOrRefining]="isGeneratingOrRefining() || isProblemStatementEditingLocked()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"
@@ -509,7 +517,14 @@
                 [header]="'artemisApp.review.adaptExercise.title' | artemisTranslate"
                 (hidden)="onAdaptDialogHidden()"
             >
-                <jhi-review-adapt-exercise-dialog [findings]="adaptDialogFindings()" (confirmed)="onAdaptDialogConfirmed($event)" (cancelled)="adaptDialogVisible.set(false)" />
+                @if (adaptDialogVisible()) {
+                    <jhi-review-adapt-exercise-dialog
+                        [findings]="adaptDialogFindings()"
+                        [selectedFeedbackThreadIds]="adaptDialogSelectedIds()"
+                        (confirmed)="onAdaptDialogConfirmed($event)"
+                        (cancelled)="adaptDialogVisible.set(false)"
+                    />
+                }
             </tum-ui-dialog>
         }
     </div>

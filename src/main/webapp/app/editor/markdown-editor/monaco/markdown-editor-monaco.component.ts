@@ -245,6 +245,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly metaActions = input<TextEditorAction[]>([new FullscreenAction()]);
 
     readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly adaptReviewCommentThreadEnabled = input(false);
     readonly showLocationWarning = input<boolean>(false);
 
     readonly isButtonLoading = input<boolean>(false);
@@ -280,6 +281,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    readonly onAdaptReviewCommentThread = output<number>();
     readonly onApplyInlineFix = output<{ threadId: number }>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
@@ -402,6 +404,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         });
 
         effect(() => {
+            this.adaptReviewCommentThreadEnabled();
             this.showLocationWarning();
             const threads = this.exerciseReviewCommentService.threads();
             this.reviewCommentManager?.updateDraftInputs();
@@ -1083,7 +1086,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
-                showFeedbackAction: () => false,
+                showFeedbackAction: () => this.adaptReviewCommentThreadEnabled(),
+                showAdaptAction: () => this.adaptReviewCommentThreadEnabled(),
+                onAdaptThread: (threadId) => this.onAdaptReviewCommentThread.emit(threadId),
             });
         }
         return this.reviewCommentManager;

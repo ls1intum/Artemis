@@ -43,7 +43,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent, TumUiInputDirective, TumUiPopoverComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -61,7 +61,6 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
-import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -125,7 +124,8 @@ interface ConsistencyIssueNavigationIssue {
         A11yModule,
         GitDiffLineStatComponent,
         TooltipModule,
-        TextareaModule,
+        TumUiInputDirective,
+        TumUiPopoverComponent,
         BadgeModule,
         ButtonModule,
         MessageModule,
@@ -180,7 +180,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly faTableColumns = faTableColumns;
     override readonly ButtonSize = ButtonSize;
 
-    readonly refinementPopover = viewChild<Popover>('refinementPopover');
+    readonly refinementPopover = viewChild<TumUiPopoverComponent>('refinementPopover');
     /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
     readonly refinementPrompt = this.aiOps.userPrompt;
     protected readonly faPaperPlane = faPaperPlane;
@@ -214,6 +214,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly problemStatementHasUnsavedChanges = signal(false);
     readonly adaptDialogVisible = signal(false);
     readonly adaptDialogFindings = signal<AdaptFinding[]>([]);
+    readonly adaptDialogSelectedIds = signal<number[]>([]);
     private generationStartSequence = 0;
     private pendingGenerationRefreshJobId?: string;
     /** Present exactly while an adapt dialog opened by {@link openAdaptDialog} is still awaiting the user's decision. */
@@ -495,7 +496,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
-        this.adaptDialogFindings.set(selectedThreadsFindings(this.selectedAdaptFeedbackThreads(), this.translateService));
+        this.adaptDialogFindings.set(
+            selectedThreadsFindings(
+                this.exerciseReviewCommentService
+                    .threads()
+                    .filter((thread) => !thread.resolved && !thread.outdated && thread.targetType !== CommentThreadLocationType.AUXILIARY_REPO),
+                this.translateService,
+            ),
+        );
+        this.adaptDialogSelectedIds.set(this.selectedAdaptFeedbackThreadIds());
         this.pendingAdaptDialog = { exerciseId, onCancel };
         this.adaptDialogVisible.set(true);
     }
@@ -506,6 +515,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.pendingAdaptDialog = undefined;
         this.adaptDialogVisible.set(false);
         if (pending && this.exercise()?.id === pending.exerciseId) {
+            if (result.selectedFeedbackThreadIds !== undefined) {
+                this.exerciseReviewCommentService.selectedFeedbackThreadIds.set(result.selectedFeedbackThreadIds);
+            }
             this.startAdaptation(result.instructions);
         }
     }
@@ -613,7 +625,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // Dropping the pending decision before hiding keeps this programmatic close from running the cancel callback.
         this.pendingAdaptDialog = undefined;
         this.adaptDialogVisible.set(false);
-        this.refinementPopover()?.hide();
+        this.refinementPopover()?.close();
     }
 
     /**
@@ -745,7 +757,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.openGenerationPage();
             return;
         }
-        this.refinementPopover()?.toggle(event, target);
+        const origin = target ?? event.currentTarget;
+        if (origin instanceof HTMLElement) {
+            this.refinementPopover()?.toggle(origin);
+        }
     }
 
     /**
@@ -757,7 +772,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const prompt = this.refinementPrompt().trim();
         if (!prompt || !this.exercise()) return;
 
-        this.refinementPopover()?.hide();
+        this.refinementPopover()?.close();
         this.aiOps.handleProblemStatementAction(this.exercise(), this.editableInstructions());
     }
 

@@ -383,14 +383,25 @@
                 "heartbeat": "Letztes Lebenszeichen",
                 "image": "Digest des Sandbox-Images",
                 "execution": "Aktive Ausführung",
-                "snapshotHint": "Dies ist eine schreibgeschützte Momentaufnahme, keine Kapazitätsreservierung. Aktualisiere die Ansicht, um Änderungen zu sehen. Ein nicht erreichbarer Worker kann weiterhin eine Core-Reservierung haben; diese Ansicht führt keine Wiederherstellung aus.",
+                "snapshotHint": "Aktualisiert sich alle 15 Sekunden, solange die Seite sichtbar ist. Kapazität bedeutet eine Generierung pro Worker, keine Reservierung oder Durchsatzgarantie. CPU, Arbeitsspeicher und Modellleistung müssen über Deployment-Telemetrie geprüft werden.",
                 "state": {
                     "OFFLINE": "Nicht erreichbar",
                     "NOT_READY": "Nicht bereit",
                     "AVAILABLE": "Verfügbar",
                     "RESERVED": "Vom Core reserviert",
                     "BUSY": "Wird ausgeführt"
-                }
+                },
+                "updated": "Zuletzt aktualisiert:",
+                "configured": "Konfiguriert",
+                "occupied": "Aktiv / reserviert",
+                "unavailable": "Nicht verfügbar",
+                "reservation": "Core-Reservierung",
+                "reserved": "Gehalten",
+                "notReserved": "Keine",
+                "diagnostics": "Technische Details",
+                "incarnation": "Worker-Instanz",
+                "empty": "Keine Generierungs-Worker konfiguriert. Konfiguriere Worker-Identitäten und starte ihre Dienste, um Kapazität bereitzustellen.",
+                "retainedReservations": "{{ count }} Offline-Worker halten noch eine Core-Reservierung. Prüfe Ausführung und Eigentümer vor der Wiederherstellung; diese Plätze sind nicht verfügbar."
             }
         }
     }

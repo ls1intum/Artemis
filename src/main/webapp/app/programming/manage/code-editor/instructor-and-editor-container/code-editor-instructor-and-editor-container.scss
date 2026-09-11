@@ -55,25 +55,3 @@
     align-items: stretch;
     width: 100%;
 }
-
-.consistency-issue-nav-btn {
-    width: 27rem;
-    max-width: min(27rem, 40vw);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    opacity: 1 !important;
-    color: var(--p-text-color) !important;
-}
-
-.refinement-textarea {
-    width: 100%;
-    min-height: 8rem;
-    resize: vertical;
-    font-size: 0.875rem;
-}
-
-.refinement-popup-footer {
-    border-top: 1px solid var(--p-content-border-color);
-}
