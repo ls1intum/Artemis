@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -18,7 +19,7 @@ async function setup(findings?: AdaptFinding[]): Promise<{
 }> {
     await TestBed.configureTestingModule({
         imports: [ReviewAdaptExerciseDialogComponent],
-        providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
     }).compileComponents();
     const fixture = TestBed.createComponent(ReviewAdaptExerciseDialogComponent);
     if (findings) {
@@ -122,5 +123,77 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(textarea.getAttribute('maxlength')).toBe('8000');
         expect(textarea.getAttribute('aria-describedby')).toBe('adaptExerciseFreeHelp adaptExerciseCharacterCount');
         expect(fixture.nativeElement.querySelector('#adaptExerciseCharacterCount').textContent).toContain('adaptExercise.charactersRemaining');
+    });
+    it('submits selected comments together with trimmed additional instructions', async () => {
+        const { fixture, component, confirmed } = await setup([{ threadId: 7, description: 'Clarify empty input', tagSeverity: 'info' }]);
+        fixture.componentRef.setInput('selectedFeedbackThreadIds', [7]);
+        component.instructions.set('  Include an example too.  ');
+        fixture.detectChanges();
+        actionButtons(fixture)[1].click();
+        expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: 'Include an example too.', selectedFeedbackThreadIds: [7] });
+    });
+
+    it('blocks a run that becomes active while drafting without losing either input', async () => {
+        const { fixture, component, confirmed } = await setup([{ threadId: 7, description: 'Clarify empty input', tagSeverity: 'info' }]);
+        fixture.componentRef.setInput('selectedFeedbackThreadIds', [7]);
+        component.instructions.set('Keep this instruction');
+        fixture.componentRef.setInput('blockedReason', 'artemisApp.review.adaptExercise.runInProgress');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="adapt-blocked-reason"]').textContent).toContain('runInProgress');
+        actionButtons(fixture)[1].click();
+        expect(confirmed).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('blockedReason', undefined);
+        fixture.detectChanges();
+        actionButtons(fixture)[1].click();
+        expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: 'Keep this instruction', selectedFeedbackThreadIds: [7] });
+    });
+
+    it('locks submission inputs while pending and retains them for retry after a failure', async () => {
+        const { fixture, component, confirmed } = await setup([{ threadId: 7, description: 'Clarify empty input', tagSeverity: 'info' }]);
+        fixture.componentRef.setInput('selectedFeedbackThreadIds', [7]);
+        component.instructions.set('Keep my guidance');
+        fixture.componentRef.setInput('submitting', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(actionButtons(fixture).every((button) => button.disabled)).toBe(true);
+        expect(fixture.nativeElement.querySelector('textarea').disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('input[type="checkbox"]').disabled).toBe(true);
+        component['confirm']();
+        expect(confirmed).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('submitting', false);
+        fixture.componentRef.setInput('submissionError', 'artemisApp.review.adaptExercise.startFailed');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('startFailed');
+        actionButtons(fixture)[1].click();
+        expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: 'Keep my guidance', selectedFeedbackThreadIds: [7] });
+    });
+
+    it('does not reference absent help text when comments exist but none are selected', async () => {
+        const { fixture } = await setup([{ threadId: 7, description: 'Clarify empty input', tagSeverity: 'info' }]);
+        fixture.componentRef.setInput('selectedFeedbackThreadIds', []);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('textarea').getAttribute('aria-describedby')).toBe('adaptExerciseCharacterCount');
+    });
+
+    it('rejects overlong instructions even if a review comment is selected', async () => {
+        const { fixture, component, confirmed } = await setup([finding(ConsistencyIssueSeverityEnum.High, 'fix it')]);
+        component.instructions.set('a'.repeat(8001));
+        fixture.detectChanges();
+        component['confirm']();
+        expect(confirmed).not.toHaveBeenCalled();
+        expect(actionButtons(fixture)[1].disabled).toBe(true);
+    });
+    it('offers progress in a new tab without discarding the adaptation draft', async () => {
+        const { component, fixture } = await setup();
+        component.instructions.set('Keep my instructions');
+        fixture.componentRef.setInput('progressLink', ['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        fixture.componentRef.setInput('submissionError', 'artemisApp.review.adaptExercise.startFailed');
+        fixture.detectChanges();
+        const link = fixture.nativeElement.querySelector('[data-testid="adapt-open-progress"]') as HTMLAnchorElement;
+        expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/42/generation');
+        expect(link.target).toBe('_blank');
+        expect(link.rel).toBe('noopener');
+        expect(component.instructions()).toBe('Keep my instructions');
     });
 });

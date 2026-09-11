@@ -1,5 +1,6 @@
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiCheckboxComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
@@ -30,7 +31,18 @@ const MAX_INSTRUCTIONS_LENGTH = 8000;
     selector: 'jhi-review-adapt-exercise-dialog',
     templateUrl: './review-adapt-exercise-dialog.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, TumUiButtonComponent, TumUiTagComponent, TumUiInputDirective, TumUiCheckboxComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        RouterLink,
+        TumUiButtonDirective,
+        FormsModule,
+        TumUiButtonComponent,
+        TumUiTagComponent,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
 })
 export class ReviewAdaptExerciseDialogComponent {
     readonly findings = input<AdaptFinding[]>([]);
@@ -48,6 +60,11 @@ export class ReviewAdaptExerciseDialogComponent {
         this.selectedIds.update((ids) => (selected ? [...ids, threadId] : ids.filter((id) => id !== threadId)));
     }
 
+    readonly progressLink = input<(string | number)[]>();
+    readonly blockedReason = input<string>();
+    readonly submitting = input(false);
+    readonly submissionError = input<string>();
+
     readonly confirmed = output<ReviewAdaptExerciseDialogResult>();
     readonly cancelled = output<void>();
 
@@ -62,7 +79,9 @@ export class ReviewAdaptExerciseDialogComponent {
     protected readonly isFreeMode = computed(() => this.selectedCount() === 0);
     protected readonly remainingCharacters = computed(() => MAX_INSTRUCTIONS_LENGTH - this.instructions().length);
     /** Without findings there is nothing to act on, so free-form instructions become mandatory. */
-    protected readonly confirmDisabled = computed(() => this.isFreeMode() && this.instructions().trim().length === 0);
+    protected readonly confirmDisabled = computed(
+        () => !!this.blockedReason() || this.submitting() || this.instructions().length > MAX_INSTRUCTIONS_LENGTH || (this.isFreeMode() && this.instructions().trim().length === 0),
+    );
 
     protected confirm(): void {
         if (this.confirmDisabled()) {

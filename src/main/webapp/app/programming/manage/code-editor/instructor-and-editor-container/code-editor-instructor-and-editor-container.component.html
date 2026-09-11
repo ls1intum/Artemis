@@ -157,10 +157,41 @@
                         }
                     </div>
                 </div>
+                @if (generationSupported()) {
+                    <div class="flex max-w-sm flex-col items-start gap-1">
+                        <button
+                            tumUiButton
+                            severity="primary"
+                            variant="outlined"
+                            size="small"
+                            (click)="openAdaptDialog()"
+                            [disabled]="!canAdaptWithFeedback() || isExerciseGenerationActionBlocked()"
+                            aria-describedby="hyperion-adapt-availability"
+                            data-testid="hyperion-adapt-with-feedback"
+                        >
+                            <fa-icon [icon]="facArtemisIntelligence" />
+                            <span jhiTranslate="artemisApp.review.adaptExercise.title"></span>
+                            @if (selectedAdaptFeedbackCount()) {
+                                <span>({{ selectedAdaptFeedbackCount() }})</span>
+                            }
+                        </button>
+                        <span id="hyperion-adapt-availability" class="text-xs text-muted-color" role="status">
+                            @if (adaptBlockedReason(); as reason) {
+                                <span [jhiTranslate]="reason"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.review.adaptExercise.availableHint"></span>
+                            }
+                        </span>
+                    </div>
+                }
                 <!-- Artemis Intelligence - Consolidated AI Actions -->
-                @if (generationSupported() && (isExerciseGenerationRunning() || generationRefreshFailed()) && generationLink(); as link) {
-                    <a tumUiButton severity="primary" [routerLink]="link" data-testid="hyperion-editor-open-generation">
-                        <fa-icon [icon]="facArtemisIntelligence" />
+                @if (generationSupported() && (isExerciseGenerationRunning() || generationRefreshFailed() || generationActivity.statusLoadFailed()) && generationLink(); as link) {
+                    <a tumUiButton severity="primary" variant="outlined" size="small" [routerLink]="link" data-testid="hyperion-editor-open-generation">
+                        @if (generationActivity.running()) {
+                            <tum-ui-status-dot state="running" [label]="'artemisApp.hyperion.generation.status.running' | artemisTranslate" />
+                        } @else {
+                            <fa-icon [icon]="facArtemisIntelligence" />
+                        }
                         <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
                     </a>
                 } @else if (hyperionEnabled) {
@@ -203,24 +234,6 @@
                             </button>
                             <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
                                 <div class="ai-menu-items">
-                                    @if (canAdaptWithFeedback()) {
-                                        <button
-                                            class="ai-menu-item"
-                                            (click)="openAdaptDialog(); aiMenuPopover.hide()"
-                                            [disabled]="isExerciseGenerationActionBlocked()"
-                                            data-testid="hyperion-adapt-with-feedback"
-                                        >
-                                            <fa-icon [icon]="facArtemisIntelligence" class="ai-menu-item-inline-icon" />
-                                            @if (selectedAdaptFeedbackCount() === 0) {
-                                                <span jhiTranslate="artemisApp.review.adaptExercise.menuItemEmpty"></span>
-                                            } @else {
-                                                <span
-                                                    jhiTranslate="artemisApp.review.adaptExercise.menuItemSelected"
-                                                    [translateValues]="{ count: selectedAdaptFeedbackCount() }"
-                                                ></span>
-                                            }
-                                        </button>
-                                    }
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->
                                         <button
@@ -512,7 +525,9 @@
             }
             <tum-ui-dialog
                 [(visible)]="adaptDialogVisible"
-                [dismissableMask]="true"
+                [dismissableMask]="!generationStartPending()"
+                [closable]="!generationStartPending()"
+                [closeOnEscape]="!generationStartPending()"
                 size="medium"
                 [header]="'artemisApp.review.adaptExercise.title' | artemisTranslate"
                 (hidden)="onAdaptDialogHidden()"
@@ -520,6 +535,10 @@
                 @if (adaptDialogVisible()) {
                     <jhi-review-adapt-exercise-dialog
                         [findings]="adaptDialogFindings()"
+                        [blockedReason]="adaptBlockedReason()"
+                        [progressLink]="generationLink()"
+                        [submitting]="generationStartPending()"
+                        [submissionError]="adaptSubmissionError()"
                         [selectedFeedbackThreadIds]="adaptDialogSelectedIds()"
                         (confirmed)="onAdaptDialogConfirmed($event)"
                         (cancelled)="adaptDialogVisible.set(false)"

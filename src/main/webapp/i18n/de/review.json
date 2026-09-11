@@ -76,7 +76,17 @@
                 "cancel": "Abbrechen",
                 "confirm": "Aufgabe anpassen",
                 "persistenceNotice": "Verifizierte Änderungen werden automatisch in Aufgabenstellung und allen Repositorys gespeichert. Prüfe sie vor der Freigabe. Rückgängig ist nur vorübergehend möglich und kann nach weiteren Änderungen entfallen.",
-                "charactersRemaining": "Noch {{ count }} Zeichen"
+                "charactersRemaining": "Noch {{ count }} Zeichen",
+                "availableHint": "Verwende Review-Kommentare, eigene Anweisungen oder beides.",
+                "starting": "Anpassung wird gestartet… Dein Feedback wird übermittelt.",
+                "runInProgress": "Ein KI-Lauf bearbeitet diese Aufgabe bereits. Danach kannst du sie anpassen. Öffne den KI-Fortschritt, um den Lauf anzusehen oder abzubrechen.",
+                "checkingStatus": "Es wird geprüft, ob ein KI-Lauf für diese Aufgabe aktiv ist…",
+                "statusUnavailable": "Der Laufstatus ist nicht verfügbar. Öffne den KI-Fortschritt, um die Verbindung vor dem Anpassen wiederherzustellen.",
+                "reloadRequired": "Lade die gespeicherte Aufgabe neu, bevor du sie erneut anpasst.",
+                "startFailed": "Die Anpassung konnte nicht starten. Deine Kommentare und Anweisungen bleiben hier erhalten. Prüfe den KI-Fortschritt auf einen aktiven Lauf oder versuche es erneut.",
+                "ineligible": "Anpassung erfordert eine unveröffentlichte Java-Gradle-Aufgabe ohne studentische Teilnahmen, zusätzliche Repositories, statische Analyse oder sequenzielle Testläufe.",
+                "reloadDraftRequired": "Ein KI-Lauf hat Änderungen gespeichert, während dieser Dialog geöffnet war. Dein Entwurf ist noch hier. Kopiere die Anweisungen, die du behalten möchtest. Schließe dann diesen Dialog und lade die gespeicherte Aufgabe vor dem Anpassen neu.",
+                "viewProgress": "KI-Fortschritt prüfen (neuer Tab)"
             }
         }
     }

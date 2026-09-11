@@ -1,5 +1,6 @@
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -43,7 +44,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent, TumUiInputDirective, TumUiPopoverComponent } from '@tumaet/ui-angular';
+import {
+    TumUiButtonDirective,
+    TumUiConfirmDialogComponent,
+    TumUiConfirmationService,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiPopoverComponent,
+    TumUiStatusDotComponent,
+} from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -131,6 +140,7 @@ interface ConsistencyIssueNavigationIssue {
         MessageModule,
         PopoverModule,
         TumUiButtonDirective,
+        TumUiStatusDotComponent,
         RouterLink,
         TumUiConfirmDialogComponent,
         TumUiDialogComponent,
@@ -212,6 +222,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly generationRefreshFailed = signal(false);
     readonly generationRefreshBaselineUnknown = signal(false);
     readonly problemStatementHasUnsavedChanges = signal(false);
+    readonly adaptSubmissionError = signal<string | undefined>(undefined);
     readonly adaptDialogVisible = signal(false);
     readonly adaptDialogFindings = signal<AdaptFinding[]>([]);
     readonly adaptDialogSelectedIds = signal<number[]>([]);
@@ -357,7 +368,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (exerciseId === undefined || this.generationRefreshPending()) {
             return;
         }
-        if (!this.canRefreshAfterHyperionRepositoryChange()) {
+        if (this.adaptDialogVisible() || !this.canRefreshAfterHyperionRepositoryChange()) {
             this.generationRefreshFailed.set(true);
             this.generationRefreshBaselineUnknown.set(true);
             this.alertService.warning('artemisApp.hyperion.generationActivity.refreshBlockedByLocalEdits');
@@ -472,6 +483,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return this.isExerciseGenerationRunning() || this.generationRefreshBaselineUnknown() || (this.generationSupported() && activity.statusLoadFailed());
     });
 
+    protected readonly adaptBlockedReason = computed(() => {
+        if (!this.canGenerateExercise()) {
+            return 'artemisApp.review.adaptExercise.ineligible';
+        }
+        if (this.generationStartPending()) {
+            return 'artemisApp.review.adaptExercise.starting';
+        }
+        if (this.generationActivity.running()) {
+            return 'artemisApp.review.adaptExercise.runInProgress';
+        }
+        if (this.generationActivity.statusLoading()) {
+            return 'artemisApp.review.adaptExercise.checkingStatus';
+        }
+        if (this.generationActivity.statusLoadFailed()) {
+            return 'artemisApp.review.adaptExercise.statusUnavailable';
+        }
+        if (this.generationRefreshPending() || this.generationRefreshFailed()) {
+            return this.adaptDialogVisible() ? 'artemisApp.review.adaptExercise.reloadDraftRequired' : 'artemisApp.review.adaptExercise.reloadRequired';
+        }
+        return undefined;
+    });
+
     protected readonly canAdaptWithFeedback = computed(() => this.generationSupported() && this.canGenerateExercise());
 
     protected adaptFromThread(threadId: number): void {
@@ -496,6 +529,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
+        this.adaptSubmissionError.set(undefined);
         this.adaptDialogFindings.set(
             selectedThreadsFindings(
                 this.exerciseReviewCommentService
@@ -510,16 +544,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected onAdaptDialogConfirmed(result: ReviewAdaptExerciseDialogResult): void {
-        // Taking the pending decision first also disarms the cancel callback the imminent (hidden) emission would run.
         const pending = this.pendingAdaptDialog;
-        this.pendingAdaptDialog = undefined;
-        this.adaptDialogVisible.set(false);
-        if (pending && this.exercise()?.id === pending.exerciseId) {
-            if (result.selectedFeedbackThreadIds !== undefined) {
-                this.exerciseReviewCommentService.selectedFeedbackThreadIds.set(result.selectedFeedbackThreadIds);
-            }
-            this.startAdaptation(result.instructions);
+        if (!pending || this.exercise()?.id !== pending.exerciseId || this.isExerciseGenerationActionBlocked()) {
+            return;
         }
+        if (result.selectedFeedbackThreadIds !== undefined) {
+            this.exerciseReviewCommentService.selectedFeedbackThreadIds.set(result.selectedFeedbackThreadIds);
+        }
+        this.startAdaptation(result.instructions);
     }
 
     /** Runs for every dismissal — the cancel button, Escape, the backdrop, and the close icon alike. */
@@ -542,6 +574,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
         const selectedFeedbackThreadIds = this.selectedAdaptFeedbackThreadIds();
         const requestSequence = ++this.generationStartSequence;
+        this.adaptSubmissionError.set(undefined);
         this.generationStartPending.set(true);
         this.generationService
             .generate(exerciseId, {
@@ -568,13 +601,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (exercise?.course?.id !== undefined) {
                         this.generationRegistry.track({ jobId, exerciseId, courseId: exercise.course.id, exerciseTitle: exercise.title ?? '', mode: 'ADAPT' });
                     }
+                    this.pendingAdaptDialog = undefined;
+                    this.adaptDialogVisible.set(false);
                     this.exerciseReviewCommentService.clearSelectedFeedback();
                     this.generationActivity.attachToJob(jobId, 'ADAPT');
                     this.openGenerationPage();
                 },
-                error: () => {
+                error: (error: unknown) => {
                     if (requestSequence === this.generationStartSequence && this.exercise()?.id === exerciseId) {
-                        this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed');
+                        const body = error instanceof HttpErrorResponse ? (error.error as { errorKey?: string } | undefined) : undefined;
+                        const knownError = body?.errorKey === 'generationCapacityUnavailable' || body?.errorKey === 'exerciseGenerationRunning';
+                        this.adaptSubmissionError.set(knownError ? 'error.' + body.errorKey : 'artemisApp.review.adaptExercise.startFailed');
+                        if (!this.adaptDialogVisible()) {
+                            this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed');
+                        }
                     }
                 },
             });
