@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.hyperionworker.generation.verification.StageCheckS
 import de.tum.cit.aet.artemis.hyperionworker.generation.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperionworker.generation.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperionworker.generation.workspace.SandboxBuildCommandService;
-import de.tum.cit.aet.artemis.hyperionworker.sandbox.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperionworker.sandbox.DockerSandbox;
 import de.tum.cit.aet.artemis.hyperionworker.session.GenerationEngine;
 import de.tum.cit.aet.artemis.hyperionworker.session.GenerationObserver;
 import io.micrometer.observation.Observation;
@@ -54,7 +54,7 @@ public class GradleGenerationEngine implements GenerationEngine {
 
     private final ObservationRegistry observations;
 
-    private final InteractiveSandbox sandbox;
+    private final DockerSandbox sandbox;
 
     private final List<ChatModel> models;
 
@@ -66,7 +66,7 @@ public class GradleGenerationEngine implements GenerationEngine {
 
     private final AgentTranscriptWriter transcripts;
 
-    private final AtomicReference<GenerationOrchestrationService> active = new AtomicReference<>();
+    private final Map<ExecutionIdentity, GenerationOrchestrationService> active = new ConcurrentHashMap<>();
 
     private final ProviderFailureCooldown cooldown = new ProviderFailureCooldown() {
 
@@ -85,7 +85,7 @@ public class GradleGenerationEngine implements GenerationEngine {
         }
     };
 
-    public GradleGenerationEngine(InteractiveSandbox sandbox, Collection<ChatModel> models, ObservationRegistry observations,
+    public GradleGenerationEngine(DockerSandbox sandbox, Collection<ChatModel> models, ObservationRegistry observations,
             @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, @Value("${spring.ai.openai.max-retries:1}") int providerRetries,
             @Value("${spring.ai.openai.chat.timeout:${spring.ai.openai.timeout:60s}}") Duration providerTimeout,
             @Value("${artemis.hyperion.agent.transcript-dir:}") String transcriptDirectory) {
@@ -133,13 +133,14 @@ public class GradleGenerationEngine implements GenerationEngine {
                 model.getOptions().getModel(), Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
         var stages = new StagedGenerationRunner(runner, prompt, stageChecks, transcripts, approvedSpecs, critic, new ExerciseConceptSelector(runner, critic),
                 parameters.stagedContext(), parameters.maxDuration());
-        var orchestrator = new GenerationOrchestrationService(sandbox, workspace, runner, verifier, prompt, new StructuralOracleSeedingService(workspace, approvedSpecs), critic,
-                parameters.maxTurns(), maxSemanticRepairs, stages, parameters.stagedGeneration(), stageChecks, transcripts, approvedSpecs);
+        var orchestrator = new GenerationOrchestrationService(sandbox.forExecution(assignment.identity().executionId()), workspace, runner, verifier, prompt,
+                new StructuralOracleSeedingService(workspace, approvedSpecs), critic, parameters.maxTurns(), maxSemanticRepairs, stages, parameters.stagedGeneration(), stageChecks,
+                transcripts, approvedSpecs);
         var brief = assignment.brief();
         var input = new GenerationInput(assignment.identity().exerciseId(), brief.packageName(), brief.problemStatement(), assignment.gradingContext().hasDueDate(),
                 assignment.gradingContext().baselineGradedTestNames());
         Consumer<GenerationProgress.FileChange> files = change -> observer.progress("Updated " + change.path(), new GenerationProgress(null, null, change, null));
-        active.set(orchestrator);
+        active.put(assignment.identity(), orchestrator);
         try {
             var outcome = orchestrator.generate(input, assignment.seed(), brief.prompt(), assignment.identity().jobId(), brief.mode(), stopAuthoring, progress, files, usage,
                     brief.sourceBrief(), settings(parameters), spec -> files.accept(new GenerationProgress.FileChange("SPEC.md", "write", 0, Instant.now(), boundedSpec(spec))),
@@ -147,13 +148,13 @@ public class GradleGenerationEngine implements GenerationEngine {
             return GenerationOutputCapture.capture(assignment, outcome, usage, false);
         }
         finally {
-            active.compareAndSet(orchestrator, null);
+            active.remove(assignment.identity(), orchestrator);
         }
     }
 
     @Override
-    public boolean requestCancel() {
-        GenerationOrchestrationService orchestrator = active.get();
+    public boolean requestCancel(ExecutionIdentity identity) {
+        GenerationOrchestrationService orchestrator = active.get(identity);
         if (orchestrator == null) {
             return false;
         }

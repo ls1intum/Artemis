@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationParameters;
 import de.tum.cit.aet.artemis.hyperionworker.generation.critic.SpecFidelityCriticService;
-import de.tum.cit.aet.artemis.hyperionworker.sandbox.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperionworker.sandbox.DockerSandbox;
 import io.micrometer.observation.ObservationRegistry;
 import okhttp3.MediaType;
 import okhttp3.Protocol;
@@ -39,7 +39,7 @@ class WorkerChatConfigurationTest {
         var contextRunner = new ApplicationContextRunner().withInitializer(new ConfigDataApplicationContextInitializer())
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withConfiguration(AutoConfigurations.of(OpenAiChatAutoConfiguration.class, ToolCallingAutoConfiguration.class)).withUserConfiguration(GradleGenerationEngine.class)
-                .withBean(InteractiveSandbox.class, () -> mock(InteractiveSandbox.class)).withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
+                .withBean(DockerSandbox.class, () -> mock(DockerSandbox.class)).withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
                 .withPropertyValues("spring.ai.openai.api-key=test-key", "spring.ai.openai.chat.model=test-model", "spring.ai.openai.timeout=10m", "spring.ai.openai.max-retries=0")
                 .withBean(OpenAiHttpClientBuilderCustomizer.class, () -> builder -> builder.interceptor(chain -> {
                     actualTimeout.set(Duration.ofNanos(chain.call().timeout().timeoutNanos()));

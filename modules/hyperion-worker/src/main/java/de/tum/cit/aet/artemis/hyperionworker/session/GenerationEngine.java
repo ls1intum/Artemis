@@ -23,9 +23,10 @@ public interface GenerationEngine {
     /**
      * Requests prompt local teardown without interrupting an in-flight candidate capture.
      *
+     * @param identity the exact execution to cancel
      * @return whether this engine owns teardown; false lets the supervisor use its emergency Docker cleanup
      */
-    default boolean requestCancel() {
+    default boolean requestCancel(de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity identity) {
         return false;
     }
 }
