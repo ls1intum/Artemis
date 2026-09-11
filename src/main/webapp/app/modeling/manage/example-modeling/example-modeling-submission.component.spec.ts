@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, defer, of, throwError } from 'rxjs';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { ChangeDetectorRef, Component, input } from '@angular/core';
@@ -452,6 +452,56 @@ describe('Example Modeling Submission Component', () => {
         expect(saveAssessmentSpy).toHaveBeenCalledOnce();
         expect(comp.feedbackChanged).toBe(false);
         expect(comp.assessmentMode()).toBe(true);
+    });
+
+    it('should not let an assessment save started earlier overwrite the pruned feedback', async () => {
+        vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        // a request counts as sent once it is subscribed to, and the endpoint keeps the feedback of whichever request finishes last
+        const sentRequests: { feedbacks: Feedback[]; response: Subject<Result>; open: boolean }[] = [];
+        let persistedFeedback: Feedback[] | undefined;
+        let requestsOpenAtOnce = 0;
+        vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockImplementation((feedbacks: Feedback[]) =>
+            defer(() => {
+                const request = { feedbacks, response: new Subject<Result>(), open: true };
+                sentRequests.push(request);
+                requestsOpenAtOnce = Math.max(requestsOpenAtOnce, sentRequests.filter((openRequest) => openRequest.open).length);
+                return request.response;
+            }),
+        );
+        const finish = (request: (typeof sentRequests)[number]) => {
+            request.open = false;
+            persistedFeedback = request.feedbacks;
+            request.response.next(new Result());
+            request.response.complete();
+        };
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set({ ...exampleSubmission, usedForTutorial: false });
+        comp.selectedMode.set(ExampleSubmissionMode.READ_AND_CONFIRM);
+        comp.modelingSubmission = new ModelingSubmission();
+        comp.result.set({ id: 1 } as Result);
+        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
+        comp.unreferencedFeedback.set([mockFeedbackWithoutReference]);
+        comp.feedbackChanged = true;
+        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+
+        // leaving the assessment starts a save carrying the feedback of the deleted element, coming back saves the pruned feedback
+        comp.showSubmission();
+        comp.showAssessment();
+        await fixture.whenStable();
+
+        // let every request that is open finish in reverse order, so the save started first is the last one the server commits
+        while (sentRequests.some((request) => request.open)) {
+            sentRequests
+                .filter((request) => request.open)
+                .reverse()
+                .forEach(finish);
+            await fixture.whenStable();
+        }
+
+        expect(persistedFeedback).toEqual([mockFeedbackWithoutReference]);
+        expect(requestsOpenAtOnce).toBe(1);
+        expect(comp.feedbackChanged).toBe(false);
     });
 
     it('should create error alert if assessment is invalid', () => {
