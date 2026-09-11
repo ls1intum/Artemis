@@ -6,14 +6,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 
 class PyrisStruggleSignalDTOTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     @Test
     void serializesToCamelCaseWireShape() throws Exception {
@@ -21,7 +22,7 @@ class PyrisStruggleSignalDTOTest {
                 List.of(new PyrisStruggleSignalDTO.TickDTO(520, 0.5), new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
         JsonNode node = mapper.valueToTree(signal);
         assertThat(node.get("alert").get("tSessionS").asInt()).isEqualTo(540);
-        assertThat(node.get("alert").get("primaryBoundary").asText()).isEqualTo("FM");
+        assertThat(node.get("alert").get("primaryBoundary").asString()).isEqualTo("FM");
         assertThat(node.get("alert").get("inWarmup").asBoolean()).isFalse();
         assertThat(node.get("trajectory")).hasSize(2);
         assertThat(node.get("trajectory").get(1).get("s").asDouble()).isEqualTo(0.6);
@@ -63,8 +64,8 @@ class PyrisStruggleSignalDTOTest {
         assertThat(signal.alert().path()).isEqualTo("discrete");
 
         JsonNode node = mapper.valueToTree(signal);
-        assertThat(node.get("alert").get("primaryBoundary").asText()).isEqualTo("TPS");
-        assertThat(node.get("alert").get("path").asText()).isEqualTo("discrete");
+        assertThat(node.get("alert").get("primaryBoundary").asString()).isEqualTo("TPS");
+        assertThat(node.get("alert").get("path").asString()).isEqualTo("discrete");
         assertThat(node.get("alert").get("inWarmup").asBoolean()).isTrue();
     }
 }

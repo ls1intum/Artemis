@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -36,7 +36,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     private CompetencyExpertToolsService competencyExpertToolsService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private Course course;
 
@@ -81,7 +81,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
             assertThat(actualJsonNode.get("error")).isNotNull();
-            assertThat(actualJsonNode.get("error").asText()).contains("Course not found");
+            assertThat(actualJsonNode.get("error").asString()).contains("Course not found");
         }
 
         @Test
@@ -308,7 +308,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             assertThat(actualJsonNode.get("updated").asInt()).isZero();
             assertThat(actualJsonNode.get("failed").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("errors").isArray()).isTrue();
-            assertThat(actualJsonNode.get("errors").get(0).get("errorType").asText()).contains("NOT_FOUND");
+            assertThat(actualJsonNode.get("errors").get(0).get("errorType").asString()).contains("NOT_FOUND");
         }
 
     }

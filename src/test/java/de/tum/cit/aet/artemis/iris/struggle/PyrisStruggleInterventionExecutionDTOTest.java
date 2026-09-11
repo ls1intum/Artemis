@@ -6,10 +6,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
 
 class PyrisStruggleInterventionExecutionDTOTest {
 
-    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     @Test
     void serializesTopLevelSettingsAndSignal() throws Exception {
@@ -27,8 +27,8 @@ class PyrisStruggleInterventionExecutionDTOTest {
         // empty chatHistory + null exercise are dropped by NON_EMPTY (Pyris defaults them).
         var dto = new PyrisStruggleInterventionPipelineExecutionDTO(signal, null, null, List.of(), null, null, settings, null, null, null);
         JsonNode node = mapper.valueToTree(dto);
-        assertThat(node.get("settings").get("authenticationToken").asText()).isEqualTo("job-1");
-        assertThat(node.get("struggleSignal").get("alert").get("primaryBoundary").asText()).isEqualTo("FM");
+        assertThat(node.get("settings").get("authenticationToken").asString()).isEqualTo("job-1");
+        assertThat(node.get("struggleSignal").get("alert").get("primaryBoundary").asString()).isEqualTo("FM");
         assertThat(node.has("chatHistory")).isFalse();           // NON_EMPTY drops the empty list (Pyris defaults it)
         assertThat(node.has("programmingExercise")).isFalse();   // NON_EMPTY drops null @Nullable fields
     }
@@ -40,11 +40,11 @@ class PyrisStruggleInterventionExecutionDTOTest {
         var episode = new StruggleEpisodeDTO("ep-1", true, List.of());
         var dto = new PyrisStruggleInterventionPipelineExecutionDTO(signal, null, null, List.of(), null, null, settings, "decide", episode, "push");
         JsonNode node = mapper.valueToTree(dto);
-        assertThat(node.get("intent").asText()).isEqualTo("decide");
+        assertThat(node.get("intent").asString()).isEqualTo("decide");
         // proactivityMode serializes snake_case for the Pyris boundary (@JsonProperty("proactivity_mode"))
-        assertThat(node.get("proactivity_mode").asText()).isEqualTo("push");
+        assertThat(node.get("proactivity_mode").asString()).isEqualTo("push");
         assertThat(node.has("episode")).isTrue();
-        assertThat(node.get("episode").get("episodeId").asText()).isEqualTo("ep-1");
+        assertThat(node.get("episode").get("episodeId").asString()).isEqualTo("ep-1");
         assertThat(node.get("episode").get("isNew").asBoolean()).isTrue();
         // hints MUST be present and empty -- NON_EMPTY would have dropped hints:[], breaking the Pyris contract
         assertThat(node.get("episode").has("hints")).isTrue();

@@ -4,15 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionAcceptedDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 
 class StruggleInterventionEventDTOTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     @Test
     void nullSessionAndMessageIdsAreOmitted() throws Exception {
@@ -20,9 +21,9 @@ class StruggleInterventionEventDTOTest {
         var event = new StruggleInterventionEventDTO(42, "decide", "ambient", "Re-check the logic.", null, null, null, null, null, 0.7, null, null, null, null, null);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("exerciseId").asLong()).isEqualTo(42);
-        assertThat(node.get("kind").asText()).isEqualTo("decide");
-        assertThat(node.get("action").asText()).isEqualTo("ambient");
-        assertThat(node.get("message").asText()).contains("logic");
+        assertThat(node.get("kind").asString()).isEqualTo("decide");
+        assertThat(node.get("action").asString()).isEqualTo("ambient");
+        assertThat(node.get("message").asString()).contains("logic");
         assertThat(node.has("sessionId")).isFalse();
         assertThat(node.has("messageId")).isFalse();
         assertThat(node.has("episodeId")).isFalse();
@@ -35,11 +36,11 @@ class StruggleInterventionEventDTOTest {
         // Active event carries sessionId + messageId of the saved message, and the episodeId for slot correlation.
         var event = new StruggleInterventionEventDTO(42, "decide", "active", null, 99L, 555L, null, null, null, 0.81, "ep-abc", null, null, null, null);
         JsonNode node = mapper.valueToTree(event);
-        assertThat(node.get("kind").asText()).isEqualTo("decide");
+        assertThat(node.get("kind").asString()).isEqualTo("decide");
         assertThat(node.get("sessionId").asLong()).isEqualTo(99);
         assertThat(node.get("messageId").asLong()).isEqualTo(555);
         assertThat(node.get("confidence").asDouble()).isEqualTo(0.81);
-        assertThat(node.get("episodeId").asText()).isEqualTo("ep-abc");
+        assertThat(node.get("episodeId").asString()).isEqualTo("ep-abc");
     }
 
     @Test
@@ -47,8 +48,8 @@ class StruggleInterventionEventDTOTest {
         // Silent completion frames carry kind + action, but omit optional fields when null.
         var event = new StruggleInterventionEventDTO(42, "decide", "silent", null, null, null, null, null, null, null, null, null, null, null, null);
         JsonNode node = mapper.valueToTree(event);
-        assertThat(node.get("kind").asText()).isEqualTo("decide");
-        assertThat(node.get("action").asText()).isEqualTo("silent");
+        assertThat(node.get("kind").asString()).isEqualTo("decide");
+        assertThat(node.get("action").asString()).isEqualTo("silent");
         assertThat(node.has("message")).isFalse();
         assertThat(node.has("sessionId")).isFalse();
         assertThat(node.has("messageId")).isFalse();
@@ -63,8 +64,8 @@ class StruggleInterventionEventDTOTest {
         JsonNode node = mapper.valueToTree(event);
 
         assertThat(node.get("resolved").asBoolean()).isTrue();
-        assertThat(node.get("closingSentence").asText()).isEqualTo("Nice work, that is resolved.");
-        assertThat(node.get("episodeLabel").asText()).isEqualTo("Resolved");
+        assertThat(node.get("closingSentence").asString()).isEqualTo("Nice work, that is resolved.");
+        assertThat(node.get("episodeLabel").asString()).isEqualTo("Resolved");
 
         // CRITICAL: resolved=false must appear explicitly on the wire so the client receives it.
         // NON_EMPTY must NOT omit Boolean false (only null is omitted).

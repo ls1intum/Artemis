@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticsOverviewDTO;
 
 class QuizStatisticsOverviewDTOTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
 
     @Test
     void shouldUseQuizParticipantCountsIndependentlyOfQuestionStatistics() {
@@ -54,7 +54,7 @@ class QuizStatisticsOverviewDTOTest {
 
         JsonNode questionJson = objectMapper.valueToTree(overview).path("quizQuestions").path(0);
         assertThat(questionJson.path("id").asLong()).isEqualTo(question.getId());
-        assertThat(questionJson.path("title").asText()).isEqualTo(question.getTitle());
+        assertThat(questionJson.path("title").asString()).isEqualTo(question.getTitle());
         assertThat(questionJson.path("points").asDouble()).isEqualTo(question.getPoints());
         assertThat(questionJson.has("text")).isFalse();
         assertThat(questionJson.has("answerOptions")).isFalse();

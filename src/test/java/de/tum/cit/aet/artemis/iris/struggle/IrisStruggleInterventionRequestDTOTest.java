@@ -6,13 +6,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 
 class IrisStruggleInterventionRequestDTOTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     @Test
     void deserializesRequest() throws Exception {
