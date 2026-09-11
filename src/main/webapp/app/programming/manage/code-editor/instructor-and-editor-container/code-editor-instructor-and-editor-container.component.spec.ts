@@ -1029,7 +1029,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     it('blocks competing AI mutations while exercise generation is running', () => {
         const toggle = vi.fn();
         const consistencyService = TestBed.inject(ConsistencyCheckService);
-        (comp as any).refinementPopover = () => ({ toggle, hide: vi.fn() });
+        (comp as any).refinementPopover = () => ({ toggle, close: vi.fn() });
         (comp as any).generationStartPending.set(true);
         comp.refinementPrompt.set('Improve clarity');
 
@@ -1724,6 +1724,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
         expect(reloadEditor).toHaveBeenCalledOnce();
+    });
+
+    it('offers unselected instructor comments in the dialog and submits only the chosen threads', () => {
+        reviewCommentService.threads.set([userThread(7), userThread(8)]);
+        selectedIds.set([]);
+        comp['openAdaptDialog']();
+        expect(comp.adaptDialogFindings().map((finding) => finding.threadId)).toEqual([7, 8]);
+        expect(comp.adaptDialogSelectedIds()).toEqual([]);
+        comp['onAdaptDialogConfirmed']({ selectedFeedbackThreadIds: [8] });
+        expect(generationService.generate).toHaveBeenCalledWith(42, { mode: 'ADAPT', prompt: undefined, selectedFeedbackThreadIds: [8] });
     });
 
     it('includes instructor feedback but excludes resolved and outdated threads from adaptation', () => {

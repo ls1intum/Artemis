@@ -17,7 +17,7 @@ import { supportsHyperionExerciseGeneration } from '../hyperion-generation-suppo
     imports: [RouterLink, TumUiButtonDirective, TranslateDirective],
     template: `
         @if (status()?.jobId) {
-            <a tumUiButton severity="secondary" variant="outlined" size="small" [routerLink]="['generation']" data-testid="hyperion-exercise-open-generation">
+            <a tumUiButton severity="secondary" variant="text" size="small" [routerLink]="['generation']" data-testid="hyperion-exercise-open-generation">
                 <span [jhiTranslate]="labelKey()"></span>
             </a>
         }

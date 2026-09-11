@@ -199,6 +199,16 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(onAddSpy).toHaveBeenCalledOnce();
         expect(onAddSpy).toHaveBeenCalledWith({ lineNumber: 7, fileName: 'problem_statement.md' });
 
+        expect(config.showFeedbackAction()).toBe(false);
+        expect(config.showAdaptAction()).toBe(false);
+        fixture.componentRef.setInput('adaptReviewCommentThreadEnabled', true);
+        fixture.detectChanges();
+        expect(config.showFeedbackAction()).toBe(true);
+        expect(config.showAdaptAction()).toBe(true);
+        const adapt = vi.spyOn(comp.onAdaptReviewCommentThread, 'emit');
+        config.onAdaptThread(123);
+        expect(adapt).toHaveBeenCalledWith(123);
+
         expect(config.showLocationWarning()).toBe(false);
         fixture.componentRef.setInput('showLocationWarning', true);
         fixture.changeDetectorRef.detectChanges();

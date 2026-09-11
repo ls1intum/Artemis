@@ -68,6 +68,8 @@
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
+@source './app/exercise/review';
+@source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/iris/manage/settings';
 @source './app/hyperion';
 @source './app/editor/markdown-editor';

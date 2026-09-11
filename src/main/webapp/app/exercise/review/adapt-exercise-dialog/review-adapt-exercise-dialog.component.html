@@ -8,59 +8,64 @@
         }
     </p>
 
-    <!--
-        Not a live region. The notice is part of the dialog from the moment it opens, so it is read in document order
-        by the screen reader that just entered the dialog; `live` would only make it compete for the announcement that
-        the dialog itself deserves, and a live region does not fire for content that was already there.
-    -->
-    <tum-ui-message [announce]="false" severity="warn">
-        <span jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></span>
-    </tum-ui-message>
-
-    @if (!isFreeMode()) {
-        <h3
+    @if (sortedFindings().length) {
+        <p
             id="adaptExerciseFindingsHeading"
             class="-mb-1 text-base font-semibold"
             jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"
-            [translateValues]="{ count: sortedFindings().length }"
-        ></h3>
+            [translateValues]="{ count: selectedCount() }"
+        ></p>
         <ul class="m-0 flex max-h-[35vh] list-none flex-col gap-2 overflow-y-auto ps-0 pe-1 sm:max-h-[min(45vh,26rem)]" aria-labelledby="adaptExerciseFindingsHeading">
-            @for (finding of sortedFindings(); track finding) {
-                <li class="min-w-0 rounded-md border px-3 py-2">
-                    <div class="mb-1 flex flex-wrap items-center gap-1.5">
-                        @if (finding.severity) {
-                            <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
-                        }
-                        @if (finding.category) {
-                            <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
-                        }
-                        @if (finding.locationLabel) {
-                            <code class="min-w-0 text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</code>
-                        }
-                    </div>
-                    <div class="whitespace-pre-wrap">{{ finding.description }}</div>
-                    @if (finding.suggestedFix; as fix) {
-                        @if (fix.replacementCode) {
-                            <div class="mt-1.5">
-                                <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
-                                @if (fix.expectedCode) {
+            @for (row of selectionRows(); track row.finding) {
+                @let finding = row.finding;
+                <li class="flex min-w-0 items-start gap-3 rounded-md border border-surface px-3 py-2">
+                    @if (finding.threadId !== undefined) {
+                        <tum-ui-checkbox
+                            [inputId]="'adapt-feedback-' + finding.threadId"
+                            [checked]="row.selected"
+                            (checkedChange)="toggleFinding(finding.threadId, $event)"
+                            [ariaLabel]="finding.description"
+                            data-testid="adapt-feedback-selection"
+                        />
+                    }
+                    <div class="min-w-0 flex-1">
+                        <div class="mb-1 flex flex-wrap items-center gap-1.5">
+                            @if (finding.severity) {
+                                <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                            }
+                            @if (finding.category) {
+                                <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                            }
+                            @if (finding.locationLabel) {
+                                <code class="min-w-0 text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</code>
+                            }
+                        </div>
+                        <label [attr.for]="finding.threadId !== undefined ? 'adapt-feedback-' + finding.threadId : undefined" class="block whitespace-pre-wrap text-sm">{{
+                            finding.description
+                        }}</label>
+                        @if (finding.suggestedFix; as fix) {
+                            @if (fix.replacementCode) {
+                                <div class="mt-1.5">
+                                    <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                                    @if (fix.expectedCode) {
+                                        <pre
+                                            class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                            >{{ fix.expectedCode }}</pre>
+                                    }
+                                    <pre
+                                        class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-success/40 bg-state-success/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                        >{{ fix.replacementCode }}</pre>
+                                </div>
+                            } @else if (fix.expectedCode) {
+                                <div class="mt-1.5">
+                                    <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
                                     <pre
                                         class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
                                         >{{ fix.expectedCode }}</pre>
-                                }
-                                <pre
-                                    class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-success/40 bg-state-success/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                    >{{ fix.replacementCode }}</pre>
-                            </div>
-                        } @else if (fix.expectedCode) {
-                            <div class="mt-1.5">
-                                <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
-                                <pre
-                                    class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                    >{{ fix.expectedCode }}</pre>
-                            </div>
+                                </div>
+                            }
                         }
-                    }
+                    </div>
                 </li>
             }
         </ul>
@@ -86,11 +91,12 @@
         <span jhiTranslate="artemisApp.review.adaptExercise.charactersRemaining" [translateValues]="{ count: remainingCharacters() }"></span>
     </small>
 
-    <div class="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <tum-ui-button severity="secondary" (clicked)="cancelled.emit()">
+    <p class="m-0 text-sm text-muted-color" data-testid="adapt-persistence-notice" jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></p>
+    <div class="mt-2 flex justify-end gap-2 border-t border-surface pt-3">
+        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="cancelled.emit()">
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
         </tum-ui-button>
-        <tum-ui-button [icon]="facArtemisIntelligence" [disabled]="confirmDisabled()" (clicked)="confirm()">
+        <tum-ui-button size="small" [icon]="facArtemisIntelligence" [disabled]="confirmDisabled()" (clicked)="confirm()">
             {{ 'artemisApp.review.adaptExercise.confirm' | artemisTranslate }}
         </tum-ui-button>
     </div>

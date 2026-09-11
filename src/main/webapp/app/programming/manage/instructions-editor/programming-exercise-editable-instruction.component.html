@@ -18,6 +18,8 @@
             [showPreviewButton]="showPreview()"
             [showEditButton]="showPreview()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [adaptReviewCommentThreadEnabled]="adaptReviewCommentThreadEnabled()"
+            (onAdaptReviewCommentThread)="onAdaptReviewCommentThread.emit($event)"
             [showLocationWarning]="unsavedChangesValue()"
             [isReadOnly]="isGeneratingOrRefining()"
             [isAiLoading]="isAiApplying()"

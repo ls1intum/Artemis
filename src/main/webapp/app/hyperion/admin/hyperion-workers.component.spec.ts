@@ -1,3 +1,4 @@
+import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of, throwError } from 'rxjs';
@@ -13,22 +14,25 @@ const WORKERS: GenerationWorkerStatus[] = [
 
 describe('HyperionWorkersComponent', () => {
     let fixture: ComponentFixture<HyperionWorkersComponent>;
+    let titleBar: ComponentFixture<AdminTitleBarComponent>;
     let api: { getGenerationWorkers: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         api = { getGenerationWorkers: vi.fn(() => of(WORKERS)) };
         TestBed.configureTestingModule({
-            imports: [HyperionWorkersComponent],
+            imports: [HyperionWorkersComponent, AdminTitleBarComponent],
             providers: [
                 { provide: AdminHyperionWorkerApi, useValue: api },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
         fixture = TestBed.createComponent(HyperionWorkersComponent);
+        titleBar = TestBed.createComponent(AdminTitleBarComponent);
     });
 
     function refresh(): void {
-        const button = fixture.nativeElement.querySelector('[data-testid="hyperion-workers-refresh"] button') as HTMLButtonElement;
+        titleBar.detectChanges();
+        const button = titleBar.nativeElement.querySelector('[data-testid="hyperion-workers-refresh"] button') as HTMLButtonElement;
         button.click();
         fixture.detectChanges();
     }
@@ -57,6 +61,35 @@ describe('HyperionWorkersComponent', () => {
         refresh();
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-workers-error"]')).toBeNull();
         expect(fixture.componentInstance['workers']()).toEqual([]);
+    });
+
+    it('distinguishes occupied capacity and retained offline reservations', () => {
+        api.getGenerationWorkers.mockReturnValue(of([...WORKERS, { workerId: 'busy', state: 'BUSY', leaseHeld: true }]));
+        fixture.detectChanges();
+        expect(fixture.componentInstance['occupied']()).toBe(1);
+        expect(fixture.componentInstance['unavailable']()).toBe(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-workers-retained-reservations"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('details')).toHaveLength(3);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-workers-updated"]')).not.toBeNull();
+    });
+
+    it('refreshes visible pages periodically and stops polling after destruction', () => {
+        vi.useFakeTimers();
+        const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+        try {
+            fixture.detectChanges();
+            vi.advanceTimersByTime(15_000);
+            expect(api.getGenerationWorkers).toHaveBeenCalledTimes(2);
+            visibility.mockReturnValue('hidden');
+            vi.advanceTimersByTime(15_000);
+            expect(api.getGenerationWorkers).toHaveBeenCalledTimes(2);
+            fixture.destroy();
+            vi.advanceTimersByTime(15_000);
+            expect(api.getGenerationWorkers).toHaveBeenCalledTimes(2);
+        } finally {
+            visibility.mockRestore();
+            vi.useRealTimers();
+        }
     });
 
     it('prevents overlapping refreshes and unsubscribes when leaving the page', () => {

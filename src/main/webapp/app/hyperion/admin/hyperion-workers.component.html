@@ -1,7 +1,7 @@
-<section class="flex flex-col gap-4 p-4" aria-labelledby="hyperion-workers-title" [attr.aria-busy]="loading()">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 id="hyperion-workers-title" class="m-0 text-2xl font-semibold" jhiTranslate="artemisApp.hyperion.workers.title"></h1>
-        <tum-ui-button [disabled]="loading()" (clicked)="refresh()" data-testid="hyperion-workers-refresh">
+<section class="flex flex-col gap-4" aria-labelledby="hyperion-workers-title" [attr.aria-busy]="loading()">
+    <h5 *adminTitleBarTitle id="hyperion-workers-title" class="m-0" jhiTranslate="artemisApp.hyperion.workers.title"></h5>
+    <div *adminTitleBarActions>
+        <tum-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="hyperion-workers-refresh">
             <span jhiTranslate="artemisApp.hyperion.workers.refresh"></span>
         </tum-ui-button>
     </div>
@@ -11,10 +11,38 @@
             <span jhiTranslate="artemisApp.hyperion.workers.loadFailed"></span>
         </tum-ui-message>
     }
-    @if (!loading() && !failed()) {
-        <p class="m-0" data-testid="hyperion-workers-summary">
-            {{ 'artemisApp.hyperion.workers.summary' | artemisTranslate: { available: available(), total: workers().length } }}
+    @if (updatedAt(); as updated) {
+        <p class="m-0 text-xs text-muted-color" data-testid="hyperion-workers-updated">
+            <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
         </p>
+    }
+    @if (!failed() && updatedAt()) {
+        <dl class="m-0 grid grid-cols-2 gap-4 rounded-md border border-surface p-4 sm:grid-cols-4" data-testid="hyperion-workers-summary">
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.configured"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ workers().length }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.state.AVAILABLE"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ available() }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.occupied"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ occupied() }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.unavailable"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ unavailable() }}</dd>
+            </div>
+        </dl>
+        @if (retainedReservations()) {
+            <tum-ui-message severity="warn" data-testid="hyperion-workers-retained-reservations">
+                <span jhiTranslate="artemisApp.hyperion.workers.retainedReservations" [translateValues]="{ count: retainedReservations() }"></span>
+            </tum-ui-message>
+        }
+        @if (!workers().length) {
+            <tum-ui-message severity="info"><span jhiTranslate="artemisApp.hyperion.workers.empty"></span></tum-ui-message>
+        }
     }
     <div class="overflow-x-auto">
         <table tumUiTable data-testid="hyperion-workers-table">
@@ -24,18 +52,37 @@
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.worker"></th>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.status"></th>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.heartbeat"></th>
-                    <th scope="col" jhiTranslate="artemisApp.hyperion.workers.image"></th>
-                    <th scope="col" jhiTranslate="artemisApp.hyperion.workers.execution"></th>
+                    <th scope="col" jhiTranslate="artemisApp.hyperion.workers.reservation"></th>
+                    <th scope="col" jhiTranslate="artemisApp.hyperion.workers.diagnostics"></th>
                 </tr>
             </thead>
             <tbody>
-                @for (worker of workers(); track worker.workerId) {
+                @for (row of rows(); track row.worker.workerId) {
+                    @let worker = row.worker;
                     <tr [attr.data-state]="worker.state">
                         <td>{{ worker.workerId }}</td>
-                        <td>{{ 'artemisApp.hyperion.workers.state.' + worker.state | artemisTranslate }}</td>
+                        <td><tum-ui-tag [severity]="row.severity" [value]="'artemisApp.hyperion.workers.state.' + worker.state | artemisTranslate" /></td>
                         <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>
-                        <td class="max-w-sm break-all font-mono text-xs">{{ worker.imageDigest ?? '—' }}</td>
-                        <td class="max-w-xs break-all font-mono text-xs">{{ worker.activeExecution ?? '—' }}</td>
+                        <td>{{ (worker.leaseHeld ? 'artemisApp.hyperion.workers.reserved' : 'artemisApp.hyperion.workers.notReserved') | artemisTranslate }}</td>
+                        <td class="max-w-md">
+                            <details>
+                                <summary class="cursor-pointer text-sm" jhiTranslate="artemisApp.hyperion.workers.diagnostics"></summary>
+                                <dl class="mt-2 mb-0 flex flex-col gap-2 text-xs">
+                                    <div>
+                                        <dt jhiTranslate="artemisApp.hyperion.workers.execution"></dt>
+                                        <dd class="m-0 break-all font-mono">{{ worker.activeExecution ?? '—' }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt jhiTranslate="artemisApp.hyperion.workers.incarnation"></dt>
+                                        <dd class="m-0 break-all font-mono">{{ worker.incarnation ?? '—' }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt jhiTranslate="artemisApp.hyperion.workers.image"></dt>
+                                        <dd class="m-0 break-all font-mono">{{ worker.imageDigest ?? '—' }}</dd>
+                                    </div>
+                                </dl>
+                            </details>
+                        </td>
                     </tr>
                 }
             </tbody>
