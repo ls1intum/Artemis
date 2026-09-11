@@ -96,7 +96,21 @@ public class ExamDateService {
      * @return <code>true</code> if the working period is over, <code>false</code> otherwise
      */
     public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
-        if (studentParticipation.isTestRun()) {
+        return isIndividualExerciseWorkingPeriodOver(exam, studentParticipation.isTestRun(), studentParticipation.getParticipant().getId(), studentParticipation.getId());
+    }
+
+    /**
+     * Scalar form of {@link #isIndividualExerciseWorkingPeriodOver(Exam, StudentParticipation)} for callers holding a
+     * projection of the participation rather than the entity.
+     *
+     * @param exam            the exam the exercise belongs to
+     * @param testRun         whether the participation is an instructor test run
+     * @param participantId   the id of the student the participation belongs to
+     * @param participationId the id of the participation, named in the error when no student exam exists
+     * @return true if the working period is over, false otherwise
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, boolean testRun, long participantId, long participationId) {
+        if (testRun) {
             return false;
         }
         // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
@@ -104,14 +118,13 @@ public class ExamDateService {
         // For real exams, we aim to find the only existing student exam.
         // A projection: the caller already holds the exam, and reading the two values off the student exam entity pulled
         // its eager exam, that exam's course and the course configuration in behind them, on every exam submission.
-        Optional<StudentExamWorkingPeriodDTO> workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(),
-                studentParticipation.getParticipant().getId());
+        Optional<StudentExamWorkingPeriodDTO> workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(), participantId);
 
         if (workingPeriod.isPresent()) {
             return workingPeriod.get().isWorkingPeriodOver(exam);
         }
 
-        throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
+        throw new IllegalStateException("No student exam found for student participation " + participationId);
     }
 
     /**

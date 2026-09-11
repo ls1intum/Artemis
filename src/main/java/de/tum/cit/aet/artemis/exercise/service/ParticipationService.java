@@ -888,48 +888,54 @@ public class ParticipationService {
     }
 
     /**
-     * The participation a submission should be saved against, rebuilt from a projection rather than loaded.
+     * The participation a submission should be saved against, as a projection rather than an entity.
      * <p>
      * Resolves exactly as {@link #findOneByExerciseAndStudentWithEagerSubmissionsAnyState} does - team, test exam,
-     * practice after the effective due date, instructor test run - but reads five columns instead of the participation
+     * practice after the effective due date, instructor test run - but reads six columns instead of the participation
      * with its eager exercise, that exercise's course, and for an exam exercise the exercise group, its exam and the
-     * exam's course. The exercise and the participant are the ones the caller already holds, so what comes back
-     * carries everything the save and the response read. It has no submissions: a caller that needs those has to
-     * resolve the participation itself.
+     * exam's course. Nothing is turned back into an entity: the save writes the foreign key from the id, and the
+     * response is mapped from these columns. A caller that needs the participation's submissions cannot use this.
      *
      * @param exercise the exercise the submission belongs to
      * @param student  the student submitting
-     * @return the participation, or empty when the student has none
+     * @return the projected participation, or empty when the student has none
      */
-    public Optional<StudentParticipation> findSubmitTargetByExerciseAndStudent(Exercise exercise, User student) {
+    public Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseAndStudent(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId()).flatMap(
-                    team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()).map(t -> toParticipation(t, exercise, team)));
+            return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId())
+                    .flatMap(team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return findSubmitTargetOfStudent(exercise, student).map(target -> toParticipation(target, exercise, student));
+        if (exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        Optional<StudentParticipationSubmitTargetDTO> gradedParticipation = studentParticipationRepository.findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                student.getId(), false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+            Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
+                    .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        return gradedParticipation;
     }
 
     /**
-     * Puts a projected participation back together, with the exercise and participant the caller holds.
-     * <p>
-     * Carries exactly what the save and the response read - the columns, the exercise and the participant - and no
-     * submissions, so a caller that needs those must not use this.
+     * The participant a submit target belongs to, for the response that reports it.
      *
-     * @param target      the projected participation
-     * @param exercise    the exercise the submission belongs to
-     * @param participant the student or team the participation belongs to
-     * @return the detached participation
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @return the team for a team exercise, otherwise the student
      */
-    private static StudentParticipation toParticipation(StudentParticipationSubmitTargetDTO target, Exercise exercise, Participant participant) {
-        StudentParticipation participation = new StudentParticipation();
-        participation.setId(target.id());
-        participation.setInitializationState(target.initializationState());
-        participation.setInitializationDate(target.initializationDate());
-        participation.setIndividualDueDate(target.individualDueDate());
-        participation.setTestRun(target.testRun());
-        participation.setExercise(exercise);
-        participation.setParticipant(participant);
-        return participation;
+    public Participant findSubmitParticipant(Exercise exercise, User student) {
+        if (exercise.isTeamMode()) {
+            return teamRepository.findOneWithStudentsByExerciseIdAndUserId(exercise.getId(), student.getId()).orElse(null);
+        }
+        return student;
     }
 
     /**

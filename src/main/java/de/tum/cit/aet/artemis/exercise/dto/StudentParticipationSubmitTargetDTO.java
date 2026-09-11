@@ -22,8 +22,21 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
  * @param initializationDate  when the participation was initialized
  * @param individualDueDate   the individual due date, null when the exercise-wide one applies
  * @param testRun             whether the participation is a test run, which is also practice mode for a course exercise
+ * @param presentationScore   the presentation score, reported back in the response
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentParticipationSubmitTargetDTO(long id, InitializationState initializationState, ZonedDateTime initializationDate, ZonedDateTime individualDueDate,
-        boolean testRun) {
+        boolean testRun, Double presentationScore) {
+
+    /**
+     * The same target as the save leaves it, which is always finished.
+     * <p>
+     * Saving a submission moves the participation to {@link InitializationState#FINISHED}, so a response mapped from
+     * the row as it was read would report the state from before the save.
+     *
+     * @return a copy reporting the state after the save
+     */
+    public StudentParticipationSubmitTargetDTO afterSubmission() {
+        return new StudentParticipationSubmitTargetDTO(id, InitializationState.FINISHED, initializationDate, individualDueDate, testRun, presentationScore);
+    }
 }

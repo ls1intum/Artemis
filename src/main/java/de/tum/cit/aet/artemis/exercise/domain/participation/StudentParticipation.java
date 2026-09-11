@@ -55,9 +55,32 @@ public class StudentParticipation extends Participation {
         return Optional.ofNullable((Participant) student).orElse(team);
     }
 
+    /** The discriminator the client reads to tell participation kinds apart. */
+    public static final String TYPE = "student";
+
+    /**
+     * A stand-in carrying nothing but the id, for writing a submission's foreign key.
+     * <p>
+     * The submit path resolves its participation as a projection and must not load the entity - doing so pulls the
+     * exercise, its course and, for an exam exercise, the exercise group with its exam and that exam's course along.
+     * {@code getReferenceById} is not an option either: {@link Participation} is mapped {@code SINGLE_TABLE}, so
+     * Hibernate has to read the discriminator to know which subclass to proxy, which is the query this avoids.
+     * <p>
+     * Never read from this and never hand it to anything but a save. What the response reports is mapped from the
+     * projection instead, and everything the save needs from the participation is the id.
+     *
+     * @param id the id of the participation the submission belongs to
+     * @return a detached stand-in carrying only that id
+     */
+    public static StudentParticipation idOnlyReference(long id) {
+        StudentParticipation reference = new StudentParticipation();
+        reference.setId(id);
+        return reference;
+    }
+
     @Override
     public String getType() {
-        return "student";
+        return TYPE;
     }
 
     /**

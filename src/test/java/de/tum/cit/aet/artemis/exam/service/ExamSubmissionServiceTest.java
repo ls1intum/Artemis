@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
@@ -191,10 +192,10 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         existingSubmission = participationUtilService.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ParticipationFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
         // The submission is modified in place; what comes back is the participation the caller may reuse for its save.
-        StudentParticipation resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
         assertThat(resolvedParticipation).isNotNull();
-        assertThat(resolvedParticipation.getId()).isEqualTo(participation.getId());
+        assertThat(resolvedParticipation.id()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -206,7 +207,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         Submission existingSubmission = participationUtilService.addSubmission(participation, ParticipationFactory.generateFileUploadSubmission(true));
         Submission receivedSubmission = ParticipationFactory.generateFileUploadSubmission(true);
 
-        StudentParticipation resolvedParticipation = examSubmissionService.preventMultipleSubmissions(fileUploadExercise, receivedSubmission, student1);
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(fileUploadExercise, receivedSubmission, student1);
 
         assertThat(receivedSubmission.getId()).as("the existing submission is still the one that gets overwritten").isEqualTo(existingSubmission.getId());
         assertThat(resolvedParticipation).as("FileUploadSubmissionService reads the previous file off participation.submissions, which the projection does not carry, "
@@ -224,7 +225,8 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         Submission existingSubmission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("Team text", Language.ENGLISH, true));
         Submission receivedSubmission = ParticipationFactory.generateTextSubmission("New team text", Language.ENGLISH, true);
 
-        StudentParticipation resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, team.getStudents().iterator().next());
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission,
+                team.getStudents().iterator().next());
 
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
         assertThat(resolvedParticipation).as("a team participation is owned by a Team, so the caller resolves it itself").isNull();

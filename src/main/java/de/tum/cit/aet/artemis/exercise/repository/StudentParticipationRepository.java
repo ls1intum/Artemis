@@ -461,7 +461,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
-                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun, p.presentationScore)
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -484,7 +484,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
-                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun, p.presentationScore)
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -513,7 +513,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
-                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun)
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun, p.presentationScore)
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId

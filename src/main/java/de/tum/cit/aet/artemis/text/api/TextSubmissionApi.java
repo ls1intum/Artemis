@@ -45,7 +45,7 @@ public class TextSubmissionApi extends AbstractTextApi {
      * @return the saved submission, with details hidden for the given user
      */
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
-        var submission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, null);
+        var submission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, null).submission();
         textSubmissionService.hideDetails(submission, user);
         return submission;
     }
