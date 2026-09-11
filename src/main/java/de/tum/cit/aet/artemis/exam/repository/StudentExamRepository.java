@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,11 +54,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH e.exerciseGroup eg
                 LEFT JOIN FETCH eg.exam
-                LEFT JOIN FETCH e.course eCourse
-                LEFT JOIN FETCH eCourse.athenaConfig
+                LEFT JOIN FETCH e.course
                 LEFT JOIN FETCH se.exam ex
-                LEFT JOIN FETCH ex.course exCourse
-                LEFT JOIN FETCH exCourse.athenaConfig
+                LEFT JOIN FETCH ex.course
                 LEFT JOIN FETCH se.user
             WHERE se.id = :studentExamId
             """)
@@ -342,6 +341,34 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
+
+    /**
+     * What deciding a student's exam working period needs, for their newest student exam in an exam.
+     * <p>
+     * A projection rather than the entity: {@code StudentExam.exam} is a {@code @ManyToOne} and therefore eager, and so
+     * is that exam's course and the course's Athena configuration, so reading two booleans off the entity cost four
+     * further selects. A student can take a test exam more than once; the newest attempt is picked by id inside the
+     * query, so the database returns one row rather than every attempt for the caller to discard. Test runs are left
+     * out: an instructor can hold one next to their own attempt, and it would otherwise decide the working period of
+     * that attempt.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return the values for the student's newest student exam, or empty when they have none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO(
+                se.submitted, se.testRun, se.started, se.startedDate, se.workingTime)
+            FROM StudentExam se
+            WHERE se.id = (
+                SELECT MAX(se2.id)
+                FROM StudentExam se2
+                WHERE se2.exam.id = :examId
+                    AND se2.user.id = :userId
+                    AND (se2.testRun IS NULL OR se2.testRun = FALSE)
+            )
+            """)
+    Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
             SELECT se

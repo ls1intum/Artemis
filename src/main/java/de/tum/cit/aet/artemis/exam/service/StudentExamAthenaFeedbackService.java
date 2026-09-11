@@ -125,6 +125,10 @@ public class StudentExamAthenaFeedbackService {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
 
+        // The participations are loaded separately from the student exam and therefore contain different exercise
+        // instances. Attach the lazy Athena configuration to the instances passed to the asynchronous generators.
+        eligibleParticipations.forEach(participation -> courseAthenaConfigRepository.attachToCourseOf(participation.getExercise()));
+
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();
             if (exercise instanceof TextExercise && textFeedbackApi.isEmpty()) {
