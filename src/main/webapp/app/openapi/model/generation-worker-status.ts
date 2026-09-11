@@ -8,6 +8,8 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GenerationWorkerExecution } from './generation-worker-execution';
+
 export interface GenerationWorkerStatus {
     workerId?: string;
     state?: GenerationWorkerStatusStateEnum;
@@ -16,6 +18,9 @@ export interface GenerationWorkerStatus {
     incarnation?: string;
     activeExecution?: string;
     leaseHeld?: boolean;
+    capacity?: number;
+    availableSlots?: number;
+    executions?: Array<GenerationWorkerExecution>;
 }
 
 export type GenerationWorkerStatusStateEnum = 'OFFLINE' | 'NOT_READY' | 'AVAILABLE' | 'RESERVED' | 'BUSY';

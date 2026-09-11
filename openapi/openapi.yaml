@@ -10,6 +10,39 @@ tags:
     courses, exercises, lectures, lecture units, exams, FAQs, and public communication
     channels including their messages and replies'}
 paths:
+  /api/hyperion/admin/exercises/generations:
+    get:
+      tags: [admin-hyperion-generation-monitoring]
+      operationId: getActiveGenerations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ActiveGeneration'}
+  /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}:
+    delete:
+      tags: [admin-hyperion-generation-monitoring]
+      operationId: cancelGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: generationId
+        in: path
+        required: true
+        schema: {type: string}
+      - name: reason
+        in: query
+        required: true
+        schema: {type: string, minLength: 1, maxLength: 500}
+      responses:
+        '202': {description: Cancellation requested}
+        '400': {description: Invalid reason}
+        '409': {description: Run no longer cancellable}
   /api/hyperion/admin/workers:
     get:
       tags: [admin-hyperion-worker]
@@ -1815,6 +1848,27 @@ components:
         incarnation: {type: string, format: uuid}
         activeExecution: {type: string, format: uuid}
         leaseHeld: {type: boolean}
+        capacity: {type: integer, format: int32}
+        availableSlots: {type: integer, format: int32}
+        executions:
+          type: array
+          items: {$ref: '#/components/schemas/GenerationWorkerExecution'}
+    GenerationWorkerExecution:
+      type: object
+      properties:
+        slot: {type: integer, format: int32}
+        executionId: {type: string, format: uuid}
+        jobId: {type: string}
+        exerciseId: {type: integer, format: int64}
+    ActiveGeneration:
+      type: object
+      properties:
+        jobId: {type: string}
+        exerciseId: {type: integer, format: int64}
+        userLogin: {type: string}
+        startedAt: {type: string, format: date-time}
+        cancellable: {type: boolean}
+        cancellationRequested: {type: boolean}
     QuizBatchWithPassword:
       type: object
       properties:

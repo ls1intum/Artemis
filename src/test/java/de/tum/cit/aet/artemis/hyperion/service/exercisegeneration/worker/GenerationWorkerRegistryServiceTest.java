@@ -216,8 +216,8 @@ class GenerationWorkerRegistryServiceTest {
             assertThat(status.activeExecution()).isNull();
             assertThat(status.leaseHeld()).isTrue();
         });
-        registry.recordPresence("worker",
-                new WorkerEvent(1, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.HEARTBEAT, claim.identity(), false, claim.imageDigest(), null, null, null));
+        registry.recordPresence("worker", new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", incarnation, 2, Instant.now(),
+                WorkerEvent.Type.HEARTBEAT, claim.identity(), false, claim.imageDigest(), null, null, null));
         assertThat(registry.workerStatuses()).singleElement().satisfies(status -> {
             assertThat(status.state()).isEqualTo(GenerationWorkerState.BUSY);
             assertThat(status.activeExecution()).isEqualTo(claim.identity().executionId());

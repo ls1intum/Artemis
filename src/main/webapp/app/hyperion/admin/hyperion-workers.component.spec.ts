@@ -5,6 +5,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { HyperionWorkersComponent } from './hyperion-workers.component';
 import { AdminHyperionWorkerApi } from 'app/openapi/api/admin-hyperion-worker-api';
 import { GenerationWorkerStatus } from 'app/openapi/model/generation-worker-status';
+import { AdminHyperionGenerationMonitoringApi } from 'app/openapi/api/admin-hyperion-generation-monitoring-api';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const WORKERS: GenerationWorkerStatus[] = [
@@ -17,11 +18,17 @@ describe('HyperionWorkersComponent', () => {
     let titleBar: ComponentFixture<AdminTitleBarComponent>;
     let api: { getGenerationWorkers: ReturnType<typeof vi.fn> };
 
+    const generationApi = { getActiveGenerations: vi.fn(() => of([])), cancelGeneration: vi.fn(() => of(undefined)) };
+
     beforeEach(() => {
+        vi.clearAllMocks();
+        generationApi.getActiveGenerations.mockReturnValue(of([]));
+        generationApi.cancelGeneration.mockReturnValue(of(undefined));
         api = { getGenerationWorkers: vi.fn(() => of(WORKERS)) };
         TestBed.configureTestingModule({
             imports: [HyperionWorkersComponent, AdminTitleBarComponent],
             providers: [
+                { provide: AdminHyperionGenerationMonitoringApi, useValue: generationApi },
                 { provide: AdminHyperionWorkerApi, useValue: api },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -101,5 +108,38 @@ describe('HyperionWorkersComponent', () => {
         expect(fixture.nativeElement.querySelector('[aria-busy]').getAttribute('aria-busy')).toBe('true');
         fixture.destroy();
         expect(pending.observed).toBe(false);
+    });
+    it('counts free slots independently from the number of workers', () => {
+        api.getGenerationWorkers.mockReturnValue(of([{ workerId: 'worker', state: 'AVAILABLE', capacity: 4, availableSlots: 3 }]));
+        fixture.detectChanges();
+        expect(fixture.componentInstance['available']()).toBe(3);
+        expect(fixture.componentInstance['slots']()).toBe(4);
+        expect(fixture.componentInstance['occupied']()).toBe(1);
+        expect(fixture.componentInstance['workers']()).toHaveLength(1);
+    });
+
+    it('requires a reason and retains it if an exact-run cancellation is rejected', () => {
+        fixture.detectChanges();
+        const component = fixture.componentInstance;
+        component['selectCancellation']({ exerciseId: 42, jobId: 'selected-run', cancellable: true });
+        component['cancelGeneration']();
+        expect(generationApi.cancelGeneration).not.toHaveBeenCalled();
+        component['cancelReason'].set('Stop this run only');
+        generationApi.cancelGeneration.mockReturnValue(throwError(() => new Error('Already saving')));
+        component['cancelGeneration']();
+        expect(generationApi.cancelGeneration).toHaveBeenCalledWith(42, 'selected-run', 'Stop this run only');
+        expect(component['cancelDialogVisible']()).toBe(true);
+        expect(component['cancelReason']()).toBe('Stop this run only');
+        expect(component['cancelFailed']()).toBe(true);
+        expect(component['canSubmitCancellation']()).toBe(false);
+    });
+
+    it('never offers cancellation for a saving or already cancelled run', () => {
+        fixture.detectChanges();
+        const component = fixture.componentInstance;
+        component['selectCancellation']({ exerciseId: 42, jobId: 'saving', cancellable: false });
+        component['cancelReason'].set('Stop');
+        component['cancelGeneration']();
+        expect(generationApi.cancelGeneration).not.toHaveBeenCalled();
     });
 });

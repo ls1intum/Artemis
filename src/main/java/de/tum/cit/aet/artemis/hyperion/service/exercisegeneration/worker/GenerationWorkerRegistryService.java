@@ -207,12 +207,15 @@ public class GenerationWorkerRegistryService {
         Instant now = Instant.now();
         return properties.ids().stream().map(worker -> {
             Presence live = presence.get(worker);
-            boolean leaseHeld = leases.get(worker) != null;
+            boolean leaseHeld = java.util.stream.IntStream.range(0, 16).anyMatch(slot -> leases.get(slotKey(worker, slot)) != null);
             if (live == null || !live.receivedAt().plus(properties.presenceTtl()).isAfter(now)) {
-                return new GenerationWorkerStatusDTO(worker, GenerationWorkerState.OFFLINE, null, null, null, null, leaseHeld);
+                return new GenerationWorkerStatusDTO(worker, GenerationWorkerState.OFFLINE, null, null, null, null, leaseHeld, 0, 0, List.of());
             }
             GenerationWorkerState state;
-            if (live.activeExecution() != null) {
+            if (availableSlots(worker, live) > 0) {
+                state = GenerationWorkerState.AVAILABLE;
+            }
+            else if (!live.executions().isEmpty()) {
                 state = GenerationWorkerState.BUSY;
             }
             else if (leaseHeld) {
@@ -221,7 +224,10 @@ public class GenerationWorkerRegistryService {
             else {
                 state = live.ready() ? GenerationWorkerState.AVAILABLE : GenerationWorkerState.NOT_READY;
             }
-            return new GenerationWorkerStatusDTO(worker, state, live.receivedAt(), live.imageDigest(), live.incarnation(), live.activeExecution(), leaseHeld);
+            return new GenerationWorkerStatusDTO(worker, state, live.receivedAt(), live.imageDigest(), live.incarnation(),
+                    live.executions().isEmpty() ? null : live.executions().getFirst().executionId(), leaseHeld, live.slots(), availableSlots(worker, live),
+                    live.executions().stream().map(execution -> new de.tum.cit.aet.artemis.hyperion.dto.GenerationWorkerExecutionDTO(execution.slot(), execution.executionId(),
+                            execution.jobId(), execution.exerciseId())).toList());
         }).toList();
     }
 
