@@ -343,41 +343,48 @@
                 }
             </tum-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
-                <div class="mt-4">
-                    <h4 jhiTranslate="artemisApp.assessmentDashboard.tutorPerformanceIssues.title"></h4>
-                    @for (issue of tutorIssues(); track issue) {
-                        <ul>
-                            @if (issue.averageTutorValue < issue.allowedRange.lowerBound) {
-                                <li>
-                                    {{
-                                        issue.translationKey + '.below'
-                                            | artemisTranslate
-                                                : {
-                                                      tutorName: issue.tutorName,
-                                                      numberOfTutorItems: issue.numberOfTutorItems,
-                                                      averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                                      threshold: issue.allowedRange.lowerBound.toFixed(1),
-                                                  }
-                                    }}
-                                </li>
+                <tum-ui-message severity="warn" class="block">
+                    <span class="flex flex-col gap-2">
+                        <span class="flex items-center gap-2">
+                            <fa-icon [icon]="faTriangleExclamation" class="shrink-0" />
+                            <span class="font-semibold" jhiTranslate="artemisApp.assessmentDashboard.tutorPerformanceIssues.title"></span>
+                        </span>
+                        <span class="flex flex-col gap-2 text-sm font-normal">
+                            @for (issue of tutorIssues(); track issue) {
+                                @if (issue.averageTutorValue < issue.allowedRange.lowerBound) {
+                                    <span class="block">
+                                        •
+                                        {{
+                                            issue.translationKey + '.below'
+                                                | artemisTranslate
+                                                    : {
+                                                          tutorName: issue.tutorName,
+                                                          numberOfTutorItems: issue.numberOfTutorItems,
+                                                          averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                                          threshold: issue.allowedRange.lowerBound.toFixed(1),
+                                                      }
+                                        }}
+                                    </span>
+                                }
+                                @if (issue.averageTutorValue > issue.allowedRange.upperBound) {
+                                    <span class="block">
+                                        •
+                                        {{
+                                            issue.translationKey + '.above'
+                                                | artemisTranslate
+                                                    : {
+                                                          tutorName: issue.tutorName,
+                                                          numberOfTutorItems: issue.numberOfTutorItems,
+                                                          averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                                          threshold: issue.allowedRange.upperBound.toFixed(1),
+                                                      }
+                                        }}
+                                    </span>
+                                }
                             }
-                            @if (issue.averageTutorValue > issue.allowedRange.upperBound) {
-                                <li>
-                                    {{
-                                        issue.translationKey + '.above'
-                                            | artemisTranslate
-                                                : {
-                                                      tutorName: issue.tutorName,
-                                                      numberOfTutorItems: issue.numberOfTutorItems,
-                                                      averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                                      threshold: issue.allowedRange.upperBound.toFixed(1),
-                                                  }
-                                    }}
-                                </li>
-                            }
-                        </ul>
-                    }
-                </div>
+                        </span>
+                    </span>
+                </tum-ui-message>
             }
             @if (stats().tutorLeaderboardEntries?.length) {
                 <tum-ui-panel class="min-w-0 overflow-hidden">
