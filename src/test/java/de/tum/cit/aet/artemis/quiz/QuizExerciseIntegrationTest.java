@@ -901,6 +901,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectExerciseSearchWithoutSortedColumn() throws Exception {
+        request.performMvcRequest(get("/api/quiz/quiz-exercises").param("page", "0").param("pageSize", "20").param("sortingOrder", "ASCENDING").param("searchTerm", "quiz"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenWhenStudentUsesPointStatisticsPath() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1),
@@ -1651,6 +1658,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         JsonNode json = objectMapper.readTree(content);
         assertThat(json.has("quizQuestions")).isFalse();
+        assertThat(json.path("quizQuestionsType").asText()).isEqualTo("before-quiz-start");
 
         QuizExerciseWithoutQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithoutQuestionsDTO.class);
         assertThat(dto.id()).isEqualTo(quizExercise.getId());
@@ -1677,6 +1685,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         JsonNode json = objectMapper.readTree(content);
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
+        assertThat(json.path("quizQuestionsType").asText()).isEqualTo("after-quiz-end");
 
         // Assume first MC, check has isCorrect
         JsonNode mc = json.get("quizQuestions").get(0);
@@ -1714,6 +1723,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         JsonNode json = objectMapper.readTree(content);
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
+        assertThat(json.path("quizQuestionsType").asText()).isEqualTo("live-quiz");
 
         // Check no solutions, e.g. MC no isCorrect
         JsonNode mc = json.get("quizQuestions").get(0);
