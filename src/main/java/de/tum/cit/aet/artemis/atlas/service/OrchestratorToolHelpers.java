@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -316,7 +316,7 @@ public final class OrchestratorToolHelpers {
      * @return a JSON error string, or {@code null} when valid
      */
     @Nullable
-    static String validateJustification(ObjectMapper objectMapper, @Nullable String justification) {
+    static String validateJustification(JsonMapper objectMapper, @Nullable String justification) {
         if (isBlank(justification)) {
             return errorJson(objectMapper, "justification is required.");
         }
@@ -332,7 +332,7 @@ public final class OrchestratorToolHelpers {
      * @param objectMapper the mapper used to serialise the payload
      * @return the JSON error string
      */
-    static String writeQuotaError(ObjectMapper objectMapper) {
+    static String writeQuotaError(JsonMapper objectMapper) {
         return errorJson(objectMapper, "Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ") reached for this run; finalize and return.");
     }
 
@@ -342,7 +342,7 @@ public final class OrchestratorToolHelpers {
      * @param objectMapper the mapper used to serialise the payload
      * @return the JSON error string
      */
-    static String missingCourseContextError(ObjectMapper objectMapper) {
+    static String missingCourseContextError(JsonMapper objectMapper) {
         return errorJson(objectMapper, "No course context available for this tool call.");
     }
 
@@ -353,7 +353,7 @@ public final class OrchestratorToolHelpers {
      * @param message      the error message
      * @return the JSON error string
      */
-    static String errorJson(ObjectMapper objectMapper, String message) {
+    static String errorJson(JsonMapper objectMapper, String message) {
         return toJson(objectMapper, Map.of("error", message));
     }
 
@@ -364,11 +364,11 @@ public final class OrchestratorToolHelpers {
      * @param object       the object to serialise
      * @return the JSON string
      */
-    static String toJson(ObjectMapper objectMapper, Object object) {
+    static String toJson(JsonMapper objectMapper, Object object) {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException ex) {
+        catch (JacksonException ex) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

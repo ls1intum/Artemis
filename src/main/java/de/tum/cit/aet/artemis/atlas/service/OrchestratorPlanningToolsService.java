@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Conditional(AtlasEnabled.class)
 public class OrchestratorPlanningToolsService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -59,7 +59,7 @@ public class OrchestratorPlanningToolsService {
      * @param courseCompetencyRepository repository for competency lookups
      * @param exerciseRepository         repository for exercise lookups
      */
-    public OrchestratorPlanningToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository) {
+    public OrchestratorPlanningToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseRepository = exerciseRepository;

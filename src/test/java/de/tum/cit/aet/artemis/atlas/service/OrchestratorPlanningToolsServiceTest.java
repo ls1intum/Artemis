@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -46,7 +46,7 @@ class OrchestratorPlanningToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrchestratorPlanningToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository);
+        service = new OrchestratorPlanningToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository);
     }
 
     @Test
