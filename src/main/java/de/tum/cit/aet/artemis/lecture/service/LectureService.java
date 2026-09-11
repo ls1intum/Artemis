@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -110,12 +111,14 @@ public class LectureService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
             LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -131,6 +134,7 @@ public class LectureService {
         this.youTubeUrlService = youTubeUrlService;
         this.slideRepository = slideRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -299,6 +303,8 @@ public class LectureService {
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
+        // the discussion section reads this switch, and neither details query fetches the lazy configuration
+        courseAthenaConfigRepository.attachTo(course);
         return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getCourseInformationSharingConfiguration(),
                 course.isAthenaFormativeFeedbackEnabled());
     }
