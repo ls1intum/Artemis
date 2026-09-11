@@ -367,8 +367,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGenerateStudentExamsForSimulationExam() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
         exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
-        examRepository.save(exam);
 
         generateStudentExams(exam);
 
@@ -395,8 +393,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGenerateMissingStudentExamsForSimulationExam() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
-        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
-        examRepository.save(exam);
 
         generateStudentExams(exam);
 
