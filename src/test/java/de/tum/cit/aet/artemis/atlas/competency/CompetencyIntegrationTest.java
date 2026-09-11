@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -53,6 +55,10 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             request.put("/api/atlas/courses/" + course.getId() + "/competencies", toRequestDto(courseCompetency), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
                     HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
+                    new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false), HttpStatus.FORBIDDEN);
+            request.put("/api/atlas/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/competency-links/generated-from-hyperion-checklist",
+                    Set.of(courseCompetency.getId()), HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", List.of(), HttpStatus.FORBIDDEN);
@@ -205,6 +211,23 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateValidCompetency() throws Exception {
         super.shouldCreateValidCompetency(new Competency());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldPersistHyperionChecklistProvenanceForCompetencyAndLink() throws Exception {
+        Competency generatedCompetency = competencyForBulkCreation("Hyperion generated");
+        CourseCompetencyResponseDTO created = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
+                toRequestDto(generatedCompetency), CourseCompetencyResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.generatedByAi()).isTrue();
+
+        assertThat(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(textExercise.getId(), courseCompetency.getId())).get()
+                .extracting(CompetencyExerciseLink::isGeneratedByAi).isEqualTo(false);
+        request.put("/api/atlas/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/competency-links/generated-from-hyperion-checklist",
+                Set.of(courseCompetency.getId()), HttpStatus.NO_CONTENT);
+
+        assertThat(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(textExercise.getId(), courseCompetency.getId())).get()
+                .extracting(CompetencyExerciseLink::isGeneratedByAi).isEqualTo(true);
     }
 
     @Test

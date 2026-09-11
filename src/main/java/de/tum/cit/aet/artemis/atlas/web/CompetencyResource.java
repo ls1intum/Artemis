@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -96,10 +97,12 @@ public class CompetencyResource {
 
     private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
 
+    private final ExerciseRepository exerciseRepository;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
             CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi, CompetencyValidationService competencyValidator,
-            CompetencyAtlasMLNotificationService atlasMLNotificationService) {
+            CompetencyAtlasMLNotificationService atlasMLNotificationService, ExerciseRepository exerciseRepository) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -110,6 +113,7 @@ public class CompetencyResource {
         this.atlasMLApi = atlasMLApi;
         this.competencyValidator = competencyValidator;
         this.atlasMLNotificationService = atlasMLNotificationService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -161,8 +165,30 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
             throws URISyntaxException {
+        return createCompetency(courseId, competencyRequest, false, "competency creation");
+    }
+
+    /**
+     * Creates a competency selected from Hyperion's programming-exercise checklist.
+     * The dedicated route makes AI provenance a server-owned decision instead of accepting it from the request body.
+     *
+     * @param courseId          the course receiving the competency
+     * @param competencyRequest the Hyperion-inferred competency selected by the editor
+     * @return the persisted AI-generated competency
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies/generated-from-hyperion-checklist")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<CourseCompetencyResponseDTO> createCompetencyGeneratedFromHyperionChecklist(@PathVariable long courseId,
+            @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) throws URISyntaxException {
+        return createCompetency(courseId, competencyRequest, true, "competency creation from Hyperion checklist");
+    }
+
+    private ResponseEntity<CourseCompetencyResponseDTO> createCompetency(long courseId, CourseCompetencyRequestDTO competencyRequest, boolean generatedByAi,
+            String notificationReason) throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competencyRequest);
         Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
+        competency.setGeneratedByAi(generatedByAi);
         competencyValidator.checkForCreation(competency);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -170,10 +196,32 @@ public class CompetencyResource {
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
         // Notify AtlasML about the new competency
-        atlasMLNotificationService.notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency creation");
+        atlasMLNotificationService.notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, notificationReason);
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId()))
                 .body(CourseCompetencyResponseDTO.of(persistedCompetency));
+    }
+
+    /**
+     * Marks selected exercise links as originating from Hyperion's checklist after the exercise has been saved.
+     * Existing manual links not named in the request remain manual.
+     *
+     * @param courseId      the course containing the exercise
+     * @param exerciseId    the exercise whose links were inferred
+     * @param competencyIds the competencies linked by the checklist
+     * @return an empty success response
+     */
+    @PutMapping("courses/{courseId}/exercises/{exerciseId}/competency-links/generated-from-hyperion-checklist")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> markCompetencyLinksGeneratedFromHyperionChecklist(@PathVariable long courseId, @PathVariable long exerciseId,
+            @Valid @RequestBody Set<@NotNull Long> competencyIds) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (exerciseCourse == null || exerciseCourse.getId() != courseId) {
+            throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseCourseMismatch");
+        }
+        competencyService.markExerciseLinksAsAiGenerated(exerciseId, competencyIds);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -187,7 +235,7 @@ public class CompetencyResource {
     @PostMapping("courses/{courseId}/competencies/bulk")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId,
-            @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
+            @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
         return createCompetencies(courseId, competencies, false, "competency creation");
     }
 
@@ -202,7 +250,7 @@ public class CompetencyResource {
     @PostMapping("courses/{courseId}/competencies/bulk/generated-from-description")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
-            @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
+            @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
         return createCompetencies(courseId, competencies, true, "competency creation from course description");
     }
 

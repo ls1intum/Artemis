@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
-@Transactional
 class AiGeneratedProvenanceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final Set<String> PROVENANCE_TABLES = Set.of("competency", "competency_exercise", "competency_lecture_unit");
@@ -60,6 +59,7 @@ class AiGeneratedProvenanceIntegrationTest extends AbstractAtlasIntegrationTest 
     }
 
     @Test
+    @Transactional
     void persistsManualAndAiProvenanceForCompetenciesAndLinks() {
         ProvenanceFixture manual = persistFixture(false, "manual");
         ProvenanceFixture ai = persistFixture(true, "ai");

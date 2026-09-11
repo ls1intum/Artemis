@@ -126,6 +126,24 @@ describe('ProgrammingExercise Service', () => {
             req.flush(returnedFromService);
         });
 
+        it('should persist Hyperion checklist link provenance after creating an exercise', () => {
+            const course = Object.assign(new Course(), { id: 7 });
+            const exercise = new ProgrammingExercise(course, undefined);
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+            const createdExercise = Object.assign(new ProgrammingExercise(course, undefined), { id: 11 });
+
+            service.automaticSetup(exercise).subscribe((response) => expect(response.body).toEqual(createdExercise));
+
+            httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/setup?emptyRepositories=false` }).flush(createdExercise);
+            const provenanceRequest = httpMock.expectOne({
+                method: 'PUT',
+                url: 'api/atlas/courses/7/exercises/11/competency-links/generated-from-hyperion-checklist',
+            });
+            expect(provenanceRequest.request.body).toEqual([5]);
+            provenanceRequest.flush(null);
+        });
+
         it('should reconnect template submission with result', () => {
             const templateParticipation = new TemplateProgrammingExerciseParticipation();
             const tempSubmission = new ProgrammingSubmission();
@@ -236,6 +254,23 @@ describe('ProgrammingExercise Service', () => {
             expect(req.request.body.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
 
             req.flush(exercise);
+        });
+
+        it('should persist Hyperion checklist link provenance after updating', () => {
+            const exercise = new ProgrammingExercise(Object.assign(new Course(), { id: 7 }), undefined);
+            exercise.id = 11;
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+            service.update(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+            httpMock.expectOne({ method: 'PUT', url: resourceUrl }).flush(exercise);
+            const provenanceRequest = httpMock.expectOne({
+                method: 'PUT',
+                url: 'api/atlas/courses/7/exercises/11/competency-links/generated-from-hyperion-checklist',
+            });
+            expect(provenanceRequest.request.body).toEqual([5]);
+            provenanceRequest.flush(null);
         });
 
         it('should update the Timeline of a ProgrammingExercise', () => {

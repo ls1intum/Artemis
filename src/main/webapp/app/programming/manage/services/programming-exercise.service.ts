@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -22,6 +22,7 @@ import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -54,6 +55,7 @@ export class ProgrammingExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private sortService = inject(SortService);
+    private competencyService = inject(CompetencyService);
 
     public resourceUrl = 'api/programming/programming-exercises';
     public localCIResourceUrl = 'api/localci/programming-exercises';
@@ -69,9 +71,10 @@ export class ProgrammingExerciseService {
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
         const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
-        return this.http
-            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
-            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+        return this.http.post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params }).pipe(
+            map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)),
+            switchMap((res) => this.persistHyperionChecklistLinkProvenance(programmingExercise, res)),
+        );
     }
 
     /**
@@ -169,9 +172,30 @@ export class ProgrammingExerciseService {
     update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
-        return this.http
-            .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+        return this.http.put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)),
+            switchMap((res) => this.persistHyperionChecklistLinkProvenance(programmingExercise, res)),
+        );
+    }
+
+    /**
+     * Finalizes provenance through a dedicated server route after the ordinary exercise save has persisted the links.
+     */
+    private persistHyperionChecklistLinkProvenance(source: ProgrammingExercise, response: EntityResponseType): Observable<EntityResponseType> {
+        const competencyIds = [
+            ...new Set(
+                (source.competencyLinks ?? [])
+                    .filter((link) => link.generatedByAi)
+                    .map((link) => link.competency?.id)
+                    .filter((id): id is number => id !== undefined),
+            ),
+        ];
+        const exerciseId = response.body?.id;
+        const courseId = response.body?.course?.id ?? response.body?.exerciseGroup?.exam?.course?.id ?? source.course?.id ?? source.exerciseGroup?.exam?.course?.id;
+        if (exerciseId === undefined || courseId === undefined || competencyIds.length === 0) {
+            return of(response);
+        }
+        return this.competencyService.markExerciseLinksGeneratedFromHyperionChecklist(courseId, exerciseId, competencyIds).pipe(map(() => response));
     }
 
     /**

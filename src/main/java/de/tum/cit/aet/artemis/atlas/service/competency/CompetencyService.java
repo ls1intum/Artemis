@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -93,6 +94,26 @@ public class CompetencyService extends CourseCompetencyService {
      */
     public List<Competency> createCompetencies(List<Competency> competencies, Course course) {
         return createCourseCompetencies(competencies, course, Competency::new);
+    }
+
+    /**
+     * Marks already-persisted competency links as AI-generated after Hyperion's checklist selected them.
+     * Requiring every requested link to exist prevents provenance from being recorded for stale or unrelated input.
+     *
+     * @param exerciseId    the exercise whose links were inferred
+     * @param competencyIds the linked competency IDs selected from the checklist
+     */
+    public void markExerciseLinksAsAiGenerated(long exerciseId, Set<Long> competencyIds) {
+        if (competencyIds.isEmpty()) {
+            return;
+        }
+        var linksByCompetencyId = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId).stream()
+                .filter(link -> competencyIds.contains(link.getCompetency().getId())).collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link));
+        if (!linksByCompetencyId.keySet().equals(competencyIds)) {
+            throw new BadRequestAlertException("Every AI-generated competency link must exist on the exercise", "exercise", "competencyLinkMissing");
+        }
+        linksByCompetencyId.values().forEach(link -> link.setGeneratedByAi(true));
+        competencyExerciseLinkRepository.saveAll(linksByCompetencyId.values());
     }
 
     /**

@@ -83,6 +83,21 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
     }
 
+    /** Creates a competency through the server-owned Hyperion checklist provenance route. */
+    createFromHyperionChecklist(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/generated-from-hyperion-checklist`, request, { observe: 'response' })
+            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    }
+
+    /** Marks persisted exercise links as originating from Hyperion's checklist. */
+    markExerciseLinksGeneratedFromHyperionChecklist(courseId: number, exerciseId: number, competencyIds: number[]): Observable<HttpResponse<void>> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/exercises/${exerciseId}/competency-links/generated-from-hyperion-checklist`, competencyIds, {
+            observe: 'response',
+        });
+    }
+
     createBulk(competencies: Competency[], courseId: number) {
         const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
         return this.httpClient
