@@ -114,7 +114,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 // Bound the response wait to 45s so a single hung request (the multi-node
                 // observation under load) does not consume the entire test budget. On
                 // timeout we re-issue the navigation up to two more times before giving up
-                // — a hung start-participation POST is a backend race that consistently
+                // — a hung start-participation POST is a server-side race that consistently
                 // recovers on subsequent retries within 1-2 attempts.
                 for (let attempt = 0; attempt < 3; attempt++) {
                     const responsePromise = page.waitForResponse(

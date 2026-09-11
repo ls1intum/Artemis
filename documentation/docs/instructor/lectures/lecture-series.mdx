@@ -1,33 +1,35 @@
 ---
+id: lecture-series
 title: Lecture Series
 sidebar_label: Lecture Series
 ---
 
-import lectureSeriesInputVisualization from './assets/lecture-series/LectureSeriesInputVisualization.png';
-import createLectureButtonImage from './assets/lecture-series/CreateLectureButton.png';
-import lectureCreationModeSelectImage from './assets/lecture-series/LectureCreationModeSelect.png';
-import lectureSeriesImage from './assets/lecture-series/LectureSeriesCreation.png';
 import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import lectureSeriesInputVisualization from './assets/lecture-series/LectureSeriesInputVisualization.png';
+import lectureSeriesImage from './assets/lecture-series/LectureSeriesCreation.png';
 import lectureCardsImage from './assets/lecture-series/LectureCards.png';
-import lectureCardRemoveButtonImage from './assets/lecture-series/LectureCardRemoveButton.png';
-import lectureCardEditButtonImage from './assets/lecture-series/LectureCardEditButton.png';
 
-# Lecture Series
-*Lecture Series* allow you to create multiple lectures without specifying their contents. You can use this to scaffold your lectures at the beginning of the semester and inform students when each lecture will take place.
+A lecture series creates several lectures at once without their contents, so you can scaffold a whole semester at the
+start of it and tell students when each lecture takes place. The contents are added later, lecture by lecture.
 
-To open the *Lecture Series* creation page, navigate to the Lectures tab in the course management section, click <img src={createLectureButtonImage} alt={"Lecture Create Button"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />
-and select *Lecture Series* in <img src={lectureCreationModeSelectImage} alt={"Lecture Creation Mode Select"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />.
+Open the **Lectures** page of the course in the course management, click **Create Lecture**, and switch the creation
+mode from **Single Lecture** to **Lecture Series**.
 
-<Image src={lectureSeriesImage} alt={"Lecture Series Creation Page"} caption={"Lecture Series Creation Page"} size={ImageSize.medium}></Image>
+<Image src={lectureSeriesImage} alt={"Lecture series creation page with the initial lectures and the series end date"} caption={"Lecture Series Creation Page"} size={ImageSize.medium}></Image>
 
-To create a *Lecture Series*, you must first define the initial lectures. The system will repeat these initial lectures weekly until the specified end date.
+A series is defined by its initial lectures and an end date. Give at least one initial lecture a start and an end
+time, then set the date the repetition should stop at; Artemis repeats those initial lectures weekly until it reaches
+that date.
 
-The following example, shows how <span style={{ color: 'skyblue' }}>lectures</span> are generated based on the dates of two <span style={{ color: 'lightgreen' }}>initial lectures</span> and an <span style={{ color: 'lightcoral' }}>end date</span>.
+The example below shows the <span style={{ color: 'skyblue' }}>lectures</span> generated from two
+<span style={{ color: 'lightgreen' }}>initial lectures</span> and an
+<span style={{ color: 'lightcoral' }}>end date</span>.
 
-<Image src={lectureSeriesInputVisualization} alt={"Visualization of Required Inputs"} size={ImageSize.medium}></Image>
+<Image src={lectureSeriesInputVisualization} alt={"Two initial lectures repeated weekly up to the series end date"} size={ImageSize.medium}></Image>
 
-As soon as all required inputs are valid, the system generates the lectures and displays them as cards.
-Each lecture can be removed individually by clicking <img src={lectureCardRemoveButtonImage} alt={"Lecture Create Button"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />.
-Additionally, the title and timing of each lecture can be adjusted by clicking <img src={lectureCardEditButtonImage} alt={"Lecture Create Button"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />
+As soon as the inputs are valid the generated lectures appear as cards. The edit icon on a card changes that
+lecture's title and timing, and the delete icon removes it from the series, so a week with no lecture in it does not
+have to be worked around in the dates.
 
-<Image src={lectureCardsImage} alt={"Lecture Cards"} size={ImageSize.medium}></Image>
+<Image src={lectureCardsImage} alt={"Generated lecture cards, each with an edit and a delete icon"} size={ImageSize.medium}></Image>

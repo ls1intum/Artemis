@@ -42,8 +42,10 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Entity;
@@ -93,12 +95,14 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.JavaMethodReference;
+import com.tngtech.archunit.core.domain.JavaStaticInitializer;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -111,10 +115,10 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
+import de.tum.cit.aet.artemis.core.config.JGitConfig;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
-import de.tum.cit.aet.artemis.core.util.junit_extensions.JGitSystemReaderInitializer;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -142,8 +146,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google..")
                 .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
                         + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
-                        + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
-                        + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
+                        + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, "
+                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see checkstyle.xml); "
+                        + "for any other check, an explicit if throwing IllegalArgumentException or IllegalStateException, " + "Guava Optional -> java.util.Optional, "
+                        + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
     }
 
@@ -181,11 +187,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJGitSystemReaderConfigurationOutsideInitializer() {
-        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitSystemReaderInitializer.class.getName()).should()
+        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitConfig.class.getName()).should()
                 .callMethod(SystemReader.class, "setInstance", SystemReader.class)
                 .because("SystemReader#setInstance resets JGit's static platform detection caches (isWindows, isMacOS, isLinux) before re-deriving them, so calling it while "
                         + "other threads run git operations makes those fail with a NullPointerException. Installing it from a @BeforeAll means one call per test class, and test "
-                        + "classes run in parallel. Use JGitSystemReaderInitializer#configureOnce instead, which GlobalCleanupListener invokes before the test plan starts.");
+                        + "classes run in parallel. Use JGitConfig#configureSystemReaderOnce instead, which is idempotent - the server calls it from its @PostConstruct and GlobalCleanupListener calls it before the test plan starts.");
         setInstanceUsage.check(allClasses);
     }
 
@@ -201,6 +207,100 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
         toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testRegularExpressionsAreCompiledOnce() {
+        String reason = """
+                A regular expression has to be compiled before it can be matched, and compiling one is far more \
+                expensive than running it. String.matches, String.replaceAll and String.replaceFirst hide that cost: \
+                each of them compiles the expression again on every single call, throws the compiled form away, and \
+                does so even when the expression is a literal that can never change. Pattern.compile called from a \
+                method body has the same problem, only spelled out.
+                Declare the expression as a private static final Pattern instead and match against it \
+                (PATTERN.matcher(input).matches(), .replaceAll(replacement)), so it is compiled once per class rather \
+                than once per call. LocalVCRepositoryUri is the case that prompted this rule: it is constructed on \
+                every git request, and its one String.matches call recompiled the same expression every time.""";
+
+        ArchRule noStringRegexShortcuts = noClasses().should().callMethod(String.class, "matches", String.class).orShould()
+                .callMethod(String.class, "replaceAll", String.class, String.class).orShould().callMethod(String.class, "replaceFirst", String.class, String.class).orShould()
+                .callMethod(Pattern.class, "matches", String.class, CharSequence.class).because(reason);
+
+        ArchRule patternsCompiledInStaticInitializers = classes().should(compileRegularExpressionsOnlyOnce()).because(reason);
+
+        // String.split stays allowed on purpose. It is the one shortcut that does not always compile a pattern: for a
+        // single character that is not a regular expression metacharacter - the comma, the slash, the colon that most
+        // call sites pass - String.split takes a fast path that never touches Pattern at all.
+        noStringRegexShortcuts.check(productionClasses);
+        patternsCompiledInStaticInitializers.check(productionClasses);
+    }
+
+    /**
+     * The methods that may call {@code Pattern.compile} even though they are not a static initializer or a
+     * constructor, because the expression they compile is only known at runtime and can therefore not be a constant.
+     * <p>
+     * Every entry is a place where the expression comes from data rather than from the code: a value stored in the
+     * database, a configured property, or an input the method was handed. Adding to this list is a statement that the
+     * expression genuinely varies, not that compiling it once was inconvenient.
+     */
+    private static final Set<String> METHODS_THAT_COMPILE_A_RUNTIME_EXPRESSION = Set.of(
+            // the email pattern of an organization, stored per organization
+            "de.tum.cit.aet.artemis.account.repository.OrganizationRepository.getAllMatchingOrganizationsByUserEmail(java.lang.String)",
+            // the extraction patterns of the identity provider, configured per deployment and compiled once per bean
+            "de.tum.cit.aet.artemis.account.security.SAML2Service.generateExtractionPatterns(de.tum.cit.aet.artemis.account.config.SAML2Properties)",
+            // the spot of a short answer submission, which the export writes back into the question text
+            "de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService.replaceSpotWithSubmittedAnswer(de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer, java.lang.StringBuilder, boolean)",
+            // the span that is searched for, assembled from the text being extracted
+            "de.tum.cit.aet.artemis.atlas.service.ContentExtractionService.findSpan(java.lang.String, java.lang.String)",
+            // the logins mentioned in a post, which differ per post
+            "de.tum.cit.aet.artemis.communication.service.PostingService.parseUserMentions(de.tum.cit.aet.artemis.course.domain.Course, java.lang.String)",
+            // the placeholder names the caller asks to replace
+            "de.tum.cit.aet.artemis.core.util.FileUtil.replacePlaceholderSections(java.nio.file.Path, java.util.Map)",
+            // the branch expression configured on the exercise
+            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
+            // the exceptions to filter, which the caller passes in
+            "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)");
+
+    /**
+     * Complements the {@code callMethod} rules in {@link #testRegularExpressionsAreCompiledOnce()} for
+     * {@code Pattern.compile}. A call carries no per-call cost when it runs once for the class or once for the
+     * instance, which is what a static initializer and a constructor do: they are where the assignment of a
+     * {@code static final} or {@code final Pattern} field ends up. The same call in a method body compiles the
+     * expression again on every call.
+     * <p>
+     * Method references are covered as well, so that {@code Pattern::compile} cannot become a hole in the rule the way
+     * it can in a {@code callMethod} rule, which only looks at invocations.
+     *
+     * @return the condition
+     */
+    private ArchCondition<JavaClass> compileRegularExpressionsOnlyOnce() {
+        return new ArchCondition<>("compile regular expressions in a static initializer or a constructor, so that they are compiled once rather than once per call") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                for (JavaMethodCall call : item.getMethodCallsFromSelf()) {
+                    if (isPatternCompile(call.getTarget().getName(), call.getTarget().getOwner()) && compilesOncePerCall(call.getOrigin())) {
+                        events.add(violated(call, call.getDescription()));
+                    }
+                }
+                for (JavaMethodReference reference : item.getMethodReferencesFromSelf()) {
+                    if (isPatternCompile(reference.getTarget().getName(), reference.getTarget().getOwner()) && compilesOncePerCall(reference.getOrigin())) {
+                        events.add(violated(reference, reference.getDescription()));
+                    }
+                }
+            }
+
+            private static boolean isPatternCompile(String name, JavaClass owner) {
+                return "compile".equals(name) && owner.isEquivalentTo(Pattern.class);
+            }
+
+            private static boolean compilesOncePerCall(JavaCodeUnit origin) {
+                if (origin instanceof JavaStaticInitializer || origin instanceof JavaConstructor) {
+                    return false;
+                }
+                return !METHODS_THAT_COMPILE_A_RUNTIME_EXPRESSION.contains(origin.getFullName());
+            }
+        };
     }
 
     @Test
@@ -250,6 +350,84 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testTransactionBoundariesOnlyInRepositories() {
+        String reason = """
+                A transaction boundary may only be declared inside a repository interface, where it lasts for one \
+                statement. Declared anywhere else it stays open for the whole call: it holds its locks across every \
+                repository call, remote request and file write inside it, blocks anyone who needs those rows for that \
+                entire span, and gives two concurrent calls enough overlapping rows to deadlock under load. A \
+                self-invoked one is worse than useless, because Spring applies the annotation through a proxy and the \
+                call therefore does nothing at all, silently.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Checked globally, not per module. AbstractModuleRepositoryArchitectureTest carries the same two rules, but
+        // only for modules that actually have a subclass — account, calendar, deimos and globalsearch have none, which
+        // left 35 services where an annotation would have passed CI unnoticed. A rule that depends on someone
+        // remembering to add a per-module test is not an enforced rule, and a module added later would inherit the
+        // same hole.
+        var repositoryInterfaces = and(INTERFACES, annotatedWith(Repository.class));
+
+        ArchRule methodBoundaries = methods().that().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(repositoryInterfaces).because(reason);
+
+        // A class-level annotation applies to every method of the class, which is the widest boundary available, and
+        // the method rule above cannot see it. It has to demand the same repositoryInterfaces predicate rather than
+        // merely @Repository: five concrete classes carry that annotation without being Spring Data interfaces
+        // (CustomAuditEventRepository and the four passkey repositories), and a class-level boundary on one of those
+        // is an ordinary wide transaction with a repository's name on it.
+        ArchRule classBoundaries = noClasses().that(not(repositoryInterfaces)).should().beAnnotatedWith(simpleNameAnnotation("Transactional")).because(reason);
+
+        methodBoundaries.check(productionClasses);
+        classBoundaries.check(productionClasses);
+    }
+
+    @Test
+    void testNoProgrammaticTransactionManagement() {
+        String reason = """
+                A transaction boundary declared with TransactionTemplate or a PlatformTransactionManager is the same \
+                boundary @Transactional declares, only spelled in a way no annotation rule can see — which is exactly \
+                how three services kept one after the annotation was banned. It has every cost of the annotated form: \
+                the transaction stays open for the whole callback, holding its locks across every repository call and \
+                remote request inside it, and two concurrent callbacks with overlapping rows deadlock under load.
+                Do the work explicitly instead. To make a check and a write atomic, put the check into the WHERE clause \
+                of a @Modifying repository query and act on whether it updated a row — see \
+                AnswerPostRepository.verifyIfUnverified. To undo work on failure, compensate in a catch block — see \
+                SlideSplitterService.SlideOperation.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Production only. A test may legitimately need a transaction of its own: to seed data an @Modifying query
+        // would have to be invented for, or to hold a row lock while asserting that the code under test waits for it.
+        // Everything in org.springframework.transaction is programmatic except the annotation package, which carries
+        // @Transactional itself and the enums it takes, and repositories are allowed to use those.
+        ArchRule noProgrammaticTransactions = noClasses().should()
+                .dependOnClassesThat(resideInAPackage("org.springframework.transaction..").and(not(resideInAPackage("org.springframework.transaction.annotation.."))))
+                .because(reason);
+
+        noProgrammaticTransactions.check(productionClasses);
+    }
+
+    @Test
+    void testNoTransactionSynchronization() {
+        String reason = """
+                A transaction synchronization callback only runs while a transaction is open, and a transaction boundary may only be \
+                declared inside a repository, where it lasts for one statement. Registering a callback from anywhere else therefore \
+                does nothing at all: TransactionSynchronizationManager.isSynchronizationActive() is false, so afterCommit and \
+                afterCompletion never fire, and nothing is logged. That is the failure mode this rule exists to prevent — code written \
+                to delete a file on rollback or to publish an event after commit silently skips both, leaving orphaned files and \
+                half-written state behind.
+                Do the work explicitly instead. After a repository call returns, its transaction has committed, so "after commit" is \
+                simply the next statement. To undo work on failure, compensate in a catch block: see SlideSplitterService.SlideOperation \
+                for the pattern, which records the files and rows an operation created and puts them back if it fails.
+                Full rationale: documentation/docs/developer/guidelines/performance.mdx (Avoid Transactions).""";
+
+        // Checked over allClasses, tests included: a test that activates synchronization by hand keeps a dead production branch
+        // looking covered, which is how the previous usages survived.
+        ArchRule noTransactionSynchronization = noClasses().should()
+                .dependOnClassesThat(resideInAnyPackage("org.springframework.transaction.support..").and(simpleNameContaining("TransactionSynchronization"))).because(reason);
+
+        noTransactionSynchronization.check(allClasses);
+    }
+
+    @Test
     void testNoHibernateSecondLevelCacheAnnotation() {
         String reason = "Hibernate L2 cache is disabled cluster-wide. @Modifying queries bypass L2 invalidation and the absence of service-level @Transactional leaves no clean "
                 + "place to coordinate cache eviction within a REST call, both of which produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR "
@@ -263,6 +441,80 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noClassLevelCache.check(productionClasses);
         noFieldLevelCache.check(productionClasses);
         noMethodLevelCache.check(productionClasses);
+    }
+
+    /**
+     * The association annotations that must not fetch eagerly.
+     * <p>
+     * {@code @ManyToOne} is deliberately absent. Hibernate cannot make a to-one association lazy without bytecode
+     * enhancement or a proxy, and a proxied {@code @ManyToOne} does not work with entity hierarchies - which most of
+     * ours are. Its eager default is a fact to design around, not something worth declaring.
+     */
+    private static final Set<String> ASSOCIATIONS_THAT_MUST_NOT_FETCH_EAGERLY = Set.of("jakarta.persistence.OneToOne", "jakarta.persistence.OneToMany",
+            "jakarta.persistence.ManyToMany");
+
+    /**
+     * Associations that fetch eagerly today, so that {@link #testNoEagerFetching()} can forbid new ones.
+     * <p>
+     * The list only shrinks. Turning one lazy is a behaviour change - {@code open-in-view} is disabled, so an
+     * association a query did not fetch reads as absent once the session closes - so each needs the code that reads it
+     * converted first. Do not add to it.
+     */
+    private static final Set<String> FIELDS_ALLOWED_TO_FETCH_EAGERLY = Set.of("de.tum.cit.aet.artemis.assessment.domain.AssessmentNote.creator",
+            "de.tum.cit.aet.artemis.assessment.domain.Complaint.complaintResponse", "de.tum.cit.aet.artemis.assessment.domain.Complaint.result",
+            "de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse.complaint", "de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission.submission",
+            "de.tum.cit.aet.artemis.assessment.domain.GradingCriterion.structuredGradingInstructions", "de.tum.cit.aet.artemis.assessment.domain.GradingScale.course",
+            "de.tum.cit.aet.artemis.assessment.domain.GradingScale.exam", "de.tum.cit.aet.artemis.assessment.domain.GradingScale.gradeSteps",
+            "de.tum.cit.aet.artemis.assessment.domain.Rating.result", "de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.user",
+            "de.tum.cit.aet.artemis.communication.domain.AnswerPost.reactions", "de.tum.cit.aet.artemis.communication.domain.Post.answers",
+            "de.tum.cit.aet.artemis.communication.domain.Post.plagiarismCase", "de.tum.cit.aet.artemis.communication.domain.Post.reactions",
+            "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.exam", "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.exercise",
+            "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.lecture", "de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore.user",
+            "de.tum.cit.aet.artemis.iris.domain.message.IrisMessage.content", "de.tum.cit.aet.artemis.lecture.domain.Attachment.attachmentVideoUnit",
+            "de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit.attachment", "de.tum.cit.aet.artemis.lecture.domain.LectureTranscription.lectureUnit",
+            "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.course",
+            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
+            "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig.programmingExercise",
+            "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation.programmingExercise",
+            "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation.programmingExercise",
+            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy.programmingExercise",
+            "de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic.pointCounters", "de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic.quizQuestion",
+            "de.tum.cit.aet.artemis.text.domain.TextBlock.feedback", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupChannel",
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupSchedule", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule.tutorialGroup",
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration.course");
+
+    /**
+     * No new {@code @OneToOne}, {@code @OneToMany} or {@code @ManyToMany} may be fetched eagerly.
+     * <p>
+     * An eager association is loaded for every caller, including the majority that never read it, and the cost surfaces
+     * nowhere near where it was written. Declare {@code fetch = FetchType.LAZY} and read the association where it is
+     * needed, through its own repository - {@code CourseAthenaConfigRepository} is the pattern.
+     */
+    @Test
+    void testNoEagerFetching() {
+        ArchRule rule = noFields().that(are(not(allowedToFetchEagerly()))).should(fetchAnAssociationEagerly())
+                .because("an eager association is loaded for every caller, including the ones that never read it. Declare fetch = FetchType.LAZY and read it where it is "
+                        + "needed, through its own repository. Full rationale: documentation/docs/developer/guidelines/database.mdx");
+        rule.check(productionClasses);
+    }
+
+    private static DescribedPredicate<JavaField> allowedToFetchEagerly() {
+        return DescribedPredicate.describe("allowed to fetch eagerly", field -> FIELDS_ALLOWED_TO_FETCH_EAGERLY.contains(field.getFullName()));
+    }
+
+    private static ArchCondition<JavaField> fetchAnAssociationEagerly() {
+        return new ArchCondition<>("fetch a @OneToOne, @OneToMany or @ManyToMany eagerly") {
+
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                boolean eager = field.getAnnotations().stream().filter(annotation -> ASSOCIATIONS_THAT_MUST_NOT_FETCH_EAGERLY.contains(annotation.getRawType().getName()))
+                        .map(annotation -> annotation.get("fetch")).flatMap(Optional::stream)
+                        .anyMatch(fetch -> fetch instanceof JavaEnumConstant constant && "EAGER".equals(constant.name()));
+                if (eager) {
+                    events.add(SimpleConditionEvent.satisfied(field, createMessage(field, "fetches eagerly")));
+                }
+            }
+        };
     }
 
     @Test
@@ -513,6 +765,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         naming.check(allClasses);
         modifiers.check(modifierExclusions);
+    }
+
+    @Test
+    void testNoJackson2InProductionCode() {
+        // Artemis serializes with Jackson 3 (tools.jackson). Jackson 2 stays on the runtime classpath because a
+        // dozen third-party libraries carry their own mapper, so nothing stops a new import from compiling — this
+        // rule is what keeps one from creeping back in. The annotations are the deliberate exception:
+        // jackson-annotations never moved to the tools.jackson group, so @JsonInclude and friends stay where they are.
+        noClasses().should().dependOnClassesThat()
+                .resideInAnyPackage("com.fasterxml.jackson.databind..", "com.fasterxml.jackson.core..", "com.fasterxml.jackson.dataformat..", "com.fasterxml.jackson.datatype..",
+                        "com.fasterxml.jackson.module..", "com.fasterxml.jackson.jr..", "com.fasterxml.jackson.jaxrs..")
+                .because("Artemis uses Jackson 3 (tools.jackson); only com.fasterxml.jackson.annotation is still Jackson 2").check(productionClasses);
     }
 
     @Test

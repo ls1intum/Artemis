@@ -95,7 +95,7 @@ type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.co
 type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
 type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated' | 'fileDeleted'}`;
 // The generated OpenAPI CodeGenerationRequest.repositoryType uses lowercase repository names (exercise, ...),
-// but the backend deserializes RepositoryType enum names (TEMPLATE, SOLUTION, TESTS). This payload type lets the
+// but the server deserializes RepositoryType enum names (TEMPLATE, SOLUTION, TESTS). This payload type lets the
 // request be built type-safely with the client RepositoryType enum; only repositoryType differs from the generated type.
 type CodeGenerationRequestPayload = Omit<CodeGenerationRequest, 'repositoryType'> & { repositoryType?: RepositoryType };
 
@@ -620,7 +620,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Creates the request payload used to start code generation or perform a slot/check-only probe.
      * @param repositoryType repository to generate
      * @param checkOnly whether the request should only query the current generation status
-     * @returns a request object matching the backend's runtime contract
+     * @returns a request object matching the server's runtime contract
      */
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
         // Built with the client RepositoryType enum so the whole construction is type-checked; see CodeGenerationRequestPayload.
@@ -1396,7 +1396,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Polls the backend until the previous exercise-level generation slot has been released.
+     * Polls the server until the previous exercise-level generation slot has been released.
      * @param attempt current poll attempt number, starting at 1
      */
     private waitForCodeGenerationSlotRelease(attempt = 1) {

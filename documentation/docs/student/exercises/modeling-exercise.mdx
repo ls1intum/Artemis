@@ -1,10 +1,14 @@
+---
+id: modeling-exercise
+title: Modeling Exercise
+sidebar_label: Modeling Exercise
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import modelingExerciseCardStudentView from './assets/modeling/modeling-exercise-card-student-view.png';
-import startButton from './assets/modeling/start.png';
-import openModelingEditorButton from './assets/modeling/open-modeling-editor.png';
 import modelingExerciseStudentsInterface from './assets/modeling/modeling-exercise-students-interface.png';
 import automaticFeedbackRequestEditor from './assets/modeling/automatic-feedback-request-editor.png';
 import automaticFeedbackRequestAlert from './assets/modeling/automatic-feedback-request-alert.png';
@@ -12,12 +16,9 @@ import automaticFeedbackRequestScore from './assets/modeling/automatic-feedback-
 import automaticFeedbackViewDetailed from './assets/modeling/automatic-feedback-view-detailed.png';
 import automaticFeedbackHistory from './assets/modeling/automatic-feedback-history.png';
 
-# Modeling Exercise
-
-## Overview
-
-Modeling exercises allow you to create and submit UML diagrams or other types of models using Artemis's integrated Apollon editor.
-You can work on various diagram types including class diagrams, activity diagrams, use case diagrams, and more.
+A modeling exercise asks you to draw rather than to write: a UML class diagram, an activity diagram, a use case
+diagram. You build it in Artemis's own editor, and it is marked element by element — a comment and a mark against
+the class or the association it concerns, rather than one mark for the whole picture.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -25,23 +26,32 @@ You can work on various diagram types including class diagrams, activity diagram
 
 </Callout>
 
-## Student Submission
+## Start the Exercise
 
-When the exercise is released you can work on the exercise.
+The exercise appears on the course's exercise list once it is released, with the task, the points it is worth and
+its due date. **Start exercise** creates your participation; until you do that there is no canvas to draw on.
 
-<Image src={modelingExerciseCardStudentView} alt="Modeling Exercise Card Student View" size={ImageSize.large} caption="Modeling Exercise Overview - Student View" />
+<Image src={modelingExerciseCardStudentView} alt="Modeling exercise before starting, with the task and the due date" size={ImageSize.large} caption="A modeling exercise before you start it" />
 
-You can start the exercise by clicking the <img src={startButton} alt="Start" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+Once you have started, opening the exercise takes you straight back to the editor.
 
-Once you start the exercise, you will have the option to work on it in an online modeling editor by clicking on the <img src={openModelingEditorButton} alt="Open Modeling Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+## Draw and Submit
 
-The screenshot below depicts the online modeling exercise interface. You can read the Problem Statement, work on the online editor and also provide an explanation to your solutions, if needed.
+The task sits beside the canvas, and the components your diagram type offers are in the palette on the left: drag
+one onto the canvas, then drag from its edge to another element to connect them. **Explanation**, under the canvas,
+is worth writing whenever a choice in the diagram needs justifying — an assessor reads it alongside the diagram.
 
-<Image src={modelingExerciseStudentsInterface} alt="Modeling Exercise Students Interface" size={ImageSize.large} caption="Modeling Editor - Student View" />
+The editor saves the diagram by itself, roughly every thirty seconds while there is anything unsaved, and each of
+those saves counts as your submission as long as the due date has not passed. **Submit** saves straight away and
+confirms it, and it refuses an empty diagram, which the automatic save does not check. You can submit as often as
+you like before the due date — the last version is the one that is marked.
+
+<Image src={modelingExerciseStudentsInterface} alt="Modeling editor with the palette, the canvas and the task beside it" size={ImageSize.large} caption="Drawing a diagram" />
 
 <Callout variant={CalloutVariant.info}>
 
-  The modeling editor automatically saves your work as you make changes. You can continue working on your diagram until the due date.
+  Because the automatic save is already a submission, a diagram left in the editor before the due date is handed
+  in. After the due date it is not: the editor still saves, but nothing saved then is counted.
 
 </Callout>
 
