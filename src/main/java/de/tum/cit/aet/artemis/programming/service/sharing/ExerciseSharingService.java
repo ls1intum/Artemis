@@ -40,9 +40,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -100,12 +99,12 @@ public class ExerciseSharingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
-     * Local {@link ObjectMapper} instance that ignores unknown JSON fields.
+     * Local {@link JsonMapper} instance that ignores unknown JSON fields.
      * <p>
      * Allows the Sharing Platform to evolve its metadata format without breaking imports.
      * </p>
      */
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
             ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
@@ -114,9 +113,9 @@ public class ExerciseSharingService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.restTemplate = restTemplate;
 
-        // Configure ObjectMapper to ignore unknown properties
-        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        this.objectMapper.findAndRegisterModules();
+        // The two lines that used to sit here reconfigured the shared mapper in place, which was never safe.
+        // Neither is needed: JsonObjectMapper already disables FAIL_ON_UNKNOWN_PROPERTIES, and the modules
+        // findAndRegisterModules() used to pick up (java.time, JDK 8) are built into jackson-databind 3.
     }
 
     /**
