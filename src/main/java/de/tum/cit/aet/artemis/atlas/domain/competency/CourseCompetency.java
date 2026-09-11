@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // @formatter:off
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Competency.class, name = "competency"),

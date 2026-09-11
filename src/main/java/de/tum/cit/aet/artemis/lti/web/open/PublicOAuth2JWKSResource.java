@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
@@ -48,7 +48,7 @@ public class PublicOAuth2JWKSResource {
         try {
             keysAsJson = JsonObjectMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
         }
-        catch (JsonProcessingException exception) {
+        catch (JacksonException exception) {
             log.debug("Error occurred parsing jwkSet: {}", exception.getMessage());
         }
         return new ResponseEntity<>(keysAsJson, HttpStatus.OK);

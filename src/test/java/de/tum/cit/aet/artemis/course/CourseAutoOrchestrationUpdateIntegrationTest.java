@@ -14,8 +14,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -58,7 +58,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     private Course updateCourse(long courseId, Object courseToUpdate) throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
@@ -136,7 +136,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
 
         setAutoOrchestration(course, true, null, null);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         request.performMvcRequest(builder).andExpect(status().isBadRequest());

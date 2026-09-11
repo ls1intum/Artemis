@@ -31,7 +31,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
@@ -394,7 +394,7 @@ class AtlasAgentServiceTest {
     @Nested
     class AtlasAgentHistoryMessageDTOTests {
 
-        private final ObjectMapper objectMapper = JsonObjectMapper.get();
+        private final JsonMapper objectMapper = JsonObjectMapper.get();
 
         @Test
         void shouldSerializeToJsonWhenValidData() throws Exception {

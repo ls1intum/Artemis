@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
@@ -64,7 +64,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     private UserActivityService userActivityService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private UserService userService;
@@ -964,7 +964,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         String initialImpactResponse = mockMvc.perform(get("/api/account/admin/users/" + user.getLogin() + "/deletion-impact")).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString();
         var initialImpact = objectMapper.readTree(initialImpactResponse);
-        String initialFingerprint = initialImpact.path("impactFingerprint").asText();
+        String initialFingerprint = initialImpact.path("impactFingerprint").asString();
         assertThat(initialFingerprint).isNotBlank();
         assertThat(initialImpact.path("automaticEligible").asBoolean()).isTrue();
         assertThat(initialImpact.path("retentionOverrideRequired").asBoolean()).isFalse();
@@ -975,12 +975,12 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         String changedImpactResponse = mockMvc.perform(get("/api/account/admin/users/" + user.getLogin() + "/deletion-impact")).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString();
         var changedImpact = objectMapper.readTree(changedImpactResponse);
-        assertThat(changedImpact.path("impactFingerprint").asText()).isNotEqualTo(initialFingerprint);
+        assertThat(changedImpact.path("impactFingerprint").asString()).isNotEqualTo(initialFingerprint);
         assertThat(changedImpact.path("automaticEligible").asBoolean()).isFalse();
         assertThat(changedImpact.path("retentionOverrideRequired").asBoolean()).isTrue();
         assertThat(changedImpact.path("categories")).anySatisfy(category -> {
-            assertThat(category.path("category").asText()).isEqualTo("COURSE_MEMBERSHIP");
-            assertThat(category.path("action").asText()).isEqualTo("REMOVE_MEMBERSHIP");
+            assertThat(category.path("category").asString()).isEqualTo("COURSE_MEMBERSHIP");
+            assertThat(category.path("action").asString()).isEqualTo("REMOVE_MEMBERSHIP");
             assertThat(category.path("count").asLong()).isOne();
         });
 
@@ -990,8 +990,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                 .andExpect(status().isConflict()).andReturn().getResponse().getContentAsString();
         var deletionResult = objectMapper.readTree(deletionResponse);
 
-        assertThat(deletionResult.path("status").asText()).isEqualTo("PLAN_CHANGED");
-        assertThat(deletionResult.path("reason").asText()).isEqualTo("impactChanged");
+        assertThat(deletionResult.path("status").asString()).isEqualTo("PLAN_CHANGED");
+        assertThat(deletionResult.path("reason").asString()).isEqualTo("impactChanged");
         assertThat(userTestRepository.findById(user.getId())).isPresent();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, user.getId(), course.getId())).isOne();
     }
@@ -1108,7 +1108,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         List<Map<String, String>> confirmations = new ArrayList<>();
         for (var impact : impacts) {
-            confirmations.add(Map.of("login", impact.path("login").asText(), "impactFingerprint", impact.path("impactFingerprint").asText()));
+            confirmations.add(Map.of("login", impact.path("login").asString(), "impactFingerprint", impact.path("impactFingerprint").asString()));
         }
         String deletionResponse = mockMvc
                 .perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("users", confirmations))))
@@ -1116,13 +1116,13 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         var results = objectMapper.readTree(deletionResponse);
 
         assertThat(results).anySatisfy(result -> {
-            assertThat(result.path("login").asText()).isEqualTo(unchangedUser.getLogin());
-            assertThat(result.path("status").asText()).isEqualTo("DELETED");
+            assertThat(result.path("login").asString()).isEqualTo(unchangedUser.getLogin());
+            assertThat(result.path("status").asString()).isEqualTo("DELETED");
         });
         assertThat(results).anySatisfy(result -> {
-            assertThat(result.path("login").asText()).isEqualTo(changedUser.getLogin());
-            assertThat(result.path("status").asText()).isEqualTo("PLAN_CHANGED");
-            assertThat(result.path("reason").asText()).isEqualTo("impactChanged");
+            assertThat(result.path("login").asString()).isEqualTo(changedUser.getLogin());
+            assertThat(result.path("status").asString()).isEqualTo("PLAN_CHANGED");
+            assertThat(result.path("reason").asString()).isEqualTo("impactChanged");
         });
         assertThat(userTestRepository.findById(unchangedUser.getId())).isEmpty();
         assertThat(userTestRepository.findById(changedUser.getId())).isPresent();
@@ -1192,7 +1192,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     private void permanentlyDeleteUser(String login) throws Exception {
         String impactResponse = mockMvc.perform(get("/api/account/admin/users/" + login + "/deletion-impact")).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString();
-        String fingerprint = objectMapper.readTree(impactResponse).path("impactFingerprint").asText();
+        String fingerprint = objectMapper.readTree(impactResponse).path("impactFingerprint").asString();
         mockMvc.perform(delete("/api/account/admin/users/" + login).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of("impactFingerprint", fingerprint)))).andExpect(status().isOk());
     }
