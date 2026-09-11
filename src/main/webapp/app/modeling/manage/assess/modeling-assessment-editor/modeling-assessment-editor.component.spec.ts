@@ -194,8 +194,9 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
         const location = TestBed.inject(Location);
-        vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
         const go = vi.spyOn(location, 'go').mockImplementation(() => {});
+        component.courseId = 1;
+        component.exerciseId = 7;
         vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(getSubmissionWithData()));
 
         component['loadRandomSubmission'](7);
