@@ -85,7 +85,13 @@
             <tum-ui-card>
                 <jhi-hyperion-run-outcome [view]="view" />
                 <tum-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="stageStripHeader()" data-testid="hyperion-run-stage-strip">
-                    <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
+                    <jhi-hyperion-run-progress
+                        [stages]="stages()"
+                        [adapting]="adapting()"
+                        [liveMessage]="liveMessage()"
+                        [repairRound]="repairRound()"
+                        [activity]="activityView()"
+                    />
                 </tum-ui-panel>
             </tum-ui-card>
         } @else {
@@ -104,6 +110,7 @@
                 <section class="mt-3" aria-labelledby="hyperion-run-progress-title">
                     <jhi-hyperion-run-progress
                         [stages]="stages()"
+                        [adapting]="adapting()"
                         [liveMessage]="liveMessage()"
                         [repairRound]="repairRound()"
                         [activity]="activityView()"

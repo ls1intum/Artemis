@@ -14,11 +14,20 @@ type ServerPhase = NonNullable<HyperionGenerationEvent['phase']>;
  */
 export const HYPERION_STAGES: readonly { readonly key: HyperionStageKey; readonly phases: readonly ServerPhase[] }[] = [
     { key: 'prepare', phases: ['PREPARING'] },
-    { key: 'design', phases: ['DESIGNING'] },
+    // A repair is the agent editing again, so the spinner returns to the authoring rung rather than staying on review.
+    { key: 'design', phases: ['DESIGNING', 'REPAIRING'] },
     { key: 'build', phases: ['VERIFYING'] },
-    { key: 'review', phases: ['REVIEWING', 'REPAIRING'] },
+    { key: 'review', phases: ['REVIEWING'] },
     { key: 'save', phases: ['SAVING'] },
 ];
+
+/**
+ * The translation key of a stage's label. The ladder is the same for both kinds of run, but the authoring rung means
+ * "design an exercise" for a generation and "apply the requested changes" for an adaptation, and only that rung differs.
+ */
+export function stageLabelKey(key: HyperionStageKey, adapting: boolean): string {
+    return `artemisApp.hyperion.generation.stage.${adapting && key === 'design' ? 'revise' : key}`;
+}
 
 /** How many rungs the ladder has. A real, fixed denominator is what makes "Step 2 of 5" a fact rather than a guess. */
 export const HYPERION_STAGE_COUNT = HYPERION_STAGES.length;

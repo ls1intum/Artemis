@@ -26,6 +26,7 @@
                 "stage": {
                     "prepare": "Prepare workspace",
                     "design": "Design the exercise",
+                    "revise": "Apply the requested changes",
                     "build": "Build and test",
                     "review": "Review and repair",
                     "save": "Save the draft",
