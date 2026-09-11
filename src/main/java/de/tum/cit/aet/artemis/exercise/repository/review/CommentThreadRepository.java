@@ -75,13 +75,16 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
 
     /**
      * Find selected comment threads for a given exercise with their comments loaded.
+     * <p>
+     * No {@code DISTINCT}: Hibernate de-duplicates the fetched parents itself, and PostgreSQL cannot compare the fetched {@code json} comment content, which a
+     * {@code DISTINCT} over the joined row would require.
      *
      * @param exerciseId the exercise id
      * @param threadIds  the selected thread ids
      * @return selected comment threads with comments
      */
     @Query("""
-            SELECT DISTINCT ct
+            SELECT ct
             FROM CommentThread ct
                 LEFT JOIN FETCH ct.comments c
             WHERE ct.exercise.id = :exerciseId

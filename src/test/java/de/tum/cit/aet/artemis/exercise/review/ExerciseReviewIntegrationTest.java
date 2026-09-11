@@ -216,6 +216,21 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldLoadSelectedThreadsWithAllCommentsOnce() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
+                CommentThreadDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody(reviewCommentsPath(exercise.getId(), createdThread.id()), buildUserComment("Reply comment"), CommentDTO.class, HttpStatus.CREATED);
+
+        // Two comments make the fetch join return two rows for one thread; the query must collapse them without a DISTINCT over the json comment content.
+        List<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exercise.getId(), List.of(createdThread.id()));
+
+        assertThat(threads).hasSize(1);
+        assertThat(threads.getFirst().getComments()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldReturnThreadsWithCommentsAndMetadata() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class, HttpStatus.CREATED);
