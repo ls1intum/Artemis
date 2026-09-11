@@ -4,7 +4,8 @@ import static de.tum.cit.aet.artemis.iris.service.AutonomousTutorService.AUTO_VE
 import static de.tum.cit.aet.artemis.iris.service.AutonomousTutorService.REVIEW_MIN_CONFIDENCE_THRESHOLD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -130,7 +131,9 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
-        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/communication/courses/" + course.getId()), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/communication/courses/" + course.getId()), any(PostBroadcastDTO.class));
+        // One broadcast in total: a restored /topic/metis/ mirror would make it two and fail here.
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
     }
 
     @Test
