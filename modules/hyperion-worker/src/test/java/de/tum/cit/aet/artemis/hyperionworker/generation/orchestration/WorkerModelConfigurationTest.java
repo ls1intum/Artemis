@@ -14,7 +14,7 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
-import de.tum.cit.aet.artemis.hyperionworker.sandbox.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperionworker.sandbox.DockerSandbox;
 import de.tum.cit.aet.artemis.hyperionworker.telemetry.WorkerTelemetryConfiguration;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
@@ -33,12 +33,14 @@ class WorkerModelConfigurationTest {
                     public boolean supportsContext(Observation.Context context) {
                         return true;
                     }
-                }).withBean(InteractiveSandbox.class, () -> mock(InteractiveSandbox.class))
+                }).withBean(DockerSandbox.class, () -> mock(DockerSandbox.class))
                 .withPropertyValues("spring.ai.openai.api-key=test-only-not-used", "spring.ai.openai.chat.options.model=test-model", "spring.ai.openai.max-retries=0")
                 .run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(ChatModel.class).hasSingleBean(GradleGenerationEngine.class);
                     assertThat(context.getBean(ChatModel.class).getOptions().getModel()).isEqualTo("test-model");
-                    assertThat(context.getBean(GradleGenerationEngine.class).requestCancel()).isFalse();
+                    assertThat(context.getBean(GradleGenerationEngine.class).requestCancel(
+                            new de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity("unused", 1, java.util.UUID.randomUUID(), "worker", java.util.UUID.randomUUID())))
+                            .isFalse();
                     var registry = context.getBean(ObservationRegistry.class);
                     var chat = ChatModelObservationContext.builder().prompt(new Prompt("not for export")).provider("openai").build();
                     Observation.createNotStarted("gen_ai.client.operation", () -> chat, registry).observe(() -> {

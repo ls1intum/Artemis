@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress;
 import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
-import de.tum.cit.aet.artemis.hyperionworker.sandbox.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperionworker.sandbox.DockerSandbox;
 import de.tum.cit.aet.artemis.hyperionworker.session.GenerationObserver;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
@@ -36,13 +36,14 @@ import io.micrometer.observation.ObservationRegistry;
 
 class GradleGenerationEngineTest {
 
-    private final InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+    private final DockerSandbox sandbox = mock(DockerSandbox.class);
 
     private final ChatModel model = mock(ChatModel.class);
 
     private final GenerationObserver observer = mock(GenerationObserver.class);
 
     private GradleGenerationEngine engine(int retries) {
+        when(sandbox.forExecution(org.mockito.ArgumentMatchers.any())).thenReturn(sandbox);
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
         return new GradleGenerationEngine(sandbox, List.of(model), ObservationRegistry.NOOP, 6, retries, Duration.ofMinutes(10), "");
     }
@@ -66,8 +67,9 @@ class GradleGenerationEngineTest {
         assertThat(result.verifiedDigest()).isNull();
         assertThat(result.accountingState()).isEqualTo(AccountingState.COMPLETE);
         assertThat(checkpoints).hasValue(0);
-        assertThat(engine.requestCancel()).isFalse();
-        verifyNoInteractions(sandbox, observer);
+        assertThat(engine.requestCancel(assignment(Instant.now()).identity())).isFalse();
+        verifyNoInteractions(observer);
+        verify(sandbox, org.mockito.Mockito.never()).createSession();
     }
 
     @Test
@@ -81,8 +83,8 @@ class GradleGenerationEngineTest {
         assertThat(result.terminationReason()).isEqualTo("CANCELLED");
         assertThat(result.verifiedDigest()).isNull();
         assertThat(result.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
-        assertThat(engine.requestCancel()).isFalse();
-        verifyNoInteractions(sandbox);
+        assertThat(engine.requestCancel(assignment(Instant.now()).identity())).isFalse();
+        verify(sandbox, org.mockito.Mockito.never()).createSession();
         verify(observer).progress("Provider usage recorded.", new GenerationProgress(null, null, null, new ProviderUsageUpdate(ProviderUsageUpdate.Kind.UNCERTAIN, 0, null)));
     }
 
@@ -103,6 +105,7 @@ class GradleGenerationEngineTest {
             }
         });
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
+        when(sandbox.forExecution(org.mockito.ArgumentMatchers.any())).thenReturn(sandbox);
         var engine = new GradleGenerationEngine(sandbox, List.of(model), registry, 6, 0, Duration.ofMinutes(10), "");
         var assignment = assignment(Instant.now().plusSeconds(300));
         engine.generate(assignment, () -> {
@@ -119,6 +122,54 @@ class GradleGenerationEngineTest {
             assertThat(context.getHighCardinalityKeyValue("artemis.exercise.id").getValue()).isEqualTo("1");
             assertThat(context.getLowCardinalityKeyValue("artemis.hyperion.effort_profile").getValue()).isEqualTo("standard");
         });
+    }
+
+    @Test
+    void concurrentRunsUseSeparateSandboxesAndExactCancellationIdentities() throws Exception {
+        var engine = engine(0);
+        var first = assignment(Instant.now().plusSeconds(300));
+        var second = assignment(Instant.now().plusSeconds(300));
+        var firstSandbox = mock(DockerSandbox.class);
+        var secondSandbox = mock(DockerSandbox.class);
+        when(sandbox.forExecution(first.identity().executionId())).thenReturn(firstSandbox);
+        when(sandbox.forExecution(second.identity().executionId())).thenReturn(secondSandbox);
+        var entered = new java.util.concurrent.CountDownLatch(2);
+        var releaseFirst = new java.util.concurrent.CountDownLatch(1);
+        var releaseSecond = new java.util.concurrent.CountDownLatch(1);
+        when(firstSandbox.createSession()).thenAnswer(call -> {
+            entered.countDown();
+            assertThat(releaseFirst.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            throw new IllegalStateException("Test ends before authoring");
+        });
+        when(secondSandbox.createSession()).thenAnswer(call -> {
+            entered.countDown();
+            assertThat(releaseSecond.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            throw new IllegalStateException("Test ends before authoring");
+        });
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var firstRun = executor.submit(() -> engine.generate(first, () -> false, observer, ignored -> {
+            }));
+            var secondRun = executor.submit(() -> engine.generate(second, () -> false, observer, ignored -> {
+            }));
+            try {
+                assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThat(engine.requestCancel(first.identity())).isTrue();
+                releaseFirst.countDown();
+                try {
+                    firstRun.get(5, java.util.concurrent.TimeUnit.SECONDS);
+                }
+                catch (java.util.concurrent.ExecutionException expected) {
+                    assertThat(expected.getCause()).isInstanceOf(IllegalStateException.class);
+                }
+                assertThat(engine.requestCancel(first.identity())).isFalse();
+                assertThat(engine.requestCancel(second.identity())).isTrue();
+                assertThat(secondRun.isDone()).isFalse();
+            }
+            finally {
+                releaseFirst.countDown();
+                releaseSecond.countDown();
+            }
+        }
     }
 
     @Test

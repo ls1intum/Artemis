@@ -316,7 +316,7 @@ public class WorkerSupervisor implements AutoCloseable {
     private void cancel(ActiveExecution execution) {
         if (execution.cancelled.compareAndSet(false, true) && !execution.finishing) {
             execution.cleanup = CompletableFuture.runAsync(() -> {
-                if (!execution.engine.requestCancel()) {
+                if (!execution.engine.requestCancel(execution.assignment.identity())) {
                     cancelSandboxes.accept(execution.assignment.identity());
                 }
             }, cancellationExecutor);

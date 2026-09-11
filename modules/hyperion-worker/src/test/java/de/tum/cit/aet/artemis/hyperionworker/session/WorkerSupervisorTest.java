@@ -62,7 +62,8 @@ class WorkerSupervisorTest {
             try {
                 for (int slot = 0; slot < 4; slot++) {
                     var id = new ExecutionIdentity("parallel-" + slot, 42 + slot, UUID.randomUUID(), settings.id(), heartbeat.incarnation(), slot);
-                    var assignment = new GenerationAssignment(id, original.brief(), original.parameters(), original.seed(), original.authoringDeadline(), IMAGE, original.gradingContext());
+                    var assignment = new GenerationAssignment(id, original.brief(), original.parameters(), original.seed(), original.authoringDeadline(), IMAGE,
+                            original.gradingContext());
                     releases.put(id.executionId(), new CountDownLatch(1));
                     var command = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, id, assignment);
                     commands.add(command);
@@ -223,8 +224,8 @@ class WorkerSupervisorTest {
             WorkerCommand first = start(worker, events);
             var identity = new ExecutionIdentity(UUID.randomUUID().toString(), 2, UUID.randomUUID(), first.identity().workerId(), first.identity().workerIncarnation());
             var assignment = first.assignment();
-            var second = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, new GenerationAssignment(identity, assignment.brief(), assignment.parameters(), assignment.seed(),
-                    assignment.authoringDeadline(), IMAGE, assignment.gradingContext()));
+            var second = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, new GenerationAssignment(identity, assignment.brief(),
+                    assignment.parameters(), assignment.seed(), assignment.authoringDeadline(), IMAGE, assignment.gradingContext()));
             worker.accept(first);
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
             worker.accept(second);
