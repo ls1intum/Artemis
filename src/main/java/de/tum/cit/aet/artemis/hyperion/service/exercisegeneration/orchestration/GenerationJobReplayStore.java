@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
@@ -133,13 +134,18 @@ final class GenerationJobReplayStore {
     }
 
     StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode, @Nullable String effortProfile) {
+        return initializeStart(exerciseId, jobId, userLogin, mode, effortProfile, null);
+    }
+
+    StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode, @Nullable String effortProfile,
+            @Nullable ExerciseGenerationInputDTO input) {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
             GenerationJobService.JobTranscript previousTranscript = transcriptMap().get(key);
             GenerationJobService.JobFileChangeIndex previousFileChanges = fileChangeMap().get(key);
             GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null,
-                    effortProfile);
+                    effortProfile, input);
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
             StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges, artifactMap().get(key));
             try {
@@ -536,7 +542,7 @@ final class GenerationJobReplayStore {
                 }
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
                         latestFileChangesFor(key, transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable(), transcript.specDocument())
-                        .withEffortProfile(transcript.effortProfile()).withArtifactsRetained(hasRetainedArtifacts(key, transcript.jobId(), user)));
+                        .withInput(transcript.input()).withEffortProfile(transcript.effortProfile()).withArtifactsRetained(hasRetainedArtifacts(key, transcript.jobId(), user)));
             }
             if (transcript == null) {
                 return Optional.empty();
@@ -550,7 +556,7 @@ final class GenerationJobReplayStore {
             }
             // Owner-only, like the usage aggregate: which configuration ran is part of the account a caller is asked to review, and a sanitized view carries none of it.
             return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(), latestFileChangesFor(key, transcript.jobId()),
-                    false, null, null, true, false, transcript.specDocument()).withEffortProfile(transcript.effortProfile())
+                    false, null, null, true, false, transcript.specDocument()).withInput(transcript.input()).withEffortProfile(transcript.effortProfile())
                     .withArtifactsRetained(hasRetainedArtifacts(key, transcript.jobId(), user)));
         }
         finally {

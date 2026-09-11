@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIndicator;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
@@ -180,13 +181,18 @@ public class HyperionExerciseGenerationResource {
         }
         User user = userRepository.getUserWithAuthorities();
         Long courseId = courseIdOf(exercise);
-        String prompt = withSelectedFeedback(generationRequestService.resolvePrompt(request, exercise), exerciseId, request);
+        var feedback = selectedFeedback(exerciseId, request);
+        String prompt = generationRequestService.resolvePrompt(request, exercise);
+        if (!feedback.prompt().isBlank()) {
+            prompt += "\n\n" + feedback.prompt();
+        }
         // Reserves what this run may spend rather than the fleet-wide worst case, so a course drafting small exercises is not throttled at the largest job's cost.
         HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId, settings.maxTokensPerJob());
         String jobId;
         try {
             String sourceBrief = request.mode() == GenerationMode.GENERATE && request.prompt() != null && !request.prompt().isBlank() ? request.prompt().strip() : null;
-            jobId = jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id(), sourceBrief, settings);
+            jobId = jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id(), sourceBrief, settings,
+                    new ExerciseGenerationInputDTO(request.prompt(), feedback.feedback()));
         }
         catch (RuntimeException e) {
             generationBudgetService.releaseReservation(budgetReservation.id());
@@ -248,7 +254,7 @@ public class HyperionExerciseGenerationResource {
             return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileChanges(),
                     revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
                     revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable(), status.specDocument(),
-                    status.usage(), status.accountingState(), status.effortProfile(), status.artifactsRetained()));
+                    status.usage(), status.accountingState(), status.effortProfile(), status.artifactsRetained(), status.input()));
         }
         return revertibleRun.<ResponseEntity<ExerciseGenerationStatusDTO>>map(run -> ResponseEntity.ok(ExerciseGenerationStatusDTO.revertOnly(run.jobId(), run.mode())))
                 .orElseGet(() -> ResponseEntity.noContent().build());
@@ -322,12 +328,11 @@ public class HyperionExerciseGenerationResource {
         }
     }
 
-    private String withSelectedFeedback(String basePrompt, long exerciseId, ExerciseGenerationRequestDTO request) {
+    private HyperionReviewCommentContextRendererService.SelectedFeedback selectedFeedback(long exerciseId, ExerciseGenerationRequestDTO request) {
         if (request.mode() != GenerationMode.ADAPT || request.selectedFeedbackThreadIds() == null || request.selectedFeedbackThreadIds().isEmpty()) {
-            return basePrompt;
+            return new HyperionReviewCommentContextRendererService.SelectedFeedback("", List.of());
         }
-        String feedback = reviewCommentContextRenderer.renderWholeExerciseSelectedFeedback(exerciseId, request.selectedFeedbackThreadIds());
-        return feedback == null || feedback.isBlank() ? basePrompt : basePrompt + "\n\n" + feedback;
+        return reviewCommentContextRenderer.captureWholeExerciseSelectedFeedback(exerciseId, request.selectedFeedbackThreadIds());
     }
 
     private ProgrammingExercise loadExercise(long exerciseId) {

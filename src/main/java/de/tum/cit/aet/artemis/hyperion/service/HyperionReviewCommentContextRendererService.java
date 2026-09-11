@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContent
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
@@ -213,20 +214,34 @@ public class HyperionReviewCommentContextRendererService {
      *
      * @param exerciseId the exercise the threads belong to
      * @param threadIds  the thread ids the instructor selected
-     * @return the instruction block followed by its JSON payload, or an empty string when nothing selected is still actionable, so the caller appends nothing
+     * @return the worker instruction block and the same bounded feedback snapshot for owner-only replay
      */
-    public String renderWholeExerciseSelectedFeedback(long exerciseId, Collection<Long> threadIds) {
+    public SelectedFeedback captureWholeExerciseSelectedFeedback(long exerciseId, Collection<Long> threadIds) {
         if (threadIds == null || threadIds.isEmpty()) {
-            return "";
+            return new SelectedFeedback("", List.of());
         }
-        List<Map<String, Object>> serializedThreads = serializeSelectedThreads(exerciseId, threadIds, thread -> !thread.isResolved() && !thread.isOutdated());
-        if (serializedThreads.isEmpty()) {
-            return "";
+        List<Map<String, Object>> threads = serializeSelectedThreads(exerciseId, threadIds, thread -> !thread.isResolved() && !thread.isOutdated());
+        if (threads.isEmpty()) {
+            return new SelectedFeedback("", List.of());
         }
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("threads", serializedThreads);
-        return "Address the following selected instructor review feedback (each thread points at a file/line in one of the repositories). Apply the requested change for every "
-                + "thread while keeping the rest of the exercise intact:\n" + serializePayload(payload, exerciseId);
+        String prompt = "Address the following selected instructor review feedback (each thread points at a file/line in one of the repositories). Apply the requested change for every "
+                + "thread while keeping the rest of the exercise intact:\n" + serializePayload(Map.of("threads", threads), exerciseId);
+        List<ExerciseGenerationFeedbackDTO> feedback = threads.stream().map(thread -> {
+            List<String> texts = new ArrayList<>();
+            if (thread.get("comments") instanceof List<?> comments) {
+                for (Object entry : comments) {
+                    if (entry instanceof Map<?, ?> comment && comment.get("text") instanceof String text) {
+                        texts.add(text);
+                    }
+                }
+            }
+            return new ExerciseGenerationFeedbackDTO((String) thread.get("targetType"), (String) thread.get("filePath"), (Integer) thread.get("lineNumber"), texts);
+        }).toList();
+        return new SelectedFeedback(prompt, feedback);
+    }
+
+    /** The model instruction and its owner-visible review snapshot. */
+    public record SelectedFeedback(String prompt, List<ExerciseGenerationFeedbackDTO> feedback) {
     }
 
     private String extractCommentText(CommentContentDTO content) {
