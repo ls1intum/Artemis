@@ -48,27 +48,27 @@ public class AdminHyperionGenerationMonitoringResource {
      * @return metadata-only live jobs, including their cancellation availability
      */
     @GetMapping("generations")
-    public List<ActiveGenerationDTO> getActiveGenerations() {
-        return jobs.map(GenerationMonitoringService::activeGenerations).orElseGet(List::of);
+    public ResponseEntity<List<ActiveGenerationDTO>> getActiveGenerations() {
+        return ResponseEntity.ok(jobs.map(GenerationMonitoringService::activeGenerations).orElseGet(List::of));
     }
 
     /**
      * Audits and requests cancellation of one exact run, never a replacement run or a save in progress.
      *
-     * @param exerciseId the exercise
-     * @param jobId      the selected generation
-     * @param reason     the operator's reason
+     * @param exerciseId   the exercise
+     * @param generationId the selected generation
+     * @param reason       the operator's reason
      * @return 202 when requested, 400 for an invalid reason, or 409 when no longer cancellable
      */
-    @DeleteMapping("{exerciseId}/generations/{jobId}")
-    public ResponseEntity<Void> cancelGeneration(@PathVariable long exerciseId, @PathVariable String jobId, @RequestParam String reason) {
+    @DeleteMapping("{exerciseId}/generations/{generationId}")
+    public ResponseEntity<Void> cancelGeneration(@PathVariable long exerciseId, @PathVariable String generationId, @RequestParam String reason) {
         String boundedReason = reason.replaceAll("[\\p{Cntrl}]+", " ").trim();
-        if (boundedReason.isBlank() || boundedReason.length() > 500 || jobId.length() > 128) {
+        if (boundedReason.isBlank() || boundedReason.length() > 500 || generationId.length() > 128) {
             return ResponseEntity.badRequest().build();
         }
         audit.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), "HYPERION_GENERATION_CANCEL_ATTEMPT",
-                Map.of("exerciseId", exerciseId, "jobId", jobId, "reason", boundedReason)));
-        return jobs.filter(service -> service.cancel(exerciseId, jobId)).isPresent() ? ResponseEntity.accepted().build() : ResponseEntity.status(409).build();
+                Map.of("exerciseId", exerciseId, "jobId", generationId, "reason", boundedReason)));
+        return jobs.filter(service -> service.cancel(exerciseId, generationId)).isPresent() ? ResponseEntity.accepted().build() : ResponseEntity.status(409).build();
     }
 
 }
