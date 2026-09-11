@@ -134,6 +134,9 @@ export class ListOfComplaintsComponent implements OnInit {
         this.assessorFilter.set(undefined);
         this.filterOption.set(undefined);
         this.showAddressedComplaints.set(false);
+        this.complaints.set([]);
+        this.complaintsToShow.set([]);
+        this.loading.set(true);
     };
 
     loadComplaints() {

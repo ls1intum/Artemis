@@ -625,6 +625,13 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void getComplaintsByCourseId_tutor_allComplaintsForTutor_exposesAssessorKeyAndLabelForMultipleForeignTutors() throws Exception {
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         User tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
+        // Names must not embed logins — otherwise "label must not contain login" is a false failure.
+        instructor.setFirstName("Alice");
+        instructor.setLastName("Instructor");
+        tutor2.setFirstName("Bob");
+        tutor2.setLastName("Tutor");
+        userTestRepository.save(instructor);
+        userTestRepository.save(tutor2);
 
         complaint.getResult().setAssessor(instructor);
         resultRepository.save(complaint.getResult());
@@ -657,8 +664,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         });
 
         assertThat(allComplaints).extracting(ComplaintDTO::assessorKey).containsExactlyInAnyOrder(String.valueOf(instructor.getId()), String.valueOf(tutor2.getId()));
-        assertThat(allComplaints).extracting(ComplaintDTO::assessorLabel).containsExactlyInAnyOrder(User.displayName(instructor.getFirstName(), instructor.getLastName(), null),
-                User.displayName(tutor2.getFirstName(), tutor2.getLastName(), null));
+        assertThat(allComplaints).extracting(ComplaintDTO::assessorLabel).containsExactlyInAnyOrder("Alice Instructor", "Bob Tutor");
     }
 
     @Test
