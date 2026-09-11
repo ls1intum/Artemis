@@ -50,8 +50,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
@@ -1237,7 +1237,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // The fetched graph still carries a typed quiz-question stub.
         JsonNode fetchedQuizQuestions = findQuizQuestions(examJson.get("exerciseGroups"));
         assertThat(fetchedQuizQuestions).isNotNull();
-        assertThat(fetchedQuizQuestions.get(0).get("type").asText()).isNotBlank();
+        assertThat(fetchedQuizQuestions.get(0).get("type").asString()).isNotBlank();
 
         List<Long> exerciseIds = new ArrayList<>();
         for (JsonNode group : examJson.get("exerciseGroups")) {
@@ -2612,6 +2612,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         quizExerciseRepository.save(quiz);
         Exam targetExam = examUtilService.addExam(course1);
 
+        JsonNode examJson = request.get("/api/exam/exams/" + sourceExam.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode fetchedQuiz = examJson.get("exerciseGroups").get(0).get("exercises").get(0);
+        // Sanity: the source response still carries the non-default scalars the import is asserted on below.
+        assertThat(fetchedQuiz.get("randomizeQuestionOrder").asBoolean()).isFalse();
+        assertThat(fetchedQuiz.get("allowedNumberOfAttempts").asInt()).isEqualTo(5);
+        assertThat(fetchedQuiz.get("duration").asInt()).isEqualTo(999);
+        assertThat(fetchedQuiz.get("quizMode").asString()).isEqualTo("BATCHED");
+
+        // The endpoint takes the import dto now, not the echoed entity json develop posted here.
         List<ExerciseGroupImportDTO> body = List.of(new ExerciseGroupImportDTO(quizGroup.getTitle(), quizGroup.getIsMandatory(), List.of(ExerciseImportDTO.of(quiz))));
         ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 body, ExerciseGroupImportResultDTO.class, HttpStatus.OK);

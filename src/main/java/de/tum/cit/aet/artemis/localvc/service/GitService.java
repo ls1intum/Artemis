@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -86,6 +87,9 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
 public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
+
+    /** The exercise name inside a repository folder name, which a JPlag checkout replaces with the participation id. */
+    private static final Pattern EXERCISE_NAME_IN_FOLDER_NAME = Pattern.compile("/[a-zA-Z0-9]*-");
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
@@ -166,7 +170,7 @@ public class GitService extends AbstractGitService {
 
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
-        String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
+        String updatedRepoFolderName = EXERCISE_NAME_IN_FOLDER_NAME.matcher(repoFolderName).replaceAll("/" + participation.getId() + "-");
         // the repo-folder name might start with a separator, e.g. "/studentOriginRepo1234567890 which is treated as absolute path which is wrong
         if (updatedRepoFolderName.startsWith(FileSystems.getDefault().getSeparator())) {
             updatedRepoFolderName = updatedRepoFolderName.substring(1);

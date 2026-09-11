@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.CloseShieldOutputStream;
@@ -59,6 +60,9 @@ public class GitRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(GitRepositoryExportService.class);
 
+    /** A run of whitespace in a file name, removed so that the name needs no quoting. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
     /** Suffix an archive carries while it is still being written. */
     private static final String PARTIAL_EXPORT_SUFFIX = ".part";
 
@@ -99,7 +103,7 @@ public class GitRepositoryExportService {
     }
 
     private String sanitizeZipFilename(String filename) {
-        String sanitized = FileUtil.sanitizeFilename(filename).replaceAll("\\s+", "");
+        String sanitized = WHITESPACE_RUN.matcher(FileUtil.sanitizeFilename(filename)).replaceAll("");
         if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
             sanitized += ".zip";
         }

@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -95,6 +96,9 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
 public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
+
+    /** The characters a path inside a build container may consist of. */
+    private static final Pattern SAFE_CONTAINER_PATH = Pattern.compile("[a-zA-Z0-9_*./-]+");
 
     /**
      * Timeout in minutes for Docker exec setup commands (mkdir, chmod, cp, etc.).
@@ -1000,7 +1004,7 @@ public class BuildJobContainerService {
      * @throws LocalCIException if the path is invalid or potentially malicious
      */
     private void checkPath(String path) {
-        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+        if (path == null || path.contains("..") || !SAFE_CONTAINER_PATH.matcher(path).matches()) {
             throw new LocalCIException("Invalid path: " + path);
         }
     }

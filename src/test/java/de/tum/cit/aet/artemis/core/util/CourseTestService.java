@@ -60,9 +60,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -280,7 +280,7 @@ public class CourseTestService {
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -613,7 +613,6 @@ public class CourseTestService {
 
     // Test
     public void testDeleteCourseWithPermission() throws Exception {
-        // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5));
         Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), true);
         course3 = courseRepo.save(course3);
@@ -1034,50 +1033,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses.getFirst().getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        Course receivedCourse = receivedCourseForDashboard.course();
-
-        // Test that the received course has five exercises
-        assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
-        // Test that the received course has two lectures
-        assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
-        // Test that the received course has two competencies
-
-        assertThat(receivedCourse.getCompetencies()).isEmpty();
-        assertThat(receivedCourse.getPrerequisites()).isEmpty();
-        assertThat(receivedCourse.getTutorialGroups()).isEmpty();
-        assertThat(receivedCourse.getTutorialGroupsConfiguration()).isNull();
-
-        // Iterate over all exercises of the remaining course
-        for (Exercise exercise : courses.getFirst().getExercises()) {
-            // Test that the exercise does not have more than one participation.
-            assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-            if (!exercise.getStudentParticipations().isEmpty()) {
-                // Buffer participation so that null checking is easier.
-                Participation participation = exercise.getStudentParticipations().iterator().next();
-                if (!participation.getSubmissions().isEmpty()) {
-                    // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                    assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
-                    Submission submission = participation.getSubmissions().iterator().next();
-                    if (submission != null) {
-                        // Test that the correct text submission was filtered.
-                        if (submission instanceof TextSubmission textSubmission) {
-                            assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
-                        }
-                        // Test that the correct modeling submission was filtered.
-                        else if (submission instanceof ModelingSubmission modelingSubmission) {
-                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Test
     public void testGetCourseAvailableTabs() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courses.getFirst().getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
@@ -1238,18 +1193,6 @@ public class CourseTestService {
         assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
         assertThat(exercises.totalScores().studentScores().presentationScore()).as("the stateless calculator counts projected basic presentation scores").isEqualTo(1.0);
 
-        // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
-        // the entity-based endpoint while native clients still use that path.
-        CourseForDashboardDTO dashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        assertThat(exercises.totalScores()).isEqualTo(dashboard.totalScores());
-        assertThat(exercises.textScores()).isEqualTo(dashboard.textScores());
-        assertThat(exercises.programmingScores()).isEqualTo(dashboard.programmingScores());
-        assertThat(exercises.modelingScores()).isEqualTo(dashboard.modelingScores());
-        assertThat(exercises.fileUploadScores()).isEqualTo(dashboard.fileUploadScores());
-        assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
-        assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
-        assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
-
         var programmingGradeBeforePendingSubmission = exercises.participationResults().stream()
                 .filter(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).findFirst().orElseThrow();
         assertThat(programmingGradeBeforePendingSubmission.score()).as("the existing individual grade is meaningful").isPositive();
@@ -1376,21 +1319,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
-        Course course = createCourseWithEnrollmentEnabled(true);
-        unenrollStudent1FromAllCourses();
-        request.get("/api/course/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
-    public void testGetCourseForDashboardForbiddenWithEnrollmentPossible() throws Exception {
-        Course course = createCourseWithEnrollmentEnabled(true);
-        unenrollStudent1FromAllCourses();
-        // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
-        request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
     public void testGetCourseForEnrollment() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
         // remove student from course so that they are not already enrolled (UCR-based unenrollment)
@@ -1462,19 +1390,6 @@ public class CourseTestService {
             registeredStudent.setExam(examRegistered);
             examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
-            CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
-                    CourseForDashboardDTO.class);
-            Course receivedCourse = receivedCourseForDashboard.course();
-            assertThat(receivedCourse).isNotNull();
-            if (i == 0) {
-                assertThat(receivedCourse.getExams()).isEmpty();
-            }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examRegistered, testExam);
-            }
-            else {
-                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
-            }
         }
         var receivedCoursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         List<Course> receivedCourses = receivedCoursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
@@ -1527,21 +1442,16 @@ public class CourseTestService {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
 
         var receivedCoursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         Course finalCourse = course;
         CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream()
                 .filter(dto -> dto.course().getId().equals(finalCourse.getId())).findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
-        assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(1);
-        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(2);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
-        assertThat(receivedCourseForDashboard.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
         assertThat(receivedCourseForDashboardFromGeneralCall.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
-        assertThat(receivedCourseForDashboard.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
     }
 
     // Test
@@ -3368,11 +3278,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JacksonException {
         return buildCreateCourse(course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JacksonException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
@@ -3401,11 +3311,11 @@ public class CourseTestService {
                 course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JacksonException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + id).file(coursePart);
         if (fileContent != null) {

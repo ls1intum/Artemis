@@ -30,6 +30,19 @@ public class ExamDateApi extends AbstractExamApi {
         return examDateService.isIndividualExerciseWorkingPeriodOver(exam, studentParticipation);
     }
 
+    /**
+     * Whether the student's working period for an exam exercise is over, for a caller holding a projection.
+     *
+     * @param exam            the exam the exercise belongs to
+     * @param testRun         whether the participation is an instructor test run
+     * @param participantId   the id of the student the participation belongs to
+     * @param participationId the id of the participation
+     * @return true if the working period is over, false otherwise
+     */
+    public boolean isIndividualExerciseWorkingPeriodOver(Exam exam, boolean testRun, long participantId, long participationId) {
+        return examDateService.isIndividualExerciseWorkingPeriodOver(exam, testRun, participantId, participationId);
+    }
+
     public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
         return examDateService.getLatestIndividualExamEndDate(examId);
     }
