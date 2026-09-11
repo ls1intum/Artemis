@@ -105,7 +105,7 @@ public class GenerationOrchestrationService {
         boolean accountingComplete = false;
         try {
             var assignment = new GenerationAssignment(claim.identity(), brief, parameters, seed.snapshot(), deadline, claim.imageDigest());
-            client.send(new WorkerCommand(1, WorkerCommand.Type.START, claim.identity(), assignment));
+            client.send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, claim.identity(), assignment));
             Instant renewAt = Instant.MIN;
             boolean stopped = false;
             while (terminal.get() == null) {
@@ -115,14 +115,14 @@ public class GenerationOrchestrationService {
                 }
                 if (!stopped && stopAuthoring.getAsBoolean()) {
                     WorkerCommand.Type stop = jobs.isCancelled(jobId) ? WorkerCommand.Type.CANCEL : WorkerCommand.Type.STOP_AUTHORING;
-                    client.send(new WorkerCommand(1, stop, claim.identity(), null));
+                    client.send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, stop, claim.identity(), null));
                     stopped = true;
                 }
                 if (!Instant.now().isBefore(renewAt)) {
                     if (!workers.renew(claim)) {
                         throw new IllegalStateException("Generation worker ownership or presence was lost");
                     }
-                    client.send(new WorkerCommand(1, WorkerCommand.Type.RENEW, claim.identity(), null));
+                    client.send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.RENEW, claim.identity(), null));
                     renewAt = Instant.now().plusSeconds(10);
                 }
                 if (Instant.now().isAfter(deadline.plus(Duration.ofMinutes(5)))) {
@@ -175,7 +175,7 @@ public class GenerationOrchestrationService {
         }
         finally {
             try {
-                client.send(new WorkerCommand(1, WorkerCommand.Type.CANCEL, claim.identity(), null));
+                client.send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, claim.identity(), null));
             }
             catch (RuntimeException ignored) {
                 log.warn("Could not deliver worker cleanup request; the worker stops when core renewals expire");
