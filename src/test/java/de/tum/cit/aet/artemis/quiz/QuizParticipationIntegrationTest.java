@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.quiz.web.openapi.QuizParticipationResource;
+import de.tum.cit.aet.artemis.quiz.web.QuizParticipationResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
