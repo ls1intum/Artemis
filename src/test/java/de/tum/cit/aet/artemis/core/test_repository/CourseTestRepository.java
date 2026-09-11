@@ -8,11 +8,8 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -21,11 +18,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 @Repository
 @Primary
 public interface CourseTestRepository extends CourseRepository {
-
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
-    void clearSemester();
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<Course> findWithEagerLearningPathsById(@Param("courseId") long courseId);

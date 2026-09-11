@@ -38,6 +38,7 @@
                     labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                     [ngModel]="course().startDate"
                     (ngModelChange)="updateField('startDate', $event)"
+                    [requiredField]="true"
                 />
             </div>
             <div class="col-md-6">
@@ -45,6 +46,7 @@
                     labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                     [ngModel]="course().endDate"
                     (ngModelChange)="updateField('endDate', $event)"
+                    [requiredField]="true"
                 />
             </div>
         </div>
@@ -52,9 +54,9 @@
         <div class="row mb-3 g-3">
             <div class="col-md-6">
                 <label class="form-label" jhiTranslate="artemisApp.course.semester"></label>
-                <select class="form-select" [ngModel]="course().semester" (ngModelChange)="updateField('semester', $event)">
+                <select class="form-select" [class.is-invalid]="semesterMissing()" [ngModel]="course().semester" (ngModelChange)="updateField('semester', $event)">
                     <option [ngValue]="undefined"></option>
-                    @for (semester of semesters; track semester) {
+                    @for (semester of semesters(); track semester) {
                         <option [value]="semester">{{ semester }}</option>
                     }
                 </select>

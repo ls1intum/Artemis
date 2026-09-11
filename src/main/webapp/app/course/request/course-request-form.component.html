@@ -72,6 +72,7 @@
                 labelName="{{ 'artemisApp.courseRequest.form.startDate' | artemisTranslate }}"
                 formControlName="startDate"
                 [error]="dateRangeInvalid()"
+                [requiredField]="true"
             />
         </div>
         <div class="flex flex-col gap-2">
@@ -80,6 +81,7 @@
                 labelName="{{ 'artemisApp.courseRequest.form.endDate' | artemisTranslate }}"
                 formControlName="endDate"
                 [error]="dateRangeInvalid()"
+                [requiredField]="true"
             />
         </div>
     </div>

@@ -357,11 +357,8 @@ public class CourseStatsService {
      * @return end date of the time span
      */
     public ZonedDateTime determineEndDateForActiveStudents(Course course) {
-        var endDate = TimeUtil.now();
-        if (course.getEndDate() != null && TimeUtil.now().isAfter(course.getEndDate())) {
-            endDate = course.getEndDate();
-        }
-        return endDate;
+        var now = TimeUtil.now();
+        return now.isAfter(course.getEndDate()) ? course.getEndDate() : now;
     }
 
     /**
@@ -375,12 +372,8 @@ public class CourseStatsService {
      * @return the allowed time span size
      */
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
-        var spanTime = maximalSize;
-        if (course.getStartDate() != null) {
-            long amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
-            spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
-        }
-        return spanTime;
+        long amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
+        return Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
     }
 
     /**

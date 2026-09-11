@@ -15,17 +15,24 @@ import { CourseRequestsComponent } from 'app/admin/course-requests/course-reques
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
+import { getSemesterDateRange } from 'app/foundation/util/semester-utils';
 
 describe('CourseRequestsComponent', () => {
     let component: CourseRequestsComponent;
     let courseRequestService: CourseRequestService;
     let alertService: AlertService;
 
+    /** The WS25/26 date range, used so mock requests carry dates that line up exactly with their semester */
+    const mockDateRange = getSemesterDateRange('WS25/26')!;
+
     /** Sample pending course request for testing */
     const mockRequest: CourseRequest = {
         id: 1,
         title: 'Test Course',
         shortName: 'TC',
+        semester: 'WS25/26',
+        startDate: mockDateRange.startDate,
+        endDate: mockDateRange.endDate,
         testCourse: false,
         reason: 'Test reason',
         status: CourseRequestStatus.PENDING,
@@ -36,6 +43,9 @@ describe('CourseRequestsComponent', () => {
         id: 1,
         title: 'Test Course',
         shortName: 'TC',
+        semester: 'WS25/26',
+        startDate: mockDateRange.startDate,
+        endDate: mockDateRange.endDate,
         testCourse: false,
         reason: 'Test reason',
         status: CourseRequestStatus.ACCEPTED,
@@ -47,6 +57,9 @@ describe('CourseRequestsComponent', () => {
         id: 1,
         title: 'Test Course',
         shortName: 'TC',
+        semester: 'WS25/26',
+        startDate: mockDateRange.startDate,
+        endDate: mockDateRange.endDate,
         testCourse: false,
         reason: 'Test reason',
         status: CourseRequestStatus.REJECTED,
@@ -157,7 +170,14 @@ describe('CourseRequestsComponent', () => {
         });
 
         it('should not call service if request has no id', () => {
-            const requestWithoutId: CourseRequest = { title: 'Test', shortName: 'T', testCourse: false, reason: 'reason' };
+            const requestWithoutId: CourseRequest = {
+                title: 'Test',
+                shortName: 'T',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+                testCourse: false,
+                reason: 'reason',
+            };
 
             component.accept(requestWithoutId);
 
@@ -229,7 +249,7 @@ describe('CourseRequestsComponent', () => {
         });
 
         it('should not call service if selectedRequest has no id', () => {
-            component.selectedRequest.set({ title: 'Test', shortName: 'T', testCourse: false, reason: 'reason' });
+            component.selectedRequest.set({ title: 'Test', shortName: 'T', startDate: dayjs('2025-10-01'), endDate: dayjs('2026-03-31'), testCourse: false, reason: 'reason' });
             component.decisionReason.set('Valid reason');
 
             component.reject();
@@ -344,7 +364,7 @@ describe('CourseRequestsComponent', () => {
         });
 
         it('should not submit when selectedRequest has no id', () => {
-            component.selectedRequest.set({ title: 'Test', shortName: 'T', testCourse: false, reason: 'reason' });
+            component.selectedRequest.set({ title: 'Test', shortName: 'T', startDate: dayjs('2025-10-01'), endDate: dayjs('2026-03-31'), testCourse: false, reason: 'reason' });
             component.editForm.patchValue({
                 title: 'Test',
                 shortName: 'TST',
@@ -436,6 +456,75 @@ describe('CourseRequestsComponent', () => {
             component.saveEdit();
 
             expect(component.isSubmittingEdit()).toBe(false);
+        });
+    });
+
+    describe('required dates', () => {
+        it('prefills the dates from the request semester', () => {
+            component.openEditModal(mockRequest);
+            const range = getSemesterDateRange('WS25/26')!;
+
+            expect(component.editForm.get('startDate')!.value!.isSame(range.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(range.endDate)).toBe(true);
+        });
+
+        it('marks the form invalid when a date is cleared', () => {
+            component.openEditModal(mockRequest);
+            component.editForm.get('startDate')!.setValue(undefined);
+
+            expect(component.editForm.get('startDate')!.valid).toBe(false);
+            expect(component.editForm.invalid).toBe(true);
+        });
+
+        it('follows the semester while the dates are untouched', () => {
+            component.openEditModal(mockRequest);
+            component.editForm.get('semester')!.setValue('SS26');
+
+            expect(component.editForm.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2026-04-01');
+            expect(component.editForm.get('endDate')!.value!.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps a hand-picked date when the semester changes', () => {
+            component.openEditModal(mockRequest);
+            component.editForm.get('startDate')!.setValue(dayjs('2025-11-05'));
+            component.editForm.get('semester')!.setValue('SS26');
+
+            expect(component.editForm.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2025-11-05');
+        });
+
+        it("does not clobber a request whose own stored dates coincide with a previously open request's semester range", () => {
+            // Open the WS25/26 request first, so previousSemester and the form both settle on its range.
+            component.openEditModal(mockRequest);
+
+            // Now open a different request, for SS26, whose own stored dates happen to equal WS25/26's range.
+            // Those dates must survive unchanged: they belong to this request, not to the one that was open before it.
+            const coincidentallyMatchingRequest: CourseRequest = {
+                ...mockRequest,
+                id: 2,
+                semester: 'SS26',
+                startDate: mockDateRange.startDate,
+                endDate: mockDateRange.endDate,
+            };
+
+            component.openEditModal(coincidentallyMatchingRequest);
+
+            expect(component.editForm.get('startDate')!.value!.isSame(mockDateRange.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(mockDateRange.endDate)).toBe(true);
+        });
+
+        it('fills in dates from the semester when opening a request that has none yet', () => {
+            const requestWithoutDates: CourseRequest = {
+                ...mockRequest,
+                id: 4,
+                semester: 'WS25/26',
+                startDate: undefined,
+                endDate: undefined,
+            };
+
+            component.openEditModal(requestWithoutDates);
+
+            expect(component.editForm.get('startDate')!.value!.isSame(mockDateRange.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(mockDateRange.endDate)).toBe(true);
         });
     });
 

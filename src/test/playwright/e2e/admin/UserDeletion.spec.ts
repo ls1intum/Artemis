@@ -323,6 +323,9 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
                 title: `Requested ${generateUUID().slice(0, 6)}`,
                 shortName: `req${generateUUID().slice(0, 6).replace(/-/g, '')}`,
                 semester: 'WS26/27',
+                // The dates are mandatory and have to match the semester above, which runs October to March.
+                startDate: dayjs('2026-10-01').toISOString(),
+                endDate: dayjs('2027-03-31').toISOString(),
                 testCourse: true,
                 reason: 'For the deletion test',
             },

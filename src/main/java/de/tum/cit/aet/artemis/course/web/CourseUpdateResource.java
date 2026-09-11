@@ -9,6 +9,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -127,7 +129,7 @@ public class CourseUpdateResource {
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
+    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") @Valid CourseUpdateDTO courseUpdateDTO,
             @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithAuthorities();
@@ -191,6 +193,7 @@ public class CourseUpdateResource {
         CourseValidator.validateAccuracyOfScores(existingCourse);
         CourseValidator.validatePointBounds(existingCourse);
         CourseValidator.validateStartAndEndDate(existingCourse);
+        CourseValidator.validateSemester(existingCourse);
         CourseValidator.validateEnrollmentStartAndEndDate(existingCourse);
         CourseValidator.validateUnenrollmentEndDate(existingCourse);
         if (file != null) {

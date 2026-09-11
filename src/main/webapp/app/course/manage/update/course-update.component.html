@@ -147,9 +147,10 @@
                             id="field_startDate"
                             labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                             formControlName="startDate"
-                            [error]="!isValidDate"
+                            [error]="isDateOrderInvalid"
+                            [requiredField]="true"
                         />
-                        @if (!isValidDate) {
+                        @if (isDateOrderInvalid) {
                             <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
@@ -158,9 +159,10 @@
                             id="field_endDate"
                             labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                             formControlName="endDate"
-                            [error]="!isValidDate"
+                            [error]="isDateOrderInvalid"
+                            [requiredField]="true"
                         />
-                        @if (!isValidDate) {
+                        @if (isDateOrderInvalid) {
                             <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
@@ -188,11 +190,14 @@
                 </div>
                 <div class="form-group">
                     <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
-                    <select id="semester" class="form-select" formControlName="semester">
-                        @for (semester of semesters; track semester) {
+                    <select id="semester" class="form-select" formControlName="semester" required>
+                        @for (semester of semesters(); track semester) {
                             <option [value]="semester">{{ semester }}</option>
                         }
                     </select>
+                    @if (courseForm.get('semester')?.invalid && courseForm.get('semester')?.touched) {
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.course.form.semester.required"></div>
+                    }
                 </div>
                 <!-- timezone -->
                 <div class="form-group">

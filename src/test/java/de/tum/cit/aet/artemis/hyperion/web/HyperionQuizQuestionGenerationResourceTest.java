@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -38,7 +39,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
     void setupTestData() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         course.setTitle("Hyperion Test Course");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
