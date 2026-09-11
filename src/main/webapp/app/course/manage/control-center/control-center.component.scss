@@ -20,7 +20,7 @@
     flex-direction: column;
 
     // 280px each at full size, narrowing in step with each other when the row
-    // gets tight. Both panels always share one line.
+    // gets tight. Both panels share one line down to the phone breakpoint below.
     // The floor is what the panel header needs, not zero: two panels in the space
     // the row leaves left 199px for a header wanting 202px, and being three pixels
     // short broke both the title and its "Learn more" onto a second line. Deriving
@@ -72,12 +72,19 @@
     }
 }
 
-// Below roughly this width the row can no longer give both panels the width their
-// headers need, so drop the one-line floor rather than push the cards past the edge
-// of the screen. The panels then shrink as before, and still get their titles on one
-// line whenever the row happens to leave enough room.
+// Below roughly this width two panels side by side no longer fit: at half the row each,
+// the Enabled / Disabled buttons are wider than the panel and get clipped. Stack the
+// panels instead, so each one gets the full width of the section. The basis goes back
+// to auto because in a column it would set a 280px height, and the title may wrap as a
+// last resort on screens too narrow even for one panel.
 @media (max-width: 700px) {
+    :host {
+        flex-direction: column;
+        align-self: stretch;
+    }
+
     .ai-panel {
+        flex: 0 0 auto;
         min-width: 0;
     }
 

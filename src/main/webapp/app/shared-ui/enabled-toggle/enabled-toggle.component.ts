@@ -48,6 +48,10 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
             :host {
                 display: block;
                 width: 100%;
+
+                // The control is sized by the panel around it, not by the viewport: on a phone the
+                // app shell leaves a panel about 200px, less than the buttons want at full padding.
+                container-type: inline-size;
             }
 
             .enabled-toggle-group {
@@ -59,13 +63,17 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
             .enabled-toggle-btn {
                 flex: 1;
+                min-width: 0;
 
                 // The icon sits next to its label rather than above it, and the pair
-                // stays centred as the two buttons share the width between them.
+                // stays centred as the two buttons share the width between them. Only
+                // when even the narrow padding below leaves too little room does the
+                // icon wrap above its label, since the group clips what overflows it.
                 display: inline-flex;
+                flex-wrap: wrap;
                 align-items: center;
                 justify-content: center;
-                gap: 0.4rem;
+                gap: 0.15rem 0.4rem;
 
                 padding: 0.5rem 1rem;
                 border: none;
@@ -90,6 +98,12 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
                     background: var(--tumaet-ui-state-danger);
                     color: var(--tumaet-ui-state-danger-contrast);
                     font-weight: 600;
+                }
+            }
+
+            @container (max-width: 240px) {
+                .enabled-toggle-btn {
+                    padding-inline: 0.5rem;
                 }
             }
         `,

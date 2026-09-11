@@ -1,6 +1,6 @@
 @if (course().isAtLeastInstructor) {
     @if (irisEnabled()) {
-        <div class="ai-panel">
+        <div class="ai-panel" data-testid="iris-panel">
             <div class="ai-header">
                 <div class="ai-title">
                     <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
@@ -14,7 +14,7 @@
         </div>
     }
     @if (athenaEnabled()) {
-        <div class="ai-panel">
+        <div class="ai-panel" data-testid="athena-panel">
             <div class="ai-header">
                 <div class="ai-title">
                     <jhi-athena-logo />
