@@ -230,18 +230,13 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], releaseDate, startOfWorkingTime });
         });
 
-        test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
-            // looking for the overlay — the overlay is gated on that fetch returning the
-            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
-            // timeout can fire under multi-node CI load while the request is still in flight,
-            // even though the overlay would render seconds later.
-            const dashboardResponse = page
-                .waitForResponse((resp) => resp.url().includes(`api/course/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
-                .catch(() => undefined);
+        test('Student cannot participate in scheduled quiz before start of working time', async ({ login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await dashboardResponse;
-            await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
+            // The overlay renders once the page has the quiz's startOfWorkingTime, so give the assertion more than the
+            // default 10s: under multi-node CI load that data can still be in flight. Waiting on the assertion rather
+            // than on a specific response means this returns as soon as the overlay appears instead of always paying
+            // the full budget.
+            await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible({ timeout: 30_000 });
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
