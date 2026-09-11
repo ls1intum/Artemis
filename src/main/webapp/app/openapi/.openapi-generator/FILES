@@ -7,6 +7,7 @@ api/hyperion-problem-statement-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/legacy-calendar-api.ts
 api/quiz-exercise-batch-api.ts
+api/quiz-exercise-deletion-api.ts
 api/quiz-participation-api.ts
 api/quiz-submission-api.ts
 api/quiz-training-api.ts
@@ -21,6 +22,7 @@ model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
 model/bloom-radar.ts
 model/calendar-event.ts
+model/channel-sub-type-reference-dates.ts
 model/channel.ts
 model/checklist-action-request.ts
 model/checklist-action-response.ts
@@ -130,4 +132,6 @@ model/tutorial-group-schedule.ts
 model/tutorial-group-session.ts
 model/tutorial-group-student-import-data.ts
 model/tutorial-group-student.ts
+model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
+model/tutorial-group-summary.ts

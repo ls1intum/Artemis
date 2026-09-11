@@ -20,6 +20,7 @@ import { TutorialGroupExportData } from '../model/tutorial-group-export-data';
 import { TutorialGroupStudent } from '../model/tutorial-group-student';
 import { TutorialGroupDetailData } from '../model/tutorial-group-detail-data';
 import { TutorialGroupSchedule } from '../model/tutorial-group-schedule';
+import { TutorialGroupSummary } from '../model/tutorial-group-summary';
 import { TutorialGroupStudentImportData } from '../model/tutorial-group-student-import-data';
 import { TutorialGroupImportData } from '../model/tutorial-group-import-data';
 
@@ -155,9 +156,9 @@ export class TutorialGroupApi {
      * 
      * @param courseId 
      */
-    getTutorialGroupsForCourse(courseId: number): Observable<Array<any>> {
+    getTutorialGroupsForCourse(courseId: number): Observable<Array<TutorialGroupSummary>> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups`;
-        return this.http.get<Array<any>>(url);
+        return this.http.get<Array<TutorialGroupSummary>>(url);
     }
 
     /**

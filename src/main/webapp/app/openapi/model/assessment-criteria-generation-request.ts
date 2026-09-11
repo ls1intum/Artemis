@@ -21,7 +21,7 @@ export interface AssessmentCriteriaGenerationRequest {
     bonusPoints: number;
     /** General assessment instructions */
     gradingInstructions?: string;
-    /** Current example solution */
+    /** Current example solution, if available */
     exampleSolution?: string;
     /** Optional exercise-specific context appended to the default prompt */
     additionalContext?: string;

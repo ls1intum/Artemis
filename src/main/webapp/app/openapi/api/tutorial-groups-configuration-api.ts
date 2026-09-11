@@ -37,9 +37,30 @@ export class TutorialGroupsConfigurationApi {
      * 
      * 
      * @param courseId 
+     * @param tutorialGroupConfiguration 
+     */
+    create_(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations`;
+        return this.http.post<TutorialGroupConfiguration>(url, tutorialGroupConfiguration);
+    }
+
+    /**
+     * 
+     * 
+     * @param courseId 
      */
     getOneOfCourse(courseId: number): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration`;
+        return this.http.get<TutorialGroupConfiguration>(url);
+    }
+
+    /**
+     * 
+     * 
+     * @param courseId 
+     */
+    getOneOfCourse_(courseId: number): Observable<TutorialGroupConfiguration> {
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations`;
         return this.http.get<TutorialGroupConfiguration>(url);
     }
 
@@ -51,6 +72,18 @@ export class TutorialGroupsConfigurationApi {
      * @param tutorialGroupConfiguration 
      */
     update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}`;
+        return this.http.put<TutorialGroupConfiguration>(url, tutorialGroupConfiguration);
+    }
+
+    /**
+     * 
+     * 
+     * @param courseId 
+     * @param tutorialGroupsConfigurationId 
+     * @param tutorialGroupConfiguration 
+     */
+    update_(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}`;
         return this.http.put<TutorialGroupConfiguration>(url, tutorialGroupConfiguration);
     }

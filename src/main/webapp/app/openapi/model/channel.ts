@@ -8,6 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ChannelSubTypeReferenceDates } from './channel-sub-type-reference-dates';
 import type { ConversationUser } from './conversation-user';
 
 export interface Channel {
@@ -37,6 +38,9 @@ export interface Channel {
     tutorialGroupTitle?: string;
     subType?: ChannelSubTypeEnum;
     subTypeReferenceId?: number;
+    subTypeReferenceStartDate?: string;
+    subTypeReferenceEndDate?: string;
+    subTypeReferenceDates?: ChannelSubTypeReferenceDates;
     subTypeWithReferenceFromChannel?: Channel;
 }
 

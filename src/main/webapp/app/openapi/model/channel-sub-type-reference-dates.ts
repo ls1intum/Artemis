@@ -8,10 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { ShortAnswerSpot } from './short-answer-spot';
 
-export interface ShortAnswerSubmittedText {
-    text?: string;
-    isCorrect?: boolean;
-    spot?: ShortAnswerSpot;
+export interface ChannelSubTypeReferenceDates {
+    channelId?: number;
+    startDate?: string;
+    endDate?: string;
 }

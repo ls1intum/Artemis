@@ -42,6 +42,7 @@ api/legacy-calendar-resources.ts
 api/global-search-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/tutorial-group-free-period-resources.ts
+api/quiz-exercise-deletion-resources.ts
 api/hyperion-faq-resources.ts
 api/calendar-resources.ts
 api/quiz-training-resources.ts

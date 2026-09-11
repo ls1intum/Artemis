@@ -8,10 +8,14 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { ShortAnswerSpot } from './short-answer-spot';
 
-export interface ShortAnswerSubmittedText {
-    text?: string;
-    isCorrect?: boolean;
-    spot?: ShortAnswerSpot;
+export interface TutorialGroupSummarySchedule {
+    id?: number;
+    dayOfWeek?: number;
+    startTime?: string;
+    endTime?: string;
+    repetitionFrequency?: number;
+    location?: string;
+    validFromInclusive?: string;
+    validToInclusive?: string;
 }
