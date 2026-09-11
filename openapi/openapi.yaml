@@ -3030,8 +3030,8 @@ components:
     CreateExerciseVariantGroup:
       type: object
       properties:
-        title: {type: string, minLength: 1}
-        maxPoints: {type: number, format: double}
+        title: {type: string, maxLength: 255, minLength: 1}
+        maxPoints: {type: number, format: double, minimum: 0}
         releaseDate: {type: string, format: date-time}
         startDate: {type: string, format: date-time}
         dueDate: {type: string, format: date-time}
