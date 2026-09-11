@@ -452,6 +452,9 @@ public class StudentExamResource {
 
         // 1st: load the testRun with all associated exercises
         StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
+        // the conduction response reports whether the student may request AI feedback, and the query above no longer
+        // drags the configuration along with every course it touches
+        courseAthenaConfigRepository.attachTo(testRun.getExam().getCourse());
 
         if (!currentUser.equals(testRun.getUser())) {
             throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
