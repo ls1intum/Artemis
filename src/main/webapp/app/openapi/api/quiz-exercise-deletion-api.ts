@@ -22,9 +22,9 @@ export class QuizExerciseDeletionApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param quizExerciseId 
+     *
+     *
+     * @param quizExerciseId
      */
     deleteQuizExercise(quizExerciseId: number): Observable<void> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}`;

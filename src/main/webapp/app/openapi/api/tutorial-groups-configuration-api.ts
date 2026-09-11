@@ -23,10 +23,10 @@ export class TutorialGroupsConfigurationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupConfiguration 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupConfiguration
      */
     create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration`;
@@ -34,10 +34,10 @@ export class TutorialGroupsConfigurationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupConfiguration 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupConfiguration
      */
     create_(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations`;
@@ -45,9 +45,9 @@ export class TutorialGroupsConfigurationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getOneOfCourse(courseId: number): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration`;
@@ -55,9 +55,9 @@ export class TutorialGroupsConfigurationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
+     *
+     *
+     * @param courseId
      */
     getOneOfCourse_(courseId: number): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations`;
@@ -65,11 +65,11 @@ export class TutorialGroupsConfigurationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupsConfigurationId 
-     * @param tutorialGroupConfiguration 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupsConfigurationId
+     * @param tutorialGroupConfiguration
      */
     update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}`;
@@ -77,11 +77,11 @@ export class TutorialGroupsConfigurationApi {
     }
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param tutorialGroupsConfigurationId 
-     * @param tutorialGroupConfiguration 
+     *
+     *
+     * @param courseId
+     * @param tutorialGroupsConfigurationId
+     * @param tutorialGroupConfiguration
      */
     update_(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration): Observable<TutorialGroupConfiguration> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}`;

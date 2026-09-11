@@ -1,12 +1,5 @@
-import type { EntityIdRef } from './entity-id-ref';
-import type { DragAndDropMappingFromLiveClient } from './drag-and-drop-mapping-from-live-client';
-import type { ShortAnswerSubmittedTextFromLiveClient } from './short-answer-submitted-text-from-live-client';
+import type { MultipleChoiceSubmittedAnswerFromLiveClient } from "./multiple-choice-submitted-answer-from-live-client";
+import type { DragAndDropSubmittedAnswerFromLiveClient } from "./drag-and-drop-submitted-answer-from-live-client";
+import type { ShortAnswerSubmittedAnswerFromLiveClient } from "./short-answer-submitted-answer-from-live-client";
 
-export interface SubmittedAnswerFromLiveClient {
-    type: string;
-    quizQuestion?: EntityIdRef;
-    selectedOptions?: Array<EntityIdRef>;
-    mappings?: Array<DragAndDropMappingFromLiveClient>;
-    submittedTexts?: Array<ShortAnswerSubmittedTextFromLiveClient>;
-}
-
+export type SubmittedAnswerFromLiveClient = MultipleChoiceSubmittedAnswerFromLiveClient | DragAndDropSubmittedAnswerFromLiveClient | ShortAnswerSubmittedAnswerFromLiveClient;

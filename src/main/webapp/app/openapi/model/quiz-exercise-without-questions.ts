@@ -77,4 +77,3 @@ export const QuizExerciseWithoutQuestionsModeEnum = {
 } as const;
 
 export const QuizExerciseWithoutQuestionsModeEnumValues = ['INDIVIDUAL', 'TEAM'] as const;
-

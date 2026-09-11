@@ -24,4 +24,3 @@ export const ShortAnswerSubmittedAnswerFromLiveClientTypeEnum = {
 } as const;
 
 export const ShortAnswerSubmittedAnswerFromLiveClientTypeEnumValues = ['short-answer'] as const;
-

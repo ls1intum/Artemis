@@ -23,4 +23,3 @@ export const MultipleChoiceSubmittedAnswerFromLiveClientTypeEnum = {
 } as const;
 
 export const MultipleChoiceSubmittedAnswerFromLiveClientTypeEnumValues = ['multiple-choice'] as const;
-

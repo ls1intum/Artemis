@@ -38,4 +38,3 @@ export const DragAndDropQuizQuestionWithSolutionScoringTypeEnum = {
 } as const;
 
 export const DragAndDropQuizQuestionWithSolutionScoringTypeEnumValues = ['ALL_OR_NOTHING', 'PROPORTIONAL_WITH_PENALTY', 'PROPORTIONAL_WITHOUT_PENALTY'] as const;
-

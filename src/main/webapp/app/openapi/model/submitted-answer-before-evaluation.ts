@@ -1,14 +1,5 @@
-import type { AnswerOptionWithoutSolution } from './answer-option-without-solution';
-import type { DragAndDropMapping } from './drag-and-drop-mapping';
-import type { ShortAnswerSubmittedText } from './short-answer-submitted-text';
-import type { QuizQuestionWithoutSolution } from './quiz-question-without-solution';
+import type { MultipleChoiceSubmittedAnswerBeforeEvaluation } from "./multiple-choice-submitted-answer-before-evaluation";
+import type { DragAndDropSubmittedAnswerBeforeEvaluation } from "./drag-and-drop-submitted-answer-before-evaluation";
+import type { ShortAnswerSubmittedAnswerBeforeEvaluation } from "./short-answer-submitted-answer-before-evaluation";
 
-export interface SubmittedAnswerBeforeEvaluation {
-    id?: number;
-    quizQuestion?: QuizQuestionWithoutSolution;
-    selectedOptions?: Array<AnswerOptionWithoutSolution>;
-    type?: string;
-    mappings?: Array<DragAndDropMapping>;
-    submittedTexts?: Array<ShortAnswerSubmittedText>;
-}
-
+export type SubmittedAnswerBeforeEvaluation = MultipleChoiceSubmittedAnswerBeforeEvaluation | DragAndDropSubmittedAnswerBeforeEvaluation | ShortAnswerSubmittedAnswerBeforeEvaluation;

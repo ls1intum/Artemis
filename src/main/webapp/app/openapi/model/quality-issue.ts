@@ -47,4 +47,3 @@ export const QualityIssueSeverityEnum = {
 } as const;
 
 export const QualityIssueSeverityEnumValues = ['LOW', 'MEDIUM', 'HIGH'] as const;
-

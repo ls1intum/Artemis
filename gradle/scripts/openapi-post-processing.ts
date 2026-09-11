@@ -1,6 +1,9 @@
-import { Project } from "ts-morph";
+/// <reference types="node" />
+
+import { Node, Project, SourceFile } from "ts-morph";
 import { join } from "path";
-import { readdirSync, statSync, writeFileSync } from "fs";
+import { readFileSync, readdirSync, statSync, writeFileSync } from "fs";
+import { parse } from "yaml";
 
 const getAllOpenApiFiles = (dir: string): string[] => {
     let results: string[] = [];
@@ -13,17 +16,17 @@ const getAllOpenApiFiles = (dir: string): string[] => {
             results.push(fullPath);
         }
     }
-    results.push('openapi/openapi.yaml')
     return results;
 };
 
-const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any, renamedMethodsInFile: number) => {
+const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: SourceFile, renamedMethodsInFile: number) => {
     for (const clazz of sourceFile.getClasses()) {
         for (const method of clazz.getMethods()) {
             const oldName = method.getName();
             const newName = oldName.replace(/^_+/, "").replace(/\d+$/, "");
-            if (newName !== oldName) {
-                method.getNameNode().rename(newName);
+            const nameNode = method.getNameNode();
+            if (newName !== oldName && Node.isIdentifier(nameNode)) {
+                nameNode.rename(newName);
                 renamedMethodsInFile++;
                 console.log(`🔄 [${sourceFile.getBaseName()}] ${oldName} → ${newName}`);
             }
@@ -32,10 +35,96 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any,
     return renamedMethodsInFile;
 };
 
-const normalizeLineEndings = (text: string, lineEnding: "CRLF" | "LF" = "CRLF") => {
-    return lineEnding === "CRLF"
-        ? text.replace(/\r?\n/g, "\r\n")
-        : text.replace(/\r?\n/g, "\n");
+interface OpenApiSpecification {
+    components?: {
+        schemas?: Record<string, {
+            oneOf?: Array<{
+                $ref?: string;
+            }>;
+        }>;
+    };
+}
+
+const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Array<[string, string[]]> => {
+    return Object.entries(openApiSpecification.components?.schemas ?? {}).flatMap(([schemaName, schema]) => {
+        if (!schema.oneOf || schema.oneOf.length < 2) {
+            return [];
+        }
+
+        const referencedSchemaNames = schema.oneOf.map((branch) => branch.$ref?.split("/").at(-1));
+        if (referencedSchemaNames.some((referencedSchemaName) => referencedSchemaName === undefined)) {
+            return [];
+        }
+
+        return [[schemaName, referencedSchemaNames.filter((referencedSchemaName) => referencedSchemaName !== undefined)]];
+    });
+};
+
+const replaceOneOfModelsWithUnionTypes = (project: Project, openApiSpecification: OpenApiSpecification) => {
+    const modelSourceFilesByName = new Map<string, SourceFile>();
+    for (const sourceFile of project.getSourceFiles()) {
+        if (!sourceFile.getFilePath().replaceAll("\\", "/").includes("/openapi/model/")) {
+            continue;
+        }
+        for (const declaration of [...sourceFile.getInterfaces(), ...sourceFile.getTypeAliases()]) {
+            if (declaration.isExported()) {
+                modelSourceFilesByName.set(declaration.getName(), sourceFile);
+            }
+        }
+    }
+
+    let replacedUnionModels = 0;
+    for (const [schemaName, referencedSchemaNames] of referencedUnionSchemas(openApiSpecification)) {
+        const sourceFile = modelSourceFilesByName.get(schemaName);
+        const referencedSourceFiles = referencedSchemaNames.map((referencedSchemaName) => modelSourceFilesByName.get(referencedSchemaName));
+        if (!sourceFile || referencedSourceFiles.some((referencedSourceFile) => referencedSourceFile === undefined)) {
+            continue;
+        }
+
+        for (const [index, referencedSchemaName] of referencedSchemaNames.entries()) {
+            const referencedSourceFile = referencedSourceFiles[index];
+            if (!referencedSourceFile || referencedSourceFile === sourceFile) {
+                continue;
+            }
+
+            const moduleSpecifier = `./${referencedSourceFile.getBaseNameWithoutExtension()}`;
+            const existingImport = sourceFile.getImportDeclaration((declaration) => declaration.getModuleSpecifierValue() === moduleSpecifier);
+            if (existingImport) {
+                if (!existingImport.getNamedImports().some((namedImport) => namedImport.getName() === referencedSchemaName)) {
+                    existingImport.addNamedImport(referencedSchemaName);
+                }
+            } else {
+                sourceFile.addImportDeclaration({
+                    isTypeOnly: true,
+                    namedImports: [referencedSchemaName],
+                    moduleSpecifier,
+                });
+            }
+        }
+
+        const unionType = referencedSchemaNames.join(" | ");
+        const interfaceDeclaration = sourceFile.getInterface(schemaName);
+        const typeAliasDeclaration = sourceFile.getTypeAlias(schemaName);
+        if (interfaceDeclaration) {
+            interfaceDeclaration.replaceWithText(`export type ${schemaName} = ${unionType};`);
+        } else if (typeAliasDeclaration) {
+            typeAliasDeclaration.setType(unionType);
+        } else {
+            continue;
+        }
+
+        for (const staleTypeAlias of sourceFile.getTypeAliases().filter((declaration) => declaration.getName() !== schemaName && declaration.getName().startsWith(schemaName))) {
+            staleTypeAlias.remove();
+        }
+        for (const staleVariableStatement of sourceFile
+            .getVariableStatements()
+            .filter((statement) => statement.getDeclarations().every((declaration) => declaration.getName().startsWith(schemaName)))) {
+            staleVariableStatement.remove();
+        }
+
+        replacedUnionModels++;
+    }
+    return replacedUnionModels;
 };
 
 const main = async () => {
@@ -49,6 +138,10 @@ const main = async () => {
     });
     project.addSourceFilesAtPaths(files);
 
+    // generateApiDocs owns this shape. The postprocessor consumes only optional component fields.
+    const openApiSpecification = parse(readFileSync("openapi/openapi.yaml", "utf8")) as OpenApiSpecification;
+    const totalReplacedUnionModels = replaceOneOfModelsWithUnionTypes(project, openApiSpecification);
+
     const typeChecker = project.getTypeChecker();
     let totalRemovedImports = 0;
     let totalRenamedMethods = 0;
@@ -60,15 +153,17 @@ const main = async () => {
         for (const importDeclaration of sourceFile.getImportDeclarations()) {
             for (const namedImport of importDeclaration.getNamedImports()) {
                 const id = namedImport.getNameNode();
+                if (!Node.isIdentifier(id)) {
+                    continue;
+                }
                 const symbol = typeChecker.getSymbolAtLocation(id);
-                if (!symbol) continue;
+                if (!symbol) {
+                    continue;
+                }
 
                 const refs = id.findReferences();
-                const isUsed = refs.some(refGroup =>
-                    refGroup.getReferences().some(usage =>
-                        usage.getNode().getSourceFile() === sourceFile &&
-                        usage.getNode() !== id
-                    )
+                const isUsed = refs.some((refGroup) =>
+                    refGroup.getReferences().some((usage) => usage.getNode().getSourceFile() === sourceFile && usage.getNode() !== id),
                 );
 
                 if (!isUsed) {
@@ -77,9 +172,8 @@ const main = async () => {
                 }
             }
 
-            const isEmpty = importDeclaration.getNamedImports().length === 0 &&
-                !importDeclaration.getDefaultImport() &&
-                !importDeclaration.getNamespaceImport();
+            const isEmpty =
+                importDeclaration.getNamedImports().length === 0 && !importDeclaration.getDefaultImport() && !importDeclaration.getNamespaceImport();
             if (isEmpty) {
                 importDeclaration.remove();
             }
@@ -87,27 +181,23 @@ const main = async () => {
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
         const path = sourceFile.getFilePath();
-        const content = sourceFile.getFullText();
-        const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
+        const content = sourceFile.getFullText().replace(/[ \t]+(?=\r?$)/gm, "").replace(/(?:\r?\n)+$/, "\n");
+        const fixedContent = isWindows ? content.replace(/\r?\n/g, "\r\n") : content;
 
         writeFileSync(path, fixedContent, "utf8");
         if (removedImportsInFile + renamedMethodsInFile > 0) {
             totalRemovedImports += removedImportsInFile;
             totalRenamedMethods += renamedMethodsInFile;
-            console.log(
-                `🧹 Removed ${removedImportsInFile} imports, ` +
-                `renamed ${renamedMethodsInFile} methods in ${sourceFile.getBaseName()}`
-            );
+            console.log(`🧹 Removed ${removedImportsInFile} imports, renamed ${renamedMethodsInFile} methods in ${sourceFile.getBaseName()}`);
         }
     }
 
     console.log(
-        `✅ Done. Total imports removed: ${totalRemovedImports}, ` +
-        `methods renamed: ${totalRenamedMethods}`
+        `✅ Done. Total imports removed: ${totalRemovedImports}, methods renamed: ${totalRenamedMethods}, oneOf models converted to union types: ${totalReplacedUnionModels}`,
     );
 };
 
-main().catch(err => {
-    console.error("❌ Error:", err);
+main().catch((error: unknown) => {
+    console.error("OpenAPI post-processing failed:", error);
     process.exit(1);
 });

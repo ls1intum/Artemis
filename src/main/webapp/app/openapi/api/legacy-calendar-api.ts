@@ -22,12 +22,12 @@ export class LegacyCalendarApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param courseId 
-     * @param token 
-     * @param filterOptions 
-     * @param language 
+     *
+     *
+     * @param courseId
+     * @param token
+     * @param filterOptions
+     * @param language
      */
     getLegacyCalendarEventSubscriptionFile(courseId: number, token: string, filterOptions: Array<'LECTURES' | 'TUTORIALS' | 'EXAMS' | 'EXERCISES'>, language: 'ENGLISH' | 'GERMAN'): Observable<string> {
         const queryParams = new URLSearchParams();

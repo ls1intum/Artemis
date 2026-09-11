@@ -24,10 +24,10 @@ export class HyperionCodeGenerationApi {
     private readonly basePath = '';
 
     /**
-     * 
-     * 
-     * @param exerciseId 
-     * @param codeGenerationRequest 
+     *
+     *
+     * @param exerciseId
+     * @param codeGenerationRequest
      */
     generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest): Observable<CodeGenerationJobStart> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-code`;

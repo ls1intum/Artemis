@@ -47,4 +47,3 @@ export const QuizQuestionGenerationRequestQuestionTypesEnum = {
 } as const;
 
 export const QuizQuestionGenerationRequestQuestionTypesEnumValues = ['single-choice', 'multiple-choice', 'true-false'] as const;
-

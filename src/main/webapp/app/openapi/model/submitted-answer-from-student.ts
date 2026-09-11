@@ -1,11 +1,5 @@
-import type { ShortAnswerSubmittedTextFromStudent } from './short-answer-submitted-text-from-student';
-import type { DragAndDropMappingReEvaluate } from './drag-and-drop-mapping-re-evaluate';
+import type { MultipleChoiceSubmittedAnswerFromStudent } from "./multiple-choice-submitted-answer-from-student";
+import type { DragAndDropSubmittedAnswerFromStudent } from "./drag-and-drop-submitted-answer-from-student";
+import type { ShortAnswerSubmittedAnswerFromStudent } from "./short-answer-submitted-answer-from-student";
 
-export interface SubmittedAnswerFromStudent {
-    type: string;
-    questionId: number;
-    selectedOptions: Array<number>;
-    mappings: Array<DragAndDropMappingReEvaluate>;
-    submittedTexts: Array<ShortAnswerSubmittedTextFromStudent>;
-}
-
+export type SubmittedAnswerFromStudent = MultipleChoiceSubmittedAnswerFromStudent | DragAndDropSubmittedAnswerFromStudent | ShortAnswerSubmittedAnswerFromStudent;

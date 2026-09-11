@@ -25,4 +25,3 @@ export const QuizQuestionRefinementFailureTypeEnum = {
 } as const;
 
 export const QuizQuestionRefinementFailureTypeEnumValues = ['failure'] as const;
-

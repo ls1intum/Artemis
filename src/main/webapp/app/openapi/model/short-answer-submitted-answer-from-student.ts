@@ -23,4 +23,3 @@ export const ShortAnswerSubmittedAnswerFromStudentTypeEnum = {
 } as const;
 
 export const ShortAnswerSubmittedAnswerFromStudentTypeEnumValues = ['short-answer'] as const;
-

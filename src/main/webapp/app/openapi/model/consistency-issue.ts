@@ -48,4 +48,3 @@ export const ConsistencyIssueCategoryEnum = {
 } as const;
 
 export const ConsistencyIssueCategoryEnumValues = ['METHOD_RETURN_TYPE_MISMATCH', 'METHOD_PARAMETER_MISMATCH', 'CONSTRUCTOR_PARAMETER_MISMATCH', 'ATTRIBUTE_TYPE_MISMATCH', 'VISIBILITY_MISMATCH', 'IDENTIFIER_NAMING_INCONSISTENCY'] as const;
-

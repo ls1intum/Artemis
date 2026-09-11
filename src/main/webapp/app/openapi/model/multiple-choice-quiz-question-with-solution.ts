@@ -34,4 +34,3 @@ export const MultipleChoiceQuizQuestionWithSolutionScoringTypeEnum = {
 } as const;
 
 export const MultipleChoiceQuizQuestionWithSolutionScoringTypeEnumValues = ['ALL_OR_NOTHING', 'PROPORTIONAL_WITH_PENALTY', 'PROPORTIONAL_WITHOUT_PENALTY'] as const;
-
