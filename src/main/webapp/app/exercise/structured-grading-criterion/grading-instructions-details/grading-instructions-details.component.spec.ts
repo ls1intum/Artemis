@@ -1070,7 +1070,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(moved[1].id).toBe(10);
     });
 
-    it('should keep a persisted instruction id on one copy when both duplicate marked blocks are edited', () => {
+    it('should reject a duplicate instruction marker when both copies are edited', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
         const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
@@ -1096,11 +1096,50 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
         expect(instructions).toHaveLength(2);
-        expect(instructions[0]).toBe(originalInstruction);
-        expect(instructions[0].id).toBe(1);
-        expect(instructions[0].feedback).toBe('edited copy feedback');
+        // Neither row may inherit id 1: ordering must not decide which content keeps the feedback links.
+        expect(instructions[0]).not.toBe(originalInstruction);
+        expect(instructions[1]).not.toBe(originalInstruction);
+        expect(instructions[0].id).toBeUndefined();
         expect(instructions[1].id).toBeUndefined();
+        expect(instructions[0].feedback).toBe('edited copy feedback');
         expect(instructions[1].feedback).toBe('edited original feedback');
+    });
+
+    it('should reject a duplicate criterion marker when both copies are edited', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const criterionAction = domainActions[0].action;
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        // Both criteria carry {@id:1} and both titles were edited away from the persisted one.
+        const edited = [
+            { text: '{@id:1} renamed copy', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'copy feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            { text: '{@id:1} renamed original', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '2', action: creditsAction },
+            { text: 'other', action: scaleAction },
+            { text: 'other', action: descriptionAction },
+            { text: 'other feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(edited);
+
+        expect(exercise.gradingCriteria).toHaveLength(2);
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![1].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0]).not.toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![1]).not.toBe(gradingCriterion);
     });
 
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {

@@ -497,9 +497,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
      * database IDs (and feedback links). Match by `{@id:N}` markers from markdown first, then
      * title / content fingerprint. Instruction id matching uses a cross-criterion pool so a moved
-     * marked instruction keeps its id. Duplicate markers skip id-claim until after fingerprints;
-     * if neither copy matches content, one edited copy still reclaims the persisted id. Unmatched
-     * marker ids are stripped. Never match by position alone — reorders would remount IDs.
+     * marked instruction keeps its id. A marker repeated across rows (copied block) is rejected
+     * outright: only an unchanged row can still reclaim by fingerprint, and every unmatched marker
+     * id is stripped. Never match by position alone — reorders and copies would remount IDs.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
@@ -520,56 +520,31 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         unusedInstructions: GradingInstruction[],
     ): GradingCriterion[] {
         const unusedCriteria = [...previousCriteria];
-        const results: (GradingCriterion | undefined)[] = parsedCriteria.map(() => undefined);
-        const pendingAmbiguous: { index: number; parsed: GradingCriterion }[] = [];
-
-        parsedCriteria.forEach((parsedCriterion, index) => {
+        return parsedCriteria.map((parsedCriterion) => {
             let matchIndex = this.findUnusedById(unusedCriteria, parsedCriterion.id, ambiguousCriterionIds);
             if (matchIndex < 0 && (parsedCriterion.title ?? '') !== '') {
                 matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
             }
-            if (matchIndex >= 0) {
-                const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
-                existingCriterion.title = parsedCriterion.title;
-                existingCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
-                    unusedInstructions,
-                    parsedCriterion.structuredGradingInstructions ?? [],
-                    ambiguousInstructionIds,
-                );
-                results[index] = existingCriterion;
-            } else if (parsedCriterion.id != undefined && ambiguousCriterionIds.has(parsedCriterion.id)) {
-                pendingAmbiguous.push({ index, parsed: parsedCriterion });
-            } else {
+            if (matchIndex < 0) {
+                // Unknown, unused, or ambiguous duplicate marker: keep it as a new criterion instead of
+                // letting row order decide which content inherits the persisted identity.
                 delete parsedCriterion.id;
                 parsedCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
                     unusedInstructions,
                     parsedCriterion.structuredGradingInstructions ?? [],
                     ambiguousInstructionIds,
                 );
-                results[index] = parsedCriterion;
+                return parsedCriterion;
             }
+            const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
+            existingCriterion.title = parsedCriterion.title;
+            existingCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
+                unusedInstructions,
+                parsedCriterion.structuredGradingInstructions ?? [],
+                ambiguousInstructionIds,
+            );
+            return existingCriterion;
         });
-
-        // Duplicate criterion markers: if content matched neither copy, one edited copy keeps the id.
-        for (const { index, parsed } of pendingAmbiguous) {
-            const matchIndex = this.findUnusedById(unusedCriteria, parsed.id, new Set());
-            if (matchIndex >= 0) {
-                const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
-                existingCriterion.title = parsed.title;
-                existingCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
-                    unusedInstructions,
-                    parsed.structuredGradingInstructions ?? [],
-                    ambiguousInstructionIds,
-                );
-                results[index] = existingCriterion;
-            } else {
-                delete parsed.id;
-                parsed.structuredGradingInstructions = this.reconcileInstructionsByContent(unusedInstructions, parsed.structuredGradingInstructions ?? [], ambiguousInstructionIds);
-                results[index] = parsed;
-            }
-        }
-
-        return results as GradingCriterion[];
     }
 
     private reconcileInstructionsByContent(
@@ -577,45 +552,25 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         parsedInstructions: GradingInstruction[],
         ambiguousInstructionIds: Set<number>,
     ): GradingInstruction[] {
-        const results: (GradingInstruction | undefined)[] = parsedInstructions.map(() => undefined);
-        const pendingAmbiguous: { index: number; parsed: GradingInstruction }[] = [];
-
-        parsedInstructions.forEach((parsedInstruction, index) => {
+        return parsedInstructions.map((parsedInstruction) => {
             let matchIndex = this.findUnusedById(unusedInstructions, parsedInstruction.id, ambiguousInstructionIds);
             if (matchIndex < 0) {
                 const fingerprint = this.instructionFingerprint(parsedInstruction);
                 matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
             }
-            if (matchIndex >= 0) {
-                const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
-                results[index] = this.applyInstructionFields(existingInstruction, parsedInstruction);
-            } else if (parsedInstruction.id != undefined && ambiguousInstructionIds.has(parsedInstruction.id)) {
-                pendingAmbiguous.push({ index, parsed: parsedInstruction });
-            } else {
+            if (matchIndex < 0) {
                 delete parsedInstruction.id;
-                results[index] = parsedInstruction;
+                return parsedInstruction;
             }
+            const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
+            return this.applyInstructionFields(existingInstruction, parsedInstruction);
         });
-
-        // Duplicate instruction markers: fingerprint already preferred the unchanged original; if both
-        // copies were edited, reclaim the persisted id onto the first remaining marked row.
-        for (const { index, parsed } of pendingAmbiguous) {
-            const matchIndex = this.findUnusedById(unusedInstructions, parsed.id, new Set());
-            if (matchIndex >= 0) {
-                const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
-                results[index] = this.applyInstructionFields(existingInstruction, parsed);
-            } else {
-                delete parsed.id;
-                results[index] = parsed;
-            }
-        }
-
-        return results as GradingInstruction[];
     }
 
     /**
-     * Ids repeated across parsed rows (copied marked blocks). Those rows skip id-claim in phase 1 so a
-     * content-identical original can reclaim via fingerprint; phase 2 then lets one edited copy keep the id.
+     * Ids repeated across parsed rows (copied marked blocks). Such a marker never claims the persisted
+     * entity: only a row whose content still matches can reclaim it by fingerprint, so a copy and an
+     * edited original both end up without an id rather than inheriting one by position.
      */
     private duplicateParsedIds(parsed: { id?: number }[]): Set<number> {
         const seenIds = new Set<number>();
