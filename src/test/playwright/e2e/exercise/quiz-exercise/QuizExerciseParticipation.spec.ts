@@ -231,16 +231,18 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            // The overlay is gated on the quiz's own for-student fetch returning startOfWorkingTime, so wait for that
-            // response before looking for it: under multi-node CI load the default 10s expect timeout can otherwise
-            // fire while the request is still in flight. Registered before the navigation so the response cannot be
-            // missed, and deliberately not swallowed — if the page ever stops issuing it, this must fail loudly rather
-            // than wait out the budget and leave the assertion to explain it.
-            const quizForStudent = page.waitForResponse((response) => response.url().includes(`api/quiz/quiz-exercises/${quizExercise.id}/for-student`) && response.ok(), {
-                timeout: 30_000,
-            });
+            // The overlay is gated on the quiz load: initLiveMode POSTs start-participation on page load regardless of
+            // whether the quiz has started, and the batch it returns is what flips waitingForQuizStart. Wait for that
+            // response before looking for the overlay, because under multi-node CI load the default 10s expect timeout
+            // can otherwise fire while the request is still in flight. Registered before the navigation so the response
+            // cannot be missed, and deliberately not swallowed: if the page stops issuing it, this must fail pointing
+            // at the cause rather than wait out the budget.
+            const startParticipation = page.waitForResponse(
+                (response) => response.url().includes(`api/quiz/quiz-exercises/${quizExercise.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                { timeout: 30_000 },
+            );
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await quizForStudent;
+            await startParticipation;
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
