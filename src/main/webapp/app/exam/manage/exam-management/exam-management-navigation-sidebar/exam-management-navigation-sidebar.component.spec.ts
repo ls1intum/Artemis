@@ -11,6 +11,7 @@ import { ActivatedRoute, Event, NavigationEnd, Router, convertToParamMap } from 
 import { Subject } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { faFlaskVial } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExamManagementNavigationSidebarComponent', () => {
     let component: ExamManagementNavigationSidebarComponent;
@@ -297,6 +298,15 @@ describe('ExamManagementNavigationSidebarComponent', () => {
             ];
             expect(new Set(actualSubpages)).toEqual(new Set(expectedTestExamSubpages));
             expect(actualSubpages).toEqual(expectedTestExamSubpages);
+        });
+
+        it('should display the simulation icon for a test exam with simulation', () => {
+            fixture.componentRef.setInput('course', { id: 1 } as Course);
+            fixture.componentRef.setInput('exams', [{ id: 1, title: 'Simulation Exam', examMode: ExamMode.TEST_WITH_SIMULATION } as Exam]);
+            fixture.detectChanges();
+
+            const icon = fixture.debugElement.query(By.css('[tumUiPanelHeader] fa-icon'));
+            expect(icon.componentInstance.icon()).toBe(faFlaskVial);
         });
 
         it('should not render assessment dashboard for a tutor on a test exam', () => {
