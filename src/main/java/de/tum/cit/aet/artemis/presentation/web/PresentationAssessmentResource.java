@@ -157,6 +157,22 @@ public class PresentationAssessmentResource {
                 .body(PresentationAssessmentInstanceDTO.of(instance));
     }
 
+    /**
+     * POST /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/instances/batch : atomically persist a logical instance operation.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param dto          the instance data to persist
+     * @return the affected presentation assessment instances
+     */
+    @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/batch")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<PresentationAssessmentInstanceDTO>> savePresentationAssessmentInstances(@PathVariable long courseId, @PathVariable long assessmentId,
+            @Valid @RequestBody PresentationAssessmentInstanceDTO dto) {
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        return ResponseEntity.ok(presentationAssessmentService.saveInstances(course, assessmentId, dto).stream().map(PresentationAssessmentInstanceDTO::of).toList());
+    }
+
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentInstanceDTO> updatePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,

@@ -57,6 +57,16 @@ export class PresentationAssessmentService {
             .pipe(map((res) => this.convertInstanceResponseFromServer(res)));
     }
 
+    saveInstances(courseId: number, presentationAssessmentId: number, instance: PresentationAssessmentInstance): Observable<HttpResponse<PresentationAssessmentInstance[]>> {
+        return this.http
+            .post<PresentationAssessmentInstance[]>(
+                `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/batch`,
+                this.convertInstanceDateFromClient(instance),
+                { observe: 'response' },
+            )
+            .pipe(map((res) => this.convertInstanceArrayResponseFromServer(res)));
+    }
+
     deleteInstance(courseId: number, presentationAssessmentId: number, instanceId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/${instanceId}`, {
             observe: 'response',
@@ -89,6 +99,11 @@ export class PresentationAssessmentService {
         if (res.body) {
             res.body.presentationDate = convertDateFromServer(res.body.presentationDate);
         }
+        return res;
+    }
+
+    private convertInstanceArrayResponseFromServer(res: HttpResponse<PresentationAssessmentInstance[]>): HttpResponse<PresentationAssessmentInstance[]> {
+        res.body?.forEach((instance) => (instance.presentationDate = convertDateFromServer(instance.presentationDate)));
         return res;
     }
 }

@@ -25,6 +25,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         delete: ReturnType<typeof vi.fn>;
         createInstance: ReturnType<typeof vi.fn>;
         updateInstance: ReturnType<typeof vi.fn>;
+        saveInstances: ReturnType<typeof vi.fn>;
         deleteInstance: ReturnType<typeof vi.fn>;
         findCourseStudents: ReturnType<typeof vi.fn>;
     };
@@ -50,6 +51,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             delete: vi.fn(),
             createInstance: vi.fn(),
             updateInstance: vi.fn(),
+            saveInstances: vi.fn(),
             deleteInstance: vi.fn(),
             findCourseStudents: vi.fn().mockReturnValue(
                 of(
@@ -180,45 +182,26 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.dialogPresentationAssessment()).toBe(presentationAssessment);
     });
 
-    it('should create a separate instance for every selected student', () => {
-        presentationAssessmentService.createInstance.mockReturnValue(of(new HttpResponse({ body: {} })));
+    it('should save selected students through one atomic request', () => {
+        presentationAssessmentService.saveInstances.mockReturnValue(of(new HttpResponse({ body: [] })));
         component.startCreateInstance(presentationAssessment);
 
-        component.handleInstanceDialogSave({ presentationDate, resultPoints: 10, studentLogins: ['student1', 'student2'] });
+        const result = { presentationDate, resultPoints: 10, studentLogins: ['student1', 'student2'] };
+        component.handleInstanceDialogSave(result);
 
-        expect(presentationAssessmentService.createInstance).toHaveBeenCalledTimes(2);
-        expect(presentationAssessmentService.createInstance).toHaveBeenNthCalledWith(
-            1,
-            courseId,
-            presentationAssessment.id,
-            expect.objectContaining({ studentLogins: ['student1'] }),
-        );
-        expect(presentationAssessmentService.createInstance).toHaveBeenNthCalledWith(
-            2,
-            courseId,
-            presentationAssessment.id,
-            expect.objectContaining({ studentLogins: ['student2'] }),
-        );
+        expect(presentationAssessmentService.saveInstances).toHaveBeenCalledOnce();
+        expect(presentationAssessmentService.saveInstances).toHaveBeenCalledWith(courseId, presentationAssessment.id, result);
     });
 
-    it('should split a legacy shared instance before grading one student', () => {
+    it('should delegate splitting a legacy shared instance to the atomic endpoint', () => {
         const sharedInstance = presentationAssessment.instances![0];
-        presentationAssessmentService.updateInstance.mockReturnValue(of(new HttpResponse({ body: sharedInstance })));
-        presentationAssessmentService.createInstance.mockReturnValue(of(new HttpResponse({ body: sharedInstance })));
+        presentationAssessmentService.saveInstances.mockReturnValue(of(new HttpResponse({ body: [sharedInstance] })));
         component.startEditInstance(presentationAssessment, sharedInstance, 'student1');
 
-        component.handleInstanceDialogSave({ ...sharedInstance, resultPoints: 19, studentLogins: ['student1'] });
+        const result = { ...sharedInstance, resultPoints: 19, studentLogins: ['student1'] };
+        component.handleInstanceDialogSave(result);
 
-        expect(presentationAssessmentService.updateInstance).toHaveBeenCalledWith(
-            courseId,
-            presentationAssessment.id,
-            expect.objectContaining({ id: sharedInstance.id, studentLogins: ['student2'], resultPoints: 18 }),
-        );
-        expect(presentationAssessmentService.createInstance).toHaveBeenCalledWith(
-            courseId,
-            presentationAssessment.id,
-            expect.objectContaining({ id: undefined, studentLogins: ['student1'], resultPoints: 19 }),
-        );
+        expect(presentationAssessmentService.saveInstances).toHaveBeenCalledWith(courseId, presentationAssessment.id, result);
     });
 
     it('should keep loaded student details when opening the instance edit dialog', () => {
@@ -297,19 +280,19 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it('should keep the instance dialog open when create instance fails', () => {
-        presentationAssessmentService.createInstance.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        presentationAssessmentService.saveInstances.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreateInstance(presentationAssessment);
 
         component.handleInstanceDialogSave({ presentationDate, resultPoints: 10, studentLogins: ['student1'] });
 
-        expect(presentationAssessmentService.createInstance).toHaveBeenCalledOnce();
+        expect(presentationAssessmentService.saveInstances).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(1);
         expect(component.instanceDialogVisible()).toBe(true);
         expect(component.isSaving()).toBe(false);
     });
 
     it('should close the instance dialog after saving instances', () => {
-        presentationAssessmentService.createInstance.mockReturnValue(of(new HttpResponse({ body: {} })));
+        presentationAssessmentService.saveInstances.mockReturnValue(of(new HttpResponse({ body: [] })));
         component.startCreateInstance(presentationAssessment);
 
         component.handleInstanceDialogSave({ presentationDate, resultPoints: 10, studentLogins: ['student1'] });

@@ -18,7 +18,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -258,13 +258,37 @@ describe('CourseManagementContainerComponent', () => {
         await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(getSidebarItems).toHaveBeenCalledOnce();
+        expect(getSidebarItems).toHaveBeenCalledTimes(2);
         expect(subscribeToCourseUpdates).toHaveBeenCalledWith(1);
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             1,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
         );
+    });
+
+    it('should keep presentations hidden until a delayed feature toggle response enables them', async () => {
+        const presentationToggle = new Subject<boolean>();
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) =>
+            feature === FeatureToggle.PresentationAssessments ? presentationToggle : of(true),
+        );
+        vi.spyOn(courseService, 'find').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: { ...course1, presentationAssessmentsEnabled: true },
+                }),
+            ),
+        );
+
+        await component.ngOnInit();
+
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
+
+        presentationToggle.next(true);
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeTruthy();
+
+        presentationToggle.next(false);
+        expect(component.sidebarItems().find((item) => item.title === 'Presentations')).toBeUndefined();
     });
 
     it('should subscribe to profileService and set values correctly', async () => {

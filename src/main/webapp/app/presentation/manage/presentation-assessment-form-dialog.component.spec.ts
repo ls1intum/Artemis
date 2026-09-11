@@ -51,6 +51,20 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(component.exercises()).toEqual([exercise]);
     });
 
+    it('should preserve form edits when exercises are loaded asynchronously', () => {
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, exerciseId: exercise.id });
+        fixture.componentRef.setInput('exercises', []);
+        fixture.detectChanges();
+        component.editForm.patchValue({ title: 'Unsaved title', description: 'Unsaved description' });
+
+        fixture.componentRef.setInput('exercises', [exercise]);
+        fixture.detectChanges();
+
+        expect(component.editForm.controls.title.value).toBe('Unsaved title');
+        expect(component.editForm.controls.description.value).toBe('Unsaved description');
+        expect(component.editForm.controls.exercise.value).toBe(exercise);
+    });
+
     it('should reject invalid max points', () => {
         component.editForm.controls.maxPoints.setValue(0);
         expect(component.editForm.controls.maxPoints.hasError('min')).toBe(true);

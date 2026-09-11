@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
-import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 describe('PresentationAssessmentService', () => {
     let service: PresentationAssessmentService;
@@ -73,6 +73,24 @@ describe('PresentationAssessmentService', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/1` });
         req.flush(null);
+    });
+
+    it('should save presentation instances atomically and convert their dates', () => {
+        const presentationDate = dayjs('2026-07-20T10:00:00+02:00');
+        const instance: PresentationAssessmentInstance = { presentationDate, studentLogins: ['student1', 'student2'] };
+
+        service.saveInstances(courseId, 1, instance).subscribe((response) => {
+            expect(response.body).toHaveLength(2);
+            expect(dayjs.isDayjs(response.body?.[0].presentationDate)).toBe(true);
+        });
+
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/1/instances/batch` });
+        expect(req.request.body.presentationDate).toBe(presentationDate.toJSON());
+        expect(req.request.body.studentLogins).toEqual(['student1', 'student2']);
+        req.flush([
+            { id: 1, presentationDate: '2026-07-20T10:00:00+02:00', studentLogins: ['student1'] },
+            { id: 2, presentationDate: '2026-07-20T10:00:00+02:00', studentLogins: ['student2'] },
+        ]);
     });
 
     it('should find all students in the course', () => {

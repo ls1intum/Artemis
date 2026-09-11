@@ -14,7 +14,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let component: PresentationAssessmentInstanceFormDialogComponent;
     let saved: Mock<(value: PresentationAssessmentInstance) => void>;
 
-    const presentationDate = dayjs('2026-07-31T13:26:00+02:00');
+    const presentationDate = dayjs('2026-07-31T13:26:00');
 
     beforeEach(async () => {
         saved = vi.fn();
@@ -74,8 +74,8 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should combine the mandatory date with the optional time', () => {
-        component.editForm.controls.presentationDate.setValue(dayjs('2026-08-10T00:00:00+02:00'));
-        component.editForm.controls.presentationTime.setValue(dayjs('2026-08-03T14:45:00+02:00'));
+        component.editForm.controls.presentationDate.setValue(dayjs('2026-08-10T00:00:00'));
+        component.editForm.controls.presentationTime.setValue(dayjs('2026-08-03T14:45:00'));
 
         component.save();
 

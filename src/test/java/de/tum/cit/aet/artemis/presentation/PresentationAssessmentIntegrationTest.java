@@ -56,7 +56,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @BeforeEach
     void initTestCase() {
         featureToggleService.enableFeature(Feature.PresentationAssessments);
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setPresentationAssessmentsEnabled(true);
@@ -187,6 +187,26 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessment_belowExistingResult_shouldReturnBadRequest() throws Exception {
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(ZonedDateTime.now().plusDays(7));
+        instance.setResultPoints(18.0);
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        presentationAssessmentInstanceRepository.save(instance);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 10.0, course.getId(), null,
+                null, List.of());
+
+        request.put(getAssessmentUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
+        assertThat(storedAssessment.getMaxPoints()).isEqualTo(20.0);
+        assertThat(storedAssessment.getTitle()).isEqualTo("Initial presentation");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_withMismatchedCourseId_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, otherCourse.getId(),
                 null, null, List.of());
@@ -218,6 +238,14 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessments_withFeatureDisabled_shouldReturnForbidden() throws Exception {
+        featureToggleService.disableFeature(Feature.PresentationAssessments);
+
+        request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPresentationAssessments_withCourseSettingDisabled_shouldReturnForbidden() throws Exception {
         course.setPresentationAssessmentsEnabled(false);
         courseRepository.save(course);
 
@@ -281,6 +309,61 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
                 PresentationAssessmentInstanceDTO.class, HttpStatus.BAD_REQUEST);
 
         assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_shouldCreateOneInstancePerStudentAtomically() throws Exception {
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, ZonedDateTime.now().plusDays(14), 15.5,
+                List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, "Good presentation");
+
+        List<PresentationAssessmentInstanceDTO> result = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/batch", dto,
+                PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).allSatisfy(instance -> {
+            assertThat(instance.id()).isNotNull();
+            assertThat(instance.resultPoints()).isEqualTo(15.5);
+            assertThat(instance.studentLogins()).hasSize(1);
+        });
+        assertThat(result).flatExtracting(PresentationAssessmentInstanceDTO::studentLogins).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_withInvalidStudent_shouldNotPersistPartialResults() throws Exception {
+        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
+        PresentationAssessmentInstanceDTO dto = new PresentationAssessmentInstanceDTO(null, ZonedDateTime.now().plusDays(14), 15.5,
+                List.of(TEST_PREFIX + "student1", "unknown-student"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        request.post(getInstancesUrl(course, presentationAssessment) + "/batch", dto, HttpStatus.BAD_REQUEST);
+
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_shouldSplitSharedInstanceAtomically() throws Exception {
+        PresentationAssessmentInstanceDTO sharedDto = new PresentationAssessmentInstanceDTO(null, ZonedDateTime.now().plusDays(14), null,
+                List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+        PresentationAssessmentInstanceDTO sharedInstance = request.postWithResponseBody(getInstancesUrl(course, presentationAssessment), sharedDto,
+                PresentationAssessmentInstanceDTO.class, HttpStatus.CREATED);
+        PresentationAssessmentInstanceDTO assessedStudent = new PresentationAssessmentInstanceDTO(sharedInstance.id(), sharedInstance.presentationDate(), 18.5,
+                List.of(TEST_PREFIX + "student1"), sharedInstance.language(), sharedInstance.mode(), sharedInstance.location(), sharedInstance.meetingLink(), "Assessed");
+
+        List<PresentationAssessmentInstanceDTO> result = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/batch", assessedStudent,
+                PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).anySatisfy(instance -> {
+            assertThat(instance.studentLogins()).containsExactly(TEST_PREFIX + "student1");
+            assertThat(instance.resultPoints()).isEqualTo(18.5);
+            assertThat(instance.remark()).isEqualTo("Assessed");
+        });
+        assertThat(result).anySatisfy(instance -> {
+            assertThat(instance.studentLogins()).containsExactly(TEST_PREFIX + "student2");
+            assertThat(instance.resultPoints()).isNull();
+        });
     }
 
     private String getBaseUrl(Course course) {

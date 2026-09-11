@@ -83,7 +83,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private autoOrchestrationCourseId?: number;
     private autoOrchestrationActive = false;
-    private presentationAssessmentsToggleInitialized = false;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -115,7 +114,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
-    private presentationAssessmentsActive = signal(true);
+    private presentationAssessmentsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -159,10 +158,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
                 this.presentationAssessmentsActive.set(isActive);
-                if (this.presentationAssessmentsToggleInitialized) {
-                    this.sidebarItems.set(this.getSidebarItems());
-                }
-                this.presentationAssessmentsToggleInitialized = true;
+                this.sidebarItems.set(this.getSidebarItems());
             });
 
         this.featureToggleService

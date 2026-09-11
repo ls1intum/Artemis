@@ -5,12 +5,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -89,6 +91,11 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
+        double highestResultPoints = presentationAssessment.getInstances().stream().map(PresentationAssessmentInstance::getResultPoints).filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue).max().orElse(0.0);
+        if (dto.maxPoints() < highestResultPoints) {
+            throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME, "maxPointsBelowExistingResult");
+        }
         applyDto(presentationAssessment, dto);
         presentationAssessmentRepository.save(presentationAssessment);
     }
@@ -141,6 +148,42 @@ public class PresentationAssessmentService {
         return presentationAssessmentInstanceRepository.save(instance);
     }
 
+    /**
+     * Atomically creates individual instances for multiple students or updates/splits an existing shared instance.
+     *
+     * @param course       the owning course
+     * @param assessmentId the parent presentation assessment id
+     * @param dto          the instance data to persist
+     * @return all instances affected by the logical operation
+     */
+    @Transactional
+    public List<PresentationAssessmentInstance> saveInstances(Course course, long assessmentId, PresentationAssessmentInstanceDTO dto) {
+        PresentationAssessment assessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
+        if (dto.id() == null) {
+            List<PresentationAssessmentInstance> instances = dto.studentLogins().stream().distinct()
+                    .map(studentLogin -> createIndividualInstance(course, assessment, dto, studentLogin)).toList();
+            return presentationAssessmentInstanceRepository.saveAll(instances);
+        }
+
+        PresentationAssessmentInstance existingInstance = findInstanceElseThrow(course.getId(), assessmentId, dto.id());
+        if (existingInstance.getStudents().size() <= 1) {
+            applyInstanceDto(course, assessment, existingInstance, dto);
+            return List.of(presentationAssessmentInstanceRepository.save(existingInstance));
+        }
+
+        if (dto.studentLogins().size() != 1) {
+            throw new BadRequestAlertException("Exactly one student must be selected when splitting a shared instance", PresentationAssessmentInstance.ENTITY_NAME,
+                    "invalidStudentCountForSplit");
+        }
+        String editedStudentLogin = dto.studentLogins().getFirst();
+        User editedStudent = existingInstance.getStudents().stream().filter(student -> editedStudentLogin.equals(student.getLogin())).findFirst()
+                .orElseThrow(() -> new BadRequestAlertException("The selected student does not belong to the shared instance", PresentationAssessmentInstance.ENTITY_NAME,
+                        "studentNotInInstance"));
+        existingInstance.getStudents().remove(editedStudent);
+        PresentationAssessmentInstance editedInstance = createIndividualInstance(course, assessment, dto, editedStudentLogin);
+        return presentationAssessmentInstanceRepository.saveAll(List.of(existingInstance, editedInstance));
+    }
+
     public void deleteInstance(long courseId, long assessmentId, long instanceId) {
         presentationAssessmentInstanceRepository.delete(findInstanceElseThrow(courseId, assessmentId, instanceId));
     }
@@ -166,6 +209,18 @@ public class PresentationAssessmentService {
         instance.setLocation(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
         instance.setMeetingLink(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.ONLINE ? dto.meetingLink() : null);
         instance.setRemark(dto.remark());
+    }
+
+    private PresentationAssessmentInstance createIndividualInstance(Course course, PresentationAssessment assessment, PresentationAssessmentInstanceDTO dto, String studentLogin) {
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(assessment);
+        applyInstanceDto(course, assessment, instance, withStudentLogin(dto, studentLogin));
+        return instance;
+    }
+
+    private PresentationAssessmentInstanceDTO withStudentLogin(PresentationAssessmentInstanceDTO dto, String studentLogin) {
+        return new PresentationAssessmentInstanceDTO(null, dto.presentationDate(), dto.resultPoints(), List.of(studentLogin), dto.language(), dto.mode(), dto.location(),
+                dto.meetingLink(), dto.remark());
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {

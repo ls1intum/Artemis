@@ -114,7 +114,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
     private void seedOneRowForEveryReference() {
         long userId = target.getId();
         long courseId = course.getId();
-        Timestamp now = Timestamp.from(Instant.now());
+        Timestamp now = Timestamp.from(Instant.parse("2026-01-15T12:00:00Z"));
 
         long exerciseId = insert("exercise", values("discriminator", "T", "title", "Exercise", "course_id", courseId));
         long participationId = insert("participation", values("discriminator", "SP", "exercise_id", exerciseId, "student_id", bystander.getId()));

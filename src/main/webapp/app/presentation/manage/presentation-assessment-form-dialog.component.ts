@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 
@@ -77,14 +77,24 @@ export class PresentationAssessmentFormDialogComponent {
     constructor() {
         effect(() => {
             const presentationAssessment = this.presentationAssessment();
-            const exercises = this.exercises();
-            this.filteredExercises.set(exercises);
+            const exercises = untracked(this.exercises);
             this.editForm.reset({
                 title: presentationAssessment?.title ?? '',
                 description: presentationAssessment?.description ?? '',
                 maxPoints: presentationAssessment?.maxPoints,
                 exercise: exercises.find((exercise) => exercise.id === presentationAssessment?.exerciseId),
             });
+        });
+        effect(() => {
+            const exercises = this.exercises();
+            this.filteredExercises.set(exercises);
+            const presentationAssessment = untracked(this.presentationAssessment);
+            if (!this.editForm.controls.exercise.value && presentationAssessment?.exerciseId) {
+                this.editForm.controls.exercise.setValue(
+                    exercises.find((exercise) => exercise.id === presentationAssessment.exerciseId),
+                    { emitEvent: false },
+                );
+            }
         });
         effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
     }

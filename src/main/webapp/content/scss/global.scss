@@ -309,8 +309,10 @@ Generic styles
 // above. Suppress the global JHipster 5px red `border-left` "stick" that otherwise lands on the
 // p-datepicker host (when bound via formControlName + a validator) — it doesn't follow the input's
 // rounded corners and looks detached (PR #13009 review).
-jhi-date-time-picker.ng-invalid,
-p-datepicker.ng-invalid {
+jhi-date-time-picker.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']),
+jhi-date-time-picker.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']),
+p-datepicker.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']),
+p-datepicker.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']) {
     border-left-width: 0;
 }
 

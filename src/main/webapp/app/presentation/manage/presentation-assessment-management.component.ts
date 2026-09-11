@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, forkJoin } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -38,32 +38,24 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
-import { CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
+import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-
-type PresentationViewMode = 'presentations' | 'students';
-type AssessmentStatusFilter = 'all' | 'assessed' | 'pending';
-type PresentationTypeFilter = 'all' | 'standalone' | 'exercise';
-
-interface FilterOption<T> {
-    label: string;
-    value: T;
-}
-
-interface PresentationStudentRow {
-    studentLogin: string;
-    student: User;
-    presentationAssessment: PresentationAssessment;
-    instance: PresentationAssessmentInstance;
-}
-
-interface SelectedPresentationStudentRow {
-    student: User;
-    studentLogin: string;
-    presentationAssessment: PresentationAssessment;
-    instance?: PresentationAssessmentInstance;
-}
+import {
+    AssessmentStatusFilter,
+    FilterOption,
+    PresentationStudentRow,
+    PresentationTypeFilter,
+    PresentationViewMode,
+    SelectedPresentationStudentRow,
+    createPresentationSidebarData,
+    createSelectedStudentRows,
+    createStudentRows,
+    filterAndSortStudentRows,
+    filterStudentRowsBySearch,
+    hasResultPoints,
+    resolveStudentsByLogin,
+} from 'app/presentation/manage/presentation-assessment-management.helper';
 
 const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standalone: false, linkedToExercise: false };
 const PRESENTATION_SIDEBAR_COLLAPSE_STATE = presentationSidebarCollapseStateRecord as CollapseState;
@@ -148,72 +140,29 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         return this.presentationAssessments().find((assessment) => assessment.id === selectedId) ?? this.presentationAssessments()[0];
     });
     readonly studentRows = computed<PresentationStudentRow[]>(() => {
-        const studentsByLogin = new Map(
-            this.courseStudents()
-                .filter((student) => !!student.login)
-                .map((student) => [student.login!, student]),
-        );
-        return this.presentationAssessments().flatMap((presentationAssessment) =>
-            (presentationAssessment.instances ?? []).flatMap((instance) =>
-                (instance.studentLogins ?? []).map((studentLogin) => ({
-                    studentLogin,
-                    student: studentsByLogin.get(studentLogin) ?? new User(undefined, studentLogin),
-                    presentationAssessment,
-                    instance,
-                })),
-            ),
-        );
+        return createStudentRows(this.presentationAssessments(), this.courseStudents());
     });
-    readonly selectedInstances = computed(() => this.selectedPresentation()?.instances ?? []);
     readonly selectedPresentationStudentRows = computed<SelectedPresentationStudentRow[]>(() => {
-        const presentationAssessment = this.selectedPresentation();
-        if (!presentationAssessment) {
-            return [];
-        }
-        const studentsByLogin = new Map(
-            this.courseStudents()
-                .filter((student) => !!student.login)
-                .map((student) => [student.login!, student]),
-        );
-        return this.selectedInstances().flatMap((instance) =>
-            (instance.studentLogins ?? []).map((studentLogin) => ({
-                student: studentsByLogin.get(studentLogin) ?? new User(undefined, studentLogin),
-                studentLogin,
-                presentationAssessment,
-                instance,
-            })),
-        );
+        return createSelectedStudentRows(this.selectedPresentation(), this.courseStudents());
     });
     readonly filteredSelectedPresentationStudentRows = computed(() => {
-        const query = this.studentSearchTerm().trim().toLocaleLowerCase();
-        return query ? this.selectedPresentationStudentRows().filter((row) => row.studentLogin.toLocaleLowerCase().includes(query)) : this.selectedPresentationStudentRows();
+        return filterStudentRowsBySearch(this.selectedPresentationStudentRows(), this.studentSearchTerm());
     });
     readonly filteredStudentRows = computed(() => {
-        const query = this.studentSearchTerm().trim().toLocaleLowerCase();
-        const rows = this.studentRows().filter((row) => {
-            const matchesQuery =
-                !query ||
-                [row.studentLogin, row.student.name, row.student.firstName, row.student.lastName, row.student.email, row.presentationAssessment.title]
-                    .filter((value): value is string => !!value)
-                    .some((value) => value.toLocaleLowerCase().includes(query));
-            const matchesStatus =
-                this.assessmentStatusFilter() === 'all' ||
-                (this.assessmentStatusFilter() === 'assessed' ? this.hasResultPoints(row.instance.resultPoints) : !this.hasResultPoints(row.instance.resultPoints));
-            const matchesPresentation = this.presentationFilter() === 'all' || row.presentationAssessment.id === this.presentationFilter();
-            const matchesType =
-                this.presentationTypeFilter() === 'all' ||
-                (this.presentationTypeFilter() === 'exercise' ? !!row.presentationAssessment.exerciseId : !row.presentationAssessment.exerciseId);
-            return matchesQuery && matchesStatus && matchesPresentation && matchesType;
+        return filterAndSortStudentRows(this.studentRows(), {
+            query: this.studentSearchTerm(),
+            status: this.assessmentStatusFilter(),
+            presentation: this.presentationFilter(),
+            type: this.presentationTypeFilter(),
+            sortField: this.studentSortField(),
+            sortOrder: this.studentSortOrder(),
         });
-        const field = this.studentSortField();
-        const order = this.studentSortOrder();
-        return [...rows].sort((first, second) => this.compareStudentRows(first, second, field) * order);
     });
     readonly paginatedStudentRows = computed(() => {
         const start = this.overviewPage() * this.overviewPageSize();
         return this.filteredStudentRows().slice(start, start + this.overviewPageSize());
     });
-    readonly assessedStudentCount = computed(() => this.studentRows().filter((row) => this.hasResultPoints(row.instance.resultPoints)).length);
+    readonly assessedStudentCount = computed(() => this.studentRows().filter((row) => hasResultPoints(row.instance.resultPoints)).length);
     readonly pendingStudentCount = computed(() => this.studentRows().length - this.assessedStudentCount());
     readonly presentationFilterOptions = computed<FilterOption<number | 'all'>[]>(() => [
         { label: this.translateService.instant('artemisApp.presentationAssessment.filter.allPresentations'), value: 'all' },
@@ -224,40 +173,16 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         { label: this.translateService.instant('artemisApp.presentationAssessment.standalone'), value: 'standalone' },
         { label: this.translateService.instant('artemisApp.presentationAssessment.linkedToExercise'), value: 'exercise' },
     ]);
-    readonly sidebarData = computed<SidebarData>(() => {
-        const overview: SidebarCardElement = {
-            id: 'overview',
-            title: this.translateService.instant('artemisApp.presentationAssessment.overallOverview'),
-            icon: this.faUsers,
-            size: 'M',
-            active: this.viewMode() === 'students',
-            disableNavigation: true,
-        };
-        const standalonePresentations = this.presentationAssessments()
-            .filter((assessment) => !assessment.exerciseId)
-            .sort((first, second) => (first.title ?? '').localeCompare(second.title ?? ''));
-        const linkedPresentations = this.presentationAssessments()
-            .filter((assessment) => !!assessment.exerciseId)
-            .sort((first, second) => (first.exerciseTitle ?? '').localeCompare(second.exerciseTitle ?? '') || (first.title ?? '').localeCompare(second.title ?? ''));
-        return {
-            groupByCategory: true,
-            sidebarType: 'default',
-            storageId: 'presentationAssessment',
-            pinnedData: [overview],
-            groupedData: {
-                standalone: {
-                    entityData: standalonePresentations.map((assessment) => this.toSidebarItem(assessment)),
-                    isHideCount: true,
-                    translationKey: 'artemisApp.presentationAssessment.standalone',
-                },
-                linkedToExercise: {
-                    entityData: linkedPresentations.map((assessment) => this.toSidebarItem(assessment, true)),
-                    isHideCount: true,
-                    translationKey: 'artemisApp.presentationAssessment.linkedToExercise',
-                },
-            },
-        };
-    });
+    readonly sidebarData = computed(() =>
+        createPresentationSidebarData(
+            this.presentationAssessments(),
+            this.viewMode(),
+            this.selectedPresentationId(),
+            (key) => this.translateService.instant(key),
+            this.faUsers,
+            this.faLink,
+        ),
+    );
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -467,17 +392,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.dialogInstancePresentationAssessment.set(presentationAssessment);
         this.dialogInstance.set(instance);
         this.dialogInstanceStudentLogin.set(studentLogin);
-        this.dialogAssignedStudents.set(this.resolveStudentsByLogin(studentLogin ? [studentLogin] : (instance?.studentLogins ?? [])));
+        this.dialogAssignedStudents.set(resolveStudentsByLogin(this.courseStudents(), studentLogin ? [studentLogin] : (instance?.studentLogins ?? [])));
         this.instanceDialogVisible.set(true);
-    }
-
-    private resolveStudentsByLogin(studentLogins: string[]): User[] {
-        const studentsByLogin = new Map(
-            this.courseStudents()
-                .filter((student) => !!student.login)
-                .map((student) => [student.login!, student]),
-        );
-        return studentLogins.map((login) => studentsByLogin.get(login) ?? new User(undefined, login));
     }
 
     handleInstanceDialogSave(result: PresentationAssessmentInstance): void {
@@ -486,31 +402,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
         this.isSaving.set(true);
-        const originalInstance = this.dialogInstance();
-        const editedStudentLogin = this.dialogInstanceStudentLogin();
-        const originalStudentLogins = originalInstance?.studentLogins ?? [];
-        let request: Observable<unknown>;
-        if (result.id && originalInstance && editedStudentLogin && originalStudentLogins.length > 1) {
-            const remainingInstance = deepClone(originalInstance);
-            remainingInstance.studentLogins = originalStudentLogins.filter((login) => login !== editedStudentLogin);
-            const editedInstance = deepClone(result);
-            editedInstance.id = undefined;
-            editedInstance.studentLogins = [editedStudentLogin];
-            request = forkJoin([
-                this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id, remainingInstance),
-                this.presentationAssessmentService.createInstance(this.courseId(), presentationAssessment.id, editedInstance),
-            ]);
-        } else if (result.id) {
-            request = this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id, result);
-        } else {
-            request = forkJoin(
-                (result.studentLogins ?? []).map((studentLogin) => {
-                    const studentInstance = deepClone(result);
-                    studentInstance.studentLogins = [studentLogin];
-                    return this.presentationAssessmentService.createInstance(this.courseId(), presentationAssessment.id!, studentInstance);
-                }),
-            );
-        }
+        const request = this.presentationAssessmentService.saveInstances(this.courseId(), presentationAssessment.id, result);
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
             next: () => {
                 this.instanceDialogVisible.set(false);
@@ -528,52 +420,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     hasResultPoints(resultPoints: number | null | undefined): resultPoints is number {
-        return resultPoints !== undefined && resultPoints !== null;
+        return hasResultPoints(resultPoints);
     }
 
     studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
         return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
-    }
-
-    private compareStudentRows(first: PresentationStudentRow, second: PresentationStudentRow, field: string): number {
-        const firstValue = this.studentSortValue(first, field);
-        const secondValue = this.studentSortValue(second, field);
-        if (firstValue === secondValue) {
-            return 0;
-        }
-        if (firstValue === undefined) {
-            return 1;
-        }
-        if (secondValue === undefined) {
-            return -1;
-        }
-        return firstValue < secondValue ? -1 : 1;
-    }
-
-    private studentSortValue(row: PresentationStudentRow, field: string): string | number | undefined {
-        switch (field) {
-            case 'studentLogin':
-                return row.studentLogin.toLocaleLowerCase();
-            case 'presentationTitle':
-                return row.presentationAssessment.title?.toLocaleLowerCase();
-            case 'presentationDate':
-                return row.instance.presentationDate?.valueOf();
-            case 'resultPoints':
-                return row.instance.resultPoints ?? undefined;
-            default:
-                return undefined;
-        }
-    }
-
-    private toSidebarItem(assessment: PresentationAssessment, showExerciseTitle = false): SidebarCardElement {
-        return {
-            id: assessment.id!,
-            title: assessment.title ?? '',
-            subtitleLeft: showExerciseTitle ? assessment.exerciseTitle : undefined,
-            subtitleLeftIcon: showExerciseTitle ? this.faLink : undefined,
-            size: 'M',
-            active: this.viewMode() === 'presentations' && this.selectedPresentationId() === assessment.id,
-            disableNavigation: true,
-        };
     }
 }
