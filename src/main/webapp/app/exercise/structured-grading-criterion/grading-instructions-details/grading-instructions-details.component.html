@@ -67,7 +67,7 @@
                                     [ngModelOptions]="{ standalone: true }"
                                     [disabled]="!editable()"
                                     (change)="onCriterionTitleChange($event, criterion)"
-                                    placeholder="Criterion Title"
+                                    [placeholder]="'artemisApp.exercise.criterionTitlePlaceholder' | artemisTranslate"
                                 />
                             </div>
                             <tum-ui-button
