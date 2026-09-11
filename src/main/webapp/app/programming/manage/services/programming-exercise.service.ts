@@ -516,7 +516,10 @@ export class ProgrammingExerciseService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)),
+                switchMap((res) => this.persistHyperionChecklistLinkProvenance(programmingExercise, res)),
+            );
     }
 
     /**

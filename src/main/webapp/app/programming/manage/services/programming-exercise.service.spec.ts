@@ -476,6 +476,24 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expected);
     });
 
+    it('should persist Hyperion checklist link provenance after reevaluating an exercise', () => {
+        const course = Object.assign(new Course(), { id: 7 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.id = 123;
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+        httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${exercise.id}/re-evaluate` }).flush(exercise);
+        const provenanceRequest = httpMock.expectOne({
+            method: 'PUT',
+            url: 'api/atlas/courses/7/exercises/123/competency-links/generated-from-hyperion-checklist',
+        });
+        expect(provenanceRequest.request.body).toEqual([5]);
+        provenanceRequest.flush(null);
+    });
+
     it('should get theia config', () => {
         const exerciseId = 123;
         const expectedConfig = { dockerImage: 'theia:latest' };
