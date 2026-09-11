@@ -38,6 +38,7 @@ api/hyperion-quiz-question-generation-resources.ts
 api/quiz-submission-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
+api/quiz-exercise-evaluation-resources.ts
 api/quiz-statistics-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/legacy-calendar-resources.ts
@@ -49,4 +50,5 @@ api/hyperion-faq-resources.ts
 api/quiz-exercise-resources.ts
 api/calendar-resources.ts
 api/quiz-training-resources.ts
+api/quiz-exercise-creation-update-resources.ts
 api/quiz-exercise-batch-resources.ts

@@ -1,6 +1,6 @@
 /// <reference types="node" />
 
-import { Node, Project, SourceFile } from "ts-morph";
+import { Node, Project, SourceFile, SyntaxKind } from "ts-morph";
 import { join } from "path";
 import { readFileSync, readdirSync, statSync, writeFileSync } from "fs";
 import { parse } from "yaml";
@@ -33,6 +33,45 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: Sour
         }
     }
     return renamedMethodsInFile;
+};
+
+const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serializedPartsInFile: number) => {
+    const generatedModelTypes = new Set(
+        sourceFile
+            .getImportDeclarations()
+            .filter((declaration) => declaration.getModuleSpecifierValue().includes("/model/"))
+            .flatMap((declaration) => declaration.getNamedImports().map((namedImport) => namedImport.getName())),
+    );
+
+    for (const callExpression of sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+        if (callExpression.getExpression().getText() !== "formData.append") {
+            continue;
+        }
+
+        const [partName, formDataValue] = callExpression.getArguments();
+        if (!Node.isStringLiteral(partName) || partName.getLiteralValue() !== "exercise") {
+            continue;
+        }
+        const formDataValueText = formDataValue.getText();
+        if (Node.isNewExpression(formDataValue) && formDataValueText.startsWith("new Blob([JSON.stringify(") && formDataValueText.includes("type: 'application/json'")) {
+            serializedPartsInFile++;
+            continue;
+        }
+        if (!Node.isIdentifier(formDataValue)) {
+            throw new Error(`Cannot serialize multipart exercise part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        const parameterDeclaration = formDataValue.getSymbol()?.getDeclarations().find(Node.isParameterDeclaration);
+        const parameterType = parameterDeclaration?.getTypeNode()?.getText();
+        if (!parameterType || !generatedModelTypes.has(parameterType)) {
+            throw new Error(`Multipart exercise part is not a generated model in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        formDataValue.replaceWithText(`new Blob([JSON.stringify(${formDataValue.getText()})], { type: 'application/json' })`);
+        serializedPartsInFile++;
+    }
+
+    return serializedPartsInFile;
 };
 
 interface OpenApiSpecification {
@@ -145,10 +184,12 @@ const main = async () => {
     const typeChecker = project.getTypeChecker();
     let totalRemovedImports = 0;
     let totalRenamedMethods = 0;
+    let totalSerializedFormDataParts = 0;
 
     for (const sourceFile of project.getSourceFiles()) {
         let removedImportsInFile = 0;
         let renamedMethodsInFile = 0;
+        let serializedPartsInFile = 0;
 
         for (const importDeclaration of sourceFile.getImportDeclarations()) {
             for (const namedImport of importDeclaration.getNamedImports()) {
@@ -180,20 +221,28 @@ const main = async () => {
         }
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
+        serializedPartsInFile = serializeGeneratedModelFormDataParts(sourceFile, serializedPartsInFile);
         const path = sourceFile.getFilePath();
         const content = sourceFile.getFullText().replace(/[ \t]+(?=\r?$)/gm, "").replace(/(?:\r?\n)+$/, "\n");
         const fixedContent = isWindows ? content.replace(/\r?\n/g, "\r\n") : content;
 
         writeFileSync(path, fixedContent, "utf8");
-        if (removedImportsInFile + renamedMethodsInFile > 0) {
+        if (removedImportsInFile + renamedMethodsInFile + serializedPartsInFile > 0) {
             totalRemovedImports += removedImportsInFile;
             totalRenamedMethods += renamedMethodsInFile;
-            console.log(`🧹 Removed ${removedImportsInFile} imports, renamed ${renamedMethodsInFile} methods in ${sourceFile.getBaseName()}`);
+            totalSerializedFormDataParts += serializedPartsInFile;
+            console.log(
+                `🧹 Removed ${removedImportsInFile} imports, renamed ${renamedMethodsInFile} methods, serialized ${serializedPartsInFile} multipart model parts in ${sourceFile.getBaseName()}`,
+            );
         }
     }
 
+    if (totalSerializedFormDataParts === 0) {
+        throw new Error("No generated multipart exercise parts were serialized");
+    }
+
     console.log(
-        `✅ Done. Total imports removed: ${totalRemovedImports}, methods renamed: ${totalRenamedMethods}, oneOf models converted to union types: ${totalReplacedUnionModels}`,
+        `✅ Done. Total imports removed: ${totalRemovedImports}, methods renamed: ${totalRenamedMethods}, multipart model parts serialized: ${totalSerializedFormDataParts}, oneOf models converted to union types: ${totalReplacedUnionModels}`,
     );
 };
 

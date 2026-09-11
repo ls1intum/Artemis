@@ -10,7 +10,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MultipleChoiceQuestionReEvaluateDTO(@NotNull Long id, @NotEmpty String title, @NotNull ScoringType scoringType, @NotNull Boolean randomizeOrder,
         @NotNull Boolean invalid, String text, String hint, String explanation, @NotEmpty List<@Valid AnswerOptionReEvaluateDTO> answerOptions)
