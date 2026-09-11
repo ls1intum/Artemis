@@ -22,6 +22,9 @@ const TIME_ZONE = 'Europe/Berlin';
 /** Pinned, so "today", the month the calendar opens on and what counts as upcoming are all fixed. */
 const TODAY = new Date('2025-12-10T09:00:00Z');
 
+/** Comfortably past the wait the page puts in front of a session count. */
+const SETTLED = 500;
+
 const course = { id: 42, title: 'Introduction to Programming', timeZone: TIME_ZONE, isAtLeastInstructor: true } as Course;
 
 /**
@@ -294,6 +297,18 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(component['sessionCountsByDay']().has('2025-12-17')).toBe(false);
     });
 
+    it('should clear what it holds when the reload after a change fails', () => {
+        expect(component['holidays']()).toHaveLength(2);
+
+        vi.mocked(configurationService.getOneOfCourse).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component['loadConfiguration']();
+
+        // A holiday that was just deleted must not stay on the page offering itself for editing.
+        expect(component['holidays']()).toHaveLength(0);
+        expect(component['configuration']()).toBeUndefined();
+        expect(component['isLoading']()).toBe(false);
+    });
+
     it('should keep the newest configuration when an older reload answers last', () => {
         // Deleting and saving in quick succession leaves two reloads in flight; the earlier one still holds the
         // holiday that has just gone, and letting it land last would put it back on the page.
@@ -370,6 +385,21 @@ describe('TutorialGroupHolidaysComponent', () => {
         vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         component['onDialogSpanChange']({ start: dayjs('2025-12-23T00:00'), end: dayjs('2025-12-23T23:59') });
         vi.advanceTimersByTime(500);
+
+        expect(component['dialogSessionCount']()).toBe(0);
+    });
+
+    it('should not let a count already in flight land against the span the reader moved to', () => {
+        // The request for the first span is on its way when the reader picks another. Waiting before switching would
+        // leave it subscribed, and its answer would appear under a span it was never counted for.
+        const firstAnswer = new Subject<number>();
+        vi.mocked(freePeriodService.getOverlappingSessionCount).mockReturnValueOnce(firstAnswer);
+
+        component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-22T23:59') });
+        vi.advanceTimersByTime(SETTLED);
+
+        component['onDialogSpanChange']({ start: dayjs('2025-12-23T09:00'), end: dayjs('2025-12-23T10:00') });
+        firstAnswer.next(7);
 
         expect(component['dialogSessionCount']()).toBe(0);
     });

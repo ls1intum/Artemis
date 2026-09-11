@@ -3,8 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { EMPTY, Subject } from 'rxjs';
-import { catchError, debounceTime, finalize, switchMap } from 'rxjs/operators';
+import { EMPTY, Subject, timer } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
@@ -186,23 +186,32 @@ export class TutorialGroupHolidaysComponent {
     private countSessionsForSpansChosenInTheDialog(): void {
         this.dialogSpanRequests
             .pipe(
-                debounceTime(SESSION_COUNT_DEBOUNCE_MS),
-                // The course id is captured per request rather than asserted, so a span arriving before the route
-                // resolves is dropped instead of throwing inside the stream and killing it for the rest of the page.
-                switchMap((span) => {
-                    const courseId = this.course()?.id;
-                    if (courseId === undefined) {
-                        return EMPTY;
-                    }
-                    // Caught inside the switch: an error reaching the outer subscription would close this pipeline, and
-                    // every later date the reader picks would go uncounted until the page is reloaded.
-                    return this.freePeriodService.getOverlappingSessionCount(courseId, span.start, span.end, this.editedHoliday()?.period.id).pipe(
-                        catchError((response: HttpErrorResponse) => {
-                            onError(this.alertService, response);
-                            return EMPTY;
+                /*
+                 * The wait is inside the switch rather than a debounceTime in front of it. Debouncing first leaves a
+                 * request already on its way subscribed for the whole of the next wait, so its answer could land
+                 * against a span the reader had already moved off and put that count back on screen. Switching first
+                 * drops the pending wait and any request in flight the moment a new span arrives.
+                 */
+                switchMap((span) =>
+                    timer(SESSION_COUNT_DEBOUNCE_MS).pipe(
+                        switchMap(() => {
+                            // The course id is read per request rather than asserted, so a span arriving before the
+                            // route resolves is dropped instead of throwing inside the stream and killing it.
+                            const courseId = this.course()?.id;
+                            if (courseId === undefined) {
+                                return EMPTY;
+                            }
+                            // Caught inside the switch: an error reaching the outer subscription would close this
+                            // pipeline, and every later date the reader picks would go uncounted until a reload.
+                            return this.freePeriodService.getOverlappingSessionCount(courseId, span.start, span.end, this.editedHoliday()?.period.id).pipe(
+                                catchError((response: HttpErrorResponse) => {
+                                    onError(this.alertService, response);
+                                    return EMPTY;
+                                }),
+                            );
                         }),
-                    );
-                }),
+                    ),
+                ),
                 takeUntilDestroyed(),
             )
             .subscribe((count) => this.dialogSessionCount.set(count));
@@ -249,7 +258,11 @@ export class TutorialGroupHolidaysComponent {
                     this.configurationService.getOneOfCourse(courseId).pipe(
                         catchError((response: HttpErrorResponse) => {
                             onError(this.alertService, response);
-                            this.isLoading.set(false);
+                            // What is on screen was read before the save or the delete that asked for this reload, so
+                            // it may show a holiday that is already gone. Nothing is better than something known to be
+                            // wrong: the alert says why the page is empty, and clicking through to a holiday that no
+                            // longer exists is not offered.
+                            this.forgetLoadedConfiguration();
                             return EMPTY;
                         }),
                     ),
@@ -264,6 +277,15 @@ export class TutorialGroupHolidaysComponent {
                 this.loadSessionCounts();
                 this.loadSessionCountsPerHoliday();
             });
+    }
+
+    /** Drops everything read from the configuration, so nothing outlives a reload that failed. */
+    private forgetLoadedConfiguration(): void {
+        this.configuration.set(undefined);
+        this.freePeriods.set([]);
+        this.sessionCountsByHoliday.set(new Map());
+        this.sessionCountsByDay.set(new Map());
+        this.isLoading.set(false);
     }
 
     private loadConfiguration(): void {
