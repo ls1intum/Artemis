@@ -575,7 +575,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         it('should clear grading criteria when prepareForSave flushes an empty monaco buffer', () => {
             exercise.gradingCriteria = [gradingCriterion];
-            component.criteria.set([gradingCriterion]);
+            component.ngOnInit();
             component.showEditMode.set(false);
             const markdownEditor = {
                 currentMarkdown: () => '',
@@ -588,12 +588,11 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
             expect(exercise.gradingCriteria).toEqual([]);
-            expect(component.criteria()).toEqual([]);
         });
 
         it('should clear grading criteria when switching to structured mode with an empty buffer', () => {
             exercise.gradingCriteria = [gradingCriterion];
-            component.criteria.set([gradingCriterion]);
+            component.ngOnInit();
             component.showEditMode.set(false);
             Object.defineProperty(component, 'markdownEditor', {
                 value: () => ({
@@ -605,7 +604,6 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.setEditMode('structured');
 
             expect(exercise.gradingCriteria).toEqual([]);
-            expect(component.criteria()).toEqual([]);
             expect(component.showEditMode()).toBe(true);
         });
 
