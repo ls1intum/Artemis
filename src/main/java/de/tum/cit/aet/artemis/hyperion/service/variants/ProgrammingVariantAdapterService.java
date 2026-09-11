@@ -75,6 +75,18 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
      */
     private static final Pattern TASK_MARKER = Pattern.compile("\\[task]\\[[^\\[\\]]*]\\([^()]*\\)");
 
+    /** Opening code fence directly above an {@code @startuml} block, with the block start captured. */
+    private static final Pattern PLANTUML_OPENING_FENCE = Pattern.compile("(?m)^[ \\t]*```[\\w-]*[ \\t]*\\n(\\s*@startuml)");
+
+    /** Closing code fence directly below an {@code @enduml} block, with the block end captured. */
+    private static final Pattern PLANTUML_CLOSING_FENCE = Pattern.compile("(?m)(@enduml)\\s*\\n[ \\t]*```[ \\t]*$");
+
+    private static final Pattern REPEATED_COMMA = Pattern.compile(",{2,}");
+
+    private static final Pattern COMMA_AFTER_OPENING_PAREN = Pattern.compile("\\(\\s*,");
+
+    private static final Pattern COMMA_BEFORE_CLOSING_PAREN = Pattern.compile(",\\s*\\)");
+
     /** Suffix-retry budget for short-name/project-key collisions. */
     private static final int MAX_NAME_ATTEMPTS = 300;
 
@@ -454,7 +466,8 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         if (problemStatement == null) {
             return null;
         }
-        return problemStatement.replaceAll("(?m)^[ \\t]*```[\\w-]*[ \\t]*\\n(\\s*@startuml)", "$1").replaceAll("(?m)(@enduml)\\s*\\n[ \\t]*```[ \\t]*$", "$1");
+        String withoutOpeningFence = PLANTUML_OPENING_FENCE.matcher(problemStatement).replaceAll("$1");
+        return PLANTUML_CLOSING_FENCE.matcher(withoutOpeningFence).replaceAll("$1");
     }
 
     /**
@@ -498,7 +511,9 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
     /** Collapses ",,", "( ," and ", )" inside a single task marker's reference list. */
     private static String tidySeparators(String taskMarker) {
-        return taskMarker.replaceAll(",{2,}", ",").replaceAll("\\(\\s*,", "(").replaceAll(",\\s*\\)", ")");
+        String collapsed = REPEATED_COMMA.matcher(taskMarker).replaceAll(",");
+        String withoutLeadingComma = COMMA_AFTER_OPENING_PAREN.matcher(collapsed).replaceAll("(");
+        return COMMA_BEFORE_CLOSING_PAREN.matcher(withoutLeadingComma).replaceAll(")");
     }
 
     /** PascalCases the alphanumeric words of the title into a valid exercise short name (starts with a letter, ≥3 chars). */

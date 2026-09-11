@@ -455,9 +455,16 @@ public class HyperionProgrammingExerciseContextRendererService {
             Path repositoryPath = solutionRepository.getLocalPath();
             StringBuilder solutionCode = new StringBuilder();
 
-            try {
-                Files.walk(repositoryPath).filter(path -> path.toString().endsWith(".java")).filter(path -> path.toString().contains("src/")).filter(Files::isRegularFile)
-                        .forEach(path -> {
+            // Files.walk holds an open directory handle, so it belongs in a try-with-resources like the other two
+            // walks in this class. A solution repository is scanned once per Hyperion request, so a leaked handle
+            // here accumulates for the lifetime of the node.
+            try (var paths = Files.walk(repositoryPath)) {
+                // The source root is matched on the path relative to the repository, with separators normalised: the
+                // absolute path uses a backslash on Windows, so a plain contains("src/") found nothing there and the
+                // method silently fell back to "no solution code". Relativizing also stops a repository whose own
+                // location happens to contain "src/" from matching every file.
+                paths.filter(path -> path.toString().endsWith(".java")).filter(path -> repositoryPath.relativize(path).toString().replace('\\', '/').contains("src/"))
+                        .filter(Files::isRegularFile).forEach(path -> {
                             try {
                                 String content = Files.readString(path);
                                 solutionCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n");

@@ -16,9 +16,9 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -62,7 +62,7 @@ class QuizVariantTools implements VariantToolset {
 
     private final QuizExerciseService quizExerciseService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private volatile String finishSummary;
 
@@ -71,7 +71,7 @@ class QuizVariantTools implements VariantToolset {
     private final VariantRoundBudget budget;
 
     QuizVariantTools(long quizExerciseId, String jobId, ExerciseVariantJobService jobService, QuizExerciseRepository quizExerciseRepository,
-            QuizExerciseService quizExerciseService, ObjectMapper objectMapper) {
+            QuizExerciseService quizExerciseService, JsonMapper objectMapper) {
         this.quizExerciseId = quizExerciseId;
         this.jobId = jobId;
         this.jobService = jobService;
@@ -130,10 +130,9 @@ class QuizVariantTools implements VariantToolset {
             return "Error: the \"questionJson\" argument is required — pass the full question JSON.";
         }
         try {
-            // Statistics MUST be fetched eagerly: QuizService.save re-initializes/fixes the per-question
-            // statistic objects, and a lazy statistic proxy on this detached instance would throw a
-            // LazyInitializationException on save.
-            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+            // Categories and batches MUST be fetched eagerly: QuizExerciseService.save walks both, and a lazy
+            // proxy on this detached instance would throw a LazyInitializationException on save.
+            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
             String error = replaceQuestion(quiz, index, questionJson);
             if (error != null) {
                 return "Error: " + error;
@@ -165,7 +164,8 @@ class QuizVariantTools implements VariantToolset {
             return "Error: no question edits were provided. Pass at least one { index, questionJson } edit.";
         }
         try {
-            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+            // Categories and batches MUST be fetched eagerly (see updateQuestion).
+            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
             StringBuilder report = new StringBuilder();
             int appliedCount = 0;
             for (int position = 0; position < edits.size(); position++) {
@@ -203,7 +203,7 @@ class QuizVariantTools implements VariantToolset {
 
     /**
      * Replaces the question at {@code index} of {@code quiz} in memory with the deserialized {@code questionJson}
-     * (id, statistic, and child back-references restored). Shared by the single {@link #updateQuestion} and the
+     * (id and child back-references restored). Shared by the single {@link #updateQuestion} and the
      * batch {@link #updateQuestions} tools so the validation and reconnection rules are defined once; the caller
      * saves the quiz. Returns a precise, model-facing reason (WITHOUT an "Error: " prefix) on rejection, or
      * {@code null} when the replacement was applied.
@@ -233,10 +233,6 @@ class QuizVariantTools implements VariantToolset {
             return imageError;
         }
         updated.setId(existing.getId());
-        // Keep the persisted statistic: the JSON payload has none, and QuizService.save would otherwise
-        // create a second statistic for the same question. The save path reconciles the statistic's
-        // counters with the (possibly changed) options/spots, same as the quiz editor's update flow.
-        updated.setQuizQuestionStatistic(existing.getQuizQuestionStatistic());
         // Grading metadata is invariant across a variant: the plan and the prompt both declare it, but a
         // replacement that changes points or scoring type still deserializes and still passes isValid(), and
         // QuizExerciseService.save recomputes the quiz maximum from the question points. Restore both from the
@@ -248,12 +244,9 @@ class QuizVariantTools implements VariantToolset {
                     + "consistent drag-and-drop/short-answer mappings, valid scoring type). Fix the question and try again.";
         }
         questions.set(index, updated);
-        // The child side owns every FK here (question -> exercise, option/mapping -> question, statistic ->
-        // question), and all those back-references are @JsonIgnore'd, so they are null on the deserialized
-        // instance. Saving without restoring them writes NULL FKs: the question row is orphaned and the
-        // @OrderColumn list comes back with a null gap (observed as an NPE in VERIFYING). Same wiring as
-        // QuizConfiguration.reconnectJSONIgnoreAttributes, but only for the replaced question — the full
-        // reconnect walks lazy statistic-counter collections this detached graph has not fetched.
+        // The child side owns the FK here (question -> exercise), and that back-reference is @JsonIgnore'd, so it
+        // is null on the deserialized instance. Saving without restoring it writes a NULL FK: the question row is
+        // orphaned and the @OrderColumn list comes back with a null gap (observed as an NPE in VERIFYING).
         reconnectReplacedQuestion(quiz, updated);
         return null;
     }
@@ -286,7 +279,7 @@ class QuizVariantTools implements VariantToolset {
      * erased runtime type makes Jackson skip the {@code @JsonTypeInfo} discriminator, so the emitted JSON
      * would lack exactly the {@code "type"} field {@link #updateQuestion} requires the model to echo back.
      */
-    static String serializeQuestions(ObjectMapper objectMapper, List<QuizQuestion> questions) throws JsonProcessingException {
+    static String serializeQuestions(JsonMapper objectMapper, List<QuizQuestion> questions) {
         return objectMapper.writerWithDefaultPrettyPrinter().forType(new TypeReference<List<QuizQuestion>>() {
         }).writeValueAsString(questions);
     }
@@ -354,14 +347,10 @@ class QuizVariantTools implements VariantToolset {
      * Restores the @JsonIgnore'd child-to-parent pointer of one deserialized question so it is written correctly on
      * save. Answer options / drop locations / drag items / correct mappings / spots / solutions no longer carry a
      * back-reference (they are stored id-based inside the question's {@code content} JSON column, see
-     * {@code QuizConfiguration.reconnectJSONIgnoreAttributes}); only the question's own statistic and its parent
-     * exercise still need reconnecting.
+     * {@code QuizConfiguration.reconnectJSONIgnoreAttributes}); only the parent exercise still needs reconnecting.
      */
     private static void reconnectReplacedQuestion(QuizExercise quiz, QuizQuestion question) {
         question.setExercise(quiz);
-        if (question.getQuizQuestionStatistic() != null) {
-            question.getQuizQuestionStatistic().setQuestion(question);
-        }
         switch (question) {
             case ShortAnswerQuestion saQuestion -> reconnectShortAnswerMappings(saQuestion);
             default -> {

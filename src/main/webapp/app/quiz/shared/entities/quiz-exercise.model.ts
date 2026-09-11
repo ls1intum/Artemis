@@ -1,6 +1,5 @@
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizQuestion, resetQuizQuestionForImport } from 'app/quiz/shared/entities/quiz-question.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -45,7 +44,6 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
     public remainingNumberOfAttempts?: number;
     public randomizeQuestionOrder?: boolean;
     public duration?: number;
-    public quizPointStatistic?: QuizPointStatistic;
     public quizQuestions?: QuizQuestion[];
     public status?: QuizStatus;
     public quizMode?: QuizMode = QuizMode.INDIVIDUAL; // default value

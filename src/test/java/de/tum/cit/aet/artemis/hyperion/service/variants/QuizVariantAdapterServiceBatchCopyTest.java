@@ -16,10 +16,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
@@ -62,12 +61,12 @@ class QuizVariantAdapterServiceBatchCopyTest {
         quizExerciseImportService = mock(QuizExerciseImportService.class);
 
         adapters = new QuizVariantAdapterService(quizExerciseRepository, quizExerciseImportService, mock(QuizExerciseService.class), mock(VariantPlacementService.class),
-                mock(ExerciseVariantJobService.class), new ObjectMapper(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class), mock(UserRepository.class),
-                mock(ExerciseDeletionService.class), null);
+                mock(ExerciseVariantJobService.class), JsonObjectMapper.get(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class),
+                mock(UserRepository.class), mock(ExerciseDeletionService.class), null);
 
         // Every load returns its own detached graph, which is what the repository does outside a transaction — the
         // whole point being that the two roles must not end up sharing one object.
-        when(quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(SOURCE_ID))
+        when(quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(SOURCE_ID))
                 .thenAnswer(invocation -> Optional.of(synchronizedQuizWithTwoBatches()));
 
         QuizExercise provisioned = new QuizExercise();

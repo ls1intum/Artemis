@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -61,7 +61,7 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
 
     private final ExerciseVariantJobService jobService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final HyperionPromptTemplateService templateService;
 
@@ -75,7 +75,7 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
     private final ChatClient chatClient;
 
     public QuizVariantAdapterService(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
-            VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
+            VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, JsonMapper objectMapper, HyperionPromptTemplateService templateService,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ExerciseDeletionService exerciseDeletionService, @Nullable ChatClient chatClient) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
@@ -138,13 +138,13 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
         }
         // Same eager graph as the REST import path — the import service deep-copies questions (incl. DnD images
         // via copyDragItemFile), mappings, and batches from this instance.
-        QuizExercise original = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
+        QuizExercise original = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
                 .orElseThrow(() -> new EntityNotFoundException("QuizExercise", source.getId()));
         // A SECOND, separate instance of the same row plays the import's source role. The import resets the target's
         // batches before re-copying them from the source, so handing it one instance for both roles wiped the batches
         // it was about to copy and left every synchronized or batched variant without a single batch. Loaded outside a
         // transaction, so this is a distinct detached graph rather than the same object again.
-        QuizExercise importSource = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
+        QuizExercise importSource = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
                 .orElseThrow(() -> new EntityNotFoundException("QuizExercise", source.getId()));
         // The detached instance doubles as the "imported exercise carrying the new values": only the fields the
         // variant changes are overwritten; course/exam group, dates, mode, and duration are copied as-is.

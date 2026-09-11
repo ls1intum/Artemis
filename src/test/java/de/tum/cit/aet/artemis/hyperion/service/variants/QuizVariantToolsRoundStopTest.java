@@ -11,10 +11,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
@@ -62,7 +61,7 @@ class QuizVariantToolsRoundStopTest {
         quiz.setId(QUIZ_ID);
         quiz.setQuizQuestions(new ArrayList<>(List.of()));
         when(quizExerciseRepository.findByIdWithQuestionsElseThrow(QUIZ_ID)).thenReturn(quiz);
-        tools = new QuizVariantTools(QUIZ_ID, job.getJobId(), jobService, quizExerciseRepository, mock(QuizExerciseService.class), new ObjectMapper());
+        tools = new QuizVariantTools(QUIZ_ID, job.getJobId(), jobService, quizExerciseRepository, mock(QuizExerciseService.class), JsonObjectMapper.get());
     }
 
     @Test

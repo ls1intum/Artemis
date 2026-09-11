@@ -11,9 +11,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
@@ -102,7 +103,7 @@ class VariantTypeRegistryServiceTest {
 
     @Test
     void changePlanShouldRoundTripThroughJson() throws Exception {
-        ObjectMapper objectMapper = new ObjectMapper();
+        JsonMapper objectMapper = JsonObjectMapper.get();
         ChangePlan plan = new ChangePlan("Cargo Bay Manager", "## Tasks\n1. [task][Implement load](testLoad)", List.of("rename BankAccount to CargoBay"),
                 List.of("test count stays identical"));
 

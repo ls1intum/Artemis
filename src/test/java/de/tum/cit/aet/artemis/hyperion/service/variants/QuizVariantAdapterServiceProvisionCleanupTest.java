@@ -16,10 +16,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
@@ -62,12 +61,12 @@ class QuizVariantAdapterServiceProvisionCleanupTest {
         exerciseDeletionService = mock(ExerciseDeletionService.class);
 
         adapters = new QuizVariantAdapterService(quizExerciseRepository, quizExerciseImportService, mock(QuizExerciseService.class), mock(VariantPlacementService.class),
-                mock(ExerciseVariantJobService.class), new ObjectMapper(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class), mock(UserRepository.class),
-                exerciseDeletionService, null);
+                mock(ExerciseVariantJobService.class), JsonObjectMapper.get(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class),
+                mock(UserRepository.class), exerciseDeletionService, null);
 
         QuizExercise original = new QuizExercise();
         original.setId(SOURCE_ID);
-        when(quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(SOURCE_ID)).thenReturn(Optional.of(original));
+        when(quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(SOURCE_ID)).thenReturn(Optional.of(original));
 
         source = new QuizExercise();
         source.setId(SOURCE_ID);

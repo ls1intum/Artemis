@@ -14,11 +14,12 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -37,7 +38,7 @@ class QuizVariantToolsImageGuardTest {
 
     private static final String PICTURE_PATH = "/api/files/drag-and-drop/drag-items/1/cargo.png";
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private QuizExerciseService quizExerciseService;
 
@@ -69,7 +70,7 @@ class QuizVariantToolsImageGuardTest {
         QuizExercise quiz = new QuizExercise();
         quiz.setId(QUIZ_ID);
         quiz.setQuizQuestions(new ArrayList<>(List.of(question)));
-        when(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(QUIZ_ID)).thenReturn(quiz);
+        when(quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(QUIZ_ID)).thenReturn(quiz);
 
         tools = new QuizVariantTools(QUIZ_ID, "job-1", jobService, quizExerciseRepository, quizExerciseService, objectMapper);
     }

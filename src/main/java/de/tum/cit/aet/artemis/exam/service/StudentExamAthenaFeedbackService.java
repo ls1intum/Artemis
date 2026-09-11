@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
@@ -55,8 +56,12 @@ public class StudentExamAthenaFeedbackService {
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public StudentExamAthenaFeedbackService(StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository,
-            Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi, Optional<AthenaFeedbackApi> athenaFeedbackApi,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.textFeedbackApi = textFeedbackApi;
@@ -95,11 +100,13 @@ public class StudentExamAthenaFeedbackService {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
         }
 
-        // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
-        // avoiding lazy-load traversal through StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
+        // Determine the eligible exercise ids from the studentExam exercises, whose Athena configuration is resolved
+        // just below, rather than traversing StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
         // Only text and modeling exercises are dispatched below, so exclude other exercise types here even if their
         // course has formative feedback enabled - otherwise a request could reserve a cap slot without ever
         // generating feedback.
+        // Athena's configuration is lazy and an exam does not otherwise need it, so this is where it gets read
+        studentExam.getExercises().forEach(courseAthenaConfigRepository::attachToCourseOf);
         Set<Long> eligibleExerciseIds = studentExam.getExercises().stream()
                 .filter(exercise -> (exercise instanceof TextExercise || exercise instanceof ModelingExercise) && exercise.getAllowFeedbackRequests()).map(Exercise::getId)
                 .collect(Collectors.toSet());
@@ -117,6 +124,10 @@ public class StudentExamAthenaFeedbackService {
         if (eligibleParticipations.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
+
+        // The participations are loaded separately from the student exam and therefore contain different exercise
+        // instances. Attach the lazy Athena configuration to the instances passed to the asynchronous generators.
+        eligibleParticipations.forEach(participation -> courseAthenaConfigRepository.attachToCourseOf(participation.getExercise()));
 
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();

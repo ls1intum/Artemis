@@ -32,6 +32,33 @@ public class LocalCIWebsocketMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    /** The admin build queue destinations, named here so the sender and the subscription check cannot drift apart. */
+    public static final String ADMIN_QUEUED_JOBS_TOPIC = "/topic/admin/queued-jobs";
+
+    public static final String ADMIN_RUNNING_JOBS_TOPIC = "/topic/admin/running-jobs";
+
+    public static final String ADMIN_BUILD_AGENTS_TOPIC = "/topic/admin/build-agents";
+
+    /**
+     * The destination carrying a course's queued build jobs.
+     *
+     * @param courseId the id of the course
+     * @return the topic
+     */
+    public static String queuedJobsTopicForCourse(long courseId) {
+        return "/topic/courses/" + courseId + "/queued-jobs";
+    }
+
+    /**
+     * The destination carrying a course's running build jobs.
+     *
+     * @param courseId the id of the course
+     * @return the topic
+     */
+    public static String runningJobsTopicForCourse(long courseId) {
+        return "/topic/courses/" + courseId + "/running-jobs";
+    }
+
     private static final Pattern COURSE_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs|finished-jobs)$");
 
     private static final Pattern COURSE_BUILD_JOB_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/build-job/.+$");
@@ -53,7 +80,7 @@ public class LocalCIWebsocketMessagingService {
      */
 
     public void sendQueuedBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/courses/" + courseId + "/queued-jobs";
+        String channel = queuedJobsTopicForCourse(courseId);
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
@@ -65,7 +92,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobsRunning the running build jobs
      */
     public void sendRunningBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobsRunning) {
-        String channel = "/topic/courses/" + courseId + "/running-jobs";
+        String channel = runningJobsTopicForCourse(courseId);
         log.debug("Sending message on topic {}: {}", channel, buildJobsRunning);
         websocketMessagingService.sendMessage(channel, buildJobsRunning);
     }
@@ -76,7 +103,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the queued build jobs
      */
     public void sendQueuedBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/admin/queued-jobs";
+        String channel = ADMIN_QUEUED_JOBS_TOPIC;
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
@@ -87,7 +114,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the running build jobs
      */
     public void sendRunningBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/admin/running-jobs";
+        String channel = ADMIN_RUNNING_JOBS_TOPIC;
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
@@ -98,7 +125,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildAgentInfo the build agent information
      */
     public void sendBuildAgentSummary(List<BuildAgentInformation> buildAgentInfo) {
-        String channel = "/topic/admin/build-agents";
+        String channel = ADMIN_BUILD_AGENTS_TOPIC;
         log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
         websocketMessagingService.sendMessage(channel, buildAgentInfo);
     }
@@ -167,7 +194,7 @@ public class LocalCIWebsocketMessagingService {
      * @return true if the destination is a build queue admin destination, false otherwise
      */
     public static boolean isBuildQueueAdminDestination(String destination) {
-        return "/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination) || "/topic/admin/finished-jobs".equals(destination);
+        return ADMIN_QUEUED_JOBS_TOPIC.equals(destination) || ADMIN_RUNNING_JOBS_TOPIC.equals(destination) || "/topic/admin/finished-jobs".equals(destination);
     }
 
     /**
@@ -198,7 +225,7 @@ public class LocalCIWebsocketMessagingService {
      * @return true if the destination is a build agent destination, false otherwise
      */
     public static boolean isBuildAgentDestination(String destination) {
-        return "/topic/admin/build-agents".equals(destination);
+        return ADMIN_BUILD_AGENTS_TOPIC.equals(destination);
     }
 
     /**

@@ -36,9 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -115,7 +115,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     private DistributedDataProvider distributedDataProvider;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private Course course;
 
@@ -691,7 +691,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
 
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
-        QuizExercise variant = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(job.getVariantExerciseId()).orElseThrow();
+        QuizExercise variant = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(job.getVariantExerciseId()).orElseThrow();
         assertThat(variant.isExamExercise()).isTrue();
         assertThat(variant.getExerciseGroup().getId()).isEqualTo(exerciseGroup.getId());
     }

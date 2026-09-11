@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -287,6 +288,46 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND se.user.id = :userId
             """)
     Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
+    /**
+     * Reads everything the exam preparation needs to set up the participations of an exam: one row per
+     * (student exam, exercise) pair, carrying only identifiers and the student's login.
+     * <p>
+     * This deliberately replaces loading the exam with its student exams and their exercises. That entity graph repeats
+     * the exam row and the full exercise row - problem statement included - once per student exam, so its size grows
+     * with students times exercises even though the distinct data does not.
+     *
+     * @param examId the id of the exam
+     * @return one row per exercise of every student exam of the exam, test runs included
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
+            FROM StudentExam studentExam
+                JOIN studentExam.user student
+                JOIN studentExam.exercises exercise
+            WHERE studentExam.exam.id = :examId
+            ORDER BY studentExam.id, exercise.id
+            """)
+    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
+
+    /**
+     * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
+     * belong to the exam simply do not match, so callers cannot prepare exercises across exams.
+     *
+     * @param examId         the id of the exam
+     * @param studentExamIds the ids of the student exams to read
+     * @return one row per exercise of every requested student exam that belongs to the exam
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
+            FROM StudentExam studentExam
+                JOIN studentExam.user student
+                JOIN studentExam.exercises exercise
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.id IN :studentExamIds
+            ORDER BY studentExam.id, exercise.id
+            """)
+    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 

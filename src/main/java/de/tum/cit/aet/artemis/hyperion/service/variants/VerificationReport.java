@@ -55,6 +55,8 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
          */
         private static final Pattern DIGITS = Pattern.compile("\\d+");
 
+        private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
         /**
          * Long enough to keep the actual failure line (which sits at the end of a build log — see
          * {@code VariantBuildVerificationService.extractBuildLogs}, which keeps only the tail for the same
@@ -70,7 +72,8 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
          * genuinely hasn't changed.
          */
         String stableSignature() {
-            String normalized = DIGITS.matcher(message() == null ? "" : message()).replaceAll("#").replaceAll("\\s+", " ").strip();
+            String withoutDigits = DIGITS.matcher(message() == null ? "" : message()).replaceAll("#");
+            String normalized = WHITESPACE_RUN.matcher(withoutDigits).replaceAll(" ").strip();
             String tail = normalized.length() > SIGNATURE_TAIL_LENGTH ? normalized.substring(normalized.length() - SIGNATURE_TAIL_LENGTH) : normalized;
             return gate() + "|" + tail;
         }
