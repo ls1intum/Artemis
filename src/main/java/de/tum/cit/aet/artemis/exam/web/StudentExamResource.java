@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
@@ -783,8 +784,11 @@ public class StudentExamResource {
             if (setupTestExamNeeded) {
                 // For test exam with simulation it can happen that the student has not started their
                 // prepared (simulation) attempt and therefore the participations are already prepared
-                var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
-                boolean isFullyPrepared = studentExamWithParticipations.getStudentParticipations().size() == studentExam.getExercises().size();
+                boolean isFullyPrepared = false;
+                if (studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SIMULATION) {
+                    var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+                    isFullyPrepared = studentExamWithParticipations.getStudentParticipations().size() == studentExam.getExercises().size();
+                }
                 if (!isFullyPrepared) {
                     // Set up new participations for the Exercises
                     studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
