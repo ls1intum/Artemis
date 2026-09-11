@@ -1,6 +1,6 @@
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, Signal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, Subscription, map } from 'rxjs';
+import { Observable, Subject, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
@@ -19,6 +19,21 @@ type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
 type CommentResponseType = HttpResponse<Comment>;
 type ReviewCommentSuccessCallback = () => void;
+
+/** What the editor that owns the Hyperion run state tells the review threads about AI adaptation. */
+export interface ReviewAdaptationAvailability {
+    /** Whether this deployment offers whole-exercise adaptation for the open exercise. */
+    offered: Signal<boolean>;
+    /** Translation key for why adaptation cannot start right now; `undefined` when it can. */
+    blockedReason: Signal<string | undefined>;
+}
+
+/** A review thread asked to adapt the exercise with itself as feedback. */
+export interface ReviewAdaptationRequest {
+    threadId: number;
+    /** Whether the thread was already part of the feedback selection, so a dismissed request knows whether to remove it again. */
+    wasAlreadySelected: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseReviewCommentService implements OnDestroy {
@@ -45,6 +60,38 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * This state is scoped to the active exercise/editor session and is never persisted independently.
      */
     readonly selectedFeedbackThreadIds = signal<number[]>([]);
+
+    private readonly adaptation = signal<ReviewAdaptationAvailability | undefined>(undefined);
+    /** Whether review threads should offer feedback selection and the adaptation shortcut at all. */
+    readonly adaptationOffered = computed(() => this.adaptation()?.offered() ?? false);
+    /** Why the adaptation shortcut on a thread is disabled right now, or `undefined` when it is available. */
+    readonly adaptationBlockedReason = computed(() => this.adaptation()?.blockedReason());
+    private readonly adaptationRequestSubject = new Subject<ReviewAdaptationRequest>();
+    /** Adaptation requests raised from review threads, for the editor that owns the adapt dialog. */
+    readonly adaptationRequests = this.adaptationRequestSubject.asObservable();
+
+    /**
+     * Lets the editor container that knows the Hyperion feature and run state drive what the thread widgets offer. The
+     * widgets are created deep inside generic editors, so this shared service is how the state reaches them without
+     * threading Hyperion inputs through every component in between.
+     */
+    connectAdaptation(availability: ReviewAdaptationAvailability): void {
+        this.adaptation.set(availability);
+    }
+
+    /**
+     * Turns a thread into the feedback of the next adaptation and asks the owning editor to open the adapt dialog.
+     *
+     * @param threadId The thread to adapt with.
+     */
+    requestAdaptation(threadId: number): void {
+        if (!this.adaptationOffered() || this.adaptationBlockedReason()) {
+            return;
+        }
+        const wasAlreadySelected = this.isThreadSelectedAsFeedback(threadId);
+        this.selectThreadAsFeedback(threadId);
+        this.adaptationRequestSubject.next({ threadId, wasAlreadySelected });
+    }
 
     /**
      * Sets the active exercise context and clears thread state when it changes.

@@ -84,6 +84,8 @@ export class HyperionRunHeaderComponent {
     readonly runAgainAvailable = input(false);
     /** Offered on an exercise that has never generated anything, so the empty state carries an action rather than directions. */
     readonly startAvailable = input(false);
+    /** Translation key for why the exercise refuses a run right now; the start and run-again buttons stay visible and say it. */
+    readonly startBlockedReason = input<string | undefined>();
     readonly startPending = input(false);
     readonly editorLink = input<readonly (string | number)[] | undefined>();
     readonly exerciseLink = input<readonly (string | number)[] | undefined>();
@@ -95,7 +97,7 @@ export class HyperionRunHeaderComponent {
     readonly fileCount = input(0);
 
     readonly cancelRequested = output<void>();
-    readonly runAgainRequested = output<void>();
+    /** Both the first start and a run-again ask for the same thing: the start dialog. */
     readonly startRequested = output<void>();
 
     protected readonly cancelConfirmationKey = CANCEL_CONFIRMATION_KEY;
@@ -104,6 +106,12 @@ export class HyperionRunHeaderComponent {
 
     /** Re-read on every language change, because a number formatted for one locale is wrong in the other. */
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+    /** The blocked reason as text for the button tooltip; re-translated on a language switch. */
+    protected readonly startBlockedReasonText = computed(() => {
+        this.languageChange();
+        const reason = this.startBlockedReason();
+        return reason ? this.translateService.instant(reason) : undefined;
+    });
     private readonly locale = computed(() => {
         this.languageChange();
         return this.translateService.getCurrentLang() ?? 'en';

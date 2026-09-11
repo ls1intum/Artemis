@@ -267,7 +267,26 @@
                     "openRun": "Open the generation view",
                     "start": "Generate this exercise",
                     "viewRun": "View AI progress",
-                    "viewResults": "View AI results"
+                    "viewResults": "View AI results",
+                    "adapt": "Adapt exercise",
+                    "moreActions": "More AI actions",
+                    "refineProblemStatement": "Refine problem statement",
+                    "showIssues": "Show issues"
+                },
+                "blocker": {
+                    "requiresEditor": "You need editor rights in this course to change the exercise with AI.",
+                    "unsupportedLanguage": "AI authoring supports Java exercises only.",
+                    "unsupportedProjectType": "This Java exercise builds with Maven or another tool. AI authoring only verifies Gradle builds; the build tool cannot be changed after creation, so create a Gradle exercise to use it.",
+                    "examExercise": "AI authoring is not available for exam exercises.",
+                    "staticCodeAnalysis": "Disable static code analysis in the exercise settings first. The AI verifier does not model its penalties.",
+                    "sequentialTestRuns": "Disable sequential test runs in the exercise settings first. The AI verifier runs all tests in one pass.",
+                    "auxiliaryRepositories": "Remove the auxiliary repositories first. AI authoring writes only the template, solution, and test repositories.",
+                    "noReleaseDate": "Set a future release date first. AI authoring only changes exercises students cannot see yet.",
+                    "released": "This exercise is already released. Move its release date into the future first; AI authoring only changes exercises students cannot see yet.",
+                    "studentParticipations": "Students have already started this exercise. AI authoring only changes exercises without participations.",
+                    "problemStatementBusy": "Wait for the current problem statement refinement to finish.",
+                    "consistencyCheckBusy": "Wait for the current consistency check to finish.",
+                    "repositorySetupBusy": "Wait until the repository operation has finished."
                 }
             },
             "jobs": {

@@ -2,7 +2,7 @@ import { HyperionRunInputComponent } from './hyperion-run-input.component';
 import { filter, merge } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
-import { isHyperionGenerationDraft } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, linkedSignal, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -223,11 +223,17 @@ export class HyperionRunPageComponent {
     protected readonly notStarted = computed(() => this.facade.jobId() === undefined && !this.statusLoading() && !this.statusLoadFailed());
 
     protected readonly cancelAvailable = computed(() => !this.terminal() && this.running() && this.ownedByCaller() && this.facade.cancellable());
-    protected readonly generationEligible = computed(
-        () => this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && isHyperionGenerationDraft(this.exercise(), this.now()),
-    );
-    protected readonly runAgainAvailable = computed(() => this.generationEligible() && this.terminal() && this.ownedByCaller() && !this.starting());
-    protected readonly startAvailable = computed(() => this.generationEligible() && this.notStarted() && this.ownedByCaller() && !this.starting());
+    /** Whether starting a run is this deployment's and this instructor's to do at all; why the exercise may still refuse one is {@link startBlockedReason}. */
+    protected readonly generationOffered = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && this.ownedByCaller());
+    /** Translation key for what about the exercise prevents a run, so the start button can say it instead of vanishing. */
+    protected readonly startBlockedReason = computed(() => {
+        const exercise = this.exercise();
+        const blocker = exercise ? hyperionGenerationBlocker(exercise, this.now()) : undefined;
+        return blocker ? HYPERION_GENERATION_BLOCKER_KEY + blocker : undefined;
+    });
+    protected readonly runAgainAvailable = computed(() => this.generationOffered() && this.terminal() && !this.starting());
+    protected readonly startAvailable = computed(() => this.generationOffered() && this.notStarted() && !this.starting());
+    private readonly canStart = computed(() => (this.runAgainAvailable() || this.startAvailable()) && this.startBlockedReason() === undefined);
 
     /** How long a finished run took, for the folded stage strip. Static: a terminal run has no clock left to tick. */
     protected readonly runDuration = computed(() => {
@@ -417,21 +423,15 @@ export class HyperionRunPageComponent {
         this.facade.retryStatus();
     }
 
-    protected runAgain(): void {
-        if (this.runAgainAvailable()) {
-            this.startDialogVisible.set(true);
-        }
-    }
-
-    protected startFirstRun(): void {
-        if (this.startAvailable()) {
+    protected openStartDialog(): void {
+        if (this.canStart()) {
             this.startDialogVisible.set(true);
         }
     }
 
     protected start(): void {
         const exerciseId = this.exerciseId();
-        if (exerciseId === undefined || !this.startDialogVisible() || !this.startPromptValid() || !(this.runAgainAvailable() || this.startAvailable())) {
+        if (exerciseId === undefined || !this.startDialogVisible() || !this.startPromptValid() || !this.canStart()) {
             return;
         }
         const mode = this.facade.mode() ?? 'GENERATE';

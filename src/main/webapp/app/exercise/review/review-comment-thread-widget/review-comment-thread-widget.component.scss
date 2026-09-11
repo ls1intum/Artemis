@@ -334,6 +334,12 @@
     margin-right: 0.25rem;
 }
 
+/* Soft-disabled by `tumUiDisabledReason`: PrimeNG only styles `:disabled`, which would swallow the tooltip. */
+.monaco-review-comment-adapt-button[aria-disabled='true'] {
+    opacity: 0.6;
+    cursor: default;
+}
+
 .monaco-review-comment-resolve-controls {
     display: inline-flex;
     align-items: stretch;

@@ -267,7 +267,26 @@
                     "openRun": "Generierungsansicht öffnen",
                     "start": "Diese Aufgabe generieren",
                     "viewRun": "KI-Fortschritt ansehen",
-                    "viewResults": "KI-Ergebnis ansehen"
+                    "viewResults": "KI-Ergebnis ansehen",
+                    "adapt": "Aufgabe anpassen",
+                    "moreActions": "Weitere KI-Aktionen",
+                    "refineProblemStatement": "Aufgabenstellung verfeinern",
+                    "showIssues": "Probleme anzeigen"
+                },
+                "blocker": {
+                    "requiresEditor": "Du brauchst Editor-Rechte in diesem Kurs, um die Aufgabe mit KI zu ändern.",
+                    "unsupportedLanguage": "KI-Erstellung unterstützt nur Java-Aufgaben.",
+                    "unsupportedProjectType": "Diese Java-Aufgabe wird mit Maven oder einem anderen Werkzeug gebaut. KI-Erstellung prüft nur Gradle-Builds; das Build-Werkzeug lässt sich nach dem Anlegen nicht ändern, lege dafür eine Gradle-Aufgabe an.",
+                    "examExercise": "KI-Erstellung ist für Prüfungsaufgaben nicht verfügbar.",
+                    "staticCodeAnalysis": "Deaktiviere zuerst die statische Codeanalyse in den Aufgabeneinstellungen. Die KI-Prüfung bildet deren Abzüge nicht ab.",
+                    "sequentialTestRuns": "Deaktiviere zuerst sequenzielle Testläufe in den Aufgabeneinstellungen. Die KI-Prüfung führt alle Tests in einem Durchlauf aus.",
+                    "auxiliaryRepositories": "Entferne zuerst die zusätzlichen Repositories. KI-Erstellung schreibt nur in Vorlage, Lösung und Tests.",
+                    "noReleaseDate": "Setze zuerst ein Veröffentlichungsdatum in der Zukunft. KI-Erstellung ändert nur Aufgaben, die Studierende noch nicht sehen können.",
+                    "released": "Diese Aufgabe ist bereits veröffentlicht. Verschiebe zuerst das Veröffentlichungsdatum in die Zukunft; KI-Erstellung ändert nur Aufgaben, die Studierende noch nicht sehen können.",
+                    "studentParticipations": "Studierende haben diese Aufgabe bereits begonnen. KI-Erstellung ändert nur Aufgaben ohne Teilnahmen.",
+                    "problemStatementBusy": "Warte, bis die laufende Verfeinerung der Aufgabenstellung abgeschlossen ist.",
+                    "consistencyCheckBusy": "Warte, bis die laufende Konsistenzprüfung abgeschlossen ist.",
+                    "repositorySetupBusy": "Warte, bis der Repository-Vorgang abgeschlossen ist."
                 }
             },
             "jobs": {

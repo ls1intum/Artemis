@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -421,6 +422,63 @@ describe('ExerciseReviewCommentService', () => {
         service.clearSelectedFeedback();
 
         expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
+    describe('adaptation', () => {
+        it('should not offer adaptation before an editor connects', () => {
+            expect(service.adaptationOffered()).toBe(false);
+            expect(service.adaptationBlockedReason()).toBeUndefined();
+        });
+
+        it('connectAdaptation should mirror the availability signals of the owning editor', () => {
+            const offered = signal(false);
+            const blockedReason = signal<string | undefined>(undefined);
+            service.connectAdaptation({ offered, blockedReason });
+
+            expect(service.adaptationOffered()).toBe(false);
+            offered.set(true);
+            expect(service.adaptationOffered()).toBe(true);
+            blockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+            expect(service.adaptationBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        });
+
+        it('requestAdaptation should be a no-op when adaptation is not offered', () => {
+            const requests: unknown[] = [];
+            service.adaptationRequests.subscribe((request) => requests.push(request));
+
+            service.requestAdaptation(5);
+
+            expect(requests).toEqual([]);
+            expect(service.selectedFeedbackThreadIds()).toEqual([]);
+        });
+
+        it('requestAdaptation should be a no-op while adaptation is blocked', () => {
+            service.connectAdaptation({ offered: signal(true), blockedReason: signal('artemisApp.review.adaptExercise.runInProgress') });
+            const requests: unknown[] = [];
+            service.adaptationRequests.subscribe((request) => requests.push(request));
+
+            service.requestAdaptation(5);
+
+            expect(requests).toEqual([]);
+            expect(service.selectedFeedbackThreadIds()).toEqual([]);
+        });
+
+        it('requestAdaptation should select the thread and emit whether it was already selected', () => {
+            service.connectAdaptation({ offered: signal(true), blockedReason: signal(undefined) });
+            const requests: unknown[] = [];
+            service.adaptationRequests.subscribe((request) => requests.push(request));
+
+            service.requestAdaptation(5);
+            expect(service.selectedFeedbackThreadIds()).toEqual([5]);
+            expect(requests).toEqual([{ threadId: 5, wasAlreadySelected: false }]);
+
+            service.requestAdaptation(5);
+            expect(service.selectedFeedbackThreadIds()).toEqual([5]);
+            expect(requests).toEqual([
+                { threadId: 5, wasAlreadySelected: false },
+                { threadId: 5, wasAlreadySelected: true },
+            ]);
+        });
     });
 
     it('selectedFeedbackThreads should resolve selected ids against loaded threads in selection order and drop unloaded ones', () => {

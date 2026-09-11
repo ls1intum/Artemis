@@ -9,6 +9,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faScrewdriverWrench, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { TumUiDisabledReasonDirective } from '@tumaet/ui-angular';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
@@ -32,22 +33,27 @@ interface RelatedThreadLocation {
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
+    imports: [
+        FormsModule,
+        ButtonDirective,
+        MenuModule,
+        ConfirmDialogModule,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        FaIconComponent,
+        MonacoDiffEditorComponent,
+        TumUiDisabledReasonDirective,
+    ],
     providers: [ConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
-    readonly showFeedbackAction = input<boolean>(false);
-    /** Whether the per-thread "Adapt with feedback" action may be offered (host-gated to at-least-editor contexts where agentic adaptation is supported). */
-    readonly showAdaptAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
     readonly onApplyInlineFix = output<InlineCodeChange>();
-    /** Emits this thread's id when the instructor asks to adapt the exercise from it; the host adds it to the shared feedback selection and opens the adapt dialog. */
-    readonly adaptThread = output<number>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -84,11 +90,18 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         }));
     });
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
+    /**
+     * Whether this thread can feed an AI adaptation: the editor offers adaptation (see {@link ExerciseReviewCommentService.connectAdaptation}) and the thread sits in
+     * a repository the adaptation writes to. Auxiliary repositories are outside what it changes.
+     */
+    readonly showFeedbackAction = computed(() => this.reviewCommentService.adaptationOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
+    /** Why the "Adapt with feedback" shortcut is disabled right now (translation key), or `undefined` while it can run. */
+    readonly adaptBlockedReason = computed(() => this.reviewCommentService.adaptationBlockedReason());
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
-    /** Whether to offer the per-thread "Adapt with feedback" action: an active consistency finding on a host that permits adaptation. */
-    readonly canAdaptExercise = computed(() => this.showAdaptAction() && !this.thread().resolved && !this.thread().outdated);
+    /** Whether to offer the per-thread "Adapt with feedback" shortcut: an open thread on an editor that offers adaptation. Blocked state disables it with a reason. */
+    readonly canAdaptExercise = computed(() => this.showFeedbackAction() && !this.thread().resolved && !this.thread().outdated);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {
@@ -244,15 +257,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
     }
 
-    /**
-     * Requests adapting the exercise from this thread: emits the thread id so the host adds it to the shared feedback selection store and opens the adapt dialog (instead of
-     * bypassing the store with a one-off finding object).
-     */
+    /** Adapts the exercise from this thread: it joins the shared feedback selection and the owning editor opens the adapt dialog. */
     requestAdapt(): void {
         if (!this.canAdaptExercise()) {
             return;
         }
-        this.adaptThread.emit(this.thread().id);
+        this.reviewCommentService.requestAdaptation(this.thread().id);
     }
 
     /**

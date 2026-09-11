@@ -7,7 +7,10 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/progr
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
+import {
+    CodeEditorInstructorBaseContainerComponent,
+    LOADING_STATE,
+} from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -19,7 +22,6 @@ import {
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
-    faPaperPlane,
     faPlus,
     faSave,
     faSpinner,
@@ -44,21 +46,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import {
-    TumUiButtonDirective,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiPopoverComponent,
-    TumUiStatusDotComponent,
-    TumUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseReviewCommentService, ReviewAdaptationRequest } from 'app/exercise/review/exercise-review-comment.service';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -69,15 +62,15 @@ import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.compo
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { InlineRefinementEvent } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
-import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { Popover, PopoverModule } from 'primeng/popover';
 import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
-import { Router, RouterLink } from '@angular/router';
-import { isHyperionGenerationDraft, supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { Router } from '@angular/router';
+import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
+import { CodeEditorAiActionsComponent } from 'app/programming/manage/code-editor/ai-actions/code-editor-ai-actions.component';
 
 const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
     ['HIGH']: 0,
@@ -134,19 +127,13 @@ interface ConsistencyIssueNavigationIssue {
         A11yModule,
         GitDiffLineStatComponent,
         TooltipModule,
-        TumUiInputDirective,
-        TumUiPopoverComponent,
-        BadgeModule,
         ButtonModule,
         MessageModule,
-        PopoverModule,
         TumUiButtonDirective,
-        TumUiStatusDotComponent,
-        TumUiTooltipDirective,
-        RouterLink,
         TumUiConfirmDialogComponent,
         TumUiDialogComponent,
         ReviewAdaptExerciseDialogComponent,
+        CodeEditorAiActionsComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -156,7 +143,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly generationActivity = inject(HyperionGenerationActivityFacade);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly sortedIssues = computed(() =>
         this.exerciseReviewCommentService
@@ -192,10 +178,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly faTableColumns = faTableColumns;
     override readonly ButtonSize = ButtonSize;
 
-    readonly refinementPopover = viewChild<TumUiPopoverComponent>('refinementPopover');
-    /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
+    private readonly aiActions = viewChild(CodeEditorAiActionsComponent);
+    /** The refinement prompt the AI actions edit; aliased to aiOps.userPrompt so the helper reads what was typed. */
     readonly refinementPrompt = this.aiOps.userPrompt;
-    protected readonly faPaperPlane = faPaperPlane;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -289,6 +274,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
         this.generationActivity.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => this.onHyperionGenerationCompleted(event));
         this.generationActivity.generationReverted.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterHyperionRepositoryChange());
+        // Review threads offer feedback selection and the adaptation shortcut through the shared review service, so the
+        // generic editors between here and the thread widgets carry no Hyperion inputs.
+        this.exerciseReviewCommentService.connectAdaptation({ offered: this.adaptOffered, blockedReason: this.adaptBlockedReason });
+        this.exerciseReviewCommentService.adaptationRequests.pipe(takeUntilDestroyed()).subscribe((request) => this.adaptFromThread(request));
     }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
@@ -355,10 +344,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (link) {
             void this.reviewRouter.navigate(link);
         }
-    }
-
-    protected onAiToolbarClick(event: Event, popover: Popover): void {
-        popover.toggle(event);
     }
 
     private refreshAfterHyperionRepositoryChange(): void {
@@ -454,16 +439,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return codeEditorClean && problemStatementClean;
     }
 
-    protected readonly canGenerateExercise = computed(() => isHyperionGenerationDraft(this.exercise(), Date.now()));
+    /** Whether this deployment offers whole-exercise adaptation for the open exercise; why it may still be blocked is {@link adaptBlockedReason}. */
+    protected readonly adaptOffered = computed(() => this.hyperionGenerationSupported && !!this.exercise()?.id);
 
+    /** Whether the run machinery (status polling, editing locks, reload after a save) applies to this exercise at all. */
     protected readonly generationSupported = computed(() => {
         const exercise = this.exercise();
-        return (
-            this.hyperionGenerationSupported &&
-            !!exercise?.id &&
-            (exercise?.isAtLeastEditor ?? false) &&
-            supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType)
-        );
+        return this.adaptOffered() && (exercise?.isAtLeastEditor ?? false) && supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType);
     });
 
     protected readonly isExerciseGenerationRunning = computed(() => {
@@ -481,9 +463,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return this.isExerciseGenerationRunning() || this.generationRefreshBaselineUnknown() || (this.generationSupported() && activity.statusLoadFailed());
     });
 
+    /** Server-adjusted clock, so an exercise whose release date passes while the editor is open turns ineligible on time. */
+    private readonly now = serverTimeSignal();
+
+    /**
+     * Why adaptation cannot start right now, as a translation key, or `undefined` when it can. Ordered so the
+     * instructor reads what to change first: their role, then the exercise, then what the run state is doing.
+     */
     protected readonly adaptBlockedReason = computed(() => {
-        if (!this.canGenerateExercise()) {
-            return 'artemisApp.review.adaptExercise.ineligible';
+        const exercise = this.exercise();
+        if (!exercise?.isAtLeastEditor) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
+        }
+        const blocker = hyperionGenerationBlocker(exercise, this.now());
+        if (blocker) {
+            return HYPERION_GENERATION_BLOCKER_KEY + blocker;
+        }
+        if (this.repositorySetupBusy()) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'repositorySetupBusy';
         }
         if (this.generationStartPending()) {
             return 'artemisApp.review.adaptExercise.starting';
@@ -503,19 +500,70 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return undefined;
     });
 
-    protected readonly canAdaptWithFeedback = computed(() => this.generationSupported() && this.canGenerateExercise());
-
-    protected adaptFromThread(threadId: number): void {
-        if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {
-            return;
+    /** Why the problem-statement refinement cannot start right now: the same run lock as adaptation, plus its own operation being busy. */
+    protected readonly refineBlockedReason = computed(() => {
+        if (!this.exercise()?.isAtLeastEditor) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
         }
-        const wasAlreadySelected = this.exerciseReviewCommentService.selectedFeedbackThreadIds().includes(threadId);
-        this.exerciseReviewCommentService.selectThreadAsFeedback(threadId);
+        if (this.isAiApplying()) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'problemStatementBusy';
+        }
+        return this.runStateBlockedReason();
+    });
+
+    protected readonly consistencyBlockedReason = computed(() => {
+        if (!this.exercise()?.isAtLeastEditor) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
+        }
+        if (this.isCheckingConsistency()) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'consistencyCheckBusy';
+        }
+        return this.runStateBlockedReason();
+    });
+
+    /** An assignment repository being created or deleted: the exercise is changing underneath every AI action. */
+    private readonly repositorySetupBusy = computed(
+        () => this.loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO || this.loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO,
+    );
+
+    /** The part of {@link adaptBlockedReason} that also locks the other AI actions: repository setup, and an active or unknown run. */
+    private readonly runStateBlockedReason = computed(() => {
+        if (this.repositorySetupBusy()) {
+            return HYPERION_GENERATION_BLOCKER_KEY + 'repositorySetupBusy';
+        }
+        if (!this.isExerciseGenerationActionBlocked()) {
+            return undefined;
+        }
+        if (this.isExerciseGenerationRunning()) {
+            return 'artemisApp.review.adaptExercise.runInProgress';
+        }
+        if (this.generationActivity.statusLoadFailed()) {
+            return 'artemisApp.review.adaptExercise.statusUnavailable';
+        }
+        return 'artemisApp.review.adaptExercise.reloadRequired';
+    });
+
+    /** The generation page is offered whenever the run state needs attention: a run in progress, or one whose outcome the editor could not apply. */
+    protected readonly progressLink = computed(() =>
+        this.generationSupported() && (this.isExerciseGenerationRunning() || this.generationRefreshFailed() || this.generationActivity.statusLoadFailed())
+            ? this.generationLink()
+            : undefined,
+    );
+
+    /** Operations with no indicator of their own; a generation run already shows as the progress link's status dot. */
+    protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy());
+
+    /** Adaptation can be requested from the toolbar and from any review thread; both go through here. */
+    protected readonly canAdaptNow = computed(() => this.adaptOffered() && this.adaptBlockedReason() === undefined);
+
+    /** A review thread's "Adapt with feedback": the thread joins the selection, and leaves it again if the dialog is dismissed. */
+    private adaptFromThread({ threadId, wasAlreadySelected }: ReviewAdaptationRequest): void {
         this.openAdaptDialog(wasAlreadySelected ? undefined : () => this.exerciseReviewCommentService.toggleThreadFeedbackSelection(threadId));
     }
 
     protected openAdaptDialog(onCancel?: () => void): void {
-        if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {
+        if (!this.canAdaptNow()) {
+            onCancel?.();
             return;
         }
         const exerciseId = this.exercise()?.id;
@@ -663,7 +711,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // Dropping the pending decision before hiding keeps this programmatic close from running the cancel callback.
         this.pendingAdaptDialog = undefined;
         this.adaptDialogVisible.set(false);
-        this.refinementPopover()?.close();
+        this.aiActions()?.close();
     }
 
     /**
@@ -685,8 +733,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        if (this.isExerciseGenerationActionBlocked()) {
-            this.openGenerationPage();
+        if (this.consistencyBlockedReason()) {
             return;
         }
         this.selectedIssue.set(undefined);
@@ -787,30 +834,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.aiOps.cancelAiOperation();
     }
 
-    /**
-     * Toggles the refinement prompt popover visibility.
-     */
-    toggleRefinementPopover(event: Event, target?: HTMLElement): void {
-        if (this.isExerciseGenerationActionBlocked()) {
-            this.openGenerationPage();
+    /** Submits the full problem statement refinement typed into the AI actions' prompt. */
+    submitRefinement(): void {
+        if (this.refineBlockedReason() || !this.refinementPrompt().trim() || !this.exercise()) {
             return;
         }
-        const origin = target ?? event.currentTarget;
-        if (origin instanceof HTMLElement) {
-            this.refinementPopover()?.toggle(origin);
-        }
-    }
-
-    /**
-     * Submits the full problem statement refinement.
-     * Hides the popover, then delegates to the shared AI operations helper.
-     */
-    submitRefinement(): void {
-        if (this.isExerciseGenerationActionBlocked()) return;
-        const prompt = this.refinementPrompt().trim();
-        if (!prompt || !this.exercise()) return;
-
-        this.refinementPopover()?.close();
         this.aiOps.handleProblemStatementAction(this.exercise(), this.editableInstructions());
     }
 

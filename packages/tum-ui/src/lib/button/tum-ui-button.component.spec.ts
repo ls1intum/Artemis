@@ -48,6 +48,22 @@ describe('TumUiButtonComponent', () => {
         expect(emitSpy).not.toHaveBeenCalled();
     });
 
+    it('soft-disables with a reason: stays focusable, is aria-disabled, and blocks the click output', () => {
+        const emitSpy = vi.spyOn(component.clicked, 'emit');
+        fixture.componentRef.setInput('disabledReason', 'Save first');
+        fixture.detectChanges();
+        const button = nativeButton();
+        expect(button.disabled).toBe(false);
+        expect(button.getAttribute('aria-disabled')).toBe('true');
+        button.click();
+        expect(emitSpy).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('disabledReason', undefined);
+        fixture.detectChanges();
+        expect(button.getAttribute('aria-disabled')).toBeNull();
+        button.click();
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
     it('emits clicked when enabled', () => {
         const emitSpy = vi.spyOn(component.clicked, 'emit');
         nativeButton().click();

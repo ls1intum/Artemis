@@ -113,10 +113,12 @@ describe('HyperionRunPageComponent', () => {
     let routeData: BehaviorSubject<{ programmingExercise: ProgrammingExercise }>;
     /** Everything the page asked the CDK announcer to read out, in order. */
     let announced: string[];
+    let generationFeatureActive: boolean;
 
     beforeEach(() => {
         vi.useRealTimers();
         announced = [];
+        generationFeatureActive = true;
         service = new MockGenerationService();
         registry = { track: vi.fn(), markSeen: vi.fn() };
         const routeSnapshot = {
@@ -130,7 +132,7 @@ describe('HyperionRunPageComponent', () => {
             imports: [HyperionRunPageComponent],
             providers: [
                 provideRouter([]),
-                { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: () => generationFeatureActive } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideTranslateService({ lang: 'en' }),
@@ -194,17 +196,54 @@ describe('HyperionRunPageComponent', () => {
         expect(testId('hyperion-run-undo-confirm')).toBeNull();
     });
 
-    it('does not offer generation after release or for a nonqualified exercise configuration', () => {
+    it('keeps the start action but says why it is blocked after release or for a nonqualified exercise configuration', () => {
         render(null);
         expect(fixture.componentInstance['startAvailable']()).toBe(true);
+        expect(fixture.componentInstance['startBlockedReason']()).toBeUndefined();
+        expect(testId('hyperion-run-start')!.querySelector('button')!.getAttribute('aria-disabled')).toBeNull();
+
         routeData.next({ programmingExercise: { ...exercise(), releaseDate: dayjs().subtract(1, 'day') } });
         fixture.detectChanges();
-        expect(fixture.componentInstance['startAvailable']()).toBe(false);
+        expect(fixture.componentInstance['startAvailable']()).toBe(true);
+        expect(fixture.componentInstance['startBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.released');
+        const startButton = testId('hyperion-run-start')!.querySelector('button')!;
+        expect(startButton.getAttribute('aria-disabled')).toBe('true');
+        expect(startButton.hasAttribute('disabled')).toBe(false);
+
+        startButton.click();
+        fixture.detectChanges();
+        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
+        expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
+
         routeData.next({ programmingExercise: { ...exercise(), staticCodeAnalysisEnabled: true } });
         fixture.detectChanges();
-        expect(fixture.componentInstance['startAvailable']()).toBe(false);
-        fixture.componentInstance['startFirstRun']();
+        expect(fixture.componentInstance['startBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.staticCodeAnalysis');
+        fixture.componentInstance['openStartDialog']();
+        fixture.detectChanges();
+        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
         expect(service.generate).not.toHaveBeenCalled();
+    });
+
+    it('keeps Run again in place but blocked once the exercise no longer qualifies', () => {
+        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        routeData.next({ programmingExercise: { ...exercise(), releaseDate: dayjs().subtract(1, 'day') } });
+        fixture.detectChanges();
+
+        const runAgain = testId('hyperion-run-run-again')!.querySelector('button')!;
+        expect(runAgain.getAttribute('aria-disabled')).toBe('true');
+        runAgain.click();
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
+        expect(service.generate).not.toHaveBeenCalled();
+    });
+
+    it('does not offer generation at all when the feature is off for this deployment', () => {
+        generationFeatureActive = false;
+        render(null);
+
+        expect(fixture.componentInstance['startAvailable']()).toBe(false);
+        expect(testId('hyperion-run-start')).toBeNull();
     });
 
     it('does not show a previous exercise when its refresh finishes after route navigation', () => {

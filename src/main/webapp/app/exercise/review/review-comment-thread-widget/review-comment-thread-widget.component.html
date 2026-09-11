@@ -222,7 +222,15 @@
                     </button>
                 }
                 @if (canAdaptExercise()) {
-                    <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-adapt-button" (click)="requestAdapt()">
+                    <button
+                        pButton
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        class="monaco-review-comment-adapt-button"
+                        [tumUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
+                        (click)="requestAdapt()"
+                    >
                         <fa-icon [icon]="faScrewdriverWrench" class="monaco-review-comment-button-icon" />
                         {{ 'artemisApp.review.adaptExercise.threadAction' | artemisTranslate }}
                     </button>

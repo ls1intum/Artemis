@@ -10,7 +10,7 @@ export interface TumUiButtonVariantOptions {
 }
 
 const BASE =
-    'tum-ui-btn tum:inline-flex tum:appearance-none tum:items-center tum:justify-center tum:gap-2 tum:rounded-md tum:border tum:font-normal tum:transition-colors tum:focus-visible:outline-none tum:disabled:opacity-60 tum:disabled:pointer-events-none';
+    'tum-ui-btn tum:inline-flex tum:appearance-none tum:items-center tum:justify-center tum:gap-2 tum:rounded-md tum:border tum:font-normal tum:transition-colors tum:focus-visible:outline-none tum:disabled:opacity-60 tum:disabled:pointer-events-none tum:aria-disabled:opacity-60 tum:aria-disabled:cursor-default';
 
 const SOLID: Record<TumUiButtonSeverity, string> = {
     primary: 'tum:bg-primary tum:text-primary-contrast tum:border-primary',
