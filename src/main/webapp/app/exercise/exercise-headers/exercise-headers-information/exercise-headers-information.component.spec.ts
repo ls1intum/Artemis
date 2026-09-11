@@ -109,6 +109,35 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(titles()).toEqual([STATUS]);
         });
 
+        it('gives each placement its own row hook, since both are mounted while the bar shows the pills', () => {
+            const rowTestId = (): string | null => fixture.nativeElement.querySelector('[data-testid$="information"]').getAttribute('data-testid');
+
+            expect(rowTestId()).toBe('exercise-headers-information');
+
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            // A shared hook would match twice on the page and every Playwright assertion using it would fail strict mode.
+            expect(rowTestId()).toBe('exercise-title-bar-information');
+        });
+
+        it('carries the status hook in whichever placement is currently rendering the status', () => {
+            const statusHooks = (): number => fixture.nativeElement.querySelectorAll('[data-testid="exercise-status"]').length;
+
+            expect(statusHooks()).toBe(1);
+
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+            expect(statusHooks()).toBe(1);
+
+            // Handed to the title bar, the panel stops rendering it - so across the page there is still exactly one.
+            fixture.componentRef.setInput('placement', 'panel');
+            fixture.componentRef.setInput('titleBarShowsPills', true);
+            fixture.detectChanges();
+
+            expect(statusHooks()).toBe(0);
+        });
+
         it('leaves the build progress bar to the panel, since it is two rows tall and a pill is one line', () => {
             const showsProgressBar = (): boolean => fixture.debugElement.query(By.directive(SubmissionResultStatusComponent)).componentInstance.showProgressBar();
 

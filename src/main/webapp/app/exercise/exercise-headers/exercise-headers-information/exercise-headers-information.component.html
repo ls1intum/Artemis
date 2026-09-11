@@ -5,7 +5,7 @@
         only renders them at all at a width where they fit (see ExerciseHeaderComponent.showsPills).
     -->
     <div
-        data-testid="exercise-headers-information"
+        [attr.data-testid]="rootTestId()"
         class="d-flex flex-row gap-2"
         [class.align-self-stretch]="placement() === 'panel'"
         [class.flex-wrap]="placement() === 'panel'"
@@ -27,7 +27,7 @@
                     (keydown.enter)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                     (keydown.space)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                 >
-                    <jhi-information-box [informationBoxData]="informationBoxItem" [layout]="boxLayout()">
+                    <jhi-information-box data-testid="exercise-status" [informationBoxData]="informationBoxItem" [layout]="boxLayout()">
                         <span contentComponent class="d-flex align-items-center gap-1">
                             <span (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
                                 <!--

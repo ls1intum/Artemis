@@ -134,6 +134,13 @@ export class ExerciseHeadersInformationComponent {
      */
     readonly titleBarShowsPills = input<boolean>(false);
 
+    /**
+     * Test hook for the row, one per placement. Both instances are mounted at once whenever the bar shows the pills, so
+     * a shared hook would match twice and every Playwright assertion using it would fail on strict mode. The status
+     * itself carries `exercise-status` in either placement, since it is only ever rendered by one of them.
+     */
+    protected readonly rootTestId = computed<string>(() => (this.placement() === 'titleBar' ? 'exercise-title-bar-information' : 'exercise-headers-information'));
+
     /** How each box arranges itself: stacked in the panel, one line in the title bar so it sits at the bar's height. */
     protected readonly boxLayout = computed<InformationBoxLayout>(() => (this.placement() === 'titleBar' ? 'inline' : 'stacked'));
 
