@@ -101,8 +101,11 @@
         <p class="m-0 text-sm text-state-danger" role="alert" data-testid="adapt-submission-error" [jhiTranslate]="error"></p>
     }
     @if ((blockedReason() || submissionError()) && progressLink(); as link) {
+        <!-- A new tab, because this dialog holds the instructor's unsent selection and instructions. Said by the icon and screen-reader text, not the label. -->
         <a tumUiButton severity="secondary" variant="outlined" size="small" class="self-start" [routerLink]="link" target="_blank" rel="noopener" data-testid="adapt-open-progress">
-            <span jhiTranslate="artemisApp.review.adaptExercise.viewProgress"></span>
+            <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
+            <fa-icon [icon]="faArrowUpRightFromSquare" size="xs" />
+            <span class="sr-only" jhiTranslate="artemisApp.review.adaptExercise.opensInNewTab"></span>
         </a>
     }
     <div class="mt-2 flex justify-end gap-2 border-t border-surface pt-3">

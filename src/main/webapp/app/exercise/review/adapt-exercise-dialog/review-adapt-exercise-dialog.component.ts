@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, outp
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -71,6 +72,7 @@ export class ReviewAdaptExerciseDialogComponent {
     readonly instructions = signal('');
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly maxInstructionsLength = MAX_INSTRUCTIONS_LENGTH;
 
     protected readonly sortedFindings = computed(() =>

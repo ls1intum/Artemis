@@ -82,7 +82,7 @@
                 "reloadRequired": "Reload the saved exercise before adapting it again.",
                 "startFailed": "Adaptation could not start. Your comments and instructions are kept here. Check AI progress for an active run, or try again.",
                 "reloadDraftRequired": "An AI run saved changes while this dialog was open. Your draft is still here. Copy any instructions you want to keep, then close this dialog and reload the saved exercise before adapting.",
-                "viewProgress": "Check AI progress (new tab)"
+                "opensInNewTab": "(opens in a new tab)"
             }
         }
     }
