@@ -454,6 +454,14 @@ class GenerationAttemptLoop {
             unresolvedConceptFindings = stagedOutcome.unresolvedConceptFindings();
         }
         else {
+            // The single loop must report a phase too, or an adaptation sits on "preparing" while the agent is already editing.
+            if (attempt == 1) {
+                emitPhase(Phase.DESIGNING, mode == Mode.ADAPT ? "Applying the requested changes to the problem statement, code, and tests"
+                        : "Designing the learning task and creating the specification, code, and tests");
+            }
+            else {
+                emitPhase(Phase.REPAIRING, "Fixing the reported issues (attempt " + attempt + " of " + maxGenerationAttempts + ")");
+            }
             SemanticRepairBatch repairBatchForAttempt = pendingSemanticRepair;
             pendingSemanticRepair = null;
             if (repairBatchForAttempt != null) {
