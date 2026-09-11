@@ -302,6 +302,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         return `${this.exercise().gradingInstructions || GRADING_INSTRUCTION_PLACEHOLDER}\n\n`;
     }
 
+    /**
+     * Flushes the live Monaco buffer into the exercise model. Hosts must call this synchronously
+     * before setting isSaving (which sets editable=false and would no-op this method) or sending
+     * the update DTO, otherwise a save inside the markdownChange debounce window keeps stale text.
+     */
     prepareForSave(): void {
         if (!this.editable() || this.showEditMode()) {
             return;

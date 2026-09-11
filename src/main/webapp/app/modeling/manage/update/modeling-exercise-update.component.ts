@@ -113,6 +113,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
     readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
@@ -396,6 +397,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+        // Flush text-mode Monaco before isSaving disables the child (editable becomes false).
+        this.gradingInstructionsDetails()?.prepareForSave();
         this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)

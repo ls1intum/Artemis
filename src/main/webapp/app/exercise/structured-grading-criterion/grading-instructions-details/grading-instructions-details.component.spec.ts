@@ -555,6 +555,23 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(mainEditor.flushLiveMarkdownAndParse).not.toHaveBeenCalled();
         });
 
+        it('should flush pending markdown synchronously so a save within the debounce window keeps the latest text', () => {
+            component.showEditMode.set(false);
+            exercise.gradingInstructions = 'stale instructions';
+            const markdownEditor = {
+                flushLiveMarkdownAndParse: vi.fn(() => {
+                    // Host save calls prepareForSave before the debounced markdownChange fires.
+                    exercise.gradingInstructions = 'latest instructions from monaco';
+                }),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+
+            component.prepareForSave();
+
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
+            expect(exercise.gradingInstructions).toBe('latest instructions from monaco');
+        });
+
         it('should flush the live monaco buffer before switching to structured mode', () => {
             component.showEditMode.set(false);
             const markdownEditor = { flushLiveMarkdownAndParse: vi.fn() };

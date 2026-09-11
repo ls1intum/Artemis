@@ -297,6 +297,30 @@ describe('TextExercise Management Update Component', () => {
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
 
+            it('should flush grading instructions before setting isSaving', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                let savingDuringFlush = false;
+                const prepareForSave = vi.fn(() => {
+                    savingDuringFlush = component.isSaving();
+                });
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave }) });
+                vi.spyOn(textExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+                component.save();
+                await fixture.whenStable();
+
+                expect(prepareForSave).toHaveBeenCalledOnce();
+                expect(savingDuringFlush).toBe(false);
+            });
+
             it('should error during save', async () => {
                 const exercise = createExistingExercise();
                 routeData$.next({ textExercise: exercise });

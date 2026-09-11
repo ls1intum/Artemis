@@ -94,6 +94,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     points = viewChild<NgModel>('points');
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
+    gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
     // Signals for state
     fileUploadExercise = signal<FileUploadExercise>(new FileUploadExercise(undefined, undefined));
@@ -291,6 +292,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     }
 
     async save() {
+        // Flush text-mode Monaco before isSaving disables the child (editable becomes false).
+        this.gradingInstructionsDetails()?.prepareForSave();
         this.isSaving.set(true);
 
         const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType());
