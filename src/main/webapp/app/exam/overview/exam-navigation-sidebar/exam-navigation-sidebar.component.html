@@ -13,7 +13,7 @@
                         (click)="changePage(true, -1)"
                     >
                         <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                            <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2">
+                            <span data-testid="sidebar-card-title" class="small fw-semibold text-truncate me-2">
                                 <fa-icon [ngbTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="faFileLines" />
                                 @if (!isCollapsed()) {
                                     <span class="auto-collapse" jhiTranslate="artemisApp.studentExamDetail.overview"></span>
@@ -32,7 +32,7 @@
                                 (click)="changePage(false, i, false)"
                             >
                                 <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                                    <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
+                                    <span data-testid="sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
                                         @if (sidebarItem.icon) {
                                             <fa-icon
                                                 [ngbTooltip]="!examTimeLineView() ? (getExerciseIconTooltip(exercises()[i]) | artemisTranslate) : ''"

@@ -21,13 +21,15 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
@@ -169,29 +171,37 @@ public class ExamSubmissionService {
      * @param exercise   the exercise for which the submission should be saved
      * @param submission the submission, whose id is set in place when an earlier submission exists
      * @param user       the current user
-     * @return the participation the caller may reuse, or null if the caller has to resolve it itself
+     * @return the projected participation the caller may reuse, or null if the caller has to resolve it itself
      */
     @Nullable
-    public StudentParticipation preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
+    public StudentParticipationSubmitTargetDTO preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
         if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExam().isTestExam()) {
             return null;
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
-        if (!participations.isEmpty()) {
-            Set<Submission> submissions = participations.getFirst().getSubmissions();
-            if (!submissions.isEmpty()) {
-                Submission existingSubmission = submissions.iterator().next();
-                // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
-                // we set the id of the received submission to the id of the existing submission. When repository.save()
-                // is invoked the existing submission will be updated.
-                submission.setId(existingSubmission.getId());
-            }
-            StudentParticipation resolved = participations.getFirst();
-            if (participations.size() == 1 && !resolved.isTestRun()) {
-                return resolved;
-            }
+        // A projection rather than the participation entity: loading that one pulls the whole exercise graph behind it,
+        // which nothing here reads, and the caller already holds the exercise.
+        List<ExamSubmissionGateDTO> participations = participationService.findExamSubmissionGate(exercise, user.getId());
+        if (participations.isEmpty()) {
+            return null;
+        }
+        // The rows are ordered graded first, then oldest first, so the one an instructor's test run added alongside the
+        // graded participation cannot decide which submission is overwritten.
+        ExamSubmissionGateDTO existing = participations.getFirst();
+        if (existing.existingSubmissionId() != null) {
+            // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
+            // we set the id of the received submission to the id of the existing submission. When repository.save()
+            // is invoked the existing submission will be updated.
+            submission.setId(existing.existingSubmissionId());
+        }
+        // Team participations are owned by a Team, not by a User, so they cannot be rebuilt from these fields. A file
+        // upload needs the participation's existing submissions as well - FileUploadSubmissionService reads the previous
+        // file off them to delete it when the name changed and to evict the cache when it did not, and the projection
+        // does not carry them. Both callers resolve the participation themselves, exactly as they do when several exist.
+        if (participations.size() == 1 && !existing.testRun() && !exercise.isTeamMode() && !(exercise instanceof FileUploadExercise)) {
+            return new StudentParticipationSubmitTargetDTO(existing.participationId(), existing.initializationState(), existing.initializationDate(), existing.individualDueDate(),
+                    existing.testRun(), null);
         }
 
         return null;

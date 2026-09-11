@@ -17,7 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.CourseRequestsAdminOverviewDTO;
@@ -286,7 +286,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> performPostAndGetErrorResponse(CourseRequestCreateDTO createDTO) throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         String jsonBody = mapper.writeValueAsString(createDTO);
         MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/course/course-requests")).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().isBadRequest()).andReturn();

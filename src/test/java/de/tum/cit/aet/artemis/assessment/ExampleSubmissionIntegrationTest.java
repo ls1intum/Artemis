@@ -20,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -171,7 +171,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
         String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + created.id(), HttpStatus.OK, String.class);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", created.id());
         body.put("usedForTutorial", false);
@@ -219,7 +219,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         String exampleAssessmentJson = request.get(
                 "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + created.submission().id() + "/example-assessment", HttpStatus.OK, String.class);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", created.id());
         body.put("usedForTutorial", false);
@@ -423,7 +423,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         String exampleResultJson = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result", HttpStatus.OK,
                 String.class);
 
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", created.id());
         body.put("usedForTutorial", false);
@@ -465,7 +465,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
         String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + created.id(), HttpStatus.OK, String.class);
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", created.id());
         body.put("usedForTutorial", false);
@@ -528,7 +528,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleTextSubmission_clientShape() throws Exception {
         String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("usedForTutorial", true);
         body.set("exercise", mapper.readTree(exerciseDetailJson));
@@ -560,7 +560,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void updateExampleTextSubmission_loadedShapeWithoutExercise() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true, true));
         String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + stored.getId(), HttpStatus.OK, String.class);
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = (ObjectNode) mapper.readTree(exampleSubmissionJson);
         assertThat(body.has("exercise")).isFalse();
         body.put("usedForTutorial", false);
@@ -582,7 +582,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExampleSubmission_bodyExerciseDiffersFromPath_badRequest() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", stored.getId());
         body.set("exercise", mapper.createObjectNode().put("id", modelingExercise.getId()));
@@ -597,7 +597,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExampleSubmission_ofAnotherExercise_badRequest() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", stored.getId());
         body.set("submission", mapper.createObjectNode().put("model", validModel));
@@ -610,7 +610,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleSubmission_withoutSubmission_badRequest() throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("usedForTutorial", false);
 
@@ -625,7 +625,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true, true));
         stored.setAssessmentExplanation("Explanation of the assessment");
         exampleSubmissionRepository.save(stored);
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.put("id", stored.getId());
         body.put("usedForTutorial", false);
@@ -642,7 +642,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleSubmission_unsupportedExerciseType_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, null, null, null, null);
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
         body.set("submission", mapper.createObjectNode().put("text", "Example text"));
 

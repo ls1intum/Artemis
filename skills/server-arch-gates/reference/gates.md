@@ -10,13 +10,37 @@ check instead of the problem.
 controllers. Transaction boundaries may only be defined inside repositories, typically for
 modifying queries.
 
-**Enforced by.** `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`,
-which each module's `*RepositoryArchitectureTest` subclass runs.
+**Enforced by.** Three rules in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`, all checked over
+the whole code base rather than per module:
+
+- `testTransactionBoundariesOnlyInRepositories` — a `@Transactional` method must be declared in a
+  repository interface, and no class outside one may carry the annotation.
+- `testNoProgrammaticTransactionManagement` — production code may not touch anything in
+  `org.springframework.transaction` except the annotation package, which is what covers
+  `TransactionTemplate` and `PlatformTransactionManager`. Tests are exempt: one may legitimately
+  open a transaction to seed data, or hold a row lock while asserting the code under test waits.
+- `testNoTransactionSynchronization` — nothing anywhere may use `TransactionSynchronizationManager`
+  or a `TransactionSynchronization`. Without a boundary the callbacks never fire and nothing is
+  logged, so the code silently does not run.
+
+`AbstractModuleRepositoryArchitectureTest` carries the first rule per module as well, but only
+modules with a `*RepositoryArchitectureTest` subclass get it, which is why the global rules exist.
 
 **Consequence for you.** A REST call is not one transaction. Do not write code that assumes reads
 later in the call see writes from earlier in the call rolled into one atomic unit, and do not
 attempt to coordinate cache eviction across a request boundary that does not exist.
+
+**What to write instead.** Two patterns cover nearly every boundary that looked necessary:
+
+- To make a check and a write atomic, move the check into the `WHERE` clause of a `@Modifying`
+  query and act on the row count — `AnswerPostRepository.verifyIfUnverified`,
+  `LectureUnitProcessingStateRepository.claimIdleForDispatch`. This also replaces
+  `SELECT ... FOR UPDATE SKIP LOCKED`.
+- To undo work when a later step fails, compensate in a `catch` block —
+  `SlideSplitterService.SlideOperation`.
+
+Full reasoning: `documentation/docs/developer/guidelines/performance.mdx` (Avoid Transactions).
 
 ## Persistence access
 
@@ -36,6 +60,35 @@ likely to read, because it is also the canonical cache-eviction pattern below; i
 `PostUpdateEventListener` / `PostDeleteEventListener`. Copy its eviction logic, not its
 constructor. A new class taking an `EntityManagerFactory` fails the rule, and adding yourself to
 the list is the wrong fix.
+
+## Fetching
+
+**Rule.** No `@OneToOne`, `@OneToMany` or `@ManyToMany` fetches eagerly. The rule reads the fetch
+type that applies, not the one written down, so an omitted `fetch` on a `@OneToOne` counts as eager
+and has to be spelled out as `FetchType.LAZY`; `@OneToMany` and `@ManyToMany` are lazy by default.
+
+**Enforced by.** `testNoEagerFetching` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
+
+**`@ManyToOne` is out of scope.** Hibernate cannot make a to-one association lazy without bytecode
+enhancement or a proxy, and a proxied `@ManyToOne` does not work with entity hierarchies. Do not add
+`fetch = FetchType.LAZY` there expecting it to take effect.
+
+**Read a configuration through its own repository.** Do not put a lazy association into an
+`@EntityGraph` or a `JOIN FETCH` so that code further down can read it off the entity. Besides
+coupling unrelated queries to that decision, it does not work where the owner is reached through an
+eager `@ManyToOne` chain (`Exercise` to `ExerciseGroup` to `Exam` to `Course`): Hibernate resolves
+that chain by secondary select and the fetch plan no longer applies, so the association stays
+uninitialized however the query is written. `CourseAthenaConfigRepository` and
+`CourseConfigurationRepository` are the pattern.
+
+**`FIELDS_ALLOWED_TO_FETCH_EAGERLY` is grandfathering, not permission.** 38 associations, and the
+list may only shrink.
+
+**Turning an existing one lazy is not free.** `open-in-view` is disabled, so an association a query
+did not fetch reads as absent once the session closes - a `LazyInitializationException`, or a
+silently wrong value where the getter guards with `Hibernate.isInitialized`. Convert every reader,
+then pin the result with a wire-contract test; `AthenaConfigWireContractTest` is the pattern.
 
 ## Distributed data
 
@@ -175,3 +228,35 @@ where you can. Local check: `supporting_scripts/find_slow_queries.py`.
 
 **Adding a NOT NULL column to an existing table** needs the guarded migration pattern. See
 `skills/liquibase-migration/SKILL.md`.
+
+## Jackson version
+
+**Rule:** `ArchitectureTest.testNoJackson2InProductionCode`
+
+Production code may not depend on `com.fasterxml.jackson.databind..`, `..core..`, `..dataformat..`,
+`..datatype..`, `..module..`, `..jr..` or `..jaxrs..`. Artemis migrated to Jackson 3 (`tools.jackson`)
+ahead of Spring Boot 4.3 removing Jackson 2 support.
+
+`com.fasterxml.jackson.annotation` is deliberately allowed and is not a mistake: `jackson-annotations`
+never moved to the `tools.jackson` group, so every `@JsonInclude`, `@JsonProperty`, `@JsonIgnore` and
+`@JsonTypeInfo` in the codebase is still imported from there.
+
+**Why the rule exists rather than the compiler:** Jackson 2 is still resolvable, because a dozen
+third-party libraries ship their own mapper and the `jackson-bom` import keeps that transitive line on a
+patched release. Nothing stops a new Jackson 2 import from compiling.
+
+**Three things that compile but change behaviour:**
+
+- Jackson 3 exceptions are unchecked and do not extend `IOException`. A `catch (IOException)` around a
+  parse used to handle malformed input and silently no longer does, wherever the block still performs
+  real IO. Name `JacksonException` explicitly.
+- Mappers are immutable. There is no `configure(...)` or `registerModule(...)` on a built mapper — use
+  `JsonMapper.builder()`, or `rebuild()` to derive from an existing configuration.
+- `asString()` is not a rename of `asText()`. Jackson 2 returned `""` for a non-string node; Jackson 3
+  throws. Use `asString(null)` or an `isString()` guard wherever the input is not ours.
+
+**Configuration:** `ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper,
+applied to the auto-configured `JsonMapper`, the `XmlMapper` and the shared static `JsonObjectMapper`. It
+pins the Jackson 3 defaults that would otherwise change the JSON on the wire, each with a TODO naming what
+has to happen before it can go. `JacksonSerializationContractTest` records the payloads those pins protect:
+remove a pin, run it, and the failing fixture is the payload that would change.

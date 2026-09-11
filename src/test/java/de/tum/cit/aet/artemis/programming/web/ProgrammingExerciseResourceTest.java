@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,7 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -127,6 +129,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     @Autowired
@@ -154,9 +159,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private SubmissionPolicyRepository submissionPolicyRepository;
 
     @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
     private CompetencyUtilService competencyUtilService;
 
     @Autowired
@@ -174,6 +176,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
 
     @AfterEach
     void tearDown() {
@@ -351,10 +356,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         List<String> colors = new ArrayList<>();
 
         for (var node : categoriesArray) {
-            var raw = node.asText();
+            var raw = node.asString();
             var inner = objectMapper.readTree(raw);
-            categoryNames.add(inner.get("category").asText());
-            colors.add(inner.get("color").asText());
+            categoryNames.add(inner.get("category").asString());
+            colors.add(inner.get("color").asString());
         }
 
         // Verify category names
@@ -424,6 +429,24 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         newExercise.setProblemStatement("a".repeat(100_001));
 
         request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforePersistence() throws Exception {
+        addInstructorToCourse();
+        long exerciseCountBeforeRequest = programmingExerciseRepository.count();
+
+        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), dueDate, course);
+        newExercise.setAssessmentDueDate(dueDate.plusMinutes(10));
+        newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        newExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeRequest);
     }
 
     @Test
@@ -767,6 +790,43 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
         assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).as("buildAndTestStudentSubmissionsAfterDueDate should be shifted by the same offset")
                 .isCloseTo(expectedBuildAndTestDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforeAuxiliaryRepositoryChanges() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        programmingExercise.setDueDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
+        programmingExercise.setReleaseDate(dueDate.minusDays(2));
+        programmingExercise.setStartDate(dueDate.minusDays(1));
+        programmingExercise.setDueDate(dueDate);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentDueDate(dueDate.plusMinutes(10));
+        programmingExercise.setExampleSolutionPublicationDate(null);
+
+        var addedAuxiliaryRepository = new AuxiliaryRepository();
+        addedAuxiliaryRepository.setName("additional");
+        addedAuxiliaryRepository.setDescription("Must not be created for a rejected update");
+        addedAuxiliaryRepository.setCheckoutDirectory("additional");
+        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(addedAuxiliaryRepository)));
+        var auxiliaryRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName("additional"));
+        Path auxiliaryRepositoryPath = auxiliaryRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(auxiliaryRepositoryPath).doesNotExist();
+
+        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(auxiliaryRepositoryPath).doesNotExist();
     }
 
     @Test
@@ -1244,7 +1304,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(templateParticipation.getRepositoryUri()), Map.of("README.md", "Initial commit"), "Initial commit");
     }
 
-    private String validBuildPlanConfiguration() throws JsonProcessingException {
+    private String validBuildPlanConfiguration() throws JacksonException {
         var phase = new BuildPhaseDTO("Test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
         return new BuildPlanPhasesDTO(List.of(phase), "ubuntu:latest").toBuildPlanConfiguration();
     }
@@ -1312,7 +1372,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     // The /timeline guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     /** Puts {@link #programmingExercise} into a variant group whose timeline it already matches. */
-    private void attachProgrammingExerciseToVariantGroup() throws JsonProcessingException {
+    private void attachProgrammingExerciseToVariantGroup() throws JacksonException {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(GROUP_RELEASE_DATE);
