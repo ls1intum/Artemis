@@ -1,19 +1,4 @@
-import {
-    ChangeDetectorRef,
-    Component,
-    DestroyRef,
-    ElementRef,
-    afterNextRender,
-    afterRenderEffect,
-    computed,
-    effect,
-    inject,
-    input,
-    model,
-    output,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -48,15 +33,16 @@ function widthOf(element: HTMLElement | undefined): number {
 }
 
 /**
- * Whether a bar of `barWidth` can carry the pills next to its controls and still leave the title
- * {@link MIN_TITLE_WIDTH_PX}. A width of 0 means not measured yet — see {@link ExerciseHeaderComponent.showsPills} for
- * why that answers yes.
+ * Whether a bar of `barWidth` can carry the pills and still leave the title {@link MIN_TITLE_WIDTH_PX}.
+ * `fixedContentWidth` is everything in the bar the title cannot have either way — the trailing controls, and the quiz
+ * countdown that sits where the due date otherwise would. A width of 0 means not measured yet; see
+ * {@link ExerciseHeaderComponent.showsPills} for why that answers yes.
  */
-export function pillsFitInTitleBar(barWidth: number, controlsWidth: number, pillsWidth: number): boolean {
+export function pillsFitInTitleBar(barWidth: number, fixedContentWidth: number, pillsWidth: number): boolean {
     if (!barWidth || !pillsWidth) {
         return true;
     }
-    return barWidth - controlsWidth - pillsWidth - PILLS_GAP_PX >= MIN_TITLE_WIDTH_PX;
+    return barWidth - fixedContentWidth - pillsWidth - PILLS_GAP_PX >= MIN_TITLE_WIDTH_PX;
 }
 
 @Component({
@@ -104,13 +90,15 @@ export class ExerciseHeaderComponent {
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
 
-    /** The bar itself, the controls that are always in it, and the pills — measured to decide whether the pills fit. */
+    /** The bar and the content in it whose widths decide whether the pills still fit beside the title. */
     private readonly bar = viewChild<ElementRef<HTMLElement>>('bar');
     private readonly controls = viewChild<ElementRef<HTMLElement>>('controls');
+    private readonly countdown = viewChild<ElementRef<HTMLElement>>('countdown');
     private readonly pills = viewChild<ElementRef<HTMLElement>>('pills');
 
     private readonly barWidth = signal(0);
-    private readonly controlsWidth = signal(0);
+    /** The trailing controls plus the quiz countdown: what the bar holds no matter how narrow it gets. */
+    private readonly fixedContentWidth = signal(0);
     /**
      * Last measured width of the pills. Kept when they are not rendered, because that is exactly the width the fit
      * calculation needs in order to decide whether they could be shown again — a removed element has none to read.
@@ -128,7 +116,7 @@ export class ExerciseHeaderComponent {
      * not rendered has no width — so the first frame renders them and the next one takes them away again if they turn
      * out not to fit.
      */
-    readonly showsPills = computed<boolean>(() => pillsFitInTitleBar(this.barWidth(), this.controlsWidth(), this.pillsWidth()));
+    readonly showsPills = computed<boolean>(() => pillsFitInTitleBar(this.barWidth(), this.fixedContentWidth(), this.pillsWidth()));
 
     // Local signal to track a practice participation created in this session,
     // ensuring the toggle appears immediately without waiting for the parent round-trip.
@@ -220,28 +208,24 @@ export class ExerciseHeaderComponent {
     });
 
     /**
-     * Watches the bar and the controls in it, both of which are there for the life of the view, so one observer covers
-     * them. Change detection is flushed in the callback — which runs after layout and before paint — so a pill
-     * appearing or giving way lands on the same frame rather than flickering for one.
+     * Watches the bar and the content the title never gets back. Change detection is flushed in the callback — which
+     * runs after layout and before paint — so a pill appearing or giving way lands on the same frame rather than
+     * flickering for one.
      */
-    protected readonly measureBarAndControls = afterNextRender(() => {
-        const observer = new ResizeObserver(() => {
-            if (this.destroyed) {
-                return;
-            }
-            this.barWidth.set(widthOf(this.bar()?.nativeElement));
-            this.controlsWidth.set(widthOf(this.controls()?.nativeElement));
-            this.changeDetectorRef.detectChanges();
-        });
-        const barElement = this.bar()?.nativeElement;
-        const controlsElement = this.controls()?.nativeElement;
-        if (barElement) {
-            observer.observe(barElement);
+    private readonly layoutObserver = new ResizeObserver(() => {
+        if (this.destroyed) {
+            return;
         }
-        if (controlsElement) {
-            observer.observe(controlsElement);
-        }
-        this.destroyRef.onDestroy(() => observer.disconnect());
+        this.barWidth.set(widthOf(this.bar()?.nativeElement));
+        this.fixedContentWidth.set(widthOf(this.controls()?.nativeElement) + widthOf(this.countdown()?.nativeElement));
+        this.changeDetectorRef.detectChanges();
+    });
+
+    /** Points {@link layoutObserver} at whichever of them are rendered — only a quiz has a countdown. */
+    protected readonly followBarAndFixedContent = afterRenderEffect(() => {
+        const elements = [this.bar(), this.controls(), this.countdown()].map((ref) => ref?.nativeElement).filter((element) => !!element);
+        this.layoutObserver.disconnect();
+        elements.forEach((element) => this.layoutObserver.observe(element));
     });
 
     /** Points {@link pillsObserver} at the pills for as long as they are rendered. */
@@ -259,6 +243,7 @@ export class ExerciseHeaderComponent {
     constructor() {
         this.destroyRef.onDestroy(() => {
             this.destroyed = true;
+            this.layoutObserver.disconnect();
             this.pillsObserver.disconnect();
         });
     }

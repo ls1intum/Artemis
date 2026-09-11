@@ -56,11 +56,12 @@ describe('ExerciseHeaderComponent', () => {
     }
 
     /** Lays the bar out at these widths and lets the component react, as a resize in the browser would. */
-    function layOutBar(widths: { bar: number; controls: number; pills: number }): void {
+    function layOutBar(widths: { bar: number; controls: number; pills: number; countdown?: number }): void {
         const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
         bar.getBoundingClientRect = () => ({ width: widths.bar }) as DOMRect;
         stubWidth('exercise-header-controls', widths.controls);
         stubWidth('exercise-header-pills', widths.pills);
+        stubWidth('exercise-header-countdown', widths.countdown ?? 0);
         resizeCallbacks.forEach((callback) => callback());
         fixture.detectChanges();
     }
@@ -194,6 +195,15 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
         }
 
+        function renderQuizBar(): void {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.id = 1;
+            quiz.type = ExerciseType.QUIZ;
+            fixture.componentRef.setInput('exercise', quiz);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+        }
+
         function pillsAreRendered(): boolean {
             return fixture.nativeElement.querySelector('[data-testid="exercise-header-pills"]') !== null;
         }
@@ -237,6 +247,44 @@ describe('ExerciseHeaderComponent', () => {
             // as "not measured yet", put them straight back, measure them too wide, and take them away again - on
             // every frame. The width measured while they were up is what settles it.
             layOutBar({ bar: 900, controls: 400, pills: 0 });
+
+            expect(pillsAreRendered()).toBe(false);
+        });
+
+        it('places the due date and the status after the title, not over with the buttons', () => {
+            renderBar();
+            const positionOf = (selector: string): number => {
+                const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+                return Array.from(bar.children).indexOf(bar.querySelector(selector)!);
+            };
+
+            // Title, then the pills, then the controls the bar holds at its far end.
+            expect(positionOf('h5')).toBeLessThan(positionOf('[data-testid="exercise-header-pills"]'));
+            expect(positionOf('[data-testid="exercise-header-pills"]')).toBeLessThan(positionOf('[data-testid="exercise-header-controls"]'));
+        });
+
+        it('puts a running quiz clock where the due date would be, between the title and the status', () => {
+            renderQuizBar();
+
+            const bar: HTMLElement = fixture.nativeElement.querySelector('#exercise-header');
+            const positions = Array.from(bar.children);
+            const countdown = bar.querySelector('[data-testid="exercise-header-countdown"]')!;
+            const pills = bar.querySelector('[data-testid="exercise-header-pills"]')!;
+
+            expect(positions.indexOf(bar.querySelector('h5')!)).toBeLessThan(positions.indexOf(countdown));
+            expect(positions.indexOf(countdown)).toBeLessThan(positions.indexOf(pills));
+        });
+
+        it('counts the quiz countdown against the title, now that it sits beside it rather than with the buttons', () => {
+            renderQuizBar();
+
+            // This bar has room for the pills while nothing else stands between the title and the buttons.
+            layOutBar({ bar: 1200, controls: 400, pills: 380, countdown: 0 });
+            expect(pillsAreRendered()).toBe(true);
+
+            // The clock is never taken away, so its width is space the title cannot have either - and with it there is
+            // no longer enough left. Leaving it out of the calculation would keep the pills and squeeze the title.
+            layOutBar({ bar: 1200, controls: 400, pills: 380, countdown: 150 });
 
             expect(pillsAreRendered()).toBe(false);
         });
