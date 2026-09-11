@@ -1462,12 +1462,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
     });
 
-    it('reopens Hyperion from the AI toolbar while status is unavailable', () => {
+    it('keeps the AI menu accessible while status is unavailable', () => {
         (comp as any).generationActivity = { running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
-        (comp as any).onAiToolbarClick({} as Event, { toggle: vi.fn() });
-
-        expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        const toggle = vi.fn();
+        comp['onAiToolbarClick']({} as Event, { toggle } as Parameters<(typeof comp)['onAiToolbarClick']>[1]);
+        expect(toggle).toHaveBeenCalledOnce();
+        expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
     });
 
     it('keeps the editor locked while generation status is hydrating', () => {
