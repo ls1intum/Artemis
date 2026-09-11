@@ -8,6 +8,7 @@ import {
     HyperionSubstepKey,
     mostCriticalState,
     runOutcome,
+    stageLabelKey,
     stagePosition,
     stageStates,
 } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
@@ -378,5 +379,27 @@ describe('mostCriticalState', () => {
         expect(mostCriticalState('failed', [{ key: 'concept', state: 'complete' }])).toBe('failed');
         expect(mostCriticalState('pending', [{ key: 'concept', state: 'pending' }])).toBe('pending');
         expect(mostCriticalState('complete', [{ key: 'concept', state: 'skipped' }])).toBe('complete');
+    });
+
+    describe('adaptation', () => {
+        it('labels the authoring rung as revising for an adaptation and as designing for a generation', () => {
+            expect(stageLabelKey('design', true)).toBe('artemisApp.hyperion.generation.stage.revise');
+            expect(stageLabelKey('design', false)).toBe('artemisApp.hyperion.generation.stage.design');
+            expect(stageLabelKey('build', true)).toBe('artemisApp.hyperion.generation.stage.build');
+        });
+
+        it('moves the spinner back to the authoring rung while a repair edits, keeping review complete', () => {
+            const stages = stageStates(
+                [
+                    event({ type: 'PROGRESS', phase: 'DESIGNING' }),
+                    event({ type: 'PROGRESS', phase: 'VERIFYING' }),
+                    event({ type: 'PROGRESS', phase: 'REVIEWING' }),
+                    event({ type: 'PROGRESS', phase: 'REPAIRING' }),
+                ],
+                undefined,
+            );
+            expect(stages.map((stage) => stage.state)).toEqual(['complete', 'current', 'complete', 'complete', 'pending']);
+            expect(stagePosition(stages)).toBe(4);
+        });
     });
 });

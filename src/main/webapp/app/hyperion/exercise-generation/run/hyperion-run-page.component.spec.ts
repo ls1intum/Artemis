@@ -384,6 +384,12 @@ describe('HyperionRunPageComponent', () => {
         expect(testId('hyperion-run-other-instructor')).not.toBeNull();
     });
 
+    it("reports another instructor's run as running even though its events are withheld", () => {
+        render(status({ running: true, cancellable: false, ownedByCaller: false, events: [] }));
+
+        expect(testId('hyperion-run-status')?.textContent).toContain('artemisApp.hyperion.generation.status.running');
+    });
+
     it('swaps Cancel for Run again once the run has ended', () => {
         render(status({ events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
 

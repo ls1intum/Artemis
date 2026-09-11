@@ -29,7 +29,7 @@ import { HyperionRunHeaderComponent } from 'app/hyperion/exercise-generation/run
 import { HyperionRunOutcomeCheck, HyperionRunOutcomeComponent, HyperionRunOutcomeView } from 'app/hyperion/exercise-generation/run/hyperion-run-outcome.component';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
 import { HyperionRunUsageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-usage.component';
-import { HYPERION_STAGE_COUNT, HyperionRunOutcome, runOutcome, stagePosition, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
+import { HYPERION_STAGE_COUNT, HyperionRunOutcome, runOutcome, stageLabelKey, stagePosition, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { activityView, formatClockTime, formatElapsed, isStalled } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { HyperionRunAnnouncerService } from 'app/hyperion/exercise-generation/run/hyperion-run-announcer.service';
@@ -193,7 +193,8 @@ export class HyperionRunPageComponent {
             return 'cancelling';
         }
         if (this.running()) {
-            return this.events().length > 0 ? 'running' : 'queued';
+            // Another instructor's run streams no events to this reader, yet it is running, not waiting to start.
+            return this.events().length > 0 || !this.ownedByCaller() ? 'running' : 'queued';
         }
         if (this.facade.jobId() !== undefined) {
             return 'queued';
@@ -362,7 +363,7 @@ export class HyperionRunPageComponent {
             message: this.translateService.instant('artemisApp.hyperion.generation.run.stageAnnouncement', {
                 position,
                 total: this.stepTotal,
-                stage: this.translateService.instant(`artemisApp.hyperion.generation.stage.${current.key}`),
+                stage: this.translateService.instant(stageLabelKey(current.key, this.adapting())),
             }),
         };
     });

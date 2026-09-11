@@ -26,6 +26,7 @@
                 "stage": {
                     "prepare": "Arbeitsbereich vorbereiten",
                     "design": "Aufgabe entwerfen",
+                    "revise": "Gewünschte Änderungen umsetzen",
                     "build": "Bauen und testen",
                     "review": "Prüfen und nachbessern",
                     "save": "Entwurf speichern",

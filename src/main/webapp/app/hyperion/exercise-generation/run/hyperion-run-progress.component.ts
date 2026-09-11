@@ -3,7 +3,7 @@ import { TumUiStepComponent, TumUiStepState, TumUiStepperComponent } from '@tuma
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HyperionActivityView, formatElapsed } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
-import { HyperionStage, HyperionStageKey, HyperionSubstepKey } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
+import { HyperionStage, HyperionStageKey, HyperionSubstepKey, stageLabelKey } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionRunActivityComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-activity.component';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { ExerciseGenerationRepairRound } from 'app/openapi/model/exercise-generation-repair-round';
@@ -46,6 +46,8 @@ interface StageTiming {
 })
 export class HyperionRunProgressComponent {
     readonly stages = input.required<readonly HyperionStage[]>();
+    /** An adaptation labels the authoring rung as revising the exercise rather than designing one. */
+    readonly adapting = input(false);
     /** The newest message from the server, shown under the stage it belongs to. */
     readonly liveMessage = input<string | undefined>();
     readonly repairRound = input<ExerciseGenerationRepairRound | undefined>();
@@ -91,7 +93,7 @@ export class HyperionRunProgressComponent {
             return {
                 key: stage.key,
                 state: stage.state,
-                labelKey: `artemisApp.hyperion.generation.stage.${stage.key}`,
+                labelKey: stageLabelKey(stage.key, this.adapting()),
                 // A stage nobody has reached yet must not preview the work it might do.
                 substeps,
                 // Files are omitted when the stage wrote none, for the same reason the meter omits a counter at zero.
