@@ -262,7 +262,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.loadTestExamStudentExamForSummary();
             } else {
                 this.examLoadSubscription = this.courseOverviewTabDataService
-                    .loadExamsIfNeeded(this.courseId())
+                    // The parent exams tab loaded this list before navigating to the selected exam child route. Reuse
+                    // that response across this one internal navigation so opening the tab does not issue it twice.
+                    .loadExamsIfNeeded(this.courseId(), true)
                     .pipe(
                         catchError(() => of(undefined)),
                         switchMap((exams) => {

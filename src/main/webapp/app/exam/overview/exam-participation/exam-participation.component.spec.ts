@@ -447,6 +447,16 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()).toEqual(studentExam);
     });
 
+    it('should request overview exams with reuseFromParentNavigation true', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        const loadExamsSpy = vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([]));
+
+        comp.ngOnInit();
+
+        expect(loadExamsSpy).toHaveBeenCalledWith(1, true);
+    });
+
     it('should still load an existing test exam attempt summary when the attempt card is clicked', () => {
         const exam = new Exam();
         exam.id = 2;
