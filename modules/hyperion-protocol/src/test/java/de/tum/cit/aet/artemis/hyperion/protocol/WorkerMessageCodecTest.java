@@ -52,8 +52,8 @@ class WorkerMessageCodecTest {
     @ValueSource(booleans = { false, true })
     void heartbeatRoundTripPreservesIdleAndOccupiedCapacity(boolean occupied) {
         var id = identity();
-        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.HEARTBEAT, null, true, IMAGE,
-                null, null, null).withCapacity(new WorkerCapacity(4, occupied ? List.of(id) : List.of()));
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.HEARTBEAT, null, true, IMAGE, null,
+                null, null).withCapacity(new WorkerCapacity(4, occupied ? List.of(id) : List.of()));
         assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
     }
 
