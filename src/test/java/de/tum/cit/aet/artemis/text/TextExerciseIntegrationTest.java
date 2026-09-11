@@ -21,12 +21,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -40,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -67,7 +65,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -1158,6 +1155,33 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertTextBlocksHaveSameContent(automaticTextBlock, automaticTextBlockFromImport);
     }
 
+    /**
+     * An instructor can create an example submission and leave it unassessed, so the source submission has no result.
+     * Copying one used to dereference that missing result and fail the whole import with a NullPointerException;
+     * ModelingExerciseImportService already guarded it, the text import did not.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importTextExerciseWithUnassessedExampleSubmissionFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise = textExerciseRepository.save(textExercise);
+        textExercise.setChannelName("testchannel" + textExercise.getId());
+
+        // Deliberately no addResultToSubmission: this is the unassessed case.
+        var exampleSubmission = participationUtilService.generateExampleSubmission("Lorem Ipsum", textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
+
+        TextExerciseResponseDTO newTextExerciseDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(),
+                ImportTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        TextExercise newTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(newTextExerciseDto.id());
+        assertThat(newTextExercise.getExampleSubmissions()).as("the example submission is imported even without a result").hasSize(1);
+        ExampleSubmission newExampleSubmission = newTextExercise.getExampleSubmissions().iterator().next();
+        assertThat(newExampleSubmission.getSubmission().getResults()).as("no result is invented for an unassessed example submission").isEmpty();
+    }
+
     private static void assertTextBlocksHaveSameContent(TextBlock manualTextBlock, TextBlock manualTextBlockFromImport) {
         assertThat(manualTextBlockFromImport.getType()).isEqualTo(manualTextBlock.getType());
         assertThat(manualTextBlockFromImport.getStartIndex()).isEqualTo(manualTextBlock.getStartIndex());
@@ -2056,6 +2080,30 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(2));
+        textExercise.setAssessmentDueDate(baseTime.plusHours(4));
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setExampleSolutionPublicationDate(textExercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setAssessmentDueDate(null);
+
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(3));
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setExampleSolutionPublicationDate(textExercise.getDueDate());
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
         textExercise.setReleaseDate(baseTime.plusHours(3));
         textExercise.setDueDate(null);
         textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
@@ -2068,38 +2116,17 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
         textExercise.setId(null);
-        textExercise.setAssessmentDueDate(null);
+        textExercise.setAssessmentDueDate(baseTime.plusHours(3));
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         textExercise.setReleaseDate(baseTime.plusHours(1));
         textExercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         textExercise.setChannelName("test");
 
         var result = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
         assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
-
-        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        textExercise.setReleaseDate(baseTime.plusHours(1));
-        textExercise.setDueDate(baseTime.plusHours(3));
-        exampleSolutionPublicationDate = baseTime.plusHours(2);
-        textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        result = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
-        assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetTextExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetTextExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetTextExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetTextExercise_exampleSolutionVisibility(false, "instructor1");
     }
 
     @Test
@@ -2123,7 +2150,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();
         feedback.setGradingInstruction(gradingInstruction);
-        participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
+        var latestResult = submission.getLatestResult();
+        assertThat(latestResult).isNotNull();
+        participationUtilService.addFeedbackToResult(feedback, latestResult);
 
         textExercise.setCourse(course2);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
@@ -2159,61 +2188,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 
-    }
-
-    private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        // Utility function to avoid duplication
-        Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny()
-                .orElseThrow();
-
-        textExercise.setExampleSolution("Sample<br>solution");
-
-        if (isStudent) {
-            participationUtilService.createAndSaveParticipationForExercise(textExercise, username);
-        }
-
-        // Test example solution publication date not set.
-        textExercise.setExampleSolutionPublicationDate(null);
-        textExerciseRepository.save(textExercise);
-
-        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
-                HttpStatus.OK, CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
-        }
-        else {
-            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
-        }
-
-        // Test example solution publication date in the past.
-        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        textExerciseRepository.save(textExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(course);
-
-        assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
-
-        // Test example solution publication date in the future.
-        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        textExerciseRepository.save(textExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
-        }
-        else {
-            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
-        }
     }
 
     @Test

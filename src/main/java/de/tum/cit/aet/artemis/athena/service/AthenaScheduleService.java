@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -50,13 +51,17 @@ public class AthenaScheduleService {
 
     private final AthenaSubmissionSendingService athenaSubmissionSendingService;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, ExerciseRepository exerciseRepository, ProfileService profileService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler, AthenaSubmissionSendingService athenaSubmissionSendingService) {
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler, AthenaSubmissionSendingService athenaSubmissionSendingService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.exerciseRepository = exerciseRepository;
         this.profileService = profileService;
         this.taskScheduler = taskScheduler;
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -90,6 +95,9 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
+        // Neither caller hands over an exercise whose course carries the configuration, and without it the check
+        // below answers false for every exercise and cancels the tasks it should schedule.
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             cancelScheduledAthena(exercise.getId());
             return;

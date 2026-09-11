@@ -459,6 +459,10 @@ public class BuildAgentDockerService {
                     checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                 }
                 catch (InterruptedException ie) {
+                    // Wrapping in another exception type loses the interruption, so restore it for whoever catches
+                    // LocalCIException: a build agent thread that keeps running after a shutdown request is the failure
+                    // this guards against.
+                    Thread.currentThread().interrupt();
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
                 catch (Exception ex) {
@@ -478,6 +482,8 @@ public class BuildAgentDockerService {
                             checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                         }
                         catch (InterruptedException ie) {
+                            // See the primary pull above: the wrapper does not carry the interrupt status.
+                            Thread.currentThread().interrupt();
                             throw new LocalCIException("Interrupted while pulling docker image " + imageName + " with amd64 fallback", ie);
                         }
                         catch (Exception fallbackEx) {

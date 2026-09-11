@@ -18,8 +18,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class HyperionReviewCommentContextRendererServiceTest {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final JsonMapper OBJECT_MAPPER = new JsonMapper();
 
     @Mock
     private CommentThreadRepository commentThreadRepository;
@@ -92,8 +92,8 @@ class HyperionReviewCommentContextRendererServiceTest {
 
         JsonNode comments = OBJECT_MAPPER.readTree(result).path("threads").get(0).path("comments");
         assertThat(comments).hasSize(maxSerializedComments);
-        assertThat(comments.get(0).path("text").asText()).isEqualTo("comment-13-2");
-        assertThat(comments.get(maxSerializedComments - 1).path("text").asText()).isEqualTo("comment-13-" + (maxSerializedComments + 1));
+        assertThat(comments.get(0).path("text").asString()).isEqualTo("comment-13-2");
+        assertThat(comments.get(maxSerializedComments - 1).path("text").asString()).isEqualTo("comment-13-" + (maxSerializedComments + 1));
     }
 
     private CommentThread createThread(long threadId, CommentThreadLocationType targetType, int commentCount) {

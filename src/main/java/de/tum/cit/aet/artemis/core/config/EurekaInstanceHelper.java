@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -86,10 +87,7 @@ public class EurekaInstanceHelper {
      * @return list of service instances, empty list if no registration is available
      */
     public List<ServiceInstance> getServiceInstances() {
-        if (registration.isEmpty()) {
-            return List.of();
-        }
-        return discoveryClient.getInstances(registration.get().getServiceId());
+        return registration.map(value -> discoveryClient.getInstances(value.getServiceId())).orElseGet(List::of);
     }
 
     /**
@@ -313,7 +311,7 @@ public class EurekaInstanceHelper {
      * @return the formatted address string suitable for Hazelcast TCP/IP configuration
      * @throws NullPointerException if host is null
      */
-    public String formatAddressForHazelcast(String host, String port) {
+    public String formatAddressForHazelcast(@NonNull String host, String port) {
         // IPv6 addresses contain colons, so we need to wrap them in brackets
         // to distinguish the port separator from the IPv6 address colons
         if (host.contains(":")) {
@@ -355,14 +353,5 @@ public class EurekaInstanceHelper {
                 log.debug("ServiceRegistry not available - metadata will propagate on subsequent Eureka heartbeats");
             }
         }
-    }
-
-    /**
-     * Gets the default Hazelcast port from configuration.
-     *
-     * @return the Hazelcast port
-     */
-    public int getHazelcastPort() {
-        return hazelcastPort;
     }
 }
