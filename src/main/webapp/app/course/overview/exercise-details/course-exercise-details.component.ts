@@ -582,6 +582,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     readonly isViewingSubmission = signal(false);
 
+    /**
+     * Whether the title bar is carrying the status and due date pills, which only it can know: it depends on the width
+     * left over once the title and the controls have taken theirs. The details panel leaves them out while it is true,
+     * so each of the two facts is stated once on the page rather than twice.
+     */
+    readonly titleBarShowsPills = signal(false);
+
     /** Handed to the header. Navigates directly, for the same reason the flag above is derived here. */
     readonly continueToLatest = (): void => {
         const participation = this.activeParticipation();

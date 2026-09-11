@@ -1,3 +1,19 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
 .mw-content {
     max-width: fit-content;
+}
+
+/*
+ * The one-line layout, for a box shown in a title bar. `title-bar-box` is the same frame the quiz countdown uses, so
+ * the boxes in the bar line up with each other and with the buttons beside them.
+ *
+ * The label and the value are `div`s in the stacked layout and become flex items here, which is the whole difference
+ * between the two. `padding-block: 0` is what the mixin's height needs; the stacked box's `py-1` is bound off in the
+ * template rather than overridden, because it carries `!important`.
+ */
+.information-box-inline {
+    @include title-bar-box;
+
+    padding-block: 0;
 }

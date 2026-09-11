@@ -117,6 +117,8 @@ export class ExerciseSplitPanelComponent {
     readonly submissionPolicy = input<SubmissionPolicy>();
     readonly athenaEnabled = input<boolean>(false);
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
+    /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
+    readonly titleBarShowsPills = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route

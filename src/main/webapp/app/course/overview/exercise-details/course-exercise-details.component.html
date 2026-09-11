@@ -22,6 +22,7 @@
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
             (toggleSidebar)="toggleSidebar()"
+            (showsPillsChange)="titleBarShowsPills.set($event)"
         />
 
         <jhi-exercise-split-panel
@@ -40,6 +41,7 @@
             [submissionPolicy]="submissionPolicy()"
             [athenaEnabled]="athenaEnabled"
             [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
+            [titleBarShowsPills]="titleBarShowsPills()"
             (quizSubmitted)="onQuizSubmitted($event)"
             (liveQuizStatusChange)="onLiveQuizStatusChange($event)"
             (quizPracticeParticipationChanged)="onNewParticipation($event)"

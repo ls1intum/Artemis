@@ -1,21 +1,13 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
 /*
  * A bordered box rather than loose text, so the remaining time reads as its own thing in a bar that is otherwise
- * a title and buttons, and holds a running quiz's attention. Sized to the title bar's control height so it lines up
- * with the buttons beside it.
+ * a title and buttons, and holds a running quiz's attention. `title-bar-box` is the shared frame — the same one the
+ * status and due date pills use — so the boxes in the bar line up with each other and with the buttons beside them.
+ * The urgency stays on the number, in the red the result percentage uses.
  */
 .quiz-countdown {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    height: var(--title-bar-content-height);
-    padding-inline: 0.5rem;
-
-    /* The same outline the information boxes carry, so the countdown reads as one of them rather than a separate
-       kind of thing: their `border border-1 rounded-3` resolves to these two values. The urgency stays on the
-       number, in the red the result percentage uses. */
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-lg);
-    white-space: nowrap;
+    @include title-bar-box;
 
     &__label {
         color: var(--bs-secondary-color);

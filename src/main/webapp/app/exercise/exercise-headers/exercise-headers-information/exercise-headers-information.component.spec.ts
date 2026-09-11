@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideTranslateService } from '@ngx-translate/core';
 
@@ -62,6 +64,70 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    describe('handing the status and due date to the title bar', () => {
+        const STATUS = 'artemisApp.courseOverview.exerciseDetails.status';
+        const SUBMISSION_DUE_OVER = 'artemisApp.courseOverview.exerciseDetails.submissionDueOver';
+        const ASSESSMENT_DUE = 'artemisApp.courseOverview.exerciseDetails.assessmentDue';
+
+        function titles(): string[] {
+            return component.informationBoxItems().map((item) => item.title);
+        }
+
+        it('shows the two boxes in the panel while the title bar has no room for them', () => {
+            expect(titles()).toContain(STATUS);
+            expect(titles()).toContain(SUBMISSION_DUE_OVER);
+        });
+
+        it('drops exactly those two from the panel once the title bar shows them, so neither is stated twice', () => {
+            const beforeHandover = titles();
+
+            fixture.componentRef.setInput('titleBarShowsPills', true);
+            fixture.detectChanges();
+
+            const afterHandover = titles();
+            expect(beforeHandover.filter((title) => !afterHandover.includes(title))).toEqual([SUBMISSION_DUE_OVER, STATUS]);
+            // The panel keeps everything else, including the due dates that come after the submission deadline.
+            expect(afterHandover).toContain(ASSESSMENT_DUE);
+        });
+
+        it('shows only those two in the title bar, laid out on one line', () => {
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(titles()).toEqual([SUBMISSION_DUE_OVER, STATUS]);
+            const box: HTMLElement = fixture.nativeElement.querySelector('#test-information-box');
+            expect(box.classList).toContain('information-box-inline');
+        });
+
+        it('shows the status alone in the title bar when the exercise has no due date', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, dueDate: undefined, assessmentDueDate: undefined });
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(titles()).toEqual([STATUS]);
+        });
+
+        it('leaves the build progress bar to the panel, since it is two rows tall and a pill is one line', () => {
+            const showsProgressBar = (): boolean => fixture.debugElement.query(By.directive(SubmissionResultStatusComponent)).componentInstance.showProgressBar();
+
+            expect(showsProgressBar()).toBe(true);
+
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(showsProgressBar()).toBe(false);
+        });
+
+        it('leaves the due date to the running quiz clock, which already holds that slot in the bar', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ, dueDate: dayjs().add(1, 'hours') });
+            fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, showResultsAvailable: false });
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(titles()).toEqual([STATUS]);
+        });
     });
 
     it('should render one information box per computed item', () => {

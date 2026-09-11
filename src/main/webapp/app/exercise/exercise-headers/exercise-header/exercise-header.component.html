@@ -1,9 +1,9 @@
 <!--
     The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the exercise
-    page reads like the other student pages; the information boxes live with the exercise content instead.
-    `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
+    page reads like the other student pages. `px-*` rather than `p-*`, so Bootstrap's !important spacing does not
+    overrule the class's vertical padding.
 -->
-<div id="exercise-header" class="page-top-bar module-bg rounded-3 px-3 shell-divider-b d-flex align-items-center gap-2">
+<div #bar id="exercise-header" class="page-top-bar module-bg rounded-3 px-3 shell-divider-b d-flex align-items-center gap-2">
     @if (showSidebarToggle() && isSidebarCollapsed()) {
         <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
     }
@@ -14,27 +14,47 @@
         </h5>
     }
     <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
-        @if (exercise().type === ExerciseType.QUIZ) {
-            <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
+        <!--
+            The status and due date pills, kept in the bar while it has the room for them (see `showsPills`) and shown
+            with the rest of the exercise's details otherwise. They sit outside `#controls` on purpose: that element is
+            measured as the width the bar owes its controls, which must not change with the pills in or out.
+        -->
+        @if (showsPills()) {
+            <div #pills data-testid="exercise-header-pills" class="d-flex align-items-center">
+                <jhi-exercise-headers-information
+                    placement="titleBar"
+                    [exercise]="exercise()"
+                    [studentParticipation]="activeParticipation()"
+                    [course]="exercise().course"
+                    [isPractice]="participationMode() === 'practice'"
+                    [quizLiveStatus]="quizLiveStatus()"
+                    [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
+                />
+            </div>
         }
-        <jhi-participation-mode-toggle
-            [mode]="participationMode()"
-            (modeChange)="participationMode.set($event)"
-            [hasPractice]="showPracticeMode()"
-            [hasGraded]="showGradedMode()"
-        />
-        <jhi-exercise-header-actions
-            [courseId]="courseId()"
-            [exercise]="exercise()"
-            [onSubmitExercise]="effectiveOnSubmitExercise()"
-            [onContinueExercise]="onContinueExercise()"
-            [onRestartPractice]="onRestartPractice()"
-            [submitDisabled]="submitDisabled()"
-            [submitLabel]="submitLabel()"
-            [plagiarismCaseInfo]="plagiarismCaseInfo()"
-            [participationMode]="participationMode()"
-            (newParticipation)="onNewParticipation($event)"
-            (participationModeChange)="participationMode.set($event)"
-        />
+        <div #controls data-testid="exercise-header-controls" class="d-flex align-items-center gap-2">
+            @if (exercise().type === ExerciseType.QUIZ) {
+                <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
+            }
+            <jhi-participation-mode-toggle
+                [mode]="participationMode()"
+                (modeChange)="participationMode.set($event)"
+                [hasPractice]="showPracticeMode()"
+                [hasGraded]="showGradedMode()"
+            />
+            <jhi-exercise-header-actions
+                [courseId]="courseId()"
+                [exercise]="exercise()"
+                [onSubmitExercise]="effectiveOnSubmitExercise()"
+                [onContinueExercise]="onContinueExercise()"
+                [onRestartPractice]="onRestartPractice()"
+                [submitDisabled]="submitDisabled()"
+                [submitLabel]="submitLabel()"
+                [plagiarismCaseInfo]="plagiarismCaseInfo()"
+                [participationMode]="participationMode()"
+                (newParticipation)="onNewParticipation($event)"
+                (participationModeChange)="participationMode.set($event)"
+            />
+        </div>
     </div>
 </div>
