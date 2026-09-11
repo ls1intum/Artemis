@@ -80,7 +80,7 @@ class ProgrammingExerciseDtoMappingTest {
         JsonNode json = objectMapper.valueToTree(SubmissionPolicyDTO.of(policy));
 
         assertThat(json.has("type")).isTrue();
-        assertThat(json.get("type").asText()).isEqualTo("lock_repository");
+        assertThat(json.get("type").asString()).isEqualTo("lock_repository");
         assertThat(json.get("id").asLong()).isEqualTo(11L);
         assertThat(json.get("submissionLimit").asInt()).isEqualTo(3);
         // NON_EMPTY keeps a false Boolean: only nulls and empty containers are dropped
@@ -100,7 +100,7 @@ class ProgrammingExerciseDtoMappingTest {
 
         JsonNode json = objectMapper.valueToTree(SubmissionPolicyDTO.of(policy));
 
-        assertThat(json.get("type").asText()).isEqualTo("submission_penalty");
+        assertThat(json.get("type").asString()).isEqualTo("submission_penalty");
         assertThat(json.get("submissionLimit").asInt()).isEqualTo(5);
         assertThat(json.get("exceedingPenalty").asDouble()).isEqualTo(2.5);
         assertThat(json.get("active").asBoolean()).isTrue();
