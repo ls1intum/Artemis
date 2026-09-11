@@ -91,6 +91,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
@@ -1095,7 +1096,7 @@ public class ExamResource {
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestOrPractice(ZonedDateTime.now())) {
+        if (exam.getExamMode() == ExamMode.TEST || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && !ZonedDateTime.now().isBefore(exam.getStartDate())) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
         }
 

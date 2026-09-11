@@ -512,7 +512,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
         testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().plusHours(1));
         testExamWithSimulation.setWorkingTime(3600);
         testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
         testExamWithSimulation.setExamMaxPoints(19);
@@ -527,6 +527,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // Generate student exams
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
                 null);
+
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
 
         // Start exercises for the simulation exam for the first time
         int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
@@ -630,8 +633,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
         testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        // Start date in the past, but working time long enough so we are still in simulation phase for generation
-        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().plusHours(1));
         testExamWithSimulation.setWorkingTime(3600);
         testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
         testExamWithSimulation.setExamMaxPoints(19);
@@ -646,6 +648,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // Generate student exams
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
                 null);
+
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
 
         // Prepare the simulation exam (this creates participations)
         int generated = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
