@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperionworker.config;
 import java.time.Duration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /** Operator-owned worker limits and image. No job or model can widen these values. */
@@ -16,6 +17,7 @@ public record WorkerSettings(String id, String image, @DefaultValue("runc") Stri
         this(id, image, runtime, memoryBytes, cpuQuota, pids, heartbeatInterval, connectionGrace, shutdownTimeout, 1);
     }
 
+    @ConstructorBinding
     public WorkerSettings {
         if (maxConcurrentGenerations < 1 || maxConcurrentGenerations > 16) {
             throw new IllegalArgumentException("Configure between one and sixteen generation slots");
