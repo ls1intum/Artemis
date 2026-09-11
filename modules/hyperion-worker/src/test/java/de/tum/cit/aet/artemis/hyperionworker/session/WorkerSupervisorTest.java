@@ -37,6 +37,9 @@ class WorkerSupervisorTest {
         var events = new LinkedBlockingQueue<WorkerEvent>();
         var entered = new CountDownLatch(4);
         var releases = new java.util.concurrent.ConcurrentHashMap<UUID, CountDownLatch>();
+        var blockedCleanup = new java.util.concurrent.atomic.AtomicReference<UUID>();
+        var cleanupEntered = new CountDownLatch(1);
+        var releaseCleanup = new CountDownLatch(1);
         var cleaned = new java.util.concurrent.CopyOnWriteArrayList<UUID>();
         var settings = new WorkerSettings("worker-1", IMAGE, "runc", 128 * 1024 * 1024, 100_000, 32,
                 Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5), 4);
@@ -46,6 +49,10 @@ class WorkerSupervisorTest {
             return result();
         };
         try (var worker = new WorkerSupervisor(settings, events::add, () -> engine, identity -> {
+            if (identity.executionId().equals(blockedCleanup.get())) {
+                cleanupEntered.countDown();
+                await(releaseCleanup);
+            }
             cleaned.add(identity.executionId());
             releases.get(identity.executionId()).countDown();
         }, () -> IMAGE, System::nanoTime)) {
@@ -77,8 +84,15 @@ class WorkerSupervisorTest {
                 var remaining = take(events, WorkerEvent.Type.HEARTBEAT);
                 assertThat(remaining.ready()).isTrue();
                 assertThat(remaining.capacity().executions()).hasSize(3).doesNotContain(first);
+                blockedCleanup.set(commands.get(1).identity().executionId());
+                worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, commands.get(1).identity(), null));
+                assertThat(cleanupEntered.await(5, TimeUnit.SECONDS)).isTrue();
+                worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, commands.get(2).identity(), null));
+                assertThat(take(events, WorkerEvent.Type.CANCELLED).identity()).isEqualTo(commands.get(2).identity());
+                assertThat(releaseCleanup.getCount()).isEqualTo(1);
             }
             finally {
+                releaseCleanup.countDown();
                 releases.values().forEach(CountDownLatch::countDown);
             }
         }
