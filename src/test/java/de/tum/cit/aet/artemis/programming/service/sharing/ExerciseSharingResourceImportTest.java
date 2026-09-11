@@ -33,10 +33,9 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -91,13 +90,12 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
     void setupObjectMapper() {
-        objectMapper = JsonObjectMapper.get().copy();
-        objectMapper.findAndRegisterModules();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // JsonObjectMapper already disables FAIL_ON_UNKNOWN_PROPERTIES, and Jackson 3 mappers are immutable
+        objectMapper = JsonObjectMapper.get();
     }
 
     @AfterEach
