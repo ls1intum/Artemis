@@ -336,7 +336,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * A projection rather than the entity: {@code StudentExam.exam} is a {@code @ManyToOne} and therefore eager, and so
      * is that exam's course and the course's Athena configuration, so reading two booleans off the entity cost four
      * further selects. A student can take a test exam more than once; the newest attempt is picked by id inside the
-     * query, so the database returns one row rather than every attempt for the caller to discard.
+     * query, so the database returns one row rather than every attempt for the caller to discard. Test runs are left
+     * out: an instructor can hold one next to their own attempt, and it would otherwise decide the working period of
+     * that attempt.
      *
      * @param examId the id of the exam
      * @param userId the id of the student
@@ -351,6 +353,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 FROM StudentExam se2
                 WHERE se2.exam.id = :examId
                     AND se2.user.id = :userId
+                    AND (se2.testRun IS NULL OR se2.testRun = FALSE)
             )
             """)
     Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);

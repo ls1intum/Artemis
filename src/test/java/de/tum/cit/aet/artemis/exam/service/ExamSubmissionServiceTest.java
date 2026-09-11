@@ -232,4 +232,23 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         assertThat(resolvedParticipation).as("a team participation is owned by a Team, so the caller resolves it itself").isNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testWorkingPeriodIsReadFromTheOwnAttemptRatherThanATestRun() {
+        // an instructor can hold a test run next to their own attempt, and it is the newer of the two, so picking the
+        // greatest id alone would let the test run decide when their own attempt has to be handed in
+        StudentExam testRun = examUtilService.addStudentExam(exam);
+        testRun.setUser(student1);
+        testRun.setTestRun(true);
+        testRun.setSubmitted(true);
+        testRun.setWorkingTime(1);
+        studentExamRepository.save(testRun);
+
+        var workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(), student1.getId());
+
+        assertThat(workingPeriod).isPresent();
+        assertThat(workingPeriod.get().testRun()).isNotEqualTo(Boolean.TRUE);
+        assertThat(workingPeriod.get().workingTime()).as("the student's own attempt decides the working period").isEqualTo(7200);
+    }
+
 }

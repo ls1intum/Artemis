@@ -262,8 +262,10 @@ public class ParticipationTeamWebsocketService {
             api.hideDetails(submission, user);
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
-            submission = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).handleTextSubmission(textSubmission, textExercise, user);
+            TextSubmissionApi api = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
+            submission = api.handleTextSubmission(textSubmission, textExercise, user);
             submission.setParticipation(participation);
+            api.hideDetails(submission, user);
         }
         else {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");

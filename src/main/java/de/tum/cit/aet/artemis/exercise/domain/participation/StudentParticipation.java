@@ -63,8 +63,6 @@ public class StudentParticipation extends Participation {
      * <p>
      * The submit path resolves its participation as a projection and must not load the entity - doing so pulls the
      * exercise, its course and, for an exam exercise, the exercise group with its exam and that exam's course along.
-     * {@code getReferenceById} is not an option either: {@link Participation} is mapped {@code SINGLE_TABLE}, so
-     * Hibernate has to read the discriminator to know which subclass to proxy, which is the query this avoids.
      * <p>
      * Never read from this and never hand it to anything but a save. What the response reports is mapped from the
      * projection instead, and everything the save needs from the participation is the id.
