@@ -133,7 +133,13 @@ function compareStudentRows(first: PresentationStudentRow, second: PresentationS
     const firstValue = studentSortValue(first, field);
     const secondValue = studentSortValue(second, field);
     const missingValueOrder = Number(firstValue === undefined) - Number(secondValue === undefined);
-    return missingValueOrder || String(firstValue).localeCompare(String(secondValue), undefined, { numeric: true }) * sortOrder;
+    if (missingValueOrder) {
+        return missingValueOrder;
+    }
+    if (typeof firstValue === 'number' && typeof secondValue === 'number') {
+        return (firstValue - secondValue) * sortOrder;
+    }
+    return String(firstValue).localeCompare(String(secondValue)) * sortOrder;
 }
 
 function studentSortValue(row: PresentationStudentRow, field: string): string | number | undefined {

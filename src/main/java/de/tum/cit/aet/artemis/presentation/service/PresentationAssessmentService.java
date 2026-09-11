@@ -158,8 +158,8 @@ public class PresentationAssessmentService {
     public List<PresentationAssessmentInstance> saveInstances(Course course, long assessmentId, PresentationAssessmentInstanceDTO dto) {
         PresentationAssessment assessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
         if (dto.id() == null) {
-            List<PresentationAssessmentInstance> instances = dto.studentLogins().stream().distinct()
-                    .map(studentLogin -> createIndividualInstance(course, assessment, dto, studentLogin)).toList();
+            Set<User> students = resolveAssignedCourseStudents(course, dto.studentLogins());
+            List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto, student)).toList();
             return presentationAssessmentInstanceRepository.saveAllAtomically(instances);
         }
 
@@ -178,7 +178,7 @@ public class PresentationAssessmentService {
                 .orElseThrow(() -> new BadRequestAlertException("The selected student does not belong to the shared instance", PresentationAssessmentInstance.ENTITY_NAME,
                         "studentNotInInstance"));
         existingInstance.getStudents().remove(editedStudent);
-        PresentationAssessmentInstance editedInstance = createIndividualInstance(course, assessment, dto, editedStudentLogin);
+        PresentationAssessmentInstance editedInstance = createIndividualInstance(assessment, dto, editedStudent);
         return presentationAssessmentInstanceRepository.saveAllAtomically(List.of(existingInstance, editedInstance));
     }
 
@@ -192,6 +192,11 @@ public class PresentationAssessmentService {
     }
 
     private void applyInstanceDto(Course course, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceDTO dto) {
+        applyInstanceData(assessment, instance, dto);
+        instance.setStudents(resolveAssignedCourseStudents(course, dto.studentLogins()));
+    }
+
+    private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceDTO dto) {
         if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
             throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
                     "resultPointsExceedMaxPoints");
@@ -201,7 +206,6 @@ public class PresentationAssessmentService {
         }
         instance.setPresentationDate(dto.presentationDate());
         instance.setResultPoints(dto.resultPoints());
-        instance.setStudents(resolveAssignedCourseStudents(course, dto.studentLogins()));
         instance.setLanguage(dto.language());
         instance.setMode(dto.mode());
         instance.setLocation(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
@@ -209,16 +213,12 @@ public class PresentationAssessmentService {
         instance.setRemark(dto.remark());
     }
 
-    private PresentationAssessmentInstance createIndividualInstance(Course course, PresentationAssessment assessment, PresentationAssessmentInstanceDTO dto, String studentLogin) {
+    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceDTO dto, User student) {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(assessment);
-        applyInstanceDto(course, assessment, instance, withStudentLogin(dto, studentLogin));
+        applyInstanceData(assessment, instance, dto);
+        instance.setStudents(Set.of(student));
         return instance;
-    }
-
-    private PresentationAssessmentInstanceDTO withStudentLogin(PresentationAssessmentInstanceDTO dto, String studentLogin) {
-        return new PresentationAssessmentInstanceDTO(null, dto.presentationDate(), dto.resultPoints(), List.of(studentLogin), dto.language(), dto.mode(), dto.location(),
-                dto.meetingLink(), dto.remark());
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {

@@ -55,6 +55,14 @@ describe('Presentation assessment management helpers', () => {
         expect(filterAndSortStudentRows(rows, { ...baseFilters, sortField: 'presentationDate', sortOrder: -1 })[0].studentLogin).toBe('bert');
         expect(filterAndSortStudentRows(rows, { ...baseFilters, sortField: 'resultPoints', sortOrder: 1 })[0].studentLogin).toBe('bert');
         expect(filterAndSortStudentRows(rows, { ...baseFilters, sortField: 'resultPoints', sortOrder: -1 }).map((row) => row.studentLogin)).toEqual(['bert', 'anna', 'unknown']);
+        const fractionalRows = [
+            { ...rows[0], studentLogin: 'one-point-two', instance: { ...rows[0].instance, resultPoints: 1.2 } },
+            { ...rows[0], studentLogin: 'one-point-eleven', instance: { ...rows[0].instance, resultPoints: 1.11 } },
+        ];
+        expect(filterAndSortStudentRows(fractionalRows, { ...baseFilters, sortField: 'resultPoints', sortOrder: 1 }).map((row) => row.studentLogin)).toEqual([
+            'one-point-eleven',
+            'one-point-two',
+        ]);
         expect(filterStudentRowsBySearch(rows, 'Anna Student').map((row) => row.studentLogin)).toEqual(['anna']);
         expect(filterStudentRowsBySearch(rows, 'bert@example.com').map((row) => row.studentLogin)).toEqual(['bert']);
     });
