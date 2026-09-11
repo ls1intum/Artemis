@@ -26,7 +26,7 @@ class VerificationResultTest {
                 .isThrownBy(() -> new GenerationOutput(candidate, verification, "wrong", review, "CONVERGED", null, GenerationOutput.AccountingState.INCOMPLETE, "standard"));
         var output = new GenerationOutput(candidate, verification, candidate.sha256(), review, "CONVERGED", null, GenerationOutput.AccountingState.INCOMPLETE, "standard");
         var identity = new ExecutionIdentity("job", 1, java.util.UUID.randomUUID(), "worker-1", java.util.UUID.randomUUID());
-        var event = new WorkerEvent(1, identity.workerId(), identity.workerIncarnation(), 1, java.time.Instant.now(), WorkerEvent.Type.FINISHED, identity, false,
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, identity.workerId(), identity.workerIncarnation(), 1, java.time.Instant.now(), WorkerEvent.Type.FINISHED, identity, false,
                 "sha256:" + "a".repeat(64), null, null, output);
         WorkerMessageCodec codec = new WorkerMessageCodec();
         assertThat(codec.decodeEvent(codec.encode(event)).output()).isEqualTo(output);

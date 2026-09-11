@@ -7,7 +7,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Identifies one assignment; a restarted worker or another run cannot reuse its authority. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExecutionIdentity(String jobId, long exerciseId, UUID executionId, String workerId, UUID workerIncarnation) {
+public record ExecutionIdentity(String jobId, long exerciseId, UUID executionId, String workerId, UUID workerIncarnation, int slot) {
+
+    public ExecutionIdentity(String jobId, long exerciseId, UUID executionId, String workerId, UUID workerIncarnation) {
+        this(jobId, exerciseId, executionId, workerId, workerIncarnation, 0);
+    }
 
     private static final Pattern WORKER_ID = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
@@ -18,7 +22,7 @@ public record ExecutionIdentity(String jobId, long exerciseId, UUID executionId,
         if (workerId == null || !WORKER_ID.matcher(workerId).matches()) {
             throw new IllegalArgumentException("Worker identity must be a bounded destination-safe name");
         }
-        if (executionId == null || workerIncarnation == null) {
+        if (executionId == null || workerIncarnation == null || slot < 0 || slot >= 16) {
             throw new IllegalArgumentException("Execution and worker incarnation identities are required");
         }
     }

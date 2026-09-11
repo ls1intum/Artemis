@@ -31,6 +31,59 @@ class WorkerSupervisorTest {
 
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
+
+    @Test
+    void fourSlotsOverlapAndCancellationOnlyCleansItsOwnExecution() throws InterruptedException {
+        var events = new LinkedBlockingQueue<WorkerEvent>();
+        var entered = new CountDownLatch(4);
+        var releases = new java.util.concurrent.ConcurrentHashMap<UUID, CountDownLatch>();
+        var cleaned = new java.util.concurrent.CopyOnWriteArrayList<UUID>();
+        var settings = new WorkerSettings("worker-1", IMAGE, "runc", 128 * 1024 * 1024, 100_000, 32,
+                Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5), 4);
+        GenerationEngine engine = (assignment, cancelled, progress, checkpoint) -> {
+            entered.countDown();
+            await(releases.get(assignment.identity().executionId()));
+            return result();
+        };
+        try (var worker = new WorkerSupervisor(settings, events::add, () -> engine, identity -> {
+            cleaned.add(identity.executionId());
+            releases.get(identity.executionId()).countDown();
+        }, () -> IMAGE, System::nanoTime)) {
+            worker.prepare();
+            worker.heartbeat();
+            var heartbeat = take(events, WorkerEvent.Type.HEARTBEAT);
+            var commands = new java.util.ArrayList<WorkerCommand>();
+            var original = start(worker, events).assignment();
+            try {
+                for (int slot = 0; slot < 4; slot++) {
+                    var id = new ExecutionIdentity("parallel-" + slot, 42 + slot, UUID.randomUUID(), settings.id(), heartbeat.incarnation(), slot);
+                    var assignment = new GenerationAssignment(id, original.brief(), original.parameters(), original.seed(), original.authoringDeadline(), IMAGE);
+                    releases.put(id.executionId(), new CountDownLatch(1));
+                    var command = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, id, assignment);
+                    commands.add(command);
+                    worker.accept(command);
+                }
+                assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
+                worker.heartbeat();
+                var full = take(events, WorkerEvent.Type.HEARTBEAT);
+                assertThat(full.ready()).isFalse();
+                assertThat(full.capacity().slots()).isEqualTo(4);
+                assertThat(full.capacity().executions()).hasSize(4);
+                var first = commands.getFirst().identity();
+                worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, first, null));
+                assertThat(take(events, WorkerEvent.Type.CANCELLED).identity()).isEqualTo(first);
+                assertThat(cleaned).containsOnly(first.executionId());
+                worker.heartbeat();
+                var remaining = take(events, WorkerEvent.Type.HEARTBEAT);
+                assertThat(remaining.ready()).isTrue();
+                assertThat(remaining.capacity().executions()).hasSize(3).doesNotContain(first);
+            }
+            finally {
+                releases.values().forEach(CountDownLatch::countDown);
+            }
+        }
+    }
+
     @Test
     void duplicateStartCannotExecuteTwiceEvenAfterTerminalDelivery() throws InterruptedException {
         var events = new LinkedBlockingQueue<WorkerEvent>();
@@ -65,7 +118,7 @@ class WorkerSupervisorTest {
             WorkerCommand command = start(worker, events);
             worker.accept(command);
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
-            worker.accept(new WorkerCommand(1, WorkerCommand.Type.CANCEL, command.identity(), null));
+            worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, command.identity(), null));
             take(events, WorkerEvent.Type.CANCELLED);
         }
     }
@@ -87,7 +140,7 @@ class WorkerSupervisorTest {
             worker.accept(command);
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
             nanos.set(Duration.ofSeconds(30).toNanos());
-            worker.accept(new WorkerCommand(1, WorkerCommand.Type.RENEW, command.identity(), null));
+            worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.RENEW, command.identity(), null));
             nanos.set(Duration.ofSeconds(60).toNanos());
             worker.heartbeat();
             assertThat(cancelledSandbox.getCount()).isEqualTo(1);
@@ -104,7 +157,7 @@ class WorkerSupervisorTest {
         }, new AtomicLong())) {
             WorkerCommand command = start(worker, events);
             ExecutionIdentity wrong = new ExecutionIdentity(command.identity().jobId(), 1, command.identity().executionId(), "worker-1", UUID.randomUUID());
-            assertThatIllegalArgumentException().isThrownBy(() -> worker.accept(new WorkerCommand(1, WorkerCommand.Type.CANCEL, wrong, null)));
+            assertThatIllegalArgumentException().isThrownBy(() -> worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, wrong, null)));
         }
     }
 
@@ -158,7 +211,7 @@ class WorkerSupervisorTest {
             WorkerCommand first = start(worker, events);
             var identity = new ExecutionIdentity(UUID.randomUUID().toString(), 2, UUID.randomUUID(), first.identity().workerId(), first.identity().workerIncarnation());
             var assignment = first.assignment();
-            var second = new WorkerCommand(1, WorkerCommand.Type.START, identity,
+            var second = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity,
                     new GenerationAssignment(identity, assignment.brief(), assignment.parameters(), assignment.seed(), assignment.authoringDeadline(), IMAGE));
             worker.accept(first);
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
@@ -221,7 +274,7 @@ class WorkerSupervisorTest {
             assertThat(cleanupEntered.await(5, TimeUnit.SECONDS)).isTrue();
             worker.heartbeat();
             assertThat(take(events, WorkerEvent.Type.HEARTBEAT).ready()).isFalse();
-            worker.accept(new WorkerCommand(1, WorkerCommand.Type.CANCEL, command.identity(), null));
+            worker.accept(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.CANCEL, command.identity(), null));
             releaseCleanup.countDown();
             assertThat(take(events, WorkerEvent.Type.CANCELLED).ready()).isTrue();
         }
@@ -270,7 +323,7 @@ class WorkerSupervisorTest {
         var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE);
         var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
         var assignment = new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.now().plusSeconds(300), IMAGE);
-        return new WorkerCommand(1, WorkerCommand.Type.START, identity, assignment);
+        return new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, assignment);
     }
 
     private static GenerationOutput result() {

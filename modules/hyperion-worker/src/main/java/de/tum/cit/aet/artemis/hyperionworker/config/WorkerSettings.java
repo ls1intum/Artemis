@@ -9,9 +9,17 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 @ConfigurationProperties("artemis.hyperion.worker")
 public record WorkerSettings(String id, String image, @DefaultValue("runc") String runtime, @DefaultValue("2147483648") long memoryBytes, @DefaultValue("200000") long cpuQuota,
         @DefaultValue("256") long pids, @DefaultValue("PT10S") Duration heartbeatInterval, @DefaultValue("PT45S") Duration connectionGrace,
-        @DefaultValue("PT2M") Duration shutdownTimeout) {
+        @DefaultValue("PT2M") Duration shutdownTimeout, @DefaultValue("1") int maxConcurrentGenerations) {
+
+    public WorkerSettings(String id, String image, String runtime, long memoryBytes, long cpuQuota, long pids, Duration heartbeatInterval, Duration connectionGrace,
+            Duration shutdownTimeout) {
+        this(id, image, runtime, memoryBytes, cpuQuota, pids, heartbeatInterval, connectionGrace, shutdownTimeout, 1);
+    }
 
     public WorkerSettings {
+        if (maxConcurrentGenerations < 1 || maxConcurrentGenerations > 16) {
+            throw new IllegalArgumentException("Configure between one and sixteen generation slots");
+        }
         if (id == null || !id.matches("[a-zA-Z0-9_-]{1,64}")) {
             throw new IllegalArgumentException("Configure a unique destination-safe worker id");
         }

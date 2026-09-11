@@ -105,6 +105,22 @@ class DockerSandboxIsolationTest {
     }
 
     @Test
+    void executionCleanupLeavesOtherSlotsRunning() {
+        DockerSandbox first = sandbox.forExecution(UUID.randomUUID());
+        DockerSandbox second = sandbox.forExecution(UUID.randomUUID());
+        String firstSession = first.createSession();
+        String secondSession = second.createSession();
+        try {
+            first.destroyActiveSessions();
+            assertThatExceptionOfType(NotFoundException.class).isThrownBy(() -> docker.inspectContainerCmd(firstSession).exec());
+            assertThat(second.exec(secondSession, Duration.ofSeconds(5), "true").isSuccess()).isTrue();
+        }
+        finally {
+            second.destroyActiveSessions();
+        }
+    }
+
+    @Test
     void startupCleanupDoesNotTouchAnotherWorker() {
         String own = sandbox.createSession();
         DockerSandbox other = sandbox("other-" + UUID.randomUUID());

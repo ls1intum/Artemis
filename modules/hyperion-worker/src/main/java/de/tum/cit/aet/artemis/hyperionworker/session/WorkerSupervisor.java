@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperionworker.session;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -32,13 +34,14 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerEvent;
+import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCapacity;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperionworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.hyperionworker.messaging.WorkerEventPublisher;
 import de.tum.cit.aet.artemis.hyperionworker.sandbox.DockerSandbox;
 
-/** One execution per worker. The message listener never waits for a model/tool call to complete. */
+/** Bounded, independently cancellable executions per worker. The message listener never waits for a model/tool call to complete. */
 @Service
 public class WorkerSupervisor implements AutoCloseable {
 
@@ -52,11 +55,11 @@ public class WorkerSupervisor implements AutoCloseable {
 
     private final Supplier<@Nullable GenerationEngine> engine;
 
-    private final Runnable cancelSandboxes;
+    private final Consumer<ExecutionIdentity> cancelSandboxes;
 
     private final Supplier<String> prepareSandbox;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("hyperion-generation").factory());
+    private final ExecutorService executor;
 
     private final ExecutorService cancellationExecutor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("hyperion-cancel").factory());
 
@@ -68,14 +71,11 @@ public class WorkerSupervisor implements AutoCloseable {
 
     private final Map<UUID, Instant> admitted = new HashMap<>();
 
-    @Nullable
-    private ActiveExecution active;
+    private final Map<UUID, ActiveExecution> active = new HashMap<>();
 
-    @Nullable
-    private WorkerEvent pendingTerminal;
+    private final Map<UUID, WorkerEvent> pendingTerminals = new java.util.LinkedHashMap<>();
 
-    @Nullable
-    private WorkerEvent pendingCheckpoint;
+    private final Map<UUID, WorkerEvent> pendingCheckpoints = new java.util.LinkedHashMap<>();
 
     private boolean draining;
 
@@ -104,7 +104,7 @@ public class WorkerSupervisor implements AutoCloseable {
 
     @Autowired
     public WorkerSupervisor(WorkerSettings settings, WorkerEventPublisher publisher, ObjectProvider<GenerationEngine> engine, DockerSandbox sandbox, DockerClient docker) {
-        this(settings, publisher, engine::getIfAvailable, sandbox::destroyActiveSessions, () -> {
+        this(settings, publisher, engine::getIfAvailable, sandbox::destroyExecution, () -> {
             sandbox.removePreviousSessions();
             try (var inspect = docker.inspectImageCmd(settings.image())) {
                 return inspect.exec().getId();
@@ -114,6 +114,12 @@ public class WorkerSupervisor implements AutoCloseable {
 
     WorkerSupervisor(WorkerSettings settings, WorkerEventPublisher publisher, Supplier<@Nullable GenerationEngine> engine, Runnable cancelSandboxes,
             Supplier<String> prepareSandbox, LongSupplier nanoTime) {
+        this(settings, publisher, engine, identity -> cancelSandboxes.run(), prepareSandbox, nanoTime);
+    }
+
+    WorkerSupervisor(WorkerSettings settings, WorkerEventPublisher publisher, Supplier<@Nullable GenerationEngine> engine, Consumer<ExecutionIdentity> cancelSandboxes,
+            Supplier<String> prepareSandbox, LongSupplier nanoTime) {
+        this.executor = Executors.newFixedThreadPool(settings.maxConcurrentGenerations(), Thread.ofPlatform().name("hyperion-generation-", 0).factory());
         this.nanoTime = nanoTime;
         this.settings = settings;
         this.publisher = publisher;
@@ -140,12 +146,13 @@ public class WorkerSupervisor implements AutoCloseable {
             throw new IllegalArgumentException("Command targets another worker incarnation");
         }
         if (command.type() != WorkerCommand.Type.START) {
-            if (active != null && active.assignment.identity().equals(identity)) {
+            ActiveExecution execution = active.get(identity.executionId());
+            if (execution != null && execution.assignment.identity().equals(identity)) {
                 if (command.type() == WorkerCommand.Type.CANCEL) {
-                    cancel(active);
+                    cancel(execution);
                 }
                 else {
-                    active.renewedAt = nanoTime.getAsLong();
+                    execution.renewedAt = nanoTime.getAsLong();
                 }
             }
             return;
@@ -163,12 +170,13 @@ public class WorkerSupervisor implements AutoCloseable {
             admitted.put(identity.executionId(), assignment.authoringDeadline());
         }
         GenerationEngine policy = engine.get();
-        if (!ready() || policy == null || !imageDigest.equals(assignment.imageDigest())) {
+        if (!ready() || policy == null || identity.slot() >= settings.maxConcurrentGenerations()
+                || occupiedExecutions().stream().anyMatch(id -> id.slot() == identity.slot()) || !imageDigest.equals(assignment.imageDigest())) {
             publishBestEffort(event(WorkerEvent.Type.ERROR, identity, "Generation worker is not available for this assignment.", null, null));
             return;
         }
         ActiveExecution execution = new ActiveExecution(assignment, nanoTime.getAsLong());
-        active = execution;
+        active.put(identity.executionId(), execution);
         executor.submit(() -> execute(execution, policy));
     }
 
@@ -214,7 +222,7 @@ public class WorkerSupervisor implements AutoCloseable {
                 if (cleanup != null) {
                     cleanup.join();
                 }
-                cancelSandboxes.run();
+                cancelSandboxes.accept(identity);
             }
             catch (RuntimeException cleanupFailure) {
                 synchronized (this) {
@@ -224,10 +232,10 @@ public class WorkerSupervisor implements AutoCloseable {
             }
         }
         synchronized (this) {
-            active = null;
-            // Terminal readiness describes the cleaned-up worker; pending delivery still prevents another local admission.
-            pendingTerminal = event(execution.cancelled.get() ? WorkerEvent.Type.CANCELLED : terminal.type(), identity,
-                    execution.cancelled.get() ? "Generation cancelled." : terminal.message(), null, terminal.output());
+            active.remove(identity.executionId());
+            // Retain this slot until cleanup and delivery both finish, without blocking other slots.
+            pendingTerminals.put(identity.executionId(), event(execution.cancelled.get() ? WorkerEvent.Type.CANCELLED : terminal.type(), identity,
+                    execution.cancelled.get() ? "Generation cancelled." : terminal.message(), null, terminal.output()));
         }
         flushTerminal();
     }
@@ -236,8 +244,10 @@ public class WorkerSupervisor implements AutoCloseable {
     @Scheduled(fixedDelayString = "${artemis.hyperion.worker.heartbeat-interval:PT10S}")
     public void heartbeat() {
         synchronized (this) {
-            if (active != null && pendingTerminal == null && nanoTime.getAsLong() - active.renewedAt > settings.connectionGrace().toNanos()) {
-                cancel(active);
+            for (ActiveExecution execution : active.values()) {
+                if (nanoTime.getAsLong() - execution.renewedAt > settings.connectionGrace().toNanos()) {
+                    cancel(execution);
+                }
             }
             admitted.values().removeIf(deadline -> !deadline.isAfter(Instant.now()));
         }
@@ -246,42 +256,53 @@ public class WorkerSupervisor implements AutoCloseable {
     }
 
     private synchronized void retainCheckpoint(ExecutionIdentity identity, GenerationOutput checkpoint) {
-        pendingCheckpoint = event(WorkerEvent.Type.CHECKPOINT, identity, null, null, checkpoint);
+        pendingCheckpoints.put(identity.executionId(), event(WorkerEvent.Type.CHECKPOINT, identity, null, null, checkpoint));
         flushTerminal();
     }
 
     private synchronized void flushTerminal() {
-        if (pendingCheckpoint != null) {
-            if (!publishBestEffort(pendingCheckpoint)) {
+        flushPending(pendingCheckpoints);
+        if (pendingCheckpoints.isEmpty()) {
+            flushPending(pendingTerminals);
+        }
+    }
+
+    private void flushPending(Map<UUID, WorkerEvent> pending) {
+        var iterator = pending.values().iterator();
+        while (iterator.hasNext()) {
+            if (!publishBestEffort(iterator.next())) {
                 return;
             }
-            pendingCheckpoint = null;
-        }
-        if (pendingTerminal != null && publishBestEffort(pendingTerminal)) {
-            pendingTerminal = null;
-            active = null;
+            iterator.remove();
         }
     }
 
     private void cancel(ActiveExecution execution) {
         if (execution.cancelled.compareAndSet(false, true) && !execution.finishing) {
-            execution.cleanup = CompletableFuture.runAsync(cancelSandboxes, cancellationExecutor);
+            execution.cleanup = CompletableFuture.runAsync(() -> cancelSandboxes.accept(execution.assignment.identity()), cancellationExecutor);
         }
     }
 
     private synchronized boolean ready() {
-        return prepared && !draining && active == null && pendingTerminal == null && admitted.size() < MAX_RECENT_ASSIGNMENTS && engine.get() != null;
+        return prepared && !draining && (active.size() + pendingTerminals.size()) < settings.maxConcurrentGenerations() && admitted.size() < MAX_RECENT_ASSIGNMENTS && engine.get() != null;
     }
 
     @Nullable
     private synchronized ExecutionIdentity currentIdentity() {
-        return active == null ? null : active.assignment.identity();
+        return active.values().stream().findFirst().map(value -> value.assignment.identity()).orElse(null);
     }
 
     private synchronized WorkerEvent event(WorkerEvent.Type type, @Nullable ExecutionIdentity identity, @Nullable String message, @Nullable GenerationActivity activity,
             @Nullable GenerationOutput output) {
         return new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, settings.id(), incarnation, sequence.incrementAndGet(), Instant.now(), type, identity, ready(), imageDigest, message,
-                activity, output);
+                activity, output).withCapacity(new WorkerCapacity(settings.maxConcurrentGenerations(), occupiedExecutions()));
+    }
+
+    private synchronized List<ExecutionIdentity> occupiedExecutions() {
+        var identities = new java.util.ArrayList<ExecutionIdentity>();
+        active.values().forEach(value -> identities.add(value.assignment.identity()));
+        pendingTerminals.values().forEach(value -> identities.add(value.identity()));
+        return identities;
     }
 
     private boolean publishBestEffort(WorkerEvent event) {
@@ -304,9 +325,7 @@ public class WorkerSupervisor implements AutoCloseable {
     public void close() {
         synchronized (this) {
             draining = true;
-            if (active != null) {
-                cancel(active);
-            }
+            active.values().forEach(this::cancel);
         }
         executor.shutdown();
         cancellationExecutor.shutdown();
