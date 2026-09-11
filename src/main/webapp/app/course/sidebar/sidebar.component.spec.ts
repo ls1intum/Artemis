@@ -135,11 +135,11 @@ describe('SidebarComponent', () => {
     it('should display the correct message when no data is found', () => {
         // Mock sidebarData to have no items
         fixture.componentRef.setInput('sidebarData', {
-            groupByCategory: true,
+            groupByCategory: false,
             ungroupedData: [],
         });
         component.sidebarDataBeforeFiltering.set({
-            groupByCategory: true,
+            groupByCategory: false,
             ungroupedData: [] as SidebarCardElement[],
         });
         fixture.changeDetectorRef.detectChanges();

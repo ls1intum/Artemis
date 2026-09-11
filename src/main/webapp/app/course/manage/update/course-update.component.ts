@@ -265,6 +265,7 @@ export class CourseUpdateComponent implements OnInit {
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
+                presentationAssessmentsEnabled: new FormControl(this.course.presentationAssessmentsEnabled ?? false),
                 autoOrchestratorEnabled: new FormControl(this.course.courseConfiguration?.autoOrchestratorEnabled ?? false),
                 // Seconds / daily run counts: reject fractional values in addition to the lower bound.
                 debounceWindowSecondsOverride: new FormControl(this.course.courseConfiguration?.debounceWindowSecondsOverride, {

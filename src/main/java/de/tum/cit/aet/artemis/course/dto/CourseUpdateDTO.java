@@ -61,7 +61,7 @@ public record CourseUpdateDTO(
         String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, boolean presentationAssessmentsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean athenaGradingFeedbackEnabled,
         boolean athenaFormativeFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
@@ -124,6 +124,7 @@ public record CourseUpdateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
+        course.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
@@ -180,8 +181,9 @@ public record CourseUpdateDTO(
                 course.isOnlineCourse(), course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(),
                 course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
                 course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
-                course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
+                course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationAssessmentsEnabled(),
+                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
                 course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
                 course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
                 course.getMaxDailyOrchestrationOverride());

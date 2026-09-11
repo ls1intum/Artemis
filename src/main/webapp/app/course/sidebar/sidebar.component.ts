@@ -1,5 +1,6 @@
 import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import type { TumUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
@@ -51,6 +52,7 @@ export class SidebarComponent implements OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
 
     readonly onSelectConversation = output<number | string>();
+    readonly onSelectItem = output<number | string>();
     readonly onUpdateSidebar = output<void>();
     onDirectChatPressed = output<void>();
     onGroupChatPressed = output<void>();
@@ -58,6 +60,7 @@ export class SidebarComponent implements OnDestroy {
     onCreateChannelPressed = output<void>();
     onMarkAllChannelsAsRead = output<void>();
     readonly searchFieldEnabled = input<boolean>(true);
+    readonly searchFieldSize = input<TumUiInputSize | undefined>(undefined);
     readonly sidebarData = input.required<SidebarData>();
     readonly courseId = input<number>();
     readonly itemSelected = input<boolean>();
@@ -148,6 +151,7 @@ export class SidebarComponent implements OnDestroy {
         this.sidebarEventSubscription = pipe.subscribe((targetComponentRoute) => {
             if (targetComponentRoute) {
                 this.storeLastSelectedItemTargetComponentRoute(targetComponentRoute);
+                this.onSelectItem.emit(targetComponentRoute);
                 if (this.sidebarDataInternal().sidebarType == 'conversation') {
                     this.onSelectConversation.emit(targetComponentRoute);
                 }

@@ -41,6 +41,8 @@ public enum UserDeletionReferencePolicy {
     PLAGIARISM_CASE_STUDENT("plagiarism_case", "student_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DELETE, true),
     PLAGIARISM_VERDICT_AUTHOR("plagiarism_case", "verdict_by_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DETACH_ACTOR, true),
     POST_AUTHOR("post", "author_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
+    PRESENTATION_ASSESSMENT_INSTANCE_STUDENT("presentation_assessment_instance_student", "student_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.REMOVE_MEMBERSHIP,
+            true),
     PUSH_NOTIFICATION_DEVICE("push_notification_device_configuration", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     QUIZ_QUESTION_PROGRESS("quiz_question_progress", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
     QUIZ_TRAINING_LEADERBOARD("quiz_training_leaderboard", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),

@@ -41,7 +41,7 @@ export class SidebarCardMediumComponent {
             return;
         }
         this.storeTargetComponentSubRoute();
-        if (this.itemSelected()) {
+        if (this.itemSelected() && !this.sidebarItem().disableNavigation) {
             this.refreshChildComponent();
         }
     }

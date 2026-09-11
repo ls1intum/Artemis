@@ -1,0 +1,98 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Presentations",
+                "createLabel": "Create Presentation",
+                "editLabel": "Edit Presentation"
+            },
+            "created": "The presentation assessment was successfully created",
+            "updated": "The presentation assessment was successfully updated",
+            "deleted": "The presentation assessment {{ title }} was successfully deleted",
+            "title": "Title",
+            "description": "Description",
+            "maxPoints": "Max. points",
+            "resultPoints": "Result",
+            "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "placeholder": {
+                "title": "Title",
+                "maxPoints": "0",
+                "resultPoints": "0",
+                "description": "Enter a description"
+            },
+            "validation": {
+                "numberRequired": "Please enter a number.",
+                "maxPointsMin": "Please enter a value greater than 0.",
+                "resultPointsMin": "Result must be at least 0.",
+                "pointsMax": "Points must not exceed {{ max }}."
+            },
+            "presentationDate": "Presentation date",
+            "presentationTime": "Time",
+            "picture": "Picture",
+            "presentation": "Presentation",
+            "presenter": "Presenter",
+            "score": "Score",
+            "overview": "Overview",
+            "grading": "Grading",
+            "byPresentation": "By presentation",
+            "byStudent": "By student",
+            "overallOverview": "Overall overview",
+            "standalone": "Standalone",
+            "linkedToExercise": "Linked to an exercise",
+            "enterGrade": "Enter Grade",
+            "student": "Student",
+            "status": "Status",
+            "assessment": "Assessment",
+            "remark": "Remark",
+            "note": "Remark",
+            "assessed": "Assessed",
+            "pending": "Pending",
+            "searchStudent": "Search for a student",
+            "searchOverview": "Search name, email, or presentation",
+            "noMatchingStudents": "No students match your search.",
+            "date": "Date",
+            "type": "Type",
+            "typeStandalone": "Standalone",
+            "typeExercise": "Exercise",
+            "assessedBy": "Assessed by",
+            "rows": "rows",
+            "statistics": {
+                "total": "Total"
+            },
+            "exercise": "Linked exercise",
+            "linkedExercise": "Linked exercise:",
+            "noExercise": "No exercise",
+            "exerciseNotInCourse": "The linked exercise must belong to this course.",
+            "instanceRequiresPresenter": "Select at least one presenter.",
+            "language": "Language",
+            "location": "Location",
+            "meetingLink": "Meeting link",
+            "mode": {
+                "label": "Mode",
+                "online": "Online",
+                "inPerson": "In person"
+            },
+            "filter": {
+                "all": "All",
+                "future": "Future",
+                "allPresentations": "All presentations",
+                "allTypes": "All types",
+                "presentation": "Filter by presentation",
+                "type": "Filter by type"
+            },
+            "instance": {
+                "createLabel": "Add Presentation Instance",
+                "editLabel": "Edit Presentation Instance"
+            },
+            "noExisting": "There are no presentation assessments for this course yet.",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
+            },
+            "students": {
+                "newPresentation": "New presentation",
+                "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation?"
+            }
+        }
+    }
+}

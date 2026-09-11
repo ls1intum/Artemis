@@ -1,5 +1,5 @@
 import { Component, input, output, signal } from '@angular/core';
-import { TumUiSearchFieldComponent } from '@tumaet/ui-angular';
+import { type TumUiInputSize, TumUiSearchFieldComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-search-filter',
@@ -14,6 +14,7 @@ export class SearchFilterComponent {
      * placeholder, which says less than a purpose-written label and changes whenever the placeholder copy does.
      */
     readonly ariaLabelKey = input<string>('artemisApp.course.exercise.search.searchLabel');
+    readonly size = input<TumUiInputSize | undefined>(undefined);
     readonly disabled = input(false);
     readonly newSearchEvent = output<string>();
 

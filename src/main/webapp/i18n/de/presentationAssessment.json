@@ -1,0 +1,98 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Präsentationen",
+                "createLabel": "Präsentation erstellen",
+                "editLabel": "Präsentation bearbeiten"
+            },
+            "created": "Die Präsentationsbewertung wurde erfolgreich erstellt",
+            "updated": "Die Präsentationsbewertung wurde erfolgreich aktualisiert",
+            "deleted": "Die Präsentationsbewertung {{ title }} wurde erfolgreich gelöscht",
+            "title": "Titel",
+            "description": "Beschreibung",
+            "maxPoints": "Max. Punkte",
+            "resultPoints": "Ergebnis",
+            "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximalen Punkte nicht überschreiten.",
+            "placeholder": {
+                "title": "Titel",
+                "maxPoints": "0",
+                "resultPoints": "0",
+                "description": "Beschreibung eingeben"
+            },
+            "validation": {
+                "numberRequired": "Bitte gib eine Zahl ein.",
+                "maxPointsMin": "Bitte gib einen Wert größer als 0 ein.",
+                "resultPointsMin": "Das Ergebnis muss mindestens 0 betragen.",
+                "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten."
+            },
+            "presentationDate": "Präsentationstermin",
+            "presentationTime": "Uhrzeit",
+            "picture": "Bild",
+            "presentation": "Präsentation",
+            "presenter": "Präsentierende Person",
+            "score": "Punkte",
+            "overview": "Übersicht",
+            "grading": "Bewertung",
+            "byPresentation": "Nach Präsentation",
+            "byStudent": "Nach Studierenden",
+            "overallOverview": "Gesamtübersicht",
+            "standalone": "Eigenständig",
+            "linkedToExercise": "An Aufgabe geknüpft",
+            "enterGrade": "Note eintragen",
+            "student": "Student",
+            "status": "Status",
+            "assessment": "Bewertung",
+            "remark": "Anmerkung",
+            "note": "Anmerkung",
+            "assessed": "Bewertet",
+            "pending": "Ausstehend",
+            "searchStudent": "Studierende Person suchen",
+            "searchOverview": "Name, E-Mail oder Präsentation suchen",
+            "noMatchingStudents": "Keine Studierenden entsprechen der Suche.",
+            "date": "Datum",
+            "type": "Typ",
+            "typeStandalone": "Eigenständig",
+            "typeExercise": "Aufgabe",
+            "assessedBy": "Bewertet von",
+            "rows": "Zeilen",
+            "statistics": {
+                "total": "Gesamt"
+            },
+            "exercise": "Verknüpfte Aufgabe",
+            "linkedExercise": "Verknüpfte Aufgabe:",
+            "noExercise": "Keine Aufgabe",
+            "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
+            "instanceRequiresPresenter": "Wähle mindestens eine präsentierende Person aus.",
+            "language": "Sprache",
+            "location": "Ort",
+            "meetingLink": "Meeting-Link",
+            "mode": {
+                "label": "Modus",
+                "online": "Online",
+                "inPerson": "Präsenz"
+            },
+            "filter": {
+                "all": "Alle",
+                "future": "Zukünftige",
+                "allPresentations": "Alle Präsentationen",
+                "allTypes": "Alle Typen",
+                "presentation": "Präsentation filtern",
+                "type": "Typ filtern"
+            },
+            "instance": {
+                "createLabel": "Präsentationsinstanz hinzufügen",
+                "editLabel": "Präsentationsinstanz bearbeiten"
+            },
+            "noExisting": "Für diesen Kurs gibt es noch keine Präsentationsbewertungen.",
+            "delete": {
+                "question": "Soll die Präsentationsbewertung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
+            },
+            "students": {
+                "newPresentation": "Neue Präsentation",
+                "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentation entfernt werden?"
+            }
+        }
+    }
+}

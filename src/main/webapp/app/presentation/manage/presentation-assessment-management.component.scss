@@ -1,0 +1,235 @@
+.presentation-page {
+    height: 100%;
+    min-height: 0;
+}
+
+.presentation-workspace {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.presentation-sidebar {
+    flex: 0 0 auto;
+    min-width: 0;
+
+    ::ng-deep .sidebar-body > .mt-2:first-child {
+        margin-bottom: 0.25rem;
+    }
+}
+
+.presentation-content {
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-content-background);
+}
+
+.presentation-detail {
+    min-width: 0;
+}
+
+.presentation-detail-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+
+    &::after {
+        position: absolute;
+        right: 1rem;
+        bottom: 0;
+        left: 1rem;
+        border-bottom: 1px solid var(--p-content-border-color);
+        content: '';
+    }
+}
+
+.presentation-detail-title {
+    font-size: 1rem;
+}
+
+.presentation-summary {
+    min-height: 2.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--p-text-muted-color);
+    white-space: pre-wrap;
+}
+
+.presentation-grading-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+}
+
+.presentation-overall-toolbar {
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--p-content-border-color);
+    border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.presentation-content thead th {
+    background: var(--p-content-hover-background);
+}
+
+.student-search {
+    width: min(100%, 19rem);
+}
+
+.student-search-input {
+    padding-left: 2.25rem;
+    background: var(--p-content-hover-background);
+}
+
+.presentation-detail-row > td {
+    padding: 1rem 1.5rem;
+    background: var(--p-content-hover-background);
+}
+
+.presentation-student-row-striped > td {
+    background: var(--p-content-hover-background);
+}
+
+.presentation-overview {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.presentation-statistics {
+    display: flex;
+    min-height: 3.75rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+}
+
+.presentation-statistic {
+    display: grid;
+    min-width: 4.75rem;
+    gap: 0;
+    text-align: center;
+
+    ::ng-deep strong {
+        font-size: 1rem;
+        line-height: 1.25;
+    }
+
+    ::ng-deep span {
+        color: var(--p-text-muted-color);
+        font-size: 0.6875rem;
+    }
+}
+
+.presentation-statistic-total ::ng-deep strong {
+    color: var(--p-primary-color);
+}
+
+.presentation-statistic-assessed ::ng-deep strong {
+    color: var(--color-state-success);
+}
+
+.presentation-statistic-pending ::ng-deep strong {
+    color: var(--color-state-warning);
+}
+
+.presentation-status-filter {
+    flex: 0 0 auto;
+
+    tum-ui-button.active ::ng-deep .tum-ui-btn {
+        color: var(--p-primary-color);
+        font-weight: 600;
+    }
+}
+
+.presentation-toolbar-divider {
+    align-self: stretch;
+    border-left: 1px solid var(--p-content-border-color);
+}
+
+.presentation-filter-select {
+    width: 12rem;
+}
+
+.presentation-row-count {
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 0.75rem;
+}
+
+.presentation-table-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.presentation-paginator {
+    display: block;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: 0.5rem 1rem 0.75rem;
+}
+
+.presentation-detail-row:not(.presentation-student-row-striped) > td {
+    background: var(--p-content-background);
+}
+
+.instance-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+}
+
+.student-avatar {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: var(--p-border-radius-md);
+    color: var(--p-primary-color);
+    background: var(--p-highlight-background);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+@media (max-width: 48rem) {
+    .instance-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .presentation-detail-header,
+    .presentation-grading-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .presentation-overall-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .presentation-filter-select,
+    .student-search {
+        width: 100%;
+    }
+
+    .presentation-toolbar-divider {
+        display: none;
+    }
+
+    .presentation-row-count {
+        margin-left: 0;
+    }
+}

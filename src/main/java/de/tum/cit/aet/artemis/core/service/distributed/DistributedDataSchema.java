@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -93,6 +93,15 @@ public final class DistributedDataSchema {
             // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * Structures carried from v1 to v2. V2 adds a value at the end of the {@code Feature} enum. Existing feature-map
+     * keys therefore retain their ordinal representation and can be moved byte-for-byte; the new value is only ever
+     * written after the migration. The remaining durable structures are unchanged and remain wire-compatible.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
+            new CarriedOverStructure("features", StructureKind.MAP), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

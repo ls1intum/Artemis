@@ -37,4 +37,12 @@ describe('TumUiTagComponent', () => {
         fixture.detectChanges();
         expect(tag().textContent?.trim()).toBe('Active');
     });
+
+    it('can render regular-weight tag text', () => {
+        fixture.componentRef.setInput('bold', false);
+        fixture.detectChanges();
+
+        expect(tag().classList).toContain('tum:font-normal');
+        expect(tag().classList).not.toContain('tum:font-bold');
+    });
 });
