@@ -51,7 +51,7 @@
         </div>
     </tum-ui-panel>
 
-    <tum-ui-panel class="h-full min-w-0 overflow-hidden [&_.tum-ui-panel-header]:hidden">
+    <tum-ui-panel class="h-full min-w-0 overflow-hidden [&_.tum-ui-panel-header]:!hidden">
         <div class="-mx-[calc(var(--tumaet-ui-spacing)*4.5)] -mb-[calc(var(--tumaet-ui-spacing)*4.5)]">
             <table class="w-full table-fixed border-collapse text-base text-muted-color">
                 <colgroup>
@@ -153,25 +153,25 @@
                     </tr>
                     @if (!isExamMode()) {
                         <tr>
-                            <th class="!border-b-0 px-6 py-2.5 text-start font-normal align-middle" scope="row" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></th>
-                            <td class="!border-b-0 whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            <th class="px-6 py-2.5 text-start font-normal align-middle" scope="row" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></th>
+                            <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle">
                                 @if (course()?.isAtLeastInstructor) {
                                     <a [routerLink]="ratingsLink()">{{ ratings().total }}</a>
                                 } @else {
                                     {{ ratings().total }}
                                 }
                             </td>
-                            <td class="!border-b-0 whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ ratings().tutor }}</td>
+                            <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ ratings().tutor }}</td>
                         </tr>
                     }
                     @if (isExamMode()) {
                         <tr>
                             <th
-                                class="!border-b-0 px-6 py-2.5 text-start font-normal align-middle"
+                                class="px-6 py-2.5 text-start font-normal align-middle"
                                 scope="row"
                                 jhiTranslate="artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds"
                             ></th>
-                            <td class="!border-b-0 whitespace-nowrap px-6 py-2.5 text-end align-middle" colspan="2">
+                            <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle" colspan="2">
                                 {{ numberOfAssessmentsOfCorrectionRounds()[0].inTime }}
                                 @if (numberOfAssessmentsOfCorrectionRounds()[1]) {
                                     <span> - {{ numberOfAssessmentsOfCorrectionRounds()[1].inTime }}</span>

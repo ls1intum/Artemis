@@ -6,6 +6,8 @@
             },
             "title": "Assessment Dashboard",
             "noSubmissionFound": "No submission found",
+            "noExercises": "No exercises have been created yet.",
+            "noExercisesMatchFilters": "No exercises match the selected filters.",
             "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} assessments completed)",
             "progressTitle": "Assessment progress",
             "assessmentsCompleted": "assessments completed",

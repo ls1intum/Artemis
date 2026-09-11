@@ -6,6 +6,8 @@
             },
             "title": "Bewertungsübersicht",
             "noSubmissionFound": "Keine Abgaben gefunden",
+            "noExercises": "Es wurden noch keine Übungen erstellt.",
+            "noExercisesMatchFilters": "Keine Übungen entsprechen den ausgewählten Filtern.",
             "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} Bewertungen abgeschlossen)",
             "progressTitle": "Bewertungsfortschritt",
             "assessmentsCompleted": "Bewertungen abgeschlossen",
