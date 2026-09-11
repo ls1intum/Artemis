@@ -35,20 +35,26 @@ import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedba
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 
 /**
- * Where "continue to latest" goes for an exercise. Exported because the page offers the same action from the title
- * bar, where the dropdown that owns this method may not be rendered at all.
+ * Where "continue to latest" goes for an exercise, or undefined for one with no participation route to return to.
+ * Exported because the page offers the same action from the title bar, where the dropdown may not be rendered at all.
+ *
+ * A quiz routes by mode rather than by participation id, so it is answered here. Everything else goes through
+ * {@link participationChildRouteSegments}, the one place that knows where a participation lives: spelling the mapping
+ * out a second time is what sent programming and file upload to the modeling route, and it cannot express that a
+ * programming exercise without the online editor has nowhere to go at all.
  */
-export function latestSubmissionRoute(exercise: Exercise, participation: StudentParticipation): unknown[] {
+export function latestSubmissionRoute(exercise: Exercise, participation: StudentParticipation): unknown[] | undefined {
     const courseId = getCourseFromExercise(exercise)?.id;
     if (exercise.type === ExerciseType.QUIZ) {
         return isPracticeMode(participation)
             ? ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]
             : ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live'];
     }
-    const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-    return ['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id];
+    const segments = participationChildRouteSegments(exercise, participation);
+    return segments ? ['/courses', courseId, 'exercises', ...segments] : undefined;
 }
 
 @Component({
@@ -137,16 +143,6 @@ export class ResultHistoryDropdownComponent {
         }
         this.selectedResultId.set(undefined);
         this.viewingSubmissionChange.emit(false);
-    }
-
-    continueToLatest() {
-        this.selectedResultId.set(undefined);
-        this.viewingSubmissionChange.emit(false);
-        const participation = this.studentParticipation();
-        if (!participation) {
-            return;
-        }
-        void this.router.navigate(latestSubmissionRoute(this.exercise(), participation));
     }
 
     resultsPopover = viewChild<Popover>('resultsPopover');

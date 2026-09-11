@@ -596,7 +596,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!participation || !exercise) {
             return;
         }
-        void this.router.navigate(latestSubmissionRoute(exercise, participation));
+        const route = latestSubmissionRoute(exercise, participation);
+        if (!route) {
+            return;
+        }
+        void this.router.navigate(route);
     };
 
     private syncViewingSubmissionWithRoute(): void {
