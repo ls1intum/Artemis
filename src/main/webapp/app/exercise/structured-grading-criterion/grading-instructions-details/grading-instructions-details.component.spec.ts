@@ -559,6 +559,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.showEditMode.set(false);
             exercise.gradingInstructions = 'stale instructions';
             const markdownEditor = {
+                currentMarkdown: () => 'latest instructions from monaco',
                 flushLiveMarkdownAndParse: vi.fn(() => {
                     // Host save calls prepareForSave before the debounced markdownChange fires.
                     exercise.gradingInstructions = 'latest instructions from monaco';
@@ -570,6 +571,42 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
             expect(exercise.gradingInstructions).toBe('latest instructions from monaco');
+        });
+
+        it('should clear grading criteria when prepareForSave flushes an empty monaco buffer', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.criteria.set([gradingCriterion]);
+            component.showEditMode.set(false);
+            const markdownEditor = {
+                currentMarkdown: () => '',
+                // Empty buffer: parseMarkdown does not emit textWithDomainActionsFound.
+                flushLiveMarkdownAndParse: vi.fn(),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+
+            component.prepareForSave();
+
+            expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
+            expect(exercise.gradingCriteria).toEqual([]);
+            expect(component.criteria()).toEqual([]);
+        });
+
+        it('should clear grading criteria when switching to structured mode with an empty buffer', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.criteria.set([gradingCriterion]);
+            component.showEditMode.set(false);
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => '',
+                    flushLiveMarkdownAndParse: vi.fn(),
+                }),
+            });
+
+            component.setEditMode('structured');
+
+            expect(exercise.gradingCriteria).toEqual([]);
+            expect(component.criteria()).toEqual([]);
+            expect(component.showEditMode()).toBe(true);
         });
 
         it('should flush the live monaco buffer before switching to structured mode', () => {

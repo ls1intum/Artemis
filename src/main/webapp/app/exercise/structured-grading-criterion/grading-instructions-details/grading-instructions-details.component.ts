@@ -312,7 +312,22 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor()?.flushLiveMarkdownAndParse();
+        const editor = this.markdownEditor();
+        editor?.flushLiveMarkdownAndParse();
+        // parseMarkdown emits textWithDomainActionsFound only for non-empty markdown, so an emptied
+        // buffer never reaches onDomainActionsFound and would otherwise keep the previous criteria.
+        // Only clear when the live buffer is known empty — undefined means the editor did not report
+        // a value (e.g. tests / unavailable Monaco), so leave whatever flush already applied.
+        const liveMarkdown = editor?.currentMarkdown?.();
+        if (liveMarkdown !== undefined && !liveMarkdown.trim()) {
+            this.clearGradingCriteria();
+        }
+    }
+
+    private clearGradingCriteria(): void {
+        this.instructions = [];
+        this.criteria.set([]);
+        this.exercise().gradingCriteria = [];
     }
 
     /**
