@@ -1,0 +1,107 @@
+---
+id: iris
+title: Iris, the AI Tutor
+sidebar_label: Iris
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import irisSettings from './assets/iris/iris-settings.png';
+import supportLevelLow from './assets/iris/support-level-low.png';
+import supportLevelHigh from './assets/iris/support-level-high.png';
+
+Iris is a tutor your students can ask questions of at any hour, inside the exercise they are working on. It has the
+exercise and their latest work as context, so a question does not have to be explained before it can be answered, and
+it is built to guide rather than to answer: Artemis will not let it hand over a complete solution however you
+configure it.
+
+You decide two things per course — whether Iris is available at all, and how much help it gives.
+
+<Callout variant={CalloutVariant.info}>
+
+  Iris only appears where an administrator has configured an Iris service for the instance. If the **Iris** entry is
+  missing from your course management, that is why. See [Artemis Intelligence](/admin/artemis-intelligence) for the
+  service boundary.
+
+</Callout>
+
+## Turning Iris On
+
+**Iris** in the course management opens the settings, which are separate from the rest of the
+[course configuration](/instructor/course-management/course-configuration). The switch at the top decides whether
+every student in the course can use Iris; nothing below it applies while it is off.
+
+<Image src={irisSettings} alt="Iris settings for a course, with the support level, its example conversation and the guidelines field" size={ImageSize.large} caption="The Iris settings of a course" />
+
+**Save Changes** applies what you have set. **Reset to Default** puts the support level back to **Moderate** and
+clears the guidelines, and touches nothing else: whether Iris is enabled, and the administrative settings, are left
+as they are. It is a way to undo your tuning, not a way to switch Iris off.
+
+## Level of Instructional Support
+
+This is the setting worth thinking about. It decides how much Iris gives away, on a scale of three, and the page
+shows you an example conversation at each so the choice is not abstract.
+
+**Low** answers with counter-questions and nothing else, sending the student back to their own reasoning. It suits an
+advanced course where working the problem out unaided is the point of the exercise.
+
+<Image src={supportLevelLow} alt="Support level Low, with its example conversation" size={ImageSize.large} caption="Low: Iris asks rather than tells" />
+
+**Moderate**, the default, asks guiding questions and adds targeted hints. It suits a course where students have some
+grounding but benefit from a nudge and a pointer.
+
+**High** explains step by step, with analogies and small code examples. It suits an introductory course where
+students are new to programming and an unexplained hint helps nobody.
+
+<Image src={supportLevelHigh} alt="Support level High, with its example conversation" size={ImageSize.large} caption="High: Iris explains, with an example" />
+
+Reading the three example conversations against each other is the quickest way to pick one. The same student question
+— a sorting algorithm that does not work — draws a counter-question at Low, a walk-through invitation at Moderate,
+and at High the actual off-by-one error named with the fix.
+
+<Callout variant={CalloutVariant.warning}>
+
+  The level applies to the whole course, not per exercise. If one exercise in the course is meant to be worked out
+  unaided, the support level cannot carve it out — say so in the exercise's problem statement instead.
+
+</Callout>
+
+## Additional Guidelines
+
+**Additional Guidelines** is free text, up to 2048 characters, that sets expectations Iris follows in this course.
+It is for the things a general tutor cannot know: which language version the course uses, which of two conventions
+you teach, where students should be sent for background.
+
+> Use Java 21 syntax in any example. Refer students to the lecture on design patterns rather than to outside
+> tutorials.
+
+Keep it to instructions about *how* to answer. It is not a place to put course content, and it is not a way to make
+Iris stricter than the support level already makes it.
+
+<Callout variant={CalloutVariant.info}>
+
+  Whatever you write here, Artemis is globally restricted from providing complete solutions or full code blocks. The
+  settings page says so beneath the guidelines field, and that restriction is not yours to relax.
+
+</Callout>
+
+## What Students See
+
+Enabling Iris adds an **Iris** tab to the panel beside the problem statement on **programming** and **text**
+exercises, with the current exercise already set as the chat's topic. Other exercise types have no tab, and neither
+does an exam exercise. Iris can also answer about a lecture, and about the course as a whole.
+
+Before anything else happens, each student is asked to choose whether they want to use cloud AI at all — a choice
+they make once, for themselves, and which you cannot make for them.
+
+That means enabling Iris does not oblige anyone to use it, and a course cannot depend on every student having done
+so. See [Iris](/student/learning-content/iris) for the student's side of it, which is worth reading before you set the
+support level.
+
+## Rate Limits and Variants
+
+Two further settings sit on an **Admin** tab of the same page and are not yours to change: the pipeline **variant**
+Iris runs, and a **rate limit** of so many requests per timeframe. The page shows the effective limit for your course,
+so if students report Iris refusing to answer, that figure is the first thing to check with your administrator.

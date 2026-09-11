@@ -21,11 +21,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import tools.jackson.core.JacksonException;
+
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -86,6 +90,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -93,7 +99,7 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService) {
+            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -110,6 +116,7 @@ public class ProgrammingExerciseImportBasicService {
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
@@ -150,6 +157,15 @@ public class ProgrammingExerciseImportBasicService {
         }
         // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
         programmingExerciseValidationService.validateBuildConfigSize(newExercise);
+        if (automaticAfterDueDateService.isPresent() && newExercise.isCourseExercise()) {
+            try {
+                newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise));
+            }
+            catch (JacksonException e) {
+                throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
+            }
+        }
+        newExercise.validateDates();
         newExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newExercise.getBuildConfig()));
 
         // Persist the submission policy (as a fresh entity) up front for the same reason.

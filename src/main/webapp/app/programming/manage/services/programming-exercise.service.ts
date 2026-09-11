@@ -149,7 +149,8 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
         const options = createRequestOption(importOptions);
-        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        // Route through convertDataFromClient like automaticSetup and importFromFile do, so competency-link back-references are stripped.
+        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
 
         ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
@@ -323,8 +324,10 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
+        // No second sort here: sortByProperty above established the order, and calling sort() without a comparator
+        // on the submissions would compare them as strings, where every element is equal and nothing is reordered.
         // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-        return getNewestResult(submissions.sort().last()?.results);
+        return getNewestResult(submissions.last()?.results);
     }
 
     /**
@@ -395,6 +398,10 @@ export class ProgrammingExerciseService {
         }
         if (copy.solutionParticipation) {
             copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
+        }
+        // Each competency link back-references this exercise, which would make the payload circular.
+        if (copy.competencyLinks) {
+            copy.competencyLinks = copy.competencyLinks.map((link) => _omit(link, ['exercise']));
         }
 
         return copy as ProgrammingExercise;

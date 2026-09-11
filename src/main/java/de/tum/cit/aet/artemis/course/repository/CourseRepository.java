@@ -148,9 +148,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Returns the active courses in which the given user holds any role. For an active course (already started, not yet
-     * finished) holding any role is exactly the visibility condition evaluated by
-     * {@code CourseVisibleService.isCourseVisibleForUser} for a non-admin, so this lets the dashboard/dropdown load only
-     * the user's own courses via an indexed join instead of loading all active courses and filtering them in memory.
+     * finished) holding any role is exactly the course visibility condition for a non-admin, so this lets the
+     * dashboard/dropdown load only the user's own courses via an indexed join instead of loading all active courses and
+     * filtering them in memory.
      *
      * @param userId the id of the user
      * @param now    the current time used to determine whether a course is active
@@ -253,8 +253,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
-    // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
@@ -266,8 +265,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param courseId The id of the course to find
      * @return the populated course or an empty optional if no course was found
      */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup",
-            "lectures.attachments" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup", "lectures" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
@@ -558,15 +556,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     }
 
     /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    default List<Course> findAllActive() {
-        return findAllActive(ZonedDateTime.now());
-    }
-
-    /**
      * Get a single course to enroll with eagerly loaded organizations and prerequisites.
      *
      * @param courseId the id of the course
@@ -777,11 +766,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Projects the fields the course overview container renders.
-     *
+     * <p>
      * The endpoint used to load the whole {@code Course} to read a handful of scalars off it. Selecting them directly
      * means the successful path materialises no entity at all, so nothing can lazily initialise on the way out and the
      * response cannot drift as the entity gains fields.
-     *
+     * <p>
      * The unread notification count lives outside this table, so the caller fills it in with
      * {@link CourseForOverviewDTO#withNotificationCount(long)}.
      *

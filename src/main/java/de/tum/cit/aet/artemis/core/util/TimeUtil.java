@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.util;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -57,7 +56,7 @@ public class TimeUtil {
         return toRelativeTime(origin.getEpochSecond(), unit.getEpochSecond(), target.getEpochSecond());
     }
 
-    private static double toRelativeTime(@NonNull long originEpochSecond, @NonNull long unitEpochSecond, @NonNull long targetEpochSecond) {
+    private static double toRelativeTime(long originEpochSecond, long unitEpochSecond, long targetEpochSecond) {
         if (originEpochSecond == unitEpochSecond) {
             return 1;
         }
@@ -101,8 +100,14 @@ public class TimeUtil {
      *
      * @param newClock the new Clock instance to set
      */
-    public static void setClock(@NonNull Clock newClock) {
-        threadLocalClock.set(Objects.requireNonNull(newClock, "Clock must not be null"));
+    public static void setClock(Clock newClock) {
+        // Checked rather than left to the annotation, unlike most non-null contracts in this code base. Nothing
+        // dereferences this value afterwards: ThreadLocal.set(null) succeeds and now() falls back to DEFAULT_CLOCK, so
+        // a test that passed null here would silently become time-dependent instead of failing.
+        if (newClock == null) {
+            throw new IllegalArgumentException("The clock must not be null. Use resetClock() to go back to the system clock.");
+        }
+        threadLocalClock.set(newClock);
     }
 
     /**

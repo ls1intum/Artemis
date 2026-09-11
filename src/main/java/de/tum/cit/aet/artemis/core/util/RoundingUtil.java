@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import org.jspecify.annotations.NonNull;
+
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 public class RoundingUtil {
@@ -28,7 +30,7 @@ public class RoundingUtil {
      * @param course The course that specifies the amount of decimal places in the attribute {@link Course#getAccuracyOfScores()}
      * @return The rounded number
      */
-    public static double roundScoreSpecifiedByCourseSettings(double score, Course course) {
+    public static double roundScoreSpecifiedByCourseSettings(double score, @NonNull Course course) {
         return roundToNDecimalPlaces(score, course.getAccuracyOfScores());
     }
 

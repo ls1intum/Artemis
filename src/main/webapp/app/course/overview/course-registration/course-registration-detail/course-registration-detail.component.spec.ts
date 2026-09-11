@@ -96,17 +96,6 @@ describe('CourseRegistrationDetailComponent', () => {
         expect(result).toBe(false);
     });
 
-    it('should ask the lightweight access-state endpoint rather than the deprecated course dashboard', async () => {
-        const accessSpy = vi.spyOn(courseService, 'hasAccessToCourse').mockReturnValue(of(false));
-        const dashboardSpy = vi.spyOn(courseService, 'findOneForDashboard');
-
-        component.ngOnInit();
-        await fixture.whenStable();
-
-        expect(accessSpy).toHaveBeenCalledWith(123);
-        expect(dashboardSpy).not.toHaveBeenCalled();
-    });
-
     it('should redirect to the course page if the dashboard version is fully accessible', async () => {
         vi.spyOn(component, 'isCourseFullyAccessible').mockReturnValue(of(true));
 

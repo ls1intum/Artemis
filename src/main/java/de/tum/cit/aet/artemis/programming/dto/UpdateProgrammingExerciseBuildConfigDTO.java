@@ -33,4 +33,29 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
                 buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTimeoutSeconds(), buildConfig.getDockerFlags(),
                 buildConfig.getTheiaImage(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
     }
+
+    /**
+     * Builds a transient {@link ProgrammingExerciseBuildConfig} from this DTO, copying the id through so an existing
+     * configuration keeps its identity. The back-reference to the programming exercise is never set.
+     *
+     * @return the build configuration entity described by this DTO
+     */
+    public ProgrammingExerciseBuildConfig toEntity() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setId(id);
+        buildConfig.setSequentialTestRuns(sequentialTestRuns);
+        buildConfig.setBranch(branch);
+        buildConfig.setBuildPlanConfiguration(buildPlanConfiguration);
+        buildConfig.setBuildScript(buildScript);
+        buildConfig.setCheckoutSolutionRepository(checkoutSolutionRepository);
+        buildConfig.setTestCheckoutPath(testCheckoutPath);
+        buildConfig.setAssignmentCheckoutPath(assignmentCheckoutPath);
+        buildConfig.setSolutionCheckoutPath(solutionCheckoutPath);
+        buildConfig.setTimeoutSeconds(timeoutSeconds);
+        buildConfig.setDockerFlags(dockerFlags);
+        buildConfig.setTheiaImage(theiaImage);
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(branchRegex);
+        return buildConfig;
+    }
 }

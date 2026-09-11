@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.iris.api.IrisDataExportApi;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
@@ -39,9 +39,9 @@ public class DataExportIrisService {
 
     private final Optional<IrisDataExportApi> irisDataExportApi;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi, ObjectMapper objectMapper) {
+    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi, JsonMapper objectMapper) {
         this.irisDataExportApi = irisDataExportApi;
         this.objectMapper = objectMapper;
     }

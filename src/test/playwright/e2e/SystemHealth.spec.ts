@@ -3,7 +3,7 @@ import { admin } from '../support/users';
 import { Page, expect } from '@playwright/test';
 import { Commands } from '../support/commands';
 
-// Exactly one of the two distributed data backends contributes a health indicator, decided by
+// Exactly one of the two distributed data providers contributes a health indicator, decided by
 // artemis.distributed-data.provider. Asserting on the one that is not configured would fail on a perfectly healthy
 // server, so the runner tells us which one to expect.
 const distributedDataProvider = (process.env.DISTRIBUTED_DATA_PROVIDER ?? 'hazelcast').toLowerCase();
