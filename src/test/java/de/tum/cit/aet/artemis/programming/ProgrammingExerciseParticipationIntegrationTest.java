@@ -655,16 +655,16 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
 
-        assertThat(body.path("type").asText()).isEqualTo("programming");
-        assertThat(body.path("student").path("login").asText()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("type").asString()).isEqualTo("programming");
+        assertThat(body.path("student").path("login").asString()).isEqualTo(TEST_PREFIX + "student1");
         assertThat(body.path("repositoryUri").isMissingNode()).isFalse();
         // the nested exercise keeps its nested course, which the client renders display links off
         assertThat(body.path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
         assertThat(body.path("exercise").path("course").path("id").asLong()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertThat(body.path("exercise").path("course").path("title").asText()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+        assertThat(body.path("exercise").path("course").path("title").asString()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         // the results stay nested under their submission, where the client reads them
         assertThat(body.path("submissions")).hasSize(1);
-        assertThat(body.path("submissions").get(0).path("submissionExerciseType").asText()).isEqualTo("programming");
+        assertThat(body.path("submissions").get(0).path("submissionExerciseType").asString()).isEqualTo("programming");
         assertThat(body.path("submissions").get(0).path("results")).isNotEmpty();
     }
 
@@ -700,12 +700,12 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results");
 
-        assertThat(body.path("type").asText()).isEqualTo("programming");
-        assertThat(body.path("student").path("login").asText()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("type").asString()).isEqualTo("programming");
+        assertThat(body.path("student").path("login").asString()).isEqualTo(TEST_PREFIX + "student1");
         assertThat(body.path("exercise").path("course").path("id").asLong()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertThat(body.path("submissions")).isNotEmpty();
         // the commit history matches the submissions against git hashes, so every submission needs its commit hash
-        assertThat(body.path("submissions").get(0).path("commitHash").asText()).isEqualTo("1234567890abcdef");
+        assertThat(body.path("submissions").get(0).path("commitHash").asString()).isEqualTo("1234567890abcdef");
         assertThat(body.path("submissions").get(0).path("results")).isNotEmpty();
     }
 
