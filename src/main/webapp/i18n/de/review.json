@@ -82,7 +82,7 @@
                 "reloadRequired": "Lade die gespeicherte Aufgabe neu, bevor du sie erneut anpasst.",
                 "startFailed": "Die Anpassung konnte nicht starten. Deine Kommentare und Anweisungen bleiben hier erhalten. Prüfe den KI-Fortschritt auf einen aktiven Lauf oder versuche es erneut.",
                 "reloadDraftRequired": "Ein KI-Lauf hat Änderungen gespeichert, während dieser Dialog geöffnet war. Dein Entwurf ist noch hier. Kopiere die Anweisungen, die du behalten möchtest. Schließe dann diesen Dialog und lade die gespeicherte Aufgabe vor dem Anpassen neu.",
-                "viewProgress": "KI-Fortschritt prüfen (neuer Tab)"
+                "opensInNewTab": "(öffnet in einem neuen Tab)"
             }
         }
     }
