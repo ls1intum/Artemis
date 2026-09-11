@@ -75,7 +75,8 @@ class GenerationWorkerRegistryServiceTest {
     void completedWorkerCanBeClaimedAgainWithoutWaitingForHeartbeat() {
         registry.recordPresence("worker", heartbeat(incarnation, 1, true));
         var claim = registry.claim("first", 1);
-        WorkerEvent busy = new WorkerEvent(1, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.HEARTBEAT, claim.identity(), false, claim.imageDigest(), null, null, null);
+        WorkerEvent busy = new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", incarnation, 2, Instant.now(),
+                WorkerEvent.Type.HEARTBEAT, claim.identity(), false, claim.imageDigest(), null, null, null);
         registry.recordPresence("worker", busy);
 
         registry.recordCompletion(claim, completion(claim, 3, true));
@@ -103,8 +104,8 @@ class GenerationWorkerRegistryServiceTest {
         var old = registry.claim("old", 1);
         registry.release(old);
         var replacement = registry.claim("replacement", 2);
-        registry.recordPresence("worker", new WorkerEvent(1, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.HEARTBEAT, replacement.identity(), false,
-                replacement.imageDigest(), null, null, null));
+        registry.recordPresence("worker", new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", incarnation, 2, Instant.now(),
+                WorkerEvent.Type.HEARTBEAT, replacement.identity(), false, replacement.imageDigest(), null, null, null));
 
         registry.recordCompletion(old, completion(old, 3, true));
 
@@ -125,11 +126,68 @@ class GenerationWorkerRegistryServiceTest {
     }
 
     private WorkerEvent completion(GenerationWorkerRegistryService.Claim claim, long sequence, boolean ready) {
-        return new WorkerEvent(1, "worker", incarnation, sequence, Instant.now(), WorkerEvent.Type.ERROR, claim.identity(), ready, claim.imageDigest(), "Generation failed", null,
-                null);
+        return new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", incarnation, sequence, Instant.now(), WorkerEvent.Type.ERROR,
+                claim.identity(), ready, claim.imageDigest(), "Generation failed", null, null);
+    }
+
+    @Test
+    void coordinatorsShareFourAtomicSlotsAndCancellationReleasesOnlyOne() throws Exception {
+        var otherCore = new GenerationWorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodec(), data);
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true).withCapacity(new de.tum.cit.aet.artemis.hyperion.protocol.WorkerCapacity(4, List.of())));
+        var barrier = new java.util.concurrent.CyclicBarrier(8);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(8)) {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<GenerationWorkerRegistryService.Claim>>();
+            for (int index = 0; index < 8; index++) {
+                final int number = index;
+                futures.add(executor.submit(() -> {
+                    barrier.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                    try {
+                        return (number % 2 == 0 ? registry : otherCore).claim("job-" + number, number + 1);
+                    }
+                    catch (ServiceUnavailableAlertException full) {
+                        return null;
+                    }
+                }));
+            }
+            var claims = new java.util.ArrayList<GenerationWorkerRegistryService.Claim>();
+            for (var future : futures) {
+                var claim = future.get(5, java.util.concurrent.TimeUnit.SECONDS);
+                if (claim != null) {
+                    claims.add(claim);
+                }
+            }
+            assertThat(claims).hasSize(4);
+            assertThat(claims).extracting(claim -> claim.identity().slot()).containsExactlyInAnyOrder(0, 1, 2, 3);
+            assertThat(registry.hasAvailableGenerationSandboxSlot()).isFalse();
+            var cancelled = claims.removeFirst();
+            otherCore.release(cancelled);
+            var replacement = registry.claim("replacement", 20);
+            assertThat(replacement.identity().slot()).isEqualTo(cancelled.identity().slot());
+            registry.release(cancelled);
+            assertThat(registry.renew(cancelled)).isFalse();
+            assertThat(otherCore.renew(replacement)).isTrue();
+            assertThat(claims).allMatch(otherCore::renew);
+        }
+    }
+
+    @Test
+    void completingOneSlotDoesNotForgetOtherExecutionWhenItsCoreLeaseExpires() {
+        registry.recordPresence("worker", heartbeat(incarnation, 1, true).withCapacity(new de.tum.cit.aet.artemis.hyperion.protocol.WorkerCapacity(4, List.of())));
+        var first = registry.claim("first", 1);
+        var second = registry.claim("second", 2);
+        var terminal = new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", incarnation, 2, Instant.now(), WorkerEvent.Type.CANCELLED,
+                first.identity(), true, first.imageDigest(), null, null, null)
+                .withCapacity(new de.tum.cit.aet.artemis.hyperion.protocol.WorkerCapacity(4, List.of(second.identity())));
+        registry.recordCompletion(first, terminal);
+        registry.release(first);
+        registry.release(second);
+        var replacements = List.of(registry.claim("third", 3), registry.claim("fourth", 4), registry.claim("fifth", 5));
+        assertThat(replacements).noneMatch(claim -> claim.identity().slot() == second.identity().slot());
+        assertThatThrownBy(() -> registry.claim("sixth", 6)).isInstanceOf(ServiceUnavailableAlertException.class);
     }
 
     private WorkerEvent heartbeat(UUID workerIncarnation, long sequence, boolean ready) {
-        return new WorkerEvent(1, "worker", workerIncarnation, sequence, Instant.now(), WorkerEvent.Type.HEARTBEAT, null, ready, "sha256:" + "a".repeat(64), null, null, null);
+        return new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", workerIncarnation, sequence, Instant.now(),
+                WorkerEvent.Type.HEARTBEAT, null, ready, "sha256:" + "a".repeat(64), null, null, null);
     }
 }

@@ -84,7 +84,7 @@ public class GenerationWorkerRegistryService {
         if (!destinationWorker.equals(event.workerId()) || event.type() != WorkerEvent.Type.HEARTBEAT) {
             throw new IllegalArgumentException("Worker identity does not match its authenticated destination");
         }
-        updatePresence(destinationWorker, event, event.identity() == null ? null : event.identity().executionId());
+        updatePresence(destinationWorker, event, true);
     }
 
     /**
@@ -98,13 +98,16 @@ public class GenerationWorkerRegistryService {
                 || (event.type() != WorkerEvent.Type.FINISHED && event.type() != WorkerEvent.Type.CANCELLED && event.type() != WorkerEvent.Type.ERROR)) {
             throw new IllegalArgumentException("Completion does not match the claimed execution and image");
         }
-        if (claim.identity().executionId().equals(leases.get(claim.identity().workerId()))) {
-            updatePresence(claim.identity().workerId(), event, null);
+        if (claim.identity().executionId().equals(leases.get(slotKey(claim.identity())))) {
+            updatePresence(claim.identity().workerId(), event, false);
         }
     }
 
-    private void updatePresence(String destinationWorker, WorkerEvent event, @Nullable UUID activeExecution) {
-        Presence updated = new Presence(event.incarnation(), event.sequence(), Instant.now(), event.imageDigest(), event.ready(), activeExecution);
+    private void updatePresence(String destinationWorker, WorkerEvent event, boolean heartbeat) {
+        List<SlotExecution> executions = event.capacity() != null ? event.capacity().executions().stream().map(SlotExecution::from).toList()
+                : heartbeat && event.identity() != null ? List.of(SlotExecution.from(event.identity())) : List.of();
+        int slots = event.capacity() == null ? 1 : event.capacity().slots();
+        Presence updated = new Presence(event.incarnation(), event.sequence(), Instant.now(), event.imageDigest(), event.ready(), slots, executions);
         for (int attempt = 0; attempt < 3; attempt++) {
             Presence current = presence.get(destinationWorker);
             if (current == null) {
@@ -127,7 +130,7 @@ public class GenerationWorkerRegistryService {
     }
 
     public boolean hasAvailableGenerationSandboxSlot() {
-        return properties.ids().stream().anyMatch(worker -> available(presence.get(worker)) && leases.get(worker) == null);
+        return properties.ids().stream().anyMatch(worker -> availableSlots(worker, presence.get(worker)) > 0);
     }
 
     /**
@@ -141,9 +144,15 @@ public class GenerationWorkerRegistryService {
             if (!available(observed)) {
                 continue;
             }
-            UUID execution = UUID.randomUUID();
-            if (leases.putIfAbsent(worker, execution) == null) {
-                return new Claim(new ExecutionIdentity(jobId, exerciseId, execution, worker, observed.incarnation()), observed.imageDigest());
+            for (int slot = 0; slot < observed.slots(); slot++) {
+                if (occupied(observed, slot)) {
+                    continue;
+                }
+                UUID execution = UUID.randomUUID();
+                var identity = new ExecutionIdentity(jobId, exerciseId, execution, worker, observed.incarnation(), slot);
+                if (leases.putIfAbsent(slotKey(identity), execution) == null) {
+                    return new Claim(identity, observed.imageDigest());
+                }
             }
         }
         throw new ServiceUnavailableAlertException("No generation worker has available capacity.", "hyperionExerciseGeneration", "generationCapacityUnavailable");
@@ -156,8 +165,8 @@ public class GenerationWorkerRegistryService {
      * @return whether core still owns that execution
      */
     public boolean renew(Claim claim) {
-        String worker = claim.identity().workerId();
-        Presence live = presence.get(worker);
+        String worker = slotKey(claim.identity());
+        Presence live = presence.get(claim.identity().workerId());
         if (live == null || !claim.identity().workerIncarnation().equals(live.incarnation()) || !claim.identity().executionId().equals(leases.get(worker))) {
             return false;
         }
@@ -165,7 +174,7 @@ public class GenerationWorkerRegistryService {
     }
 
     public void release(Claim claim) {
-        leases.remove(claim.identity().workerId(), claim.identity().executionId());
+        leases.remove(slotKey(claim.identity()), claim.identity().executionId());
     }
 
     public int reachableWorkers() {
@@ -179,16 +188,41 @@ public class GenerationWorkerRegistryService {
      */
     public int capableWorkers() {
         return (int) properties.ids().stream().map(presence::get)
-                .filter(value -> value != null && (value.ready() || value.activeExecution() != null) && value.receivedAt().plus(properties.presenceTtl()).isAfter(Instant.now()))
+                .filter(value -> value != null && (value.ready() || !value.executions().isEmpty()) && value.receivedAt().plus(properties.presenceTtl()).isAfter(Instant.now()))
                 .count();
     }
 
     public int availableWorkers() {
-        return (int) properties.ids().stream().filter(worker -> available(presence.get(worker)) && leases.get(worker) == null).count();
+        return (int) properties.ids().stream().filter(worker -> availableSlots(worker, presence.get(worker)) > 0).count();
     }
 
     private boolean available(@Nullable Presence value) {
-        return value != null && value.ready() && value.activeExecution() == null && value.receivedAt().plus(properties.presenceTtl()).isAfter(Instant.now());
+        return value != null && value.ready() && value.receivedAt().plus(properties.presenceTtl()).isAfter(Instant.now());
+    }
+
+    private int availableSlots(String worker, @Nullable Presence value) {
+        if (!available(value)) {
+            return 0;
+        }
+        int count = 0;
+        for (int slot = 0; slot < value.slots(); slot++) {
+            if (!occupied(value, slot) && leases.get(slotKey(worker, slot)) == null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static boolean occupied(Presence value, int slot) {
+        return value.executions().stream().anyMatch(execution -> execution.slot() == slot);
+    }
+
+    private static String slotKey(ExecutionIdentity identity) {
+        return slotKey(identity.workerId(), identity.slot());
+    }
+
+    private static String slotKey(String worker, int slot) {
+        return slot == 0 ? worker : worker + ":" + slot;
     }
 
     public static String eventDestination(String worker) {
@@ -204,6 +238,15 @@ public class GenerationWorkerRegistryService {
     public record Claim(ExecutionIdentity identity, String imageDigest) {
     }
 
-    private record Presence(UUID incarnation, long sequence, Instant receivedAt, String imageDigest, boolean ready, @Nullable UUID activeExecution) implements Serializable {
+    private record Presence(UUID incarnation, long sequence, Instant receivedAt, String imageDigest, boolean ready, int slots, List<SlotExecution> executions)
+            implements Serializable {
     }
+
+    private record SlotExecution(int slot, UUID executionId, String jobId, long exerciseId) implements Serializable {
+
+        static SlotExecution from(ExecutionIdentity identity) {
+            return new SlotExecution(identity.slot(), identity.executionId(), identity.jobId(), identity.exerciseId());
+        }
+    }
+
 }
