@@ -9,13 +9,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.persistence.EntityManager;
-
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -32,9 +29,6 @@ class AiGeneratedProvenanceIntegrationTest extends AbstractAtlasIntegrationTest 
 
     @Autowired
     private DataSource dataSource;
-
-    @Autowired
-    private EntityManager entityManager;
 
     @Test
     void migrationCreatesNonNullableFalseDefaults() throws SQLException {
@@ -59,12 +53,9 @@ class AiGeneratedProvenanceIntegrationTest extends AbstractAtlasIntegrationTest 
     }
 
     @Test
-    @Transactional
     void persistsManualAndAiProvenanceForCompetenciesAndLinks() {
         ProvenanceFixture manual = persistFixture(false, "manual");
         ProvenanceFixture ai = persistFixture(true, "ai");
-        entityManager.flush();
-        entityManager.clear();
 
         assertFixtureProvenance(manual, false);
         assertFixtureProvenance(ai, true);

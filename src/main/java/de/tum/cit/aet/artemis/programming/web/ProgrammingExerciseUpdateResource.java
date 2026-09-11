@@ -495,7 +495,7 @@ public class ProgrammingExerciseUpdateResource {
      * @param exerciseId                                  of the exercise
      * @param updateDTO                                   the DTO containing the ProgrammingExercise data to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     * @param hyperionCompetencyIds                        IDs of links inferred through Hyperion's checklist
+     * @param hyperionCompetencyIds                       IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
      *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the
      *         ProgrammingExercise
