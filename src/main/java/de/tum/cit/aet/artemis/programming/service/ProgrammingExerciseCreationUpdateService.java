@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -127,7 +127,7 @@ public class ProgrammingExerciseCreationUpdateService {
         try {
             return automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
                     "invalidBuildPlanConfiguration");
         }
@@ -367,7 +367,7 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
             @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
-            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) throws JsonProcessingException {
+            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) {
         validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
@@ -408,9 +408,8 @@ public class ProgrammingExerciseCreationUpdateService {
      *
      * @param programmingExercise the exercise to prepare
      * @param buildAndTestOffset  the original offset from the due date, or {@code null} when no offset should be preserved
-     * @throws JsonProcessingException if the build plan configuration cannot be parsed
      */
-    public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) throws JsonProcessingException {
+    public void prepareAndValidateTimelineForUpdate(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) {
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
             setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
@@ -487,7 +486,7 @@ public class ProgrammingExerciseCreationUpdateService {
                 final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
                 setBuildAndTestDate(programmingExercise, computedBuildAndTestDate);
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
                         "invalidBuildPlanConfiguration");
             }

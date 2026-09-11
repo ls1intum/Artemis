@@ -23,6 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -43,7 +45,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     public static final String TEST_CALLBACK_URL = "http://testing/xyz1";
 
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;
