@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.localci.dto.BuildPlanDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -155,7 +155,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
         // The build plan editor loads the DTO and sends the same object back on save
         String url = "/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan";
         String loaded = request.get(url + "/for-editor", HttpStatus.OK, String.class);
-        assertThat(request.getObjectMapper().readTree(loaded).fieldNames()).toIterable().containsExactlyInAnyOrder("id", "buildPlan");
+        assertThat(request.getObjectMapper().readTree(loaded).propertyNames()).containsExactlyInAnyOrder("id", "buildPlan");
 
         var echoed = (ObjectNode) request.getObjectMapper().readTree(loaded);
         echoed.put("buildPlan", "echoed content");

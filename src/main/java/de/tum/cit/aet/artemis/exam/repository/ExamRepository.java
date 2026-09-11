@@ -282,8 +282,19 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
-    Optional<Exam> findWithStudentExamsExercisesById(long id);
+    /**
+     * Reads the single flag the exam preparation needs off the exam, rather than the whole row: the exam texts are
+     * unbounded in length and none of them is read there.
+     *
+     * @param examId the id of the exam
+     * @return whether the exam is a test exam, empty if no exam with that id exists
+     */
+    @Query("""
+            SELECT exam.testExam
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<Boolean> findIsTestExamById(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT e

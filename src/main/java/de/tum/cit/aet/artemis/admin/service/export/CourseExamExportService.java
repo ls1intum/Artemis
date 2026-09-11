@@ -27,7 +27,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -92,13 +93,13 @@ public class CourseExamExportService {
 
     private final CourseOperationProgressService progressService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             Optional<TextSubmissionExportApi> textSubmissionExportApi, Optional<FileSubmissionExportApi> fileSubmissionExportApi,
             Optional<ModelingSubmissionExportApi> modelingSubmissionExportApi, QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService,
             WebsocketMessagingService websocketMessagingService, Optional<ExamRepositoryApi> examRepositoryApi, CourseStudentDataExportService courseStudentDataExportService,
-            CourseOperationProgressService progressService, ObjectMapper objectMapper) {
+            CourseOperationProgressService progressService, JsonMapper objectMapper) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileSubmissionExportApi = fileSubmissionExportApi;
@@ -569,7 +570,7 @@ public class CourseExamExportService {
         try {
             websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             log.info("Couldn't notify the user about the exercise export state for topic {}: {}", topic, e.getMessage());
         }
     }

@@ -38,11 +38,11 @@ import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationWithSubmissionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionBeforeEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
@@ -140,7 +140,7 @@ public class QuizSubmissionResource {
     public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPractice(@PathVariable Long exerciseId,
             @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -172,13 +172,6 @@ public class QuizSubmissionResource {
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(convertedSubmission, quizExercise, participation);
         studentParticipationRepository.saveAndFlush(participation);
-
-        // remove some redundant or unnecessary data that is not needed on client side
-        for (SubmittedAnswer answer : convertedSubmission.getSubmittedAnswers()) {
-            answer.getQuizQuestion().setQuizQuestionStatistic(null);
-        }
-
-        quizExercise.setQuizPointStatistic(null);
 
         resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
 
@@ -253,7 +246,7 @@ public class QuizSubmissionResource {
 
         QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 
-        StudentParticipation participationFromExamGate = null;
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (quizExercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
