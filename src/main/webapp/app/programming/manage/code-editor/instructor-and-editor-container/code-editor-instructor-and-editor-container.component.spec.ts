@@ -1466,7 +1466,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).generationActivity = { running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
         const toggle = vi.fn();
-        comp['onAiToolbarClick']({} as Event, { toggle } as Parameters<(typeof comp)['onAiToolbarClick']>[1]);
+        comp['onAiToolbarClick']({} as Event, { toggle } as unknown as Parameters<(typeof comp)['onAiToolbarClick']>[1]);
         expect(toggle).toHaveBeenCalledOnce();
         expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
     });

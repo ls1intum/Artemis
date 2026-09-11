@@ -468,7 +468,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected readonly isExerciseGenerationRunning = computed(() => {
         const activity = this.generationActivity;
-        return this.generationStartPending() || this.generationRefreshPending() || (this.generationSupported() && (activity.statusLoading() || activity.running() || false));
+        return this.generationStartPending() || this.generationRefreshPending() || (this.generationSupported() && (activity.statusLoading() || activity.running()));
     });
 
     protected readonly isExerciseGenerationActionBlocked = computed(() => {

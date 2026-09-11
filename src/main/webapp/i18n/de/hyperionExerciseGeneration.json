@@ -373,9 +373,9 @@
                 "undoAdaptationFailed": "Die Anpassung konnte nicht rückgängig gemacht werden."
             },
             "workers": {
-                "title": "Hyperion-Worker",
+                "title": "KI-Generierungen",
                 "refresh": "Aktualisieren",
-                "description": "Eigenständige Generierungs-Worker sind von LocalCI-Build-Agents getrennt. Jeder Worker führt höchstens eine Generierung gleichzeitig aus.",
+                "description": "Generierung und Anpassung teilen sich begrenzte Worker-Slots. Ein isolierter Worker kann mehrere Aufgaben gleichzeitig bearbeiten; pro Aufgabe ist weiterhin nur ein aktiver KI-Lauf möglich.",
                 "loadFailed": "Der Worker-Status konnte nicht aktualisiert werden. Vorher geladene Einträge können veraltet sein. Die Generierung kann auf diesem Knoten auch deaktiviert sein.",
                 "summary": "{{available}} von {{total}} konfigurierten Workern verfügbar",
                 "worker": "Worker",
@@ -383,7 +383,7 @@
                 "heartbeat": "Letztes Lebenszeichen",
                 "image": "Digest des Sandbox-Images",
                 "execution": "Aktive Ausführung",
-                "snapshotHint": "Aktualisiert sich alle 15 Sekunden, solange die Seite sichtbar ist. Kapazität bedeutet eine Generierung pro Worker, keine Reservierung oder Durchsatzgarantie. CPU, Arbeitsspeicher und Modellleistung müssen über Deployment-Telemetrie geprüft werden.",
+                "snapshotHint": "Wird alle 15 Sekunden aktualisiert, solange diese Seite sichtbar ist. Freie Slots sind eine Momentaufnahme, keine Reservierung oder Durchsatzgarantie. CPU-, Arbeitsspeicher- und Anbieterlimits gelten weiterhin.",
                 "state": {
                     "OFFLINE": "Nicht erreichbar",
                     "NOT_READY": "Nicht bereit",
@@ -392,8 +392,8 @@
                     "BUSY": "Wird ausgeführt"
                 },
                 "updated": "Zuletzt aktualisiert:",
-                "configured": "Konfiguriert",
-                "occupied": "Aktiv / reserviert",
+                "configured": "Worker / Slots",
+                "occupied": "Laufende / reservierte Slots",
                 "unavailable": "Nicht verfügbar",
                 "reservation": "Core-Reservierung",
                 "reserved": "Gehalten",
@@ -401,7 +401,26 @@
                 "diagnostics": "Technische Details",
                 "incarnation": "Worker-Instanz",
                 "empty": "Keine Generierungs-Worker konfiguriert. Konfiguriere Worker-Identitäten und starte ihre Dienste, um Kapazität bereitzustellen.",
-                "retainedReservations": "{{ count }} Offline-Worker halten noch eine Core-Reservierung. Prüfe Ausführung und Eigentümer vor der Wiederherstellung; diese Plätze sind nicht verfügbar."
+                "retainedReservations": "{{ count }} Offline-Worker halten noch eine Core-Reservierung. Prüfe Ausführung und Eigentümer vor der Wiederherstellung; diese Plätze sind nicht verfügbar.",
+                "availableSlots": "Freie / gesamte Slots",
+                "activeRuns": "Aktive KI-Läufe",
+                "noActiveRuns": "Derzeit läuft keine Generierung oder Anpassung.",
+                "cancelHint": "Beende einen einzelnen Lauf, nicht den Worker. Andere Aufgaben laufen weiter. Sobald das Speichern beginnt, ist ein Abbruch nicht mehr sicher.",
+                "exercise": "Aufgabe",
+                "owner": "Gestartet von",
+                "started": "Gestartet",
+                "actions": "Aktionen",
+                "running": "Generieren / Anpassen",
+                "saving": "Speichern — kein Abbruch möglich",
+                "cancelling": "Abbruch angefordert",
+                "savingHint": "Repository-Änderungen werden gespeichert. Warte, bis diese Phase abgeschlossen ist.",
+                "cancellingHint": "Der Worker beendet diesen Lauf und räumt seine Sandbox auf.",
+                "cancel": "Lauf abbrechen",
+                "cancelConfirmation": "Den aktiven KI-Lauf für Aufgabe #{{ exerciseId }} abbrechen? Ungespeicherte Arbeit wird nicht übernommen. Andere Läufe sind nicht betroffen.",
+                "cancelReason": "Grund (wird im Admin-Protokoll erfasst)",
+                "cancelFailed": "Der Abbruch wurde nicht angenommen. Der Lauf ist möglicherweise beendet oder speichert bereits. Aktualisiere die Übersicht; dein Grund bleibt erhalten.",
+                "keepRunning": "Weiterlaufen lassen",
+                "workerSlot": "Worker / Slot"
             }
         }
     }

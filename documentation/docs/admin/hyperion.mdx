@@ -269,22 +269,58 @@ supported for generation. Do not mix guarded and older, unguarded nodes while
 generation is enabled. Redis deployments currently cannot admit generation
 because the provider cannot attest data-member topology.
 
-### Inspect worker capacity
+### Concurrent worker slots
 
-Open **Administration → Hyperion workers** to inspect the configured worker IDs,
-core-observed heartbeat times, sandbox image digests, and active execution IDs.
-Use **Refresh** to obtain another snapshot; this page does not poll continuously
-or reserve capacity. The same administrator-only data is available at
-`GET /api/hyperion/admin/workers`. The endpoint returns 404 when whole-exercise
-generation is disabled on the serving node.
+A worker process can handle several exercises concurrently. Set
+`artemis.hyperion.worker.max-concurrent-generations=4` on the worker to offer four
+slots (default `1`, maximum `16`). Each execution has its own sandbox, state,
+lease and cancellation identity. A single exercise still permits only one active
+run: generation and adaptation must not race to replace its repositories.
+
+Core nodes reserve slots atomically through the distributed data provider. The
+same worker transport supports one core node or several core nodes. Set
+`artemis.hyperion.generation.max-concurrent-jobs-per-core-node` to accommodate the
+intended local concurrency; it defaults to `2`. Worker slots do not override
+per-user token admission quotas or individual run budgets. A full worker rejects
+additional admission rather than accumulating an unbounded queue.
+
+Budget RAM for all simultaneously active sandboxes plus the worker JVM and host
+services. Sandbox CPU, RAM and PID limits remain per execution. Slots are a bounded
+concurrency setting, not automatic host scaling. Keep generation outside the core
+JVM: a single-host installation can run a separate isolated worker, while a
+multi-host installation uses the same authenticated broker contract. The worker
+requires neither database access nor membership in the application data grid.
+Deploy matching core and worker protocol versions together after draining runs.
+
+### Inspect runs and worker capacity
+
+Open **Administration → AI generations** to see active generation/adaptation
+runs, their owners and start times, assigned workers and slots, and free versus
+total capacity. Worker diagnostics include heartbeat times, sandbox image digests,
+and execution identities. The page refreshes every 15 seconds while visible;
+**Refresh** requests an immediate snapshot. A snapshot never reserves capacity.
+
+**Cancel run** asks for an audit reason and targets only the selected run.
+Other runs on the worker continue. While cancellation is pending, the action is
+disabled with an explanation. Once persistence starts, cancellation is disabled:
+interrupting repository writes is unsafe. A stale selection returns a conflict,
+not an instruction to cancel a replacement run. Failed cancellation keeps the
+entered reason so the operator can refresh and assess the current state.
+
+Administrator-only APIs expose the same metadata and controls:
+
+- `GET /api/hyperion/admin/workers` (404 when generation is disabled).
+- `GET /api/hyperion/admin/exercises/generations` (active runs only).
+- `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
+  (202 when accepted, 409 if no longer cancellable).
 
 | State | Meaning |
 | --- | --- |
 | Offline | No unexpired heartbeat is available. A core reservation can still exist. |
-| Not ready | The worker is reachable but has not advertised a usable generation engine. |
-| Available | The latest heartbeat is ready and no core reservation is present. Admission still requires an atomic claim. |
-| Reserved by core | Core has claimed the worker, but the latest heartbeat does not yet report an active execution. |
-| Running | The worker reports an active execution. |
+| Not ready | The worker has not advertised usable capacity. |
+| Available | At least one slot is free; other slots can already be running. |
+| Reserved by core | Slots have been reserved but no active execution is reported yet. |
+| Running | The worker reports active executions and no free slot. |
 
 This view contains no prompts, generated artifacts, or credentials. It cannot
 execute commands, terminate a worker, or release an exercise mutation slot.

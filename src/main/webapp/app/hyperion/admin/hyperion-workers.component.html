@@ -20,11 +20,11 @@
         <dl class="m-0 grid grid-cols-2 gap-4 rounded-md border border-surface p-4 sm:grid-cols-4" data-testid="hyperion-workers-summary">
             <div>
                 <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.configured"></dt>
-                <dd class="m-0 text-xl font-semibold tabular-nums">{{ workers().length }}</dd>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ workers().length }} / {{ slots() }}</dd>
             </div>
             <div>
-                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.state.AVAILABLE"></dt>
-                <dd class="m-0 text-xl font-semibold tabular-nums">{{ available() }}</dd>
+                <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.availableSlots"></dt>
+                <dd class="m-0 text-xl font-semibold tabular-nums">{{ available() }} / {{ slots() }}</dd>
             </div>
             <div>
                 <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.occupied"></dt>
@@ -44,6 +44,80 @@
             <tum-ui-message severity="info"><span jhiTranslate="artemisApp.hyperion.workers.empty"></span></tum-ui-message>
         }
     }
+    <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
+        <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></h2>
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.cancelHint"></p>
+        @if (updatedAt() && !generations().length && !failed()) {
+            <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
+        }
+        @if (generations().length) {
+            <div class="overflow-x-auto">
+                <table tumUiTable data-testid="hyperion-active-runs">
+                    <caption class="sr-only" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.exercise"></th>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.workerSlot"></th>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.owner"></th>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.started"></th>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.status"></th>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.actions"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (row of generationRows(); track row.run.jobId) {
+                            @let run = row.run;
+                            <tr>
+                                <td>
+                                    #{{ run.exerciseId }}
+                                    <div class="text-xs text-muted-color break-all">{{ run.jobId }}</div>
+                                </td>
+                                <td>{{ row.workerId ?? '—' }} / {{ row.slot ?? '—' }}</td>
+                                <td>{{ run.userLogin }}</td>
+                                <td>{{ run.startedAt | date: 'medium' }}</td>
+                                <td>
+                                    {{
+                                        (run.cancellationRequested
+                                            ? 'artemisApp.hyperion.workers.cancelling'
+                                            : run.cancellable
+                                              ? 'artemisApp.hyperion.workers.running'
+                                              : 'artemisApp.hyperion.workers.saving'
+                                        ) | artemisTranslate
+                                    }}
+                                </td>
+                                <td>
+                                    <span
+                                        class="inline-flex"
+                                        [attr.tabindex]="!run.cancellable || run.cancellationRequested ? 0 : undefined"
+                                        [tumUiTooltip]="
+                                            (!run.cancellable
+                                                ? 'artemisApp.hyperion.workers.savingHint'
+                                                : run.cancellationRequested
+                                                  ? 'artemisApp.hyperion.workers.cancellingHint'
+                                                  : ''
+                                            ) | artemisTranslate
+                                        "
+                                    >
+                                        <tum-ui-button
+                                            severity="danger"
+                                            variant="outlined"
+                                            size="small"
+                                            [disabled]="!run.cancellable || run.cancellationRequested || failed()"
+                                            [class.pointer-events-none]="!run.cancellable || run.cancellationRequested"
+                                            (clicked)="selectCancellation(run)"
+                                            data-testid="hyperion-admin-cancel-run"
+                                        >
+                                            <span jhiTranslate="artemisApp.hyperion.workers.cancel"></span>
+                                        </tum-ui-button>
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
     <div class="overflow-x-auto">
         <table tumUiTable data-testid="hyperion-workers-table">
             <caption class="sr-only" jhiTranslate="artemisApp.hyperion.workers.title"></caption>
@@ -51,6 +125,7 @@
                 <tr>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.worker"></th>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.status"></th>
+                    <th scope="col" jhiTranslate="artemisApp.hyperion.workers.availableSlots"></th>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.heartbeat"></th>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.reservation"></th>
                     <th scope="col" jhiTranslate="artemisApp.hyperion.workers.diagnostics"></th>
@@ -62,6 +137,7 @@
                     <tr [attr.data-state]="worker.state">
                         <td>{{ worker.workerId }}</td>
                         <td><tum-ui-tag [severity]="row.severity" [value]="'artemisApp.hyperion.workers.state.' + worker.state | artemisTranslate" /></td>
+                        <td class="tabular-nums">{{ worker.availableSlots ?? 0 }} / {{ worker.capacity ?? 0 }}</td>
                         <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>
                         <td>{{ (worker.leaseHeld ? 'artemisApp.hyperion.workers.reserved' : 'artemisApp.hyperion.workers.notReserved') | artemisTranslate }}</td>
                         <td class="max-w-md">
@@ -90,3 +166,37 @@
     </div>
     <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.snapshotHint"></p>
 </section>
+
+<tum-ui-dialog
+    [(visible)]="cancelDialogVisible"
+    [header]="'artemisApp.hyperion.workers.cancel' | artemisTranslate"
+    size="medium"
+    [closable]="!cancelling()"
+    [closeOnEscape]="!cancelling()"
+>
+    <div class="flex flex-col gap-3">
+        <p jhiTranslate="artemisApp.hyperion.workers.cancelConfirmation" [translateValues]="{ exerciseId: cancelTarget()?.exerciseId }"></p>
+        <label for="hyperion-admin-cancel-reason" jhiTranslate="artemisApp.hyperion.workers.cancelReason"></label>
+        <textarea
+            id="hyperion-admin-cancel-reason"
+            tumUiTextarea
+            rows="3"
+            maxlength="500"
+            [ngModel]="cancelReason()"
+            (ngModelChange)="cancelReason.set($event)"
+            [disabled]="cancelling()"
+            data-testid="hyperion-admin-cancel-reason"
+        ></textarea>
+        @if (cancelFailed()) {
+            <tum-ui-message severity="error" data-testid="hyperion-admin-cancel-error"><span jhiTranslate="artemisApp.hyperion.workers.cancelFailed"></span></tum-ui-message>
+        }
+        <div class="flex justify-end gap-2">
+            <tum-ui-button severity="secondary" variant="outlined" [disabled]="cancelling()" (clicked)="cancelDialogVisible.set(false)"
+                ><span jhiTranslate="artemisApp.hyperion.workers.keepRunning"></span
+            ></tum-ui-button>
+            <tum-ui-button severity="danger" [disabled]="!canSubmitCancellation()" (clicked)="cancelGeneration()" data-testid="hyperion-admin-confirm-cancel"
+                ><span jhiTranslate="artemisApp.hyperion.workers.cancel"></span
+            ></tum-ui-button>
+        </div>
+    </div>
+</tum-ui-dialog>

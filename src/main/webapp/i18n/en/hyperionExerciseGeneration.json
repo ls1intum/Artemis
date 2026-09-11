@@ -373,9 +373,9 @@
                 "undoAdaptationFailed": "Could not undo the adaptation."
             },
             "workers": {
-                "title": "Hyperion workers",
+                "title": "AI generations",
                 "refresh": "Refresh",
-                "description": "Standalone generation workers are separate from LocalCI build agents. Each worker executes at most one generation at a time.",
+                "description": "Generation and adaptation share bounded worker slots. One isolated worker can run several exercises at once; each exercise still allows only one active AI run.",
                 "loadFailed": "Worker status could not be refreshed. Previously loaded entries may be stale. Generation may also be disabled on this node.",
                 "summary": "{{available}} of {{total}} configured workers available",
                 "worker": "Worker",
@@ -383,7 +383,7 @@
                 "heartbeat": "Last heartbeat",
                 "image": "Sandbox image digest",
                 "execution": "Active execution",
-                "snapshotHint": "Refreshes every 15 seconds while this page is visible. Capacity is one generation per worker, not a reservation or throughput guarantee. CPU, memory, and model-provider performance require deployment telemetry.",
+                "snapshotHint": "Refreshes every 15 seconds while this page is visible. Free slots are an admission snapshot, not a reservation or throughput guarantee. CPU, memory and provider limits still apply.",
                 "state": {
                     "OFFLINE": "Offline",
                     "NOT_READY": "Not ready",
@@ -392,8 +392,8 @@
                     "BUSY": "Running"
                 },
                 "updated": "Last updated:",
-                "configured": "Configured",
-                "occupied": "Running / reserved",
+                "configured": "Workers / slots",
+                "occupied": "Running / reserved slots",
                 "unavailable": "Unavailable",
                 "reservation": "Core reservation",
                 "reserved": "Held",
@@ -401,7 +401,26 @@
                 "diagnostics": "Technical details",
                 "incarnation": "Worker instance",
                 "empty": "No generation workers are configured. Configure worker identities and start their services to provide capacity.",
-                "retainedReservations": "{{ count }} offline worker(s) still hold a core reservation. Inspect the execution and ownership before recovery; do not treat these slots as available."
+                "retainedReservations": "{{ count }} offline worker(s) still hold a core reservation. Inspect the execution and ownership before recovery; do not treat these slots as available.",
+                "availableSlots": "Free / total slots",
+                "activeRuns": "Active AI runs",
+                "noActiveRuns": "No generation or adaptation is currently running.",
+                "cancelHint": "Cancel an individual run, not the worker. Other exercises keep running. Once saving starts, cancellation is no longer safe.",
+                "exercise": "Exercise",
+                "owner": "Started by",
+                "started": "Started",
+                "actions": "Actions",
+                "running": "Generating / adapting",
+                "saving": "Saving — cannot cancel",
+                "cancelling": "Cancellation requested",
+                "savingHint": "Repository changes are being saved. Wait for this phase to finish.",
+                "cancellingHint": "The worker is stopping this run and cleaning up its sandbox.",
+                "cancel": "Cancel run",
+                "cancelConfirmation": "Cancel the active AI run for exercise #{{ exerciseId }}? Unsaved work will not be applied. Other runs are unaffected.",
+                "cancelReason": "Reason (recorded in the administrator audit log)",
+                "cancelFailed": "Cancellation was not accepted. The run may have finished or started saving. Refresh the overview; your reason is retained.",
+                "keepRunning": "Keep running",
+                "workerSlot": "Worker / slot"
             }
         }
     }
