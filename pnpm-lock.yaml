@@ -489,7 +489,7 @@ importers:
         specifier: 30.0.1
         version: 30.0.1
       knip:
-        specifier: ^6.35.1
+        specifier: 6.35.1
         version: 6.35.1
       lighthouse:
         specifier: 13.4.1
