@@ -290,7 +290,7 @@ class GenerationAttemptLoop {
         this.baselineProblemStatement = context.baselineProblemStatement();
         this.baselineGradedTestNames = context.baselineGradedTestNames();
         this.reviewBrief = context.sourceBrief();
-        this.authoringBrief = GenerationOrchestrationService.renderAuthoringBrief(context.sourceBrief());
+        this.authoringBrief = GenerationOrchestrationService.renderAuthoringBrief(context.sourceBrief(), context.mode());
         this.repairPrompts = new RepairPromptComposer(maxGenerationAttempts, mode, authoringBrief, specFidelityCritic);
         this.systemPrompt = context.systemPrompt();
         this.baseTools = context.baseTools();
@@ -328,6 +328,23 @@ class GenerationAttemptLoop {
             CandidateArtifacts artifacts = captureArtifacts(seededStructuralTests);
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
+            }
+            if (adaptAttemptEndedWithoutAnyEdit(artifacts)) {
+                // The tree is still the seeded baseline: a differential build of it costs a full verification and can only say what the agent already knows. The attempt still
+                // counts, both against the run's attempt cap and the bounded mechanical phase, so an agent that never edits cannot keep the run alive.
+                if (attempt == maxGenerationAttempts) {
+                    emit("The step limit was reached before any change was made on the final attempt; stopping.");
+                    terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
+                    break;
+                }
+                if (repairScheduler.roundsStarted() == 0 && ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
+                    emit("The step limit was reached before any change was made and the bounded mechanical repair phase is exhausted; stopping.");
+                    terminationReason = TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
+                    break;
+                }
+                emit("The step limit was reached before any change was made; asking the agent to edit first.");
+                currentPrompt = repairPrompts.editBeforeInspecting(attempt);
+                continue;
             }
             if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())) {
                 emit("The agent resubmitted the unchanged rejected candidate; stopping without repeating the same verification.");
@@ -497,6 +514,16 @@ class GenerationAttemptLoop {
             return cancelledOutcome(cancelledResult(loopResult));
         }
         return null;
+    }
+
+    /**
+     * An ADAPT attempt that ran out of steps while the workspace is still byte-identical to the seeded exercise. Restricted to ADAPT because only there is the baseline a complete
+     * exercise the agent was meant to edit; a GENERATE tree that is unchanged is an empty scaffold whose verification verdict is the evidence the repair prompt needs. An
+     * extraction failure leaves the comparison inconclusive, so it falls through to verification as before.
+     */
+    private boolean adaptAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts) {
+        return mode == Mode.ADAPT && loopResult.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED && artifacts.extractionFailed().isEmpty()
+                && !hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement);
     }
 
     /** Reads all candidate artifacts back and preserves extraction failures so verification can distinguish them from empty repositories. */

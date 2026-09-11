@@ -238,10 +238,17 @@ public class AgentSystemPromptService {
     private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_3_TESTS_INSTRUCTIONS + STAGE_4_STATEMENT_INSTRUCTIONS;
 
     private static final String ADAPT_GROUNDED_WORKFLOW = """
-            Inspect the seeded artifacts and apply the requested feedback with the smallest coherent change. Preserve unrelated source files, public APIs, tests, task bindings,
-            and instructor prose. Keep solution, starter, assessment, and statement consistent; retaining an assigned modification's supplied behavior is part of that contract.
-            Use verify to establish relevant build evidence and diagnose failures. Submit when the requested changes are complete and the mechanical gate passes; unchanged
-            artifacts do not need repeated verification. Authoritative post-loop verification and independent quality review still determine the final outcome.
+            Apply the requested feedback with the smallest coherent change, in this order and within this budget:
+            1. Read `problem-statement.md` and only the files the feedback names.
+            2. Call `verify` once before editing to obtain the exact current test names and the baseline verdict.
+            3. Make the edits.
+            4. Call `verify`, then `submit`.
+            Do not read the Gradle harness, the wrapper, or the Ares structural providers (`ClassTest`, `MethodTest`, `AttributeTest`, `ConstructorTest`, `test.json`) unless the
+            feedback concerns them; they are immutable. Spend at most about a quarter of your steps on inspection before the first edit.
+            Preserve unrelated source files, public APIs, tests, task bindings, and instructor prose. Keep solution, starter, assessment, and statement consistent; retaining an
+            assigned modification's supplied behavior is part of that contract. Use verify failure evidence to diagnose defects. Submit when the requested changes are complete
+            and the mechanical gate passes; unchanged artifacts do not need repeated verification. Authoritative post-loop verification and independent quality review still
+            determine the final outcome.
             """;
 
     private static final String ADAPT_MODE_FRAMING = """
@@ -298,7 +305,7 @@ public class AgentSystemPromptService {
         // must be preserved, so it needs the standalone block.
         String scaffoldGuidance = mode == Mode.ADAPT ? TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE : DIFF_DISCIPLINE;
         String prompt = INTRO + SECURITY_BOUNDARY + LEARNING_OWNERSHIP + workspaceSection(exercise, mode) + THE_CONTRACT + scaffoldGuidance + STUDENT_FACING_STATEMENT
-                + ARTEMIS_TASK_BINDINGS + layoutAndHarnessSection(exercise, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
+                + ARTEMIS_TASK_BINDINGS + layoutAndHarnessSection(mode, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
         return mode == Mode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt;
     }
 
@@ -443,14 +450,15 @@ public class AgentSystemPromptService {
      * per-stage instructions and the shared {@link #HARNESS_IMMUTABILITY_RULE} inside {@link #STAGE_TOOLS_NOTE}, whose single-loop counterpart is {@link #safeToolUseSection}
      * rather than this method.
      */
-    private String layoutAndHarnessSection(GenerationInput exercise, String testSourceGuidance) {
+    private String layoutAndHarnessSection(Mode mode, String testSourceGuidance) {
+        // Learning the layout from the harness is GENERATE work; an ADAPT run inherits a complete, already laid-out exercise and must not re-derive or move anything.
+        String layoutGuidance = mode == Mode.ADAPT ? "The existing layout and package are authoritative; keep every file where it is."
+                : "Read the existing Gradle harness to learn its source layout, package, and expected test filenames,\nthen place solution, template, and test sources accordingly.";
         return """
                 LAYOUT AND HARNESS
-                The verifier checks the assignment out under `assignment/` beside the tests. Read the existing Gradle harness to learn its source layout, package, and expected test filenames,
-                then place solution, template, and test sources accordingly. Preserve package names across repositories. %s %s
+                The verifier checks the assignment out under `assignment/` beside the tests. %s Preserve package names across repositories. %s %s
 
-                """
-                .formatted(HARNESS_IMMUTABILITY_RULE, testSourceGuidance);
+                """.formatted(layoutGuidance, HARNESS_IMMUTABILITY_RULE, testSourceGuidance);
     }
 
     private static String groundedWorkflowSection(String groundedWorkflow) {

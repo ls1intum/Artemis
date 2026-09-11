@@ -194,6 +194,70 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void anAdaptAttemptThatRanOutOfStepsWithoutEditingIsNotVerified_andIsAskedToEditFirst() {
+        // The baseline problem statement is null, so an empty read-back means the workspace is byte-identical to the seeded exercise.
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted));
+
+        GenerationAttemptLoop loop = newLoop(Mode.ADAPT, 3, 1);
+
+        assertThat(loop.run()).isNull();
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
+        assertThat(loop.verification()).isNull();
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner, times(3)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getAllValues().get(0)).isEqualTo("FIRST_PROMPT");
+        assertThat(prompts.getAllValues().subList(1, 3)).allSatisfy(
+                prompt -> assertThat(prompt).contains("reached its step limit before making any change", "Edit first", "ADAPTATION REQUEST", "Build a bubble sort exercise.")
+                        .doesNotContain("rejected by the differential verifier"));
+        assertThat(progressLines).contains("The step limit was reached before any change was made; asking the agent to edit first.")
+                .doesNotContain("Building the solution and starter code against the generated tests");
+    }
+
+    @Test
+    void anAdaptAttemptThatEditsAfterBeingAskedToIsVerifiedNormally() {
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("", "Adapted statement");
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted), loopSession(completed()));
+
+        GenerationAttemptLoop loop = newLoop(Mode.ADAPT, 3, 1);
+
+        assertThat(loop.run()).isNull();
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void repeatedNoEditAdaptAttemptsAreBoundedByTheMechanicalPhaseEvenUnderALargeAttemptCap() {
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted));
+
+        GenerationAttemptLoop loop = newLoop(Mode.ADAPT, 20, 1);
+
+        assertThat(loop.run()).isNull();
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        verify(agentLoopRunner, times(GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void aGenerateAttemptThatRanOutOfStepsWithoutEditingIsStillVerified() {
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted));
+
+        GenerationAttemptLoop loop = newGenerateLoop(1, 0);
+        loop.run();
+
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+    }
+
+    @Test
     void preservesTheStagedRunnersSpecificFailureReason() {
         AgentLoopResult failed = new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "No exercise concept passed.");
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
