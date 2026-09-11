@@ -960,6 +960,20 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('unknown feedback');
     });
 
+    it('should drop unknown marker ids even when grading instruction feedback is not used', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray({ criterionId: 999, instructionId: 888 });
+        domainActions[0] = { text: '{id:999} brand new criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'brand new feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('brand new criterion');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('brand new feedback');
+    });
+
     it('should update properties for grading instruction', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const instruction = gradingInstruction;

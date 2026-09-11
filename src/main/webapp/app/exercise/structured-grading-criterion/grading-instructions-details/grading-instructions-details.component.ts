@@ -468,15 +468,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
-        if (this.exercise().gradingInstructionFeedbackUsed) {
-            this.reconcileParsedCriteria(previousCriteria);
-        }
+        // Markers are emitted whenever ids exist, so unknown/copied ids must be sanitized in every mode.
+        this.reconcileParsedCriteria(previousCriteria);
     }
 
     /**
      * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
      * database IDs (and feedback links). Match by `{id:N}` markers from markdown first, then
-     * title / content fingerprint. Never match by position alone — reorders would remount IDs.
+     * title / content fingerprint. Unmatched marker ids are stripped so they are never submitted
+     * as existing entities. Never match by position alone — reorders would remount IDs.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
