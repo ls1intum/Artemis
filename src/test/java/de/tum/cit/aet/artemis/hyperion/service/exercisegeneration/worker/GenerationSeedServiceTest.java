@@ -4,7 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -24,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
@@ -31,8 +36,11 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.Genera
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 class GenerationSeedServiceTest {
 
@@ -44,6 +52,8 @@ class GenerationSeedServiceTest {
     private final GenerationRequestService requests = mock();
 
     private final de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository testCases = mock();
+
+    private final ProgrammingExerciseTaskService taskService = mock();
 
     private final ProgrammingExercise exercise = mock();
 
@@ -59,11 +69,11 @@ class GenerationSeedServiceTest {
 
     @BeforeEach
     void setup() throws Exception {
-        service = new GenerationSeedService(git, new TempFileUtilService(temporary), requests, testCases, "main");
+        service = new GenerationSeedService(git, new TempFileUtilService(temporary), requests, testCases, taskService, "main");
         when(exercise.getRepositoryURI(any())).thenReturn(uri);
         when(exercise.getId()).thenReturn(42L);
         when(exercise.getProblemStatement()).thenReturn("The instructor's specification.");
-        when(requests.isAuthoritativeProblemStatement(exercise)).thenReturn(true);
+        when(requests.isAuthoritativeProblemStatement(any())).thenReturn(true);
         when(git.getOrCheckoutRepository(eq(uri), eq(uri), any(Path.class), eq(true), eq("main"), eq(false))).thenAnswer(invocation -> createRepository(invocation.getArgument(2)));
     }
 
@@ -105,8 +115,37 @@ class GenerationSeedServiceTest {
     }
 
     @Test
+    void seededStatementRendersTestIdsAsNamesWithoutMutatingTheLoadedExercise() {
+        ProgrammingExercise loaded = spy(new ProgrammingExercise());
+        loaded.setId(42L);
+        loaded.setProblemStatement("[task][Push](<testid>3245</testid>)\n@startuml\ntestsColor(<testid>3240</testid>)\n@enduml");
+        loaded.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        loaded.setProjectType(ProjectType.PLAIN_GRADLE);
+        doReturn(uri).when(loaded).getRepositoryURI(any());
+        ArgumentCaptor<ProgrammingExercise> rendered = ArgumentCaptor.forClass(ProgrammingExercise.class);
+        doAnswer(invocation -> {
+            ProgrammingExercise copy = invocation.getArgument(0);
+            copy.setProblemStatement(copy.getProblemStatement().replace("<testid>3245</testid>", "testPush").replace("<testid>3240</testid>", "testPop"));
+            return null;
+        }).when(taskService).replaceTestIdsWithNames(rendered.capture());
+
+        var seed = service.capture(loaded);
+
+        assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
+                .satisfies(file -> assertThat(new String(file.content(), StandardCharsets.UTF_8)).isEqualTo("[task][Push](testPush)\n@startuml\ntestsColor(testPop)\n@enduml"));
+        // The loaded entity is the compare-and-set expectation for the later save, so it must keep the ids the database holds.
+        assertThat(loaded.getProblemStatement()).contains("<testid>3245</testid>", "<testid>3240</testid>");
+        assertThat(rendered.getValue()).isNotSameAs(loaded);
+        assertThat(rendered.getValue().getId()).isEqualTo(42L);
+        assertThat(rendered.getValue().getProgrammingLanguage()).isEqualTo(ProgrammingLanguage.JAVA);
+        assertThat(rendered.getValue().getProjectType()).isEqualTo(ProjectType.PLAIN_GRADLE);
+        // The authoritative-statement check compares against the shipped readme, which uses names, so it must see the rendered copy.
+        verify(requests).isAuthoritativeProblemStatement(rendered.getValue());
+    }
+
+    @Test
     void seededSampleStatementIsNotSentAsAnAuthoritativeContract() {
-        when(requests.isAuthoritativeProblemStatement(exercise)).thenReturn(false);
+        when(requests.isAuthoritativeProblemStatement(any())).thenReturn(false);
         assertThat(service.capture(exercise).snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
                 .satisfies(file -> assertThat(file.content()).isEmpty());
         assertThat(temporary.toFile().list()).isEmpty();
