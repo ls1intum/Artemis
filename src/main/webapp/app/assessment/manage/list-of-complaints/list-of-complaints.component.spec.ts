@@ -20,7 +20,8 @@ import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -373,7 +374,7 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('requests the exercise-scoped all list on exercise-scoped routes', () => {
-        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId').mockReturnValue(of({ body: [] } as EntityResponseTypeArray));
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId').mockReturnValue(of(emptyComplaintResponse()));
         const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId');
         activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
@@ -385,7 +386,7 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('requests the course-scoped all list on course-scoped routes', () => {
-        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of({ body: [] } as EntityResponseTypeArray));
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of(emptyComplaintResponse()));
         const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId');
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
         comp.ngOnInit();
@@ -395,6 +396,25 @@ describe('ListOfComplaintsComponent', () => {
         expect(findAllForCourseStub).toHaveBeenCalledExactlyOnceWith(12, ComplaintType.COMPLAINT);
         verifyNotCalled(findAllForExerciseStub);
     });
+
+    it('sorts the assessor column by the same value the cell renders', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+        const ownComplaint = { id: 1, result: { assessor: { name: 'Zoe Tutor' } } } as Complaint;
+        const foreignComplaint = { id: 2, assessorLabel: 'Alice Tutor' } as Complaint;
+        comp.complaintsToShow.set([ownComplaint, foreignComplaint]);
+        comp.complaintsSortingPredicate = 'assessorName';
+
+        comp.sortRows();
+
+        const sortKeyOf = sortByFunctionSpy.mock.calls[0][1] as (complaint: Complaint) => unknown;
+        expect(sortKeyOf(ownComplaint)).toBe('Zoe Tutor');
+        expect(sortKeyOf(foreignComplaint)).toBe('Alice Tutor');
+    });
+
+    function emptyComplaintResponse(): EntityResponseTypeArray {
+        return new HttpResponse<ComplaintDTO[]>({ body: [] });
+    }
 
     function verifyNotCalled(...instances: MockInstance[]) {
         for (const spyInstance of instances) {

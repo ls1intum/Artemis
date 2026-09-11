@@ -85,7 +85,10 @@
                 "title": "List of More Feedback Requests",
                 "showAnsweredRequests": "Show answered requests",
                 "hideAnsweredRequests": "Hide answered requests",
-                "noRequestsToShow": "There are no requests to show at the moment"
+                "noRequestsToShow": "There are no requests to show at the moment",
+                "scopeGroup": "Feedback request scope",
+                "scopeMineCaption": "Showing feedback requests assigned to you.",
+                "scopeAllCaption": "Showing feedback requests from all tutors."
             },
             "hint": "Scroll down to review More Feedback Request"
         }

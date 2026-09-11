@@ -32,6 +32,8 @@ export interface IComplaintService {
     findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
     findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllWithoutStudentInformationForExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -80,6 +80,11 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         return Array.from(byKey, ([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
     });
+
+    /** The scope controls serve both views, so their wording follows the complaint type of the current route. */
+    readonly scopeTranslationKeyRoot = computed(() =>
+        this.complaintType() === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.list' : 'artemisApp.complaint.listOfComplaints',
+    );
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
@@ -281,6 +286,10 @@ export class ListOfComplaintsComponent implements OnInit {
                 break;
             case 'lockStatus':
                 this.sortService.sortByFunction(sorted, (complaint) => this.calculateComplaintLockStatus(complaint), this.complaintsReverseOrder);
+                break;
+            case 'assessorName':
+                // Same fallback as the rendered cell: foreign assessors only carry assessorLabel, result.assessor is redacted.
+                this.sortService.sortByFunction(sorted, (complaint) => complaint.result?.assessor?.name || complaint.assessorLabel || '', this.complaintsReverseOrder);
                 break;
             default:
                 this.sortService.sortByProperty(sorted, this.complaintsSortingPredicate, this.complaintsReverseOrder);

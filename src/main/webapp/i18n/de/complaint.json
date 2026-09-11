@@ -86,7 +86,10 @@
                 "title": "Liste der Feedbackanfragen",
                 "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",
                 "hideAnsweredRequests": "Beantwortete Feedbackanfragen ausblenden",
-                "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
+                "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen.",
+                "scopeGroup": "Bereich der Feedbackanfragen",
+                "scopeMineCaption": "Zeigt Feedbackanfragen, die dir zugewiesen sind.",
+                "scopeAllCaption": "Zeigt Feedbackanfragen aller Tutor:innen."
             }
         }
     }

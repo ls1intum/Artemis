@@ -1,7 +1,7 @@
 <div class="col-12 mt-4">
     @if (course() && !course().isAtLeastInstructor) {
         <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-            <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'artemisApp.complaint.listOfComplaints.scopeGroup' | artemisTranslate">
+            <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="scopeTranslationKeyRoot() + '.scopeGroup' | artemisTranslate">
                 <button
                     type="button"
                     class="btn"
@@ -44,9 +44,9 @@
 
             <small class="text-muted">
                 @if (allComplaintsForTutorLoaded()) {
-                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAllCaption"></span>
+                    <span [jhiTranslate]="scopeTranslationKeyRoot() + '.scopeAllCaption'"></span>
                 } @else {
-                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeMineCaption"></span>
+                    <span [jhiTranslate]="scopeTranslationKeyRoot() + '.scopeMineCaption'"></span>
                 }
             </small>
         </div>
@@ -89,7 +89,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.submissionId"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="result.assessor.name">
+                    <th jhiSortBy="assessorName">
                         <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
