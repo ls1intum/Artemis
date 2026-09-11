@@ -4,7 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -23,6 +30,7 @@ import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -39,6 +47,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
+
+    @Autowired
+    private PresentationAssessmentService presentationAssessmentService;
 
     @Autowired
     private CourseRepository courseRepository;
@@ -202,6 +213,40 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
         assertThat(storedAssessment.getMaxPoints()).isEqualTo(20.0);
         assertThat(storedAssessment.getTitle()).isEqualTo("Initial presentation");
+    }
+
+    @Test
+    void concurrentMaximumAndResultUpdates_shouldPreservePointsInvariant() throws Exception {
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(FIXED_DATE.plusDays(7));
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance = presentationAssessmentInstanceRepository.save(instance);
+        long instanceId = instance.getId();
+        PresentationAssessmentDTO assessmentDto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 10.0, course.getId(),
+                null, null, List.of());
+        PresentationAssessmentInstanceDTO instanceDto = new PresentationAssessmentInstanceDTO(instanceId, instance.getPresentationDate(), 18.0, List.of(), "en",
+                PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<RuntimeException> maximumUpdate = executor
+                    .submit(() -> runAfterLatch(ready, start, () -> presentationAssessmentService.update(course, presentationAssessment.getId(), assessmentDto)));
+            Future<RuntimeException> resultUpdate = executor
+                    .submit(() -> runAfterLatch(ready, start, () -> presentationAssessmentService.updateInstance(course, presentationAssessment.getId(), instanceId, instanceDto)));
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+
+            List<RuntimeException> failures = java.util.stream.Stream.of(maximumUpdate.get(10, TimeUnit.SECONDS), resultUpdate.get(10, TimeUnit.SECONDS)).filter(Objects::nonNull)
+                    .toList();
+            assertThat(failures).singleElement().isInstanceOf(BadRequestAlertException.class);
+        }
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
+        PresentationAssessmentInstance storedInstance = presentationAssessmentInstanceRepository.findByIdElseThrow(instanceId);
+        assertThat(storedInstance.getResultPoints() == null || storedInstance.getResultPoints() <= storedAssessment.getMaxPoints()).isTrue();
     }
 
     @Test
@@ -374,5 +419,17 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     private String getInstancesUrl(Course course, PresentationAssessment presentationAssessment) {
         return getAssessmentUrl(course, presentationAssessment) + "/instances";
+    }
+
+    private RuntimeException runAfterLatch(CountDownLatch ready, CountDownLatch start, Runnable operation) throws InterruptedException {
+        ready.countDown();
+        start.await();
+        try {
+            operation.run();
+            return null;
+        }
+        catch (RuntimeException exception) {
+            return exception;
+        }
     }
 }

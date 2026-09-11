@@ -89,14 +89,17 @@ public class PresentationAssessmentService {
         if (!dto.id().equals(assessmentId)) {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
-        PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
-        double highestResultPoints = presentationAssessment.getInstances().stream().map(PresentationAssessmentInstance::getResultPoints).filter(Objects::nonNull)
-                .mapToDouble(Double::doubleValue).max().orElse(0.0);
-        if (dto.maxPoints() < highestResultPoints) {
-            throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME, "maxPointsBelowExistingResult");
-        }
-        applyDto(presentationAssessment, dto);
-        presentationAssessmentRepository.save(presentationAssessment);
+        presentationAssessmentRepository.executeWithWriteLock(assessmentId, course.getId(), presentationAssessment -> {
+            double highestResultPoints = presentationAssessment.getInstances().stream().map(PresentationAssessmentInstance::getResultPoints).filter(Objects::nonNull)
+                    .mapToDouble(Double::doubleValue).max().orElse(0.0);
+            if (dto.maxPoints() < highestResultPoints) {
+                throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME,
+                        "maxPointsBelowExistingResult");
+            }
+            applyDto(presentationAssessment, dto);
+            presentationAssessmentRepository.save(presentationAssessment);
+            return null;
+        });
     }
 
     /**
@@ -106,8 +109,10 @@ public class PresentationAssessmentService {
      * @param assessmentId the presentation assessment id
      */
     public void delete(long courseId, long assessmentId) {
-        PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
-        presentationAssessmentRepository.delete(presentationAssessment);
+        presentationAssessmentRepository.executeWithWriteLock(assessmentId, courseId, presentationAssessment -> {
+            presentationAssessmentRepository.delete(presentationAssessment);
+            return null;
+        });
     }
 
     /**
@@ -122,11 +127,12 @@ public class PresentationAssessmentService {
         if (dto.id() != null) {
             throw new BadRequestAlertException("A new presentation instance cannot already have an ID", PresentationAssessmentInstance.ENTITY_NAME, "idExists");
         }
-        PresentationAssessment assessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
-        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
-        instance.setPresentationAssessment(assessment);
-        applyInstanceDto(course, assessment, instance, dto);
-        return presentationAssessmentInstanceRepository.save(instance);
+        return presentationAssessmentRepository.executeWithWriteLock(assessmentId, course.getId(), assessment -> {
+            PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+            instance.setPresentationAssessment(assessment);
+            applyInstanceDto(course, assessment, instance, dto);
+            return presentationAssessmentInstanceRepository.save(instance);
+        });
     }
 
     /**
@@ -142,9 +148,11 @@ public class PresentationAssessmentService {
         if (dto.id() == null || !dto.id().equals(instanceId)) {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessmentInstance.ENTITY_NAME, "idMismatch");
         }
-        PresentationAssessmentInstance instance = findInstanceElseThrow(course.getId(), assessmentId, instanceId);
-        applyInstanceDto(course, instance.getPresentationAssessment(), instance, dto);
-        return presentationAssessmentInstanceRepository.save(instance);
+        return presentationAssessmentRepository.executeWithWriteLock(assessmentId, course.getId(), assessment -> {
+            PresentationAssessmentInstance instance = findInstanceElseThrow(course.getId(), assessmentId, instanceId);
+            applyInstanceDto(course, assessment, instance, dto);
+            return presentationAssessmentInstanceRepository.save(instance);
+        });
     }
 
     /**
@@ -156,34 +164,38 @@ public class PresentationAssessmentService {
      * @return all instances affected by the logical operation
      */
     public List<PresentationAssessmentInstance> saveInstances(Course course, long assessmentId, PresentationAssessmentInstanceDTO dto) {
-        PresentationAssessment assessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
-        if (dto.id() == null) {
-            Set<User> students = resolveAssignedCourseStudents(course, dto.studentLogins());
-            List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto, student)).toList();
-            return presentationAssessmentInstanceRepository.saveAllAtomically(instances);
-        }
+        return presentationAssessmentRepository.executeWithWriteLock(assessmentId, course.getId(), assessment -> {
+            if (dto.id() == null) {
+                Set<User> students = resolveAssignedCourseStudents(course, dto.studentLogins());
+                List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto, student)).toList();
+                return presentationAssessmentInstanceRepository.saveAll(instances);
+            }
 
-        PresentationAssessmentInstance existingInstance = findInstanceElseThrow(course.getId(), assessmentId, dto.id());
-        if (existingInstance.getStudents().size() <= 1) {
-            applyInstanceDto(course, assessment, existingInstance, dto);
-            return presentationAssessmentInstanceRepository.saveAllAtomically(List.of(existingInstance));
-        }
+            PresentationAssessmentInstance existingInstance = findInstanceElseThrow(course.getId(), assessmentId, dto.id());
+            if (existingInstance.getStudents().size() <= 1) {
+                applyInstanceDto(course, assessment, existingInstance, dto);
+                return presentationAssessmentInstanceRepository.saveAll(List.of(existingInstance));
+            }
 
-        if (dto.studentLogins().size() != 1) {
-            throw new BadRequestAlertException("Exactly one student must be selected when splitting a shared instance", PresentationAssessmentInstance.ENTITY_NAME,
-                    "invalidStudentCountForSplit");
-        }
-        String editedStudentLogin = dto.studentLogins().getFirst();
-        User editedStudent = existingInstance.getStudents().stream().filter(student -> editedStudentLogin.equals(student.getLogin())).findFirst()
-                .orElseThrow(() -> new BadRequestAlertException("The selected student does not belong to the shared instance", PresentationAssessmentInstance.ENTITY_NAME,
-                        "studentNotInInstance"));
-        existingInstance.getStudents().remove(editedStudent);
-        PresentationAssessmentInstance editedInstance = createIndividualInstance(assessment, dto, editedStudent);
-        return presentationAssessmentInstanceRepository.saveAllAtomically(List.of(existingInstance, editedInstance));
+            if (dto.studentLogins().size() != 1) {
+                throw new BadRequestAlertException("Exactly one student must be selected when splitting a shared instance", PresentationAssessmentInstance.ENTITY_NAME,
+                        "invalidStudentCountForSplit");
+            }
+            String editedStudentLogin = dto.studentLogins().getFirst();
+            User editedStudent = existingInstance.getStudents().stream().filter(student -> editedStudentLogin.equals(student.getLogin())).findFirst()
+                    .orElseThrow(() -> new BadRequestAlertException("The selected student does not belong to the shared instance", PresentationAssessmentInstance.ENTITY_NAME,
+                            "studentNotInInstance"));
+            existingInstance.getStudents().remove(editedStudent);
+            PresentationAssessmentInstance editedInstance = createIndividualInstance(assessment, dto, editedStudent);
+            return presentationAssessmentInstanceRepository.saveAll(List.of(existingInstance, editedInstance));
+        });
     }
 
     public void deleteInstance(long courseId, long assessmentId, long instanceId) {
-        presentationAssessmentInstanceRepository.delete(findInstanceElseThrow(courseId, assessmentId, instanceId));
+        presentationAssessmentRepository.executeWithWriteLock(assessmentId, courseId, assessment -> {
+            presentationAssessmentInstanceRepository.delete(findInstanceElseThrow(courseId, assessmentId, instanceId));
+            return null;
+        });
     }
 
     private PresentationAssessmentInstance findInstanceElseThrow(long courseId, long assessmentId, long instanceId) {
