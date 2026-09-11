@@ -1,15 +1,10 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, input } from '@angular/core';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { TranslateService } from '@ngx-translate/core';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
-import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiPanelComponent } from '@tumaet/ui-angular';
 
 export class AssessmentDashboardInformationEntry {
     constructor(
@@ -37,11 +32,9 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
-    imports: [TranslateDirective, TumUiDoughnutChartComponent, RouterLink, ArtemisTranslatePipe, SidePanelComponent],
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, TumUiPanelComponent],
 })
 export class AssessmentDashboardInformationComponent {
-    private translateService = inject(TranslateService);
-
     readonly isExamMode = input.required<boolean>();
     readonly course = input.required<Course>();
     readonly examId = input<number>();
@@ -63,35 +56,28 @@ export class AssessmentDashboardInformationComponent {
     readonly assessmentLocks = input.required<AssessmentDashboardInformationEntry>();
     readonly ratings = input.required<AssessmentDashboardInformationEntry>();
 
-    // Re-evaluate language-dependent computeds whenever the active language changes.
-    private readonly currentLang = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+    /** Number of completed assessment slots represented by the progress summary. */
+    readonly totalProgressItems = computed(() => this.numberOfSubmissions().total * (this.isExamMode() ? this.numberOfCorrectionRounds() : 1));
 
-    // Graph data.
-    readonly completedAssessmentsTitle = computed(() => {
-        this.currentLang();
-        return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+    readonly assessedSubmissions = computed(() => {
+        if (this.isExamMode()) {
+            return this.totalNumberOfAssessments();
+        }
+
+        const correctionRounds = this.numberOfCorrectionRounds();
+        return correctionRounds > 0 ? Math.floor(this.totalNumberOfAssessments() / correctionRounds) : 0;
     });
-    readonly openedAssessmentsTitle = computed(() => {
-        this.currentLang();
-        return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
-    });
-    readonly assessments = computed(() => [
-        {
-            name: this.openedAssessmentsTitle(),
-            value: this.numberOfSubmissions().total - this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
-        },
-        {
-            name: this.completedAssessmentsTitle(),
-            value: this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
-        },
-    ]);
-    // The colors are index-aligned with the entries of the assessments computed (open, completed).
-    readonly chartData = computed(() => singleSeriesChart(this.assessments(), [GraphColors.RED, GraphColors.BLUE]));
-    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
-        arcWidth: 1,
-        legend: { position: 'bottom' },
-        tooltip: { label: (item) => `${(this.numberOfSubmissions().total > 0 ? (item.value * 100) / this.numberOfSubmissions().total : 0).toFixed(2)}%` },
-    }));
+
+    /** Locked assessment slots are currently being assessed and are therefore shown separately from open assessment slots. */
+    readonly inProgressSubmissions = computed(() => Math.min(Math.max(0, this.totalProgressItems() - this.assessedSubmissions()), this.assessmentLocks().total));
+
+    readonly openSubmissions = computed(() => Math.max(0, this.totalProgressItems() - this.assessedSubmissions() - this.inProgressSubmissions()));
+
+    readonly assessedPercentage = computed(() => this.toSubmissionPercentage(this.assessedSubmissions()));
+    readonly inProgressPercentage = computed(() => this.toSubmissionPercentage(this.inProgressSubmissions()));
+
+    readonly openComplaints = computed(() => this.openEntryCount(this.complaints()));
+    readonly openMoreFeedbackRequests = computed(() => this.openEntryCount(this.moreFeedbackRequests()));
 
     readonly complaintsLink = computed(() => {
         const examRouteIfNeeded = this.isExamMode() ? ['exams', this.examId()!] : [];
@@ -106,4 +92,13 @@ export class AssessmentDashboardInformationComponent {
         return ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['assessment-locks']);
     });
     readonly ratingsLink = computed(() => ['/course-management', this.course().id, 'ratings']);
+
+    private openEntryCount(entry: AssessmentDashboardInformationEntry): number {
+        return Math.max(0, entry.total - (entry.done ?? 0));
+    }
+
+    private toSubmissionPercentage(submissions: number): number {
+        const totalProgressItems = this.totalProgressItems();
+        return totalProgressItems > 0 ? (submissions / totalProgressItems) * 100 : 0;
+    }
 }

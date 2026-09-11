@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideRouter } from '@angular/router';
 import {
     AssessmentDashboardInformationComponent,
     AssessmentDashboardInformationEntry,
@@ -15,7 +16,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideRouter([])],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AssessmentDashboardInformationComponent);
@@ -43,7 +44,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should display open and closed assessments correctly', () => {
+    it('should calculate the summary progress correctly', () => {
         const submissions = new DueDateStat();
         submissions.inTime = 400;
         submissions.late = 350;
@@ -51,13 +52,34 @@ describe('AssessmentDashboardInformationComponent', () => {
         fixture.componentRef.setInput('totalNumberOfAssessments', 150);
         fixture.componentRef.setInput('numberOfSubmissions', submissions);
         fixture.componentRef.setInput('numberOfCorrectionRounds', 1);
+        fixture.componentRef.setInput('assessmentLocks', new AssessmentDashboardInformationEntry(50, 10, undefined));
 
-        expect(component.assessments()[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
-        expect(component.assessments()[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        expect(component.assessments()[0].value).toBe(600);
-        expect(component.assessments()[1].value).toBe(150);
-        expect(component.chartData().labels).toEqual(['artemisApp.exerciseAssessmentDashboard.openAssessments', 'artemisApp.exerciseAssessmentDashboard.closedAssessments']);
-        expect(component.chartData().series[0].data).toEqual([600, 150]);
+        expect(component.assessedSubmissions()).toBe(150);
+        expect(component.inProgressSubmissions()).toBe(50);
+        expect(component.openSubmissions()).toBe(550);
+    });
+
+    it('should calculate exam progress from all correction rounds', () => {
+        const submissions = new DueDateStat();
+        submissions.inTime = 4;
+        const firstCorrectionRound = new DueDateStat();
+        firstCorrectionRound.inTime = 3;
+        const secondCorrectionRound = new DueDateStat();
+        secondCorrectionRound.inTime = 2;
+
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('numberOfCorrectionRounds', 2);
+        fixture.componentRef.setInput('numberOfAssessmentsOfCorrectionRounds', [firstCorrectionRound, secondCorrectionRound]);
+        fixture.componentRef.setInput('totalNumberOfAssessments', 5);
+        fixture.componentRef.setInput('numberOfSubmissions', submissions);
+        fixture.componentRef.setInput('assessmentLocks', new AssessmentDashboardInformationEntry(1, 0, undefined));
+
+        expect(component.totalProgressItems()).toBe(8);
+        expect(component.assessedSubmissions()).toBe(5);
+        expect(component.inProgressSubmissions()).toBe(1);
+        expect(component.openSubmissions()).toBe(2);
+        expect(component.assessedPercentage()).toBe(62.5);
+        expect(component.inProgressPercentage()).toBe(12.5);
     });
 
     it('should set up links correctly', () => {
@@ -74,21 +96,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.complaintsLink()).toEqual(['/course-management', 10, 'exams', 42, 'complaints']);
         expect(component.moreFeedbackRequestsLink()).toEqual(['/course-management', 10, 'exams', 42, 'more-feedback-requests']);
         expect(component.assessmentLocksLink()).toEqual(['/course-management', 10, 'exams', 42, 'assessment-locks']);
-    });
-
-    it('should handle language changes', () => {
-        const translateService = TestBed.inject(TranslateService);
-        const instantSpy = vi.spyOn(translateService, 'instant');
-
-        // Initial evaluation of the language-dependent computed.
-        expect(component.completedAssessmentsTitle()).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        expect(instantSpy).toHaveBeenCalledTimes(1);
-
-        // A language change must invalidate the computed so it re-evaluates on the next read.
-        translateService.use('de');
-
-        expect(component.completedAssessmentsTitle()).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        expect(instantSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should compute the right total/missing ratio', () => {

@@ -1,8 +1,16 @@
-<div class="btn-group">
+<div class="flex flex-wrap gap-2">
     <!-- Enable second correction with this button -->
     @if (!secondCorrectionEnabled()) {
-        <button (click)="triggerSecondCorrectionButton()" class="btn btn-success float-end btn-sm">
-            <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}
+        <button
+            type="button"
+            tumUiButton
+            severity="success"
+            size="small"
+            (click)="triggerSecondCorrectionButton()"
+            [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate"
+        >
+            <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
+            <span>{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}</span>
             @if (togglingSecondCorrectionButton()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
@@ -10,8 +18,16 @@
     }
     <!-- Disable second correction with this button -->
     @if (secondCorrectionEnabled()) {
-        <button (click)="triggerSecondCorrectionButton()" class="btn btn-danger float-end btn-sm">
-            <fa-icon [icon]="faToggleOff" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}
+        <button
+            type="button"
+            tumUiButton
+            severity="danger"
+            size="small"
+            (click)="triggerSecondCorrectionButton()"
+            [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate"
+        >
+            <fa-icon [icon]="faToggleOff" [fixedWidth]="true" />
+            <span>{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}</span>
             @if (togglingSecondCorrectionButton()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
