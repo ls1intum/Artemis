@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -112,7 +112,7 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     // Executor for versioning work. In production it delegates to the shared async pool so exercise updates do not
     // block on versioning; under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
@@ -121,7 +121,7 @@ public class ExerciseVersionService {
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, ObjectMapper objectMapper,
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, JsonMapper objectMapper,
             @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
@@ -292,7 +292,7 @@ public class ExerciseVersionService {
             // schedules an initial orchestration run, rather than being silently dropped until the
             // next edit. (Non-content consumers ignore this set; the listener still type-filters.)
             Set<String> changedFieldsForEvent = previousVersion.map(prev -> collectChangedFieldsForEvent(exerciseSnapshot, prev.getExerciseSnapshot()))
-                    .orElseGet(() -> COMPETENCY_RELEVANT_FIELDS);
+                    .orElse(COMPETENCY_RELEVANT_FIELDS);
             eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise, changedFieldsForEvent));
         }
         catch (Exception e) {
@@ -599,13 +599,6 @@ public class ExerciseVersionService {
     }
 
     /**
-     * Checks whether the commit id changed for a participation snapshot.
-     *
-     * @param previousParticipation the previous participation snapshot
-     * @param newParticipation      the new participation snapshot
-     * @return true if the commit id changed
-     */
-    /**
      * The session an alert may be attributed to, which is only the session whose own commit the alert describes.
      * <p>
      * Version jobs run asynchronously on several workers and read the repository refs when they execute, not when they were
@@ -613,12 +606,12 @@ public class ExerciseVersionService {
      * alert to the queueing client would make its editor filter out a warning about somebody else's commit, and a missing
      * warning is worse than the duplicate warning this attribution exists to remove. Whenever the identity cannot be
      * established the alert goes out unattributed, which warns everyone, including the committer.
-     *
+     * <p>
      * The repository has to match as well as the commit. A commit id identifies an object, not a place: repositories of one
      * exercise are seeded from each other, so the same commit legitimately exists in more than one of them, and an empty
      * commit made in two of them by the same author in the same second is byte-identical and therefore has the same id.
      * Matching on the id alone would let an alert about one repository be attributed to a client that committed to another.
-     *
+     * <p>
      * For an auxiliary repository the id has to match as well, because one target covers every auxiliary repository of the
      * exercise. An auxiliary commit whose id could not be resolved stays unattributed rather than matching all of them.
      *

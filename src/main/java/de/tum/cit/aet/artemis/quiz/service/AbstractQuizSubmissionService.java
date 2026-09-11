@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -42,7 +42,7 @@ public abstract class AbstractQuizSubmissionService<T extends QuizSubmission> {
      *                                      caller has none and it has to be looked up here
      * @return saved QuizSubmission
      */
-    protected abstract T save(QuizExercise quizExercise, T submission, User user, @Nullable StudentParticipation participationFromExamGate);
+    protected abstract T save(QuizExercise quizExercise, T submission, User user, @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate);
 
     /**
      * Updates a submission for the exam mode
@@ -54,7 +54,7 @@ public abstract class AbstractQuizSubmissionService<T extends QuizSubmission> {
      *                                      caller has none and it has to be looked up here
      * @return the updated quiz submission after it has been saved to the database
      */
-    public T saveSubmissionForExamMode(QuizExercise quizExercise, T quizSubmission, User user, @Nullable StudentParticipation participationFromExamGate) {
+    public T saveSubmissionForExamMode(QuizExercise quizExercise, T quizSubmission, User user, @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) {
         // update submission properties
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);

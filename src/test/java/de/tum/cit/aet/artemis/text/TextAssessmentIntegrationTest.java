@@ -502,8 +502,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), Objects.requireNonNull(latestResultId(submissionWithoutAssessment)),
-                textAssessmentDTO, submit, HttpStatus.OK);
+        var latestResultId = latestResultId(submissionWithoutAssessment);
+        assertThat(latestResultId).isNotNull();
+        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), latestResultId, textAssessmentDTO, submit, HttpStatus.OK);
         assertThat(result).as("saved result found").isNotNull();
         // The student of the participation is hidden for non-instructors: ResultDTO.participation() (ParticipationDTO) structurally carries no student field.
         assertThat(result.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
@@ -516,8 +517,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // feedbacks omitted entirely (null), not just an empty list: this used to NPE/500 on the unguarded feedbacks.stream() path.
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(null, null, null);
 
-        ResultDTO result = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/"
-                + Objects.requireNonNull(latestResultId(submissionWithoutAssessment)) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
+        ResultDTO result = request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
         assertThat(result).as("submitting an assessment with omitted feedbacks returns 200 (not 500)").isNotNull();
     }
@@ -529,8 +531,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        ResultDTO result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(latestResultId(submissionWithoutAssessment)), textAssessmentDTO, submit,
-                HttpStatus.BAD_REQUEST);
+        var latestResultId = latestResultId(submissionWithoutAssessment);
+        assertThat(latestResultId).isNotNull();
+        ResultDTO result = saveOrSubmitTextAssessment(1343L, latestResultId, textAssessmentDTO, submit, HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
     }
 
