@@ -57,6 +57,7 @@
                     <thead>
                         <tr>
                             <th scope="col" jhiTranslate="artemisApp.hyperion.workers.exercise"></th>
+                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.kind"></th>
                             <th scope="col" jhiTranslate="artemisApp.hyperion.workers.workerSlot"></th>
                             <th scope="col" jhiTranslate="artemisApp.hyperion.workers.owner"></th>
                             <th scope="col" jhiTranslate="artemisApp.hyperion.workers.started"></th>
@@ -69,8 +70,25 @@
                             @let run = row.run;
                             <tr>
                                 <td>
-                                    #{{ run.exerciseId }}
-                                    <div class="text-xs text-muted-color break-all">{{ run.jobId }}</div>
+                                    @if (row.exerciseLink; as link) {
+                                        <a [routerLink]="link" data-testid="hyperion-admin-run-exercise">{{ run.exerciseTitle || '#' + run.exerciseId }}</a>
+                                    } @else {
+                                        {{ run.exerciseTitle || '#' + run.exerciseId }}
+                                    }
+                                    <div class="text-xs text-muted-color">
+                                        #{{ run.exerciseId }}
+                                        @if (row.runLink; as link) {
+                                            · <a [routerLink]="link" data-testid="hyperion-admin-run-page" jhiTranslate="artemisApp.hyperion.workers.openRun"></a>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <!-- Adaptation rewrites an exercise instructors may already have polished; that is worth seeing before cancelling. -->
+                                    <tum-ui-tag
+                                        [severity]="run.mode === 'ADAPT' ? 'warn' : 'info'"
+                                        [value]="'artemisApp.hyperion.workers.mode.' + (run.mode ?? 'GENERATE') | artemisTranslate"
+                                        data-testid="hyperion-admin-run-kind"
+                                    />
                                 </td>
                                 <td>{{ row.workerId ?? '—' }} / {{ row.slot ?? '—' }}</td>
                                 <td>{{ run.userLogin }}</td>

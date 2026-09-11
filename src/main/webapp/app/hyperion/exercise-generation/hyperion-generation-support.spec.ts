@@ -40,10 +40,10 @@ describe('Hyperion draft eligibility', () => {
         expect(isHyperionGenerationDraft(undefined, now)).toBe(false);
     });
 
-    it('names the release-date problem: unset counts as released, and so does the current instant', () => {
+    it('treats a missing release date as a draft and the current instant as released', () => {
         const exercise = draft();
         exercise.releaseDate = undefined;
-        expect(hyperionGenerationBlocker(exercise, now)).toBe('noReleaseDate');
+        expect(hyperionGenerationBlocker(exercise, now)).toBeUndefined();
         exercise.releaseDate = dayjs(now);
         expect(hyperionGenerationBlocker(exercise, now)).toBe('released');
         expect(isHyperionGenerationDraft(exercise, now)).toBe(false);

@@ -241,7 +241,7 @@ export class HyperionBriefDialogComponent {
         exercise.maxPoints = metadata.maxPoints;
         exercise.difficulty = DifficultyLevel[metadata.difficulty];
         exercise.problemStatement = '';
-        // A future release date is required for generation eligibility; instructors review and schedule the draft afterwards.
+        // The draft is created empty and filled by the run, so it must stay invisible to students until the instructor reviews it and schedules the real release.
         exercise.releaseDate = dayjs().add(1, 'year');
         exercise.assessmentType = AssessmentType.AUTOMATIC;
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;

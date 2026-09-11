@@ -22,7 +22,6 @@ export type HyperionGenerationBlocker =
     | 'staticCodeAnalysis'
     | 'sequentialTestRuns'
     | 'auxiliaryRepositories'
-    | 'noReleaseDate'
     | 'released'
     | 'studentParticipations';
 
@@ -30,7 +29,8 @@ export const HYPERION_GENERATION_BLOCKER_KEY = 'artemisApp.hyperion.generation.b
 
 /**
  * Client-side preflight only; the server rechecks permissions, participation state, and repository configuration.
- * Mirrors the server's draft rule that an exercise without a release date counts as released.
+ * An exercise without a release date is a draft still being authored, so only a release date that has passed counts
+ * as released.
  *
  * @returns the blocker, or `undefined` when the exercise is an eligible draft
  */
@@ -53,10 +53,7 @@ export function hyperionGenerationBlocker(exercise: ProgrammingExercise, now: nu
     if (exercise.auxiliaryRepositories?.length) {
         return 'auxiliaryRepositories';
     }
-    if (!exercise.releaseDate) {
-        return 'noReleaseDate';
-    }
-    if (exercise.releaseDate.valueOf() <= now) {
+    if (exercise.releaseDate && exercise.releaseDate.valueOf() <= now) {
         return 'released';
     }
     if (exercise.studentParticipations?.length || exercise.numberOfParticipations) {

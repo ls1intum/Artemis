@@ -2141,9 +2141,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.released');
         expect((comp as any).canAdaptNow()).toBe(false);
 
+        // A draft without a release date is what an instructor authors on; it stays adaptable.
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
         expect((comp as any).generationSupported()).toBe(true);
-        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.noReleaseDate');
+        expect((comp as any).adaptBlockedReason()).toBeUndefined();
 
         const unreleased = { programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().add(1, 'day') };
         comp.exercise.set(createMockExercise({ ...unreleased, studentParticipations: [{} as any] }));

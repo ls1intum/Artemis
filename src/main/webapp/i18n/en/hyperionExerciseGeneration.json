@@ -256,12 +256,12 @@
                     "NOT_STARTED": "The run never started."
                 },
                 "actions": {
-                    "cancel": "Cancel generation",
+                    "cancel": "Cancel run",
                     "cancelling": "Cancelling…",
-                    "cancelConfirmHeader": "Cancel this generation?",
-                    "cancelConfirmMessage": "Artemis stops immediately and nothing is written to your exercise. The draft exercise stays in your course.",
-                    "cancelConfirmAccept": "Cancel generation",
-                    "cancelConfirmReject": "Keep generating",
+                    "cancelConfirmHeader": "Cancel this run?",
+                    "cancelConfirmMessage": "Artemis stops immediately and nothing is written to your exercise. The exercise stays as it is.",
+                    "cancelConfirmAccept": "Cancel run",
+                    "cancelConfirmReject": "Keep running",
                     "runAgain": "Run again",
                     "openEditor": "Open code editor",
                     "openRun": "Open the generation view",
@@ -281,7 +281,6 @@
                     "staticCodeAnalysis": "Disable static code analysis in the exercise settings first. The AI verifier does not model its penalties.",
                     "sequentialTestRuns": "Disable sequential test runs in the exercise settings first. The AI verifier runs all tests in one pass.",
                     "auxiliaryRepositories": "Remove the auxiliary repositories first. AI authoring writes only the template, solution, and test repositories.",
-                    "noReleaseDate": "Set a future release date first. AI authoring only changes exercises students cannot see yet.",
                     "released": "This exercise is already released. Move its release date into the future first; AI authoring only changes exercises students cannot see yet.",
                     "studentParticipations": "Students have already started this exercise. AI authoring only changes exercises without participations.",
                     "problemStatementBusy": "Wait for the current problem statement refinement to finish.",
@@ -439,7 +438,13 @@
                 "cancelReason": "Reason (recorded in the administrator audit log)",
                 "cancelFailed": "Cancellation was not accepted. The run may have finished or started saving. Refresh the overview; your reason is retained.",
                 "keepRunning": "Keep running",
-                "workerSlot": "Worker / slot"
+                "workerSlot": "Worker / slot",
+                "kind": "Run",
+                "openRun": "open run",
+                "mode": {
+                    "GENERATE": "Generate",
+                    "ADAPT": "Adapt"
+                }
             }
         }
     }
