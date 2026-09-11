@@ -477,6 +477,20 @@ describe('ComplaintService', () => {
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
+    it('findAllWithoutStudentInformationForExerciseId', () => {
+        const exerciseId = 42;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllWithoutStudentInformationForExerciseId(exerciseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
     it('should remove result references from feedbacks for update after complaint', () => {
         const result = new Result();
         result.id = 1;

@@ -127,6 +127,17 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
+     * Find all complaints of a single exercise and complaintType without student's information.
+     * Used by the tutor "All" scope on exercise-scoped pages, so it cannot leak complaints of other exercises.
+     * @param exerciseId - the exercise id for which the complaints should be retrieved
+     * @param complaintType - the type of complaint
+     */
+    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        return this.requestComplaintsFromUrl(url);
+    }
+
+    /**
      * Find all complaints by tutor id, exercise id, and complaintType.
      * @param tutorId
      * @param exerciseId

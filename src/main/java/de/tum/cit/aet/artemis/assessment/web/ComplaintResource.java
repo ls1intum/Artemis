@@ -245,15 +245,16 @@ public class ComplaintResource {
     /**
      * GET complaints: get all the complaints filtered by exerciseId, complaintType, and optionally tutorId.
      *
-     * @param tutorId       the id of the tutor by which we want to filter
-     * @param exerciseId    the id of the exercise we are interested in
-     * @param complaintType the type of complaints we are interested in
+     * @param tutorId               the id of the tutor by which we want to filter
+     * @param exerciseId            the id of the exercise we are interested in
+     * @param complaintType         the type of complaints we are interested in
+     * @param allComplaintsForTutor flag if all complaints of the exercise should be sent to a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping(value = "complaints", params = { "exerciseId", "complaintType" })
     @EnforceAtLeastTutor
     public ResponseEntity<List<ComplaintDTO>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
-            @RequestParam(required = false) Long tutorId) {
+            @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
@@ -263,7 +264,7 @@ public class ComplaintResource {
 
         // Only instructors can access all complaints about an exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
-            tutorId = userRepository.getUser().getId();
+            tutorId = user.getId();
         }
 
         List<Complaint> complaints;
@@ -271,6 +272,12 @@ public class ComplaintResource {
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
             filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
+        }
+        else if (allComplaintsForTutor) {
+            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
+            // Redact foreign assessor public-info on the DTO while keeping privacy-safe assessorKey/assessorLabel for filtering.
+            return ResponseEntity.ok(getComplaintsByComplaintTypeForTutorOverview(complaints, complaintType, user));
         }
         else {
             complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);

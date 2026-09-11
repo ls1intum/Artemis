@@ -19,7 +19,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -360,6 +361,39 @@ describe('ListOfComplaintsComponent', () => {
         comp.onAssessorFilterChange('101');
 
         expect(comp.complaintsToShow().map((complaint) => complaint.id)).toEqual([1, 3]);
+    });
+
+    it('clears loading when the mine request fails', () => {
+        findAllByCourseIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+
+        comp.ngOnInit();
+
+        expect(comp.loading()).toBe(false);
+    });
+
+    it('requests the exercise-scoped all list on exercise-scoped routes', () => {
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId').mockReturnValue(of({ body: [] } as EntityResponseTypeArray));
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId');
+        activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        comp.setComplaintScope('all');
+
+        expect(findAllForExerciseStub).toHaveBeenCalledExactlyOnceWith(34, ComplaintType.COMPLAINT);
+        verifyNotCalled(findAllForCourseStub);
+    });
+
+    it('requests the course-scoped all list on course-scoped routes', () => {
+        const findAllForCourseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForCourseId').mockReturnValue(of({ body: [] } as EntityResponseTypeArray));
+        const findAllForExerciseStub = vi.spyOn(complaintService, 'findAllWithoutStudentInformationForExerciseId');
+        activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.COMPLAINT });
+        comp.ngOnInit();
+
+        comp.setComplaintScope('all');
+
+        expect(findAllForCourseStub).toHaveBeenCalledExactlyOnceWith(12, ComplaintType.COMPLAINT);
+        verifyNotCalled(findAllForExerciseStub);
     });
 
     function verifyNotCalled(...instances: MockInstance[]) {

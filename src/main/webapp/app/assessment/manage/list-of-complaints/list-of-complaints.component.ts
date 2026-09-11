@@ -201,6 +201,9 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.assessorFilter.set(undefined);
                     this.complaints.set(this.ownComplaints ?? []);
                     this.applyComplaintFilter();
+                } else {
+                    // `complete` never runs after an error, so the spinner would stay forever without this.
+                    this.loading.set(false);
                 }
                 onError(this.alertService, error);
             },
@@ -295,8 +298,9 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     /**
-     * Switches between the tutor's own complaints and all complaints in the course.
-     * The "all" list is fetched from the server once and cached, so switching back and forth afterwards is instant.
+     * Switches between the tutor's own complaints and all complaints in the current scope (the exercise when the route
+     * is exercise-scoped, otherwise the course). The "all" list is fetched from the server once and cached, so
+     * switching back and forth afterwards is instant.
      */
     setComplaintScope(scope: 'mine' | 'all') {
         const wantAll = scope === 'all';
@@ -329,10 +333,11 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.isLoadingAllComplaints.set(true);
         this.allScopeSubscription?.unsubscribe();
-        this.allScopeSubscription = this.subscribeToComplaintResponse(
-            this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType()),
-            'all',
-        );
+        // Must match the scope the Mine list was loaded with, otherwise "All" shows complaints of other exercises.
+        const allComplaintsResponse = this.exerciseId
+            ? this.complaintService.findAllWithoutStudentInformationForExerciseId(this.exerciseId, this.complaintType())
+            : this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
+        this.allScopeSubscription = this.subscribeToComplaintResponse(allComplaintsResponse, 'all');
     }
 
     onAssessorFilterChange(key: string | undefined) {
