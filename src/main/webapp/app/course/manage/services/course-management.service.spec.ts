@@ -37,6 +37,8 @@ import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { CourseDashboardDTO, CourseWithContentDTO, courseFromDashboardDTO, courseFromWithContentDTO } from 'app/course/shared/entities/course-content-response.dto';
+import { CourseForQuizSelectionDTO, courseFromQuizSelectionDTO } from 'app/course/shared/entities/course-management-response.dto';
 
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
@@ -294,6 +296,7 @@ describe('Course Management Service', () => {
     it('should find all courses for dashboard', () => {
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'setCourses');
         returnedFromService = coursesForDashboard;
+        const mappedCourse = courseFromDashboardDTO(courseForDashboard.course as CourseDashboardDTO);
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
@@ -301,7 +304,7 @@ describe('Course Management Service', () => {
                 expect(res.body!.courses[0].course).toEqual(course);
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, mappedCourse);
     });
 
     it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
@@ -315,6 +318,7 @@ describe('Course Management Service', () => {
     // VS Code clients, so these three tests are the only remaining coverage of it and have to keep calling it.
     it('should find one course for dashboard', () => {
         returnedFromService = { ...courseForDashboard };
+        const mappedCourse = courseFromDashboardDTO(courseForDashboard.course as CourseDashboardDTO);
         courseStorageService
             .subscribeToCourseUpdates(course.id!)
             .pipe(take(1))
@@ -326,7 +330,7 @@ describe('Course Management Service', () => {
             .findOneForDashboard(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, mappedCourse, true);
     });
 
     it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
@@ -429,11 +433,12 @@ describe('Course Management Service', () => {
 
     it('should get all courses with quiz exercises', () => {
         returnedFromService = [{ ...course }];
+        const mappedCourse = courseFromQuizSelectionDTO(returnedFromService[0] as CourseForQuizSelectionDTO);
         courseManagementService
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, mappedCourse, true);
     });
 
     it('should get all courses for overview', () => {
@@ -569,8 +574,9 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {
+        const mappedCourse = courseFromWithContentDTO(returnedFromService as CourseWithContentDTO);
         courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => expect(response.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, course);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, mappedCourse);
     });
 
     it('should fetch the minimal course list for dropdowns', () => {

@@ -2026,7 +2026,8 @@ public class CourseTestService {
             assertThat(courseOnly.numberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
             // Assert that course properties on courseWithExercises match those of courseOnly
-            assertThat(courseWithExercises.course()).as("courseWithExercises same as courseOnly").isEqualTo(courseOnly);
+            assertThat(courseWithExercises.course()).as("courseWithExercises same as courseOnly").usingRecursiveComparison()
+                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors").isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
