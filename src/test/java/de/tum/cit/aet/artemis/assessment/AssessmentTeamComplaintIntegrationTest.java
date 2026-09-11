@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -39,6 +39,8 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ComplaintResponseRequestDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
@@ -219,7 +221,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
-        final var assessmentUpdate = new AssessmentUpdate(feedbacks, complaintResponse, null);
+        final var assessmentUpdate = modelingAssessmentUpdate(feedbacks, complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
@@ -249,7 +251,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
-        final var assessmentUpdate = new AssessmentUpdate(feedbacks, complaintResponse, null);
+        final var assessmentUpdate = modelingAssessmentUpdate(feedbacks, complaintResponse);
         request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
     }
@@ -268,5 +270,19 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         modelingSubmission = modelingExerciseUtilService.addModelingTeamSubmission(modelingExercise, modelingSubmission, team);
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);
+    }
+
+    /**
+     * Builds the request body of the modeling assessment-after-complaint endpoint the way the client sends it: feedbacks as
+     * {@link FeedbackDTO}s and the complaint response as a {@link ComplaintResponseRequestDTO}.
+     *
+     * @param feedbacks         the updated feedback entities
+     * @param complaintResponse the complaint response carrying the accept/reject decision
+     * @return the request body
+     */
+    private static ModelingAssessmentUpdateDTO modelingAssessmentUpdate(List<Feedback> feedbacks, ComplaintResponse complaintResponse) {
+        Complaint complaint = complaintResponse.getComplaint();
+        return new ModelingAssessmentUpdateDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), new ComplaintResponseRequestDTO(complaintResponse.getId(),
+                complaintResponse.getResponseText(), new ComplaintResponseRequestDTO.ComplaintRequestDTO(complaint.getId(), complaint.isAccepted())), null);
     }
 }
