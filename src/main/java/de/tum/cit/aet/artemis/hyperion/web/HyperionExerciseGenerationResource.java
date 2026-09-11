@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -363,21 +364,30 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * Hyperion writes directly to the exercise repositories, so it must only run on drafts no student can reach. Note that {@link ProgrammingExercise#isReleased()} is also true
-     * when there is no release date at all, which makes an exercise without one ineligible rather than eligible.
+     * Hyperion writes directly to the exercise repositories, so it must only run on exercises no student has started. An exercise whose release date lies in the past is
+     * rejected; one without a release date is accepted, because instructors leave the date empty while authoring and {@link ProgrammingExercise#isReleased()} would treat that as
+     * released. An exercise that is visible but has no participations stays eligible: the participation endpoints refuse to start one while a run holds the exercise, so a
+     * student cannot copy a template that is about to change.
      */
     private void validateDraftExercise(ProgrammingExercise exercise) {
-        if (exercise.isReleased()) {
+        if (hasReleaseDateInThePast(exercise)) {
             throw new BadRequestAlertException("Hyperion generation can only modify unreleased draft exercises.", ENTITY_NAME, "exerciseAlreadyReleased");
         }
-        if (exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty()) {
+        if (hasStudentParticipations(exercise)) {
             throw new BadRequestAlertException("Hyperion generation can only modify exercises without student participations.", ENTITY_NAME, "exerciseHasParticipations");
         }
     }
 
     private boolean canOfferRevert(ProgrammingExercise exercise) {
-        boolean hasParticipations = exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty();
-        return !exercise.isReleased() && !hasParticipations && !jobService.hasActiveJob(exercise.getId());
+        return !hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise) && !jobService.hasActiveJob(exercise.getId());
+    }
+
+    private static boolean hasReleaseDateInThePast(ProgrammingExercise exercise) {
+        return exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now());
+    }
+
+    private static boolean hasStudentParticipations(ProgrammingExercise exercise) {
+        return exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty();
     }
 
     /**

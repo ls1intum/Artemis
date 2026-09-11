@@ -327,12 +327,15 @@ public class HyperionReviewCommentContextRendererService {
         return normalizeWhitespace(HyperionUtils.sanitizeInput(text));
     }
 
-    /** Folds a comment onto a single line with its breaks escaped, so one comment stays one JSON value however the instructor formatted it. */
+    /**
+     * Normalizes line endings and trims. Line breaks are kept as they are: the JSON serializer escapes them for the model payload, and the owner-visible snapshot
+     * renders them as the instructor wrote them. Escaping them here would show a literal backslash-n in both.
+     */
     private String normalizeWhitespace(String text) {
         if (text == null || text.isBlank()) {
             return "";
         }
-        return text.replace("\r\n", "\n").replace('\r', '\n').replace("\n", "\\n").trim();
+        return text.replace("\r\n", "\n").replace('\r', '\n').trim();
     }
 
     private String truncateText(String text) {

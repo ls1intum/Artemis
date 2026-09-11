@@ -30,7 +30,9 @@ public class GenerationMonitoringService {
     /** @return active generation summaries, excluding ordinary edits and undo operations */
     public List<ActiveGenerationDTO> activeGenerations() {
         return active.values().stream().filter(GenerationJobService::isGenerationJob).sorted(Comparator.comparing(GenerationJobService.JobInfo::startedAt))
-                .map(job -> new ActiveGenerationDTO(job.jobId(), job.exerciseId(), job.userLogin(), job.startedAt(), job.cancellable(), jobs.isCancelled(job.jobId()))).toList();
+                .map(job -> new ActiveGenerationDTO(job.jobId(), job.exerciseId(), job.userLogin(), job.startedAt(), job.cancellable(), jobs.isCancelled(job.jobId()), job.mode(),
+                        job.exerciseTitle(), job.courseId()))
+                .toList();
     }
 
     /**

@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
@@ -138,6 +139,23 @@ class GenerationJobServiceTest {
 
         assertThat(jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE)).isNotBlank();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE));
+    }
+
+    @Test
+    void startJob_recordsModeTitleAndCourseForTheAdministratorOverview() {
+        ProgrammingExercise exercise = exercise(42L);
+        exercise.setTitle("Bubble Sort");
+        Course course = new Course();
+        course.setId(7L);
+        exercise.setCourse(course);
+
+        String jobId = jobService.startJob(user("owner"), exercise, "adapt it", GenerationMode.ADAPT);
+
+        GenerationJobService.JobInfo job = jobMap().get("42");
+        assertThat(job.jobId()).isEqualTo(jobId);
+        assertThat(job.mode()).isEqualTo(GenerationMode.ADAPT);
+        assertThat(job.exerciseTitle()).isEqualTo("Bubble Sort");
+        assertThat(job.courseId()).isEqualTo(7L);
     }
 
     @Test

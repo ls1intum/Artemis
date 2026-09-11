@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
@@ -303,7 +304,9 @@ public class GenerationJobService {
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
         Instant deadlineAt = startedAt.plus(settings == null ? maxJobDuration : settings.maxJobDuration());
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId);
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode, exercise.getTitle(),
+                course == null ? null : course.getId());
         claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
         GenerationJobReplayStore.StartedReplay startedReplay = null;
         boolean publicStatePublished = false;
@@ -941,22 +944,34 @@ public class GenerationJobService {
     public record WedgedSlotInfo(long exerciseId, String token, WedgedSlotKind kind, @Nullable String ownerNodeId, Instant startedAt, boolean ownerLeftCluster) {
     }
 
+    /**
+     * The slot entry for one exercise. {@code mode}, {@code exerciseTitle} and {@code courseId} are display context for the administrator overview and are only set for
+     * generation runs; revert and external-mutation slots leave them {@code null}.
+     */
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
-            @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId) implements Serializable {
+            @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId, @Nullable GenerationMode mode, @Nullable String exerciseTitle,
+            @Nullable Long courseId) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
+
+        /** A slot without display context: reverts and external mutations, which the administrator overview does not list. */
+        public JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
+                @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId) {
+            this(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, null, null, null);
+        }
 
         Instant lastHeartbeatOrStartedAt() {
             return lastHeartbeatAt == null ? startedAt : lastHeartbeatAt;
         }
 
         JobInfo withHeartbeat(Instant heartbeatAt) {
-            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable, budgetReservationId);
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId);
         }
 
         JobInfo withCancellable(boolean newCancellable) {
-            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable, budgetReservationId);
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable, budgetReservationId, mode, exerciseTitle,
+                    courseId);
         }
     }
 
