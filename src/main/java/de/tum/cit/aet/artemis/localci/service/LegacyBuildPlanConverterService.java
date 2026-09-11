@@ -11,11 +11,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -30,14 +32,15 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 @Profile(PROFILE_LOCALCI)
 public class LegacyBuildPlanConverterService {
 
-    private static final ObjectMapper objectMapper = createMapper();
+    private static final JsonMapper objectMapper = createMapper();
 
-    private static ObjectMapper createMapper() {
+    private static JsonMapper createMapper() {
         // Parse the user-provided build plan configuration with the same bounds as BuildPlanPhasesDTO, so that an oversized
         // or excessively wide payload is rejected during parsing instead of building a huge JSON tree on a request thread.
-        ObjectMapper configuredMapper = JsonObjectMapper.get().copy();
-        configuredMapper.getFactory().setStreamReadConstraints(BuildPlanPhasesDTO.BUILD_PLAN_CONFIGURATION_CONSTRAINTS);
-        return configuredMapper;
+        // Jackson 3 mappers are immutable, so the bounds go on the factory the mapper is built from rather than
+        // being pushed into a copy afterwards
+        return ArtemisJacksonDefaults.apply(JsonMapper.builder(JsonFactory.builder().streamReadConstraints(BuildPlanPhasesDTO.BUILD_PLAN_CONFIGURATION_CONSTRAINTS).build()))
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
     }
 
     /**
@@ -73,7 +76,7 @@ public class LegacyBuildPlanConverterService {
                     node = null;
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 if (buildScript == null) {
                     return Optional.empty();
                 }
@@ -114,10 +117,10 @@ public class LegacyBuildPlanConverterService {
         if (imageNode.isMissingNode() || imageNode.isNull()) {
             return null;
         }
-        if (!imageNode.isTextual()) {
+        if (!imageNode.isString()) {
             return null;
         }
-        return imageNode.asText().trim();
+        return imageNode.asString().trim();
     }
 
     private static boolean isLegacyWindfile(JsonNode actionsNode) {
@@ -134,16 +137,16 @@ public class LegacyBuildPlanConverterService {
         }
 
         for (JsonNode actionNode : actionsNode) {
-            if (!actionNode.isObject() || !actionNode.path("script").isTextual()) {
+            if (!actionNode.isObject() || !actionNode.path("script").isString()) {
                 continue;
             }
 
             JsonNode workdirNode = actionNode.path("workdir");
-            String workdir = workdirNode.isTextual() ? workdirNode.asText().trim() : null;
+            String workdir = workdirNode.isString() ? workdirNode.asString().trim() : null;
             if (workdir != null && !workdir.isBlank()) {
                 buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
             }
-            buildScriptBuilder.append(actionNode.path("script").asText()).append("\n");
+            buildScriptBuilder.append(actionNode.path("script").asString()).append("\n");
             if (workdir != null && !workdir.isBlank()) {
                 buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
             }
@@ -176,10 +179,10 @@ public class LegacyBuildPlanConverterService {
                     continue;
                 }
                 JsonNode pathNode = resultNode.path("path");
-                if (!pathNode.isTextual()) {
+                if (!pathNode.isString()) {
                     continue;
                 }
-                resultPaths.add(pathNode.asText().trim());
+                resultPaths.add(pathNode.asString().trim());
             }
         }
 
