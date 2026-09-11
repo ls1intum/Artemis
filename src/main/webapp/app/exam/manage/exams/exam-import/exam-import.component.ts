@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
@@ -44,6 +45,8 @@ export interface ExamImportDialogData {
     ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
+    protected readonly ExamMode = ExamMode;
+
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
 

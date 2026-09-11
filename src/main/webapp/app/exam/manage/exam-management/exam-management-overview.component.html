@@ -58,7 +58,7 @@
                                         {{ exam.title }}
                                     </span>
                                 }
-                                <jhi-exam-mode-badge [examMode]="exam.examMode!" />
+                                <jhi-exam-mode-badge [examMode]="exam.examMode ?? ExamMode.REAL" />
                             </ng-container>
                         </td>
                         <td class="d-md-table-cell">

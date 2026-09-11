@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { Component, OnDestroy, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -39,6 +40,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     ],
 })
 export class ExamManagementOverviewComponent implements OnDestroy {
+    protected readonly ExamMode = ExamMode;
+
     private examManagementComponent = inject(ExamManagementComponent);
     private sortService = inject(SortService);
     private dialogService = inject(DialogService);
