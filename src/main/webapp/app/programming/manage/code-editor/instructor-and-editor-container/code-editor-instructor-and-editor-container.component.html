@@ -30,9 +30,6 @@
             [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
             [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback() && !isExerciseGenerationActionBlocked()"
-            [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.panelTitle' : undefined"
-            [editorBottomPanelIcon]="showGenerationActivity() ? facArtemisIntelligence : undefined"
-            [preferredBottomPanel]="preferredBottomPanel()"
             (onFileLoad)="onFileLoad($event)"
             (onRepositoryFilesLoaded)="onRepositoryFilesLoaded()"
             (onEditorLoaded)="onEditorLoaded()"
@@ -161,7 +158,12 @@
                     </div>
                 </div>
                 <!-- Artemis Intelligence - Consolidated AI Actions -->
-                @if (hyperionEnabled) {
+                @if (generationSupported() && (isExerciseGenerationRunning() || generationRefreshFailed()) && generationLink(); as link) {
+                    <a tumUiButton severity="primary" [routerLink]="link" data-testid="hyperion-editor-open-generation">
+                        <fa-icon [icon]="facArtemisIntelligence" />
+                        <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
+                    </a>
+                } @else if (hyperionEnabled) {
                     <!-- Toolbar divider -->
                     <div class="vr mx-2"></div>
 
@@ -201,20 +203,6 @@
                             </button>
                             <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
                                 <div class="ai-menu-items">
-                                    <!-- AI Generation Actions -->
-                                    @if (canGenerateExercise()) {
-                                        <div class="ai-menu-item-group">
-                                            <button
-                                                class="ai-menu-item grow"
-                                                (click)="startGeneration(); aiMenuPopover.hide()"
-                                                [disabled]="isExerciseGenerationActionBlocked()"
-                                                data-testid="hyperion-generate-exercise"
-                                            >
-                                                <fa-icon [icon]="facArtemisIntelligence" class="mr-2" />
-                                                <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate exercise</span>
-                                            </button>
-                                        </div>
-                                    }
                                     @if (canAdaptWithFeedback()) {
                                         <button
                                             class="ai-menu-item"
@@ -496,23 +484,6 @@
                     </div>
                 }
             </div>
-            <ng-container editorBottomPanel>
-                @if (showGenerationActivity()) {
-                    <jhi-hyperion-generation-activity
-                        [exerciseId]="exercise?.id"
-                        [courseId]="course?.id"
-                        [startAllowed]="canGenerateExercise()"
-                        [refreshingEditor]="generationRefreshPending()"
-                        [editorRefreshFailed]="generationRefreshFailed()"
-                        (editorRefreshRequested)="retryHyperionRefresh()"
-                        (generationReverted)="onHyperionGenerationReverted($event)"
-                        (generationCompleted)="onHyperionGenerationCompleted($event)"
-                        (reviewRequested)="onHyperionReviewRequested($event)"
-                        (fileChangeSelected)="onHyperionFileChangeSelected($event)"
-                        (startRequested)="onHyperionStartRequested($event)"
-                    />
-                }
-            </ng-container>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions
                 editorSidebar
@@ -524,11 +495,13 @@
                 [generateHtmlEvents]="previewEvents$"
             />
         </jhi-code-editor-container>
-        <!-- Kept outside the editor's bottom panel: that panel's content is destroyed whenever another tab is
-             selected, which would take these overlays down with it. -->
-        @if (showGenerationActivity()) {
-            <tum-ui-confirm-dialog key="hyperionGenerateConfirmation" />
+        @if (generationSupported()) {
             <tum-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
+            @if (generationRefreshFailed()) {
+                <button tumUiButton severity="secondary" variant="outlined" (click)="retryHyperionRefresh()" data-testid="hyperion-editor-reload-saved">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
+                </button>
+            }
             <tum-ui-dialog
                 [(visible)]="adaptDialogVisible"
                 [dismissableMask]="true"

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CodeEditorBottomPanel, CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
     CommitState,
     CreateFileChange,
@@ -444,42 +444,6 @@ describe('CodeEditorContainerComponent', () => {
         component.onToggleCollapse(event, CollapsableCodeEditorElement.BuildOutput);
 
         expect(gridStub.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
-    });
-
-    it('should fall back to the projected bottom panel while no build output exists, and keep it once one does', () => {
-        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.BUILD_OUTPUT);
-
-        fixture.componentRef.setInput('buildable', false);
-        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
-
-        fixture.componentRef.setInput('buildable', true);
-        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
-    });
-
-    it('should select and expand the projected bottom panel', () => {
-        component.openEditorBottomPanel();
-
-        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
-        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
-    });
-
-    it('should expand a collapsed bottom panel when selecting a tab', () => {
-        component.bottomPanelCollapsed.set(true);
-
-        component.selectBottomPanel(CodeEditorBottomPanel.BUILD_OUTPUT);
-
-        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.BUILD_OUTPUT);
-        expect(component.bottomPanelCollapsed()).toBe(false);
-        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
-    });
-
-    it('should expand the bottom panel when activating the already-selected tab', () => {
-        component.bottomPanelCollapsed.set(true);
-
-        component.expandSelectedBottomPanel();
-
-        expect(component.bottomPanelCollapsed()).toBe(false);
-        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
     });
 
     it('should expose feedbacks for submission when inline feedback is enabled', () => {

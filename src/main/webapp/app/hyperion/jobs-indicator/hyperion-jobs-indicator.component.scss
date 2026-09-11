@@ -26,4 +26,16 @@
  */
 a.hyperion-jobs-indicator-row {
     color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+        text-decoration: none;
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-primary-color);
+        outline-offset: 2px;
+    }
 }

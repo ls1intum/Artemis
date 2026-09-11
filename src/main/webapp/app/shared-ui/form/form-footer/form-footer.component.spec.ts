@@ -64,16 +64,6 @@ describe('FormFooterComponent', () => {
         expect(invalidBadge).toBeTruthy();
     });
 
-    it('should enable save button when form is valid', () => {
-        fixture.componentRef.setInput('invalidReasons', []);
-        fixture.componentRef.setInput('isDisabled', false);
-        fixture.componentRef.setInput('isSaving', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', false);
-        fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeFalsy();
-    });
-
     it('should disable save button when saving is in progress', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
@@ -82,13 +72,11 @@ describe('FormFooterComponent', () => {
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.disabled).toBeTruthy();
     });
-
-    it('should disable save button while generating with AI', () => {
-        fixture.componentRef.setInput('invalidReasons', []);
-        fixture.componentRef.setInput('isDisabled', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', true);
+    it('offers normal save and cancel actions, without an AI-generation entry point', () => {
+        fixture.componentRef.setInput('isCreation', true);
         fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#save-entity')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#cancel-save')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#generate-with-ai')).toBeNull();
     });
 });

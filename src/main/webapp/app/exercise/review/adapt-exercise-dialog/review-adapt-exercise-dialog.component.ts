@@ -42,7 +42,9 @@ export class ReviewAdaptExerciseDialogComponent {
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly maxInstructionsLength = MAX_INSTRUCTIONS_LENGTH;
 
-    protected readonly sortedFindings = computed(() => [...this.findings()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+    protected readonly sortedFindings = computed(() =>
+        [...this.findings()].sort((a, b) => (a.severity ? SEVERITY_ORDER[a.severity] : 3) - (b.severity ? SEVERITY_ORDER[b.severity] : 3)),
+    );
     protected readonly isFreeMode = computed(() => this.sortedFindings().length === 0);
     protected readonly remainingCharacters = computed(() => MAX_INSTRUCTIONS_LENGTH - this.instructions().length);
     /** Without findings there is nothing to act on, so free-form instructions become mandatory. */

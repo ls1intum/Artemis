@@ -10,8 +10,3 @@
     font-weight: 600;
     line-height: 1.4;
 }
-
-/* Held open so the arrival of the rendered document does not push the page around underneath a reader. */
-.hyperion-markdown-placeholder {
-    min-height: 8rem;
-}

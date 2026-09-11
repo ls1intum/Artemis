@@ -1,3 +1,4 @@
+import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-input';
 import { DestroyRef, Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, defer, finalize, retry, takeUntil, throwError, timeout, timer } from 'rxjs';
@@ -98,6 +99,7 @@ export class HyperionGenerationActivityFacade {
     readonly events = signal<HyperionGenerationEvent[]>([]);
     readonly fileChanges = signal<ExerciseGenerationFileChange[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
+    readonly input = signal<ExerciseGenerationInput | undefined>(undefined);
     readonly specDocument = signal<string | undefined>(undefined);
     /** Server-confirmed retention, not merely an unsaved outcome; becomes false after expiry. */
     readonly artifactsRetained = signal<boolean>(false);
@@ -367,6 +369,7 @@ export class HyperionGenerationActivityFacade {
                     if (!sameJob || status.specDocument !== undefined) {
                         this.specDocument.set(status.specDocument);
                     }
+                    this.input.set(status.ownedByCaller ? status.input : undefined);
                     this.artifactsRetained.set(status.artifactsRetained === true);
                     const events = mergeEvents(sameJob ? this.events() : [], status.events ?? []);
                     this.events.set(events);
@@ -664,6 +667,7 @@ export class HyperionGenerationActivityFacade {
         this.usage.set(undefined);
         this.accountingState.set(undefined);
         this.specDocument.set(undefined);
+        this.input.set(undefined);
         this.artifactsRetained.set(false);
         this.clearFileChanges();
         this.generationReverted.next(result.completedAt);
@@ -760,6 +764,7 @@ export class HyperionGenerationActivityFacade {
         this.usage.set(undefined);
         this.accountingState.set(undefined);
         this.specDocument.set(undefined);
+        this.input.set(undefined);
         this.artifactsRetained.set(false);
         this.completionStatus.set(undefined);
         this.liveExerciseChanged.set(undefined);

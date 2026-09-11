@@ -36,17 +36,7 @@ interface StageTiming {
     live: boolean;
 }
 
-/**
- * The one progress ladder for a Hyperion run. The run page and the code editor's AI activity panel both render this,
- * so a run cannot appear to be at two different points depending on where an instructor is looking.
- *
- * Everything the agent is doing is reported inside the ladder: the design stage's substeps as a nested ladder, and
- * the live line, the clock, the counters and the recent messages under the stage that is running. There is no second
- * place to look, and no disclosure to open first.
- *
- * Every stage also reports its own time. A run takes tens of minutes and a single stage can be silent for several, so
- * "designing, 6:12" is the difference between a run that is working and one that is stuck.
- */
+/** Generation stages, substeps, and elapsed times on the dedicated run page. */
 @Component({
     selector: 'jhi-hyperion-run-progress',
     templateUrl: './hyperion-run-progress.component.html',

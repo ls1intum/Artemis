@@ -104,7 +104,7 @@
                 "run": {
                     "newRunHint": "Gib die Aufgabenbeschreibung oder das Feedback für diesen neuen Lauf ein. Frühere Anweisungen und ausgewählte Review-Kommentare werden nicht übernommen.",
                     "feedbackLabel": "Was soll geändert werden?",
-                    "title": "KI-Generierung",
+                    "title": "Aufgabe generieren",
                     "backToExercise": "Zurück zur Aufgabe",
                     "elapsed": "Vergangen",
                     "progressTitle": "Fortschritt",
@@ -129,19 +129,30 @@
                     "notStartedWhoCanAct": "Eine Lehrperson oder Bearbeitende dieses Kurses können eine Generierung starten.",
                     "stageAnnouncement": "Schritt {{position}} von {{total}}, {{stage}}.",
                     "stalledAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung. Die Verbindung zum Durchlauf besteht weiterhin.",
-                    "stalledOfflineAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung, und der Status des Durchlaufs konnte nicht gelesen werden."
+                    "stalledOfflineAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung, und der Status des Durchlaufs konnte nicht gelesen werden.",
+                    "adaptationTitle": "Aufgabe anpassen",
+                    "breadcrumb": "KI-Erstellung",
+                    "generationInput": "Deine Aufgabenbeschreibung",
+                    "adaptationInput": "Gewünschte Änderungen",
+                    "selectedFeedback": "Ausgewähltes Review-Feedback",
+                    "feedbackLocation": {
+                        "PROBLEM_STATEMENT": "Aufgabenstellung",
+                        "TEMPLATE_REPO": "Vorlage",
+                        "SOLUTION_REPO": "Musterlösung",
+                        "TEST_REPO": "Tests",
+                        "AUXILIARY_REPO": "Zusatz-Repository"
+                    }
                 },
                 "live": {
                     "repairRound": "Prüfrunde {{round}} — {{blocking}} zu beheben, {{advisory}} zu sichten ({{carriedOver}} übernommen, {{drained}} erledigt, {{fresh}} neu)",
                     "checkpoint": "Eine funktionierende Fassung ist gesichert. Selbst wenn der Rest scheitert, bekommst du eine Aufgabe."
                 },
                 "artifacts": {
-                    "title": "Was Artemis bisher erzeugt hat",
-                    "notSavedHint": "Nichts davon ist bisher in deiner Aufgabe. Gespeichert wird erst, wenn alle Prüfungen bestehen.",
-                    "savedHint": "Artemis hat das in deiner Aufgabe gespeichert. Prüfe es, bevor du sie freigibst.",
+                    "title": "Aufgabenmaterialien",
+                    "notSavedHint": "Die Dateiaktivität zeigt den Arbeitsstand dieses Durchlaufs. Das Ergebnis zeigt, ob er gespeichert wurde.",
+                    "savedHint": "In der Aufgabe gespeichert. Öffne den Code-Editor, um das Ergebnis zu prüfen und zu bearbeiten.",
                     "loading": "Der aufbewahrte Entwurf wird geladen…",
                     "specTitle": "Aufgabenentwurf",
-                    "specHint": "Was Artemis bauen wollte, bevor Code geschrieben wurde.",
                     "specPending": "Noch kein Aufgabenentwurf",
                     "specPendingHint": "Artemis entscheidet noch, was gebaut werden soll.",
                     "statementTitle": "Aufgabenstellung",
@@ -254,7 +265,9 @@
                     "runAgain": "Erneut ausführen",
                     "openEditor": "Code-Editor öffnen",
                     "openRun": "Generierungsansicht öffnen",
-                    "start": "Diese Aufgabe generieren"
+                    "start": "Diese Aufgabe generieren",
+                    "viewRun": "KI-Fortschritt ansehen",
+                    "viewResults": "KI-Ergebnis ansehen"
                 }
             },
             "jobs": {
@@ -264,7 +277,7 @@
                 "empty": "Bisher keine Generierungsläufe.",
                 "emptyHint": "Ein Lauf erscheint hier, sobald du ihn aus einer Aufgabe startest.",
                 "dismiss": "Diesen Lauf ausblenden",
-                "summaryRunning": "{{count}} in Arbeit",
+                "summaryRunning": "KI aktiv: {{count}}",
                 "summaryAttention": "{{count}} zu prüfen",
                 "summaryFinished": "{{count}} fertig",
                 "runningMinutes": "läuft seit {{minutes}} Min.",
