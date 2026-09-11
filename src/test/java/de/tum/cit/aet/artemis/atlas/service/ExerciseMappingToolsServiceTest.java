@@ -20,8 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
@@ -79,7 +79,7 @@ class ExerciseMappingToolsServiceTest {
 
     private ExerciseMappingToolsService service;
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private Course course;
 
@@ -131,7 +131,7 @@ class ExerciseMappingToolsServiceTest {
 
         assertThat(json.get("courseId").asLong()).isEqualTo(10L);
         assertThat(json.get("competencies")).hasSize(2);
-        assertThat(json.get("competencies").get(0).get("title").asText()).isEqualTo("Sorting Algorithms");
+        assertThat(json.get("competencies").get(0).get("title").asString()).isEqualTo("Sorting Algorithms");
     }
 
     @Test
@@ -140,7 +140,7 @@ class ExerciseMappingToolsServiceTest {
 
         JsonNode json = objectMapper.readTree(service.getCourseCompetencies(999L));
 
-        assertThat(json.get("error").asText()).contains("Course not found");
+        assertThat(json.get("error").asString()).contains("Course not found");
     }
 
     @Test

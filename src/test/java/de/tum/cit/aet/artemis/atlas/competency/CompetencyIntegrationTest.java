@@ -57,8 +57,6 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
                     HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
                     new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false), HttpStatus.FORBIDDEN);
-            request.put("/api/atlas/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/competency-links/generated-from-hyperion-checklist",
-                    Set.of(courseCompetency.getId()), HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", List.of(), HttpStatus.FORBIDDEN);
@@ -215,19 +213,11 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void shouldPersistHyperionChecklistProvenanceForCompetencyAndLink() throws Exception {
+    void shouldPersistHyperionChecklistProvenanceForCompetency() throws Exception {
         Competency generatedCompetency = competencyForBulkCreation("Hyperion generated");
         CourseCompetencyResponseDTO created = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/generated-from-hyperion-checklist",
                 toRequestDto(generatedCompetency), CourseCompetencyResponseDTO.class, HttpStatus.CREATED);
         assertThat(created.generatedByAi()).isTrue();
-
-        assertThat(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(textExercise.getId(), courseCompetency.getId())).get()
-                .extracting(CompetencyExerciseLink::isGeneratedByAi).isEqualTo(false);
-        request.put("/api/atlas/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/competency-links/generated-from-hyperion-checklist",
-                Set.of(courseCompetency.getId()), HttpStatus.NO_CONTENT);
-
-        assertThat(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(textExercise.getId(), courseCompetency.getId())).get()
-                .extracting(CompetencyExerciseLink::isGeneratedByAi).isEqualTo(true);
     }
 
     @Test

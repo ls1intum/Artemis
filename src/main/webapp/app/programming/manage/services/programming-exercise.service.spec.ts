@@ -135,13 +135,9 @@ describe('ProgrammingExercise Service', () => {
 
             service.automaticSetup(exercise).subscribe((response) => expect(response.body).toEqual(createdExercise));
 
-            httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/setup?emptyRepositories=false` }).flush(createdExercise);
-            const provenanceRequest = httpMock.expectOne({
-                method: 'PUT',
-                url: 'api/atlas/courses/7/exercises/11/competency-links/generated-from-hyperion-checklist',
-            });
-            expect(provenanceRequest.request.body).toEqual([5]);
-            provenanceRequest.flush(null);
+            const request = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/setup?emptyRepositories=false&hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toHaveLength(1);
+            request.flush(createdExercise);
         });
 
         it('should reconnect template submission with result', () => {
@@ -264,13 +260,9 @@ describe('ProgrammingExercise Service', () => {
 
             service.update(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
 
-            httpMock.expectOne({ method: 'PUT', url: resourceUrl }).flush(exercise);
-            const provenanceRequest = httpMock.expectOne({
-                method: 'PUT',
-                url: 'api/atlas/courses/7/exercises/11/competency-links/generated-from-hyperion-checklist',
-            });
-            expect(provenanceRequest.request.body).toEqual([5]);
-            provenanceRequest.flush(null);
+            const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}?hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+            request.flush(exercise);
         });
 
         it('should update the Timeline of a ProgrammingExercise', () => {
@@ -485,13 +477,9 @@ describe('ProgrammingExercise Service', () => {
 
         service.reevaluateAndUpdate(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
 
-        httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${exercise.id}/re-evaluate` }).flush(exercise);
-        const provenanceRequest = httpMock.expectOne({
-            method: 'PUT',
-            url: 'api/atlas/courses/7/exercises/123/competency-links/generated-from-hyperion-checklist',
-        });
-        expect(provenanceRequest.request.body).toEqual([5]);
-        provenanceRequest.flush(null);
+        const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${exercise.id}/re-evaluate?hyperionCompetencyId=5` });
+        expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+        request.flush(exercise);
     });
 
     it('should get theia config', () => {

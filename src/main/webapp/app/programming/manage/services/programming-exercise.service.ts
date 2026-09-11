@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -22,7 +22,6 @@ import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -55,7 +54,6 @@ export class ProgrammingExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private sortService = inject(SortService);
-    private competencyService = inject(CompetencyService);
 
     public resourceUrl = 'api/programming/programming-exercises';
     public localCIResourceUrl = 'api/localci/programming-exercises';
@@ -70,11 +68,10 @@ export class ProgrammingExerciseService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
-        const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
-        return this.http.post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params }).pipe(
-            map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)),
-            switchMap((res) => this.persistHyperionChecklistLinkProvenance(programmingExercise, res)),
-        );
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams().set('emptyRepositories', String(emptyRepositories)), programmingExercise);
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
+            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
     /**
@@ -170,32 +167,27 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
-        return this.http.put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)),
-            switchMap((res) => this.persistHyperionChecklistLinkProvenance(programmingExercise, res)),
-        );
+        return this.http
+            .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
     /**
-     * Finalizes provenance through a dedicated server route after the ordinary exercise save has persisted the links.
+     * Adds Hyperion-inferred competency IDs to the exercise save itself so the server persists links and provenance together.
      */
-    private persistHyperionChecklistLinkProvenance(source: ProgrammingExercise, response: EntityResponseType): Observable<EntityResponseType> {
-        const competencyIds = [
-            ...new Set(
-                (source.competencyLinks ?? [])
-                    .filter((link) => link.generatedByAi)
-                    .map((link) => link.competency?.id)
-                    .filter((id): id is number => id !== undefined),
-            ),
-        ];
-        const exerciseId = response.body?.id;
-        const courseId = response.body?.course?.id ?? response.body?.exerciseGroup?.exam?.course?.id ?? source.course?.id ?? source.exerciseGroup?.exam?.course?.id;
-        if (exerciseId === undefined || courseId === undefined || competencyIds.length === 0) {
-            return of(response);
+    private addHyperionChecklistProvenanceParams(params: HttpParams, exercise: ProgrammingExercise): HttpParams {
+        const competencyIds = new Set(
+            (exercise.competencyLinks ?? [])
+                .filter((link) => link.generatedByAi)
+                .map((link) => link.competency?.id)
+                .filter((id): id is number => id !== undefined),
+        );
+        for (const competencyId of competencyIds) {
+            params = params.append('hyperionCompetencyId', competencyId);
         }
-        return this.competencyService.markExerciseLinksGeneratedFromHyperionChecklist(courseId, exerciseId, competencyIds).pipe(map(() => response));
+        return params;
     }
 
     /**
@@ -348,8 +340,10 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
+        // No second sort here: sortByProperty above established the order, and calling sort() without a comparator
+        // on the submissions would compare them as strings, where every element is equal and nothing is reordered.
         // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-        return getNewestResult(submissions.sort().last()?.results);
+        return getNewestResult(submissions.last()?.results);
     }
 
     /**
@@ -509,17 +503,14 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, dto, {
                 params: options,
                 observe: 'response',
             })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)),
-                switchMap((res) => this.persistHyperionChecklistLinkProvenance(programmingExercise, res)),
-            );
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**

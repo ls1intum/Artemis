@@ -61,7 +61,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -97,12 +96,10 @@ public class CompetencyResource {
 
     private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
 
-    private final ExerciseRepository exerciseRepository;
-
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
             CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi, CompetencyValidationService competencyValidator,
-            CompetencyAtlasMLNotificationService atlasMLNotificationService, ExerciseRepository exerciseRepository) {
+            CompetencyAtlasMLNotificationService atlasMLNotificationService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -113,7 +110,6 @@ public class CompetencyResource {
         this.atlasMLApi = atlasMLApi;
         this.competencyValidator = competencyValidator;
         this.atlasMLNotificationService = atlasMLNotificationService;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -200,28 +196,6 @@ public class CompetencyResource {
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId()))
                 .body(CourseCompetencyResponseDTO.of(persistedCompetency));
-    }
-
-    /**
-     * Marks selected exercise links as originating from Hyperion's checklist after the exercise has been saved.
-     * Existing manual links not named in the request remain manual.
-     *
-     * @param courseId      the course containing the exercise
-     * @param exerciseId    the exercise whose links were inferred
-     * @param competencyIds the competencies linked by the checklist
-     * @return an empty success response
-     */
-    @PutMapping("courses/{courseId}/exercises/{exerciseId}/competency-links/generated-from-hyperion-checklist")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> markCompetencyLinksGeneratedFromHyperionChecklist(@PathVariable long courseId, @PathVariable long exerciseId,
-            @Valid @RequestBody Set<@NotNull Long> competencyIds) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (exerciseCourse == null || exerciseCourse.getId() != courseId) {
-            throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseCourseMismatch");
-        }
-        competencyService.markExerciseLinksAsAiGenerated(exerciseId, competencyIds);
-        return ResponseEntity.noContent().build();
     }
 
     /**

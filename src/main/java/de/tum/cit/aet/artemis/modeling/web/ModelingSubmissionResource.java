@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -172,7 +173,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        StudentParticipation participationFromExamGate = null;
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
             // Apply further checks if it is an exam submission
@@ -186,13 +187,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
 
-        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, participationFromExamGate);
-        modelingSubmissionService.hideDetails(modelingSubmission, user);
+        var saved = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, participationFromExamGate);
+        modelingSubmission = saved.submission();
         long end = System.currentTimeMillis();
         log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         // Include the participation owner: this is the student's own submission and the client checks participation
         // ownership (isOwnerOfParticipation) on the returned participation. hideDetails keeps the owner for the student.
-        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, true));
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, saved.participation()));
     }
 
     /**

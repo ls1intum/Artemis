@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyDTO;
@@ -85,6 +87,30 @@ class CompetencyExerciseLinkProvenanceTest {
         service.updateCompetencyLinks(dto, exercise);
 
         assertThat(exercise.getCompetencyLinks()).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isFalse());
+    }
+
+    @Test
+    void hyperionGeneratedLinkIsMarkedDuringUpdate() {
+        CourseCompetency added = competency(6L, "Recursion");
+        exercise.setCompetencyLinks(new HashSet<>());
+        when(competencyRepositoryApi.findCompetencyOrPrerequisiteByIdElseThrow(6L)).thenReturn(added);
+
+        CompetencyLinksHolderDTO dto = () -> Set.of(new CompetencyLinkDTO(new CompetencyDTO(6L, "Recursion"), 1.0));
+        service.updateCompetencyLinks(dto, exercise, Set.of(6L));
+
+        assertThat(exercise.getCompetencyLinks()).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
+    }
+
+    @Test
+    void rejectsHyperionProvenanceForLinkMissingFromSave() {
+        CourseCompetency existing = competency(5L, "Sorting");
+        CompetencyExerciseLink existingLink = new CompetencyExerciseLink(existing, exercise, 1.0);
+        exercise.setCompetencyLinks(new HashSet<>(Set.of(existingLink)));
+        CompetencyLinksHolderDTO dto = () -> Set.of(new CompetencyLinkDTO(new CompetencyDTO(5L, "Sorting"), 0.5));
+
+        assertThatThrownBy(() -> service.updateCompetencyLinks(dto, exercise, Set.of(6L))).isInstanceOf(BadRequestAlertException.class);
+        assertThat(existingLink.getWeight()).isEqualTo(1.0);
+        assertThat(existingLink.isGeneratedByAi()).isFalse();
     }
 
     @Test

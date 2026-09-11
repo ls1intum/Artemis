@@ -154,17 +154,6 @@ describe('CompetencyService', () => {
         expect(expectedResultCompetency.body?.generatedByAi).toBe(true);
     });
 
-    it('should mark exercise links generated from the Hyperion checklist', () => {
-        competencyService.markExerciseLinksGeneratedFromHyperionChecklist(1, 2, [3]).subscribe();
-
-        const req = httpTestingController.expectOne({
-            method: 'PUT',
-            url: 'api/atlas/courses/1/exercises/2/competency-links/generated-from-hyperion-checklist',
-        });
-        expect(req.request.body).toEqual([3]);
-        req.flush(null);
-    });
-
     it('should update a Competency', () => {
         const returnedFromService = { ...defaultCompetencyDtos.first()!, title: 'Test' };
         const expected = toCompetency(returnedFromService);
