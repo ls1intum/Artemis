@@ -87,7 +87,7 @@ spring:
 
 ### Token Usage Tracking
 
-Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable accurate cost reporting in admin dashboards.
+Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable operator-configured EUR cost estimates in admin dashboards.
 
 ```yaml
 artemis:
@@ -98,7 +98,23 @@ artemis:
                 output-cost-per-million-eur: 1.84
 ```
 
-Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). If a model has no cost entry, costs default to zero but token counts are still recorded.
+Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). For whole-exercise generation, missing rates make the estimate incomplete; they do not establish zero cost. Token counts remain available.
+
+When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
+
+For example, the [OpenRouter model catalogue](https://openrouter.ai/api/v1/models) retrieved on 11 September 2026 lists `qwen/qwen3.8-27b` at USD 0.42 per million input tokens, USD 0.085 per million cached input tokens, and USD 3.00 per million output tokens. At the [ECB reference rate](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml) dated 10 September 2026 (EUR 1 = USD 1.1616), a deployment whose provider returns `Qwen/Qwen3.8-27B` can configure:
+
+```yaml
+artemis:
+    llm:
+        model-costs:
+            "[Qwen/Qwen3.8-27B]":
+                input-cost-per-million-eur: 0.361570248
+                cached-input-cost-per-million-eur: 0.073174931
+                output-cost-per-million-eur: 2.582644628
+```
+
+Refresh the rates deliberately rather than treating this dated example as a permanent default. Re-register evaluation campaigns when their effective pricing configuration changes.
 
 ### Observability (Optional)
 

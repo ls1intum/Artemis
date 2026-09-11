@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *                              {@code PENDING}, so a live figure is never mistaken for a total; a status without retained usage, and any status for a caller who does not own the
  *                              run, is {@code INCOMPLETE}
  * @param effortProfile     the effort profile this run actually resolved to; omitted for sanitized views and for deployments that configure no profiles
+ * @param input             the instructor input retained for this run; omitted for non-owner and sanitized views
  * @param artifactsRetained whether a candidate snapshot from this run is currently readable through the artifacts endpoint. Answers exactly one question
  *                              for the client — is there anything for the instructor to look at — so it can stop promising kept work for a run that kept none. Derived from the
  *                              retained snapshot itself rather than stamped when the run ended, so it cannot outlive it: it turns false again once the retention TTL expires or
@@ -42,52 +43,58 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
         @Nullable String specDocument, @Nullable ExerciseGenerationUsageDTO usage,
         @Schema(description = "Whether the reported usage is a complete account of a generation run's provider spend", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseGenerationAccountingState accountingState,
         @Nullable String effortProfile,
-        @Schema(description = "Whether a current or retained candidate snapshot from this run is readable", requiredMode = Schema.RequiredMode.REQUIRED) boolean artifactsRetained) {
+        @Schema(description = "Whether a current or retained candidate snapshot from this run is readable", requiredMode = Schema.RequiredMode.REQUIRED) boolean artifactsRetained,
+        @Nullable ExerciseGenerationInputDTO input) {
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller,
             boolean cancellable, @Nullable String specDocument) {
         this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, null,
-                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false);
+                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller,
             boolean cancellable) {
         this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, null, null,
-                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false);
+                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode, boolean ownedByCaller) {
         this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, running && ownedByCaller, null, null,
-                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false);
+                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode) {
         this(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, true, running, null, null,
-                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false);
+                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false, null);
     }
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable) {
         this(jobId, running, mode, events, fileChanges, revertAvailable, null, null, true, running, null, null,
-                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false);
+                running ? ExerciseGenerationAccountingState.PENDING : ExerciseGenerationAccountingState.INCOMPLETE, null, false, null);
     }
 
     public static ExerciseGenerationStatusDTO revertOnly(String jobId, GenerationMode mode) {
         return new ExerciseGenerationStatusDTO(jobId, false, mode, List.of(), List.of(), true, jobId, mode);
     }
 
+    public ExerciseGenerationStatusDTO withInput(@Nullable ExerciseGenerationInputDTO input) {
+        return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
+                accountingState, effortProfile, artifactsRetained, ownedByCaller ? input : null);
+    }
+
     public ExerciseGenerationStatusDTO withUsage(@Nullable ExerciseGenerationUsageDTO usage, ExerciseGenerationAccountingState accountingState) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained);
+                accountingState, effortProfile, artifactsRetained, input);
     }
 
     public ExerciseGenerationStatusDTO withEffortProfile(@Nullable String effortProfile) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained);
+                accountingState, effortProfile, artifactsRetained, input);
     }
 
     /**
@@ -98,6 +105,6 @@ public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.Required
      */
     public ExerciseGenerationStatusDTO withArtifactsRetained(boolean artifactsRetained) {
         return new ExerciseGenerationStatusDTO(jobId, running, mode, events, fileChanges, revertAvailable, revertJobId, revertMode, ownedByCaller, cancellable, specDocument, usage,
-                accountingState, effortProfile, artifactsRetained);
+                accountingState, effortProfile, artifactsRetained, input);
     }
 }

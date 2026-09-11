@@ -41,7 +41,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
@@ -78,6 +80,26 @@ class GenerationJobReplayStoreTest {
     @AfterAll
     void stopHazelcast() {
         hazelcastInstance.shutdown();
+    }
+
+    @Test
+    void originalInputSurvivesReplayButIsNeverReturnedToAnotherInstructor() {
+        var input = new ExerciseGenerationInputDTO("Keep the public API.",
+                List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Handle empty stacks."))));
+        replayStore.initializeStart(81L, "adapt-input", "owner", GenerationMode.ADAPT, null, input);
+        var exercise = new ProgrammingExercise();
+        exercise.setId(81L);
+        var owner = new User();
+        owner.setLogin("owner");
+        var otherInstructor = new User();
+        otherInstructor.setLogin("other");
+
+        var reconnectedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL);
+        assertThat(reconnectedStore.getStatus(owner, exercise)).hasValueSatisfying(status -> assertThat(status.input()).isEqualTo(input));
+        assertThat(reconnectedStore.getStatus(otherInstructor, exercise)).isEmpty();
+
+        reconnectedStore.discardRetainedRun(81L, "adapt-input");
+        assertThat(reconnectedStore.getStatus(owner, exercise)).isEmpty();
     }
 
     @Test

@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
@@ -278,6 +279,11 @@ public class GenerationJobService {
         return startJob(user, exercise, userPrompt, mode, budgetReservationId, sourceBrief, null);
     }
 
+    public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
+            @Nullable HyperionGenerationSettings settings) {
+        return startJob(user, exercise, userPrompt, mode, budgetReservationId, sourceBrief, settings, null);
+    }
+
     /**
      * Starts a generation job after claiming the exercise slot.
      *
@@ -288,10 +294,11 @@ public class GenerationJobService {
      * @param budgetReservationId the budget reservation, if present
      * @param sourceBrief         the original brief, if present
      * @param settings            the resolved generation settings, if present
+     * @param input               the original instructor input retained with the run
      * @return the generation job id
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
-            @Nullable HyperionGenerationSettings settings) {
+            @Nullable HyperionGenerationSettings settings, @Nullable ExerciseGenerationInputDTO input) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
@@ -301,7 +308,7 @@ public class GenerationJobService {
         GenerationJobReplayStore.StartedReplay startedReplay = null;
         boolean publicStatePublished = false;
         try {
-            startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name());
+            startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name(), input);
             if (!exactProviderUsage) {
                 replayStore.markUsageIncomplete(jobId);
             }
@@ -960,13 +967,18 @@ public class GenerationJobService {
     }
 
     public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done,
-            @Nullable String specDocument, @Nullable String effortProfile) implements Serializable {
+            @Nullable String specDocument, @Nullable String effortProfile, @Nullable ExerciseGenerationInputDTO input) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
 
+        public JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done,
+                @Nullable String specDocument, @Nullable String effortProfile) {
+            this(jobId, userLogin, exerciseId, mode, events, done, specDocument, effortProfile, null);
+        }
+
         JobTranscript withEvents(List<ExerciseGenerationEventDTO> newEvents, boolean newDone, @Nullable String newSpecDocument) {
-            return new JobTranscript(jobId, userLogin, exerciseId, mode, newEvents, newDone, newSpecDocument, effortProfile);
+            return new JobTranscript(jobId, userLogin, exerciseId, mode, newEvents, newDone, newSpecDocument, effortProfile, input);
         }
     }
 

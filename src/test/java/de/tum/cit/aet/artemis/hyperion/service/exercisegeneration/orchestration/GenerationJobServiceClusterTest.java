@@ -24,6 +24,8 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -124,6 +126,35 @@ class GenerationJobServiceClusterTest {
     }
 
     /** The stale-writer fence: a node that does not own the job must not declare the point of no return and start writing to Git and the database. */
+    @Test
+    void inputAndDesignReplayAcrossNodesWithoutDisclosingOwnerFeedback() {
+        var firstReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(firstMember), Duration.ofHours(4));
+        var secondReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(secondMember), Duration.ofHours(4));
+        var input = new ExerciseGenerationInputDTO("Keep the API.",
+                List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Handle empty stacks."))));
+        var exercise = new ProgrammingExercise();
+        exercise.setId(810L);
+        var owner = new User();
+        owner.setLogin("owner");
+        var otherInstructor = new User();
+        otherInstructor.setLogin("other");
+        String jobId = firstNode.startJob(owner, exercise, "Keep the API.", GenerationMode.ADAPT, null, null, null, input);
+        assertThat(firstReplay.recordSpecDocument(810L, jobId, "# Approved stack design")).isTrue();
+
+        assertThat(secondReplay.getStatus(owner, exercise)).hasValueSatisfying(status -> {
+            assertThat(status.input()).isEqualTo(input);
+            assertThat(status.specDocument()).isEqualTo("# Approved stack design");
+        });
+        assertThat(secondReplay.getStatus(otherInstructor, exercise)).hasValueSatisfying(status -> {
+            assertThat(status.input()).isNull();
+            assertThat(status.specDocument()).isNull();
+        });
+
+        firstNode.clearJob(810L, jobId);
+        secondReplay.discardRetainedRun(810L, jobId);
+        assertThat(firstReplay.getStatus(owner, exercise)).isEmpty();
+    }
+
     @Test
     void enterNonCancellablePhase_isRefusedOnANodeThatDoesNotOwnTheJob() {
         long exerciseId = 900L;
