@@ -52,6 +52,7 @@ import {
     TumUiInputDirective,
     TumUiPopoverComponent,
     TumUiStatusDotComponent,
+    TumUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -141,6 +142,7 @@ interface ConsistencyIssueNavigationIssue {
         PopoverModule,
         TumUiButtonDirective,
         TumUiStatusDotComponent,
+        TumUiTooltipDirective,
         RouterLink,
         TumUiConfirmDialogComponent,
         TumUiDialogComponent,
@@ -356,10 +358,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected onAiToolbarClick(event: Event, popover: Popover): void {
-        if (this.isExerciseGenerationActionBlocked()) {
-            this.openGenerationPage();
-            return;
-        }
         popover.toggle(event);
     }
 
