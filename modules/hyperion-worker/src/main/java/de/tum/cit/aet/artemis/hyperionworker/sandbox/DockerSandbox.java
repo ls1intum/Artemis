@@ -76,6 +76,8 @@ public class DockerSandbox implements InteractiveSandbox {
 
     private final WorkerSettings settings;
 
+    private final String executionPrefix;
+
     private static final int MAX_ARCHIVE_BYTES = 40 * 1024 * 1024;
 
     /** In-process activity and operation counts used by the reaper. Unknown containers fall back to their creation time. */
@@ -147,7 +149,13 @@ public class DockerSandbox implements InteractiveSandbox {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
     public DockerSandbox(DockerClient dockerClient, WorkerSettings settings) {
+        this(dockerClient, settings, "");
+    }
+
+    private DockerSandbox(DockerClient dockerClient, WorkerSettings settings, String executionPrefix) {
+        this.executionPrefix = executionPrefix;
         this.dockerClient = dockerClient;
         this.settings = settings;
     }
@@ -345,7 +353,7 @@ public class DockerSandbox implements InteractiveSandbox {
     }
 
     String containerNamePrefix() {
-        return containerNamePrefix(settings.id());
+        return containerNamePrefix(settings.id()) + executionPrefix;
     }
 
     static String containerNamePrefix(String workerId) {
@@ -641,6 +649,23 @@ public class DockerSandbox implements InteractiveSandbox {
                 return new TarArchiveInputStream(new ByteArrayInputStream(archive.toByteArray()));
             }
         }
+    }
+
+    /**
+     * Isolates creation, lost-create recovery and cleanup to one immutable execution identity.
+     * @param executionId the admitted execution
+     * @return its scoped sandbox client
+     */
+    public DockerSandbox forExecution(UUID executionId) {
+        return new DockerSandbox(dockerClient, settings, executionId.toString() + "-");
+    }
+
+    /**
+     * Removes only the named execution's containers, including a lost Docker CREATE response.
+     * @param identity the execution to clean up
+     */
+    public void destroyExecution(de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity identity) {
+        forExecution(identity.executionId()).destroyActiveSessions();
     }
 
     /** Removes this worker's sessions, including containers missing from its local registry. */

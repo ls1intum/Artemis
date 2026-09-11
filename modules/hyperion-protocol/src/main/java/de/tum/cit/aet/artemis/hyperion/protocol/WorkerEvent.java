@@ -10,7 +10,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /** Worker-authenticated progress or terminal data. The destination, not the payload alone, establishes sender identity. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
-        String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
+        String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output, @Nullable WorkerCapacity capacity) {
+
+    public WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity,
+            boolean ready, String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
+        this(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, null);
+    }
+
+    public WorkerEvent withCapacity(WorkerCapacity snapshot) {
+        return new WorkerEvent(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, snapshot);
+    }
 
     public WorkerEvent {
         if (incarnation == null || timestamp == null || type == null) {
@@ -22,6 +31,9 @@ public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation
         }
         if (identity != null && (!workerId.equals(identity.workerId()) || !incarnation.equals(identity.workerIncarnation()))) {
             throw new IllegalArgumentException("Event and assignment identities differ");
+        }
+        if (capacity != null && capacity.executions().stream().anyMatch(id -> !workerId.equals(id.workerId()) || !incarnation.equals(id.workerIncarnation()))) {
+            throw new IllegalArgumentException("Capacity contains another worker's execution");
         }
         if ((type != Type.HEARTBEAT && identity == null) || ((type == Type.CHECKPOINT || type == Type.FINISHED) && output == null)) {
             throw new IllegalArgumentException("Event is missing its assignment or candidate");

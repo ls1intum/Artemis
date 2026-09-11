@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkerCommand(int protocolVersion, Type type, ExecutionIdentity identity, @Nullable GenerationAssignment assignment) {
 
-    public static final int PROTOCOL_VERSION = 1;
+    public static final int PROTOCOL_VERSION = 2;
 
     public WorkerCommand {
         if (type == null || identity == null) {
