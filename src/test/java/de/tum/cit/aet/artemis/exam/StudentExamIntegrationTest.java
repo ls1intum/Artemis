@@ -55,11 +55,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -208,7 +208,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
@@ -652,7 +652,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         boolean sawQuiz = false;
         boolean sawText = false;
         for (JsonNode exercise : conductionWire.get("exercises")) {
-            if ("text".equals(exercise.path("type").asText())) {
+            if ("text".equals(exercise.path("type").asString())) {
                 sawText = true;
                 assertThat(exercise.has("exampleSolution")).as("text exercise must not leak exampleSolution during conduction").isFalse();
             }
@@ -665,7 +665,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             for (JsonNode question : questions) {
                 assertThat(question.hasNonNull("id")).as("quiz question carries an id for the client").isTrue();
                 assertThat(question.hasNonNull("type")).as("quiz question carries its polymorphic type discriminator").isTrue();
-                switch (question.get("type").asText()) {
+                switch (question.get("type").asString()) {
                     case "multiple-choice" -> {
                         JsonNode options = question.get("answerOptions");
                         assertThat(options).as("MC question keeps its answer options for the client").isNotNull();
@@ -1756,7 +1756,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // 2. Build the slim submit body exactly as the client's toSubmitStudentExamDTO mapper does, reading only the wire
         // ids the mapper reads and injecting the per-type content a student would have entered.
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getObjectMapper();
         ObjectNode submitBody = mapper.createObjectNode();
         submitBody.put("id", conductionWire.get("id").asLong());
         ArrayNode submitExercises = submitBody.putArray("exercises");
@@ -1788,7 +1788,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     continue;
                 }
                 for (JsonNode submission : wireSubmissions) {
-                    String type = submission.path("submissionExerciseType").asText(null);
+                    String type = submission.path("submissionExerciseType").asString(null);
                     ObjectNode slimSubmission = slimSubmissions.addObject();
                     if (submission.hasNonNull("id")) {
                         slimSubmission.put("id", submission.get("id").asLong());
@@ -1818,7 +1818,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                             assertThat(questions).as("conduction wire quiz exercise carries quizQuestions").isNotNull();
                             ArrayNode answers = slimSubmission.putArray("submittedAnswers");
                             for (JsonNode question : questions) {
-                                if ("multiple-choice".equals(question.path("type").asText()) && mcQuestionId == null) {
+                                if ("multiple-choice".equals(question.path("type").asString()) && mcQuestionId == null) {
                                     JsonNode options = question.get("answerOptions");
                                     assertThat(options).as("conduction wire MC question carries answerOptions").isNotNull();
                                     assertThat(options.isEmpty()).as("conduction wire MC question exposes at least one option").isFalse();
@@ -2049,7 +2049,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     var quizSubmission = (QuizSubmission) submission;
                     assertThat(versionTree.size()).as("version must contain one entry per submitted answer").isEqualTo(quizSubmission.getSubmittedAnswers().size());
                     Map<String, Long> versionedTypeCounts = new HashMap<>();
-                    versionTree.forEach(node -> versionedTypeCounts.merge(node.path("quizQuestion").path("type").asText(), 1L, Long::sum));
+                    versionTree.forEach(node -> versionedTypeCounts.merge(node.path("quizQuestion").path("type").asString(), 1L, Long::sum));
                     Map<String, Long> submittedTypeCounts = quizSubmission.getSubmittedAnswers().stream().collect(Collectors.groupingBy(answer -> {
                         var question = answer.getQuizQuestion();
                         if (question instanceof MultipleChoiceQuestion) {
@@ -2065,7 +2065,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     }, Collectors.counting()));
                     assertThat(versionedTypeCounts).as("version must reference the same per-type count of question types as the submission").isEqualTo(submittedTypeCounts);
                 }
-                catch (JsonProcessingException e) {
+                catch (JacksonException e) {
                     fail("Exception thrown while parsing versioned submission content", e);
                 }
                 assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
@@ -2261,7 +2261,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             sawQuiz = true;
             assertThat(questions).hasSize(3);
             for (JsonNode question : questions) {
-                switch (question.get("type").asText()) {
+                switch (question.get("type").asString()) {
                     case "multiple-choice" -> {
                         assertThat(question.hasNonNull("explanation")).as("published summary MC question must carry its explanation").isTrue();
                         JsonNode options = question.get("answerOptions");
@@ -2323,7 +2323,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             assertThat(questions).hasSize(3);
             for (JsonNode question : questions) {
                 assertThat(question.has("explanation")).as("unpublished summary quiz question must not leak explanation").isFalse();
-                switch (question.get("type").asText()) {
+                switch (question.get("type").asString()) {
                     case "multiple-choice" -> {
                         for (JsonNode option : question.get("answerOptions")) {
                             assertThat(option.has("isCorrect")).as("unpublished summary MC option must not leak isCorrect").isFalse();
@@ -2492,9 +2492,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         JsonNode examNode = conductionWire.get("exam");
         assertThat(examNode).as("conduction wire must carry the exam").isNotNull();
-        assertThat(examNode.path("moduleNumber").asText()).as("moduleNumber must reach the exam cover").isEqualTo("IN2000");
-        assertThat(examNode.path("courseName").asText()).as("courseName must reach the exam cover").isEqualTo("Introduction to Software Engineering");
-        assertThat(examNode.path("examiner").asText()).as("examiner must reach the exam cover").isEqualTo("Prof. Dr. Stephan Krusche");
+        assertThat(examNode.path("moduleNumber").asString()).as("moduleNumber must reach the exam cover").isEqualTo("IN2000");
+        assertThat(examNode.path("courseName").asString()).as("courseName must reach the exam cover").isEqualTo("Introduction to Software Engineering");
+        assertThat(examNode.path("examiner").asString()).as("examiner must reach the exam cover").isEqualTo("Prof. Dr. Stephan Krusche");
         deleteExamWithInstructor(exam1);
     }
 
@@ -2630,7 +2630,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(policyNode).as("conduction wire must carry the active submission policy").isNotNull();
         assertThat(policyNode.path("active").asBoolean()).isTrue();
         assertThat(policyNode.path("submissionLimit").asInt()).isEqualTo(5);
-        assertThat(policyNode.path("type").asText()).as("type is the discriminator the client's SubmissionPolicyType switches on").isEqualTo("submission_penalty");
+        assertThat(policyNode.path("type").asString()).as("type is the discriminator the client's SubmissionPolicyType switches on").isEqualTo("submission_penalty");
         assertThat(policyNode.path("exceedingPenalty").asDouble()).isEqualTo(2.0);
         deleteExamWithInstructor(exam1);
     }
@@ -2648,7 +2648,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 continue;
             }
             for (JsonNode question : questions) {
-                switch (question.get("type").asText()) {
+                switch (question.get("type").asString()) {
                     case "multiple-choice" -> {
                         long correctOptions = 0;
                         for (JsonNode option : question.get("answerOptions")) {
@@ -2685,7 +2685,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             sawQuiz = true;
             for (JsonNode question : questions) {
                 assertThat(question.has("explanation")).as(context + " quiz question must not leak explanation").isFalse();
-                if ("multiple-choice".equals(question.get("type").asText())) {
+                if ("multiple-choice".equals(question.get("type").asString())) {
                     for (JsonNode option : question.get("answerOptions")) {
                         assertThat(option.has("isCorrect")).as(context + " MC option must not leak isCorrect").isFalse();
                     }
@@ -3312,7 +3312,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);
@@ -3964,7 +3964,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         private final int QUIZ_SUBMISSION_QUERY_COUNT = 17;
 
         // exam summary: user with course roles, student exam with its exercises' groups, exam, quiz questions,
-        // participations with latest submission and result, submitted answers
+        // participations with latest submission and result, submitted answers. A real exam summary does not read the
+        // course's Athena configuration: only a test exam offers the AI feedback request.
         private final int SUMMARY_QUERY_COUNT = 9;
 
         private TextExercise textExercise;

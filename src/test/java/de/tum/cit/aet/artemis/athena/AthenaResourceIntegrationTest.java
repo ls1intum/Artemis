@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionWithoutAssessmentDTO;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -122,7 +123,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Override
     protected void initTestCase() {
         super.initTestCase();
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 0);
 
         // Create learner profiles for test users
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
@@ -398,4 +399,38 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     // Removed legacy public endpoint test that expected BAD_REQUEST for invalid repository type
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNextSubmissionToAssessIsTheOneAthenaProposed() throws Exception {
+        // The endpoint asks Athena which submission to hand out next, gated on the course's grading feedback setting.
+        // That setting is lazy, so the endpoint has to resolve it before the selection rather than only for the response.
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        var pastDueDateExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(2),
+                ZonedDateTime.now().plusDays(1));
+        var firstSubmission = textExerciseUtilService.saveTextSubmission(pastDueDateExercise,
+                ParticipationFactory.generateTextSubmission("The first submission", Language.ENGLISH, true), TEST_PREFIX + "student1");
+        var proposedSubmission = textExerciseUtilService.saveTextSubmission(pastDueDateExercise,
+                ParticipationFactory.generateTextSubmission("The submission Athena picks", Language.ENGLISH, true), TEST_PREFIX + "student2");
+
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", proposedSubmission.getId());
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("lock", "true");
+        var selected = request.get("/api/text/exercises/" + pastDueDateExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmissionWithoutAssessmentDTO.class, params);
+
+        // Athena has to have been asked at all: without the configuration the endpoint skips it and picks at random,
+        // which would pass the id assertion below every other run.
+        athenaRequestMockProvider.verifySubmissionSelection();
+        assertThat(selected).isNotNull();
+        assertThat(selected.id()).as("the submission Athena proposed is handed out, not a random one").isEqualTo(proposedSubmission.getId());
+        assertThat(selected.id()).isNotEqualTo(firstSubmission.getId());
+    }
 }

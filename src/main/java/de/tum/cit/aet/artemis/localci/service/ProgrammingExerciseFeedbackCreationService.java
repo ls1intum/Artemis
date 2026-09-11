@@ -62,6 +62,9 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseFeedbackCreationService.class);
 
+    /** A dot inside an exception name, escaped so that it matches literally in the assembled expression. */
+    private static final Pattern DOT = Pattern.compile("\\.");
+
     private static final String DEFAULT_FILEPATH = "notAvailable";
 
     private static final String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
@@ -75,6 +78,12 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final List<String> TIMEOUT_EXCEPTIONS = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
             "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
+
+    /** A timeout exception at the start of a line, with the exception name and its text as groups. */
+    private static final Pattern TIMEOUT_EXCEPTION_MESSAGE = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
+
+    /** Any other message that reports a timeout, with its text as the one group. */
+    private static final Pattern GENERAL_TIMEOUT_MESSAGE = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
 
     /**
      * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
@@ -120,15 +129,13 @@ public class ProgrammingExerciseFeedbackCreationService {
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
         // Defining two pattern groups, (1) the exception name and (2) the exception text
-        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
-        Matcher matcher = findTimeoutPattern.matcher(errorMessage);
+        Matcher matcher = TIMEOUT_EXCEPTION_MESSAGE.matcher(errorMessage);
         if (matcher.find()) {
             String exceptionText = matcher.group(2);
             return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
         }
         // Defining one pattern group, (1) the exception text
-        Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
-        matcher = findGeneralTimeoutPattern.matcher(errorMessage);
+        matcher = GENERAL_TIMEOUT_MESSAGE.matcher(errorMessage);
         if (matcher.find()) {
             // overwrite Ares: TimeoutException
             String generalTimeOutExceptionText = matcher.group(1);
@@ -159,7 +166,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static Pattern prepareJVMResultMessageMatcher(List<String> jvmExceptionsToFilter) {
         // Replace all "." with "\\." and join with regex alternative symbol "|"
-        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replaceAll("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
+        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> DOT.matcher(s).replaceAll("\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
         // Match any of the exceptions at the start of the line and with ": " after it
         String pattern = "^(?:%s): \n*".formatted(assertionRegex);
 
