@@ -202,7 +202,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component['loadRandomSubmission'](7);
         await fixture.whenStable();
 
-        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0');
+        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0&testRun=false');
     });
 
     describe('ngOnInit tests', () => {
