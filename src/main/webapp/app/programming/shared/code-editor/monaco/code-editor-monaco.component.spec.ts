@@ -26,7 +26,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 
@@ -1287,40 +1286,6 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(config.showLocationWarning()).toBe(true);
         expect(config.canSubmit()).toBe(false);
-    });
-
-    it('offers feedback selection and adaptation for instructor comments as well as consistency findings', () => {
-        fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
-        fixture.componentRef.setInput('enableExerciseReviewComments', true);
-        fixture.changeDetectorRef.detectChanges();
-        const config = (internals(comp).getReviewCommentManager() as any).config;
-        const templateThread = {
-            targetType: CommentThreadLocationType.TEMPLATE_REPO,
-            comments: [{ type: CommentType.CONSISTENCY_CHECK, content: { contentType: CommentContentType.CONSISTENCY_CHECK } }],
-        } as any;
-        const normalReviewThread = {
-            targetType: CommentThreadLocationType.TEMPLATE_REPO,
-            comments: [{ type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'Manual comment' } }],
-        } as any;
-        const auxiliaryThread = {
-            targetType: CommentThreadLocationType.AUXILIARY_REPO,
-            comments: [{ type: CommentType.CONSISTENCY_CHECK, content: { contentType: CommentContentType.CONSISTENCY_CHECK } }],
-        } as any;
-
-        // Disabled (e.g. a Jenkins deployment, where agentic adaptation is unsupported): the button is hidden even for a template/solution/test thread.
-        fixture.componentRef.setInput('adaptReviewCommentThreadEnabled', false);
-        fixture.changeDetectorRef.detectChanges();
-        expect(config.showAdaptAction(templateThread)).toBe(false);
-        expect(config.showFeedbackAction(normalReviewThread)).toBe(false);
-
-        // Both ordinary comments and AI findings are eligible; auxiliary repositories are not.
-        fixture.componentRef.setInput('adaptReviewCommentThreadEnabled', true);
-        fixture.changeDetectorRef.detectChanges();
-        expect(config.showAdaptAction(templateThread)).toBe(true);
-        expect(config.showAdaptAction(normalReviewThread)).toBe(true);
-        expect(config.showFeedbackAction(normalReviewThread)).toBe(true);
-        expect(config.showFeedbackAction(auxiliaryThread)).toBe(false);
-        expect(config.showAdaptAction(auxiliaryThread)).toBe(false);
     });
 
     it('should commit and mark inline fix as applied after successful code-editor apply', () => {

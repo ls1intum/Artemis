@@ -1,0 +1,131 @@
+<div class="flex items-center gap-2" data-testid="code-editor-ai-actions">
+    @if (progressLink(); as link) {
+        <a tumUiButton severity="primary" variant="outlined" [routerLink]="link" data-testid="hyperion-editor-open-generation">
+            @if (progressRunning()) {
+                <tum-ui-status-dot state="running" [label]="'artemisApp.hyperion.generation.status.running' | artemisTranslate" />
+            } @else {
+                <fa-icon [icon]="facArtemisIntelligence" />
+            }
+            <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
+        </a>
+    }
+
+    <tum-ui-button-group [attr.aria-label]="'artemisApp.programmingExercise.artemisIntelligence.title' | artemisTranslate">
+        @if (adaptOffered()) {
+            <button
+                tumUiButton
+                type="button"
+                severity="primary"
+                variant="outlined"
+                [tumUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
+                tumUiTooltipPlacement="bottom"
+                (click)="requestAdapt()"
+                data-testid="hyperion-adapt-with-feedback"
+            >
+                <fa-icon [icon]="facArtemisIntelligence" />
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.adapt"></span>
+                @if (selectedFeedbackCount()) {
+                    <tum-ui-tag severity="info" rounded [value]="'' + selectedFeedbackCount()" data-testid="hyperion-adapt-selected-count" />
+                }
+            </button>
+        }
+        <button
+            #menuTrigger
+            tumUiButton
+            type="button"
+            severity="primary"
+            variant="outlined"
+            [tumUiMenuTrigger]="aiMenu"
+            [attr.aria-label]="adaptOffered() ? ('artemisApp.hyperion.generation.actions.moreActions' | artemisTranslate) : undefined"
+            data-testid="hyperion-ai-menu"
+        >
+            @if (busy()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            } @else if (!adaptOffered()) {
+                <fa-icon [icon]="facArtemisIntelligence" />
+            }
+            @if (!adaptOffered()) {
+                <span jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
+            }
+            @if (issueCount()) {
+                <tum-ui-tag severity="warn" rounded [value]="issueCountLabel()" data-testid="hyperion-issue-count" />
+            }
+            <fa-icon [icon]="faChevronDown" size="xs" />
+        </button>
+    </tum-ui-button-group>
+
+    @if (cancelAvailable()) {
+        <button tumUiButton type="button" severity="secondary" variant="outlined" (click)="cancelRequested.emit()" data-testid="hyperion-cancel-ai-operation">
+            <fa-icon [icon]="faBan" />
+            <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
+        </button>
+    }
+</div>
+
+<ng-template #aiMenu>
+    <tum-ui-menu>
+        <button tumUiMenuItem [disabled]="!!refineBlockedReason()" (triggered)="openRefinement()" data-testid="hyperion-refine-problem-statement">
+            <fa-icon [icon]="facArtemisIntelligence" />
+            <span class="flex flex-col">
+                <span [jhiTranslate]="refineLabelKey()"></span>
+                @if (refineBlockedReason(); as reason) {
+                    <span class="max-w-80 text-sm text-muted-color whitespace-normal">{{ reason | artemisTranslate }}</span>
+                }
+            </span>
+        </button>
+        <button tumUiMenuItem [disabled]="!!consistencyBlockedReason()" (triggered)="consistencyRequested.emit()" data-testid="hyperion-check-consistency">
+            <fa-icon [icon]="faCheckDouble" />
+            <span class="flex flex-col">
+                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
+                @if (consistencyBlockedReason(); as reason) {
+                    <span class="max-w-80 text-sm text-muted-color whitespace-normal">{{ reason | artemisTranslate }}</span>
+                }
+            </span>
+        </button>
+        @if (issueCount()) {
+            <button tumUiMenuItem (triggered)="issuesToggled.emit()" data-testid="hyperion-show-issues">
+                <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.showIssues"></span>
+                <span class="text-muted-color">({{ issueCount() }})</span>
+            </button>
+        }
+    </tum-ui-menu>
+</ng-template>
+
+<!-- The prompt is kept on dismiss so typed text is not lost. -->
+<tum-ui-popover #refinementPopover [ariaLabel]="refineLabelKey() | artemisTranslate">
+    <div class="flex w-[min(28rem,80vw)] flex-col gap-3" data-testid="hyperion-refinement-panel">
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-sm font-semibold" [jhiTranslate]="refineLabelKey()"></span>
+            <button
+                tumUiButton
+                type="button"
+                severity="secondary"
+                variant="text"
+                size="small"
+                (click)="refinementPopover.close()"
+                [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            >
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+        <textarea
+            tumUiTextarea
+            class="w-full resize-y"
+            rows="5"
+            [ngModel]="prompt()"
+            (ngModelChange)="prompt.set($event)"
+            [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+            [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+            [disabled]="!!refineBlockedReason()"
+            [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
+        ></textarea>
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-xs text-muted-color" [class.text-state-danger]="promptNearLimit()">{{ prompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
+            <button tumUiButton type="button" size="small" [disabled]="!promptSubmittable()" (click)="submitRefinement()" data-testid="hyperion-refine-submit">
+                <fa-icon [icon]="faPaperPlane" />
+                <span [jhiTranslate]="refineSubmitKey()"></span>
+            </button>
+        </div>
+    </div>
+</tum-ui-popover>

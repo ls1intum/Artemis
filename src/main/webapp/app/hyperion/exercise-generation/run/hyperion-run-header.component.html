@@ -63,12 +63,26 @@
             </tum-ui-button>
         }
         @if (startAvailable()) {
-            <tum-ui-button severity="primary" size="small" [loading]="startPending()" (clicked)="startRequested.emit()" data-testid="hyperion-run-start">
+            <tum-ui-button
+                severity="primary"
+                size="small"
+                [loading]="startPending()"
+                [disabledReason]="startBlockedReasonText()"
+                (clicked)="startRequested.emit()"
+                data-testid="hyperion-run-start"
+            >
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.start"></span>
             </tum-ui-button>
         }
         @if (runAgainAvailable()) {
-            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="runAgainRequested.emit()" data-testid="hyperion-run-run-again">
+            <tum-ui-button
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                [disabledReason]="startBlockedReasonText()"
+                (clicked)="startRequested.emit()"
+                data-testid="hyperion-run-run-again"
+            >
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.runAgain"></span>
             </tum-ui-button>
         }

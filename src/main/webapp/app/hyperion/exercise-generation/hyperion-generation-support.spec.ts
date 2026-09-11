@@ -2,15 +2,16 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { isHyperionGenerationDraft, supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { hyperionGenerationBlocker, isHyperionGenerationDraft, supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Hyperion generation support', () => {
-    it('supports the qualified Java Gradle project type', () => {
-        expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE)).toBe(true);
+    it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports the Java Gradle project type %s', (projectType) => {
+        expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(true);
     });
 
-    it.each([ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.FACT, undefined, null])(
+    it.each([ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_BLACKBOX, ProjectType.FACT, undefined, null])(
         'rejects unsupported or unspecified project type %s',
         (projectType) => {
             expect(supportsHyperionExerciseGeneration(ProgrammingLanguage.JAVA, projectType)).toBe(false);
@@ -28,37 +29,51 @@ describe('Hyperion draft eligibility', () => {
     function draft(): ProgrammingExercise {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;
-        exercise.projectType = ProjectType.GRADLE_GRADLE;
+        exercise.projectType = ProjectType.PLAIN_GRADLE;
         exercise.releaseDate = dayjs(now).add(1, 'day');
         return exercise;
     }
 
     it('accepts an unreleased, unmodified Java Gradle draft', () => {
+        expect(hyperionGenerationBlocker(draft(), now)).toBeUndefined();
         expect(isHyperionGenerationDraft(draft(), now)).toBe(true);
+        expect(isHyperionGenerationDraft(undefined, now)).toBe(false);
     });
 
-    it('rejects missing exercises, release dates, and exercises released at the current instant', () => {
-        expect(isHyperionGenerationDraft(undefined, now)).toBe(false);
+    it('names the release-date problem: unset counts as released, and so does the current instant', () => {
         const exercise = draft();
         exercise.releaseDate = undefined;
-        expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('noReleaseDate');
         exercise.releaseDate = dayjs(now);
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('released');
         expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
     });
 
-    it('rejects static analysis, sequential tests, auxiliary repositories, and student participations', () => {
+    it('names the first blocker in an order the instructor can act on', () => {
         const exercise = draft();
+        exercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+        exercise.projectType = ProjectType.PLAIN_MAVEN;
         exercise.staticCodeAnalysisEnabled = true;
-        expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('unsupportedLanguage');
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('unsupportedProjectType');
+        exercise.projectType = ProjectType.GRADLE_GRADLE;
+        exercise.exerciseGroup = new ExerciseGroup();
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('examExercise');
+        exercise.exerciseGroup = undefined;
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('staticCodeAnalysis');
         exercise.staticCodeAnalysisEnabled = false;
         exercise.buildConfig = new ProgrammingExerciseBuildConfig();
         exercise.buildConfig.sequentialTestRuns = true;
-        expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('sequentialTestRuns');
         exercise.buildConfig.sequentialTestRuns = false;
         exercise.auxiliaryRepositories = [new AuxiliaryRepository()];
-        expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('auxiliaryRepositories');
         exercise.auxiliaryRepositories = [];
         exercise.studentParticipations = [new StudentParticipation()];
-        expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('studentParticipations');
+        exercise.studentParticipations = [];
+        exercise.numberOfParticipations = 3;
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('studentParticipations');
     });
 });

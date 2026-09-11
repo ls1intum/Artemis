@@ -29,13 +29,11 @@
             [allowHiddenFiles]="true"
             [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
-            [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback() && !isExerciseGenerationActionBlocked()"
             (onFileLoad)="onFileLoad($event)"
             (onRepositoryFilesLoaded)="onRepositoryFilesLoaded()"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
-            (onAdaptReviewCommentThread)="adaptFromThread($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -157,204 +155,27 @@
                         }
                     </div>
                 </div>
-                <!-- Artemis Intelligence - Consolidated AI Actions -->
-                @if (generationSupported() && (isExerciseGenerationRunning() || generationRefreshFailed() || generationActivity.statusLoadFailed()) && generationLink(); as link) {
-                    <a tumUiButton severity="primary" variant="outlined" size="small" [routerLink]="link" data-testid="hyperion-editor-open-generation">
-                        @if (generationActivity.running()) {
-                            <tum-ui-status-dot state="running" [label]="'artemisApp.hyperion.generation.status.running' | artemisTranslate" />
-                        } @else {
-                            <fa-icon [icon]="facArtemisIntelligence" />
-                        }
-                        <span jhiTranslate="artemisApp.hyperion.generation.actions.viewRun"></span>
-                    </a>
-                }
                 @if (hyperionEnabled) {
-                    <!-- Toolbar divider -->
                     <div class="vr mx-2"></div>
-
-                    <div class="position-relative d-flex align-items-center">
-                        <div class="btn-group">
-                            <button
-                                #aiDropdownToggle
-                                class="ai-dropdown-toggle"
-                                pButton
-                                severity="primary"
-                                [outlined]="true"
-                                type="button"
-                                (click)="onAiToolbarClick($event, aiMenuPopover)"
-                                data-testid="hyperion-ai-menu"
-                                [disabled]="
-                                    isAiApplying() ||
-                                    isCheckingConsistency() ||
-                                    loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                                    loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO
-                                "
-                            >
-                                @if (
-                                    isAiApplying() ||
-                                    isExerciseGenerationRunning() ||
-                                    isCheckingConsistency() ||
-                                    loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                                    loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO
-                                ) {
-                                    <fa-icon [icon]="faSpinner" animation="spin" />
-                                } @else {
-                                    <fa-icon [icon]="facArtemisIntelligence" />
-                                }
-                                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
-                                @if (sortedIssues().length) {
-                                    <p-badge [value]="'' + sortedIssues().length" severity="warn" class="ms-1" />
-                                }
-                            </button>
-                            <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
-                                <div class="ai-menu-items">
-                                    @if (generationSupported()) {
-                                        <span
-                                            class="block"
-                                            [tumUiTooltip]="adaptBlockedReason() ?? '' | artemisTranslate"
-                                            [attr.tabindex]="adaptBlockedReason() ? 0 : undefined"
-                                            [attr.aria-label]="
-                                                adaptBlockedReason()
-                                                    ? ('artemisApp.review.adaptExercise.title' | artemisTranslate) + ': ' + (adaptBlockedReason()! | artemisTranslate)
-                                                    : undefined
-                                            "
-                                            data-testid="hyperion-adapt-availability"
-                                        >
-                                            <button
-                                                class="ai-menu-item"
-                                                [class.pointer-events-none]="!!adaptBlockedReason()"
-                                                (click)="openAdaptDialog(); aiMenuPopover.hide()"
-                                                [disabled]="!canAdaptWithFeedback() || isExerciseGenerationActionBlocked()"
-                                                data-testid="hyperion-adapt-with-feedback"
-                                            >
-                                                <fa-icon [icon]="facArtemisIntelligence" class="ai-menu-item-inline-icon" />
-                                                <span jhiTranslate="artemisApp.review.adaptExercise.title"></span>
-                                                @if (selectedAdaptFeedbackCount()) {
-                                                    <span>({{ selectedAdaptFeedbackCount() }})</span>
-                                                }
-                                            </button>
-                                        </span>
-                                    }
-
-                                    @if (exercise.isAtLeastEditor) {
-                                        <!-- Problem Statement Refinement -->
-                                        <button
-                                            class="ai-menu-item"
-                                            (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()"
-                                            [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
-                                            data-testid="hyperion-refine-problem-statement"
-                                        >
-                                            <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
-                                            <span
-                                                [jhiTranslate]="
-                                                    shouldShowGenerateButton()
-                                                        ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
-                                                        : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
-                                                "
-                                            ></span>
-                                        </button>
-
-                                        <!-- Split Button for Consistency Check if issues exist -->
-                                        @if (sortedIssues().length) {
-                                            <div class="d-flex w-100">
-                                                <button
-                                                    class="ai-menu-item flex-grow-1"
-                                                    (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
-                                                    [disabled]="isCheckingConsistency() || isExerciseGenerationActionBlocked()"
-                                                    data-testid="hyperion-check-consistency"
-                                                >
-                                                    <fa-icon [icon]="faCheckDouble" class="me-2" />
-                                                    <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
-                                                </button>
-                                                <div class="vr my-1"></div>
-                                                <button class="ai-menu-item flex-shrink-1 w-auto px-3" (click)="toggleConsistencyIssuesToolbar(); aiMenuPopover.hide()">
-                                                    <fa-icon [icon]="faTriangleExclamation" class="me-2 text-warning" />
-                                                    <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
-                                                </button>
-                                            </div>
-                                        } @else {
-                                            <button
-                                                class="ai-menu-item"
-                                                (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
-                                                [disabled]="isCheckingConsistency() || isExerciseGenerationActionBlocked()"
-                                                data-testid="hyperion-check-consistency"
-                                            >
-                                                <fa-icon [icon]="faCheckDouble" class="me-2" />
-                                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
-                                            </button>
-                                        }
-                                    }
-                                </div>
-                            </p-popover>
-                        </div>
-
-                        @if (isGeneratingOrRefining()) {
-                            <button pButton type="button" severity="secondary" outlined class="ms-1" (click)="cancelAiOperation()">
-                                <fa-icon [icon]="faBan" class="me-1" />
-                                <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
-                            </button>
-                        }
-
-                        <!-- Refinement Prompt Popover -->
-                        <!-- Prompt is intentionally preserved on dismiss so users don't lose typed text -->
-                        <tum-ui-popover #refinementPopover [ariaLabel]="'artemisApp.programmingExercise.problemStatement.refinementAssistance' | artemisTranslate">
-                            <div class="flex w-[min(28rem,80vw)] flex-col gap-3" data-testid="hyperion-refinement-panel">
-                                <div class="flex items-center justify-between gap-3">
-                                    <span
-                                        class="text-sm font-semibold"
-                                        [jhiTranslate]="
-                                            shouldShowGenerateButton()
-                                                ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
-                                                : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
-                                        "
-                                    ></span>
-                                    <button
-                                        tumUiButton
-                                        type="button"
-                                        severity="secondary"
-                                        variant="text"
-                                        size="small"
-                                        (click)="refinementPopover.close()"
-                                        [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
-                                    >
-                                        <fa-icon [icon]="faTimes" />
-                                    </button>
-                                </div>
-                                <textarea
-                                    tumUiTextarea
-                                    class="w-full resize-y"
-                                    rows="5"
-                                    [ngModel]="refinementPrompt()"
-                                    (ngModelChange)="refinementPrompt.set($event)"
-                                    [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
-                                    [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
-                                    [disabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
-                                    [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
-                                ></textarea>
-                                <div class="flex items-center justify-between gap-3">
-                                    <span class="text-xs text-muted-color" [class.text-state-danger]="isPromptNearLimit()"
-                                        >{{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</span
-                                    >
-                                    <button
-                                        tumUiButton
-                                        type="button"
-                                        size="small"
-                                        [disabled]="!refinementPrompt().trim() || isAiApplying() || isExerciseGenerationActionBlocked()"
-                                        (click)="submitRefinement()"
-                                    >
-                                        <fa-icon [icon]="faPaperPlane" />
-                                        <span
-                                            [jhiTranslate]="
-                                                shouldShowGenerateButton()
-                                                    ? 'artemisApp.programmingExercise.problemStatement.generate'
-                                                    : 'artemisApp.programmingExercise.problemStatement.refine'
-                                            "
-                                        ></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </tum-ui-popover>
-                    </div>
+                    <jhi-code-editor-ai-actions
+                        [adaptOffered]="adaptOffered()"
+                        [adaptBlockedReason]="adaptBlockedReason()"
+                        [selectedFeedbackCount]="selectedAdaptFeedbackCount()"
+                        [progressLink]="progressLink()"
+                        [progressRunning]="generationActivity.running()"
+                        [problemStatementEmpty]="shouldShowGenerateButton()"
+                        [refineBlockedReason]="refineBlockedReason()"
+                        [consistencyBlockedReason]="consistencyBlockedReason()"
+                        [issueCount]="sortedIssues().length"
+                        [busy]="aiActionsBusy()"
+                        [cancelAvailable]="isGeneratingOrRefining()"
+                        [(prompt)]="refinementPrompt"
+                        (adaptRequested)="openAdaptDialog()"
+                        (refineSubmitted)="submitRefinement()"
+                        (consistencyRequested)="checkConsistencies(exercise)"
+                        (issuesToggled)="toggleConsistencyIssuesToolbar()"
+                        (cancelRequested)="cancelAiOperation()"
+                    />
                 }
 
                 <!-- Consistency Issue Navigator Toolbar -->
@@ -486,8 +307,6 @@
                         [enableResize]="false"
                         [showPreview]="false"
                         [enableExerciseReviewComments]="true"
-                        [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback() && !isExerciseGenerationActionBlocked()"
-                        (onAdaptReviewCommentThread)="adaptFromThread($event)"
                         [isGeneratingOrRefining]="isGeneratingOrRefining() || isProblemStatementEditingLocked()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"

@@ -13,6 +13,7 @@
         [cancelPending]="cancelRequested()"
         [runAgainAvailable]="runAgainAvailable()"
         [startAvailable]="startAvailable()"
+        [startBlockedReason]="startBlockedReason()"
         [startPending]="starting()"
         [editorLink]="terminal() && !running() ? editorLink() : undefined"
         [exerciseLink]="exerciseLink()"
@@ -21,8 +22,7 @@
         [spend]="spend()"
         [fileCount]="fileCount()"
         (cancelRequested)="cancel()"
-        (runAgainRequested)="runAgain()"
-        (startRequested)="startFirstRun()"
+        (startRequested)="openStartDialog()"
     />
 
     @if (ownedByCaller() && runInput(); as context) {

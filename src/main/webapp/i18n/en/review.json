@@ -61,8 +61,6 @@
             "submitBeforeComment": "Submit the exercise before starting a thread.",
             "adaptExercise": {
                 "title": "Adapt exercise",
-                "menuItemEmpty": "Adapt exercise…",
-                "menuItemSelected": "Adapt with {{ count }} selected comment(s)",
                 "threadAction": "Adapt with feedback",
                 "summary": "Choose the comments to address and add any further instructions.",
                 "freeSummary": "Choose review comments below or describe the change you want.",
@@ -77,14 +75,12 @@
                 "confirm": "Adapt exercise",
                 "persistenceNotice": "Verified changes are saved automatically to the statement and all repositories. Review them before release. Undo is temporary and may become unavailable after later edits.",
                 "charactersRemaining": "{{ count }} characters remaining",
-                "availableHint": "Use review comments, your own instructions, or both.",
                 "starting": "Starting adaptation… Your feedback is being submitted.",
                 "runInProgress": "An AI run is already changing this exercise. Adaptation is available when it finishes. Open AI progress to inspect or cancel the run.",
                 "checkingStatus": "Checking whether this exercise has an active AI run…",
                 "statusUnavailable": "Run status is unavailable. Open AI progress to reconnect before adapting.",
                 "reloadRequired": "Reload the saved exercise before adapting it again.",
                 "startFailed": "Adaptation could not start. Your comments and instructions are kept here. Check AI progress for an active run, or try again.",
-                "ineligible": "Adaptation requires an unreleased Java Gradle exercise without student participations, auxiliary repositories, static analysis, or sequential test runs.",
                 "reloadDraftRequired": "An AI run saved changes while this dialog was open. Your draft is still here. Copy any instructions you want to keep, then close this dialog and reload the saved exercise before adapting.",
                 "viewProgress": "Check AI progress (new tab)"
             }

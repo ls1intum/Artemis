@@ -12,7 +12,7 @@ vi.mock('y-monaco', () => {
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider, Signal, WritableSignal, signal } from '@angular/core';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -45,7 +45,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseReviewCommentService, ReviewAdaptationAvailability, ReviewAdaptationRequest } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -206,6 +206,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         reloadThreads: ReturnType<typeof vi.fn>;
         getSelectedFeedbackThreadIdsForRepository: ReturnType<typeof vi.fn>;
         threads: WritableSignal<any[]>;
+        connectAdaptation: ReturnType<typeof vi.fn>;
+        adaptationRequests: Observable<ReviewAdaptationRequest>;
     };
 
     const mockIssues: ConsistencyIssue[] = [
@@ -350,6 +352,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             reloadThreads: vi.fn(),
             getSelectedFeedbackThreadIdsForRepository: vi.fn(() => []),
             threads: signal([]),
+            connectAdaptation: vi.fn(),
+            adaptationRequests: new Subject<ReviewAdaptationRequest>().asObservable(),
         };
         reviewCommentService.reloadThreads.mockImplementation((onLoaded?: () => void) => onLoaded?.());
 
@@ -365,7 +369,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
 
-        comp.exercise.set(createMockExercise());
+        comp.exercise.set(createMockExercise({ isAtLeastEditor: true }));
 
         setCodeEditorContainer(comp, createDefaultContainerStub());
         setEditableInstructions(comp, {
@@ -450,6 +454,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         const error1 = new ConsistencyCheckError();
         error1.programmingExercise = { id: 42 } as any;
         error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
+
+        it('does not run the consistency check for a user below the editor role', () => {
+            const check1Spy = vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            comp.exercise.set(createMockExercise({ isAtLeastEditor: false }));
+
+            expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
+            comp.checkConsistencies(comp.exercise()!);
+
+            expect(check1Spy).not.toHaveBeenCalled();
+        });
 
         it('runs full consistency check and shows success when no issues', () => {
             const check1Spy = vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
@@ -993,7 +1007,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise.set(createMockExercise({ problemStatement: 'Original problem statement' }));
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original problem statement', isAtLeastEditor: true }));
     });
 
     afterEach(() => {
@@ -1016,11 +1030,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         expect(comp.showDiff()).toBe(true);
     });
 
-    it('should handle toggleRefinementPopover gracefully when popover is undefined', () => {
-        // popover viewChild is undefined because the template is overridden to empty
-        expect(() => comp.toggleRefinementPopover(new Event('click'))).not.toThrow();
-    });
-
     it('should preserve refinement prompt when popover hides (prompt is never cleared on dismiss)', () => {
         comp.refinementPrompt.set('Some prompt');
         // The prompt signal should persist since there's no onHide handler clearing it
@@ -1028,21 +1037,42 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     });
 
     it('blocks competing AI mutations while exercise generation is running', () => {
-        const toggle = vi.fn();
         const consistencyService = TestBed.inject(ConsistencyCheckService);
-        (comp as any).refinementPopover = () => ({ toggle, close: vi.fn() });
         (comp as any).generationStartPending.set(true);
         comp.refinementPrompt.set('Improve clarity');
 
-        comp.toggleRefinementPopover(new Event('click'));
+        expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+
         comp.submitRefinement();
         comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
         comp.checkConsistencies(comp.exercise()!);
 
-        expect(toggle).not.toHaveBeenCalled();
         expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
         expect(problemStatementService.refineTargeted).not.toHaveBeenCalled();
         expect(consistencyService.checkConsistencyForProgrammingExercise).not.toHaveBeenCalled();
+    });
+
+    it('blocks refinement and the consistency check for a user below the editor role', () => {
+        const consistencyService = TestBed.inject(ConsistencyCheckService);
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original problem statement', isAtLeastEditor: false }));
+        comp.refinementPrompt.set('Improve clarity');
+
+        expect((comp as any).refineBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
+        expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
+
+        comp.submitRefinement();
+        comp.checkConsistencies(comp.exercise()!);
+
+        expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
+        expect(consistencyService.checkConsistencyForProgrammingExercise).not.toHaveBeenCalled();
+    });
+
+    it('reports the busy problem-statement operation as the refinement blocker', () => {
+        comp.aiOps.isGeneratingOrRefining.set(true);
+
+        expect((comp as any).refineBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.problemStatementBusy');
+        expect((comp as any).consistencyBlockedReason()).toBeUndefined();
     });
 
     it('should delegate global refinement to service and show diff on success', () => {
@@ -1308,7 +1338,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         selectedFeedbackThreads: ReturnType<typeof vi.fn>;
         selectedFeedbackThreadIds: WritableSignal<number[]>;
         clearSelectedFeedback: ReturnType<typeof vi.fn>;
+        connectAdaptation: ReturnType<typeof vi.fn>;
+        adaptationRequests: Observable<ReviewAdaptationRequest>;
+        requestAdaptation: (threadId: number) => void;
     };
+    /** What the container connected; the mock mirrors the real service's guard so a thread request honours it. */
+    let adaptation: ReviewAdaptationAvailability | undefined;
+    let adaptationRequests: Subject<ReviewAdaptationRequest>;
 
     const consistencyThread = (id: number) => ({
         id,
@@ -1346,6 +1382,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
     beforeEach(async () => {
         selectedIds = signal<number[]>([]);
+        adaptation = undefined;
+        adaptationRequests = new Subject<ReviewAdaptationRequest>();
         reviewCommentService = {
             setExercise: vi.fn(),
             reloadThreads: vi.fn((onLoaded?: () => void) => onLoaded?.()),
@@ -1358,6 +1396,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             selectedFeedbackThreads: vi.fn(() => reviewCommentService.threads().filter((thread) => selectedIds().includes(thread.id))),
             selectedFeedbackThreadIds: selectedIds,
             clearSelectedFeedback: vi.fn(() => selectedIds.set([])),
+            connectAdaptation: vi.fn((availability: ReviewAdaptationAvailability) => (adaptation = availability)),
+            adaptationRequests: adaptationRequests.asObservable(),
+            requestAdaptation: vi.fn((threadId: number) => {
+                if (!adaptation?.offered() || adaptation.blockedReason()) {
+                    return;
+                }
+                const wasAlreadySelected = selectedIds().includes(threadId);
+                (reviewCommentService.selectThreadAsFeedback as (threadId: number) => void)(threadId);
+                adaptationRequests.next({ threadId, wasAlreadySelected });
+            }),
         };
         generationService = { generate: vi.fn(() => of({ jobId: 'job-adapt-1' })) };
         confirm = vi.fn((options) => options.accept?.());
@@ -1402,10 +1450,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onAdaptDialogHidden();
     };
 
-    it('adaptFromThread selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
+    it('connects the adaptation availability to the review threads', () => {
+        expect(reviewCommentService.connectAdaptation).toHaveBeenCalledOnce();
+        expect(adaptation!.offered()).toBe(true);
+        expect(adaptation!.blockedReason()).toBeUndefined();
+        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).canAdaptNow()).toBe(true);
+    });
+
+    it('a thread request selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
         reviewCommentService.threads.set([consistencyThread(9)]);
 
-        (comp as any).adaptFromThread(9);
+        reviewCommentService.requestAdaptation(9);
         expect(reviewCommentService.selectThreadAsFeedback).toHaveBeenCalledExactlyOnceWith(9);
         expect(comp.adaptDialogVisible()).toBe(true);
 
@@ -1424,12 +1480,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/course-management', 1, 'programming-exercises', 42, 'generation']);
     });
 
-    it.each([ProjectType.GRADLE_GRADLE])('supports Java generation for project type %s', (projectType) => {
+    it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports Java generation for project type %s', (projectType) => {
         // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
         // published through the always-notifying exercise signal.
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
 
-        expect((comp as any).canGenerateExercise()).toBe(true);
+        expect((comp as any).adaptBlockedReason()).toBeUndefined();
+        expect((comp as any).canAdaptNow()).toBe(true);
     });
 
     it.each([
@@ -1437,7 +1494,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         null,
         ProjectType.MAVEN_MAVEN,
         ProjectType.PLAIN_MAVEN,
-        ProjectType.PLAIN_GRADLE,
         ProjectType.MAVEN_BLACKBOX,
         ProjectType.PLAIN,
         ProjectType.XCODE,
@@ -1446,9 +1502,71 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     ])('blocks Java generation for unsupported project type %s', (projectType) => {
         comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
 
-        expect((comp as any).canGenerateExercise()).toBe(false);
-        (comp as any).openAdaptDialog();
+        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
+        expect((comp as any).canAdaptNow()).toBe(false);
+        const onCancel = vi.fn();
+        (comp as any).openAdaptDialog(onCancel);
+        expect(onCancel).toHaveBeenCalledOnce();
+        expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
+    });
+
+    it('names the missing editor role first, before any exercise blocker', () => {
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: undefined }));
+
+        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
+        expect((comp as any).refineBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
+        expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
+    });
+
+    it('does not select a thread for a user below the editor role', () => {
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: dayjs().add(1, 'day') }));
+        reviewCommentService.threads.set([consistencyThread(9)]);
+
+        reviewCommentService.requestAdaptation(9);
+
+        expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
+        expect(comp.adaptDialogVisible()).toBe(false);
+    });
+
+    it('reports the run state as the adapt blocker once the exercise itself qualifies', () => {
+        (comp as any).generationActivity = { attachToJob, running: () => true, statusLoading: () => false, statusLoadFailed: () => false };
+
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        // The run already shows as the progress link's status dot, so the menu trigger does not spin for it as well.
+        expect((comp as any).aiActionsBusy()).toBe(false);
+    });
+
+    it('reports a pending start, a pending reload and a failed reload as adapt blockers', () => {
+        (comp as any).generationStartPending.set(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.starting');
+        (comp as any).generationStartPending.set(false);
+
+        (comp as any).generationRefreshPending.set(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.reloadRequired');
+        comp.adaptDialogVisible.set(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.reloadDraftRequired');
+        comp.adaptDialogVisible.set(false);
+        (comp as any).generationRefreshPending.set(false);
+
+        (comp as any).generationRefreshFailed.set(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.reloadRequired');
+        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+    });
+
+    it('reports the busy consistency check as the consistency blocker only', () => {
+        vi.spyOn(TestBed.inject(ArtemisIntelligenceService), 'isLoading').mockReturnValue(true);
+
+        expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.consistencyCheckBusy');
+        expect((comp as any).adaptBlockedReason()).toBeUndefined();
+        expect((comp as any).aiActionsBusy()).toBe(true);
+        comp.checkConsistencies(comp.exercise()!);
+        expect(TestBed.inject(ConsistencyCheckService).checkConsistencyForProgrammingExercise).not.toHaveBeenCalled();
     });
 
     it('checks for dirty editor state before opening the adaptation dialog', () => {
@@ -1462,13 +1580,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
     });
 
-    it('keeps the AI menu accessible while status is unavailable', () => {
+    it('offers the generation page and explains the lost status while it is unavailable', () => {
         (comp as any).generationActivity = { running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
-        const toggle = vi.fn();
-        comp['onAiToolbarClick']({} as Event, { toggle } as unknown as Parameters<(typeof comp)['onAiToolbarClick']>[1]);
-        expect(toggle).toHaveBeenCalledOnce();
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
+        expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
+        expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
+        expect((comp as any).progressLink()).toEqual(['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        expect((comp as any).aiActionsBusy()).toBe(false);
         expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    });
+
+    it('reports the hydrating status as the adapt blocker', () => {
+        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false };
+
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.checkingStatus');
+        expect((comp as any).aiActionsBusy()).toBe(false);
     });
 
     it('keeps the editor locked while generation status is hydrating', () => {
@@ -1500,8 +1627,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         };
 
         expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
+        expect((comp as any).canAdaptNow()).toBe(false);
 
-        (comp as any).adaptFromThread(9);
+        reviewCommentService.requestAdaptation(9);
         (comp as any).openAdaptDialog();
 
         expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
@@ -1855,10 +1983,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(attachToJob).not.toHaveBeenCalled();
     });
 
-    it('adaptFromThread rolls back a new preview selection when the dialog is dismissed', () => {
+    it('a thread request rolls back a new preview selection when the dialog is dismissed', () => {
         reviewCommentService.threads.set([consistencyThread(9)]);
 
-        (comp as any).adaptFromThread(9);
+        reviewCommentService.requestAdaptation(9);
         dismissAdaptDialog();
 
         expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledExactlyOnceWith(9);
@@ -1866,9 +1994,21 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
+    it('a thread request keeps a selection that existed before the dialog when it is dismissed', () => {
+        reviewCommentService.threads.set([consistencyThread(9)]);
+        selectedIds.set([9]);
+
+        adaptationRequests.next({ threadId: 9, wasAlreadySelected: true });
+        expect(comp.adaptDialogVisible()).toBe(true);
+        dismissAdaptDialog();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
+        expect(selectedIds()).toEqual([9]);
+    });
+
     it('keeps the preview selection when the adapt dialog is closed programmatically rather than dismissed', () => {
         reviewCommentService.threads.set([consistencyThread(9)]);
-        (comp as any).adaptFromThread(9);
+        reviewCommentService.requestAdaptation(9);
 
         (comp as any).invalidateHyperionLifecycleState();
         (comp as any).onAdaptDialogHidden();
@@ -1979,8 +2119,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect((jenkinsComp as any).hyperionEnabled).toBe(true);
         expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
-        expect((jenkinsComp as any).canAdaptWithFeedback()).toBe(false);
+        expect((jenkinsComp as any).adaptOffered()).toBe(false);
         expect((jenkinsComp as any).generationSupported()).toBe(false);
+        expect((jenkinsComp as any).canAdaptNow()).toBe(false);
 
         (jenkinsComp as any).openAdaptDialog();
         expect(jenkinsComp.adaptDialogVisible()).toBe(false);
@@ -1989,28 +2130,32 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         jenkinsFixture.destroy();
     });
 
-    it('keeps retained activity visible but does not offer new generation after release or participation', () => {
+    it('keeps retained activity visible but explains why no new generation is offered after release or participation', () => {
         const localCiProfileService = TestBed.inject(ProfileService);
         vi.spyOn(localCiProfileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(localCiProfileService, 'isProfileActive').mockReturnValue(true);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') }));
         expect((comp as any).generationSupported()).toBe(true);
-        expect((comp as any).canGenerateExercise()).toBe(false);
+        expect((comp as any).adaptOffered()).toBe(true);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.released');
+        expect((comp as any).canAdaptNow()).toBe(false);
 
         comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
         expect((comp as any).generationSupported()).toBe(true);
-        expect((comp as any).canGenerateExercise()).toBe(false);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.noReleaseDate');
 
-        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [{} as any] }));
+        const unreleased = { programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().add(1, 'day') };
+        comp.exercise.set(createMockExercise({ ...unreleased, studentParticipations: [{} as any] }));
         expect((comp as any).generationSupported()).toBe(true);
-        expect((comp as any).canGenerateExercise()).toBe(false);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.studentParticipations');
 
-        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, numberOfParticipations: 1 }));
+        comp.exercise.set(createMockExercise({ ...unreleased, numberOfParticipations: 1 }));
         expect((comp as any).generationSupported()).toBe(true);
-        expect((comp as any).canGenerateExercise()).toBe(false);
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.studentParticipations');
 
-        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [], numberOfParticipations: 1 }));
-        expect((comp as any).canGenerateExercise()).toBe(false);
+        comp.exercise.set(createMockExercise({ ...unreleased, studentParticipations: [], numberOfParticipations: 1 }));
+        expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.studentParticipations');
+        expect((comp as any).canAdaptNow()).toBe(false);
     });
 });

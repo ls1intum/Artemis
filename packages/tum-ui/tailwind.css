@@ -99,35 +99,39 @@
     display: inline-flex;
 }
 
-.tum-ui-button-group > tum-ui-button,
-.tum-ui-button-group > button:not(.tum-ui-btn) {
+/*
+ * A group accepts both button forms as direct children: the `<tum-ui-button>` component, whose styled element is its
+ * inner `.tum-ui-btn`, and `button[tumUiButton]` / `a[tumUiButton]`, which are the styled element themselves. The
+ * child selectors count children rather than element types so a group may mix the forms - a split button is a
+ * `<tum-ui-button>` next to a `button[tumUiButton][tumUiMenuTrigger]`.
+ */
+.tum-ui-button-group > * {
     margin: 0;
 }
 
-.tum-ui-button-group > tum-ui-button:not(:first-of-type, :last-of-type) .tum-ui-btn,
-.tum-ui-button-group > button:not(.tum-ui-btn, :first-of-type, :last-of-type) {
+.tum-ui-button-group > :not(:first-child, :last-child),
+.tum-ui-button-group > tum-ui-button:not(:first-child, :last-child) > .tum-ui-btn {
     border-radius: 0;
 }
 
-.tum-ui-button-group > tum-ui-button:first-of-type:not(:only-of-type) .tum-ui-btn,
-.tum-ui-button-group > button:not(.tum-ui-btn):first-of-type:not(:only-of-type) {
+.tum-ui-button-group > :first-child:not(:only-child),
+.tum-ui-button-group > tum-ui-button:first-child:not(:only-child) > .tum-ui-btn {
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }
 
-.tum-ui-button-group > tum-ui-button:last-of-type:not(:only-of-type) .tum-ui-btn,
-.tum-ui-button-group > button:not(.tum-ui-btn):last-of-type:not(:only-of-type) {
+.tum-ui-button-group > :last-child:not(:only-child),
+.tum-ui-button-group > tum-ui-button:last-child:not(:only-child) > .tum-ui-btn {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
 }
 
-.tum-ui-button-group > tum-ui-button:not(:last-of-type) .tum-ui-btn,
-.tum-ui-button-group > button:not(.tum-ui-btn):not(:last-of-type) {
+.tum-ui-button-group > :not(:last-child),
+.tum-ui-button-group > tum-ui-button:not(:last-child) > .tum-ui-btn {
     border-inline-end: 0 none;
 }
 
-.tum-ui-button-group .tum-ui-btn:focus-visible,
-.tum-ui-button-group > button:not(.tum-ui-btn):focus-visible {
+.tum-ui-button-group .tum-ui-btn:focus-visible {
     position: relative;
     z-index: 1;
 }

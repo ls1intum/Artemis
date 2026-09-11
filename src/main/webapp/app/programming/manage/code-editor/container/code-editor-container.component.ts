@@ -100,8 +100,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
-    /** Forwarded to the editor: whether the per-thread "Adapt with feedback" action may be offered (agentic adaptation is supported: Hyperion enabled AND LocalCI active). */
-    adaptReviewCommentThreadEnabled = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -113,7 +111,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
-    onAdaptReviewCommentThread = output<number>();
     onCommit = output<void>();
 
     participation = input.required<Participation>();

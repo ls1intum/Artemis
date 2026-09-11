@@ -69,7 +69,6 @@ describe('ReviewCommentWidgetManager', () => {
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
             onNavigateToLocation: { subscribe: vi.fn((cb) => (instance._onNavigateToLocation = cb)) },
             onApplyInlineFix: { subscribe: vi.fn((cb) => (instance._onApplyInlineFix = cb)) },
-            adaptThread: { subscribe: vi.fn((cb) => (instance._adaptThread = cb)) },
             setInlineFixOutdatedWarning: vi.fn(),
             hideAllCommentMenus: vi.fn(),
         };
@@ -105,7 +104,6 @@ describe('ReviewCommentWidgetManager', () => {
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
         onAdd: vi.fn(),
         showLocationWarning: () => false,
-        showFeedbackAction: () => false,
         ...overrides,
     });
 
@@ -263,21 +261,6 @@ describe('ReviewCommentWidgetManager', () => {
         expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith('review-comment-');
         expect(draftRef.destroy).toHaveBeenCalled();
         expect(threadRef.destroy).toHaveBeenCalled();
-    });
-
-    it('should forward a per-thread adapt request to the config callback', () => {
-        const editor = createEditorMock();
-        const vcRef = createViewContainerRefMock();
-        const threads: CommentThread[] = [{ id: 7, lineNumber: 1, resolved: false } as any];
-        const onAdaptThread = vi.fn();
-        const config = createConfig({ getThreads: () => threads, onAdaptThread });
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
-
-        manager.renderWidgets();
-        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
-        threadRef.instance._adaptThread(7);
-
-        expect(onAdaptThread).toHaveBeenCalledWith(7);
     });
 
     it('should update thread inputs when widgets exist', () => {

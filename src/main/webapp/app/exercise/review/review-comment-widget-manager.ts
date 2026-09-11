@@ -23,10 +23,7 @@ export type ReviewCommentWidgetManagerConfig = {
     onAdd: (payload: { lineNumber: number; fileName: string }) => void;
     onApplyInlineFix?: (payload: { thread: CommentThread; inlineFix: InlineCodeChange }) => void;
     onNavigateToLocation?: (location: ReviewThreadLocation) => void;
-    onAdaptThread?: (threadId: number) => void;
     showLocationWarning: () => boolean;
-    showFeedbackAction: (thread: CommentThread) => boolean;
-    showAdaptAction?: (thread: CommentThread) => boolean;
 };
 
 enum InlineFixApplyResult {
@@ -293,8 +290,6 @@ export class ReviewCommentWidgetManager {
     private setThreadWidgetInputs(widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, thread: CommentThread, showLocationWarning: boolean): void {
         widgetRef.setInput('thread', thread);
         widgetRef.setInput('showLocationWarning', showLocationWarning);
-        widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
-        widgetRef.setInput('showAdaptAction', this.config.showAdaptAction?.(thread) ?? false);
     }
 
     /**
@@ -307,7 +302,6 @@ export class ReviewCommentWidgetManager {
         widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
         widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
         widgetRef.instance.onApplyInlineFix.subscribe((inlineFix) => this.handleInlineFixApplication(thread, widgetRef, inlineFix));
-        widgetRef.instance.adaptThread.subscribe((threadId) => this.config.onAdaptThread?.(threadId));
     }
 
     /**

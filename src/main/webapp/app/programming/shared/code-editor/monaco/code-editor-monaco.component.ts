@@ -38,7 +38,7 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChang
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import {
     getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
@@ -102,8 +102,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
-    /** Whether the per-thread "Adapt with feedback" action may be offered — host-gated to contexts where agentic adaptation is supported (Hyperion enabled AND LocalCI active). */
-    readonly adaptReviewCommentThreadEnabled = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
     readonly fileSyncService = input<CodeEditorFileSyncService | undefined>();
     readonly secondaryHeader = input<boolean>(false);
@@ -117,8 +115,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
-    /** Emits a review-thread id when the instructor asks to adapt the exercise from that thread; the host adds it to the shared feedback selection and opens the adapt dialog. */
-    readonly onAdaptReviewCommentThread = output<number>();
     readonly onSavedFiles = output<{ [fileName: string]: string | undefined }>();
     readonly onInlineFixCommitted = output<void>();
     readonly onEditorLoaded = output<void>();
@@ -258,7 +254,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         });
 
         effect(() => {
-            this.adaptReviewCommentThreadEnabled();
             this.commitState();
             this.reviewCommentManager?.updateDraftInputs();
             const threads = this.exerciseReviewCommentService.threads();
@@ -844,18 +839,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
-                onAdaptThread: (threadId) => this.onAdaptReviewCommentThread.emit(threadId),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
-                showFeedbackAction: (thread) =>
-                    this.adaptReviewCommentThreadEnabled() &&
-                    (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
-                        thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
-                        thread.targetType === CommentThreadLocationType.TEST_REPO),
-                showAdaptAction: (thread) =>
-                    this.adaptReviewCommentThreadEnabled() &&
-                    (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
-                        thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
-                        thread.targetType === CommentThreadLocationType.TEST_REPO),
             });
         }
         return this.reviewCommentManager;

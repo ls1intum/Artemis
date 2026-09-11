@@ -16,6 +16,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'actions-button-directive--docs';
         case 'actions-button-group':
             return 'actions-button-group--docs';
+        case 'actions-disabled-reason':
+            return 'actions-disabled-reason--docs';
         case 'data-display-card':
             return 'data-display-card--docs';
         case 'data-display-chip':
