@@ -17,5 +17,4 @@ export interface CreateExerciseVariantGroup {
     dueDate?: string;
     assessmentDueDate?: string;
     exampleSolutionPublicationDate?: string;
-    buildAndTestStudentSubmissionsAfterDueDate?: string;
 }
