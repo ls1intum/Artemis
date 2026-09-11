@@ -128,6 +128,7 @@ class GenerationWorkerClientServiceTest {
     }
 
     private WorkerEvent event(ExecutionIdentity execution, String image) {
-        return new WorkerEvent(1, "worker", identity.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.STARTED, execution, false, image, null, null, null);
+        return new WorkerEvent(de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand.PROTOCOL_VERSION, "worker", identity.workerIncarnation(), 1, Instant.now(),
+                WorkerEvent.Type.STARTED, execution, false, image, null, null, null);
     }
 }
