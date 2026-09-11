@@ -76,7 +76,7 @@ class IrisLectureUnitSyncEventListenerTest {
         listener.backfillMissingSyncStates();
 
         var snapshotCaptor = org.mockito.ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(syncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        verify(syncService).markVisibilityDirty(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
         assertThat(snapshotCaptor.getValue().releaseDate().toInstant()).isEqualTo(unit.getReleaseDate().toInstant());
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(2, slide.getHidden());

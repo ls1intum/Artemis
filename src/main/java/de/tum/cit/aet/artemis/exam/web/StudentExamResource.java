@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
@@ -135,11 +136,15 @@ public class StudentExamResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAthenaFeedbackService studentExamAthenaFeedbackService, StudentExamAccessService studentExamAccessService, UserRepository userRepository,
             AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -447,6 +452,9 @@ public class StudentExamResource {
 
         // 1st: load the testRun with all associated exercises
         StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
+        // the conduction response reports whether the student may request AI feedback, and the query above no longer
+        // drags the configuration along with every course it touches
+        courseAthenaConfigRepository.attachTo(testRun.getExam().getCourse());
 
         if (!currentUser.equals(testRun.getUser())) {
             throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
@@ -533,6 +541,11 @@ public class StudentExamResource {
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
+        // Only a test exam summary offers the AI feedback request - the client hides the button for anything else and
+        // StudentExamAthenaFeedbackService rejects it - so a real exam does not read the (lazy) Athena configuration.
+        if (studentExam.getExam().isTestExam()) {
+            courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
+        }
         return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
     }
 

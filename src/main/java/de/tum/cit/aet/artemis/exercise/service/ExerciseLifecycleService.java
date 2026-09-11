@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
@@ -15,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -87,26 +84,5 @@ public class ExerciseLifecycleService {
         else {
             return scheduleTask(exercise, lifecycle.getDateFromExercise(exercise), lifecycle, task);
         }
-    }
-
-    /**
-     * Allow scheduling multiple {@code Runnable} tasks in the lifecycle of an exercise at distinct points in time. ({@code ExerciseLifecycle}) Tasks are performed in a
-     * background thread managed by a {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application
-     * restarts. Therefore, schedule your events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct}
-     * Annotation to call one service method on startup.
-     *
-     * @param exercise  The exercise for which the tasks are scheduled
-     * @param lifecycle The lifecycle event that triggers the tasks
-     * @param tasks     The tasks to be executed at distinct points in time
-     * @return The {@code ScheduledFuture<?>}s allow to later cancel the tasks or check whether they have been executed.
-     */
-    public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Pair<ZonedDateTime, Runnable>> tasks) {
-        final Set<ScheduledFuture<?>> futures = new HashSet<>();
-        for (var task : tasks) {
-            var future = scheduler.schedule(task.second(), task.first().toInstant());
-            futures.add(future);
-        }
-        log.debug("Scheduled {} Tasks for Exercise \"{}\" (#{}) to trigger on {}.", tasks.size(), exercise.getTitle(), exercise.getId(), lifecycle.toString());
-        return futures;
     }
 }

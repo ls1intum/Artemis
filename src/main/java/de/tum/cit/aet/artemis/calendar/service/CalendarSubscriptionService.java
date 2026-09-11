@@ -38,6 +38,12 @@ import net.fortuna.ical4j.model.property.immutable.ImmutableVersion;
 @Profile(PROFILE_CORE)
 public class CalendarSubscriptionService {
 
+    /**
+     * Shared deliberately: {@link SecureRandom} is thread-safe, and constructing one re-seeds from the system
+     * entropy source on every call.
+     */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final UserRepository userRepository;
 
     private final CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
@@ -97,9 +103,8 @@ public class CalendarSubscriptionService {
     }
 
     private byte[] generateSubscriptionTokenBytes() {
-        SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[16];
-        random.nextBytes(bytes);
+        SECURE_RANDOM.nextBytes(bytes);
         return bytes;
     }
 

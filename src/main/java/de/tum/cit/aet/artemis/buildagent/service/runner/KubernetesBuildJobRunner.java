@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,6 +70,21 @@ import io.fabric8.kubernetes.client.dsl.LogWatch;
 public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private static final Logger log = LoggerFactory.getLogger(KubernetesBuildJobRunner.class);
+
+    /** The characters a result path may consist of. */
+    private static final Pattern SAFE_RESULT_PATH = Pattern.compile("[a-zA-Z0-9_*./-]+");
+
+    /** Everything a DNS label may not contain, replaced by a hyphen. */
+    private static final Pattern NON_DNS_LABEL_CHARACTER = Pattern.compile("[^a-z0-9-]");
+
+    /** A run of hyphens in a DNS label, collapsed into one. */
+    private static final Pattern HYPHEN_RUN = Pattern.compile("-+");
+
+    /** Leading characters of a DNS label that may not start it. */
+    private static final Pattern LEADING_NON_ALPHANUMERIC = Pattern.compile("^[^a-z0-9]+");
+
+    /** Trailing characters of a DNS label that may not end it. */
+    private static final Pattern TRAILING_NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]+$");
 
     private static final Duration POLL_INTERVAL = Duration.ofMillis(250);
 
@@ -323,7 +339,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private static void validateResultPath(String path) {
-        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+        if (path == null || path.contains("..") || !SAFE_RESULT_PATH.matcher(path).matches()) {
             throw new LocalCIException("Invalid result path for Kubernetes build execution: " + path);
         }
     }
@@ -567,7 +583,8 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
         if (value == null || value.isBlank()) {
             return "unknown";
         }
-        String normalized = value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9-]", "-").replaceAll("-+", "-");
+        String hyphenated = NON_DNS_LABEL_CHARACTER.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("-");
+        String normalized = HYPHEN_RUN.matcher(hyphenated).replaceAll("-");
         normalized = stripNonAlphanumericEdges(normalized);
         if (normalized.isBlank()) {
             return "unknown";
@@ -579,7 +596,7 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private static String stripNonAlphanumericEdges(String value) {
-        return value.replaceAll("^[^a-z0-9]+", "").replaceAll("[^a-z0-9]+$", "");
+        return TRAILING_NON_ALPHANUMERIC.matcher(LEADING_NON_ALPHANUMERIC.matcher(value).replaceAll("")).replaceAll("");
     }
 
     private static String sha256(String value) {

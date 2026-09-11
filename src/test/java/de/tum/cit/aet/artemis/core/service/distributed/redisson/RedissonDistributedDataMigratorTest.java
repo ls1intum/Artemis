@@ -27,7 +27,9 @@ import org.redisson.config.Config;
 import org.redisson.connection.CRC16;
 import org.testcontainers.DockerClientFactory;
 
-import com.redis.testcontainers.RedisStackContainer;
+import com.redis.testcontainers.RedisContainer;
+
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
  * Covers the namespace migration against a real Redis, which is the only way to exercise the drain: the semantics that
@@ -37,7 +39,7 @@ import com.redis.testcontainers.RedisStackContainer;
 @EnabledIf("isDockerAvailable")
 class RedissonDistributedDataMigratorTest {
 
-    private static RedisStackContainer redis;
+    private static RedisContainer valkey;
 
     private static RedissonClient redissonClient;
 
@@ -52,12 +54,12 @@ class RedissonDistributedDataMigratorTest {
 
     @BeforeAll
     static void beforeAll() {
-        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag("7.4.0-v8"));
-        redis.start();
+        valkey = ValkeyTestContainerFactory.create();
+        valkey.start();
         Config config = new Config();
         // The same codec the provider installs, so values written here round-trip exactly as production ones do.
         config.setCodec(new BackwardCompatibleSerializationCodec());
-        config.useSingleServer().setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
+        config.useSingleServer().setAddress("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379));
         redissonClient = Redisson.create(config);
     }
 
@@ -66,8 +68,8 @@ class RedissonDistributedDataMigratorTest {
         if (redissonClient != null) {
             redissonClient.shutdown();
         }
-        if (redis != null) {
-            redis.stop();
+        if (valkey != null) {
+            valkey.stop();
         }
     }
 

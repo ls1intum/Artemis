@@ -67,11 +67,11 @@ public class UserSshPublicKey extends DomainObject {
     @Column(name = "expiry_date")
     private ZonedDateTime expiryDate = null;
 
-    public @NonNull long getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(@NonNull long userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 

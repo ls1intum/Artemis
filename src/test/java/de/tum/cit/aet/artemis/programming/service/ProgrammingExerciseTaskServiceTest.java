@@ -50,11 +50,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
                 + "[task][Placeholder in Problem Statement](TestTask) Only Problem Statement Text at the end");
         exercise.setId(1L);
 
-        final String problemStatement = String.format(
-                "Some Problem Statement Text infront [task][Placeholder in Problem Statement](<testid>%d</testid>) More Text at the end"
-                        + "Only Problem Statement Text infront [task][Placeholder in Problem Statement](<testid>%d</testid>)"
-                        + "[task][Placeholder in Problem Statement](<testid>%d</testid>) Only Problem Statement Text at the end",
-                testCase1.getId(), testCase1.getId(), testCase1.getId());
+        final String problemStatement = ("Some Problem Statement Text infront [task][Placeholder in Problem Statement](<testid>%d</testid>) More Text at the end"
+                + "Only Problem Statement Text infront [task][Placeholder in Problem Statement](<testid>%d</testid>)"
+                + "[task][Placeholder in Problem Statement](<testid>%d</testid>) Only Problem Statement Text at the end")
+                .formatted(testCase1.getId(), testCase1.getId(), testCase1.getId());
         programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
         assertThat(exercise.getProblemStatement()).isEqualTo(problemStatement);
     }
@@ -76,9 +75,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
                 "[task][Placeholder in Problem Statement](Outerclass$Innerclass#method)" + "[task][Placeholder2 in Problem Statement](someTestNameThatContains\\\\)");
         exercise.setId(1L);
 
-        final String problemStatement = String.format(
-                "[task][Placeholder in Problem Statement](<testid>%d</testid>)" + "[task][Placeholder2 in Problem Statement](<testid>%d</testid>)", testCase1.getId(),
-                testCase2.getId());
+        final String problemStatement = ("[task][Placeholder in Problem Statement](<testid>%d</testid>)" + "[task][Placeholder2 in Problem Statement](<testid>%d</testid>)")
+                .formatted(testCase1.getId(), testCase2.getId());
         programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
         assertThat(exercise.getProblemStatement()).isEqualTo(problemStatement);
     }

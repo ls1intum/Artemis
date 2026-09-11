@@ -114,7 +114,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 // Bound the response wait to 45s so a single hung request (the multi-node
                 // observation under load) does not consume the entire test budget. On
                 // timeout we re-issue the navigation up to two more times before giving up
-                // — a hung start-participation POST is a backend race that consistently
+                // — a hung start-participation POST is a server-side race that consistently
                 // recovers on subsequent retries within 1-2 attempts.
                 for (let attempt = 0; attempt < 3; attempt++) {
                     const responsePromise = page.waitForResponse(
@@ -231,16 +231,18 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
-            // looking for the overlay — the overlay is gated on that fetch returning the
-            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
-            // timeout can fire under multi-node CI load while the request is still in flight,
-            // even though the overlay would render seconds later.
-            const dashboardResponse = page
-                .waitForResponse((resp) => resp.url().includes(`api/course/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
-                .catch(() => undefined);
+            // The overlay is gated on the quiz load: initLiveMode POSTs start-participation on page load regardless of
+            // whether the quiz has started, and the batch it returns is what flips waitingForQuizStart. Wait for that
+            // response before looking for the overlay, because under multi-node CI load the default 10s expect timeout
+            // can otherwise fire while the request is still in flight. Registered before the navigation so the response
+            // cannot be missed, and deliberately not swallowed: if the page stops issuing it, this must fail pointing
+            // at the cause rather than wait out the budget.
+            const startParticipation = page.waitForResponse(
+                (response) => response.url().includes(`api/quiz/quiz-exercises/${quizExercise.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                { timeout: 30_000 },
+            );
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await dashboardResponse;
+            await startParticipation;
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 

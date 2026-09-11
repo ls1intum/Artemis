@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -55,7 +55,7 @@ public class HermesHealthIndicator implements HealthIndicator {
 
     private static final String URL_KEY = "url";
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final RestTemplate shortTimeoutRestTemplate;
 
@@ -121,7 +121,7 @@ public class HermesHealthIndicator implements HealthIndicator {
         try {
             return objectMapper.readValue(body, HermesHealthReport.class);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Could not parse Hermes health report from {}/api/health: {}", hermesUrl, e.getMessage());
             return null;
         }

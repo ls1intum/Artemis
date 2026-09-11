@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -148,25 +149,113 @@ public abstract class AbstractGitService {
      * @param repository    the JGit {@link Repository} to configure
      * @throws IOException if the configuration cannot be written to disk
      */
+    // Every value here is a constant, so after the first call there is nothing to write. Saving anyway costs a
+    // config.lock create, a write and a rename on every repository this is called for, and the repository store is on
+    // NFS, where each of those is a network round trip - a 2000 student exam creates two thousand repositories in the
+    // preparation phase alone. The same goes for relinking HEAD, which is only needed while it still points elsewhere.
     private static void setRepoConfig(String defaultBranch, Repository repository) throws IOException {
         StoredConfig gitRepoConfig = repository.getConfig();
-        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+        boolean changed = setInt(gitRepoConfig, ConfigConstants.CONFIG_GC_SECTION, ConfigConstants.CONFIG_KEY_AUTO, 0);
+        changed |= setBoolean(gitRepoConfig, ConfigConstants.CONFIG_GC_SECTION, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+        changed |= setInt(gitRepoConfig, ConfigConstants.CONFIG_GC_SECTION, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+        changed |= setBoolean(gitRepoConfig, ConfigConstants.CONFIG_RECEIVE_SECTION, ConfigConstants.CONFIG_KEY_AUTOGC, false);
 
         // disable symlinks to avoid security issues such as remote code execution
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+        changed |= setBoolean(gitRepoConfig, ConfigConstants.CONFIG_CORE_SECTION, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+        changed |= setBoolean(gitRepoConfig, ConfigConstants.CONFIG_COMMIT_SECTION, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+        changed |= setBranchString(gitRepoConfig, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
+        changed |= setBranchString(gitRepoConfig, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
         // Important for new / empty repositories so the default branch is set correctly.
-        RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-        refUpdate.setForceUpdate(true);
-        refUpdate.link("refs/heads/" + defaultBranch);
+        Ref head = repository.getRefDatabase().exactRef(Constants.HEAD);
+        if (head == null || !head.isSymbolic() || !("refs/heads/" + defaultBranch).equals(head.getTarget().getName())) {
+            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+            refUpdate.setForceUpdate(true);
+            refUpdate.link("refs/heads/" + defaultBranch);
+        }
 
-        gitRepoConfig.save();
+        if (changed) {
+            gitRepoConfig.save();
+        }
+    }
+
+    /**
+     * Sets an integer configuration value and reports whether that changed anything.
+     *
+     * @param config  the repository configuration
+     * @param section the configuration section
+     * @param key     the configuration key
+     * @param value   the value the key has to hold
+     * @return true if the key did not already hold that value
+     */
+    private static boolean setInt(StoredConfig config, String section, String key, int value) {
+        if (readsBackAs(config, section, key, () -> config.getInt(section, null, key, value), value)) {
+            return false;
+        }
+        config.setInt(section, null, key, value);
+        return true;
+    }
+
+    /**
+     * Sets a boolean configuration value and reports whether that changed anything.
+     *
+     * @param config  the repository configuration
+     * @param section the configuration section
+     * @param key     the configuration key
+     * @param value   the value the key has to hold
+     * @return true if the key did not already hold that value
+     */
+    private static boolean setBoolean(StoredConfig config, String section, String key, boolean value) {
+        if (readsBackAs(config, section, key, () -> config.getBoolean(section, null, key, !value), value)) {
+            return false;
+        }
+        config.setBoolean(section, null, key, value);
+        return true;
+    }
+
+    /**
+     * Whether the key is already stored with the value it has to hold, so that writing it would change nothing.
+     * <p>
+     * A key that is absent, or whose stored value JGit refuses to parse, reads back as something else and therefore has
+     * to be written. JGit throws rather than falling back to the given default when it cannot parse a value, so a
+     * repository carrying {@code gc.auto = invalid} would otherwise fail here instead of being repaired - the
+     * unconditional setters this check replaced overwrote such an entry.
+     *
+     * @param config        the repository configuration
+     * @param section       the configuration section
+     * @param key           the configuration key
+     * @param storedValue   reads the stored value in the type the key is written in
+     * @param requiredValue the value the key has to hold
+     * @param <T>           the type the key is written in
+     * @return true if the key already holds that value
+     */
+    private static <T> boolean readsBackAs(StoredConfig config, String section, String key, Supplier<T> storedValue, T requiredValue) {
+        if (config.getString(section, null, key) == null) {
+            return false;
+        }
+        try {
+            return requiredValue.equals(storedValue.get());
+        }
+        catch (IllegalArgumentException malformedValue) {
+            return false;
+        }
+    }
+
+    /**
+     * Sets a string value in the branch section and reports whether that changed anything.
+     *
+     * @param config        the repository configuration
+     * @param defaultBranch the branch the value belongs to
+     * @param key           the configuration key
+     * @param value         the value the key has to hold
+     * @return true if the key did not already hold that value
+     */
+    private static boolean setBranchString(StoredConfig config, String defaultBranch, String key, String value) {
+        if (value.equals(config.getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, key))) {
+            return false;
+        }
+        config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, key, value);
+        return true;
     }
 
     /**

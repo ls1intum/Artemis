@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.shared.architecture.util;
 
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -49,7 +48,7 @@ public abstract class ClassPathNode implements Comparable<ClassPathNode>, Iterab
      */
     ClassPathNode(PackageNode parent, String segmentName) {
         this.parent = parent;
-        this.segmentName = Objects.requireNonNull(segmentName);
+        this.segmentName = segmentName;
         name = parent != null ? parent.getName() + "." + segmentName : segmentName;
     }
 

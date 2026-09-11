@@ -6,12 +6,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.core.StreamReadConstraints;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
 
 @JsonInclude()
 public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, String dockerImage) {
@@ -25,12 +26,13 @@ public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, Str
     public static final StreamReadConstraints BUILD_PLAN_CONFIGURATION_CONSTRAINTS = StreamReadConstraints.builder().maxNestingDepth(32).maxDocumentLength(1024L * 1024)
             .maxTokenCount(10_000).build();
 
-    private static final ObjectMapper mapper = createMapper();
+    private static final JsonMapper mapper = createMapper();
 
-    private static ObjectMapper createMapper() {
-        ObjectMapper configuredMapper = JsonObjectMapper.get().copy().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-        configuredMapper.getFactory().setStreamReadConstraints(BUILD_PLAN_CONFIGURATION_CONSTRAINTS);
-        return configuredMapper;
+    private static JsonMapper createMapper() {
+        // Jackson 3 mappers are immutable, so the bounds go on the factory the mapper is built from rather than
+        // being pushed into a copy afterwards
+        return ArtemisJacksonDefaults.apply(JsonMapper.builder(JsonFactory.builder().streamReadConstraints(BUILD_PLAN_CONFIGURATION_CONSTRAINTS).build()))
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
     }
 
     /**
@@ -38,9 +40,8 @@ public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, Str
      *
      * @param buildPlanConfiguration the JSON String representation
      * @return the new {@link BuildPlanPhasesDTO} object
-     * @throws JsonProcessingException if the JSON is invalid
      */
-    public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
+    public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) {
         if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
             return new BuildPlanPhasesDTO(null, null);
         }
@@ -51,9 +52,8 @@ public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, Str
      * Serializes this to a JSON string representation
      *
      * @return the JSON string
-     * @throws JsonProcessingException if there was an issue with serialization
      */
-    public String toBuildPlanConfiguration() throws JsonProcessingException {
+    public String toBuildPlanConfiguration() {
         return mapper.writeValueAsString(this);
     }
 }

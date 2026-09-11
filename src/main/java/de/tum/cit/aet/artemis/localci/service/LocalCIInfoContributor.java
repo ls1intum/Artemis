@@ -25,6 +25,9 @@ public class LocalCIInfoContributor implements InfoContributor {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIInfoContributor.class);
 
+    /** A carriage return or a line feed, replaced so that a logged value cannot forge a second log line. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\\r\\n]");
+
     private static final Pattern WHOLE_AMOUNT = Pattern.compile("\\d+");
 
     @Value("${artemis.continuous-integration.build-timeout-seconds.min:10}")
@@ -103,7 +106,7 @@ public class LocalCIInfoContributor implements InfoContributor {
     private static Optional<Long> parseAmount(String amount) {
         String value = unquote(amount);
         if (!WHOLE_AMOUNT.matcher(value).matches()) {
-            log.warn("Ignoring the Docker flag value '{}' because it is not a whole amount", value.replaceAll("[\\r\\n]", "_"));
+            log.warn("Ignoring the Docker flag value '{}' because it is not a whole amount", LINE_BREAK.matcher(value).replaceAll("_"));
             return Optional.empty();
         }
         return Optional.of(Long.parseLong(value));

@@ -7,8 +7,6 @@ sidebar_label: OpenAPI
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
-# OpenAPI and API-driven Development
-
 We migrate the Artemis server to an API-driven development approach using OpenAPI specifications. This especially helps us with client generation to avoid subtle bugs that are often unnoticed in code reviews.
 
 Currently, the OpenAPI specs are only generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar` and (partially) `quiz` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.

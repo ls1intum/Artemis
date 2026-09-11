@@ -261,7 +261,7 @@ public class DistributedDataAccessService {
      * which is the node identity and therefore exactly what the agent stored as its {@code memberAddress}; its short
      * name never appears.</li>
      * </ul>
-     * Accepting any of the three avoids asking the provider which shape it uses, which is the backend-specific knowledge
+     * Accepting any of the three avoids asking the provider which shape it uses, which is the provider-specific knowledge
      * this abstraction exists to keep out of the call sites.
      *
      * @param agent                      the stored build agent entry

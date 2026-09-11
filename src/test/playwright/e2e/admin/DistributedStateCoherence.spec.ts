@@ -22,7 +22,7 @@ import { generateUUID } from '../../support/utils';
  *   <li>the distributed map holding one signing key per registered LTI platform.</li>
  * </ul>
  *
- * Backend-agnostic on purpose: Artemis supports Hazelcast and Redis interchangeably, and both must pass this unchanged.
+ * Provider-agnostic on purpose: Artemis supports Hazelcast and Redis interchangeably, and both must pass this unchanged.
  *
  * Skipped unless MULTI_NODE_URLS names at least two core nodes, which the multi-node runners export.
  */
