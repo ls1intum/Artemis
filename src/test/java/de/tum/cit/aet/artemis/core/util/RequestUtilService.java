@@ -432,7 +432,7 @@ public class RequestUtilService {
             return null;
         }
         // the header typically includes a suffix already, to prevent adding "...tmp", we use an empty string here
-        final var tmpFile = Files.createTempFile(tempPath, res.getResponse().getHeader("filename"), "").toFile();
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), "", tempPath.toFile());
         FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;

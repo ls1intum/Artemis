@@ -181,6 +181,10 @@ modernizer {
         // ProgrammingExercise's File extends java.io.File to carry its Repository, so its constructors have to call
         // super(String). Path.of is not a substitute for a superclass constructor.
         'java/io/File."<init>":(Ljava/lang/String;)V',
+        // Files.createTempFile is reserved for TempFileUtilService by TempFileArchitectureTest, which fails the build
+        // on a direct call from anywhere else, so java.io.File.createTempFile is the alternative that is allowed here.
+        "java/io/File.createTempFile:(Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;",
+        "java/io/File.createTempFile:(Ljava/lang/String;Ljava/lang/String;Ljava/io/File;)Ljava/io/File;",
     ]
 }
 

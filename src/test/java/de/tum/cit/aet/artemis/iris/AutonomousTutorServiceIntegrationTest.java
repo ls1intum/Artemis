@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -132,8 +133,9 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/communication/courses/" + course.getId()), any(PostBroadcastDTO.class));
-        // One broadcast in total: a restored /topic/metis/ mirror would make it two and fail here.
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
     }
 
     @Test

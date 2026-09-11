@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
@@ -193,8 +194,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via a single course-wide broadcast, not per user
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
-        // One broadcast in total: a restored /topic/metis/ mirror would make it two and fail here.
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -268,8 +270,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via a single course-wide broadcast, not per user
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
-        // One broadcast in total: a restored /topic/metis/ mirror would make it two and fail here.
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
     }
 
     @ParameterizedTest
