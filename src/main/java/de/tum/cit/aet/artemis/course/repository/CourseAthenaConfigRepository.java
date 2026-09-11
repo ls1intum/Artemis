@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
-import de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
@@ -54,41 +53,19 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
     Optional<CourseAthenaConfig> findByCourseId(@Param("courseId") long courseId);
 
     /**
-     * The two feedback switches of the course an exercise belongs to, reached through the course or through the exam.
-     * Reads the flags rather than the entity, because this answers a yes/no on a request path.
-     *
-     * @param exerciseId the id of the exercise
-     * @return the settings, defaulting to off
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO(
-                COALESCE(courseConfig.gradingFeedbackEnabled, examCourseConfig.gradingFeedbackEnabled, FALSE),
-                COALESCE(courseConfig.formativeFeedbackEnabled, examCourseConfig.formativeFeedbackEnabled, FALSE))
-            FROM Exercise exercise
-                LEFT JOIN exercise.course course
-                LEFT JOIN course.athenaConfig courseConfig
-                LEFT JOIN exercise.exerciseGroup exerciseGroup
-                LEFT JOIN exerciseGroup.exam exam
-                LEFT JOIN exam.course examCourse
-                LEFT JOIN examCourse.athenaConfig examCourseConfig
-            WHERE exercise.id = :exerciseId
-            """)
-    Optional<AthenaFeedbackSettingsDTO> findFeedbackSettingsByExerciseId(@Param("exerciseId") long exerciseId);
-
-    /**
-     * The two feedback switches of a course.
+     * The two feedback switches of a course, read as flags rather than as the entity.
      *
      * @param courseId the id of the course
-     * @return the settings, defaulting to off
+     * @return the switches, both off when the course has no configuration yet, or empty if there is no such course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.AthenaFeedbackSettingsDTO(
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(
                 COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
             FROM Course course
                 LEFT JOIN course.athenaConfig athenaConfig
             WHERE course.id = :courseId
             """)
-    Optional<AthenaFeedbackSettingsDTO> findFeedbackSettingsByCourseId(@Param("courseId") long courseId);
+    Optional<CourseAthenaConfigDTO> findConfigByCourseId(@Param("courseId") long courseId);
 
     /**
      * Puts the configuration onto the course of the given exercise, so the code below an entry point can keep asking

@@ -44,7 +44,7 @@ public class CourseAthenaConfigService {
      * @return the course's Athena configuration, all flags disabled when the course has no configuration yet
      */
     public CourseAthenaConfigDTO getConfig(long courseId) {
-        return CourseAthenaConfigDTO.from(courseAthenaConfigRepository.findFeedbackSettingsByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId)));
+        return courseAthenaConfigRepository.findConfigByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

@@ -59,7 +59,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     private CourseAthenaConfigDTO storedConfig() {
-        return CourseAthenaConfigDTO.from(courseAthenaConfigRepository.findFeedbackSettingsByCourseId(course.getId()).orElseThrow());
+        return courseAthenaConfigRepository.findConfigByCourseId(course.getId()).orElseThrow();
     }
 
     @Test

@@ -17,14 +17,4 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 // would leave the client unable to tell a disabled feature from a field the server did not send.
 @JsonInclude
 public record CourseAthenaConfigDTO(boolean gradingFeedbackEnabled, boolean formativeFeedbackEnabled) {
-
-    /**
-     * Converts the switches read for a course, which already default to off when the course has no config row.
-     *
-     * @param settings the course's Athena feedback settings
-     * @return the course's Athena configuration
-     */
-    public static CourseAthenaConfigDTO from(AthenaFeedbackSettingsDTO settings) {
-        return new CourseAthenaConfigDTO(settings.gradingFeedbackEnabled(), settings.formativeFeedbackEnabled());
-    }
 }
