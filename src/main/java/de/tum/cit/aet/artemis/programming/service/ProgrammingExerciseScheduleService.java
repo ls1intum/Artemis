@@ -305,7 +305,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleParticipationWithIndividualDueDate(ZonedDateTime now, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
             boolean isScoreUpdateNeeded) {
-        final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
+        // Only reached from the branch in scheduleParticipationTasks that has already established a non-null individual
+        // due date, which is what the method name promises. Read once rather than through three getter calls.
+        final ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+        final boolean isBeforeDueDate = now.isBefore(individualDueDate);
         // Update scores on due date
         if (isBeforeDueDate) {
             scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
@@ -317,7 +320,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // Build and test after individual due date:
         // only special scheduling if the individual due date is after the build and test date
         if (isBeforeDueDate && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && participation.getIndividualDueDate().isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+                && individualDueDate.isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleBuildAndTestAfterDueDateForParticipation(participation);
         }
         else {

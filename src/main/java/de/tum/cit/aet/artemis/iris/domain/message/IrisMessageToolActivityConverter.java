@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.iris.domain.message;
 
-import java.io.IOException;
 import java.util.List;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
@@ -16,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 @Converter
 public class IrisMessageToolActivityConverter implements AttributeConverter<List<PyrisActivityDTO>, String> {
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Override
     public String convertToDatabaseColumn(List<PyrisActivityDTO> activities) {
@@ -26,7 +25,7 @@ public class IrisMessageToolActivityConverter implements AttributeConverter<List
         try {
             return objectMapper.writeValueAsString(activities);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new IllegalArgumentException("Could not convert Iris tool activities to JSON", e);
         }
     }
@@ -40,7 +39,7 @@ public class IrisMessageToolActivityConverter implements AttributeConverter<List
             JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, PyrisActivityDTO.class);
             return objectMapper.readValue(jsonData, type);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new IllegalArgumentException("Could not convert JSON to Iris tool activities", e);
         }
     }

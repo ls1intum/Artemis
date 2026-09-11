@@ -14,7 +14,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
@@ -34,10 +33,9 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -92,13 +90,12 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
     void setupObjectMapper() {
-        objectMapper = JsonObjectMapper.get().copy();
-        objectMapper.findAndRegisterModules();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // JsonObjectMapper already disables FAIL_ON_UNKNOWN_PROPERTIES, and Jackson 3 mappers are immutable
+        objectMapper = JsonObjectMapper.get();
     }
 
     @AfterEach
@@ -153,7 +150,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
     void shouldSuccessfullyImportBasketFromSharingPlatformAsStudentNotAuthorized() throws Exception {
-        String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
+        var sampleBasketResource = this.getClass().getResource("./basket/sampleBasket.json");
+        assertThat(sampleBasketResource).isNotNull();
+        String sampleBasket = IOUtils.toString(sampleBasketResource, StandardCharsets.UTF_8);
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
 
@@ -313,11 +312,11 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
             JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
             assertThat(response.get("id").asLong()).isPositive();
-            assertThat(response.get("type").asText()).isEqualTo("programming");
-            assertThat(response.get("title").asText()).isEqualTo(exerciseDetails.title());
+            assertThat(response.get("type").asString()).isEqualTo("programming");
+            assertThat(response.get("title").asString()).isEqualTo(exerciseDetails.title());
             // The nested course drives the follow-up navigation, so it must not be flattened to an id.
             assertThat(response.get("course").get("id").asLong()).isEqualTo(course.getId());
-            assertThat(response.get("course").get("title").asText()).isEqualTo(course.getTitle());
+            assertThat(response.get("course").get("title").asString()).isEqualTo(course.getTitle());
 
             long importedExerciseId = response.get("id").asLong();
             savedExercise = programmingExerciseRepository.findByIdElseThrow(importedExerciseId);
@@ -367,7 +366,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     private void mockSampleBasketZipForToken(String basketToken, ExpectedCount expectedCount) throws Exception {
         URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken + "/repository/0?format=artemis");
-        try (InputStream inputStream = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
+        var sampleExerciseResource = getClass().getResource("./basket/sampleExercise.zip");
+        assertThat(sampleExerciseResource).isNotNull();
+        try (InputStream inputStream = sampleExerciseResource.openStream()) {
             byte[] zippedBytes = inputStream.readAllBytes();
             final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(expectedCount, requestTo(basketRepositoryZipURI))
                     .andExpect(method(HttpMethod.GET));
@@ -376,7 +377,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     private void importBasket() throws Exception {
-        String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
+        var sampleBasketResource = this.getClass().getResource("./basket/sampleBasket.json");
+        assertThat(sampleBasketResource).isNotNull();
+        String sampleBasket = IOUtils.toString(sampleBasketResource, StandardCharsets.UTF_8);
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
 

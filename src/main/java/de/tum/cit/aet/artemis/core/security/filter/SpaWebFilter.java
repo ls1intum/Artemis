@@ -27,7 +27,7 @@ public class SpaWebFilter extends OncePerRequestFilter {
             !path.startsWith("/webauthn") && // required for passkey authentication
             !path.startsWith("/login/webauthn") && // required for passkey authentication
             !path.contains(".") &&
-            path.matches("/(.*)")
+            path.startsWith("/")
         ) {
         // @formatter:on
             request.getRequestDispatcher("/").forward(request, response);

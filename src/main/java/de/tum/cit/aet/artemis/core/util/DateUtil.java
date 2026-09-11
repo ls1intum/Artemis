@@ -13,6 +13,8 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 
 public class DateUtil {
@@ -26,6 +28,42 @@ public class DateUtil {
      * Note: We can NOT use LocalTime.MAX as the precision is not supported by the database, and thus it will be rounded
      */
     public static final LocalTime END_OF_DAY = LocalTime.of(23, 59, 59);
+
+    /**
+     * Validates that every configured date in {@code shouldPrecede} is strictly before {@code dateToValidate} and that {@code dateToValidate} is strictly before every
+     * configured date in {@code shouldFollow}. Null values do not violate the sequence.
+     *
+     * @param shouldPrecede  dates that must be strictly before {@code dateToValidate} when set
+     * @param dateToValidate the date whose position in the sequence is validated; may be {@code null}
+     * @param shouldFollow   dates that must be strictly after {@code dateToValidate} when set
+     * @return {@code true} if all configured dates follow the strict sequence, otherwise {@code false}
+     */
+    public static boolean validateStrictDateSequence(List<ZonedDateTime> shouldPrecede, @Nullable ZonedDateTime dateToValidate, List<ZonedDateTime> shouldFollow) {
+        for (ZonedDateTime precedingDate : shouldPrecede) {
+            if (!isStrictlyBeforeIfBothNonNull(precedingDate, dateToValidate)) {
+                return false;
+            }
+        }
+
+        for (ZonedDateTime followingDate : shouldFollow) {
+            if (!isStrictlyBeforeIfBothNonNull(dateToValidate, followingDate)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks whether {@code previousDate} is strictly before {@code laterDate}. If either date is {@code null}, the optional-date ordering is considered valid.
+     *
+     * @param previousDate the date that should occur first; may be {@code null}
+     * @param laterDate    the date that should occur later; may be {@code null}
+     * @return {@code true} if either date is {@code null} or {@code previousDate} is strictly before {@code laterDate}, otherwise {@code false}
+     */
+    public static boolean isStrictlyBeforeIfBothNonNull(@Nullable ZonedDateTime previousDate, @Nullable ZonedDateTime laterDate) {
+        return previousDate == null || laterDate == null || previousDate.isBefore(laterDate);
+    }
 
     /**
      * Check if a string follows the ISO 8601 format for date
