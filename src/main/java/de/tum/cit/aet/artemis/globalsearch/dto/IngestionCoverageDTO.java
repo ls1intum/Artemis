@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 
 /**
  * One course's index coverage for the dashboard matrix. Both the stored cross-course view and the live per-page view
- * return this shape, so the frontend consumes one type: the stored view maps it from the {@code ingestion_coverage}
+ * return this shape, so the client consumes one type: the stored view maps it from the {@code ingestion_coverage}
  * projection, the live view computes it on the fly for the visible page. {@code computedAt} is the projection's stored
  * timestamp for the stored view, or the request time for the live view.
  *
