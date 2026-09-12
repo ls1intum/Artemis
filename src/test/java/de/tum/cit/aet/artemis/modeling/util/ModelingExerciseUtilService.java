@@ -265,7 +265,9 @@ public class ModelingExerciseUtilService {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
-        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null).submission();
+        // the save wrote the foreign key from an id; this utility holds the participation itself and saves again below
+        submission.setParticipation(participation);
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
