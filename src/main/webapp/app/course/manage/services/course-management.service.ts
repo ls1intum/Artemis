@@ -265,40 +265,9 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Finds one course with all of its content using a GET request.
-     *
-     * @deprecated The web client no longer uses this: the course overview loads {@link findCourseForOverview} and each
-     * tab loads what it needs. The endpoint stays for the iOS, Android and VS Code clients. Do not add new callers.
-     * @param courseId the course to fetch
-     */
-    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
-        const params = new HttpParams();
-        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
-            map((res: HttpResponse<CourseForDashboardDTO>) => {
-                if (res.body) {
-                    const courseForDashboardDTO: CourseForDashboardDTO = res.body;
-                    if (courseForDashboardDTO.course.id) {
-                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                        // Expose the per-course Iris enablement on the cached course object for the overview UI (the guard uses the dedicated access endpoint instead).
-                        courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
-                    }
-                    this.saveScoresInStorage(courseForDashboardDTO);
-
-                    // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
-                    return res.clone({ body: courseForDashboardDTO.course });
-                }
-                return res;
-            }),
-            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
-        );
-    }
-
-    /**
      * Fetches the course itself for the course overview container, without any of its content.
      *
-     * This replaces {@link findOneForDashboard} for the web client: exercises, lectures, exams, participations and
+     * This is what the web client uses: exercises, lectures, exams, participations and
      * scores are loaded by the tab that needs them, so entering a course no longer pays for content the user may never
      * open. The result is stored in the {@link CourseStorageService} exactly as before, so everything reading the course
      * from there keeps working.

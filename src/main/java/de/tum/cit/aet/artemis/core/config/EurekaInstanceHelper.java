@@ -87,10 +87,7 @@ public class EurekaInstanceHelper {
      * @return list of service instances, empty list if no registration is available
      */
     public List<ServiceInstance> getServiceInstances() {
-        if (registration.isEmpty()) {
-            return List.of();
-        }
-        return discoveryClient.getInstances(registration.get().getServiceId());
+        return registration.map(value -> discoveryClient.getInstances(value.getServiceId())).orElseGet(List::of);
     }
 
     /**
@@ -356,14 +353,5 @@ public class EurekaInstanceHelper {
                 log.debug("ServiceRegistry not available - metadata will propagate on subsequent Eureka heartbeats");
             }
         }
-    }
-
-    /**
-     * Gets the default Hazelcast port from configuration.
-     *
-     * @return the Hazelcast port
-     */
-    public int getHazelcastPort() {
-        return hazelcastPort;
     }
 }
