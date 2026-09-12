@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -16,25 +17,28 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatch;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayloadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamModelingSubmissionUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -122,7 +126,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPatchModelingSubmission() {
-        SubmissionPatch patch = new SubmissionPatch(participation, null);
+        SubmissionPatchDTO patch = new SubmissionPatchDTO(null);
 
         // when we submit a patch ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student1"));
@@ -133,7 +137,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPatchModelingSubmissionWithWrongPrincipal() {
-        SubmissionPatch patch = new SubmissionPatch(participation, null);
+        SubmissionPatchDTO patch = new SubmissionPatchDTO(null);
 
         // when we submit a patch, but with the wrong user ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student2"));
@@ -144,7 +148,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateModelingSubmission() {
-        ModelingSubmission submission = new ModelingSubmission();
+        TeamModelingSubmissionUpdateDTO submission = new TeamModelingSubmissionUpdateDTO(null, null, null, null);
 
         // when we submit a new modeling submission ...
         participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student1"));
@@ -157,7 +161,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateModelingSubmissionWithWrongPrincipal() {
-        ModelingSubmission submission = new ModelingSubmission();
+        TeamModelingSubmissionUpdateDTO submission = new TeamModelingSubmissionUpdateDTO(null, null, null, null);
 
         // when we submit a new modeling submission with the wrong user ...
         participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student2"));
@@ -170,7 +174,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateTextSubmission() {
-        TextSubmission submission = new TextSubmission();
+        TeamTextSubmissionUpdateDTO submission = new TeamTextSubmissionUpdateDTO(null, null, null, null, null);
 
         // when we submit a new text submission ...
         participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), submission, getPrincipalMock("student1"));
@@ -178,6 +182,28 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), isNull());
         // and it should be broadcast (unlike modeling exercises).
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(textParticipation), List.of());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateTextSubmissionBroadcastsWhatTheReceivingEditorSavesBack() {
+        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(null, "Hello team", Language.ENGLISH, true, null);
+
+        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), update, getPrincipalMock("student1"));
+
+        ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(textParticipation) + "/text-submissions"), payloadCaptor.capture());
+        assertThat(payloadCaptor.getValue()).isInstanceOf(SubmissionSyncPayloadDTO.class);
+        SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getValue();
+
+        assertThat(payload.sender().login()).as("The receiving editor skips its own echo by matching this login").isEqualTo(TEST_PREFIX + "student1");
+        // The receiving editor renders these and puts them straight back into PUT /api/text/exercises/{exerciseId}/text-submissions.
+        assertThat(payload.submission().id()).as("The receiving editor saves back by id").isNotNull();
+        assertThat(payload.submission().text()).as("The receiving editor renders the text").isEqualTo("Hello team");
+        assertThat(payload.submission().language()).as("The receiving editor saves the language back").isEqualTo(Language.ENGLISH);
+        assertThat(payload.submission().submitted()).as("The receiving editor saves the submitted flag back").isTrue();
+        assertThat(payload.submission().participation()).as("The receiving editor rebuilds its participation from the payload").isNotNull();
+        assertThat(payload.submission().participation().id()).isEqualTo(textParticipation.getId());
     }
 
     @Test

@@ -23,12 +23,14 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamMemberDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -135,13 +137,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         team.setExercise(exercise);
         team.setStudents(students);
 
-        Team serverTeam = request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), Team.class, HttpStatus.CREATED);
+        TeamResponseDTO serverTeam = request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(serverTeam.getName()).as("Team has correct name").isEqualTo(TEAM_NAME);
-        assertThat(serverTeam.getShortName()).as("Team has correct short name").isEqualTo(TEAM_SHORT_NAME);
-        assertThat(serverTeam.getStudents()).as("Team has correct students assigned").isEqualTo(students);
+        assertThat(serverTeam.name()).as("Team has correct name").isEqualTo(TEAM_NAME);
+        assertThat(serverTeam.shortName()).as("Team has correct short name").isEqualTo(TEAM_SHORT_NAME);
+        assertThat(loginsOf(serverTeam)).as("Team has correct students assigned").containsExactlyInAnyOrderElementsOf(loginsOf(students));
+        assertThat(serverTeam.createdDate()).as("Team reports when it was created").isNotNull();
 
-        Optional<Team> optionalTeam = teamRepo.findById(serverTeam.getId());
+        Optional<Team> optionalTeam = teamRepo.findById(serverTeam.id());
         assertThat(optionalTeam).as("Team was saved to database").isPresent();
 
         Team savedTeam = optionalTeam.orElseThrow();
@@ -158,7 +161,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Try to create team with a student that is already assigned to another team
         Team team2 = new Team().name(TEST_PREFIX + "Team 2").shortName(TEST_PREFIX + "team2").exercise(exercise).students(students);
-        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team2), Team.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team2), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -169,7 +172,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         team1.setId(1L);
         team1.setName("team");
         team1.setShortName("team");
-        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team1), Team.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team1), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -183,7 +186,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         team.setShortName("team");
         team.setExercise(exercise);
         team.setStudents(students);
-        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), Team.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -194,7 +197,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         team.setShortName("1invalid");
         team.setExercise(exercise);
         team.setStudents(students);
-        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), Team.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -206,9 +209,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         team.setName(TEAM_NAME_UPDATED);
         team.setStudents(students);
 
-        Team serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), Team.class, HttpStatus.OK);
-        assertThat(serverTeam.getName()).as("Team name was updated correctly").isEqualTo(TEAM_NAME_UPDATED);
-        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").isEqualTo(students);
+        TeamResponseDTO serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.OK);
+        assertThat(serverTeam.name()).as("Team name was updated correctly").isEqualTo(TEAM_NAME_UPDATED);
+        assertThat(loginsOf(serverTeam)).as("Team students were updated correctly").containsExactlyInAnyOrderElementsOf(loginsOf(students));
     }
 
     @Test
@@ -216,14 +219,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void testUpdateTeam_BadRequest() throws Exception {
         // Try updating a team that has no id specified
         var dto1 = new TeamInputDTO(null, "name", "shortname", null, null, null);
-        request.putWithResponseBody(resourceUrl() + "/1", dto1, Team.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(resourceUrl() + "/1", dto1, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Try updating a team with an id specified that does not match the team id param in the route
         Team team2 = teamUtilService.addTeamForExercise(exercise, tutor);
-        request.putWithResponseBody(resourceUrl() + "/" + (team2.getId() + 1), TeamInputDTO.of(team2), Team.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(resourceUrl() + "/" + (team2.getId() + 1), TeamInputDTO.of(team2), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Try updating a team with an exercise specified that does not match the exercise id param in the route
-        request.putWithResponseBody(resourceUrlWithWrongExerciseId() + "/" + team2.getId(), TeamInputDTO.of(team2), Team.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(resourceUrlWithWrongExerciseId() + "/" + team2.getId(), TeamInputDTO.of(team2), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -241,7 +244,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Try to update team with a student that is already assigned to another team
         team1.setStudents(students);
-        request.putWithResponseBody(resourceUrl() + "/" + team1.getId(), TeamInputDTO.of(team1), Team.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(resourceUrl() + "/" + team1.getId(), TeamInputDTO.of(team1), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -249,7 +252,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void testUpdateTeam_NotFound() throws Exception {
         // Try updating a non-existing team
         var dto = new TeamInputDTO(NON_EXISTING_ID, "name", "shortname", null, null, null);
-        request.putWithResponseBody(resourceUrl() + "/" + NON_EXISTING_ID, dto, Team.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody(resourceUrl() + "/" + NON_EXISTING_ID, dto, TeamResponseDTO.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -260,7 +263,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setName("Updated Team Name");
-        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), Team.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -269,7 +272,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         // It should not be allowed to change a team's short name (unique identifier) after creation
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setShortName("changed");
-        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), Team.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -278,7 +281,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         // It should not be allowed to change a team's owner as a tutor
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setOwner(userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow());
-        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), Team.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -286,10 +289,10 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void testGetTeam() throws Exception {
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
-        Team serverTeam = request.get(resourceUrl() + "/" + team.getId(), HttpStatus.OK, Team.class);
-        assertThat(serverTeam.getName()).as("Team name was fetched correctly").isEqualTo(team.getName());
-        assertThat(serverTeam.getShortName()).as("Team short name was fetched correctly").isEqualTo(team.getShortName());
-        assertThat(serverTeam.getStudents()).as("Team students were fetched correctly").isEqualTo(team.getStudents());
+        TeamResponseDTO serverTeam = request.get(resourceUrl() + "/" + team.getId(), HttpStatus.OK, TeamResponseDTO.class);
+        assertThat(serverTeam.name()).as("Team name was fetched correctly").isEqualTo(team.getName());
+        assertThat(serverTeam.shortName()).as("Team short name was fetched correctly").isEqualTo(team.getShortName());
+        assertThat(loginsOf(serverTeam)).as("Team students were fetched correctly").containsExactlyInAnyOrderElementsOf(loginsOf(team.getStudents()));
     }
 
     @Test
@@ -300,13 +303,13 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Try getting a team with an exercise specified that does not match the exercise id param in the route
         Team team = teamUtilService.addTeamForExercise(wrongExercise, tutor);
-        request.get(resourceUrl() + "/" + team.getId(), HttpStatus.BAD_REQUEST, Team.class);
+        request.get(resourceUrl() + "/" + team.getId(), HttpStatus.BAD_REQUEST, TeamResponseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_NotFound() throws Exception {
-        request.get(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND, Team.class);
+        request.get(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND, TeamResponseDTO.class);
     }
 
     @Test
@@ -317,9 +320,11 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         List<Team> teams = teamUtilService.addTeamsForExercise(exercise, numberOfTeams, tutor);
         int numberOfStudents = getCountOfStudentsInTeams(teams);
 
-        List<Team> serverTeams = request.getList(resourceUrl(), HttpStatus.OK, Team.class);
+        List<TeamResponseDTO> serverTeams = request.getList(resourceUrl(), HttpStatus.OK, TeamResponseDTO.class);
         assertThat(serverTeams).as("Correct number of teams was fetched").hasSize(numberOfTeams);
-        assertThat(getCountOfStudentsInTeams(serverTeams)).as("Correct number of students were fetched").isEqualTo(numberOfStudents);
+        assertThat(serverTeams.stream().mapToInt(serverTeam -> serverTeam.students().size()).sum()).as("Correct number of students were fetched").isEqualTo(numberOfStudents);
+        assertThat(serverTeams).as("Every student carries the registration number the exercise administration shows")
+                .allSatisfy(serverTeam -> assertThat(serverTeam.students()).allSatisfy(student -> assertThat(student.visibleRegistrationNumber()).isNotNull()));
     }
 
     @Test
@@ -328,7 +333,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         // Revoke the tutor's UCR entry so they no longer have TA access to this course
         userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
         teamUtilService.addTeamsForExercise(exercise, 3, tutor);
-        request.getList(resourceUrl(), HttpStatus.FORBIDDEN, Team.class);
+        request.getList(resourceUrl(), HttpStatus.FORBIDDEN, TeamResponseDTO.class);
     }
 
     @Test
@@ -438,13 +443,13 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         Team unsavedTeam = teamUtilService.generateTeamForExercise(exercise, "Team Unsaved", "unsaved", 2, tutor);
 
         // Create team
-        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(unsavedTeam), Team.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(unsavedTeam), TeamResponseDTO.class, HttpStatus.FORBIDDEN);
         // Update team
-        request.putWithResponseBody(resourceUrl() + "/" + existingTeam.getId(), TeamInputDTO.of(existingTeam), Team.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(resourceUrl() + "/" + existingTeam.getId(), TeamInputDTO.of(existingTeam), TeamResponseDTO.class, HttpStatus.FORBIDDEN);
         // Get other team
-        request.get(resourceUrl() + "/" + existingTeam.getId(), HttpStatus.FORBIDDEN, Team.class);
+        request.get(resourceUrl() + "/" + existingTeam.getId(), HttpStatus.FORBIDDEN, TeamResponseDTO.class);
         // Get all teams for exercise
-        request.getList(resourceUrl(), HttpStatus.FORBIDDEN, Team.class);
+        request.getList(resourceUrl(), HttpStatus.FORBIDDEN, TeamResponseDTO.class);
         // Delete team
         request.delete(resourceUrl() + "/" + existingTeam.getId(), HttpStatus.FORBIDDEN);
         // Exists team by shortName
@@ -485,6 +490,25 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         return teams.stream().map(Team::getStudents).map(Set::size).reduce(0, Integer::sum);
     }
 
+    /**
+     * The participations of an exercise. An exercise the team has no participation in omits the empty list on the wire,
+     * which the client reads as "no participation" and this reads as an empty list.
+     *
+     * @param exercise the exercise as the response reports it
+     * @return its participations, empty when it has none
+     */
+    private static List<TeamParticipationDTO> participationsOf(CourseWithTeamExercisesDTO.TeamExerciseDTO exercise) {
+        return exercise.studentParticipations() == null ? List.of() : exercise.studentParticipations();
+    }
+
+    private static Set<String> loginsOf(TeamResponseDTO team) {
+        return team.students().stream().map(TeamMemberDTO::login).collect(Collectors.toSet());
+    }
+
+    private static Set<String> loginsOf(Set<User> users) {
+        return users.stream().map(User::getLogin).collect(Collectors.toSet());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
@@ -521,38 +545,43 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         participationUtilService.addTeamParticipationForExercise(programmingExercise, team2a.getId());
         participationUtilService.addTeamParticipationForExercise(textExercise, team2b.getId());
 
-        Course course1 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
-        assertThat(course1.getExercises()).as("All exercises of team 1 in course were returned").hasSize(3);
-        assertThat(course1.getExercises().stream().map(Exercise::getTeams).collect(Collectors.toSet())).as("All team instances of team 1 in course were returned").hasSize(3);
-        assertThat(course1.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).collect(Collectors.toSet()))
-                .as("All participations of team 1 in course were returned").hasSize(2);
+        CourseWithTeamExercisesDTO course1 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+        assertThat(course1.id()).as("The course the team belongs to was returned").isEqualTo(course.getId());
+        assertThat(course1.exercises()).as("All exercises of team 1 in course were returned").hasSize(3);
+        assertThat(course1.exercises()).as("Every exercise carries the team instance the client links to").allSatisfy(exercise -> assertThat(exercise.teams()).hasSize(1));
+        assertThat(course1.exercises()).as("Every exercise carries the title and dates the participation table renders")
+                .allSatisfy(exercise -> assertThat(exercise.title()).isNotNull());
+        assertThat(course1.exercises().stream().flatMap(exercise -> participationsOf(exercise).stream()).toList()).as("All participations of team 1 in course were returned")
+                .hasSize(2);
 
-        Course course2 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
-        assertThat(course2.getExercises()).as("All exercises of team 2 in course were returned").hasSize(2);
+        CourseWithTeamExercisesDTO course2 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+        assertThat(course2.exercises()).as("All exercises of team 2 in course were returned").hasSize(2);
 
-        StudentParticipation studentParticipation = course2.getExercises().iterator().next().getStudentParticipations().iterator().next();
-        assertThat(studentParticipation.getSubmissionCount()).as("Participation includes submission count").isNotNull();
+        TeamParticipationDTO studentParticipation = course2.exercises().stream().flatMap(exercise -> participationsOf(exercise).stream()).findFirst().orElseThrow();
+        assertThat(studentParticipation.submissionCount()).as("Participation includes submission count").isNotNull();
+        assertThat(studentParticipation.type()).as("Participation reports its kind so the client can merge it").isEqualTo("student");
 
         // Submission and Result should be present for Team of which the user is the Team Owner
         final String submissionText = "Hello World";
         TextSubmission submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
 
-        Course course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
-        StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
-                .iterator().next();
-        assertThat(participation.getSubmissions()).as("Latest submission is present").hasSize(1);
-        Submission returnedSubmission = participation.getSubmissions().iterator().next();
-        assertThat(((TextSubmission) returnedSubmission).getText()).as("Latest submission is present").isEqualTo(submissionText);
-        assertThat(returnedSubmission.getResults()).as("Latest result is present").hasSize(1);
+        CourseWithTeamExercisesDTO course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+        TeamParticipationDTO participation = participationsOf(course3.exercises().stream().filter(exercise -> exercise.id().equals(textExercise.getId())).findAny().orElseThrow())
+                .getFirst();
+        assertThat(participation.submissions()).as("Latest submission is present").hasSize(1);
+        var returnedSubmission = participation.submissions().iterator().next();
+        assertThat(returnedSubmission.submitted()).as("Latest submission is present").isTrue();
+        assertThat(returnedSubmission.submissionExerciseType()).as("Submission reports its kind so the client can discriminate it").isEqualTo("text");
+        assertThat(returnedSubmission.results()).as("Latest result is present").hasSize(1);
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
         submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), TEST_PREFIX + "tutor2");
 
-        Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
-        participation = course4.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations().iterator().next();
-        assertThat(participation.getSubmissions()).as("Latest submission is not present").isEmpty();
+        CourseWithTeamExercisesDTO course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+        participation = participationsOf(course4.exercises().stream().filter(exercise -> exercise.id().equals(textExercise.getId())).findAny().orElseThrow()).getFirst();
+        assertThat(participation.submissions()).as("Latest submission is not present").isNullOrEmpty();
     }
 
     @Test
@@ -560,13 +589,13 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
         Team team = teamRepo.save(new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
                 .students(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow()));
-        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, Course.class);
+        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
         Team team = teamUtilService.addTeamsForExercise(exercise, TEST_PREFIX + "team_forb", TEST_PREFIX + "otherStudent", 1, tutor).getFirst();
-        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, Course.class);
+        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, CourseWithTeamExercisesDTO.class);
     }
 }
