@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseForExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
@@ -129,7 +130,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
                 ExerciseGroupDTO.class);
         request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.FORBIDDEN, ExerciseGroupDTO.class);
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(ExerciseGroupImportDTO.of(exerciseGroup)),
                 HttpStatus.FORBIDDEN);
     }
 
@@ -355,8 +356,23 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         exercise2.setTitle(title2);
         examRepository.save(exam);
 
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(ExerciseGroupImportDTO.of(exerciseGroup)),
                 HttpStatus.BAD_REQUEST);
+    }
+
+    private static List<ExerciseGroupImportDTO> toImportDTOs(List<ExerciseGroup> exerciseGroups) {
+        return exerciseGroups.stream().map(ExerciseGroupImportDTO::of).toList();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseGroup_missingExerciseTypeIsBadRequest() throws Exception {
+        // The DTO body has no polymorphic binding, so a missing type must still be a client error (400), not a 500 from the skeleton conversion.
+        var mapper = request.getObjectMapper();
+        var exercise = mapper.createObjectNode().put("id", 1).put("title", "no type");
+        var group = mapper.createObjectNode().put("title", "group").put("isMandatory", true);
+        group.set("exercises", mapper.createArrayNode().add(exercise));
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", mapper.createArrayNode().add(group), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -368,7 +384,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         final List<Long> idsBefore = exerciseGroupsBefore.stream().map(ExerciseGroup::getId).toList();
 
         final List<ExerciseGroupDTO> exerciseGroupsNow = request
-                .postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore,
+                .postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", toImportDTOs(exerciseGroupsBefore),
                         ExerciseGroupImportResultDTO.class, HttpStatus.OK)
                 .exerciseGroups();
 
@@ -401,7 +417,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         exerciseRepository.deleteById(sourceQuiz.getId());
 
         ExerciseGroupImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                groupsToImport, ExerciseGroupImportResultDTO.class, HttpStatus.OK);
+                toImportDTOs(groupsToImport), ExerciseGroupImportResultDTO.class, HttpStatus.OK);
 
         // The skipped quiz is reported to the editor via the "skipped" list in the response body (not silently dropped).
         assertThat(result.skippedExercises()).as("the skipped quiz title must be reported").contains(quizTitle);
@@ -430,7 +446,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
         final List<ExerciseGroupDTO> listReceived = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
+                toImportDTOs(listSendToServer), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
         listExpected.addAll(listSendToServer);
@@ -457,7 +473,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
         final List<ExerciseGroupDTO> listReceived = request.postWithResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
+                toImportDTOs(listSendToServer), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
         assertThat(listReceived).hasSize(9);
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
@@ -496,8 +512,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         versionControlService.createProjectForExercise(programming);
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", List.of(programmingGroup),
-                ExerciseGroup.class, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", List.of(ExerciseGroupImportDTO.of(programmingGroup)),
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
