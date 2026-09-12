@@ -402,6 +402,28 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(importRequest.toEntity().getExerciseVariantGroup()).isNull();
     }
 
+    /**
+     * The download export nulls the criterion and the instruction ids so that the import can persist them, which
+     * strips the only thing that told two otherwise identical criteria apart. A set of records would merge the two and
+     * drop a rubric row, so the import request binds them into a list and only the entities go into a set. The body is
+     * the shape a released export writes, ids and all.
+     */
+    @Test
+    void importRequestKeepsTwoIdenticalGradingCriteria() throws Exception {
+        String instructions = """
+                [{"id":null,"credits":1.0,"gradingScale":"good","instructionDescription":"same","feedback":"same","usageCount":1}]""";
+        String body = """
+                {"title":"Imported","shortName":"IMP","gradingCriteria":[
+                {"id":null,"title":"same title","structuredGradingInstructions":%s},
+                {"id":null,"title":"same title","structuredGradingInstructions":%s}]}""".formatted(instructions, instructions);
+
+        ImportProgrammingExerciseRequestDTO importRequest = objectMapper.readValue(body, ImportProgrammingExerciseRequestDTO.class);
+
+        assertThat(importRequest.gradingCriteria()).as("both criteria survive the binding").hasSize(2);
+        // an entity without an id is equal to nothing but itself, so the set keeps both
+        assertThat(importRequest.toEntity().getGradingCriteria()).as("both criteria become their own entity").hasSize(2);
+    }
+
     @Test
     void createRequestToEntityPreservesTheFieldsWithoutEntityDefaults() {
         CreateProgrammingExerciseDTO dto = new CreateProgrammingExerciseDTO(null, "New exercise", "NEW", "new-exercise", "de.tum.in", "problem", "instructions",

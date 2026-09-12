@@ -134,6 +134,20 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
     }
 
     /**
+     * Creates the record written into the exercise details file of an export or an archive. It is the response record
+     * without the ids of the plagiarism detection and the team assignment configuration: the file is read back by
+     * another instance, which creates a new exercise from it. An importer that copies those ids onto its new exercise,
+     * as every released version does for the plagiarism configuration, would otherwise reach persistence with the
+     * identity of the exported exercise's configuration row.
+     *
+     * @param exercise the exercise to export (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ProgrammingExerciseResponseDTO forExport(ProgrammingExercise exercise) {
+        return of(exercise, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed(), true);
+    }
+
+    /**
      * Creates a {@link ProgrammingExerciseResponseDTO} from the given exercise, carrying the transient
      * {@code gradingInstructionFeedbackUsed} flag. That flag is computed by the retrieval resource before
      * serialization and the grading-instruction editor branches on it, so it is passed in explicitly rather than read
@@ -145,6 +159,10 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, Boolean gradingInstructionFeedbackUsed) {
+        return of(exercise, gradingInstructionFeedbackUsed, false);
+    }
+
+    private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, Boolean gradingInstructionFeedbackUsed, boolean forExport) {
         if (exercise == null) {
             return null;
         }
@@ -189,6 +207,10 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig = plagiarismDetectionConfigEntity != null && Hibernate.isInitialized(plagiarismDetectionConfigEntity)
                 ? PlagiarismDetectionConfigDTO.of(plagiarismDetectionConfigEntity)
                 : null;
+        if (forExport) {
+            teamAssignmentConfig = teamAssignmentConfig == null ? null : teamAssignmentConfig.withoutId();
+            plagiarismDetectionConfig = plagiarismDetectionConfig == null ? null : plagiarismDetectionConfig.withoutId();
+        }
         var submissionPolicyEntity = exercise.getSubmissionPolicy();
         SubmissionPolicyDTO submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity)
                 : null;

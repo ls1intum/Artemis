@@ -28,15 +28,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -44,6 +48,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.Reposit
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -91,6 +96,9 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -638,13 +646,88 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(importRequest.buildConfig()).as("the build configuration is part of the create form").isNotNull();
         assertThat(importRequest.buildConfig().buildScript()).isEqualTo(exerciseToExport.getBuildConfig().getBuildScript());
 
-        // The archive carries the row ids of the source exercise's configurations. The import creates a new exercise, so
-        // it must build fresh configurations instead of adopting those ids and writing onto the source exercise's rows.
+        // The import creates a new exercise, so it must build fresh configurations instead of adopting the ids of the
+        // exported exercise's configuration rows.
         var importedExercise = importRequest.toEntity();
         assertThat(importedExercise.getPlagiarismDetectionConfig()).isNotNull();
-        assertThat(importedExercise.getPlagiarismDetectionConfig().getId()).as("the imported plagiarism configuration does not adopt the exported id").isNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getId()).as("the imported plagiarism configuration does not adopt an id").isNull();
         assertThat(importedExercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
-        assertThat(importRequest.plagiarismDetectionConfig().id()).as("the file itself still carries the id, which is why the mapper has to drop it").isNotNull();
+    }
+
+    /**
+     * The file itself carries no configuration id either, because the importer reading it is not necessarily this
+     * version: every released version copies the id of the plagiarism configuration from the request onto the exercise
+     * it creates and clears it only after that exercise was saved, and the association cascades ALL.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(exerciseToExport.getPlagiarismDetectionConfig().getId()).isNotNull();
+        assertThat(exerciseToExport.getTeamAssignmentConfig().getId()).isNotNull();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        JsonNode written = JsonObjectMapper.get().readTree(details);
+        assertThat(written.get("plagiarismDetectionConfig").get("id")).as("the exported plagiarism configuration carries no id").isNull();
+        assertThat(written.get("teamAssignmentConfig").get("id")).as("the exported team assignment configuration carries no id").isNull();
+        // the settings themselves survive, only the identity is gone
+        assertThat(written.get("plagiarismDetectionConfig").get("similarityThreshold").asInt()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
+        assertThat(written.get("teamAssignmentConfig").get("maxTeamSize").asInt()).isEqualTo(10);
+    }
+
+    /**
+     * An importer that has not upgraded copies the id of the plagiarism configuration out of the request and saves the
+     * exercise before clearing it. Such a file therefore has to import into a configuration that is still transient,
+     * so that the save inserts a row instead of reaching persistence with the identity of the exported exercise's row.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        Long sourceConfigId = exerciseToExport.getPlagiarismDetectionConfig().getId();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+
+        // what the older mapper does with the request: copy the id, then copy the settings
+        PlagiarismDetectionConfig adopted = new PlagiarismDetectionConfig();
+        adopted.setId(importRequest.plagiarismDetectionConfig().id());
+        importRequest.plagiarismDetectionConfig().applyTo(adopted);
+        assertThat(adopted.getId()).as("the copied configuration stays transient, so the importing instance inserts its own row").isNull();
+
+        ProgrammingExercise imported = importRequest.toEntity();
+        imported.setPlagiarismDetectionConfig(adopted);
+        imported.setId(null);
+        imported.setShortName(programmingExercise.getShortName() + "imp");
+        imported.setTitle(programmingExercise.getTitle() + " imported");
+        imported.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        imported.setBuildConfig(programmingExerciseBuildConfigRepository.save(new ProgrammingExerciseBuildConfig()));
+        var saved = programmingExerciseRepository.save(imported);
+
+        assertThat(saved.getPlagiarismDetectionConfig().getId()).as("the import created its own configuration row").isNotNull().isNotEqualTo(sourceConfigId);
+        var source = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(source.getPlagiarismDetectionConfig().getId()).as("the exported exercise keeps its own configuration row").isEqualTo(sourceConfigId);
+    }
+
+    private static TeamAssignmentConfig teamAssignmentConfig() {
+        TeamAssignmentConfig config = new TeamAssignmentConfig();
+        config.setMinTeamSize(1);
+        config.setMaxTeamSize(10);
+        return config;
     }
 
     /**
@@ -668,6 +751,17 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
 
         String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
         assertThat(JsonObjectMapper.get().readTree(details).get("gradingCriteria").size()).as("both stored criteria are exported").isEqualTo(2);
+
+        // the import reads the same file, so the second criterion has to survive the request binding and the database
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+        assertThat(importRequest.gradingCriteria()).as("both criteria survive the request binding").hasSize(2);
+        var importedCriteria = importRequest.toEntity().getGradingCriteria();
+        assertThat(importedCriteria).as("both criteria become their own entity").hasSize(2);
+
+        importedCriteria.forEach(criterion -> criterion.setExercise(programmingExercise));
+        gradingCriterionRepository.saveAll(importedCriteria);
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId())).as("both imported criteria are stored as their own row")
+                .hasSize(4);
     }
 
     private static GradingCriterion criterionWithInstruction() {

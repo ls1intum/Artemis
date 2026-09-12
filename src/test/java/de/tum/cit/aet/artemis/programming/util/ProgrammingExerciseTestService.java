@@ -1696,6 +1696,7 @@ public class ProgrammingExerciseTestService {
             // read the file the way the import from file and the sharing import read it
             var exportedExercise = objectMapper.readValue(json.get().toFile(), ImportProgrammingExerciseRequestDTO.class);
             assertThat(exportedExercise.teamAssignmentConfig()).isNotNull();
+            assertThat(exportedExercise.teamAssignmentConfig().id()).isNull();
             assertThat(exportedExercise.teamAssignmentConfig().minTeamSize()).isEqualTo(1);
             assertThat(exportedExercise.teamAssignmentConfig().maxTeamSize()).isEqualTo(10);
         }

@@ -227,11 +227,13 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * <p>
      * The cast is safe: this class only works with programming exercises. The record is the same one the programming
      * exercise endpoints return, so an archive stays readable by the import from file and by the sharing import, which
-     * both bind it to {@link de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO}.
+     * both bind it to {@link de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO}. The export
+     * variant leaves out the ids of the plagiarism detection and the team assignment configuration, so that an importer
+     * of any version creates its own configuration rows instead of adopting this exercise's.
      */
     @Override
     protected Record exerciseDetailsForExport(Exercise exercise) {
-        return ProgrammingExerciseResponseDTO.of((ProgrammingExercise) exercise);
+        return ProgrammingExerciseResponseDTO.forExport((ProgrammingExercise) exercise);
     }
 
     /**
