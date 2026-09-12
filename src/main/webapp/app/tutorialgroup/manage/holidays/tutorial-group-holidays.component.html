@@ -3,7 +3,7 @@
          button would open a dialog that could be filled in and then silently do nothing. -->
     @if (configuration()) {
         <div *titleBarActions class="flex items-center gap-2">
-            <button tumUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialog()">
+            <button tumUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialogFrom($event)">
                 <fa-icon [icon]="faPlus" />
                 <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
             </button>
@@ -30,9 +30,10 @@
                 [sessionCountsByDay]="sessionCountsByDay()"
                 [today]="today()"
                 (monthChange)="onMonthChange($event)"
-                (holidaySelected)="openEditDialog($event)"
-                (daySelected)="openCreateDialog($event)"
-                (rangeSelected)="openCreateDialogForRange($event.start, $event.end)"
+                [selectedRange]="selectedRange()"
+                (holidaySelected)="openEditDialog($event.holiday, $event.origin)"
+                (daySelected)="openCreateDialog($event.origin, $event.day)"
+                (rangeSelected)="openCreateDialogForRange($event.start, $event.end, $event.origin)"
             />
         </section>
 
@@ -43,7 +44,7 @@
                 [today]="today()"
                 [filter]="filter()"
                 (filterChange)="filter.set($event)"
-                (editRequested)="openEditDialog($event)"
+                (editRequested)="openEditDialog($event.holiday, $event.origin)"
                 (deleteRequested)="onDelete($event)"
             />
         </section>
@@ -51,6 +52,8 @@
 
     <jhi-holiday-dialog
         [(visible)]="dialogVisible"
+        (visibleChange)="onDialogVisibleChange($event)"
+        [origin]="dialogOrigin()"
         [holiday]="editedHoliday()"
         [existingHolidays]="holidays()"
         [initialDay]="dialogInitialDay()"

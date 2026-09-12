@@ -68,7 +68,7 @@
                         [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.addHolidayOn' | artemisTranslate: { date: day.dayKey }"
                         (pointerdown)="onDayPointerDown(day, $event)"
                         (pointerenter)="onDayPointerEnter(day)"
-                        (click)="onDayClick(day)"
+                        (click)="onDayClick(day, $event)"
                     >
                         <span class="flex items-center justify-between gap-2">
                             <!-- Today is a filled circle, so it reads at a glance without colour alone carrying it. -->

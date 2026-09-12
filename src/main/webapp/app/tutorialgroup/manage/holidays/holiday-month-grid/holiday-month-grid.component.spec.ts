@@ -6,7 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 
 const TIME_ZONE = 'Europe/Berlin';
@@ -220,6 +220,26 @@ describe('HolidayMonthGridComponent', () => {
             expect(preview.style.top).not.toBe(bar.style.top);
         });
 
+        it('should keep previewing the run a form is open for, after the drag that chose it has ended', () => {
+            // The form is anchored to this bar, so it has to outlive the drag: without it the form would point at
+            // something that vanished the moment it appeared.
+            fixture.componentRef.setInput('selectedRange', { start: dayjs('2025-12-22'), end: dayjs('2025-12-24') });
+            fixture.detectChanges();
+
+            expect(previews()).toEqual([{ span: 3, left: expect.any(String) }]);
+        });
+
+        it('should let a drag in progress win over the run a form is open for', () => {
+            fixture.componentRef.setInput('selectedRange', { start: dayjs('2025-12-22'), end: dayjs('2025-12-24') });
+            fixture.detectChanges();
+
+            dayButton('2025-12-08').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-09');
+
+            expect(previews()).toEqual([{ span: 2, left: expect.any(String) }]);
+        });
+
         it('should take the preview away once the drag is released', () => {
             dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
             fixture.detectChanges();
@@ -368,29 +388,34 @@ describe('HolidayMonthGridComponent', () => {
     });
 
     it('should offer to create a holiday when an empty day is clicked', () => {
-        let emitted: dayjs.Dayjs | undefined;
-        fixture.componentInstance.daySelected.subscribe((day) => (emitted = day));
+        let emitted: { day: dayjs.Dayjs; origin: HTMLElement } | undefined;
+        fixture.componentInstance.daySelected.subscribe((selection) => (emitted = selection));
+        const cell = fixture.debugElement.query(By.css('[data-day="2025-12-09"]')).nativeElement;
 
-        fixture.debugElement.query(By.css('[data-day="2025-12-09"]')).nativeElement.click();
+        cell.click();
 
-        expect(emitted?.format('YYYY-MM-DD')).toBe('2025-12-09');
+        expect(emitted?.day.format('YYYY-MM-DD')).toBe('2025-12-09');
+        // The form is anchored, so the day itself has to come with it.
+        expect(emitted?.origin).toBe(cell);
     });
 
     it('should open the holiday when its bar is clicked', () => {
         setHolidays(period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00'));
-        let selectedId: number | undefined;
-        fixture.componentInstance.holidaySelected.subscribe((holiday) => (selectedId = holiday.period.id));
+        let selected: { holiday: Holiday; origin: HTMLElement } | undefined;
+        fixture.componentInstance.holidaySelected.subscribe((selection) => (selected = selection));
+        const bar = query('holiday-calendar-event').nativeElement;
 
-        query('holiday-calendar-event').nativeElement.click();
+        bar.click();
 
-        expect(selectedId).toBe(4);
+        expect(selected?.holiday.period.id).toBe(4);
+        expect(selected?.origin).toBe(bar);
     });
 
     it('should still offer to create on a day that already carries a holiday, so a second one is reachable', () => {
         setHolidays(period(4, '2025-12-16T23:00:00', '2025-12-17T22:59:00'));
         let created: dayjs.Dayjs | undefined;
         let edited = false;
-        fixture.componentInstance.daySelected.subscribe((day) => (created = day));
+        fixture.componentInstance.daySelected.subscribe((selection) => (created = selection.day));
         fixture.componentInstance.holidaySelected.subscribe(() => (edited = true));
 
         // The cell, not the bar: the bar stops the click so the two actions stay separate.

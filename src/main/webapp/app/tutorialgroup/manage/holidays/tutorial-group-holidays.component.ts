@@ -101,6 +101,10 @@ export class TutorialGroupHolidaysComponent {
     protected readonly editedHoliday = signal<Holiday | undefined>(undefined);
     protected readonly dialogInitialDay = signal<dayjs.Dayjs | undefined>(undefined);
     protected readonly dialogInitialLastDay = signal<dayjs.Dayjs | undefined>(undefined);
+    /** What the form points at while it is open: a holiday's bar, the preview of a new run, or the control that asked. */
+    protected readonly dialogOrigin = signal<HTMLElement | undefined>(undefined);
+    /** The run the open form is about, so the calendar keeps previewing it behind the form rather than losing it. */
+    protected readonly selectedRange = signal<{ start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined>(undefined);
     /**
      * Counts each time the dialog is opened on something new.
      *
@@ -357,12 +361,17 @@ export class TutorialGroupHolidaysComponent {
         this.loadConfiguration();
     }
 
-    protected openCreateDialog(day?: dayjs.Dayjs): void {
-        this.openCreateDialogForRange(day ?? this.today(), day ?? this.today());
+    /** Narrows the event target here rather than in the template, where `currentTarget` is only an `EventTarget`. */
+    protected openCreateDialogFrom(event: Event): void {
+        this.openCreateDialog(event.currentTarget as HTMLElement);
     }
 
-    /** Opens the dialog on a run of days, which is what dragging across the calendar picks. */
-    protected openCreateDialogForRange(start: dayjs.Dayjs, end: dayjs.Dayjs): void {
+    protected openCreateDialog(origin: HTMLElement, day?: dayjs.Dayjs): void {
+        this.openCreateDialogForRange(day ?? this.today(), day ?? this.today(), origin);
+    }
+
+    /** Opens the form on a run of days, which is what dragging across the calendar picks. */
+    protected openCreateDialogForRange(start: dayjs.Dayjs, end: dayjs.Dayjs, origin: HTMLElement): void {
         // Saving needs the configuration to hang the holiday off, so without one the dialog could only be filled in
         // and dismissed. Guarded here rather than only on the button, because the calendar opens it too - by clicking
         // a day and by dragging a run of them.
@@ -374,16 +383,29 @@ export class TutorialGroupHolidaysComponent {
         this.dialogInitialDay.set(start);
         this.dialogInitialLastDay.set(end);
         this.dialogSessionCount.set(0);
+        this.selectedRange.set({ start, end });
+        this.dialogOrigin.set(origin);
         this.dialogVisible.set(true);
     }
 
-    protected openEditDialog(holiday: Holiday): void {
+    protected openEditDialog(holiday: Holiday, origin: HTMLElement): void {
         this.dialogGeneration++;
         this.editedHoliday.set(holiday);
         this.dialogInitialDay.set(undefined);
         this.dialogInitialLastDay.set(undefined);
         this.dialogSessionCount.set(0);
+        // The holiday already has a bar of its own to point at, so nothing extra is previewed for it.
+        this.selectedRange.set(undefined);
+        this.dialogOrigin.set(origin);
         this.dialogVisible.set(true);
+    }
+
+    /** Drops what the open form was about once it closes, so the calendar stops previewing a run nobody is editing. */
+    protected onDialogVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.selectedRange.set(undefined);
+            this.dialogOrigin.set(undefined);
+        }
     }
 
     /**

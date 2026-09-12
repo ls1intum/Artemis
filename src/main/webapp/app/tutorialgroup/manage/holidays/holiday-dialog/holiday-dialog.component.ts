@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterRenderEffect, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiDialogComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent, TumUiPopoverComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -34,7 +34,7 @@ export interface HolidaySubmission {
         ArtemisTranslatePipe,
         TumUiButtonDirective,
         TumUiDatePickerComponent,
-        TumUiDialogComponent,
+        TumUiPopoverComponent,
         TumUiFormFieldComponent,
         TumUiInputDirective,
         TumUiMessageComponent,
@@ -42,6 +42,12 @@ export interface HolidaySubmission {
 })
 export class HolidayDialogComponent {
     readonly visible = model(false);
+    /**
+     * What the form opens against: the bar of the holiday being edited, the preview of the run being created, or the
+     * control that asked for it. A popover has to point at something, and pointing at the days themselves is what
+     * makes the form read as part of the calendar rather than as a page on top of it.
+     */
+    readonly origin = input<HTMLElement | undefined>(undefined);
     /** The holiday being edited, or undefined to create one. */
     readonly holiday = input<Holiday | undefined>(undefined);
     /** Prefills the date when the reader opened the dialog by clicking a day in the calendar. */
@@ -62,6 +68,8 @@ export class HolidayDialogComponent {
     readonly save = output<HolidaySubmission>();
     /** The chosen span changed, so the page can count the sessions it covers. */
     readonly selectedSpanChange = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
+
+    private readonly popover = viewChild<TumUiPopoverComponent>('popover');
 
     private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
@@ -136,6 +144,29 @@ export class HolidayDialogComponent {
      * Held in a field rather than run from a constructor so it carries a name; protected because a private one reads
      * as unused, which is the same reason the sidebar-sync effects elsewhere in the client are declared that way.
      */
+    /**
+     * Opens and closes the popover as `visible` changes.
+     *
+     * After the render pass rather than during it: the popover reads its required `ariaLabel` when it attaches, and a
+     * plain effect can run before the binding that supplies it has been applied.
+     *
+     * A dialog took a two-way `visible`; a popover is opened against an origin instead, so the page still says when
+     * the form is wanted and this turns that into the call. Closing it here rather than only from the buttons keeps a
+     * save, a cancel and an Escape all ending the same way.
+     */
+    protected readonly openPopoverWhenVisible = afterRenderEffect(() => {
+        const popover = this.popover();
+        const origin = this.origin();
+        const visible = this.visible();
+        untracked(() => {
+            if (visible && origin) {
+                popover?.open(origin);
+            } else {
+                popover?.close();
+            }
+        });
+    });
+
     protected readonly fillFormOnOpen = effect(() => {
         if (!this.visible()) {
             return;
@@ -213,6 +244,13 @@ export class HolidayDialogComponent {
             return;
         }
         this.save.emit({ start, end, reason: this.reason().trim() });
+    }
+
+    /** Keeps `visible` true to what the popover is doing, so an Escape or a backdrop click is not lost to the page. */
+    protected onPopoverOpenChange(open: boolean): void {
+        if (!open) {
+            this.visible.set(false);
+        }
     }
 
     protected onCancel(): void {

@@ -63,7 +63,7 @@
                         type="button"
                         data-testid="holiday-edit"
                         [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.editHolidayNamed' | artemisTranslate: { reason: entry.holiday.reason }"
-                        (click)="editRequested.emit(entry.holiday)"
+                        (click)="requestEdit(entry.holiday, $event)"
                     >
                         <fa-icon [icon]="faWrench" />
                         <!-- sr-only in the narrow panel keeps the label in the accessibility tree so the icon-only button stays named -->

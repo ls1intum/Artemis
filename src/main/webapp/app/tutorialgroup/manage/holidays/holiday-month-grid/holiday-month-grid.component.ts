@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -123,18 +123,27 @@ export class HolidayMonthGridComponent {
     readonly sessionCountsByDay = input.required<Map<string, number>>();
     /** Today in the course's time zone, so "today" is the course's day rather than the reader's. */
     readonly today = input.required<dayjs.Dayjs>();
+    /**
+     * The run a form is currently open for, kept previewed while it is filled in.
+     *
+     * A drag ends before the form opens, so without this the bar the form is anchored to would vanish the moment it
+     * appeared. Holding it keeps the days under discussion on screen, which is the point of anchoring at all.
+     */
+    readonly selectedRange = input<{ start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined>(undefined);
 
     readonly monthChange = output<dayjs.Dayjs>();
-    readonly holidaySelected = output<Holiday>();
+    readonly holidaySelected = output<{ holiday: Holiday; origin: HTMLElement }>();
     /** A click on a day, which opens the create dialog prefilled with that date. */
-    readonly daySelected = output<dayjs.Dayjs>();
+    readonly daySelected = output<{ day: dayjs.Dayjs; origin: HTMLElement }>();
     /**
      * A run of days picked by dragging across them, first day to last.
      *
      * An accelerator rather than the only way in: the dialog a single day opens carries an end date of its own, which
      * is what a reader who cannot drag uses to reach the same span.
      */
-    readonly rangeSelected = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
+    readonly rangeSelected = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs; origin: HTMLElement }>();
+
+    private readonly gridElement = inject<ElementRef<HTMLElement>>(ElementRef);
 
     private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
@@ -154,7 +163,10 @@ export class HolidayMonthGridComponent {
         const holidays = this.holidays();
         const sessionCountsByDay = this.sessionCountsByDay();
         const todayKey = this.today().format(DAY_KEY_FORMAT);
-        const preview = this.pendingRange();
+        // The page speaks start/end; the clipping here speaks from/to. Converted once, rather than teaching the
+        // geometry a second pair of names.
+        const held = this.selectedRange();
+        const preview = this.pendingRange() ?? (held ? { from: held.start, to: held.end } : undefined);
 
         const weeks: HolidayCalendarWeek[] = [];
         let weekStart = month.startOf('month').startOf('isoWeek');
@@ -362,7 +374,9 @@ export class HolidayMonthGridComponent {
         this.dragAnchor.set(undefined);
         this.dragCurrent.set(undefined);
         if (range && !range.from.isSame(range.to, 'day')) {
-            this.rangeSelected.emit({ start: range.from, end: range.to });
+            // Reported after the drag is cleared, so the preview the form anchors to is the held one the page hands
+            // back rather than this drag's - which is about to disappear.
+            this.rangeSelected.emit({ start: range.from, end: range.to, origin: this.previewElement() ?? this.gridElement.nativeElement });
         }
     }
 
@@ -371,15 +385,20 @@ export class HolidayMonthGridComponent {
         this.dragCurrent.set(undefined);
     }
 
-    protected onDayClick(day: HolidayCalendarDay): void {
+    protected onDayClick(day: HolidayCalendarDay, event: Event): void {
         if (day.inDisplayedMonth) {
-            this.daySelected.emit(day.date);
+            this.daySelected.emit({ day: day.date, origin: event.currentTarget as HTMLElement });
         }
     }
 
     protected onBarClick(bar: HolidayBar, event: Event): void {
         // Without this the click reaches the day underneath and offers to create a holiday on top of this one.
         event.stopPropagation();
-        this.holidaySelected.emit(bar.holiday);
+        this.holidaySelected.emit({ holiday: bar.holiday, origin: event.currentTarget as HTMLElement });
+    }
+
+    /** The preview bar on screen, which is what a form about a run of days should point at. */
+    private previewElement(): HTMLElement | undefined {
+        return this.gridElement.nativeElement.querySelector<HTMLElement>('[data-testid="holiday-calendar-preview"]') ?? undefined;
     }
 }

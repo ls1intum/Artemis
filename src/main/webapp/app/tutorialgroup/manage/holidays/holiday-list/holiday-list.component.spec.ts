@@ -178,7 +178,11 @@ describe('HolidayListComponent', () => {
     it('should hand the whole holiday to the edit and delete handlers', () => {
         let edited: number | undefined;
         let deleted: number | undefined;
-        fixture.componentInstance.editRequested.subscribe((holiday) => (edited = holiday.period.id));
+        let editOrigin: HTMLElement | undefined;
+        fixture.componentInstance.editRequested.subscribe((request) => {
+            edited = request.holiday.period.id;
+            editOrigin = request.origin;
+        });
         fixture.componentInstance.deleteRequested.subscribe((holiday) => (deleted = holiday.period.id));
 
         fixture.debugElement.queryAll(By.css('[data-testid="holiday-edit"]'))[0].nativeElement.click();
@@ -186,6 +190,8 @@ describe('HolidayListComponent', () => {
 
         expect(edited).toBe(2);
         expect(deleted).toBe(2);
+        // The form opens against the button that asked for it, so the row has to come with the holiday.
+        expect(editOrigin).toBe(fixture.debugElement.queryAll(By.css('[data-testid="holiday-edit"]'))[0].nativeElement);
     });
 
     it('should request the filter the reader pressed', () => {

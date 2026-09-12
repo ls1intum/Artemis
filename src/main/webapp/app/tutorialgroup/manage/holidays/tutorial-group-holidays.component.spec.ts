@@ -309,6 +309,43 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(component['isLoading']()).toBe(false);
     });
 
+    describe('opening the form against what it is about', () => {
+        it('should point the form at the control that asked for it', () => {
+            const button = document.createElement('button');
+
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), button);
+
+            expect(component['dialogOrigin']()).toBe(button);
+            expect(component['dialogVisible']()).toBe(true);
+        });
+
+        it('should keep previewing the run while its form is open, since the drag that chose it is over', () => {
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), document.createElement('button'));
+
+            const held = component['selectedRange']();
+            expect(held?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(held?.end.format('YYYY-MM-DD')).toBe('2025-12-24');
+        });
+
+        it('should stop previewing it once the form closes', () => {
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), document.createElement('button'));
+
+            component['onDialogVisibleChange'](false);
+
+            expect(component['selectedRange']()).toBeUndefined();
+            expect(component['dialogOrigin']()).toBeUndefined();
+        });
+
+        it('should preview nothing for a holiday being edited, which already has a bar of its own', () => {
+            const bar = document.createElement('button');
+
+            component['openEditDialog'](component['holidays']()[0], bar);
+
+            expect(component['dialogOrigin']()).toBe(bar);
+            expect(component['selectedRange']()).toBeUndefined();
+        });
+    });
+
     describe('when the configuration could not be read', () => {
         async function failTheLoad(): Promise<void> {
             vi.mocked(configurationService.getOneOfCourse).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
@@ -339,10 +376,11 @@ describe('TutorialGroupHolidaysComponent', () => {
             await failTheLoad();
 
             // Both routes the calendar offers: clicking one day, and dragging a run of them.
-            component['openCreateDialog'](dayjs('2025-12-22'));
+            const anywhere = document.createElement('button');
+            component['openCreateDialog'](anywhere, dayjs('2025-12-22'));
             expect(component['dialogVisible']()).toBe(false);
 
-            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'));
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), anywhere);
             expect(component['dialogVisible']()).toBe(false);
         });
 

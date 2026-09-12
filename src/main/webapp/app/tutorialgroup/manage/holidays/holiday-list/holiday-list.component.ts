@@ -55,7 +55,13 @@ export class HolidayListComponent {
     readonly filter = input.required<HolidayListFilter>();
 
     readonly filterChange = output<HolidayListFilter>();
-    readonly editRequested = output<Holiday>();
+    /** Carries the button pressed, so the form can point at the row it was asked for rather than at the page. */
+    readonly editRequested = output<{ holiday: Holiday; origin: HTMLElement }>();
+
+    /** Narrows the event target here rather than in the template, where `currentTarget` is only an `EventTarget`. */
+    protected requestEdit(holiday: Holiday, event: Event): void {
+        this.editRequested.emit({ holiday, origin: event.currentTarget as HTMLElement });
+    }
     readonly deleteRequested = output<Holiday>();
 
     private readonly translateService = inject(TranslateService);

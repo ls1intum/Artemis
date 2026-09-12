@@ -34,10 +34,18 @@ describe('HolidayDialogComponent', () => {
         component = fixture.componentInstance;
     });
 
-    /** The dialog fills the form in an effect, so the DOM is only settled after a stable tick. */
+    /**
+     * The form fills itself in an effect, so the DOM is only settled after a stable tick. The popover portals it into
+     * an overlay, but through the component's own view container, so it stays in the debug tree and this still finds it.
+     */
     const query = (testId: string) => fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
 
+    /** Something for the popover to point at; a popover without an origin has nothing to open against. */
+    let origin: HTMLElement;
+
     async function open(): Promise<void> {
+        origin ??= document.body.appendChild(document.createElement('button'));
+        fixture.componentRef.setInput('origin', origin);
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
         await fixture.whenStable();
