@@ -17,6 +17,7 @@
                 (monthChange)="onMonthChange($event)"
                 (holidaySelected)="openEditDialog($event)"
                 (daySelected)="openCreateDialog($event)"
+                (rangeSelected)="openCreateDialogForRange($event.start, $event.end)"
             />
         </section>
 
@@ -36,7 +37,9 @@
     <jhi-holiday-dialog
         [(visible)]="dialogVisible"
         [holiday]="editedHoliday()"
+        [existingHolidays]="holidays()"
         [initialDay]="dialogInitialDay()"
+        [initialLastDay]="dialogInitialLastDay()"
         [sessionCountForSelectedSpan]="dialogSessionCount()"
         [saving]="isSaving()"
         (save)="onSave($event)"

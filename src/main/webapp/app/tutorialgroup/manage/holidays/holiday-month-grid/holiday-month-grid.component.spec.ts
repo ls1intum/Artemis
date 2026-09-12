@@ -48,6 +48,85 @@ describe('HolidayMonthGridComponent', () => {
         fixture.detectChanges();
     });
 
+    describe('dragging across days', () => {
+        const dayButton = (dayKey: string) => fixture.debugElement.query(By.css(`[data-day="${dayKey}"]`)).nativeElement as HTMLButtonElement;
+
+        /** The primary button; a drag must not start on any other, so the tests say which one they press. */
+        function pressOn(dayKey: string): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true }));
+            fixture.detectChanges();
+        }
+
+        function moveOver(dayKey: string): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+            fixture.detectChanges();
+        }
+
+        function release(): void {
+            window.dispatchEvent(new PointerEvent('pointerup'));
+            fixture.detectChanges();
+        }
+
+        it('should report the run a drag covered, first day to last', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22');
+            moveOver('2025-12-24');
+            moveOver('2025-12-26');
+            release();
+
+            expect(range?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(range?.end.format('YYYY-MM-DD')).toBe('2025-12-26');
+        });
+
+        it('should order a backwards drag the same as a forwards one', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-26');
+            moveOver('2025-12-22');
+            release();
+
+            expect(range?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(range?.end.format('YYYY-MM-DD')).toBe('2025-12-26');
+        });
+
+        it('should leave a press that never left its day to the click that opens one day', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22');
+            release();
+
+            expect(range).toBeUndefined();
+        });
+
+        it('should mark the days the drag would take while it is still running', () => {
+            pressOn('2025-12-22');
+            moveOver('2025-12-24');
+
+            const marked = fixture.debugElement.queryAll(By.css('[data-in-pending-range]')).map((day) => day.attributes['data-day']);
+            expect(marked).toEqual(['2025-12-22', '2025-12-23', '2025-12-24']);
+
+            release();
+            expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+
+        it('should forget a drag the pointer cancelled rather than reporting it', () => {
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22');
+            moveOver('2025-12-24');
+            window.dispatchEvent(new PointerEvent('pointercancel'));
+            fixture.detectChanges();
+
+            expect(range).toBeUndefined();
+            expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+    });
+
     it('should render whole weeks, so the grid is always a multiple of seven days', () => {
         const days = fixture.debugElement.queryAll(By.css('[data-day]'));
 

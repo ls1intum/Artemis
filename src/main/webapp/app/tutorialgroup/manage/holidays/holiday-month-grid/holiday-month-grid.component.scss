@@ -21,3 +21,12 @@
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }
+
+/*
+ * The run a drag would take. Tinted rather than filled, because the day numbers underneath - and any holiday bar drawn
+ * over them - have to stay readable while the pointer is still moving. Mixed the same way the bar's own background is,
+ * so the two sit on one scale rather than two.
+ */
+.day-in-pending-range {
+    background-color: color-mix(in srgb, var(--tumaet-ui-primary-color) 18%, transparent);
+}

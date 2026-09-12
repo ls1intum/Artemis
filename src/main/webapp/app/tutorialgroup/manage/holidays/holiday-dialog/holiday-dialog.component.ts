@@ -46,6 +46,15 @@ export class HolidayDialogComponent {
     readonly holiday = input<Holiday | undefined>(undefined);
     /** Prefills the date when the reader opened the dialog by clicking a day in the calendar. */
     readonly initialDay = input<dayjs.Dayjs | undefined>(undefined);
+    /** The last day of a run dragged across the calendar. Defaults to {@link initialDay}, which is the single-day case. */
+    readonly initialLastDay = input<dayjs.Dayjs | undefined>(undefined);
+    /**
+     * Every holiday the course already has, so a clash is caught here rather than by the request.
+     *
+     * The server refuses two holidays that overlap, and the reason is real: a cancelled session names one holiday as
+     * the reason it was cancelled, so two of them covering it would contradict each other.
+     */
+    readonly existingHolidays = input<readonly Holiday[]>([]);
     /** Sessions the span currently covers, so the dialog can say what saving would cancel. */
     readonly sessionCountForSelectedSpan = input(0);
     readonly saving = input(false);
@@ -90,8 +99,32 @@ export class HolidayDialogComponent {
         return !!start && !!end && !end.isAfter(start);
     });
 
+    /**
+     * The holiday the chosen span would clash with, if any.
+     *
+     * The test mirrors the server's exactly - strict at both ends - so the two never disagree about what overlaps: a
+     * holiday starting at the very minute another ends sits beside it rather than on top of it.
+     */
+    protected readonly clashingHoliday = computed<Holiday | undefined>(() => {
+        const start = this.start();
+        const end = this.end();
+        if (!start || !end) {
+            return undefined;
+        }
+        const editedId = this.holiday()?.period.id;
+        return this.existingHolidays().find((holiday) => holiday.period.id !== editedId && holiday.start.isBefore(end) && holiday.end.isAfter(start));
+    });
+
     protected readonly canSave = computed(
-        () => !!this.start() && !!this.end() && this.startTextIsValid() && this.endTextIsValid() && this.reason().trim().length > 0 && !this.endIsBeforeStart() && !this.saving(),
+        () =>
+            !!this.start() &&
+            !!this.end() &&
+            this.startTextIsValid() &&
+            this.endTextIsValid() &&
+            this.reason().trim().length > 0 &&
+            !this.endIsBeforeStart() &&
+            !this.clashingHoliday() &&
+            !this.saving(),
     );
 
     /**
@@ -109,6 +142,7 @@ export class HolidayDialogComponent {
         }
         const holiday = this.holiday();
         const initialDay = this.initialDay();
+        const initialLastDay = this.initialLastDay();
         untracked(() => {
             // A dialog reopened after invalid text was left in a field starts from the values it is given.
             this.startTextIsValid.set(true);
@@ -120,7 +154,7 @@ export class HolidayDialogComponent {
             } else {
                 const day = (initialDay ?? dayjs()).startOf('day');
                 this.start.set(day);
-                this.end.set(endOfHolidayDay(day));
+                this.end.set(endOfHolidayDay((initialLastDay ?? day).startOf('day')));
                 this.reason.set('');
             }
             this.emitSpan();

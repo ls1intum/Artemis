@@ -25,6 +25,12 @@ import { HolidayListComponent, HolidayListFilter } from 'app/tutorialgroup/manag
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
 
 /** Long enough that typing a date or stepping through a month settles before the count is asked for. */
+/**
+ * The key the server sends when a holiday would overlap another one. Matched rather than the status, because a 400
+ * covers several rejections and only this one has advice worth giving.
+ */
+const OVERLAPPING_ERROR_KEY = 'overlapping';
+
 const SESSION_COUNT_DEBOUNCE_MS = 300;
 
 /** Keeps the rollover from being scheduled for no delay at all if it is set up exactly on midnight. */
@@ -84,6 +90,7 @@ export class TutorialGroupHolidaysComponent {
     protected readonly dialogVisible = signal(false);
     protected readonly editedHoliday = signal<Holiday | undefined>(undefined);
     protected readonly dialogInitialDay = signal<dayjs.Dayjs | undefined>(undefined);
+    protected readonly dialogInitialLastDay = signal<dayjs.Dayjs | undefined>(undefined);
     /**
      * Counts each time the dialog is opened on something new.
      *
@@ -314,9 +321,15 @@ export class TutorialGroupHolidaysComponent {
     }
 
     protected openCreateDialog(day?: dayjs.Dayjs): void {
+        this.openCreateDialogForRange(day ?? this.today(), day ?? this.today());
+    }
+
+    /** Opens the dialog on a run of days, which is what dragging across the calendar picks. */
+    protected openCreateDialogForRange(start: dayjs.Dayjs, end: dayjs.Dayjs): void {
         this.dialogGeneration++;
         this.editedHoliday.set(undefined);
-        this.dialogInitialDay.set(day ?? this.today());
+        this.dialogInitialDay.set(start);
+        this.dialogInitialLastDay.set(end);
         this.dialogSessionCount.set(0);
         this.dialogVisible.set(true);
     }
@@ -325,6 +338,7 @@ export class TutorialGroupHolidaysComponent {
         this.dialogGeneration++;
         this.editedHoliday.set(holiday);
         this.dialogInitialDay.set(undefined);
+        this.dialogInitialLastDay.set(undefined);
         this.dialogSessionCount.set(0);
         this.dialogVisible.set(true);
     }
@@ -373,8 +387,24 @@ export class TutorialGroupHolidaysComponent {
                     }
                     this.loadConfiguration();
                 },
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
+                error: (response: HttpErrorResponse) => this.reportSaveFailure(response),
             });
+    }
+
+    /**
+     * Explains a rejected save.
+     *
+     * The dialog refuses to send a span that clashes with a holiday already on the page, so this only fires when one
+     * was added elsewhere since the page was loaded. `onError` turns every 400 into the same "bad request", which
+     * says nothing about what to do next, so the one rejection the reader can act on is named before falling back.
+     */
+    private reportSaveFailure(response: HttpErrorResponse): void {
+        if (response.error?.errorKey === OVERLAPPING_ERROR_KEY) {
+            this.alertService.error('artemisApp.pages.tutorialFreePeriodsManagement.form.overlapsExistingHoliday');
+            this.loadConfiguration();
+            return;
+        }
+        onError(this.alertService, response);
     }
 
     protected onDelete(holiday: Holiday): void {

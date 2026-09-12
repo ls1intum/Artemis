@@ -345,6 +345,8 @@
                     "reason": "Reason",
                     "reasonPlaceholder": "e.g. Christmas holidays",
                     "invalidRange": "The end must be after the start.",
+                    "overlapsHoliday": "This overlaps with \"{{ reason }}\". Two holidays cannot cover the same time, because a cancelled session names one of them as its reason.",
+                    "overlapsExistingHoliday": "This holiday overlaps one that was added in the meantime. The page has been refreshed; please pick a time it does not cover.",
                     "sessionsWillBeCancelled": "{{ count }} sessions in this period will be cancelled."
                 },
                 "deleteDialog": {

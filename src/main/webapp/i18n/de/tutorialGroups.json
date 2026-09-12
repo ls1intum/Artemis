@@ -345,6 +345,8 @@
                     "reason": "Grund",
                     "reasonPlaceholder": "z. B. Weihnachtsferien",
                     "invalidRange": "Das Ende muss nach dem Beginn liegen.",
+                    "overlapsHoliday": "Überschneidet sich mit „{{ reason }}“. Zwei Feiertage dürfen nicht denselben Zeitraum abdecken, da eine abgesagte Sitzung einen davon als Grund nennt.",
+                    "overlapsExistingHoliday": "Dieser Feiertag überschneidet sich mit einem, der zwischenzeitlich hinzugefügt wurde. Die Seite wurde aktualisiert; bitte wähle einen Zeitraum, den er nicht abdeckt.",
                     "sessionsWillBeCancelled": "{{ count }} Termine in diesem Zeitraum werden abgesagt."
                 },
                 "deleteDialog": {

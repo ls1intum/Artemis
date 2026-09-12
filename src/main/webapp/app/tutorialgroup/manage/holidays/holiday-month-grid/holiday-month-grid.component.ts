@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -94,6 +94,11 @@ export interface HolidayCalendarWeek {
     templateUrl: './holiday-month-grid.component.html',
     styleUrl: './holiday-month-grid.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    // On the window rather than the grid: a drag released outside the calendar still has to end.
+    host: {
+        '(window:pointerup)': 'finishDrag()',
+        '(window:pointercancel)': 'cancelDrag()',
+    },
     imports: [FaIconComponent, TumUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class HolidayMonthGridComponent {
@@ -108,6 +113,13 @@ export class HolidayMonthGridComponent {
     readonly holidaySelected = output<Holiday>();
     /** A click on a day, which opens the create dialog prefilled with that date. */
     readonly daySelected = output<dayjs.Dayjs>();
+    /**
+     * A run of days picked by dragging across them, first day to last.
+     *
+     * An accelerator rather than the only way in: the dialog a single day opens carries an end date of its own, which
+     * is what a reader who cannot drag uses to reach the same span.
+     */
+    readonly rangeSelected = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
 
     private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
@@ -238,6 +250,65 @@ export class HolidayMonthGridComponent {
      * Days outside the displayed month are inert, because creating a holiday in a month the reader is not looking at
      * reads as a misclick rather than an action.
      */
+    /** The day a drag began on, and the one the pointer is over now; both unset while no drag is in progress. */
+    private readonly dragAnchor = signal<dayjs.Dayjs | undefined>(undefined);
+    private readonly dragCurrent = signal<dayjs.Dayjs | undefined>(undefined);
+
+    protected readonly isDragging = computed(() => this.dragAnchor() !== undefined);
+
+    /** The run the pointer currently covers, ordered, so dragging backwards reads the same as dragging forwards. */
+    private readonly pendingRange = computed<{ from: dayjs.Dayjs; to: dayjs.Dayjs } | undefined>(() => {
+        const anchor = this.dragAnchor();
+        const current = this.dragCurrent();
+        if (!anchor || !current) {
+            return undefined;
+        }
+        return anchor.isAfter(current) ? { from: current, to: anchor } : { from: anchor, to: current };
+    });
+
+    /** Days the drag would take, so the reader sees the span before releasing rather than after. */
+    protected isInPendingRange(day: HolidayCalendarDay): boolean {
+        const range = this.pendingRange();
+        return !!range && !day.date.isBefore(range.from, 'day') && !day.date.isAfter(range.to, 'day');
+    }
+
+    protected onDayPointerDown(day: HolidayCalendarDay, event: PointerEvent): void {
+        // Only the primary button: a right-click opens the browser's menu and must not leave a drag half-started.
+        if (!day.inDisplayedMonth || event.button !== 0) {
+            return;
+        }
+        this.dragAnchor.set(day.date);
+        this.dragCurrent.set(day.date);
+    }
+
+    protected onDayPointerEnter(day: HolidayCalendarDay): void {
+        if (this.isDragging() && day.inDisplayedMonth) {
+            this.dragCurrent.set(day.date);
+        }
+    }
+
+    /**
+     * Ends a drag wherever the pointer is released, which is why it listens on the window: letting go outside the
+     * calendar would otherwise leave the grid believing a drag was still running.
+     *
+     * A drag that never left its day is left to the button's own click, so a plain click still opens the dialog on one
+     * day. A drag across days ends on a different button, where a click is dispatched to their common ancestor rather
+     * than to either of them - so nothing else fires and the range is the only thing reported.
+     */
+    protected finishDrag(): void {
+        const range = this.pendingRange();
+        this.dragAnchor.set(undefined);
+        this.dragCurrent.set(undefined);
+        if (range && !range.from.isSame(range.to, 'day')) {
+            this.rangeSelected.emit({ start: range.from, end: range.to });
+        }
+    }
+
+    protected cancelDrag(): void {
+        this.dragAnchor.set(undefined);
+        this.dragCurrent.set(undefined);
+    }
+
     protected onDayClick(day: HolidayCalendarDay): void {
         if (day.inDisplayedMonth) {
             this.daySelected.emit(day.date);

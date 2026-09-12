@@ -11,9 +11,9 @@ import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/man
 
 const TIME_ZONE = 'Europe/Berlin';
 
-function holidayOf(start: string, end: string, reason: string) {
+function holidayOf(start: string, end: string, reason: string, id = 3) {
     const freePeriod = new TutorialGroupFreePeriod();
-    freePeriod.id = 3;
+    freePeriod.id = id;
     freePeriod.start = dayjs.utc(start);
     freePeriod.end = dayjs.utc(end);
     freePeriod.reason = reason;
@@ -50,6 +50,60 @@ describe('HolidayDialogComponent', () => {
 
         expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 00:00');
         expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-04 23:59');
+    });
+
+    it('should open a dragged run on its whole span, not just the day it started on', async () => {
+        fixture.componentRef.setInput('initialDay', dayjs('2025-12-22').startOf('day'));
+        fixture.componentRef.setInput('initialLastDay', dayjs('2025-12-26').startOf('day'));
+        await open();
+
+        expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-22 00:00');
+        expect(component['end']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-26 23:59');
+    });
+
+    describe('overlapping an existing holiday', () => {
+        // The server refuses an overlap and answers 400, which the page can only report as "bad request"; the clash is
+        // caught here instead, so the reader is told which holiday is in the way before anything is sent.
+        const existing = () => [holidayOf('2025-12-23T23:00:00', '2025-12-27T22:59:00', 'Christmas', 7)];
+
+        it('should refuse to save a span that covers an existing holiday, and name it', async () => {
+            fixture.componentRef.setInput('existingHolidays', existing());
+            fixture.componentRef.setInput('initialDay', dayjs('2025-12-22').startOf('day'));
+            fixture.componentRef.setInput('initialLastDay', dayjs('2025-12-26').startOf('day'));
+            await open();
+            component['reason'].set('Winter break');
+            fixture.detectChanges();
+
+            expect(component['clashingHoliday']()?.reason).toBe('Christmas');
+            expect(component['canSave']()).toBe(false);
+            expect(query('holiday-overlap-error')).not.toBeNull();
+        });
+
+        it('should allow a span that begins exactly where an existing one ends, as the server does', async () => {
+            // Exactly on the line, not a minute either side of it: this holiday ends at midnight on the 24th (a span
+            // stored elsewhere can end that way) and the new one starts at that same midnight. The server compares
+            // strictly at both ends, so the two sit beside each other; comparing inclusively here would refuse a span
+            // the server would have taken.
+            fixture.componentRef.setInput('existingHolidays', [holidayOf('2025-12-19T23:00:00', '2025-12-23T23:00:00', 'Before Christmas', 7)]);
+            fixture.componentRef.setInput('initialDay', dayjs('2025-12-24').startOf('day'));
+            await open();
+            component['reason'].set('Christmas');
+            fixture.detectChanges();
+
+            expect(component['start']()!.format('YYYY-MM-DD HH:mm')).toBe('2025-12-24 00:00');
+            expect(component['clashingHoliday']()).toBeUndefined();
+            expect(component['canSave']()).toBe(true);
+        });
+
+        it('should not count the holiday being edited as a clash with itself', async () => {
+            const holiday = holidayOf('2025-12-23T23:00:00', '2025-12-27T22:59:00', 'Christmas', 7);
+            fixture.componentRef.setInput('existingHolidays', [holiday]);
+            fixture.componentRef.setInput('holiday', holiday);
+            await open();
+
+            expect(component['clashingHoliday']()).toBeUndefined();
+            expect(component['canSave']()).toBe(true);
+        });
     });
 
     it('should load the whole span of the holiday being edited, not just its first day', async () => {

@@ -42,6 +42,15 @@
             <tum-ui-message severity="error" data-testid="holiday-range-error" [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.invalidRange' | artemisTranslate" />
         }
 
+        <!-- Named rather than just reported: knowing which holiday is in the way is what tells the reader how to move out of it. -->
+        @if (clashingHoliday(); as clash) {
+            <tum-ui-message
+                severity="error"
+                data-testid="holiday-overlap-error"
+                [text]="'artemisApp.pages.tutorialFreePeriodsManagement.form.overlapsHoliday' | artemisTranslate: { reason: clash.reason }"
+            />
+        }
+
         <tum-ui-form-field [label]="'artemisApp.pages.tutorialFreePeriodsManagement.form.reason' | artemisTranslate">
             <!-- tumUiInput is a directive on a native input, so the signal binds directly and needs no form control. -->
             <input

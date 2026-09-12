@@ -31,7 +31,7 @@
     </div>
 </div>
 
-<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid">
+<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()">
     <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
         @for (weekdayKey of weekdayKeys; track weekdayKey) {
             <div class="px-3 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
@@ -64,7 +64,11 @@
                         [attr.data-day]="day.dayKey"
                         [attr.data-outside-month]="day.inDisplayedMonth ? undefined : true"
                         [attr.data-has-holiday]="day.hasHoliday ? true : undefined"
+                        [attr.data-in-pending-range]="isInPendingRange(day) ? true : undefined"
+                        [class.day-in-pending-range]="isInPendingRange(day)"
                         [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.addHolidayOn' | artemisTranslate: { date: day.dayKey }"
+                        (pointerdown)="onDayPointerDown(day, $event)"
+                        (pointerenter)="onDayPointerEnter(day)"
                         (click)="onDayClick(day)"
                     >
                         <span class="flex items-center justify-between gap-2">
@@ -102,9 +106,11 @@
                         [style.top.rem]="bar.lane * laneHeightRem"
                         [style.height.rem]="laneHeightRem"
                     >
+                        <!-- The bar gives the pointer up mid-drag, so a range being dragged over a holiday keeps following it. -->
                         <button
                             type="button"
-                            class="holiday-bar pointer-events-auto flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
+                            class="holiday-bar flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
+                            [class.pointer-events-auto]="!isDragging()"
                             data-testid="holiday-calendar-event"
                             [class.holiday-bar-continues-before]="!bar.startsRun"
                             [class.holiday-bar-continues-after]="!bar.endsRun"
