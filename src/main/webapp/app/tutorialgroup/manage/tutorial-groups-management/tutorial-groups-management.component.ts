@@ -50,6 +50,8 @@ interface TutorialGroupRow extends Record<SortableField, string | number> {
     readonly tutor: string;
     readonly utilization: number;
     readonly registrations: number;
+    /** The right half of the "registrations / capacity" cell, which orders the pair when the counts tie. */
+    readonly capacity: number;
     readonly room: string;
     /** Untranslated, so the column keeps its order when the reader switches language. */
     readonly campus: string;
@@ -82,6 +84,7 @@ function toRow(group: TutorialGroup, modeLabel: string): TutorialGroupRow {
         tutor,
         utilization: tutorialGroupUtilization(group) ?? NO_DATA_SORT_KEY,
         registrations: group.numberOfRegisteredUsers ?? 0,
+        capacity: group.capacity ?? NO_DATA_SORT_KEY,
         room,
         campus,
         campusLabel,
@@ -95,13 +98,22 @@ function isSortableField(field: string): field is SortableField {
     return (SORTABLE_FIELDS as readonly string[]).includes(field);
 }
 
-function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableField): number {
-    const left = a[field];
-    const right = b[field];
+function compareValues(left: string | number, right: string | number): number {
     if (typeof left === 'number' && typeof right === 'number') {
         return left - right;
     }
     return String(left).localeCompare(String(right));
+}
+
+function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableField): number {
+    const primary = compareValues(a[field], b[field]);
+    // The registrations cell shows a pair, and the count on its left is 0 for every group until people sign up. Left
+    // at that, every row ties, and a tie keeps the incoming order however the header is clicked - so the column looked
+    // like it did nothing. The capacity the cell already shows beside the count is what orders those rows.
+    if (primary === 0 && field === 'registrations') {
+        return compareValues(a.capacity, b.capacity);
+    }
+    return primary;
 }
 
 @Component({
