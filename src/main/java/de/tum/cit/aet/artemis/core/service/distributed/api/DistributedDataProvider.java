@@ -175,6 +175,30 @@ public interface DistributedDataProvider {
     Set<String> getConnectedClientNames();
 
     /**
+     * The connected client names and the cluster member addresses, read as one snapshot.
+     * <p>
+     * Callers that need both should ask for them here rather than calling the two methods in turn. On a provider where
+     * the two are answered by the same underlying query - Redis answers both from a single {@code CLIENT LIST} - this
+     * is the difference between one round trip and two, and the caller that needs both runs on every build agent
+     * update. Providers that hold the information locally simply return both.
+     *
+     * @return both identifier sets, never null
+     */
+    @NonNull
+    default ClusterMembership getClusterMembership() {
+        return new ClusterMembership(getConnectedClientNames(), getClusterMemberAddresses());
+    }
+
+    /**
+     * Both views the cluster offers of who is currently attached.
+     *
+     * @param connectedClientNames   the client identifiers the provider reports, empty when it cannot tell
+     * @param clusterMemberAddresses the identifiers of the nodes the provider reports as alive
+     */
+    record ClusterMembership(@NonNull Set<String> connectedClientNames, @NonNull Set<String> clusterMemberAddresses) {
+    }
+
+    /**
      * Gets the remote addresses each connected client is observed to connect from, keyed by client name.
      * <p>
      * The addresses are the ones the middleware sees on the client's own connection, not values the client

@@ -124,7 +124,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
-        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate.toAssessmentUpdateDTO());
+        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate.toAssessmentUpdate());
 
         if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
