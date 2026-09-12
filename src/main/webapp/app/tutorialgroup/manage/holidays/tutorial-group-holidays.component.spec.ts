@@ -310,6 +310,20 @@ describe('TutorialGroupHolidaysComponent', () => {
     });
 
     describe('opening the form against what it is about', () => {
+        it('should stop previewing the new run once the save that created it succeeds', async () => {
+            // The save closes the form by setting the page's own signal, which never reaches the child's
+            // visibleChange - so the preview of the holiday just created sat on the calendar beside the saved one.
+            vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), document.createElement('button'));
+
+            component['onSave']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-24T23:59'), reason: 'Winter break' });
+            await settle();
+
+            expect(component['dialogVisible']()).toBe(false);
+            expect(component['selectedRange']()).toBeUndefined();
+            expect(component['dialogOrigin']()).toBeUndefined();
+        });
+
         it('should point the form at the control that asked for it', () => {
             const button = document.createElement('button');
 
@@ -405,6 +419,27 @@ describe('TutorialGroupHolidaysComponent', () => {
 
             expect(query('holiday-load-failed')).toBeNull();
             expect(TestBed.inject(CourseTitleBarService).actionsTemplate()).toBeUndefined();
+        });
+
+        it('should drop a count request still in flight when the read fails as well', async () => {
+            // Same race as the empty body, one path over: the failure clears what is on screen, so the request that
+            // was running has to go with it rather than answering into the cleared maps afterwards.
+            const pendingDays = new Subject<{ date: string; count: number }[]>();
+            const pendingHolidays = new Subject<{ freePeriodId: number; count: number }[]>();
+            vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(pendingDays);
+            vi.mocked(freePeriodService.getSessionCountsPerFreePeriod).mockReturnValue(pendingHolidays);
+            component['loadSessionCounts']();
+            component['loadSessionCountsPerHoliday']();
+
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            component['loadConfiguration']();
+            await settle();
+
+            pendingDays.next([{ date: '2025-12-17', count: 7 }]);
+            pendingHolidays.next([{ freePeriodId: 11, count: 7 }]);
+
+            expect(component['sessionCountsByDay']().size).toBe(0);
+            expect(component['sessionCountsByHoliday']().size).toBe(0);
         });
 
         it('should drop a count request still in flight when the configuration turns out to be gone', async () => {

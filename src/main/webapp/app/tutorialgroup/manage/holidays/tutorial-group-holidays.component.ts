@@ -326,9 +326,12 @@ export class TutorialGroupHolidaysComponent {
         this.loadFailed.set(true);
         this.configuration.set(undefined);
         this.freePeriods.set([]);
-        this.sessionCountsByHoliday.set(new Map());
-        this.sessionCountsByDay.set(new Map());
         this.isLoading.set(false);
+        // Asked rather than blanked, and only once the configuration is gone: the pipelines clear the maps and then
+        // find nothing to count, so they return without sending anything. Blanking them here instead would leave a
+        // request from before the failure running, free to answer afterwards into the maps that were just emptied.
+        this.loadSessionCounts();
+        this.loadSessionCountsPerHoliday();
     }
 
     private loadConfiguration(): void {
@@ -401,12 +404,24 @@ export class TutorialGroupHolidaysComponent {
         this.dialogVisible.set(true);
     }
 
-    /** Drops what the open form was about once it closes, so the calendar stops previewing a run nobody is editing. */
+    /** Reports the form closing itself - an Escape, a backdrop click, a cancel - so the page lets go of it too. */
     protected onDialogVisibleChange(visible: boolean): void {
         if (!visible) {
-            this.selectedRange.set(undefined);
-            this.dialogOrigin.set(undefined);
+            this.closeDialog();
         }
+    }
+
+    /**
+     * Closes the form and drops what it was about, so the calendar stops previewing a run nobody is editing.
+     *
+     * Shared with the close a successful save performs: setting `dialogVisible` there only pushes into the child,
+     * whose `visibleChange` never fires for it, so a save left the preview of the holiday it had just created sitting
+     * on the calendar beside the saved one.
+     */
+    private closeDialog(): void {
+        this.dialogVisible.set(false);
+        this.selectedRange.set(undefined);
+        this.dialogOrigin.set(undefined);
     }
 
     /**
@@ -449,7 +464,7 @@ export class TutorialGroupHolidaysComponent {
                 next: () => {
                     // The holiday is saved either way, so the list is reloaded either way; only the dialog is spared.
                     if (savedGeneration === this.dialogGeneration) {
-                        this.dialogVisible.set(false);
+                        this.closeDialog();
                     }
                     this.loadConfiguration();
                 },
