@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -120,6 +122,48 @@ public class ExerciseDateService {
     }
 
     /**
+     * Whether submissions are no longer possible, for a caller holding a projection of the participation.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @param student  the student the participation belongs to
+     * @return true if the due date has passed and submissions are no longer possible
+     */
+    public boolean isAfterDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target, User student) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), target.testRun(), student.getId(), target.id());
+        }
+        return getDueDate(exercise, target).map(ZonedDateTime.now()::isAfter).orElse(false);
+    }
+
+    /**
+     * Whether the due date for a projected participation is still in the future.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @param student  the student the participation belongs to
+     * @return true if the due date has not yet passed
+     */
+    public boolean isBeforeDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target, User student) {
+        return !isAfterDueDate(exercise, target, student);
+    }
+
+    /**
+     * The individual due date of a projected participation if it has one, else the exercise due date.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @return the due date that applies, or nothing when neither is set
+     */
+    public static Optional<ZonedDateTime> getDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target) {
+        if (target.individualDueDate() != null) {
+            return Optional.of(target.individualDueDate());
+        }
+        return Optional.ofNullable(exercise.getDueDate());
+    }
+
+    /**
      * Checks if the current time is before the latest possible submission time.
      * If no due date is set, returns true (a due date infinitely far in the future is assumed).
      *
@@ -218,7 +262,7 @@ public class ExerciseDateService {
      *
      * @param latestExamEndDate      the moment the last student can no longer hand in, i.e. the latest individual exam
      *                                   end date plus the exam's grace period. This is the same notion of "the exam is
-     *                                   over" that {@link ExamDateService#isExamWithGracePeriodOver} and
+     *                                   over" that {@link ExamDateApi#isExamWithGracePeriodOver} and
      *                                   {@code AutomaticAfterDueDateService} use.
      * @param assessmentPossibleFrom the moment tutors can start assessing. Equals {@code latestExamEndDate}, except for
      *                                   programming exercises, which additionally wait for the tests to run once more on

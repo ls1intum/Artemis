@@ -69,7 +69,7 @@ class WeaviateMigrationStartupServiceTest {
             invocation.getArgument(0, Runnable.class).run();
             return null;
         });
-        doThrow(new RuntimeException("embedding backend cold")).when(migrationService).runPendingMigrations();
+        doThrow(new RuntimeException("embedding service cold")).when(migrationService).runPendingMigrations();
 
         startupService.scheduleMigrationOnStartup();
 

@@ -122,7 +122,7 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(@NonNull ExerciseBaseDTO exercise, @NonNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NonNull boolean isGraded,
+    private record RequestDTO(@NonNull ExerciseBaseDTO exercise, @NonNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, boolean isGraded,
             @Nullable AiSelectionDecision selection, @Nullable SubmissionBaseDTO latestSubmission, @Nullable List<CourseCompetencyDTO> competencies) {
     }
 
@@ -218,8 +218,12 @@ public class AthenaFeedbackSuggestionsService {
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded, @Nullable User user) throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
+        // Through the exercise rather than by hand off the course: those accessors guard with Hibernate.isInitialized,
+        // so they answer without initialising the lazy configuration and without a query per call.
+        boolean feedbackEnabled = isGraded ? exercise.areFeedbackSuggestionsEnabled() : exercise.getAllowFeedbackRequests();
+        if (!feedbackEnabled) {
+            log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
+                    exercise.getId());
             return List.of();
         }
 
@@ -263,8 +267,18 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
+        if (isGraded && exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            // Automatically assessed programming exercises rely on unit-test feedback, not Athena grading feedback
+            log.warn("Athena grading feedback is not applicable for automatically assessed exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
+            return List.of();
+        }
+
+        // Through the exercise rather than by hand off the course: those accessors guard with Hibernate.isInitialized,
+        // so they answer without initialising the lazy configuration and without a query per call.
+        boolean feedbackEnabled = isGraded ? exercise.areFeedbackSuggestionsEnabled() : exercise.getAllowFeedbackRequests();
+        if (!feedbackEnabled) {
+            log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
+                    exercise.getId());
             return List.of();
         }
 
@@ -298,8 +312,12 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
+        // Through the exercise rather than by hand off the course: those accessors guard with Hibernate.isInitialized,
+        // so they answer without initialising the lazy configuration and without a query per call.
+        boolean feedbackEnabled = isGraded ? exercise.areFeedbackSuggestionsEnabled() : exercise.getAllowFeedbackRequests();
+        if (!feedbackEnabled) {
+            log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
+                    exercise.getId());
             return List.of();
         }
 

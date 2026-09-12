@@ -39,6 +39,8 @@
                 <fa-icon [icon]="faFileExport" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.export"></span>
             </button>
+            <!-- Detail page only: exercise rows already carry a "Create Variant with AI" action of their own. -->
+            <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="me-1 mb-1" />
         }
         @if (quizExercise().isAtLeastEditor && !quizExercise().quizEnded) {
             <span [ngbTooltip]="!quizExercise().isEditable ? ('artemisApp.quizExercise.editNotPossibleDuringQuiz' | artemisTranslate) : ''">

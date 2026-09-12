@@ -27,16 +27,19 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SavedSubmission;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingParticipationDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 
 @Conditional(ModelingEnabled.class)
@@ -95,26 +98,25 @@ public class ModelingSubmissionService extends SubmissionService {
      *                                      caller has none and it has to be looked up here
      * @return the saved modelingSubmission entity
      */
-    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user,
-            @Nullable StudentParticipation participationFromExamGate) {
+    public SavedSubmission<ModelingSubmission, ModelingParticipationDTO> handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user,
+            @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) {
         // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
         // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
         // would return the same row. Every other caller passes null and the participation is resolved here.
-        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
-                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
-        if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
-        }
-        final var participation = optionalParticipation.get();
-        final var dueDate = ExerciseDateService.getDueDate(participation);
+        // A projection, rebuilt with the exercise and the user this method already has: nothing here reads the
+        // participation's submissions, and loading the entity for them pulled the whole eager exercise chain along.
+        final var target = participationFromExamGate != null ? participationFromExamGate
+                : participationService.findSubmitTargetByExerciseAndStudent(exercise, user).orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId()));
+        final var dueDate = ExerciseDateService.getDueDate(exercise, target);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(exercise, target, user) && target.initializationDate().isBefore(dueDate.get())) {
             throw new AccessForbiddenException();
         }
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation) || participation.isPracticeMode()) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(exercise, target, user) || target.testRun()) {
             modelingSubmission.setSubmitted(true);
         }
 
@@ -123,8 +125,16 @@ public class ModelingSubmissionService extends SubmissionService {
         if (modelingSubmission.getId() != null && resultRepository.existsBySubmissionId(modelingSubmission.getId())) {
             modelingSubmission.setId(null);
         }
-        modelingSubmission = save(modelingSubmission, exercise, user, participation);
-        return modelingSubmission;
+        modelingSubmission = save(modelingSubmission, exercise, user, target);
+        // The response embeds the whole exercise, so a student must not see its example solution. hideDetails used to
+        // strip that after the fact; the response is mapped here now, so it is stripped before the mapping.
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            exercise.filterSensitiveInformation();
+        }
+        // Mapped here rather than read back off the submission: its participation is only a foreign key, and reading it
+        // would load the entity this whole path exists to avoid.
+        return new SavedSubmission<>(modelingSubmission,
+                ModelingParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user), true));
     }
 
     /**
@@ -136,16 +146,15 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param user               the user who initiated the save
      * @return the textSubmission entity that was saved to the database
      */
-    private ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, User user, StudentParticipation participation) {
+    private ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, User user, StudentParticipationSubmitTargetDTO target) {
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
-        participation.addSubmission(modelingSubmission);
+        // the foreign key is all the save needs from the participation, and the id gives it that without a load
+        modelingSubmission.setParticipation(StudentParticipation.idOnlyReference(target.id()));
 
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            // The participation was loaded from the database, so its row exists and only this one column changed. Saving
-            // the detached entity would merge it, reading the row back before writing it.
-            studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
+        if (target.initializationState() != InitializationState.FINISHED) {
+            // Only this one column changes and the row exists, so it is an update by id rather than a save of an entity.
+            studentParticipationRepository.updateInitializationState(target.id(), InitializationState.FINISHED);
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result

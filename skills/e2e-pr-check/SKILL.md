@@ -65,7 +65,7 @@ Treat a change as cluster-sensitive when it touches any of:
 - websocket broker or scheduling configuration
 
 If the change is specifically about the distributed data abstraction, run the suite on both
-backends. Redis has to pass the same tests as Hazelcast, and with `--middleware redis` no Hazelcast
+providers. Redis has to pass the same tests as Hazelcast, and with `--middleware redis` no Hazelcast
 instance is created at all, which is what makes it a genuine test of the abstraction:
 
 ```bash

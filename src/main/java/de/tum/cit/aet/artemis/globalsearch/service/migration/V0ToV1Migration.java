@@ -47,7 +47,7 @@ public class V0ToV1Migration implements WeaviateMigration {
     /**
      * Page and batch size. Each page is written in one gRPC batch insert that re-embeds the objects through the target
      * collection's configured vectorizer, so the size is kept moderate to keep a batch's total embedding time within the
-     * client's 120s gRPC insert timeout even when the embedding backend is under load.
+     * client's 120s gRPC insert timeout even when the embedding service is under load.
      */
     private static final int PAGE_SIZE = 50;
 

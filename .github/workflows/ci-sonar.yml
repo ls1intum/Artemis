@@ -1,0 +1,166 @@
+name: Sonar
+
+# SonarQube Cloud analysis of the deployed application (server + client), set up alongside Codacy so
+# the two code-quality grades can be compared on the same code. Scope and rationale live in
+# `gradle/sonar.gradle`; the CI contract is in this directory's README.md, section
+# "The code quality analyses".
+#
+# ADVISORY BY CONSTRUCTION. Never in another job's `needs:` and never gating: the job is
+# `continue-on-error`, so a Sonar outage, an expired token, or a missing project cannot turn develop
+# red. It publishes a grade; it does not decide whether code is mergeable — the enforcing gates are
+# `ci-quality.yml` and `ci-test.yml`.
+
+# Two entry points on purpose:
+#   workflow_call     — from ci.yml on develop pushes, after a green `test`, importing its coverage.
+#   workflow_dispatch — standalone, to get a grade on demand without waiting out a full CI run
+#                       (~2 h with the e2e tail). Analyses the ref it is dispatched on, without
+#                       coverage: a manual run has no `test` job to take artifacts from. The ratings
+#                       and issue counts, which are what the Codacy comparison turns on, do not
+#                       depend on coverage.
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to analyze. PR builds use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+      with_coverage:
+        description: >-
+          Whether the calling run produced the coverage artifacts this job imports. False skips the
+          downloads and analyzes without coverage, which still yields the ratings and issue counts.
+        required: true
+        type: boolean
+    secrets:
+      SONAR_TOKEN:
+        description: 'SonarQube Cloud analysis token for the ls1intum organization.'
+        required: true
+  # Deliberately without inputs. Choosing the ref to dispatch already chooses the commit, so a
+  # commit_sha input would only restate it, and a dispatched run has no `test` job whose coverage
+  # artifacts it could import. Both `inputs` are therefore undefined on this trigger, which the job
+  # below reads as "the dispatched ref, without coverage". Keeping it input-free also satisfies
+  # Checkov CKV_GHA_7, which flags dispatch inputs because they let a caller influence what a build
+  # produces — do not add one back without a reason that outweighs that.
+  workflow_dispatch:
+
+permissions: {}  # default-deny; each job grants only what it needs
+
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  sonar:
+    name: SonarQube Cloud Analysis
+    runs-on: ubuntu-latest
+    # Generous on purpose: ~350k lines of Java plus ~260k of TypeScript is a long scan, and
+    # Sonar's TypeScript analyzer dominates it. A timeout costs the run's result, not the build.
+    timeout-minutes: 90
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Undefined on a dispatched run, which declares no inputs; the dispatched ref is what we want.
+          ref: ${{ inputs.commit_sha || github.sha }}
+          # Sonar attributes issues to authors and separates new code from old via git history, so a
+          # shallow clone degrades the analysis rather than failing it. `0` is what Sonar documents.
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+
+      # Before Setup Node.js, so that its `cache: 'pnpm'` finds the package manager it keys on.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          run_install: false
+
+      # Sonar's JavaScript/TypeScript analyzer shells out to Node. The runner image ships one, but
+      # pinning it here keeps the analysis reproducible when that image changes, matching how every
+      # other job in this repo pins Node rather than inheriting it.
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+
+      # Also REQUIRED, for the same reason `compileJava` is below. Sonar's TypeScript analyzer runs
+      # the real compiler: `tsconfig.json` resolves Angular, RxJS and the rest through
+      # `node_modules`, and on a clean checkout every one of those imports is unresolved. The scan
+      # still succeeds, silently, with the type-aware rules degraded to what syntax alone can see.
+      - name: Install client dependencies
+        run: pnpm install --frozen-lockfile
+
+      # And this is required for the same reason again. `tsconfig.json` maps `@tumaet/ui-angular` to
+      # `packages/tum-ui/dist`, which is a build output: it is not tracked and `pnpm install` does not
+      # create it. Without it every one of the ~240 application imports of the alias is unresolved,
+      # which is the same silent degradation as the missing `node_modules`. Only the library build is
+      # run, not the full `prebuild`: the rest of that script writes an angular.json file replacement
+      # no source imports and runs a vite version check that would fail this job for a reason
+      # unrelated to the scan.
+      - name: Build the TUM UI package the client imports
+        run: pnpm run tum-ui:build
+
+      # Coverage is imported from the reports the `test` job already uploaded, so no suite is re-run
+      # here. Both downloads are `continue-on-error`: a missing report costs the coverage metric and
+      # nothing else, and must not lose us the ratings that are the point of this job.
+      #
+      # The download paths are the ones `gradle/sonar.gradle` names in
+      # `sonar.coverage.jacoco.xmlReportPaths` / `sonar.javascript.lcov.reportPaths`. The artifact
+      # unpacks to `aggregated/jacocoTestReport.xml`, hence the `build/reports/jacoco` target.
+      - name: Download the server JaCoCo report
+        if: ${{ inputs.with_coverage }}
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: Server JaCoCo XML
+          path: build/reports/jacoco
+
+      - name: Download the client coverage report
+        if: ${{ inputs.with_coverage }}
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: Vitest Coverage Report
+          path: build/test-results/vitest/coverage
+
+      # Gated on `with_coverage` so a dispatched run — which is expected to have no reports — does
+      # not emit two warnings that mean nothing. When coverage WAS requested, a missing report is
+      # worth a warning: it means an artifact name drifted, which would otherwise show up only as a
+      # silent coverage drop in Sonar.
+      - name: Report which coverage inputs were found
+        if: ${{ inputs.with_coverage }}
+        run: |
+          set -Eeuo pipefail
+          jacoco=build/reports/jacoco/aggregated/jacocoTestReport.xml
+          lcov=build/test-results/vitest/coverage/lcov.info
+          for report in "$jacoco" "$lcov"; do
+            if [ -s "$report" ]; then
+              echo "Found $report"
+            else
+              echo "::warning::$report is missing or empty; Sonar will report no coverage for it." \
+                   "The ratings and issue counts are unaffected."
+            fi
+          done
+
+      # `compileJava` is REQUIRED, not an optimization. Sonar's Java analyzer needs bytecode, and the
+      # Gradle plugin derives `sonar.java.binaries` from the main source set's output directory only
+      # if that directory exists — with no prior compile the property is silently omitted and the
+      # whole Java half of the analysis degrades without an error. Verified by dumping the computed
+      # properties with and without a compile.
+      #
+      # `-x webapp` skips the Angular production build: Sonar analyzes the TypeScript sources, not
+      # the bundled output, so the ~10 min build would buy nothing.
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew compileJava sonar -x webapp

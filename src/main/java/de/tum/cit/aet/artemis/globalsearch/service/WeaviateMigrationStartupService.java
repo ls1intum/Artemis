@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 /**
  * Runs pending Weaviate schema migrations once, in the background, on the scheduling node only.
  * <p>
- * Migrations move data between Weaviate collections and can be long-running (and, when the embedding backend is slow or cold, can time out per object). Running them inline
+ * Migrations move data between Weaviate collections and can be long-running (and, when the embedding service is slow or cold, can time out per object). Running them inline
  * during bean initialization (as the {@code @PostConstruct} of {@link WeaviateService} previously did) blocks Spring's singleton creation on the main thread and, in turn, the
  * whole UI; it also ran on every node simultaneously. To avoid that, this service:
  * <ul>
@@ -96,7 +96,7 @@ public class WeaviateMigrationStartupService {
     }
 
     /**
-     * Runs all pending Weaviate migrations and reconciles collections afterwards, on a background thread. A failure (for example, the embedding backend being cold or unavailable)
+     * Runs all pending Weaviate migrations and reconciles collections afterwards, on a background thread. A failure (for example, the embedding service being cold or unavailable)
      * is logged and never propagated, so it can never crash or block the node; the attempt is retried a bounded number of times, and otherwise re-runs on the next scheduling-node
      * restart. Search may return incomplete results until a migration completes.
      */

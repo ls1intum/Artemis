@@ -9,7 +9,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import javax.crypto.BadPaddingException;
@@ -32,8 +32,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -52,14 +52,17 @@ public abstract class PushNotificationService {
 
     private static final SecureRandom random = new SecureRandom();
 
-    protected final ObjectMapper mapper = JsonObjectMapper.get();
+    protected final JsonMapper mapper = JsonObjectMapper.get();
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
     private final RestTemplate restTemplate;
 
-    protected PushNotificationService(RestTemplate restTemplate) {
+    protected final Executor taskExecutor;
+
+    protected PushNotificationService(RestTemplate restTemplate, Executor taskExecutor) {
         this.restTemplate = restTemplate;
+        this.taskExecutor = taskExecutor;
     }
 
     /**
@@ -69,10 +72,13 @@ public abstract class PushNotificationService {
      * @param relayServerBaseUrl the url of the relay
      */
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl) {
-        var futures = requests.stream().map(request -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(List.of(request), relayServerBaseUrl))).toList()
-                .toArray(CompletableFuture[]::new);
-
-        CompletableFuture.allOf(futures);
+        // Dispatch on the application task executor, not the common ForkJoinPool. sendRelayRequest retries up to four
+        // times with a backoff that reaches a minute, so a batch of notifications would otherwise occupy common-pool
+        // threads for minutes, and the common pool is shared with every parallel stream in the JVM.
+        // execute() rather than CompletableFuture.runAsync(..., taskExecutor): the future would be discarded, and a
+        // discarded future swallows the throwable. taskExecutor is an ExceptionHandlingAsyncTaskExecutor, so handing
+        // it the task directly means a relay failure is logged instead of vanishing.
+        requests.forEach(request -> taskExecutor.execute(() -> sendSpecificNotificationRequestsToEndpoint(List.of(request), relayServerBaseUrl)));
     }
 
     /**
@@ -82,7 +88,6 @@ public abstract class PushNotificationService {
      * @param body               to be sent to Hermes. Differs between iOS and Android
      * @param relayServerBaseUrl the url where Hermes is hosted
      */
-    @Async
     void sendRelayRequest(String body, String relayServerBaseUrl) {
         RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60 * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
 
@@ -152,7 +157,7 @@ public abstract class PushNotificationService {
 
             sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Error creating push notification payload!", e);
         }
     }

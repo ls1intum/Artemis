@@ -12,6 +12,7 @@
         },
         "assessmentNotPossibleExamRunning": "Assessment is not possible yet: you can start once the exam has ended for all students on {{ date }}.",
         "assessmentNotPossibleTestsPending": "Assessment is not possible yet: the tests still have to run once more on the final submissions. You can start assessing on {{ date }}.",
+        "invalidCorrectionRound": "This correction round does not exist for the exercise.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "isNull": "No {{ entityName }} was provided.",
@@ -145,8 +146,11 @@
             "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
             "athenaNotEnabled": "Feedback requests for text and modeling exercises are unavailable.",
-            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true)."
+            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true).",
+            "notEnabled": "AI feedback requests are not enabled for this course.",
+            "manualAssessmentRequired": "Feedback requests for programming exercises require manual assessment to be enabled."
         },
+        "athenaGradingFeedbackNotEnabled": "Athena grading feedback is not enabled for this course.",
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
@@ -201,7 +205,6 @@
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
-        "missingFeedbackSuggestionModule": "Exercise does not have a feedback suggestion module configured.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
         "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
@@ -312,6 +315,7 @@
         },
         "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
         "buildConfigMissing": "The programming exercise build configuration is missing.",
+        "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
 }

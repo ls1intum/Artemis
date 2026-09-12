@@ -56,6 +56,29 @@ public record ModelingSubmissionResponseDTO(Long id, String submissionExerciseTy
      * @param includeStudent whether the participation owner (student/team) should be included
      * @return the converted DTO, or {@code null} if the submission is {@code null}
      */
+    /**
+     * Converts a submission whose participation was resolved as a projection rather than loaded.
+     * <p>
+     * The submit path never reads the participation back off the submission - there it is only a foreign key - so the
+     * participation it reports is mapped by the caller and passed in.
+     *
+     * @param submission    the saved submission
+     * @param participation the participation the response should report
+     * @return the converted DTO
+     */
+    public static ModelingSubmissionResponseDTO of(ModelingSubmission submission, ModelingParticipationDTO participation) {
+        ModelingSubmissionResponseDTO mapped = of(submission, false);
+        return new ModelingSubmissionResponseDTO(mapped.id(), mapped.submissionExerciseType(), mapped.model(), mapped.explanationText(), mapped.submitted(),
+                mapped.submissionDate(), mapped.type(), mapped.exampleSubmission(), participation, mapped.results());
+    }
+
+    /**
+     * Converts a {@link ModelingSubmission} into a {@link ModelingSubmissionResponseDTO}.
+     *
+     * @param submission     the submission to convert (may be {@code null})
+     * @param includeStudent whether the participation owner should be included
+     * @return the converted DTO, or {@code null} if the submission is {@code null}
+     */
     public static ModelingSubmissionResponseDTO of(ModelingSubmission submission, boolean includeStudent) {
         if (submission == null) {
             return null;
