@@ -22,7 +22,7 @@
             "form": {
                 "filePattern": {
                     "undefined": "You need to specify a file pattern.",
-                    "minlength": "The file pattern must be at least {{ min }} characters long!"
+                    "minlength": "The file pattern must be at least {{ min }} characters long."
                 }
             },
             "submitSuccessful": "Your answer was submitted successfully! You may submit again or wait for your feedback.",

@@ -22,7 +22,7 @@
             "form": {
                 "filePattern": {
                     "undefined": "Du musst ein Dateimuster angeben.",
-                    "minlength": "Das Dateimuster muss mindestens {{ min }} Zeichen lang sein!"
+                    "minlength": "Das Dateimuster muss mindestens {{ min }} Zeichen lang sein."
                 }
             },
             "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten.",

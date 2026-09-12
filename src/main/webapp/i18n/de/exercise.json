@@ -327,27 +327,27 @@
             "form": {
                 "title": {
                     "undefined": "Du musst einen Titel angeben.",
-                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!",
-                    "disallowedValue": "Der Titel wird bereits für eine andere Aufgabe genutzt!",
-                    "maxlength": "Der Titel darf höchstens {{max}} Zeichen lang sein!",
-                    "minlength": "Der Titel muss mindestens {{ min }} Zeichen lang sein!"
+                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen.",
+                    "disallowedValue": "Der Titel wird bereits für eine andere Aufgabe genutzt.",
+                    "maxlength": "Der Titel darf höchstens {{max}} Zeichen lang sein.",
+                    "minlength": "Der Titel muss mindestens {{ min }} Zeichen lang sein."
                 },
                 "channelName": {
                     "empty": "Du musst einen Kanalnamen angeben."
                 },
                 "shortName": {
                     "undefined": "Du musst einen Kurznamen angeben.",
-                    "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
-                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!",
-                    "maxlength": "Der Kurzname darf höchstens 36 Zeichen lang sein!",
-                    "disallowedValue": "Der Kurzname wird bereits für eine andere Aufgabe genutzt!"
+                    "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten.",
+                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                    "maxlength": "Der Kurzname darf höchstens 36 Zeichen lang sein.",
+                    "disallowedValue": "Der Kurzname wird bereits für eine andere Aufgabe genutzt."
                 },
                 "packageName": {
                     "undefined": "Du musst einen Package-Namen angeben.",
                     "pattern": {
-                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
-                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
-                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!",
+                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\".",
+                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\".",
+                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\".",
                         "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt.",
                         "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\".",
                         "DART": "Der Package-Name muss ein kleingeschriebener Dart-Identifier sein, z.B. \"exercise01\"."
@@ -356,13 +356,13 @@
                 },
                 "points": {
                     "undefined": "Du musst die Punkte angeben.",
-                    "customMin": "Die Punkte müssen mindestens 1 betragen!",
-                    "customMax": "Die Punkte dürfen höchstens 9999 betragen!"
+                    "customMin": "Die Punkte müssen mindestens 1 betragen.",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
                 },
                 "bonusPoints": {
                     "undefined": "Du musst die Bonuspunkte angeben.",
-                    "customMin": "Die Bonuspunkte müssen mindestens 0 betragen!",
-                    "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen!"
+                    "customMin": "Die Bonuspunkte müssen mindestens 0 betragen.",
+                    "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen."
                 },
                 "minTeamSize": {
                     "min": "Die minimale Teamgröße darf nicht weniger als eine Person betragen.",
@@ -382,7 +382,7 @@
                     "otherRequired": "'{{ dateName }}' kann erst gesetzt werden, wenn das vorausgesetzte Datum gesetzt ist."
                 },
                 "maxPenalty": {
-                    "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
+                    "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen."
                 },
                 "continuousPlagiarismControl": {
                     "similarityThreshold": {

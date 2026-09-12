@@ -17,11 +17,15 @@
             <div class="quiz-options">
                 <div class="row form-group" style="width: 100%">
                     <div class="row">
-                        <label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label>
+                        <!-- The marker the shared title field carries on every other exercise form, which this page
+                             hand-rolls its own title input instead of using. Hidden from assistive technology because
+                             `required` on the input already conveys it. -->
+                        <label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label><span class="text-state-danger" aria-hidden="true">*</span>
                     </div>
                     <div class="row">
                         <div class="col-11">
                             <input
+                                required
                                 id="quiz-title"
                                 type="text"
                                 class="form-control"
