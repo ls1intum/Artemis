@@ -17,13 +17,18 @@ final class AgentToolProgress {
 
     private static final Pattern UNSAFE_CHARACTERS = Pattern.compile("[\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]");
 
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /** The "path" string value of a tool call's JSON arguments, without parsing the whole document. */
+    private static final Pattern JSON_PATH_VALUE = Pattern.compile("\"path\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     private AgentToolProgress() {
     }
 
     static String describe(AssistantMessage.ToolCall toolCall) {
-        String path = sanitizePath(extractJsonStringValue(toolCall.arguments() == null ? "" : toolCall.arguments(), "path"));
+        String path = sanitizePath(extractJsonPathValue(toolCall.arguments() == null ? "" : toolCall.arguments()));
         return switch (toolCall.name()) {
             case "read_file" -> path == null ? "Reviewing an exercise file." : "Reviewing " + path + ".";
             case "write_file", "edit_file" -> path == null ? "Working on an exercise file." : "Working on " + path + ".";
@@ -55,7 +60,7 @@ final class AgentToolProgress {
         if (!assessment.isSafe()) {
             return assessment.safePath();
         }
-        String sanitized = UNSAFE_CHARACTERS.matcher(path).replaceAll(" ").replaceAll("\\s+", " ").strip();
+        String sanitized = WHITESPACE.matcher(UNSAFE_CHARACTERS.matcher(path).replaceAll(" ")).replaceAll(" ").strip();
         if (sanitized.isEmpty()) {
             return null;
         }
@@ -66,8 +71,8 @@ final class AgentToolProgress {
     }
 
     @Nullable
-    private static String extractJsonStringValue(String json, String key) {
-        Matcher matcher = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").matcher(json);
+    private static String extractJsonPathValue(String json) {
+        Matcher matcher = JSON_PATH_VALUE.matcher(json);
         return matcher.find() ? matcher.group(1).replace("\\\"", "\"").replace("\\/", "/").replace("\\\\", "\\") : null;
     }
 }
