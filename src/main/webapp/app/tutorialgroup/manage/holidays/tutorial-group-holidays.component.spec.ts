@@ -339,6 +339,26 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(component['sessionCountsByHoliday']().get(11)).toBe(2);
     });
 
+    it('should forget the per-holiday counts when the request for them fails, rather than keeping the ones from before', () => {
+        // A reload follows a save, so the counts on screen belong to the holidays as they were before the edit. The
+        // error path emits nothing to replace them with, so anything still held here would be stated indefinitely.
+        expect(component['sessionCountsByHoliday']().get(11)).toBe(7);
+
+        vi.mocked(freePeriodService.getSessionCountsPerFreePeriod).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component['loadSessionCountsPerHoliday']();
+
+        expect(component['sessionCountsByHoliday']().size).toBe(0);
+    });
+
+    it('should forget the per-day counts when the request for them fails, for the same reason', () => {
+        expect(component['sessionCountsByDay']().get('2025-12-17')).toBe(7);
+
+        vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component['loadSessionCounts']();
+
+        expect(component['sessionCountsByDay']().size).toBe(0);
+    });
+
     it('should keep counting spans after a failed request', () => {
         vi.mocked(freePeriodService.getOverlappingSessionCount).mockClear();
         vi.mocked(freePeriodService.getOverlappingSessionCount)

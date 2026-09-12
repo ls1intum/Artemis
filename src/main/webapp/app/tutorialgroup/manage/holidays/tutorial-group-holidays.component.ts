@@ -152,6 +152,10 @@ export class TutorialGroupHolidaysComponent {
                     if (courseId === undefined) {
                         return EMPTY;
                     }
+                    // Cleared for the same reason as the per-holiday counts: a save reloads these, and a day whose
+                    // sessions were just cancelled or restored would otherwise keep its previous number - indefinitely
+                    // if the request fails.
+                    this.sessionCountsByDay.set(new Map());
                     // The whole grid, so the days of the neighbouring months it shows carry their counts too.
                     const from = month.startOf('month').startOf('isoWeek');
                     const to = month.endOf('month').endOf('isoWeek');
@@ -171,14 +175,20 @@ export class TutorialGroupHolidaysComponent {
     private countSessionsForEachHoliday(): void {
         this.holidayCountRequests
             .pipe(
-                switchMap((courseId) =>
-                    this.freePeriodService.getSessionCountsPerFreePeriod(courseId).pipe(
+                switchMap((courseId) => {
+                    // Dropped before the request rather than after it. This map is keyed by holiday, and a reload
+                    // follows a save, so every count in it describes a span that may have just changed. Holding them
+                    // would state the number of sessions an edited holiday cancelled before the edit - and a failed
+                    // request would leave that number on screen for good, because the error path emits nothing to
+                    // replace it with. Empty renders no badge at all, which is the honest answer until one arrives.
+                    this.sessionCountsByHoliday.set(new Map());
+                    return this.freePeriodService.getSessionCountsPerFreePeriod(courseId).pipe(
                         catchError((response: HttpErrorResponse) => {
                             onError(this.alertService, response);
                             return EMPTY;
                         }),
-                    ),
-                ),
+                    );
+                }),
                 takeUntilDestroyed(),
             )
             .subscribe((counts) => this.sessionCountsByHoliday.set(new Map(counts.map((count) => [count.freePeriodId, count.count]))));
