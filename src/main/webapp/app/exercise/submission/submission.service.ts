@@ -89,7 +89,6 @@ export class SubmissionService {
     protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintResponseDTO[]>): HttpResponse<SubmissionWithComplaintDTO[]> {
         const body = (res.body ?? []).map((dto) => {
             const submission = SubmissionService.convertSubmissionDateFromServer(dto.submission)!;
-            this.setSubmissionAccessRights(submission);
             const complaint = this.complaintService.convertComplaintFromServerInList(dto.complaint);
             SubmissionService.completeComplainedResult(complaint, submission);
             return { submission, complaint };
@@ -102,6 +101,8 @@ export class SubmissionService {
      * that copy. The listed submission holds the same result in full, so take the programming numbers from there and
      * hang the submission itself on the result: the result string, the code issue warning, the build log request and
      * the commit line all read those. The result is matched by id, the latest result is not always the complained one.
+     * Anything the listed submission may not hold (an Athena result is stripped from it) has to come from the complaint
+     * itself.
      */
     private static completeComplainedResult(complaint: Complaint, submission: Submission) {
         const complainedResult = complaint.result;
@@ -111,7 +112,6 @@ export class SubmissionService {
         complainedResult.submission = submission;
         const listedResult = submission.results?.find((result) => result.id === complainedResult.id);
         if (listedResult) {
-            complainedResult.successful = listedResult.successful;
             complainedResult.testCaseCount = listedResult.testCaseCount;
             complainedResult.passedTestCaseCount = listedResult.passedTestCaseCount;
             complainedResult.codeIssueCount = listedResult.codeIssueCount;

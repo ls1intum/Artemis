@@ -817,6 +817,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(draft.feedbacks()).anySatisfy(feedback -> {
             assertThat(feedback.id()).isNegative();
             assertThat(feedback.detailText()).isEqualTo("test-run failure message");
+            // the synthesized view has no text: the test case is the only carrier of the name the popup prints
+            assertThat(feedback.testCase()).isNotNull();
+            assertThat(feedback.testCase().testName()).isEqualTo("testRunTest");
         });
         // the feedback popup of a programming result prints the commit the submission was built from
         assertThat(response.getFirst().commitHash()).isEqualTo("1234abcd");

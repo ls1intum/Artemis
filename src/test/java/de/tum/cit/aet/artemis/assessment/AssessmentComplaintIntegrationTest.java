@@ -638,6 +638,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaint.getResult().setHasComplaint(true);
         complaint.getResult().setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        complaint.getResult().setSuccessful(true);
         complaint.getResult().setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(complaint.getResult());
         complaintRepo.save(complaint);
@@ -649,6 +650,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         assertThat(submissionWithComplaintDTOs).hasSize(1);
         assertThat(submissionWithComplaintDTOs.getFirst().complaint().result().assessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+        // the listed submission has its Athena results stripped, so the dashboard can only read `successful` off the
+        // complaint - without it the row shows the spinner and "AI feedback in progress" forever
+        assertThat(submissionWithComplaintDTOs.getFirst().complaint().result().successful()).isTrue();
     }
 
     @Test

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,8 +12,11 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -22,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO.TestCaseDTO;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
@@ -135,7 +140,10 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
             String participantName = participation instanceof StudentParticipation studentParticipation ? studentParticipation.getParticipantName() : null;
             List<ParticipationSubmissionDTO> submissions = null;
             if (includeSubmissions && Hibernate.isInitialized(participation.getSubmissions())) {
-                submissions = participation.getSubmissions().stream().filter(Objects::nonNull).map(ParticipationSubmissionDTO::of).toList();
+                // a hash set would hand the siblings over in an order that can change between two requests, and the client
+                // reads the date of the first sibling to decide whether the participation was in due time
+                submissions = participation.getSubmissions().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Submission::getId, Comparator.nullsLast(Long::compare)))
+                        .map(ParticipationSubmissionDTO::of).toList();
             }
             return new SubmissionParticipationDTO(participation.getId(), participation.getType(), participation.isTestRun(), participation.getInitializationState(),
                     participation.getInitializationDate(), participation.getIndividualDueDate(), participantName, submissions);
@@ -187,15 +195,48 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
     public record SubmissionResultDTO(Long id, @Nullable ZonedDateTime completionDate, @Nullable Boolean successful, @Nullable Double score, @Nullable Boolean rated,
             @Nullable AssessmentType assessmentType, @Nullable Integer correctionRound, @Nullable Boolean hasComplaint, @Nullable Boolean exampleResult,
             @Nullable Integer testCaseCount, @Nullable Integer passedTestCaseCount, @Nullable Integer codeIssueCount, @Nullable UserNameDTO assessor,
-            @Nullable List<FeedbackDTO> feedbacks) {
+            @Nullable List<SubmissionFeedbackDTO> feedbacks) {
 
         static SubmissionResultDTO of(Result result) {
             UserNameDTO assessor = result.getAssessor() != null && Hibernate.isInitialized(result.getAssessor()) ? UserNameDTO.of(result.getAssessor()) : null;
-            List<FeedbackDTO> feedbacks = Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks().stream().filter(Objects::nonNull).map(FeedbackDTO::of).toList()
+            List<SubmissionFeedbackDTO> feedbacks = Hibernate.isInitialized(result.getFeedbacks())
+                    ? result.getFeedbacks().stream().filter(Objects::nonNull).map(SubmissionFeedbackDTO::of).toList()
                     : null;
             return new SubmissionResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), result.getAssessmentType(),
                     result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
                     result.getCodeIssueCount(), assessor, feedbacks);
+        }
+
+        /**
+         * The feedback of a listed result.
+         * <p>
+         * {@code testCase} is what the client renders the test name from: the test-run list ships synthesized
+         * programming feedback, and its test case is the only carrier of that name (the synthesized view has no text).
+         *
+         * @param id                  the feedback id, negative on a synthesized view of typed automatic feedback
+         * @param text                the feedback title
+         * @param detailText          the feedback text, shortened to a preview where a long text exists
+         * @param hasLongFeedbackText whether the full text has to be fetched separately
+         * @param reference           the assessed element
+         * @param credits             the points the feedback is worth
+         * @param positive            whether the feedback is positive
+         * @param type                how the feedback was produced
+         * @param visibility          when the feedback becomes visible to the student
+         * @param gradingInstruction  the structured grading instruction the feedback was created from
+         * @param testCase            the programming test case the feedback belongs to
+         */
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public record SubmissionFeedbackDTO(Long id, @Nullable String text, @Nullable String detailText, boolean hasLongFeedbackText, @Nullable String reference,
+                @Nullable Double credits, @Nullable Boolean positive, @Nullable FeedbackType type, @Nullable Visibility visibility,
+                @Nullable GradingInstructionDTO gradingInstruction, @Nullable TestCaseDTO testCase) {
+
+            static SubmissionFeedbackDTO of(Feedback feedback) {
+                GradingInstructionDTO gradingInstruction = feedback.getGradingInstruction() != null && Hibernate.isInitialized(feedback.getGradingInstruction())
+                        ? GradingInstructionDTO.of(feedback.getGradingInstruction())
+                        : null;
+                return new SubmissionFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
+                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction, TestCaseDTO.of(feedback.getTestCase()));
+            }
         }
     }
 }

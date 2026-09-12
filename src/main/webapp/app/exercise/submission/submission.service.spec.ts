@@ -168,7 +168,7 @@ describe('Submission Service', () => {
         const complaint: ComplaintDTO = {
             submittedTime: complaintSubmittedTimeStr as any, // String should be converted to proper type by the tested service.
             complaintIsAccepted: false,
-            result: { id: 2374 },
+            result: { id: 2374, successful: true },
         };
         submission.results![0].testCaseCount = 10;
         submission.results![0].passedTestCaseCount = 7;
@@ -197,6 +197,8 @@ describe('Submission Service', () => {
                 expect(submissionWithComplaint.complaint.result!.passedTestCaseCount).toBe(7);
                 expect(submissionWithComplaint.complaint.result!.codeIssueCount).toBe(3);
                 expect(submissionWithComplaint.complaint.result!.submission).toBe(submissionWithComplaint.submission);
+                // an Athena result is stripped from the listed submission, so `successful` has to survive from the complaint itself
+                expect(submissionWithComplaint.complaint.result!.successful).toBe(true);
             });
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/submissions-with-complaints`, method: 'GET' });
         req.flush(returnedFromService);
