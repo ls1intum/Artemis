@@ -14,7 +14,9 @@ import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 
 import com.knuddels.jtokkit.api.EncodingType;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperionworker.generation.PromptTemplates;
 
@@ -59,6 +61,9 @@ final class ReviewerClient {
     @Nullable
     private final ChatOptions configuredOptions;
 
+    /** Sends a request again after a failure that provably produced no completion. */
+    private ProviderRetryPolicy providerRetries = new ProviderRetryPolicy();
+
     ReviewerClient(@Nullable ChatClient chatClient, PromptTemplates templateService, @Nullable String configuredModel, Duration providerHardFailureCooldown,
             ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
         this.configuredOptions = configuredOptions;
@@ -84,7 +89,11 @@ final class ReviewerClient {
         return chatClient != null;
     }
 
-    /** One output-capped, tool-free reviewer call; transport retry behavior is bounded by the configured OpenAI SDK client. */
+    void setProviderRetryTimingForTests(long baseMillis, long capMillis) {
+        this.providerRetries = new ProviderRetryPolicy(baseMillis, capMillis);
+    }
+
+    /** One output-capped, tool-free reviewer call, sent again after a failure that provably produced no completion. */
     @Nullable
     String call(String systemPromptTemplate, String userPrompt, @Nullable Consumer<ChatResponse> usageSink) {
         return call(systemPromptTemplate, userPrompt, usageSink, CRITIC_MAX_OUTPUT_TOKENS);
@@ -111,20 +120,7 @@ final class ReviewerClient {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        AtomicBoolean attempted = new AtomicBoolean();
-        ChatResponse response;
-        try {
-            response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
-                attempted.set(true);
-                return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
-            });
-        }
-        catch (RuntimeException error) {
-            if (attempted.get()) {
-                markUsageUncertain(usageSink);
-            }
-            throw error;
-        }
+        ChatResponse response = providerRetries.execute(() -> callOnce(systemPrompt, userPrompt, options, usageSink), () -> false, null, "reviewer call");
         if (response == null) {
             markUsageUncertain(usageSink);
         }
@@ -132,6 +128,24 @@ final class ReviewerClient {
             usageSink.accept(response);
         }
         return response == null || response.getResult() == null || response.getResult().getOutput() == null ? null : response.getResult().getOutput().getText();
+    }
+
+    /** Once the request is sent, a failure marks usage uncertain unless it proves the provider produced no completion. */
+    @Nullable
+    private ChatResponse callOnce(String systemPrompt, String userPrompt, OpenAiChatOptions.Builder options, @Nullable Consumer<ChatResponse> usageSink) {
+        AtomicBoolean attempted = new AtomicBoolean();
+        try {
+            return providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
+                attempted.set(true);
+                return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
+            });
+        }
+        catch (RuntimeException error) {
+            if (attempted.get() && !ProviderFailureClass.of(error).provesNoUsage()) {
+                markUsageUncertain(usageSink);
+            }
+            throw error;
+        }
     }
 
     private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {

@@ -38,6 +38,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openai.core.http.Headers;
+import com.openai.errors.InternalServerException;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport.Kind;
@@ -2187,6 +2189,24 @@ class SpecFidelityCriticServiceTest {
         assertThat(firstReport.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         assertThat(nextReport.findings()).isEmpty();
         verify(chatModel, times(4)).call(any(Prompt.class));
+    }
+
+    @Test
+    void providerErrorStatusIsRetriedWithinThePassWithoutMarkingUsageUncertain() {
+        ChatModel chatModel = mock(ChatModel.class);
+        var serverError = InternalServerException.builder().statusCode(503).headers(Headers.builder().build()).build();
+        when(chatModel.call(any(Prompt.class))).thenThrow(serverError).thenReturn(jsonResponse("{}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = criticWithCooldown(ChatClient.create(chatModel), "configured-model", Duration.ofMinutes(5L), inMemoryCooldown());
+        critic.setProviderRetryTimingForTests(0, 0);
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
+
+        SpecFidelityReport report = critique(critic,
+                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
+                "A clean problem statement.", List.of("test_x"), usageSink);
+
+        assertThat(report.findings()).noneMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
+        verify(usageSink, never()).markUncertain();
     }
 
     @Test
