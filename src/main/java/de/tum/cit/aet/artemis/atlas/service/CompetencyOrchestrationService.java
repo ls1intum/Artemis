@@ -354,8 +354,10 @@ public class CompetencyOrchestrationService {
                 return CompetencyOrchestrationResultDTO.noOp("No applicable exercises in batch.");
             }
             CompetencyOrchestrationResultDTO result = orchestrateBatch(exercises, courseId);
-            // claimBatchNow drained the bucket; on FAILED (nothing committed) requeue so the drained ids aren't lost.
-            if (result.status() == CompetencyOrchestrationResultDTO.Status.FAILED) {
+            // Preserve drained ids after retryable failures; budget and completion failures must not be replayed automatically.
+            if (result.status() == CompetencyOrchestrationResultDTO.Status.FAILED
+                    && result.failureReason() != CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
+                    && result.failureReason() != CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION) {
                 contentChangeAccumulatorService.requeueAfterFailedRun(courseId, mergedExerciseIds);
             }
             return result;

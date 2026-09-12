@@ -533,12 +533,16 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = { true, false })
-    void runBatch_terminalFailureRequeuesSkippedExercise(boolean toolLimitReached) {
+    @org.junit.jupiter.params.provider.CsvSource({ "true, false", "false, false", "true, true", "false, true" })
+    void terminalFailure_requeuesOnlySkippedExercise(boolean toolLimitReached, boolean manualFlush) {
         ProgrammingExercise healthy = courseExercise(10L);
         QuizExercise doomedQuiz = quizExercise(12L);
         when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(healthy, doomedQuiz));
         stubRunMap();
+        if (manualFlush) {
+            when(exerciseRepository.findByIdElseThrow(10L)).thenReturn(healthy);
+            when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(12L))));
+        }
         when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Survivor", "Survivor body", Map.of()));
         when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
@@ -554,12 +558,14 @@ class CompetencyOrchestrationServiceTest {
                     return new ChatResponse(List.of(new Generation(new AssistantMessage("Incomplete"))));
                 });
 
-        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L, 12L));
+        var service = createServiceWithRunMap(mock(ChatClient.class));
+        CompetencyOrchestrationResultDTO result = manualFlush ? service.runWithQueuedFlush(10L) : service.runBatch(COURSE_ID, Set.of(10L, 12L));
 
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(toolLimitReached ? CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 : CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
         verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(contentChangeAccumulatorService, never()).requeueAfterFailedRun(eq(COURSE_ID), argThat(ids -> ids.contains(10L)));
         verify(runMap).remove(COURSE_ID);
     }
 
