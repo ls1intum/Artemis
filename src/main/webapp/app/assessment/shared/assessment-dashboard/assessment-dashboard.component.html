@@ -1,311 +1,404 @@
-<div *titleBarTitle class="flex items-center">
-    @if (!isExamMode()) {
-        <jhi-course-title-bar-title title="artemisApp.assessmentDashboard.title" />
-    } @else {
-        <h5 class="mb-0">
-            {{ !isTestRun() ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate) : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate) }}
-        </h5>
-    }
-    <jhi-documentation-button [type]="documentationType" />
+<div>
+    <div *titleBarTitle class="flex items-center">
+        @if (!isExamMode()) {
+            <jhi-course-title-bar-title title="artemisApp.assessmentDashboard.title" />
+        }
+        @if (isExamMode()) {
+            <h5 class="mb-0">
+                {{
+                    !isTestRun()
+                        ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
+                        : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
+                }}
+            </h5>
+        }
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
+    <div *titleBarActions>
+        @if (!isTestRun()) {
+            <div class="flex justify-end gap-1">
+                @if (isExamMode() && course()?.isAtLeastInstructor) {
+                    <jhi-exam-assessment-buttons />
+                }
+                @if (!isExamMode() && course()?.isAtLeastInstructor) {
+                    <a
+                        [routerLink]="['/course-management', course().id, 'scores']"
+                        [attr.aria-label]="'entity.action.scores' | artemisTranslate"
+                        [tumUiTooltip]="'entity.action.scores' | artemisTranslate"
+                        tumUiTooltipPlacement="top"
+                        tumUiButton
+                        severity="secondary"
+                        size="small"
+                    >
+                        <fa-icon [icon]="faTable" />
+                        <span class="title-bar-collapsible-label" jhiTranslate="entity.action.scores"></span>
+                    </a>
+
+                    <a
+                        [routerLink]="['/course-management', course().id, 'grading']"
+                        [attr.aria-label]="'artemisApp.course.gradingSystem' | artemisTranslate"
+                        [tumUiTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
+                        tumUiTooltipPlacement="top"
+                        tumUiButton
+                        severity="secondary"
+                        size="small"
+                    >
+                        <fa-icon [icon]="faClipboard" />
+                        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.course.gradingSystem"></span>
+                    </a>
+                    <jhi-feature-overlay [enabled]="plagiarismEnabled()">
+                        <a
+                            [routerLink]="['/course-management', course().id, 'plagiarism-cases']"
+                            [attr.aria-label]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
+                            [tumUiTooltip]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
+                            tumUiTooltipPlacement="top"
+                            tumUiButton
+                            severity="secondary"
+                            size="small"
+                        >
+                            <fa-icon [icon]="faHeartBroken" />
+                            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+                        </a>
+                    </jhi-feature-overlay>
+
+                    @if (deimosModuleEnabled()) {
+                        <button
+                            [jhiFeatureToggleHide]="FeatureToggle.Deimos"
+                            [attr.aria-label]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
+                            [tumUiTooltip]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
+                            tumUiTooltipPlacement="top"
+                            tumUiButton
+                            severity="primary"
+                            size="small"
+                            (click)="openDeimosBatchDialog()"
+                        >
+                            <fa-icon [icon]="faShieldAlt" />
+                            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
+                        </button>
+                    }
+                }
+            </div>
+        }
+    </div>
 </div>
-
-<ng-template titleBarActions>
-    @if (!isExamMode()) {
-        @if (course()?.isAtLeastInstructor) {
-            <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'scores']" [title]="'entity.action.scores' | artemisTranslate">
-                <fa-icon [icon]="faTable" />
-                <span class="title-bar-collapsible-label" jhiTranslate="entity.action.scores"></span>
-            </a>
-            <a
-                tumUiButton
-                severity="secondary"
-                size="small"
-                [routerLink]="['/course-management', course()!.id, 'grading']"
-                [title]="'artemisApp.course.gradingSystem' | artemisTranslate"
-            >
-                <fa-icon [icon]="faClipboard" />
-                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.course.gradingSystem"></span>
-            </a>
-            <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                <a
-                    tumUiButton
-                    severity="secondary"
-                    size="small"
-                    [routerLink]="['/course-management', course()!.id, 'plagiarism-cases']"
-                    [title]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faHeartBroken" />
-                    <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
-                </a>
-            </jhi-feature-overlay>
-
-            @if (deimosModuleEnabled()) {
-                <button
-                    [jhiFeatureToggleHide]="FeatureToggle.Deimos"
-                    tumUiButton
-                    severity="info"
-                    size="small"
-                    (click)="openDeimosBatchDialog()"
-                    [title]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faShieldAlt" />
-                    <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
-                </button>
-            }
-        }
-    } @else {
-        @if (!isTestRun() && course()?.isAtLeastInstructor) {
-            <jhi-exam-assessment-buttons />
-        }
-    }
-</ng-template>
-
 @if (examNotFinished()) {
-    <div class="container-fluid mt-4">
+    <div class="mt-4">
         <tum-ui-message severity="info" id="assessment-not-possible-yet">
             <span jhiTranslate="error.assessmentNotPossibleExamRunning" [translateValues]="{ date: exam()?.latestIndividualEndDate | artemisDate }"></span>
         </tum-ui-message>
     </div>
 } @else {
-    <div>
-        @if (isExamMode() && !isTestRun()) {
-            <div class="row justify-content-between">
-                <div class="col-md-8">
-                    <h4>
-                        <span class="me-2">{{ 'artemisApp.exam.endDate' | artemisTranslate }}: {{ exam()?.endDate | artemisDate }}</span>
-                    </h4>
-                    <h4>
-                        <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam()?.publishResultsDate | artemisDate }}</span>
-                    </h4>
-                </div>
+    @if (isExamMode() && !isTestRun()) {
+        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-2 py-1 text-sm text-muted-color">
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
+                <span class="inline-flex items-center gap-2">
+                    <span class="font-medium text-color" jhiTranslate="artemisApp.exam.endDate"></span>
+                    <tum-ui-tag severity="secondary">
+                        @if (exam()?.endDate; as endDate) {
+                            {{ endDate | artemisDate }}
+                        } @else {
+                            -
+                        }
+                    </tum-ui-tag>
+                </span>
+                <span class="inline-flex items-center gap-2">
+                    <span class="font-medium text-color" jhiTranslate="artemisApp.exam.publishResultsDate"></span>
+                    <tum-ui-tag severity="secondary">
+                        @if (exam()?.publishResultsDate; as publishResultsDate) {
+                            {{ publishResultsDate | artemisDate }}
+                        } @else {
+                            -
+                        }
+                    </tum-ui-tag>
+                </span>
             </div>
-        }
-    </div>
+        </div>
+    }
     @if (isTestRun() && exam()?.numberOfCorrectionRoundsInExam && exam()!.numberOfCorrectionRoundsInExam! > 1) {
-        <div style="margin-top: 1em" class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"></div>
+        <tum-ui-message class="mt-4 block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
     }
     @if (course()) {
-        <div>
+        <div class="space-y-6 pb-6">
             <div id="assessment-statistics">
-                <div class="container-fluid">
-                    <jhi-assessment-dashboard-information
-                        [isExamMode]="isExamMode()"
-                        [feedbackRequestEnabled]="course().requestMoreFeedbackEnabled!"
-                        [complaintsEnabled]="course().complaintsEnabled!"
-                        [numberOfTutorAssessments]="numberOfTutorAssessments()"
-                        [course]="course()"
-                        [tutorId]="tutor().id!"
-                        [examId]="examId()"
-                        [totalNumberOfAssessments]="totalNumberOfAssessments()"
-                        [numberOfSubmissions]="numberOfSubmissions()"
-                        [numberOfCorrectionRounds]="numberOfCorrectionRounds()"
-                        [totalAssessmentPercentage]="totalAssessmentPercentage()"
-                        [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds()"
-                        [complaints]="complaints()"
-                        [moreFeedbackRequests]="moreFeedbackRequests()"
-                        [assessmentLocks]="assessmentLocks()"
-                        [ratings]="ratings()"
-                    />
-                </div>
+                <jhi-assessment-dashboard-information
+                    [isExamMode]="isExamMode()"
+                    [feedbackRequestEnabled]="course().requestMoreFeedbackEnabled!"
+                    [complaintsEnabled]="course().complaintsEnabled!"
+                    [numberOfTutorAssessments]="numberOfTutorAssessments()"
+                    [course]="course()"
+                    [tutorId]="tutor().id!"
+                    [examId]="examId()"
+                    [totalNumberOfAssessments]="totalNumberOfAssessments()"
+                    [numberOfSubmissions]="numberOfSubmissions()"
+                    [numberOfCorrectionRounds]="numberOfCorrectionRounds()"
+                    [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds()"
+                    [complaints]="complaints()"
+                    [moreFeedbackRequests]="moreFeedbackRequests()"
+                    [assessmentLocks]="assessmentLocks()"
+                    [ratings]="ratings()"
+                />
             </div>
-            <div class="container-fluid mt-4">
-                <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
-                @if (!isTestRun()) {
-                    <div class="col-6 align-baseline">
-                        <div class="form-check form-check-inline">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="hideFinishedExercise"
-                                id="field_hideFinishedExercise"
-                                [ngModel]="hideFinishedExercises()"
-                                (ngModelChange)="triggerFinishedExercises()"
-                            />
-                            <label class="form-check-label" for="field_hideFinishedExercise" jhiTranslate="artemisApp.assessmentDashboard.hideFinishedExercises"></label>
+            <tum-ui-panel class="min-w-0 overflow-hidden">
+                <div tumUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-4">
+                    <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></span>
+                    @if (!isTestRun() && allExercises().length > 0) {
+                        <div class="flex flex-wrap justify-end gap-x-5 gap-y-3">
+                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideFinishedExercise">
+                                <tum-ui-checkbox
+                                    inputId="field_hideFinishedExercise"
+                                    name="hideFinishedExercise"
+                                    [ngModel]="hideFinishedExercises()"
+                                    (ngModelChange)="triggerFinishedExercises()"
+                                />
+                                <span jhiTranslate="artemisApp.assessmentDashboard.hideFinishedExercises"></span>
+                            </label>
+                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideOptional">
+                                <tum-ui-checkbox inputId="field_hideOptional" name="hideOptional" [ngModel]="hideOptional()" (ngModelChange)="triggerOptionalExercises()" />
+                                <span jhiTranslate="artemisApp.assessmentDashboard.hideOptional"></span>
+                            </label>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="hideOptional"
-                                id="field_hideOptional"
-                                [ngModel]="hideOptional()"
-                                (ngModelChange)="triggerOptionalExercises()"
-                            />
-                            <label class="form-check-label" for="field_hideOptional" jhiTranslate="artemisApp.assessmentDashboard.hideOptional"></label>
-                        </div>
-                    </div>
-                }
-                <div class="row table-responsive">
-                    <table class="table exercise-table">
-                        <thead>
-                            <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
-                                <th jhiSortBy="type">
-                                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.exerciseType"></a>
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th jhiSortBy="title">
-                                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.exercise"></a>
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                @if (!isTestRun()) {
-                                    <th jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
-                                }
-                                <th jhiSortBy="averageRating">
-                                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></a>
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                @if (!isExamMode()) {
-                                    <th jhiSortBy="dueDate">
-                                        <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></a>
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                }
-                                @if (!isExamMode()) {
-                                    <th jhiSortBy="assessmentDueDate">
-                                        <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></a>
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                }
-                                <th jhiTranslate="artemisApp.assessmentDashboard.actions"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (exercise of currentlyShownExercises(); track exercise) {
-                                <tr>
-                                    <td>
-                                        <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
-                                    </td>
-                                    <td>
-                                        <span>{{ exercise.title }}</span>
-                                        <jhi-not-released-tag [exercise]="exercise" />
-                                        <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
-                                    </td>
-                                    @if (!isTestRun() && exercise.tutorParticipations && exercise.tutorParticipations![0]) {
-                                        <td>
-                                            <jhi-tutor-participation-graph
-                                                [exercise]="exercise"
-                                                [tutorParticipation]="exercise.tutorParticipations![0]"
-                                                [numberOfSubmissions]="exercise.numberOfSubmissions"
-                                                [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
-                                                [numberOfComplaints]="exercise.numberOfComplaints || 0"
-                                                [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
-                                                [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
-                                                [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
-                                                [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
-                                            />
-                                        </td>
-                                    }
-                                    <td>
-                                        @if (exercise.averageRating !== undefined) {
-                                            <span> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
-                                        }
-                                        @if (exercise.averageRating === undefined) {
-                                            <span> n.a. </span>
-                                        }
-                                    </td>
-                                    @if (!isExamMode()) {
-                                        <td>
-                                            <span placement="right auto" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
-                                                {{ exercise.dueDate | artemisTimeAgo }}
-                                            </span>
-                                        </td>
-                                    }
-                                    @if (!isExamMode()) {
-                                        <td>
-                                            <span placement="right auto" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
-                                                {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                                            </span>
-                                        </td>
-                                    }
-                                    <td>
-                                        @if (!exercise.teamMode) {
-                                            <ng-container>
-                                                <a
-                                                    data-testid="open-exercise-dashboard"
-                                                    [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
-                                                    class="btn btn-info btn-sm me-1 mb-1"
-                                                >
-                                                    <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
-                                                </a>
-                                            </ng-container>
-                                        } @else {
-                                            <a
-                                                [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
-                                                [queryParams]="{ filter: TeamFilterProp.OWN }"
-                                                class="btn btn-info btn-sm me-1 mb-1"
-                                            >
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
-                                            </a>
-                                        }
-                                        @if (
-                                            course()?.isAtLeastInstructor &&
-                                            isExamMode() &&
-                                            !isTestRun() &&
-                                            exam()?.numberOfCorrectionRoundsInExam &&
-                                            exam()!.numberOfCorrectionRoundsInExam! > 1
-                                        ) {
-                                            <jhi-second-correction-enable-button
-                                                class="me-1 mb-1"
-                                                data-testid="toggle-second-correction"
-                                                (ngModelChange)="toggleSecondCorrection(exercise.id!)"
-                                                [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
-                                                [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
-                                            />
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
-                <div class="container-fluid mt-4">
-                    <h4 jhiTranslate="artemisApp.assessmentDashboard.tutorPerformanceIssues.title"></h4>
-                    @for (issue of tutorIssues(); track issue) {
-                        <ul>
-                            @if (issue.averageTutorValue < issue.allowedRange.lowerBound) {
-                                <li>
-                                    {{
-                                        issue.translationKey + '.below'
-                                            | artemisTranslate
-                                                : {
-                                                      tutorName: issue.tutorName,
-                                                      numberOfTutorItems: issue.numberOfTutorItems,
-                                                      averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                                      threshold: issue.allowedRange.lowerBound.toFixed(1),
-                                                  }
-                                    }}
-                                </li>
-                            }
-                            @if (issue.averageTutorValue > issue.allowedRange.upperBound) {
-                                <li>
-                                    {{
-                                        issue.translationKey + '.above'
-                                            | artemisTranslate
-                                                : {
-                                                      tutorName: issue.tutorName,
-                                                      numberOfTutorItems: issue.numberOfTutorItems,
-                                                      averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                                      threshold: issue.allowedRange.upperBound.toFixed(1),
-                                                  }
-                                    }}
-                                </li>
-                            }
-                        </ul>
                     }
                 </div>
+                @if (allExercises().length === 0) {
+                    <tum-ui-message class="mt-2 w-full" severity="info" [icon]="faCircleInfo" [text]="'artemisApp.assessmentDashboard.noExercises' | artemisTranslate" />
+                } @else if (currentlyShownExercises().length === 0) {
+                    <tum-ui-message
+                        class="mt-2 w-full"
+                        severity="info"
+                        [icon]="faCircleInfo"
+                        [text]="'artemisApp.assessmentDashboard.noExercisesMatchFilters' | artemisTranslate"
+                    />
+                } @else {
+                    <div class="w-full overflow-x-auto border-t border-surface">
+                        <table
+                            tumUiTable
+                            size="small"
+                            class="min-w-[42rem] xl:min-w-[56rem]"
+                            [striped]="true"
+                            [rowHover]="true"
+                            [sortField]="exercisesSortingPredicate()"
+                            [sortOrder]="exercisesReverseOrder() ? 1 : -1"
+                            (sortChange)="onExerciseSortChange($event)"
+                        >
+                            <thead>
+                                <tr>
+                                    <th tumUiSortableColumn="type" class="hidden min-w-12 !whitespace-normal xl:table-cell xl:w-[6%]">
+                                        <span jhiTranslate="artemisApp.assessmentDashboard.exerciseType"></span>
+                                    </th>
+                                    <th tumUiSortableColumn="title" class="w-[10rem] min-w-[8rem] xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
+                                        <span jhiTranslate="artemisApp.assessmentDashboard.exercise"></span>
+                                    </th>
+                                    @if (!isTestRun()) {
+                                        <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
+                                    }
+                                    <th tumUiSortableColumn="averageRating" class="hidden min-w-14 !whitespace-normal xl:table-cell xl:w-[7%]">
+                                        <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
+                                    </th>
+                                    @if (!isExamMode()) {
+                                        <th tumUiSortableColumn="dueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
+                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>
+                                        </th>
+                                    }
+                                    @if (!isExamMode()) {
+                                        <th tumUiSortableColumn="assessmentDueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
+                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>
+                                        </th>
+                                    }
+                                    @if (!isExamMode()) {
+                                        <th class="w-28 min-w-24 !whitespace-normal xl:hidden">
+                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
+                                        </th>
+                                    }
+                                    <th class="w-10 min-w-10 text-end xl:w-[16%]">
+                                        <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (exercise of currentlyShownExercises(); track exercise) {
+                                    <tr>
+                                        <td class="hidden min-w-12 whitespace-normal break-words xl:table-cell xl:w-[6%]">
+                                            <fa-icon
+                                                [icon]="getIcon(exercise.type)"
+                                                [tumUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
+                                                tumUiTooltipPlacement="right"
+                                            />
+                                        </td>
+                                        <td class="w-[10rem] min-w-[8rem] whitespace-normal break-words font-semibold xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
+                                            <div class="flex min-w-0 items-center gap-2">
+                                                <fa-icon
+                                                    [icon]="getIcon(exercise.type)"
+                                                    class="shrink-0 xl:hidden"
+                                                    [tumUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
+                                                    tumUiTooltipPlacement="right"
+                                                />
+                                                <span class="min-w-0 flex-1 whitespace-normal break-words">{{ exercise.title }}</span>
+                                            </div>
+                                            <jhi-not-released-tag [exercise]="exercise" />
+                                            <tum-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tum-ui-tag>
+                                        </td>
+                                        @if (!isTestRun()) {
+                                            <td class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]">
+                                                @if (exercise.tutorParticipations && exercise.tutorParticipations![0]) {
+                                                    <jhi-tutor-participation-graph
+                                                        class="block w-full"
+                                                        [exercise]="exercise"
+                                                        [tutorParticipation]="exercise.tutorParticipations![0]"
+                                                        [numberOfSubmissions]="exercise.numberOfSubmissions"
+                                                        [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
+                                                        [numberOfComplaints]="exercise.numberOfComplaints || 0"
+                                                        [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
+                                                        [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
+                                                        [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
+                                                        [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
+                                                    />
+                                                }
+                                            </td>
+                                        }
+                                        <td class="hidden min-w-14 whitespace-normal break-words xl:table-cell xl:w-[7%]">
+                                            @if (exercise.averageRating !== undefined) {
+                                                <span> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                                            }
+                                            @if (exercise.averageRating === undefined) {
+                                                <span> n.a. </span>
+                                            }
+                                        </td>
+                                        @if (!isExamMode()) {
+                                            <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
+                                                <span [hidden]="!exercise.dueDate" [tumUiTooltip]="exercise.dueDate | artemisDate" tumUiTooltipPlacement="right">
+                                                    {{ exercise.dueDate | artemisTimeAgo }}
+                                                </span>
+                                            </td>
+                                        }
+                                        @if (!isExamMode()) {
+                                            <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
+                                                <span
+                                                    [hidden]="!exercise.assessmentDueDate"
+                                                    [tumUiTooltip]="exercise.assessmentDueDate | artemisDate"
+                                                    tumUiTooltipPlacement="right"
+                                                >
+                                                    {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                                                </span>
+                                            </td>
+                                        }
+                                        @if (!isExamMode()) {
+                                            <td class="w-28 min-w-24 whitespace-normal break-words text-sm xl:hidden">
+                                                <div class="flex flex-col gap-1">
+                                                    @if (exercise.dueDate) {
+                                                        <span [tumUiTooltip]="exercise.dueDate | artemisDate" tumUiTooltipPlacement="right">
+                                                            <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>:<br />
+                                                            {{ exercise.dueDate | artemisTimeAgo }}
+                                                        </span>
+                                                    }
+                                                    @if (exercise.assessmentDueDate) {
+                                                        <span [tumUiTooltip]="exercise.assessmentDueDate | artemisDate" tumUiTooltipPlacement="right">
+                                                            <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>:<br />
+                                                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                                                        </span>
+                                                    }
+                                                    @if (!exercise.dueDate && !exercise.assessmentDueDate) {
+                                                        <span>-</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        }
+                                        <td class="w-10 min-w-10 whitespace-nowrap xl:w-[16%]">
+                                            <div class="flex flex-wrap justify-end gap-2">
+                                                @if (!exercise.teamMode) {
+                                                    <ng-container>
+                                                        <a
+                                                            data-testid="open-exercise-dashboard"
+                                                            [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                            [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                            [tumUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                            tumUiTooltipPlacement="top"
+                                                            tumUiButton
+                                                            size="small"
+                                                        >
+                                                            <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
+                                                            <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                                                        </a>
+                                                    </ng-container>
+                                                } @else {
+                                                    <a
+                                                        [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
+                                                        [queryParams]="{ filter: TeamFilterProp.OWN }"
+                                                        [attr.aria-label]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
+                                                        [tumUiTooltip]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
+                                                        tumUiTooltipPlacement="top"
+                                                        tumUiButton
+                                                        size="small"
+                                                    >
+                                                        <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
+                                                        <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </tum-ui-panel>
+            @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
+                <tum-ui-message severity="warn" class="block">
+                    <span class="flex flex-col gap-2">
+                        <span class="flex items-center gap-2">
+                            <fa-icon [icon]="faTriangleExclamation" class="shrink-0" />
+                            <span class="font-semibold" jhiTranslate="artemisApp.assessmentDashboard.tutorPerformanceIssues.title"></span>
+                        </span>
+                        <span class="flex flex-col gap-2 text-sm font-normal">
+                            @for (issue of tutorIssues(); track issue) {
+                                @if (issue.averageTutorValue < issue.allowedRange.lowerBound) {
+                                    <span class="block">
+                                        •
+                                        {{
+                                            issue.translationKey + '.below'
+                                                | artemisTranslate
+                                                    : {
+                                                          tutorName: issue.tutorName,
+                                                          numberOfTutorItems: issue.numberOfTutorItems,
+                                                          averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                                          threshold: issue.allowedRange.lowerBound.toFixed(1),
+                                                      }
+                                        }}
+                                    </span>
+                                }
+                                @if (issue.averageTutorValue > issue.allowedRange.upperBound) {
+                                    <span class="block">
+                                        •
+                                        {{
+                                            issue.translationKey + '.above'
+                                                | artemisTranslate
+                                                    : {
+                                                          tutorName: issue.tutorName,
+                                                          numberOfTutorItems: issue.numberOfTutorItems,
+                                                          averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                                          threshold: issue.allowedRange.upperBound.toFixed(1),
+                                                      }
+                                        }}
+                                    </span>
+                                }
+                            }
+                        </span>
+                    </span>
+                </tum-ui-message>
             }
-            <div class="container-fluid pt-4">
-                @if (!isExamMode()) {
-                    <h4 jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle"></h4>
-                }
-                @if (isExamMode()) {
-                    <h4 jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.examTitle"></h4>
-                }
-                <jhi-tutor-leaderboard [exam]="exam()" [tutorsData]="stats().tutorLeaderboardEntries" [course]="course()" />
-            </div>
+            @if (stats().tutorLeaderboardEntries?.length) {
+                <tum-ui-panel class="min-w-0 overflow-hidden">
+                    <div tumUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-4">
+                        @if (!isExamMode()) {
+                            <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle"></span>
+                        }
+                        @if (isExamMode()) {
+                            <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.examTitle"></span>
+                        }
+                    </div>
+                    <jhi-tutor-leaderboard [exam]="exam()" [tutorsData]="stats().tutorLeaderboardEntries" [course]="course()" />
+                </tum-ui-panel>
+            }
         </div>
     }
 }
