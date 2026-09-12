@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.notification.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingSpecification;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO;
 
 /**
  * Repository for the {@link UserCourseNotificationSettingSpecification} entity.
@@ -51,6 +53,26 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
                 AND s.course.id = :courseId
             """)
     List<UserCourseNotificationSettingSpecificationDTO> findAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /***
+     * Get the setting specifications of every given user in a course, in one query.
+     * <p>
+     * The counterpart of the batched preset read: only users on a custom preset need their specifications, and asking
+     * per user put a query on every one of them.
+     *
+     * @param userIds  the users to query for
+     * @param courseId to query for
+     *
+     * @return one entry per user and notification type the users have specifications for
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO(
+                s.user.id, s.courseNotificationType, s.email, s.push, s.webapp)
+            FROM UserCourseNotificationSettingSpecification s
+            WHERE s.user.id IN :userIds
+                AND s.course.id = :courseId
+            """)
+    List<UserCourseNotificationSettingSpecificationEntryDTO> findAllByUserIdsAndCourseId(@Param("userIds") Collection<Long> userIds, @Param("courseId") Long courseId);
 
     /***
      * Get the setting specification entities for a given user id and course id, for a caller that has to write them.

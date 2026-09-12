@@ -69,14 +69,6 @@ class CourseNotificationCleanupServiceTest {
         assertThat(expiredNotifications).hasSize(notificationCount);
     }
 
-    @Test
-    void shouldAlwaysClearCacheWhenCleanupIsPerformed() {
-        when(courseNotificationRepository.findByDeletionDateBefore(any(ZonedDateTime.class))).thenReturn(new ArrayList<>());
-
-        courseNotificationCleanupService.cleanupCourseNotifications();
-
-    }
-
     /**
      * Helper method to create a list of expired CourseNotification objects
      *

@@ -91,12 +91,16 @@ public class CourseNotificationService {
 
         courseNotification.notificationId = courseNotificationEntityId;
 
+        // Read every recipient's settings once rather than per recipient per channel: the filter below runs for each
+        // supported channel, and asking per user made a course-wide announcement cost a lookup per student per channel.
+        var recipientSettings = courseNotificationSettingService.loadSettingsFor(courseNotification.courseId, recipients);
+
         for (var supportedChannel : supportedChannels) {
             var service = serviceMap.get(supportedChannel);
             if (service == null) {
                 continue;
             }
-            var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
+            var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel, recipientSettings);
             var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
             // One count per notification that actually reached somebody on this channel, which is what answers whether a
             // channel is worth maintaining. Sends that every recipient has switched off are not usage.

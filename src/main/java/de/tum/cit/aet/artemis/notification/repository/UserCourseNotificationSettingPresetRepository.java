@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.notification.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO;
 
 /**
  * Repository for the {@link UserCourseNotificationSettingPreset} entity.
@@ -38,6 +40,26 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
                 AND p.course.id = :courseId
             """)
     Short findSettingPresetByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /***
+     * Get the selected preset of every given user in a course, in one query.
+     * <p>
+     * Filtering a notification's recipients asks for this once per recipient per delivery channel, so a course-wide
+     * announcement to 3000 students across three channels asked 9000 times. Reading the cohort at once is what makes
+     * that bounded; users without a row are simply absent from the result.
+     *
+     * @param userIds  the users to query for
+     * @param courseId to query for
+     *
+     * @return one entry per user that has a preset for the course
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO(p.user.id, p.settingPreset)
+            FROM UserCourseNotificationSettingPreset p
+            WHERE p.user.id IN :userIds
+                AND p.course.id = :courseId
+            """)
+    List<UserCourseNotificationSettingPresetEntryDTO> findSettingPresetsByUserIdsAndCourseId(@Param("userIds") Collection<Long> userIds, @Param("courseId") Long courseId);
 
     /***
      * Get the setting preset entity for a given user id and course id, for a caller that has to write it back.

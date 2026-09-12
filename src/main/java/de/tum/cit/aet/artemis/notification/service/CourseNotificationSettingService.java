@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +22,8 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingS
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
-import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 
@@ -32,6 +35,16 @@ import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSett
 @Lazy
 @Service
 public class CourseNotificationSettingService {
+
+    /**
+     * The preset id that means "the user described their channels themselves", so their specification rows apply.
+     */
+    private static final short CUSTOM_PRESET_ID = 0;
+
+    /**
+     * The preset a user is treated as being on when they have never chosen one.
+     */
+    private static final short DEFAULT_PRESET_ID = 1;
 
     private final CourseNotificationRegistryService courseNotificationRegistryService;
 
@@ -218,6 +231,49 @@ public class CourseNotificationSettingService {
     }
 
     /**
+     * The notification settings of a set of recipients in one course, read in advance so that filtering them does not
+     * have to query per user.
+     *
+     * @param presets        the selected preset per user, absent for users who have none
+     * @param specifications the specifications per user, only populated for users on a custom preset
+     */
+    protected record RecipientSettings(Map<Long, Short> presets, Map<Long, List<UserCourseNotificationSettingSpecificationEntryDTO>> specifications) {
+    }
+
+    /**
+     * Reads the notification settings of a whole set of recipients in one go.
+     * <p>
+     * Sending a notification filters its recipients once per delivery channel, and filtering used to ask for each
+     * recipient's settings individually: a course-wide announcement to 3000 students across three channels issued 9000
+     * lookups. This reads the cohort instead, so the cost is one query - two if anybody is on a custom preset, since
+     * only those users have specifications worth reading.
+     *
+     * @param courseId   the course the notification belongs to
+     * @param recipients the users the notification may go to
+     * @return their settings, for {@link #filterRecipientsBy} to apply
+     */
+    protected RecipientSettings loadSettingsFor(long courseId, List<User> recipients) {
+        Set<Long> userIds = recipients.stream().map(User::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (userIds.isEmpty()) {
+            return new RecipientSettings(Map.of(), Map.of());
+        }
+
+        Map<Long, Short> presets = userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(userIds, courseId).stream()
+                .collect(Collectors.toMap(UserCourseNotificationSettingPresetEntryDTO::userId, UserCourseNotificationSettingPresetEntryDTO::settingPreset));
+
+        // Only a custom preset - the zero one - is described by specification rows, so nobody else needs reading.
+        Set<Long> customPresetUserIds = presets.entrySet().stream().filter(entry -> entry.getValue() == CUSTOM_PRESET_ID).map(Map.Entry::getKey).collect(Collectors.toSet());
+        if (customPresetUserIds.isEmpty()) {
+            return new RecipientSettings(presets, Map.of());
+        }
+
+        Map<Long, List<UserCourseNotificationSettingSpecificationEntryDTO>> specifications = userCourseNotificationSettingSpecificationRepository
+                .findAllByUserIdsAndCourseId(customPresetUserIds, courseId).stream().collect(Collectors.groupingBy(UserCourseNotificationSettingSpecificationEntryDTO::userId));
+
+        return new RecipientSettings(presets, specifications);
+    }
+
+    /**
      * Private helper method that performs the actual filtering of recipients based on notification type.
      * This method checks user presets first. If a user has custom settings (preset 0), it looks up their
      * specific notification preferences. Otherwise, it uses the preset registry.
@@ -225,32 +281,29 @@ public class CourseNotificationSettingService {
      * @param notification The course notification to be sent
      * @param recipients   List of potential recipients
      * @param filterFor    The notification channel to filter for (WEBAPP, PUSH, or EMAIL)
+     * @param settings     The recipients' settings, read once by {@link #loadSettingsFor}
      * @return Filtered list of users who have enabled notifications for the specified channel
      */
-    protected List<User> filterRecipientsBy(CourseNotification notification, List<User> recipients, NotificationChannelOption filterFor) {
+    protected List<User> filterRecipientsBy(CourseNotification notification, List<User> recipients, NotificationChannelOption filterFor, RecipientSettings settings) {
+        Short notificationType = this.courseNotificationRegistryService.getNotificationIdentifier(notification.getClass());
         return recipients.stream().filter(recipient -> {
-            // Note: We run a single query per user, however, this query is cached, so this should not cause performance issues.
-            Short preset = userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(recipient.getId(), notification.courseId);
+            Short preset = settings.presets().get(recipient.getId());
 
             if (preset == null) {
                 // Run query on default preset if none are present
-                return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor);
+                return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(DEFAULT_PRESET_ID, notification.getClass(), filterFor);
             }
-            else if (preset == 0) {
-                // The specifications are cached per-user per-course. Similar to above.
-                var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(recipient.getId(), notification.courseId);
-
-                var specification = specifications.stream()
-                        .filter((spec) -> Objects.equals(spec.courseNotificationType(), this.courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())))
-                        .findFirst();
+            else if (preset == CUSTOM_PRESET_ID) {
+                var specification = settings.specifications().getOrDefault(recipient.getId(), List.of()).stream()
+                        .filter(spec -> Objects.equals(spec.courseNotificationType(), notificationType)).findFirst();
 
                 return specification.map(switch (filterFor) {
-                    case WEBAPP -> UserCourseNotificationSettingSpecificationDTO::webapp;
-                    case PUSH -> UserCourseNotificationSettingSpecificationDTO::push;
-                    case EMAIL -> UserCourseNotificationSettingSpecificationDTO::email;
+                    case WEBAPP -> UserCourseNotificationSettingSpecificationEntryDTO::webapp;
+                    case PUSH -> UserCourseNotificationSettingSpecificationEntryDTO::push;
+                    case EMAIL -> UserCourseNotificationSettingSpecificationEntryDTO::email;
                     // Custom presets created before a notification type was introduced have no specification row for it.
                     // Fall back to the default preset value instead of silently disabling delivery for those users.
-                }).orElseGet(() -> this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor));
+                }).orElseGet(() -> this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(DEFAULT_PRESET_ID, notification.getClass(), filterFor));
             }
             else {
                 return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset, notification.getClass(), filterFor);
