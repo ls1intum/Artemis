@@ -305,8 +305,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
     // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
-    // per-course Atlas auto-orchestration settings for editing.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig", "courseConfiguration" })
+    // per-course Atlas auto-orchestration settings for editing. athenaConfig is fetched here because CourseOverviewResource
+    // returns this query's result as a raw Course, and Course#isAthenaGradingFeedbackEnabled()/isAthenaFormativeFeedbackEnabled()
+    // read it via Hibernate.isInitialized() rather than triggering a lazy load - leaving it out of this entity graph makes
+    // both JSON fields silently report false to the client regardless of the persisted value.
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration", "athenaConfig" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
