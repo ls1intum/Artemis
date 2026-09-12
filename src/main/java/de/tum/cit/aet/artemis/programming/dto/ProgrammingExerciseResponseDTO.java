@@ -107,7 +107,7 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
         ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
         ProgrammingLanguage programmingLanguage, String packageName, ProjectType projectType, String projectKey, String testRepositoryUri, Boolean staticCodeAnalysisEnabled,
         Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution, Boolean testCasesChanged, Boolean allowOnlineEditor,
         Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
@@ -153,10 +153,13 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
         Set<String> categories = copyCategories(exercise);
 
-        Set<GradingCriterionDTO> gradingCriteria = null;
+        // A list, not a set: the download export nulls the criterion and instruction ids before projecting, and
+        // GradingCriterionDTO is a record with value equality, so a set would merge two stored criteria that only
+        // differ by id and silently drop a rubric row.
+        List<GradingCriterionDTO> gradingCriteria = null;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriteria = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriteria = criteria.stream().map(GradingCriterionDTO::of).toList();
         }
 
         Set<CompetencyLinkDTO> competencyLinks = null;

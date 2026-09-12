@@ -30,6 +30,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -643,6 +645,42 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(importedExercise.getPlagiarismDetectionConfig().getId()).as("the imported plagiarism configuration does not adopt the exported id").isNull();
         assertThat(importedExercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
         assertThat(importRequest.plagiarismDetectionConfig().id()).as("the file itself still carries the id, which is why the mapper has to drop it").isNotNull();
+    }
+
+    /**
+     * The download export nulls the criterion and instruction ids so that the import can persist them, which strips the
+     * only thing that told two otherwise identical criteria apart. The exported rubric still has to keep both rows.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_keepsIdenticalGradingCriteria() throws Exception {
+        createAndSeedBaseRepositories();
+        Set<GradingCriterion> criteria = new HashSet<>();
+        criteria.add(criterionWithInstruction());
+        criteria.add(criterionWithInstruction());
+        programmingExercise.setGradingCriteria(criteria);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(exerciseToExport.getGradingCriteria()).hasSize(2);
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        assertThat(JsonObjectMapper.get().readTree(details).get("gradingCriteria").size()).as("both stored criteria are exported").isEqualTo(2);
+    }
+
+    private static GradingCriterion criterionWithInstruction() {
+        GradingCriterion criterion = new GradingCriterion();
+        criterion.setTitle("same title");
+        GradingInstruction instruction = new GradingInstruction();
+        instruction.setCredits(1.0);
+        instruction.setGradingScale("good");
+        instruction.setInstructionDescription("same description");
+        instruction.setFeedback("same feedback");
+        instruction.setUsageCount(1);
+        criterion.addStructuredGradingInstruction(instruction);
+        return criterion;
     }
 
     @Test
