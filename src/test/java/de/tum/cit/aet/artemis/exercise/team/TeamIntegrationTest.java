@@ -291,7 +291,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void testGetTeam() throws Exception {
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
-        TeamResponseDTO serverTeam = request.get(resourceUrl() + "/" + team.getId(), HttpStatus.OK, TeamResponseDTO.class);
+        TeamResponseDTO serverTeam = assertThatDb(() -> request.get(resourceUrl() + "/" + team.getId(), HttpStatus.OK, TeamResponseDTO.class)).hasBeenCalledAtMostTimes(6);
         assertThat(serverTeam.name()).as("Team name was fetched correctly").isEqualTo(team.getName());
         assertThat(serverTeam.shortName()).as("Team short name was fetched correctly").isEqualTo(team.getShortName());
         assertThat(loginsOf(serverTeam)).as("Team students were fetched correctly").containsExactlyInAnyOrderElementsOf(loginsOf(team.getStudents()));
@@ -330,7 +330,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         List<Team> teams = teamUtilService.addTeamsForExercise(exercise, numberOfTeams, tutor);
         int numberOfStudents = getCountOfStudentsInTeams(teams);
 
-        List<TeamResponseDTO> serverTeams = request.getList(resourceUrl(), HttpStatus.OK, TeamResponseDTO.class);
+        List<TeamResponseDTO> serverTeams = assertThatDb(() -> request.getList(resourceUrl(), HttpStatus.OK, TeamResponseDTO.class)).hasBeenCalledAtMostTimes(6);
         assertThat(serverTeams).as("Correct number of teams was fetched").hasSize(numberOfTeams);
         assertThat(serverTeams.stream().mapToInt(serverTeam -> serverTeam.students().size()).sum()).as("Correct number of students were fetched").isEqualTo(numberOfStudents);
         assertThat(serverTeams).as("Every student carries the registration number the exercise administration shows")
@@ -615,9 +615,16 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true, "1234567890abcdef", SubmissionType.MANUAL);
         programmingExerciseUtilService.addProgrammingSubmissionToTeamExercise(programmingExercise, submission, team);
 
-        CourseWithTeamExercisesDTO response = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+        CourseWithTeamExercisesDTO response = assertThatDb(
+                () -> request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, CourseWithTeamExercisesDTO.class))
+                .hasBeenCalledAtMostTimes(14);
 
-        TeamParticipationDTO participation = participationsOf(response.exercises().iterator().next()).getFirst();
+        CourseWithTeamExercisesDTO.TeamExerciseDTO teamExercise = response.exercises().iterator().next();
+        TeamParticipationDTO participation = participationsOf(teamExercise).getFirst();
+        // The participation table never renders team members, so neither nested team may drag a member list along.
+        assertThat(teamExercise.teams()).allSatisfy(nestedTeam -> assertThat(nestedTeam.students()).isNullOrEmpty());
+        assertThat(participation.team()).isNotNull();
+        assertThat(participation.team().students()).as("The participation table renders no member list").isNullOrEmpty();
         // The code and clone actions of the exercise header only appear when the participation carries its repository.
         assertThat(participation.repositoryUri()).as("Participation reports the repository of the team").isNotEmpty();
         assertThat(participation.submissions()).hasSize(1);
@@ -630,7 +637,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
         Team team = teamRepo.save(new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
                 .students(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow()));
-        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+        assertThatDb(() -> request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, CourseWithTeamExercisesDTO.class))
+                .hasBeenCalledAtMostTimes(12);
     }
 
     @Test
