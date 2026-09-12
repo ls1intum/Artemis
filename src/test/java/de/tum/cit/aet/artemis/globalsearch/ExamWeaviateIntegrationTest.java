@@ -146,7 +146,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
                 .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam)).toList(), exam.getId());
 
         // Verify exercises are initially indexed with original exam dates
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExistsInWeaviate(weaviateService, exercise);
@@ -161,7 +161,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
                 HttpStatus.OK);
 
         // Verify exercises now reflect the updated exam end date
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
@@ -180,7 +180,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         searchableEntityWeaviateService.updateExercisesAsync(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                 .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam)).toList(), exam.getId());
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExistsInWeaviate(weaviateService, exercise);
@@ -197,7 +197,7 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.OK);
 
         // Verify exercises now reflect the updated exam dates
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             for (ExerciseGroup group : exam.getExerciseGroups()) {
                 for (Exercise exercise : group.getExercises()) {
                     assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);

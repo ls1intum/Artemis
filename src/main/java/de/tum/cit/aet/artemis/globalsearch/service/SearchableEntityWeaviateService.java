@@ -1,22 +1,33 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
@@ -28,6 +39,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
@@ -35,14 +47,24 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * Unified service for synchronizing and searching every indexable entity type (exercise, lecture,
- * lecture unit, exam, FAQ, channel) in the shared {@code SearchableEntities} Weaviate collection.
+ * lecture unit, exam, FAQ, channel, course, post, answer post) in the shared {@code SearchableEntities}
+ * Weaviate collection.
  * <p>
  * The service enforces the single-Weaviate-request invariant for user-facing search: a single
  * {@link #searchSearchableEntities(String, Filter, int)} call is issued per HTTP request, with a compound
  * per-type filter built upstream in {@code GlobalSearchResource}.
  * <p>
- * Upsert/delete helpers are thin wrappers around a shared {@link #upsertRow(String, Long, Map)}
- * implementation that replaces existing rows keyed by {@code (type, entity_id)} or inserts new ones.
+ * <b>Durability.</b> Metadata writes are never issued to Weaviate directly from the request path.
+ * Each public {@code upsert*Async} / {@code delete*Async} method records the intent as a durable
+ * {@link WeaviateOutboxEntry} row (a plain repository save that joins any ambient transaction) and returns.
+ * The single-writer {@code WeaviateOutboxDispatcher} on the scheduling node later claims the row and calls
+ * {@link #applyOutboxEntry(WeaviateOutboxEntry)}, which performs the actual Weaviate write with retry. A
+ * Weaviate outage or node death therefore no longer loses a write.
+ * <p>
+ * The {@code Async} method-name suffix is retained so the ~40 call sites stay byte-for-byte unchanged; the
+ * methods are now synchronous enqueues, so the suffix is a documented slight misnomer (a rename is a trivial
+ * follow-up). Enqueue only happens when this bean exists, i.e. when {@link WeaviateEnabled} is true, which
+ * preserves the previous feature gating.
  */
 @Lazy
 @Service
@@ -59,12 +81,32 @@ public class SearchableEntityWeaviateService {
     private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
 
+    /**
+     * Safety bound on the number of {@code deleteMany} batches a single bulk delete will issue. Each batch removes
+     * up to Weaviate's {@code QUERY_MAXIMUM_RESULTS} cap (10&#8239;000 by default), so this covers scopes far larger
+     * than any real course while still terminating a pathological non-converging loop.
+     */
+    private static final int MAX_DELETE_ITERATIONS = 1000;
+
     private final WeaviateService weaviateService;
+
+    private final WeaviateOutboxRepository outboxRepository;
+
+    private final SearchableEntityResolver resolver;
+
+    private final ObjectMapper objectMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     private final boolean useHybridSearch;
 
-    public SearchableEntityWeaviateService(WeaviateService weaviateService) {
+    public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, ObjectMapper objectMapper,
+            ApplicationEventPublisher eventPublisher) {
         this.weaviateService = weaviateService;
+        this.outboxRepository = outboxRepository;
+        this.resolver = resolver;
+        this.objectMapper = objectMapper;
+        this.eventPublisher = eventPublisher;
         this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
 
@@ -149,396 +191,375 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Asynchronously upserts exercise metadata into the unified collection.
+     * Enqueues an exercise upsert into the durable outbox.
      *
      * @param dto the extracted exercise data
      */
-    @Async
     public void upsertExerciseAsync(ExerciseSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.exerciseId() == null) {
             log.warn("Cannot upsert exercise without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
-            log.debug("Successfully upserted exercise {} '{}' in Weaviate", dto.exerciseId(), dto.exerciseTitle());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert exercise {} in Weaviate: {}", dto.exerciseId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
     }
 
     /**
-     * Asynchronously re-upserts Weaviate metadata for a list of exercises (e.g. from an exam refresh).
+     * Enqueues an upsert for each exercise in the list (e.g. from an exam refresh).
      *
      * @param dtos   the list of exercise DTOs to upsert
      * @param examId the exam ID (for logging)
      */
-    @Async
     public void updateExercisesAsync(List<ExerciseSearchableEntityDTO> dtos, long examId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
-        if (dtos == null) {
+        if (dtos == null || dtos.isEmpty()) {
             return;
         }
-        log.info("Updating {} exercises for exam {} in Weaviate", dtos.size(), examId);
-
-        int successCount = 0;
+        int enqueued = 0;
         for (ExerciseSearchableEntityDTO dto : dtos) {
-            try {
-                upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
-                successCount++;
+            if (dto == null || dto.exerciseId() == null) {
+                log.warn("Cannot upsert exercise without an ID for exam {}", examId);
+                continue;
             }
-            catch (Exception e) {
-                log.error("Failed to update exercise {} in exam {}: {}", dto.exerciseId(), examId, e.getMessage(), e);
-            }
+            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
+            enqueued++;
         }
-        log.info("Successfully updated {} out of {} exercises for exam {} in Weaviate", successCount, dtos.size(), examId);
+        if (enqueued > 0) {
+            log.debug("Enqueued upserts for {} exercises of exam {}", enqueued, examId);
+            signalEnqueued();
+        }
     }
 
     // ----- Lecture sync -----
 
     /**
-     * Asynchronously upserts lecture metadata into the unified collection.
+     * Enqueues a lecture upsert into the durable outbox.
      *
      * @param dto the extracted lecture data
      */
-    @Async
     public void upsertLectureAsync(LectureSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.lectureId() == null) {
             log.warn("Cannot upsert lecture without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), dto.toPropertyMap());
-            log.debug("Successfully upserted lecture {} '{}' in Weaviate", dto.lectureId(), dto.lectureTitle());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert lecture {} in Weaviate: {}", dto.lectureId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId());
     }
 
     // ----- LectureUnit sync -----
 
     /**
-     * Asynchronously upserts a lecture unit into the unified collection.
+     * Enqueues a lecture unit upsert into the durable outbox.
      *
      * @param dto the extracted lecture unit data
      */
-    @Async
     public void upsertLectureUnitAsync(LectureUnitSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.lectureUnitId() == null) {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), dto.toPropertyMap());
-            log.debug("Successfully upserted lecture unit {} '{}' in Weaviate", dto.lectureUnitId(), dto.unitName());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert lecture unit {} in Weaviate: {}", dto.lectureUnitId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId());
     }
 
     /**
-     * Asynchronously deletes every lecture unit row belonging to the given lecture. Invoked from
+     * Enqueues deletion of every lecture unit row belonging to the given lecture. Invoked from
      * {@code LectureService.delete} so the JPA cascade that removes lecture units doesn't leave
      * orphaned Weaviate rows.
      *
      * @param lectureId the parent lecture id
      */
-    @Async
     public void deleteAllLectureUnitsForLectureAsync(long lectureId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
-        try {
-            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
-                    Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId));
-            var result = collection.data.deleteMany(filter);
-            log.debug("Deleted {} lecture unit rows for lecture {}", result.successful(), lectureId);
-        }
-        catch (Exception e) {
-            log.error("Failed to delete lecture unit rows for lecture {}: {}", lectureId, e.getMessage(), e);
-        }
+        enqueueBulkDelete(WeaviateOutboxOperation.DELETE_LECTURE_UNITS_FOR_LECTURE, Map.of("lectureId", lectureId));
     }
 
     // ----- Exam sync -----
 
     /**
-     * Asynchronously upserts an exam into the unified collection.
+     * Enqueues an exam upsert into the durable outbox.
      *
      * @param dto the extracted exam data
      */
-    @Async
     public void upsertExamAsync(ExamSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.examId() == null) {
             log.warn("Cannot upsert exam without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), dto.toPropertyMap());
-            log.debug("Successfully upserted exam {} '{}' in Weaviate", dto.examId(), dto.examTitle());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert exam {} in Weaviate: {}", dto.examId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId());
     }
 
     // ----- FAQ sync -----
 
     /**
-     * Asynchronously upserts a FAQ into the unified collection.
+     * Enqueues a FAQ upsert into the durable outbox.
      *
      * @param dto the extracted FAQ data
      */
-    @Async
     public void upsertFaqAsync(FaqSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.faqId() == null) {
             log.warn("Cannot upsert faq without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), dto.toPropertyMap());
-            log.debug("Successfully upserted faq {} '{}' in Weaviate", dto.faqId(), dto.questionTitle());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert faq {} in Weaviate: {}", dto.faqId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId());
     }
 
     // ----- Channel sync -----
 
     /**
-     * Asynchronously upserts a channel into the unified collection.
+     * Enqueues a channel upsert into the durable outbox.
      *
      * @param dto the extracted channel data
      */
-    @Async
     public void upsertChannelAsync(ChannelSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.channelId() == null) {
             log.warn("Cannot upsert channel without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), dto.toPropertyMap());
-            log.debug("Successfully upserted channel {} '{}' in Weaviate", dto.channelId(), dto.name());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert channel {} in Weaviate: {}", dto.channelId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId());
     }
 
     // ----- Course sync -----
 
     /**
-     * Asynchronously upserts a course into the unified collection.
+     * Enqueues a course upsert into the durable outbox.
      *
      * @param dto the extracted course data
      */
-    @Async
     public void upsertCourseAsync(CourseSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.courseId() == null) {
             log.warn("Cannot upsert course without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.COURSE, dto.courseId(), dto.toPropertyMap());
-            log.debug("Successfully upserted course {} '{}' in Weaviate", dto.courseId(), dto.title());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert course {} in Weaviate: {}", dto.courseId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId());
     }
 
     // ----- Post sync -----
 
     /**
-     * Asynchronously upserts a post (message) into the unified collection.
+     * Enqueues a post (message) upsert into the durable outbox.
      *
      * @param dto the extracted post data
      */
-    @Async
     public void upsertPostAsync(PostSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.postId() == null) {
             log.warn("Cannot upsert post without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.POST, dto.postId(), dto.toPropertyMap());
-            log.debug("Successfully upserted post {} in Weaviate", dto.postId());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert post {} in Weaviate: {}", dto.postId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId());
     }
 
     // ----- Answer Post sync -----
 
     /**
-     * Asynchronously upserts an answer post (reply) into the unified collection.
+     * Enqueues an answer post (reply) upsert into the durable outbox.
      *
      * @param dto the extracted answer post data
      */
-    @Async
     public void upsertAnswerPostAsync(AnswerPostSearchableEntityDTO dto) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
         if (dto == null || dto.answerPostId() == null) {
             log.warn("Cannot upsert answer post without an ID");
             return;
         }
-        try {
-            upsertRow(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId(), dto.toPropertyMap());
-            log.debug("Successfully upserted answer post {} in Weaviate", dto.answerPostId());
-        }
-        catch (Exception e) {
-            log.error("Failed to upsert answer post {} in Weaviate: {}", dto.answerPostId(), e.getMessage(), e);
-        }
+        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId());
     }
 
     /**
-     * Asynchronously deletes every answer post row belonging to the given post. Invoked when
+     * Enqueues deletion of every answer post row belonging to the given post. Invoked when
      * a post is deleted so its cascade-deleted replies don't remain orphaned in Weaviate.
      *
      * @param postId the parent post id
      */
-    @Async
     public void deleteAllAnswerPostsForPostAsync(long postId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
-        try {
-            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
-                    Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId));
-            var result = collection.data.deleteMany(filter);
-            log.debug("Deleted {} answer post rows for post {}", result.successful(), postId);
-        }
-        catch (Exception e) {
-            log.error("Failed to delete answer post rows for post {}: {}", postId, e.getMessage(), e);
-        }
+        enqueueBulkDelete(WeaviateOutboxOperation.DELETE_ANSWER_POSTS_FOR_POST, Map.of("postId", postId));
     }
 
     /**
-     * Asynchronously deletes every post row belonging to the given channel. Invoked when
+     * Enqueues deletion of every post row belonging to the given channel. Invoked when
      * a channel is deleted or archived so posts don't remain searchable.
      *
      * @param channelId the channel id
      */
-    @Async
     public void deleteAllPostsForChannelAsync(long channelId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
-        try {
-            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
-                    Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
-            var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId));
-            var result = collection.data.deleteMany(filter);
-            log.debug("Deleted {} post/answer post rows for channel {}", result.successful(), channelId);
-        }
-        catch (Exception e) {
-            log.error("Failed to delete post/answer post rows for channel {}: {}", channelId, e.getMessage(), e);
-        }
+        enqueueBulkDelete(WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, Map.of("channelId", channelId));
     }
 
     /**
-     * Asynchronously deletes every post row belonging to the given course. Invoked when
+     * Enqueues deletion of every post row belonging to the given course. Invoked when
      * a course is reset so deleted posts don't remain searchable.
      *
      * @param courseId the course id
      */
-    @Async
     public void deleteAllPostsForCourseAsync(long courseId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
-        try {
-            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
-                    Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
-            var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
-            var result = collection.data.deleteMany(filter);
-            log.debug("Deleted {} post/answer post rows for course {}", result.successful(), courseId);
-        }
-        catch (Exception e) {
-            log.error("Failed to delete post/answer post rows for course {}: {}", courseId, e.getMessage(), e);
-        }
+        enqueueBulkDelete(WeaviateOutboxOperation.DELETE_POSTS_FOR_COURSE, Map.of("courseId", courseId));
     }
 
     // ----- Deletion (generic) -----
 
     /**
-     * Asynchronously deletes a specific entity row from the unified collection.
+     * Enqueues deletion of a specific entity row from the unified collection.
      *
      * @param type     the entity type (use constants from {@link SearchableEntitySchema.TypeValues})
      * @param entityId the entity id
      */
-    @Async
     public void deleteEntityAsync(String type, long entityId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
-        try {
-            deleteEntityInternal(type, entityId);
-            log.debug("Deleted {} row for entity id {}", type, entityId);
-        }
-        catch (Exception e) {
-            log.error("Failed to delete {} row for entity id {}: {}", type, entityId, e.getMessage(), e);
-        }
+        outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(type, entityId));
+        log.debug("Enqueued delete for {} {}", type, entityId);
+        signalEnqueued();
     }
 
     /**
-     * Asynchronously deletes every row belonging to the given course. Invoked from
+     * Enqueues deletion of every row belonging to the given course. Invoked from
      * {@code CourseService.delete} so deleted courses don't leave orphaned Weaviate rows.
      *
      * @param courseId the course id
      */
-    @Async
     public void deleteAllForCourseAsync(long courseId) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        enqueueBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, Map.of("courseId", courseId));
+    }
+
+    // ----- Enqueue helpers -----
+
+    /**
+     * Saves a single UPSERT outbox row without signalling the dispatcher. The row stores only the entity
+     * identity; the dispatcher re-derives the current property map from the database when it applies the row.
+     * Used both directly (single-entity upserts, followed by a signal) and in the exam-refresh loop.
+     */
+    private void saveUpsert(String type, Long entityId) {
+        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId));
+    }
+
+    private void enqueueUpsert(String type, Long entityId) {
+        saveUpsert(type, entityId);
+        log.debug("Enqueued upsert for {} {}", type, entityId);
+        signalEnqueued();
+    }
+
+    private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
+        outboxRepository.save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params)));
+        log.debug("Enqueued {} with params {}", operation, params);
+        signalEnqueued();
+    }
+
+    /**
+     * Publishes a marker event so the dispatcher (scheduling node only) can nudge a drain after the enqueue
+     * commits. In-process only: on any other node this has no listener and the scheduled tick drains instead.
+     */
+    private void signalEnqueued() {
+        eventPublisher.publishEvent(new WeaviateOutboxEnqueuedEvent());
+    }
+
+    /**
+     * Serializes a property/parameter map to canonical JSON (keys sorted) so equal maps hash equal. All map
+     * values are JSON-native (strings, numbers, booleans; dates are already RFC3339 strings), so the round
+     * trip through {@link #deserializeMap(String)} preserves the values the Weaviate write needs.
+     */
+    private String serializeMap(Map<String, Object> map) {
         try {
-            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var result = collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
-            log.debug("Deleted {} rows for course {}", result.successful(), courseId);
+            return objectMapper.writeValueAsString(new TreeMap<>(map));
         }
-        catch (Exception e) {
-            log.error("Failed to delete rows for course {}: {}", courseId, e.getMessage(), e);
+        catch (JsonProcessingException e) {
+            throw new WeaviateException("Failed to serialize Weaviate outbox data: " + e.getMessage(), e);
         }
     }
 
-    // ----- Internal helpers -----
+    /**
+     * SHA-256 of the canonical property-map JSON, recorded in the sync ledger so a later reconcile can detect drift.
+     */
+    private static String sha256Hex(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        }
+        catch (NoSuchAlgorithmException e) {
+            // SHA-256 is guaranteed to be available on every JVM.
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    // ----- Dispatch path (called by WeaviateOutboxDispatcher on the scheduling node) -----
+
+    /**
+     * Applies a claimed outbox entry to Weaviate and reports what it wrote so the dispatcher can refresh the sync
+     * ledger. Any failure propagates to the dispatcher, which records a retry with backoff.
+     * <p>
+     * An {@code UPSERT} does not replay the enqueue-time content: it re-derives the entity's current desired state
+     * from the database ({@link SearchableEntityResolver}). A present, indexable entity is upserted and its content
+     * hash returned; an entity that has since been deleted or hidden converges to a delete and returns
+     * {@link Optional#empty()}, so a stale or reordered upsert can never resurrect it. Delete operations always
+     * return empty.
+     *
+     * @param entry the claimed outbox entry
+     * @return the SHA-256 of the property map written for an upsert, or empty when the entry resolved to a delete
+     */
+    Optional<String> applyOutboxEntry(WeaviateOutboxEntry entry) {
+        return switch (entry.getOperation()) {
+            case UPSERT -> applyUpsert(entry);
+            case DELETE_ENTITY -> {
+                deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
+                yield Optional.empty();
+            }
+            case DELETE_POSTS_FOR_CHANNEL -> {
+                doDeletePostsForChannel(longParam(entry, "channelId"), entry.getId());
+                yield Optional.empty();
+            }
+            case DELETE_POSTS_FOR_COURSE -> {
+                doDeletePostsForCourse(longParam(entry, "courseId"), entry.getId());
+                yield Optional.empty();
+            }
+            case DELETE_ANSWER_POSTS_FOR_POST -> {
+                doDeleteAnswerPostsForPost(longParam(entry, "postId"), entry.getId());
+                yield Optional.empty();
+            }
+            case DELETE_ALL_FOR_COURSE -> {
+                doDeleteAllForCourse(longParam(entry, "courseId"), entry.getId());
+                yield Optional.empty();
+            }
+            case DELETE_LECTURE_UNITS_FOR_LECTURE -> {
+                doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"), entry.getId());
+                yield Optional.empty();
+            }
+        };
+    }
+
+    /**
+     * Re-derives the entity and either upserts its current property map (returning the written content hash) or,
+     * when it no longer exists or is no longer indexable, converges to a delete (returning {@link Optional#empty()}).
+     * <p>
+     * The written row is stamped with {@link SearchableEntitySchema.Properties#SOURCE_SEQ} equal to this entry's
+     * outbox id, so a later bulk delete can fence it (see {@link #writtenBefore}). The stamp is intentionally
+     * excluded from the content hash, which is computed over the re-derived property map only, so the sync ledger
+     * keeps detecting content drift rather than flapping on every write.
+     */
+    private Optional<String> applyUpsert(WeaviateOutboxEntry entry) {
+        Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
+        if (desired.isPresent()) {
+            Map<String, Object> properties = desired.get();
+            String contentHash = sha256Hex(serializeMap(properties));
+            Map<String, Object> propertiesToWrite = new HashMap<>(properties);
+            propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
+            upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);
+            return Optional.of(contentHash);
+        }
+        deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
+        return Optional.empty();
+    }
+
+    private Map<String, Object> deserializeMap(String json) {
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+            });
+        }
+        catch (JsonProcessingException e) {
+            throw new WeaviateException("Failed to deserialize Weaviate outbox data: " + e.getMessage(), e);
+        }
+    }
+
+    private long longParam(WeaviateOutboxEntry entry, String key) {
+        Object value = deserializeMap(entry.getParams()).get(key);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        throw new IllegalStateException("Missing or non-numeric parameter '" + key + "' in outbox entry " + entry.getId());
+    }
+
+    // ----- Internal Weaviate writes -----
 
     /**
      * Shared upsert implementation: uses a deterministic UUID derived from {@code (type, entity_id)}
@@ -546,10 +567,11 @@ public class SearchableEntityWeaviateService {
      * <br>
      * The deterministic UUID prevents duplicate rows (Weaviate enforces UUID uniqueness), but
      * the {@code exists()} + {@code insert()} sequence is subject to a TOCTOU race: two concurrent
-     * callers (e.g. {@code @Async} methods on different cluster nodes) can both observe
-     * {@code exists() == false} and then one {@code insert()} fails with "already exists".
-     * We handle this by catching {@link WeaviateApiException} and falling back to {@code replace()},
-     * consistent with the pattern used in {@code V0ToV1Migration} and {@code WeaviateMigrationService}.
+     * callers can both observe {@code exists() == false} and then one {@code insert()} fails with
+     * "already exists". We handle this by catching {@link WeaviateApiException} and falling back to
+     * {@code replace()}, consistent with the pattern used in {@code V0ToV1Migration} and
+     * {@code WeaviateMigrationService}. The deterministic UUID is also what makes re-applying an outbox
+     * row idempotent, so retries and duplicate enqueues converge to a single row.
      */
     private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
         try {
@@ -578,8 +600,80 @@ public class SearchableEntityWeaviateService {
     }
 
     private void deleteEntityInternal(String type, long entityId) {
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)),
+                type + " " + entityId);
+    }
+
+    private void doDeleteLectureUnitsForLecture(long lectureId, long deleteOutboxId) {
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
+                Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId), writtenBefore(deleteOutboxId)), "lecture unit rows for lecture " + lectureId);
+    }
+
+    private void doDeleteAnswerPostsForPost(long postId, long deleteOutboxId) {
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
+                Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId), writtenBefore(deleteOutboxId)), "answer post rows for post " + postId);
+    }
+
+    private void doDeletePostsForChannel(long channelId, long deleteOutboxId) {
+        var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
+        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId), writtenBefore(deleteOutboxId)),
+                "post/answer post rows for channel " + channelId);
+    }
+
+    private void doDeletePostsForCourse(long courseId, long deleteOutboxId) {
+        var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
+        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), writtenBefore(deleteOutboxId)),
+                "post/answer post rows for course " + courseId);
+    }
+
+    private void doDeleteAllForCourse(long courseId, long deleteOutboxId) {
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), writtenBefore(deleteOutboxId)), "rows for course " + courseId);
+    }
+
+    /**
+     * Fence for bulk deletes. Matches only rows whose {@link SearchableEntitySchema.Properties#SOURCE_SEQ} is
+     * strictly less than the bulk delete's own outbox id, or that carry no {@code source_seq} at all (rows written
+     * before this fence existed or seeded outside the outbox, which predate every delete).
+     * <p>
+     * Because a per-entity upsert enqueued after this delete has a larger outbox id, its row's {@code source_seq}
+     * is larger and the fence spares it. This closes the last ordering hazard the per-entity collapse cannot: a
+     * bulk delete deferred by backoff waking up after a newer in-scope upsert already succeeded and erasing it.
+     *
+     * @param deleteOutboxId the outbox id of the bulk delete entry being applied
+     * @return a filter selecting only rows written strictly before this delete
+     */
+    private static Filter writtenBefore(long deleteOutboxId) {
+        return Filter.or(Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).lt(deleteOutboxId), Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).isNull());
+    }
+
+    /**
+     * Runs a {@code deleteMany} for the whole scope and treats a partial failure as a failure.
+     * <p>
+     * Weaviate caps a single {@code deleteMany} at {@code QUERY_MAXIMUM_RESULTS} (10&#8239;000 by default), so one
+     * call only removes the first batch of a larger scope and reports {@code failed == 0} for it. A busy course or
+     * channel can hold far more than that, so this loops until a call matches nothing, draining the scope fully.
+     * {@code deleteMany} is idempotent (it deletes by filter), so re-matching already-deleted rows across
+     * iterations is safe, and a partial failure ({@code failed > 0}) throws so the dispatcher keeps the outbox row
+     * and retries the whole drain with backoff rather than leaving orphaned searchable rows.
+     */
+    private void deleteManyOrThrow(Filter filter, String description) {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        collection.data.deleteMany(
-                Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)));
+        long totalDeleted = 0;
+        for (int iteration = 0; iteration < MAX_DELETE_ITERATIONS; iteration++) {
+            var result = collection.data.deleteMany(filter);
+            if (result.failed() > 0) {
+                throw new WeaviateException("Failed to delete " + result.failed() + " of " + result.matches() + " " + description + " in Weaviate");
+            }
+            totalDeleted += result.successful();
+            if (result.matches() == 0) {
+                log.debug("Deleted {} {}", totalDeleted, description);
+                return;
+            }
+        }
+        // The dispatcher is the only writer, so nothing adds rows during the drain; not converging within the cap
+        // means something is wrong (e.g. rows that keep matching but never delete). Fail so the row is retried.
+        throw new WeaviateException("Deletion of " + description + " did not converge within " + MAX_DELETE_ITERATIONS + " batches in Weaviate");
     }
 }
