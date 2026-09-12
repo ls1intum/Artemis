@@ -452,9 +452,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exerciseRepository.save(exercise);
 
         Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
-        Map<String, Object> entityJson = objectMapper.convertValue(exerciseRepository.findByIdElseThrow(exercise.getId()), new TypeReference<>() {
+        // The entity side has to be loaded and filtered exactly as the endpoint did, otherwise a collection the query
+        // never fetched shows up as a difference that says nothing about the migration.
+        Exercise reloaded = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exercise.getId());
+        reloaded.setGradingCriteria(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId()));
+        Map<String, Object> entityJson = objectMapper.convertValue(reloaded, new TypeReference<>() {
         });
 
+        assertThat(response.keySet()).as("Top-level key set the entity used to serialize").containsExactlyInAnyOrderElementsOf(entityJson.keySet());
         assertThat(PROGRAMMING_SCALARS).allSatisfy(key -> {
             assertThat(entityJson.get(key)).as(key + " is serialized by the entity").isNotNull();
             assertThat(response.get(key)).as(key + " on the wire").isEqualTo(entityJson.get(key));

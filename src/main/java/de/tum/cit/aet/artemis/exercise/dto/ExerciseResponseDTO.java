@@ -72,6 +72,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * @param allowComplaintsForAutomaticAssessments     whether complaints about automatic assessments are allowed
  * @param presentationScoreEnabled                   whether the presentation score is enabled
  * @param secondCorrectionEnabled                    whether the second correction round is enabled
+ * @param studentAssignedTeamIdComputed              whether the requesting student's team id was computed; a transient flag the entity always serialized
+ * @param gradingInstructionFeedbackUsed             whether grading instruction feedback was used; a transient flag the entity always serialized
  * @param categories                                 the serialized exercise categories the client parses into chips
  * @param teamAssignmentConfig                       the team size configuration, for team exercises
  * @param course                                     the course of a course exercise
@@ -118,8 +120,9 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
         @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable Double maxPoints, @Nullable Double bonusPoints,
         @Nullable AssessmentType assessmentType, @Nullable DifficultyLevel difficulty, @Nullable ExerciseMode mode, boolean teamMode, boolean visibleToStudents,
         @Nullable IncludedInOverallScore includedInOverallScore, boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean presentationScoreEnabled,
-        boolean secondCorrectionEnabled, @Nullable Set<String> categories, @Nullable TeamAssignmentConfigDTO teamAssignmentConfig, @Nullable ExerciseCourseDTO course,
-        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable List<GradingCriterionDTO> gradingCriteria,
+        boolean secondCorrectionEnabled, boolean studentAssignedTeamIdComputed, boolean gradingInstructionFeedbackUsed, @Nullable Set<String> categories,
+        @Nullable TeamAssignmentConfigDTO teamAssignmentConfig, @Nullable ExerciseCourseDTO course, @Nullable ExerciseGroupContextDTO exerciseGroup,
+        @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable List<GradingCriterionDTO> gradingCriteria,
         @Nullable List<ExampleSubmissionDTO> exampleSubmissions, @Nullable List<ExerciseTutorParticipationDTO> tutorParticipations, @Nullable ZonedDateTime latestExamEndDate,
         @Nullable ZonedDateTime assessmentPossibleFrom, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable Boolean allowOnlineIde,
         @Nullable Boolean staticCodeAnalysisEnabled, @Nullable Integer maxStaticCodeAnalysisPenalty, @Nullable Boolean showTestNamesToStudents,
@@ -216,7 +219,8 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
                 exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
                 exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getAssessmentType(),
                 exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), exercise.isVisibleToStudents(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), categories(exercise),
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.isStudentAssignedTeamIdComputed(), exercise.isGradingInstructionFeedbackUsed(), categories(exercise),
                 TeamAssignmentConfigDTO.of(initialized(exercise.getTeamAssignmentConfig())), ExerciseCourseDTO.of(courseOfCourseExercise(exercise)),
                 ExerciseGroupContextDTO.of(initialized(exercise.getExerciseGroup())), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
                 gradingCriteria(exercise), exampleSubmissions(exercise), tutorParticipations(exercise), exercise.getLatestExamEndDate(), exercise.getAssessmentPossibleFrom(),
