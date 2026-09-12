@@ -880,7 +880,14 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should not call the grading section invalid just because the field is absent', async () => {
             await renderIncludedExercise();
-            expect(gradingSectionIsValid()).toBe(true);
+            // Started from invalid on purpose: asserting "valid" against a baseline that is already valid passes
+            // whether or not anything recomputed when the field went.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(gradingSectionIsValid()).toBe(false);
 
             await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
 

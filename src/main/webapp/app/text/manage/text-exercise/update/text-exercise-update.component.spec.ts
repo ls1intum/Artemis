@@ -790,7 +790,6 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
             fixture.detectChanges();
-            component.calculateFormSectionStatus();
         }
 
         beforeEach(async () => {
@@ -815,13 +814,19 @@ describe('TextExercise Management Update Component', () => {
         });
 
         it('should not call the grading section invalid just because the field is absent', async () => {
-            expect(bonusInput()).not.toBeNull();
-            // Guarded, or the assertion after the switch would pass without the field having been the reason.
-            expect(gradingSectionIsValid()).toBe(true);
+            // Started from invalid on purpose. Asserting "valid" against a baseline that is already valid passes
+            // whether or not anything recomputed, which is exactly how this test first proved nothing.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(gradingSectionIsValid()).toBe(false);
 
             await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
 
-            // The field is gone because the score does not include bonus points, which is not a fault to report.
+            // The field is gone because the score does not include bonus points, which is not a fault to report -
+            // and the verdict has to be taken again to say so, rather than left at what it said a moment ago.
             expect(bonusInput()).toBeNull();
             expect(gradingSectionIsValid()).toBe(true);
         });
