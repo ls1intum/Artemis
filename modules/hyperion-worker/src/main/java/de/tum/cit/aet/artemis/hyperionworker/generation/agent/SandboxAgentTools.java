@@ -476,6 +476,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (SandboxPathPolicy.mutatesManagedBuildInfrastructure(command)) {
             return "exit=2\nDo not modify tests-repository build/harness files such as tests/build.gradle. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
         }
+        // Refused rather than run: one javap dump of the Ares security manager is enough to start a run-long bytecode study that never writes a test.
+        if (SandboxPathPolicy.inspectsDependencyArtifacts(command)) {
+            return SandboxPathPolicy.dependencyArtifactsError();
+        }
         // Even a read-only inspection invalidates the cached passing check, because a shell command can mutate the workspace outside the file tools' guardrails.
         markDirty();
         int sequence = bashSequence++;

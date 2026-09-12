@@ -538,6 +538,26 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void bash_dependencyCacheInspection_isRefusedWithTheHarnessContractWithoutTouchingTheSandbox() {
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
+        String out = new SandboxAgentTools(sandbox, "s").bash("cd /tmp/aresjar && javap -c de/tum/in/test/api/security/ArtemisSecurityManager.class | head -60");
+        assertThat(out).startsWith("exit=2\n").contains("not inspectable").contains("ReflectionTestUtils").contains("reference/style/tests.md");
+        assertThat(sandbox.lastScript()).isNull();
+    }
+
+    @Test
+    void inspectsDependencyArtifacts_flagsTheCacheDisassemblerAndJarsButNotWorkspaceInspection() {
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("find /root/.gradle -name 'artemis-java-test-sandbox*'")).isTrue();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("ls ~/.m2/repository/de/tum")).isTrue();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("cd /tmp && unzip -o -q /some/where/artemis-java-test-sandbox-1.15.0.jar")).isTrue();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("JAVAP -p Foo.class")).isTrue();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("ls -la /workspace/tests; cat tests/settings.gradle tests/build.gradle")).isFalse();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("ls solution/.gradle")).isTrue();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("grep -rn 'jar' tests/build.gradle")).isFalse();
+        assertThat(SandboxPathPolicy.inspectsDependencyArtifacts("sh verify.sh solution")).isFalse();
+    }
+
+    @Test
     void bash_posixTestCommand_isNotMistakenForAMangledArray() {
         // A POSIX test ("[ -f x ]", space after the bracket) must run normally; only the no-space array render is rejected.
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));

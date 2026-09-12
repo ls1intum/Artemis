@@ -543,7 +543,8 @@ public class AgentSystemPromptService {
             provide them. Also annotate every test class with @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class),
             so Gradle reports plain method names instead of names ending in (). The [task] binding uses the test METHOD name exactly as reported. Do NOT add @DisplayName because it can break binding. Use plain JUnit assertions and
             do not modify tests/build.gradle, or the test harness.
-            If compilation fails, inspect the first compiler diagnostic and the named source line, package, and imports before investigating dependency JARs.
+            Never read the Gradle dependency cache or disassemble dependency JARs; bash refuses both, and the harness API above is complete.
+            If compilation fails, inspect the first compiler diagnostic and the named source line, package, and imports.
             A missing symbol in generated source often needs an import or a qualified name, not another dependency. Annotation argument types need imports too.
             Repair the generated source, then verify; do not repeat unchanged verification or modify the immutable harness to explain away a source error.
 
