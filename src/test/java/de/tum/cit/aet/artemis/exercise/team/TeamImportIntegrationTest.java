@@ -339,8 +339,11 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
      */
     private void assertCorrectnessOfImport(List<Team> expectedTeamsAfterImport, List<TeamResponseDTO> actualTeamsAfterImport) {
         List<Team> destinationTeamsInDatabase = teamRepo.findAllByExerciseId(destinationExercise.getId());
-        assertThat(actualTeamsAfterImport.stream().map(TeamResponseDTO::id).toList()).as("Imported teams were persisted into destination exercise.")
-                .containsExactlyInAnyOrderElementsOf(destinationTeamsInDatabase.stream().map(Team::getId).toList());
+        // Keyed by id rather than compared as two sets, so that a response which carries the right ids and the right
+        // team data but pairs them up wrongly fails here.
+        assertThat(actualTeamsAfterImport.stream().collect(Collectors.toMap(TeamResponseDTO::id, TeamImportIntegrationTest::signatureOf)))
+                .as("Imported teams were persisted into destination exercise, each response id carrying that team's data.")
+                .isEqualTo(destinationTeamsInDatabase.stream().collect(Collectors.toMap(Team::getId, TeamImportIntegrationTest::signatureOf)));
 
         assertThat(actualTeamsAfterImport.stream().map(TeamImportIntegrationTest::signatureOf).toList()).as("Teams were correctly imported.")
                 .containsExactlyInAnyOrderElementsOf(expectedTeamsAfterImport.stream().map(TeamImportIntegrationTest::signatureOf).toList());
