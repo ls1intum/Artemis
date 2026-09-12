@@ -348,11 +348,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     showAssessment() {
         if (this.modelChanged()) {
-            this.updateExampleModelingSubmission().subscribe(() => {
-                if (this.feedbackChanged) {
-                    this.saveExampleAssessment();
-                    this.feedbackChanged = false;
-                }
+            this.updateExampleModelingSubmission().subscribe({
+                next: () => {
+                    if (this.feedbackChanged) {
+                        this.saveExampleAssessment();
+                        this.feedbackChanged = false;
+                    }
+                },
+                // the pipe already reported the failure through onError, this only keeps it from surfacing as an unhandled rejection
+                error: () => {},
             });
         }
         this.assessmentMode.set(true);
