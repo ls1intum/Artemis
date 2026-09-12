@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -37,7 +38,9 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
@@ -96,6 +99,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Autowired
     private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     static final int NUMBER_OF_TUTORS = 1;
 
@@ -280,6 +286,36 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 }
             }
         }
+    }
+
+    /**
+     * The management header reads {@code categories}, the example assessment editors read {@code gradingCriteria} with
+     * their structured instructions, and the team dialog reads {@code teamAssignmentConfig}. All three reach the DTO
+     * through initialization guards over a fetch-joined query, so pin them for a tutor here.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExercise_asTutorCarriesCategoriesGradingCriteriaAndTeamAssignmentConfig() throws Exception {
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        exercise.setCategories(new HashSet<>(Set.of("homework", "bonus")));
+        exercise.setMode(ExerciseMode.TEAM);
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(exercise);
+        teamAssignmentConfig.setMinTeamSize(2);
+        teamAssignmentConfig.setMaxTeamSize(4);
+        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        exerciseRepository.save(exercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
+
+        ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
+
+        assertThat(response.categories()).as("Categories the management header renders").containsExactlyInAnyOrder("homework", "bonus");
+        assertThat(response.teamAssignmentConfig()).as("Team assignment config the team dialog reads").isNotNull();
+        assertThat(response.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
+        assertThat(response.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        assertThat(response.gradingCriteria()).as("Grading criteria the example assessment editors read").isNotEmpty();
+        assertThat(response.gradingCriteria()).allSatisfy(criterion -> assertThat(criterion.structuredGradingInstructions()).isNotEmpty());
     }
 
     private <T> void assertEqualOrNull(T actual, T expected, String entityName) {

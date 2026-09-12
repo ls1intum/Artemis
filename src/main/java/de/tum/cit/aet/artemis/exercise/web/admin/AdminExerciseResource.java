@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -46,8 +45,7 @@ public class AdminExerciseResource {
     @GetMapping("exercises/upcoming")
     public ResponseEntity<List<UpcomingExerciseDTO>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
-        List<UpcomingExerciseDTO> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate().stream()
-                .sorted(Comparator.comparing(exercise -> exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()))).map(UpcomingExerciseDTO::of).toList();
+        List<UpcomingExerciseDTO> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate().stream().map(UpcomingExerciseDTO::of).toList();
         return ResponseEntity.ok(upcomingExercises);
     }
 }

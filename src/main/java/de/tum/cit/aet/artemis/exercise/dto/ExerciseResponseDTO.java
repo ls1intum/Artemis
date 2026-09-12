@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -132,9 +133,7 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
      * @param exercise the exercise to map
      * @return the exercise as the management, assessment and example solution pages read it
      */
-    public static ExerciseResponseDTO of(Exercise exercise) {
-        Objects.requireNonNull(exercise, "The exercise must be set");
-
+    public static ExerciseResponseDTO of(@NonNull Exercise exercise) {
         Boolean allowOnlineEditor = null;
         Boolean allowOfflineIde = null;
         Boolean allowOnlineIde = null;

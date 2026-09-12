@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -76,6 +77,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     private ModelingExercise modelingExercise;
 
@@ -207,6 +211,34 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         assertThat(updated.getId()).isEqualTo(created.getId());
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updated.getSubmission().getId(), validModel);
+    }
+
+    /**
+     * The same echo for an exam exercise. There the save's authorization check resolves the course through the echoed
+     * {@code exerciseGroup.exam.course} instead of {@code exercise.course}, so the exam context the response now
+     * carries has to deserialize back into the exercise group and exam graph.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleTextSubmission_acceptsEchoedExamExerciseResponse() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", examTextExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + examTextExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+
+        String exerciseJson = request.get("/api/exercise/exercises/" + examTextExercise.getId(), HttpStatus.OK, String.class);
+
+        JsonMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseJson));
+        body.set("submission", mapper.valueToTree(created.getSubmission()));
+
+        ExampleSubmission updated = request.putWithResponseBody("/api/assessment/exercises/" + examTextExercise.getId() + "/example-submissions", body, ExampleSubmission.class,
+                HttpStatus.OK);
+
+        assertThat(updated.getId()).isEqualTo(created.getId());
     }
 
     /**
