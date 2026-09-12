@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -219,6 +220,18 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The cast is safe: this class only works with programming exercises. The record is the same one the programming
+     * exercise endpoints return, so an archive stays readable by the import from file and by the sharing import, which
+     * both bind it to {@link de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO}.
+     */
+    @Override
+    protected Record exerciseDetailsForExport(Exercise exercise) {
+        return ProgrammingExerciseResponseDTO.of((ProgrammingExercise) exercise);
     }
 
     /**

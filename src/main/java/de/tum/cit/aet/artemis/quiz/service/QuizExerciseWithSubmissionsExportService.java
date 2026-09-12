@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
 /**
@@ -62,7 +63,9 @@ public class QuizExerciseWithSubmissionsExportService {
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(null);
         try {
-            FileUtil.writeObjectToJsonFile(quizExercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
+            // the same record the quiz endpoints return, so the file keeps the questions with their solutions but no entity graph
+            FileUtil.writeObjectToJsonFile(QuizExerciseDetailsDTO.of(quizExercise), objectMapper,
+                    exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
         }
         // Jackson 3 exceptions are unchecked and no longer extend IOException, so a serialization failure would
         // otherwise unwind past here and drop the whole exercise from the archive instead of adding one line

@@ -13,9 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -39,6 +42,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.Reposit
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -593,6 +597,42 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
                 .as("the problem statement is part of the material").isEqualTo("Implement the sorting strategies.");
         assertThat(ZipTestUtil.readEntryAsString(zipContent, "Exercise-Details-" + programmingExercise.getTitle() + ".json")).as("the exercise details are part of the material")
                 .isNotNull().contains(programmingExercise.getTitle());
+    }
+
+    /**
+     * The exercise details file is the create form of the import from file and of the sharing import: the client parses
+     * it and posts it back, so every field those imports bind has to survive the export.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesDetailsTheImportBindsBack() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setProblemStatement("Implement the sorting strategies.");
+        programmingExercise.setCategories(new HashSet<>(Set.of("{\"category\":\"homework\"}")));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        // the export endpoint hands the service an exercise loaded with its configurations, so the test does the same
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        // the client compares the discriminator with the exercise type it imports, and refuses the archive without it
+        assertThat(details).as("the details keep the exercise type discriminator").contains("\"type\":\"programming\"");
+        assertThat(details).as("no student data and no entity back references are written").doesNotContain("studentParticipations").doesNotContain("\"exercises\"");
+
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+        assertThat(importRequest.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(importRequest.shortName()).isEqualTo(programmingExercise.getShortName());
+        assertThat(importRequest.problemStatement()).isEqualTo("Implement the sorting strategies.");
+        assertThat(importRequest.categories()).isEqualTo(programmingExercise.getCategories());
+        assertThat(importRequest.maxPoints()).isEqualTo(programmingExercise.getMaxPoints());
+        assertThat(importRequest.programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(importRequest.projectType()).isEqualTo(programmingExercise.getProjectType());
+        assertThat(importRequest.packageName()).isEqualTo(programmingExercise.getPackageName());
+        assertThat(importRequest.allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
+        assertThat(importRequest.buildConfig()).as("the build configuration is part of the create form").isNotNull();
+        assertThat(importRequest.buildConfig().buildScript()).isEqualTo(exerciseToExport.getBuildConfig().getBuildScript());
     }
 
     @Test
