@@ -154,7 +154,7 @@ export class HolidayMonthGridComponent {
         const holidays = this.holidays();
         const sessionCountsByDay = this.sessionCountsByDay();
         const todayKey = this.today().format(DAY_KEY_FORMAT);
-        const preview = this.previewRange();
+        const preview = this.pendingRange();
 
         const weeks: HolidayCalendarWeek[] = [];
         let weekStart = month.startOf('month').startOf('isoWeek');
@@ -302,9 +302,6 @@ export class HolidayMonthGridComponent {
     private readonly dragAnchor = signal<dayjs.Dayjs | undefined>(undefined);
     private readonly dragCurrent = signal<dayjs.Dayjs | undefined>(undefined);
 
-    /** The day the pointer is resting on, so a single day can be previewed without dragging anything. */
-    private readonly hoveredDay = signal<dayjs.Dayjs | undefined>(undefined);
-
     protected readonly isDragging = computed(() => this.dragAnchor() !== undefined);
 
     /** The run the pointer currently covers, ordered, so dragging backwards reads the same as dragging forwards. */
@@ -315,20 +312,6 @@ export class HolidayMonthGridComponent {
             return undefined;
         }
         return anchor.isAfter(current) ? { from: current, to: anchor } : { from: anchor, to: current };
-    });
-
-    /**
-     * The run a holiday would cover if the reader acted now: the days being dragged across, or the one under the
-     * pointer. Drawn as a bar rather than as a tint on the cells, so what is previewed has the shape of the thing it
-     * would become.
-     */
-    private readonly previewRange = computed<{ from: dayjs.Dayjs; to: dayjs.Dayjs } | undefined>(() => {
-        const dragged = this.pendingRange();
-        if (dragged) {
-            return dragged;
-        }
-        const hovered = this.hoveredDay();
-        return hovered ? { from: hovered, to: hovered } : undefined;
     });
 
     /** Days the drag would take, so the reader sees the span before releasing rather than after. */
@@ -361,19 +344,9 @@ export class HolidayMonthGridComponent {
     }
 
     protected onDayPointerEnter(day: HolidayCalendarDay): void {
-        if (!day.inDisplayedMonth) {
-            return;
-        }
-        if (this.isDragging()) {
+        if (this.isDragging() && day.inDisplayedMonth) {
             this.dragCurrent.set(day.date);
-            return;
         }
-        this.hoveredDay.set(day.date);
-    }
-
-    /** Clears the hover at the edge of the grid, which a day's own leave cannot do when the pointer exits between cells. */
-    protected onGridPointerLeave(): void {
-        this.hoveredDay.set(undefined);
     }
 
     /**
@@ -388,8 +361,6 @@ export class HolidayMonthGridComponent {
         const range = this.pendingRange();
         this.dragAnchor.set(undefined);
         this.dragCurrent.set(undefined);
-        // The dialog opens over the calendar, so the pointer never leaves a cell the way it normally would.
-        this.hoveredDay.set(undefined);
         if (range && !range.from.isSame(range.to, 'day')) {
             this.rangeSelected.emit({ start: range.from, end: range.to });
         }

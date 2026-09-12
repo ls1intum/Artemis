@@ -31,7 +31,7 @@
     </div>
 </div>
 
-<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()" (pointerleave)="onGridPointerLeave()">
+<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()">
     <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
         @for (weekdayKey of weekdayKeys; track weekdayKey) {
             <div class="px-3 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>

@@ -23,14 +23,10 @@
 }
 
 /*
- * The holiday that is not there yet. Same frame as a real bar so the shape is recognisable, but paler and dashed: it
- * has to read as something the reader is about to make rather than something already saved, at a glance and without
- * relying on the colour difference alone. Transparent to the pointer, so the day underneath still takes the drag.
+ * The holiday a drag would make, drawn exactly as the saved one will be: what is on screen while choosing the days is
+ * then the same thing that stays there afterwards, rather than a paler stand-in that changes on release. Transparent
+ * to the pointer, so the day underneath still takes the drag running over it.
  */
 .holiday-bar-preview {
-    border-left-style: dashed;
-    border-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 55%, transparent);
-    background-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 6%, transparent);
-    color: color-mix(in srgb, var(--tumaet-ui-state-danger-foreground) 70%, transparent);
     pointer-events: none;
 }

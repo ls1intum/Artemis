@@ -177,10 +177,17 @@ describe('HolidayMonthGridComponent', () => {
             }));
         }
 
-        it('should show one day under the pointer, so hovering says where a holiday would go', () => {
-            expect(previews()).toHaveLength(0);
-
+        it('should show nothing for a pointer merely passing over the calendar', () => {
+            // Previewing every day the pointer crossed put a holiday under the cursor constantly; only choosing days
+            // shows one now.
             hoverOver('2025-12-10');
+
+            expect(previews()).toHaveLength(0);
+        });
+
+        it('should show the day a press starts on, before it has been dragged anywhere', () => {
+            dayButton('2025-12-10').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
 
             expect(previews()).toEqual([{ span: 1, left: expect.any(String) }]);
         });
@@ -205,18 +212,21 @@ describe('HolidayMonthGridComponent', () => {
         it('should sit beside a holiday on the same day rather than on top of it', () => {
             setHolidays(period(1, '2025-12-09T23:00:00', '2025-12-10T22:59:00'));
 
-            hoverOver('2025-12-10');
+            dayButton('2025-12-10').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
 
             const bar = query('holiday-calendar-event').parent!.nativeElement as HTMLElement;
             const preview = query('holiday-calendar-preview').nativeElement as HTMLElement;
             expect(preview.style.top).not.toBe(bar.style.top);
         });
 
-        it('should forget the hover when the pointer leaves the grid', () => {
-            hoverOver('2025-12-10');
+        it('should take the preview away once the drag is released', () => {
+            dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-24');
             expect(previews()).toHaveLength(1);
 
-            query('holiday-calendar-grid').nativeElement.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
+            window.dispatchEvent(new PointerEvent('pointerup'));
             fixture.detectChanges();
 
             expect(previews()).toHaveLength(0);
@@ -224,7 +234,8 @@ describe('HolidayMonthGridComponent', () => {
 
         it('should not preview a day of a neighbouring month, which cannot be chosen anyway', () => {
             // December 2025 starts on a Monday, so the grid's last row spills into January.
-            hoverOver('2026-01-01');
+            dayButton('2026-01-01').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
 
             expect(previews()).toHaveLength(0);
         });
