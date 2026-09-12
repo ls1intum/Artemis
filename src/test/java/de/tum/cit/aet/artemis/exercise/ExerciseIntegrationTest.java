@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -27,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -55,6 +60,7 @@ import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -72,6 +78,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Autowired
     private ExamTestRepository examRepository;
+
+    @Autowired
+    private JsonMapper objectMapper;
 
     @Autowired
     private ParticipationTestRepository participationRepository;
@@ -316,6 +325,122 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         assertThat(response.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
         assertThat(response.gradingCriteria()).as("Grading criteria the example assessment editors read").isNotEmpty();
         assertThat(response.gradingCriteria()).allSatisfy(criterion -> assertThat(criterion.structuredGradingInstructions()).isNotEmpty());
+    }
+
+    /**
+     * The exercise-by-id route is reachable with a SCORPIO tool token from a client that cannot be audited in this
+     * tree, and used to hand out the {@code Course} entity. The key set of the nested course therefore has to stay the
+     * key set the entity serialized. It is compared against the entity itself rather than against a hand-written list,
+     * because a list is exactly what silently falls behind when {@code Course} gains a column.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExerciseCarriesTheCourseKeySetTheEntityUsedToSerialize() throws Exception {
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        // Every nullable scalar needs a value: NON_EMPTY hides an unset one on both sides, which would let a dropped
+        // component pass unnoticed.
+        course.setDescription("A course description");
+        course.setSemester("WS24/25");
+        course.setLanguage(Language.ENGLISH);
+        course.setDefaultProgrammingLanguage(ProgrammingLanguage.JAVA);
+        course.setColor("#691b0b");
+        course.setCourseIcon("/api/core/files/course/icons/1/icon.png");
+        course.setMaxPoints(42);
+        course.setPresentationScore(3);
+        course.setTimeZone("Europe/Berlin");
+        course.setEnrollmentEnabled(true);
+        course.setEnrollmentStartDate(ZonedDateTime.now().minusMonths(3));
+        course.setEnrollmentEndDate(ZonedDateTime.now().minusMonths(1));
+        course.setUnenrollmentEndDate(ZonedDateTime.now().plusMonths(1));
+        course.setEnrollmentConfirmationMessage("Welcome");
+        course.setCourseInformationSharingMessagingCodeOfConduct("Be nice");
+        course.setCourseArchivePath("Course_archive.zip");
+        course.setOnboardingDone(true);
+        course.setLearningPathsEnabled(true);
+        courseRepository.save(course);
+
+        Map<String, Object> courseNode = mapOf(getJsonMap("/api/exercise/exercises/" + exercise.getId()), "course");
+
+        assertThat(courseNode.keySet()).containsExactlyInAnyOrderElementsOf(serializedKeysOf(courseRepository.findByIdElseThrow(course.getId())));
+        assertThat(courseNode.get("description")).isEqualTo("A course description");
+        assertThat(courseNode.get("semester")).isEqualTo("WS24/25");
+        assertThat(courseNode.get("language")).isEqualTo(Language.ENGLISH.name());
+        assertThat(courseNode.get("defaultProgrammingLanguage")).isEqualTo(ProgrammingLanguage.JAVA.name());
+        assertThat(courseNode.get("maxPoints")).isEqualTo(42);
+        assertThat(courseNode.get("courseArchivePath")).isEqualTo("Course_archive.zip");
+        assertThat(courseNode.get("learningPathsEnabled")).isEqualTo(true);
+    }
+
+    /**
+     * The same route hands an exam exercise its {@code ExerciseGroup} with the {@code Exam}. Both key sets are pinned
+     * against the entities for the same reason.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamExerciseCarriesTheExamKeySetTheEntityUsedToSerialize() throws Exception {
+        TextExercise exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam exam = exercise.getExerciseGroup().getExam();
+        exam.setExamWithAttendanceCheck(true);
+        exam.setNumberOfExercisesInExam(3);
+        exam.setExamMaxPoints(90);
+        exam.setGracePeriod(120);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setStartText("Good luck");
+        exam.setEndText("Well done");
+        exam.setConfirmationStartText("I am ready");
+        exam.setConfirmationEndText("I am done");
+        exam.setExaminer("Prof. Krusche");
+        exam.setModuleNumber("IN0001");
+        exam.setCourseName("Introduction to Software Engineering");
+        exam.setExamArchivePath("Exam_archive.zip");
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        exam.setExamStudentReviewStart(ZonedDateTime.now().plusDays(2));
+        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusDays(3));
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(4));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(5));
+        exam = examRepository.save(exam);
+
+        Map<String, Object> groupNode = mapOf(getJsonMap("/api/exercise/exercises/" + exercise.getId()), "exerciseGroup");
+
+        assertThat(groupNode.keySet()).containsExactlyInAnyOrder("id", "title", "isMandatory", "exam");
+        Map<String, Object> examNode = mapOf(groupNode, "exam");
+        assertThat(examNode.keySet()).containsExactlyInAnyOrderElementsOf(serializedKeysOf(examRepository.findByIdElseThrow(exam.getId())));
+        assertThat(examNode.get("examWithAttendanceCheck")).isEqualTo(true);
+        assertThat(examNode.get("numberOfExercisesInExam")).isEqualTo(3);
+        assertThat(examNode.get("examMaxPoints")).isEqualTo(90);
+        assertThat(examNode.get("examiner")).isEqualTo("Prof. Krusche");
+        assertThat(examNode.get("examArchivePath")).isEqualTo("Exam_archive.zip");
+    }
+
+    /**
+     * Reads a response as a plain map, so a key-set assertion sees exactly the keys on the wire.
+     *
+     * @param url the url to request
+     * @return the parsed response
+     */
+    private Map<String, Object> getJsonMap(String url) throws Exception {
+        return objectMapper.readValue(request.get(url, HttpStatus.OK, String.class), new TypeReference<>() {
+        });
+    }
+
+    /**
+     * The keys an entity puts on the wire, read off a detached instance the way the endpoint serialized it: its lazy
+     * collections stay uninitialized and NON_EMPTY drops them, exactly as they were dropped before the migration.
+     *
+     * @param entity the entity to serialize
+     * @return its top-level key set
+     */
+    private Set<String> serializedKeysOf(Object entity) {
+        Map<String, Object> json = objectMapper.convertValue(entity, new TypeReference<>() {
+        });
+        return json.keySet();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> mapOf(Map<String, Object> parent, String key) {
+        assertThat(parent).containsKey(key);
+        return (Map<String, Object>) parent.get(key);
     }
 
     private <T> void assertEqualOrNull(T actual, T expected, String entityName) {
