@@ -624,6 +624,90 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getComplaintsByCourseId_tutor_allComplaintsForTutor_exposesAssessorKeyAndLabelForMultipleForeignTutors() throws Exception {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
+        // Names must not embed logins — otherwise "label must not contain login" is a false failure.
+        instructor.setFirstName("Alice");
+        instructor.setLastName("Instructor");
+        tutor2.setFirstName("Bob");
+        tutor2.setLastName("Tutor");
+        userTestRepository.save(instructor);
+        userTestRepository.save(tutor2);
+
+        complaint.getResult().setAssessor(instructor);
+        resultRepository.save(complaint.getResult());
+        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        complaintRepo.save(complaint);
+
+        ModelingSubmission secondSubmission = ParticipationFactory
+                .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        secondSubmission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, secondSubmission, TEST_PREFIX + "student2");
+        Result secondAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(modelingExercise, secondSubmission,
+                "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor2", true);
+        Complaint secondComplaint = new Complaint().result(secondAssessment).complaintText("Also unfair").complaintType(ComplaintType.COMPLAINT)
+                .participant(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        complaintRepo.save(secondComplaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
+        params.add("allComplaintsForTutor", "true");
+
+        final var allComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
+
+        assertThat(allComplaints).hasSize(2);
+        allComplaints.forEach(c -> {
+            checkComplaintContainsNoSensitiveData(c, true);
+            assertThat(c.result().assessor()).as("foreign assessor public-info must stay redacted").isNull();
+            assertThat(c.assessorKey()).isNotBlank();
+            assertThat(c.assessorLabel()).isNotBlank();
+            assertThat(c.assessorLabel()).doesNotContain(instructor.getLogin()).doesNotContain(tutor2.getLogin());
+        });
+
+        assertThat(allComplaints).extracting(ComplaintDTO::assessorKey).containsExactlyInAnyOrder(String.valueOf(instructor.getId()), String.valueOf(tutor2.getId()));
+        assertThat(allComplaints).extracting(ComplaintDTO::assessorLabel).containsExactlyInAnyOrder("Alice Instructor", "Bob Tutor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getComplaintsByExerciseId_tutor_allComplaintsForTutor_returnsOnlyThatExercise() throws Exception {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor.setFirstName("Alice");
+        instructor.setLastName("Instructor");
+        userTestRepository.save(instructor);
+
+        complaint.getResult().setAssessor(instructor);
+        resultRepository.save(complaint.getResult());
+        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        complaintRepo.save(complaint);
+
+        // A complaint on a different exercise of the same course must not leak into the exercise-scoped response.
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Other exercise", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student2", TEST_PREFIX + "tutor2");
+        Complaint otherExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("Other exercise complaint").complaintType(ComplaintType.COMPLAINT)
+                .participant(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        complaintRepo.save(otherExerciseComplaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        params.add("exerciseId", modelingExercise.getId().toString());
+        params.add("allComplaintsForTutor", "true");
+
+        final var allComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
+
+        assertThat(allComplaints).hasSize(1);
+        ComplaintDTO received = allComplaints.getFirst();
+        assertThat(received.id()).isEqualTo(complaint.getId());
+        checkComplaintContainsNoSensitiveData(received, true);
+        assertThat(received.result().assessor()).as("foreign assessor public-info must stay redacted").isNull();
+        assertThat(received.assessorKey()).isEqualTo(String.valueOf(instructor.getId()));
+        assertThat(received.assessorLabel()).isEqualTo("Alice Instructor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);

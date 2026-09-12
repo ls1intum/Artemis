@@ -477,6 +477,20 @@ describe('ComplaintService', () => {
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
+    it('findAllWithoutStudentInformationForExerciseId', () => {
+        const exerciseId = 42;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllWithoutStudentInformationForExerciseId(exerciseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
     it('should remove result references from feedbacks for update after complaint', () => {
         const result = new Result();
         result.id = 1;
@@ -585,6 +599,8 @@ describe('ComplaintService', () => {
             dto.id = 11;
             dto.complaintType = ComplaintType.COMPLAINT;
             dto.complaintIsAccepted = false;
+            dto.assessorKey = '9';
+            dto.assessorLabel = 'Tutor One';
             dto.result = {
                 id: 55,
                 completionDate: dayjsTime1,
@@ -601,6 +617,8 @@ describe('ComplaintService', () => {
 
             expect(complaint.id).toBe(11);
             expect(complaint.accepted).toBe(false);
+            expect(complaint.assessorKey).toBe('9');
+            expect(complaint.assessorLabel).toBe('Tutor One');
             expect(complaint.result).toBeInstanceOf(Result);
             expect(complaint.result?.id).toBe(55);
             expect(complaint.result?.score).toBe(80);
@@ -616,14 +634,24 @@ describe('ComplaintService', () => {
             expect(participation.exercise?.title).toBe('My Exercise');
         });
 
-        it('should leave result undefined when the DTO has no result', () => {
+        it('should keep assessorKey and assessorLabel when result.assessor is redacted', () => {
             const dto = new ComplaintDTO();
-            dto.id = 12;
+            dto.id = 13;
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.assessorKey = '42';
+            dto.assessorLabel = 'Foreign Tutor';
+            dto.result = {
+                id: 56,
+                score: 70,
+                rated: true,
+                assessmentType: AssessmentType.MANUAL,
+            } as ResultSimpleDTO;
 
             const complaint = complaintService.convertComplaintFromServerInList(dto);
 
-            expect(complaint.id).toBe(12);
-            expect(complaint.result).toBeUndefined();
+            expect(complaint.assessorKey).toBe('42');
+            expect(complaint.assessorLabel).toBe('Foreign Tutor');
+            expect(complaint.result?.assessor).toBeUndefined();
         });
     });
 });

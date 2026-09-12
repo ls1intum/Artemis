@@ -9,7 +9,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faChartBar, faFlag, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -69,6 +69,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faBook = faBook;
     faWrench = faWrench;
     faUsers = faUsers;
+    faFlag = faFlag;
     faTable = faTable;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
