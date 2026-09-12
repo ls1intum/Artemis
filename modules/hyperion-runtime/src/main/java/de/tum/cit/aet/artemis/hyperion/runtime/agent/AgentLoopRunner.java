@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -97,13 +96,16 @@ public class AgentLoopRunner {
 
             The workspace files on disk are the source of truth — the agent can always re-read any file. Keep the whole summary under ~400 words.""";
 
-    /** One re-sample for a successful response that contains neither text nor tool calls. Transport failures use only the provider SDK's retry policy. */
+    /** One re-sample for a successful response that contains neither text nor tool calls. */
     private static final int EMPTY_RESPONSE_SAMPLES = 2;
 
     /** Backoff base/cap (ms) before re-sampling an empty response; instance fields keep tests deterministic. */
     private long emptyResponseRetryBaseMillis = 1_500L;
 
     private long emptyResponseRetryCapMillis = 20_000L;
+
+    /** Sends a request again after a failure that provably produced no completion. */
+    private ProviderRetryPolicy providerRetries = new ProviderRetryPolicy();
 
     private final Duration providerHardFailureCooldown;
 
@@ -555,9 +557,13 @@ public class AgentLoopRunner {
         this.emptyResponseRetryCapMillis = capMillis;
     }
 
+    void setProviderRetryTimingForTests(long baseMillis, long capMillis) {
+        this.providerRetries = new ProviderRetryPolicy(baseMillis, capMillis);
+    }
+
     /**
-     * Calls the model and re-samples only a successful response with no usable content. The OpenAI SDK already retries transport failures; retrying those again here would multiply
-     * one logical turn into a request storm. Returns {@code null} when the SDK call fails or both samples are empty.
+     * Calls the model, retrying a request that provably produced no completion, and re-samples a successful response with no usable content. Returns {@code null} when the
+     * call fails for good or both samples are empty.
      */
     @Nullable
     private ChatResponse callModel(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener,
@@ -569,20 +575,21 @@ public class AgentLoopRunner {
             }
             try {
                 AgentPromptSafety.requirePromptSafe(prompt);
-                ChatResponse response = callProvider(prompt, providerFailureKey, usageSink, activity);
+                ChatResponse response = callProviderWithRetries(prompt, providerFailureKey, usageSink, activity, turn, cancelled, stepListener);
                 if (!isEmptyResponse(response)) {
                     return response;
                 }
                 log.warn("Agent loop model call returned an empty response on turn {} (sample {}/{})", turn, sample, EMPTY_RESPONSE_SAMPLES);
                 if (sample < EMPTY_RESPONSE_SAMPLES) {
                     emit(stepListener, "Model returned an empty response; retrying.");
-                    if (!backOffBeforeEmptyResponseRetry(sample, turn, cancelled)) {
+                    long backoff = Math.min(emptyResponseRetryCapMillis, emptyResponseRetryBaseMillis * (1L << (sample - 1)));
+                    if (!ProviderRetryPolicy.backOff(backoff, emptyResponseRetryBaseMillis, cancelled)) {
                         return null;
                     }
                 }
             }
             catch (RuntimeException e) {
-                log.error("Agent loop model call failed on turn {} after the provider retry policy was exhausted ({})", turn, e.getClass().getSimpleName());
+                log.error("Agent loop model call failed on turn {} ({}, {})", turn, ProviderFailureClass.of(e), ProviderFailureClass.describe(e));
                 emit(stepListener, "The AI service could not complete the request.");
                 return null;
             }
@@ -592,9 +599,15 @@ public class AgentLoopRunner {
         return null;
     }
 
+    @Nullable
+    private ChatResponse callProviderWithRetries(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink, @Nullable GenerationActivityTracker activity,
+            int turn, BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
+        return providerRetries.execute(() -> callProvider(prompt, providerFailureKey, usageSink, activity), cancelled, stepListener, "turn " + turn);
+    }
+
     /**
      * Executes one admitted provider request and preserves the distinction between a local cooldown rejection and an indeterminate provider outcome. Once the supplier starts, an
-     * exception cannot prove zero billable usage because the SDK/provider may already have accepted or retried the request.
+     * exception marks usage uncertain unless it proves the provider produced no completion ({@link ProviderFailureClass#provesNoUsage()}).
      */
     @Nullable
     private ChatResponse callProvider(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink, @Nullable GenerationActivityTracker activity) {
@@ -607,7 +620,7 @@ public class AgentLoopRunner {
             });
         }
         catch (RuntimeException error) {
-            if (attempted.get()) {
+            if (attempted.get() && !ProviderFailureClass.of(error).provesNoUsage()) {
                 markUsageUncertain(usageSink);
             }
             throw error;
@@ -623,28 +636,6 @@ public class AgentLoopRunner {
             }
         }
         return response;
-    }
-
-    /**
-     * Sleeps with jitter before re-sampling an empty response.
-     *
-     * @return {@code true} to continue, {@code false} if cancellation or interruption was observed
-     */
-    private boolean backOffBeforeEmptyResponseRetry(int sample, int turn, BooleanSupplier cancelled) {
-        long backoff = Math.min(emptyResponseRetryCapMillis, emptyResponseRetryBaseMillis * (1L << (sample - 1)));
-        if (backoff <= 0) {
-            return !cancelled.getAsBoolean();
-        }
-        backoff += ThreadLocalRandom.current().nextLong(emptyResponseRetryBaseMillis + 1);
-        try {
-            Thread.sleep(backoff);
-            return !cancelled.getAsBoolean();
-        }
-        catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            log.warn("Interrupted while backing off before re-sampling an empty model response on turn {}", turn);
-            return false;
-        }
     }
 
     /** A response carrying neither a tool call nor any assistant text — no usable content, so re-sampling can help. */
@@ -796,7 +787,8 @@ public class AgentLoopRunner {
         if (cancelled.getAsBoolean()) {
             throw new CancellationException("Generation was cancelled before conversation compaction");
         }
-        ChatResponse response = callProvider(prompt, ProviderFailureCooldown.keyForModel(configuredModel), usageSink, activity);
+        // Turn 0: the summary belongs to no turn, and it has no step listener because a compaction retry is not a step the user follows.
+        ChatResponse response = callProviderWithRetries(prompt, ProviderFailureCooldown.keyForModel(configuredModel), usageSink, activity, 0, cancelled, null);
         String text = extractText(response);
         if (text == null || text.isBlank()) {
             throw new IllegalStateException("summarizer returned an empty summary");
