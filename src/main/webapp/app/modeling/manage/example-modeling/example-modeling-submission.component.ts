@@ -281,13 +281,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingSubmission.exampleSubmission = true;
         const result = this.result();
         if (result) {
-            const validFeedback = filterInvalidFeedback(this.referencedFeedback(), currentModel);
-            if (validFeedback.length !== this.referencedFeedback().length) {
-                // Feedback of deleted elements is dropped here but only persisted through the assessment endpoint;
-                // the submission endpoint does not touch the assessment.
-                this.feedbackChanged = true;
-            }
-            this.referencedFeedback.set(validFeedback);
             result.feedbacks = this.assessments();
             setLatestSubmissionResult(this.modelingSubmission, result);
             delete result.submission;
@@ -313,6 +306,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     }
                 }
                 this.isNewSubmission.set(false);
+                if (this.result()) {
+                    this.pruneFeedbackOfDeletedElements(currentModel);
+                }
 
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             }),
@@ -330,6 +326,23 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     onUnReferencedFeedbackChanged(unreferencedFeedback: Feedback[]) {
         this.unreferencedFeedback.set(unreferencedFeedback);
+        this.feedbackChanged = true;
+    }
+
+    /**
+     * Drops the feedback of model elements the saved model no longer contains. The submission endpoint does not touch the assessment, so this only marks the
+     * assessment dirty and the pruning is persisted through the assessment endpoint. It runs on the saved model, never on a model change the server rejected.
+     */
+    private pruneFeedbackOfDeletedElements(savedModel: UMLModel | undefined) {
+        const validFeedback = filterInvalidFeedback(this.referencedFeedback(), savedModel);
+        if (validFeedback.length === this.referencedFeedback().length) {
+            return;
+        }
+        this.referencedFeedback.set(validFeedback);
+        const result = this.result();
+        if (result) {
+            result.feedbacks = this.assessments();
+        }
         this.feedbackChanged = true;
     }
 

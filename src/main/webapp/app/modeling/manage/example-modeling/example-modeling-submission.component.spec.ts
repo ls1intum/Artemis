@@ -351,6 +351,31 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.totalScore()).toBe(mockFeedbackWithReference.credits);
     });
 
+    it('should not prune feedback when the model change is rejected', async () => {
+        vi.spyOn(service, 'update').mockReturnValue(throwError(() => ({ status: 500 })));
+        const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.modelingSubmission = new ModelingSubmission();
+        comp.result.set({ id: 1 } as Result);
+        // No editor is rendered here, so the current model is empty and the referenced feedback belongs to a deleted element.
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
+        vi.spyOn(comp as any, 'modelChanged').mockReturnValue(true);
+
+        comp.showAssessment();
+        await fixture.whenStable();
+
+        // the server kept the old model, so its feedback must survive and must not be queued for the assessment endpoint
+        expect(comp.referencedFeedback()).toEqual([mockFeedbackWithReference]);
+        expect(comp.feedbackChanged).toBe(false);
+        expect(saveAssessmentSpy).not.toHaveBeenCalled();
+
+        // switching back must not persist a pruned assessment against the unchanged server model
+        comp.showSubmission();
+        await fixture.whenStable();
+        expect(saveAssessmentSpy).not.toHaveBeenCalled();
+    });
+
     it('should persist pruned feedback when switching to the assessment after a model change', async () => {
         vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
         const saveAssessmentSpy = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
