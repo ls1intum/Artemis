@@ -28,11 +28,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
-import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -46,7 +43,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
@@ -68,7 +64,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 
 /**
  * REST controller for providing courses in the student view.
@@ -77,8 +72,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 @Lazy
 @FeatureUsage("student-view/course-overview")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping({ "api/course/" })
 public class CourseOverviewResource {
 
     private static final String ENTITY_NAME = "course";
@@ -97,19 +91,13 @@ public class CourseOverviewResource {
 
     private final ComplaintService complaintService;
 
-    private final QuizQuestionProgressService quizQuestionProgressService;
-
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
 
-    private final GradingScaleRepository gradingScaleRepository;
-
     private final TeamRepository teamRepository;
-
-    private final FaqRepository faqRepository;
 
     private final CourseAvailableTabsService courseAvailableTabsService;
 
@@ -118,9 +106,8 @@ public class CourseOverviewResource {
     private final CourseOverviewExerciseService courseOverviewExerciseService;
 
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository, CourseAvailableTabsService courseAvailableTabsService,
+            EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, Optional<ExamRepositoryApi> examRepositoryApi,
+            ComplaintService complaintService, TeamRepository teamRepository, CourseAvailableTabsService courseAvailableTabsService,
             UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
@@ -128,69 +115,12 @@ public class CourseOverviewResource {
         this.enrollmentService = enrollmentService;
         this.userRepository = userRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
-        this.gradingScaleRepository = gradingScaleRepository;
         this.examRepositoryApi = examRepositoryApi;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
-        this.quizQuestionProgressService = quizQuestionProgressService;
-        this.faqRepository = faqRepository;
         this.courseAvailableTabsService = courseAvailableTabsService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
         this.courseOverviewExerciseService = courseOverviewExerciseService;
-    }
-
-    /**
-     * GET /courses/{courseId}/for-dashboard
-     *
-     * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
-     * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
-     *         exercise type for each exercise, and the participation result for each participation.
-     * @deprecated The web client no longer uses this endpoint. It loads the course shell through
-     *             {@code courses/&#123;courseId&#125;/for-overview} and each tab's content through
-     *             {@code courses/&#123;courseId&#125;/available-tabs}, {@code .../exercises-for-overview},
-     *             {@code .../lectures-for-overview} and {@code .../exams-for-overview}, so entering a course no longer
-     *             pays for content the user may never open (16 database queries and 37 KB here, against 6 queries on
-     *             entry after the split). This endpoint is kept for the iOS, Android and VS Code clients, which still
-     *             load everything at once, and can be removed once those have migrated.
-     */
-    @Deprecated(since = "9.7")
-    @GetMapping("courses/{courseId}/for-dashboard")
-    @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
-        long timeNanoStart = System.nanoTime();
-        log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(courseId, user);
-        boolean trainingEnabled = quizQuestionProgressService.questionsAvailableForTraining(courseId);
-        course.setTrainingEnabled(trainingEnabled);
-        log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            // user might be allowed to enroll in the course
-            // We need the course with organizations so that we can check if the user is allowed to enroll
-            course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            if (enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course)) {
-                // suppress error alert with skipAlert: true so that the client can redirect to the enrollment page
-                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
-                        "noAccessButCouldEnroll", true);
-            }
-            else {
-                // user is not even allowed to self-enroll
-                // just normally throw the access forbidden exception
-                throw new AccessForbiddenException(ENTITY_NAME, courseId);
-            }
-        }
-
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
-        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done in getCourseForDashboard");
-        courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
-        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done in getCourseForDashboard");
-        GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
-        log.debug("gradingScaleRepository.findByCourseId done in getCourseForDashboard");
-        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), true);
-        logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
-        return ResponseEntity.ok(courseForDashboardDTO);
     }
 
     /**
@@ -243,8 +173,7 @@ public class CourseOverviewResource {
      * <p>
      * Only the exercises tab (and the statistics tab, which reads the same scores) needs this, so it is loaded on demand
      * rather than on every course entry. Exercise, participation, submission, result, and score inputs are projected
-     * directly from the database; the deprecated {@link #getCourseForDashboard} remains on its entity path for native
-     * clients.
+     * directly from the database.
      *
      * @param courseId the id of the course
      * @return the exercises and scores for the requesting user

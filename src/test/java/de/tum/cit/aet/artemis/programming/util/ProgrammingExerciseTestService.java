@@ -39,8 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
@@ -92,9 +90,6 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -2750,55 +2745,6 @@ public class ProgrammingExerciseTestService {
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
         request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(exercise),
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    // TEST
-    public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-
-        if (isStudent) {
-            assertThat(username).as("The setup is done according to studentLogin value, another username may not work as expected").isEqualTo(userPrefix + STUDENT_LOGIN);
-        }
-
-        // Utility function to avoid duplication
-        Function<CourseDashboardDTO, CourseDashboardExerciseDTO> programmingExerciseGetter = c -> c.exercises().stream().filter(e -> e.overview().id().equals(exercise.getId()))
-                .findAny().orElseThrow();
-        Predicate<CourseDashboardExerciseDTO> isExampleSolutionPublished = e -> e.exampleSolutionPublicationDate() != null
-                && e.exampleSolutionPublicationDate().isBefore(ZonedDateTime.now());
-
-        // Test example solution publication date not set.
-        exercise.setExampleSolutionPublicationDate(null);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        programmingExerciseRepository.save(exercise);
-
-        CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
-                HttpStatus.OK, CourseForDashboardDTO.class);
-        CourseDashboardDTO courseFromServer = courseForDashboardFromServer.course();
-        CourseDashboardExerciseDTO programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
-
-        assertThat(isExampleSolutionPublished.test(programmingExerciseFromApi)).isFalse();
-
-        // Test example solution publication date in the past.
-        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(exercise);
-
-        courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        courseFromServer = courseForDashboardFromServer.course();
-        programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
-
-        assertThat(isExampleSolutionPublished.test(programmingExerciseFromApi)).isTrue();
-
-        // Test example solution publication date in the future.
-        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepository.save(exercise);
-
-        courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        courseFromServer = courseForDashboardFromServer.course();
-        programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
-
-        assertThat(isExampleSolutionPublished.test(programmingExerciseFromApi)).isFalse();
-
     }
 
     // TEST

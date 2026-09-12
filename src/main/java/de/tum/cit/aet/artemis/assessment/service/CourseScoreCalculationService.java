@@ -288,8 +288,7 @@ public class CourseScoreCalculationService {
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
-            // TODO: Look into refactoring the fetchPlagiarismCasesForCourseExercises method in the CourseService to always initialize the participations (to an
-            // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
+            // TODO: implement this differently
             if (Hibernate.isInitialized(exercise.getPlagiarismCases())) {
                 plagiarismCases.addAll(exercise.getPlagiarismCases());
             }

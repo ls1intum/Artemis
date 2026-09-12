@@ -1,0 +1,613 @@
+// ── Step indicator ────────────────────────────────────────────────────────────
+//
+// Colour rule for this dialog: anything clickable carries `--primary`, anything that only reports state
+// (step indicator, generation progress, section labels, the source → variant flow) carries `--secondary`.
+
+.wizard-step-indicator {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+    padding-top: 4px;
+}
+
+.wiz-step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.wiz-step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--p-content-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--p-text-muted-color);
+    background: var(--p-content-background);
+    transition: all 0.3s ease;
+}
+
+.wiz-step-label {
+    margin-top: 0.45rem;
+    font-size: 0.7rem;
+    color: var(--p-text-muted-color);
+    text-align: center;
+    transition: color 0.3s ease;
+}
+
+.wiz-step-item--active {
+    .wiz-step-circle {
+        border-color: var(--secondary);
+        background: var(--secondary);
+        color: var(--p-surface-0);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 15%, transparent);
+    }
+
+    .wiz-step-label {
+        color: var(--secondary);
+        font-weight: 600;
+    }
+}
+
+.wiz-step-item--completed {
+    .wiz-step-circle {
+        border-color: var(--secondary);
+        background: color-mix(in srgb, var(--secondary) 12%, transparent);
+        color: var(--secondary);
+    }
+
+    .wiz-step-label {
+        color: var(--secondary);
+        font-weight: 500;
+    }
+}
+
+.wiz-step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--p-content-border-color);
+    margin-top: 17px;
+    min-width: 20px;
+    border-radius: 2px;
+    transition: background 0.3s ease;
+
+    &--completed {
+        background: var(--secondary);
+    }
+}
+
+// ── Source badge ──────────────────────────────────────────────────────────────
+
+.source-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--p-content-hover-background);
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.875rem;
+
+    &__icon {
+        color: var(--secondary);
+        font-size: 1rem;
+    }
+
+    &__title {
+        font-weight: 500;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+// ── Info chips ─────────────────────────────────────────────────────────────────
+
+.info-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: var(--p-content-hover-background);
+    color: var(--p-text-muted-color);
+    flex-shrink: 0;
+}
+
+// ── Option cards (step 1) ──────────────────────────────────────────────────────
+
+.option-cards {
+    display: grid;
+
+    // Four cards (Difficulty, Domain, Storytelling, Custom) in one row.
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+
+    // Exam exercises drop the Difficulty card, leaving three — fill the row instead of leaving a fourth-card gap.
+    &--three {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.option-card {
+    position: relative;
+
+    // A real <button> so the cards are focusable and operable by keyboard; these declarations undo the
+    // UA button styling the card design does not want.
+    display: block;
+    width: 100%;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--p-content-background);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    overflow: hidden;
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    &:hover:not(&--selected) {
+        box-shadow: 0 6px 20px var(--variant-wizard-elevation-shadow);
+        transform: translateY(-2px);
+        border-color: transparent;
+
+        &::before {
+            opacity: 1;
+        }
+    }
+
+    &--selected {
+        box-shadow: inset 0 0 0 2px var(--primary);
+        background: color-mix(in srgb, var(--primary) 5%, transparent);
+        border-color: transparent;
+
+        &::before {
+            opacity: 1;
+        }
+    }
+
+    &--selected:hover {
+        box-shadow:
+            inset 0 0 0 2px var(--primary),
+            0 6px 20px var(--variant-wizard-elevation-shadow);
+        transform: translateY(-2px);
+    }
+
+    &__title {
+        display: block;
+        font-weight: 600;
+        font-size: 0.87rem;
+        margin-bottom: 0.3rem;
+    }
+
+    &__hint {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--p-text-muted-color);
+        line-height: 1.35;
+        margin: 0 0 0.75rem;
+        flex: 1;
+    }
+
+    &__cta {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: transparent;
+        min-height: 1.1em;
+        display: block;
+    }
+
+    &--selected &__cta {
+        color: var(--primary);
+    }
+
+    &__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--primary) 10%, transparent);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin: 0 auto 0.65rem;
+        box-shadow: 0 3px 8px var(--variant-wizard-elevation-shadow);
+        transition: background 0.15s ease;
+    }
+
+    &--selected &__icon {
+        background: var(--primary);
+        color: var(--p-surface-0);
+    }
+
+    &__check {
+        position: absolute;
+        top: 0.45rem;
+        right: 0.55rem;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: var(--p-surface-0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+    }
+}
+
+// ── Configure fields (step 2) ─────────────────────────────────────────────────
+
+.configure-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border: 1px solid color-mix(in srgb, var(--secondary) 20%, transparent);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--secondary) 2%, transparent);
+}
+
+.field-group {
+    &__label {
+        // A <label for> rather than a <p>, so the control has an accessible name; labels are inline by default.
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--secondary);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    label {
+        margin: 0;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+}
+
+// ── Generating panel ───────────────────────────────────────────────────────────
+
+.generating-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 1rem;
+    text-align: center;
+}
+
+.generating-icon-wrapper {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+
+.generating-icon {
+    font-size: 2rem;
+    color: var(--secondary);
+    position: relative;
+    z-index: 1;
+    animation: pulse-icon 1.4s ease-in-out infinite;
+}
+
+.generating-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2.5px solid var(--secondary);
+    opacity: 0.35;
+    animation: ring-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+@keyframes ring-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.35;
+    }
+
+    50% {
+        transform: scale(1.18);
+        opacity: 0.1;
+    }
+}
+
+// Full modal width so expanded step logs don't get squeezed into a narrow column.
+.generation-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    text-align: left;
+}
+
+// Expanded step logs: full width, capped height, scrollable.
+.step-output-detail {
+    width: 100%;
+    max-height: 220px;
+    overflow: auto;
+    margin: 0.35rem 0 0;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--p-text-muted-color);
+    background: var(--p-content-hover-background);
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+// "What the AI did" summary on the result step.
+.step-summary {
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: var(--p-content-background);
+    font-size: 0.8rem;
+
+    &__title {
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: var(--secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.5rem;
+    }
+
+    &__entry {
+        padding: 0.35rem 0;
+
+        &:not(:last-child) {
+            border-bottom: 1px solid var(--p-content-border-color);
+        }
+    }
+}
+
+// AI-generated failure post-mortem — plain text with line breaks preserved.
+.instructor-summary-text {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.generation-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0;
+    font-size: 0.875rem;
+    color: var(--p-text-muted-color);
+    transition: color 0.3s ease;
+
+    &__icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &--done {
+        color: var(--secondary);
+    }
+
+    &--active {
+        color: var(--p-text-color);
+        font-weight: 500;
+    }
+
+    &--pending {
+        opacity: 0.45;
+    }
+
+    &--loop {
+        padding-left: 1.75rem;
+        font-size: 0.82rem;
+    }
+}
+
+.spinner-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--secondary);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+.pending-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--p-content-border-color);
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ── Result phase ───────────────────────────────────────────────────────────────
+
+// "source → variant" flow card shown on the generating and result steps.
+.variant-flow-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.75rem;
+    padding: 0.7rem 1rem;
+    background: var(--p-content-hover-background);
+    font-size: 0.9rem;
+
+    &__icon {
+        color: var(--secondary);
+        flex-shrink: 0;
+    }
+
+    &__title {
+        font-weight: 600;
+        min-width: 0;
+
+        &--target {
+            color: var(--secondary);
+        }
+    }
+
+    &__arrow {
+        color: var(--secondary);
+        flex-shrink: 0;
+    }
+
+    &__pending {
+        color: var(--p-text-muted-color);
+        letter-spacing: 2px;
+        animation: pulse-icon 1.4s ease-in-out infinite;
+    }
+}
+
+.placement-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.placement-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+        background: color-mix(in srgb, var(--primary) 3%, transparent);
+    }
+
+    &--selected {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 4%, transparent);
+    }
+
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    &__title {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    &__hint {
+        font-size: 0.75rem;
+        color: var(--p-text-muted-color);
+    }
+}
+
+// ── New-group inline settings ──────────────────────────────────────────────────
+
+.new-group-settings {
+    &__label {
+        // A <label for> rather than a <div>, so the control has an accessible name; labels are inline by default.
+        display: block;
+        font-size: 0.7rem;
+        color: var(--p-text-muted-color);
+        margin-bottom: 0.2rem;
+    }
+
+    &__pts {
+        width: 80px;
+    }
+
+    &__date {
+        width: 160px;
+    }
+}
+
+// ── AI warning ─────────────────────────────────────────────────────────────────
+
+.ai-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--p-text-color);
+    line-height: 1.4;
+
+    &__icon {
+        color: var(--warning);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+}
+
+// Allows a flexed child to shrink so long gate messages wrap instead of widening the box.

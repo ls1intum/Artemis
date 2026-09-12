@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -66,9 +65,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseDashboardExerciseDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -2134,18 +2130,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetTextExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetTextExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetTextExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetTextExercise_exampleSolutionVisibility(false, "instructor1");
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTextExercise_setGradingInstructionForCopiedFeedback() throws Exception {
         var now = ZonedDateTime.now();
@@ -2204,61 +2188,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 
-    }
-
-    private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        // Utility function to avoid duplication
-        Function<CourseDashboardDTO, CourseDashboardExerciseDTO> textExerciseGetter = c -> c.exercises().stream().filter(e -> e.overview().id().equals(textExercise.getId()))
-                .findAny().orElseThrow();
-
-        textExercise.setExampleSolution("Sample<br>solution");
-
-        if (isStudent) {
-            participationUtilService.createAndSaveParticipationForExercise(textExercise, username);
-        }
-
-        // Test example solution publication date not set.
-        textExercise.setExampleSolutionPublicationDate(null);
-        textExerciseRepository.save(textExercise);
-
-        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
-                HttpStatus.OK, CourseForDashboardDTO.class);
-        CourseDashboardDTO dashboardCourse = courseForDashboard.course();
-        CourseDashboardExerciseDTO textExerciseFromApi = textExerciseGetter.apply(dashboardCourse);
-
-        if (isStudent) {
-            assertThat(textExerciseFromApi.exampleSolution()).isNull();
-        }
-        else {
-            assertThat(textExerciseFromApi.exampleSolution()).isEqualTo(textExercise.getExampleSolution());
-        }
-
-        // Test example solution publication date in the past.
-        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        textExerciseRepository.save(textExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        dashboardCourse = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(dashboardCourse);
-
-        assertThat(textExerciseFromApi.exampleSolution()).isEqualTo(textExercise.getExampleSolution());
-
-        // Test example solution publication date in the future.
-        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        textExerciseRepository.save(textExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        dashboardCourse = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(dashboardCourse);
-
-        if (isStudent) {
-            assertThat(textExerciseFromApi.exampleSolution()).isNull();
-        }
-        else {
-            assertThat(textExerciseFromApi.exampleSolution()).isEqualTo(textExercise.getExampleSolution());
-        }
     }
 
     @Test
