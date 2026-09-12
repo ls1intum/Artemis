@@ -233,10 +233,28 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesByCourseId(long courseId);
 
-    // course is an eager @ManyToOne, so fetching it here saves the secondary select that git authorization would
-    // otherwise pay on every request when it reads the course for its role checks
-    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "course" })
-    List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
+    /**
+     * The exercise behind a project key, with everything the git request path reads from it.
+     * <p>
+     * Written as explicit fetches rather than an entity graph because of the last one. Hibernate joins an eager
+     * {@code @ManyToOne} of the root entity by itself, which already covers the course, the exercise group and its
+     * exam - but not the exam's own course, one hop further out, which an exam exercise then pays as a secondary
+     * select on every clone, fetch and push. Naming it here makes the whole lookup a single query.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the matching exercises, which the caller expects to be exactly one
+     */
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.submissionPolicy
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.projectKey = :projectKey
+            """)
+    List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(@Param("projectKey") String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = "buildConfig")
     List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
