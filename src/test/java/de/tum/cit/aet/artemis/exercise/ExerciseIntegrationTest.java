@@ -377,9 +377,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         course.setPresentationScore(3);
         course.setTimeZone("Europe/Berlin");
         course.setEnrollmentEnabled(true);
-        course.setEnrollmentStartDate(ZonedDateTime.now().minusMonths(3));
-        course.setEnrollmentEndDate(ZonedDateTime.now().minusMonths(1));
-        course.setUnenrollmentEndDate(ZonedDateTime.now().plusMonths(1));
+        // Fixed and distinct, in the order the course expects them, so a swapped or off-by-one mapping shows up.
+        course.setEnrollmentStartDate(ZonedDateTime.parse("2023-07-01T08:15:00Z"));
+        course.setEnrollmentEndDate(ZonedDateTime.parse("2023-08-02T09:16:00Z"));
+        course.setUnenrollmentEndDate(ZonedDateTime.parse("2023-09-03T10:17:00Z"));
         course.setEnrollmentConfirmationMessage("Welcome");
         course.setCourseInformationSharingMessagingCodeOfConduct("Be nice");
         course.setCourseArchivePath("Course_archive.zip");
@@ -421,11 +422,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exam.setModuleNumber("IN0001");
         exam.setCourseName("Introduction to Software Engineering");
         exam.setExamArchivePath("Exam_archive.zip");
-        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
-        exam.setExamStudentReviewStart(ZonedDateTime.now().plusDays(2));
-        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusDays(3));
-        exam.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(4));
-        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(5));
+        // Fixed and distinct, in the order the exam expects them, so a swapped or off-by-one mapping shows up.
+        exam.setPublishResultsDate(ZonedDateTime.parse("2023-10-01T11:18:00Z"));
+        exam.setExamStudentReviewStart(ZonedDateTime.parse("2023-10-02T12:19:00Z"));
+        exam.setExamStudentReviewEnd(ZonedDateTime.parse("2023-10-03T13:20:00Z"));
+        exam.setExamSummaryPublicationDate(ZonedDateTime.parse("2023-10-04T14:21:00Z"));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.parse("2023-10-05T15:22:00Z"));
         exam = examRepository.save(exam);
 
         Map<String, Object> groupNode = mapOf(getJsonMap("/api/exercise/exercises/" + exercise.getId()), "exerciseGroup");
@@ -537,7 +539,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     void testGetProgrammingExerciseHidesTheTestRepositoryUriFromStudents() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        exercise.setReleaseDate(RELEASE_DATE);
         exercise.setTestRepositoryUri(TEST_REPOSITORY_URI);
         exerciseRepository.save(exercise);
 
