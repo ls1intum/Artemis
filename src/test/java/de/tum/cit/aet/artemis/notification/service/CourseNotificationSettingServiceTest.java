@@ -54,9 +54,6 @@ class CourseNotificationSettingServiceTest {
     private CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
     @Mock
-    private CourseNotificationCacheService courseNotificationCacheService;
-
-    @Mock
     private de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset mockPreset;
 
     private final Long userId = 1L;
@@ -69,8 +66,8 @@ class CourseNotificationSettingServiceTest {
 
     @BeforeEach
     void setUp() {
-        courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistryService, courseNotificationCacheService,
-                userCourseNotificationSettingSpecificationRepository, userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService);
+        courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistryService, userCourseNotificationSettingSpecificationRepository,
+                userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService);
     }
 
     @Test
@@ -82,7 +79,6 @@ class CourseNotificationSettingServiceTest {
         courseNotificationSettingService.applyPreset((short) 2, userId, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -95,7 +91,6 @@ class CourseNotificationSettingServiceTest {
         courseNotificationSettingService.applyPreset((short) 2, userId, courseId);
 
         verify(userCourseNotificationSettingPresetRepository, never()).save(any(UserCourseNotificationSettingPreset.class));
-        verify(courseNotificationCacheService, never()).invalidateCourseNotificationSettingSpecificationCacheForUser(anyLong(), anyLong());
     }
 
     @Test
@@ -120,7 +115,6 @@ class CourseNotificationSettingServiceTest {
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -139,7 +133,6 @@ class CourseNotificationSettingServiceTest {
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
         verify(userCourseNotificationSettingSpecificationRepository).deleteAll(existingSpecs);
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -158,7 +151,6 @@ class CourseNotificationSettingServiceTest {
 
         verify(userCourseNotificationSettingPresetRepository).findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test

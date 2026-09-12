@@ -35,20 +35,17 @@ public class CourseNotificationSettingService {
 
     private final CourseNotificationRegistryService courseNotificationRegistryService;
 
-    private final CourseNotificationCacheService courseNotificationCacheService;
-
     private final UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
 
     private final UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository;
 
     private final CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
-    public CourseNotificationSettingService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationCacheService courseNotificationCacheService,
+    public CourseNotificationSettingService(CourseNotificationRegistryService courseNotificationRegistryService,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
-        this.courseNotificationCacheService = courseNotificationCacheService;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
         this.courseNotificationSettingPresetRegistryService = courseNotificationSettingPresetRegistryService;
@@ -113,7 +110,6 @@ public class CourseNotificationSettingService {
             userCourseNotificationSettingSpecificationRepository.deleteAll(specifications);
         }
 
-        courseNotificationCacheService.invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     /**
@@ -172,7 +168,6 @@ public class CourseNotificationSettingService {
         });
 
         userCourseNotificationSettingSpecificationRepository.saveAll(specificationEntities);
-        courseNotificationCacheService.invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     /**

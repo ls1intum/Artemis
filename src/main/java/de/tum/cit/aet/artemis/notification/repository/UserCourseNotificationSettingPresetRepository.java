@@ -4,9 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,7 +21,6 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingP
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-@CacheConfig(cacheNames = "userCourseNotificationSettingPreset")
 public interface UserCourseNotificationSettingPresetRepository extends ArtemisJpaRepository<UserCourseNotificationSettingPreset, Long> {
 
     /***
@@ -41,7 +37,6 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
             WHERE p.user.id = :userId
                 AND p.course.id = :courseId
             """)
-    @Cacheable(key = "'setting_preset_' + #userId + '_' + #courseId")
     Short findSettingPresetByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /***
@@ -64,7 +59,6 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
      *
      * @return Newly stored {@link UserCourseNotificationSettingPreset}
      */
-    @CacheEvict(key = "'setting_preset_' + #userCourseNotificationSettingPreset.user.id + '_' + #userCourseNotificationSettingPreset.course.id")
     @Transactional // Updating/Creating query
     @Override
     <S extends UserCourseNotificationSettingPreset> S save(S userCourseNotificationSettingPreset);
@@ -74,7 +68,6 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
      *
      * @param userCourseNotificationSettingPreset to delete
      */
-    @CacheEvict(key = "'setting_preset_' + #userCourseNotificationSettingPreset.user.id + '_' + #userCourseNotificationSettingPreset.course.id")
     @Transactional // Deleting Query
     @Override
     void delete(UserCourseNotificationSettingPreset userCourseNotificationSettingPreset);
@@ -90,6 +83,5 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
     // NOTE: We must clear all entries because we don't know which users had a preset for the course
     @Transactional // ok because of delete
     @Modifying
-    @CacheEvict(allEntries = true)
     void deleteAllByCourseId(long courseId);
 }

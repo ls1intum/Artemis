@@ -29,14 +29,11 @@ class CourseNotificationCleanupServiceTest {
     @Mock
     private CourseNotificationTestRepository courseNotificationRepository;
 
-    @Mock
-    private CourseNotificationCacheService courseNotificationCacheService;
-
     private CourseNotificationCleanupService courseNotificationCleanupService;
 
     @BeforeEach
     void setUp() {
-        courseNotificationCleanupService = new CourseNotificationCleanupService(courseNotificationRepository, courseNotificationCacheService);
+        courseNotificationCleanupService = new CourseNotificationCleanupService(courseNotificationRepository);
     }
 
     @Test
@@ -48,7 +45,6 @@ class CourseNotificationCleanupServiceTest {
         courseNotificationCleanupService.cleanupCourseNotifications();
 
         verify(courseNotificationRepository).deleteAll(eq(expiredNotifications));
-        verify(courseNotificationCacheService).clearCourseNotificationCache();
     }
 
     @Test
@@ -58,7 +54,6 @@ class CourseNotificationCleanupServiceTest {
         courseNotificationCleanupService.cleanupCourseNotifications();
 
         verify(courseNotificationRepository, never()).deleteAll(anyList());
-        verify(courseNotificationCacheService).clearCourseNotificationCache();
     }
 
     @ParameterizedTest
@@ -72,7 +67,6 @@ class CourseNotificationCleanupServiceTest {
 
         verify(courseNotificationRepository).deleteAll(eq(expiredNotifications));
         assertThat(expiredNotifications).hasSize(notificationCount);
-        verify(courseNotificationCacheService).clearCourseNotificationCache();
     }
 
     @Test
@@ -81,7 +75,6 @@ class CourseNotificationCleanupServiceTest {
 
         courseNotificationCleanupService.cleanupCourseNotifications();
 
-        verify(courseNotificationCacheService).clearCourseNotificationCache();
     }
 
     /**

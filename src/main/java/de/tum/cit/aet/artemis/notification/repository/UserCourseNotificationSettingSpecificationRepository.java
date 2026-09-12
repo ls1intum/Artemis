@@ -4,9 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,7 +22,6 @@ import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpec
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-@CacheConfig(cacheNames = "userCourseNotificationSettingSpecification")
 public interface UserCourseNotificationSettingSpecificationRepository extends ArtemisJpaRepository<UserCourseNotificationSettingSpecification, Long> {
 
     /***
@@ -54,7 +50,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
             WHERE s.user.id = :userId
                 AND s.course.id = :courseId
             """)
-    @Cacheable(key = "'setting_specifications_' + #userId + '_' + #courseId")
     List<UserCourseNotificationSettingSpecificationDTO> findAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /***
@@ -78,7 +73,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      *
      * @return Newly stored {@link UserCourseNotificationSettingSpecification}
      */
-    @CacheEvict(key = "'setting_specifications_' + #userCourseNotificationSettingSpecification.user.id + '_' + #userCourseNotificationSettingSpecification.course.id")
     @Transactional // OK because of modifying query
     @Modifying
     @Override
@@ -89,7 +83,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      *
      * @param userCourseNotificationSettingSpecification to delete
      */
-    @CacheEvict(key = "'setting_specifications_' + #userCourseNotificationSettingSpecification.user.id + '_' + #userCourseNotificationSettingSpecification.course.id")
     @Transactional // OK because of delete
     @Modifying
     @Override
@@ -104,7 +97,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
     List<UserCourseNotificationSettingSpecification> findAllByUserId(long userId);
 
     // NOTE: we need to clear all cached entries because we don't know which users had a specification for the course
-    @CacheEvict(allEntries = true)
     @Transactional // OK because of delete
     @Modifying
     void deleteAllByCourseId(long courseId);
