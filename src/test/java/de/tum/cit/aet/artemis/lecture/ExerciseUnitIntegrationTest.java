@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -240,7 +241,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
         }
 
         for (Exercise exercise : exercisesOfCourse) {
-            request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+            request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
         }
 
         verify(competencyProgressApi, never()).updateProgressForUpdatedLearningObjectAsync(any(), any());
