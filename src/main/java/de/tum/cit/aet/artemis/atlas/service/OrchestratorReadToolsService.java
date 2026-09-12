@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belon
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerRead;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
@@ -94,6 +96,7 @@ public class OrchestratorReadToolsService {
     @Tool(description = "Get the full details (description, soft due date, mastery threshold, optional flag, and linked exercises/lecture units with their ids and types; "
             + "each exercise ref also carries its current link weight — 1.0 / 0.5 / 0.3) for a single competency in the current course.")
     public String getCompetencyDetails(@ToolParam(description = "id of the competency to inspect") Long competencyId, ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
@@ -109,7 +112,9 @@ public class OrchestratorReadToolsService {
         if (!belongsToCourse(competency, courseId)) {
             return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
         }
-        return toJson(objectMapper, toDetail(competency));
+        CompetencyDetailDTO detail = toDetail(competency);
+        markWorkerRead(toolContext);
+        return toJson(objectMapper, detail);
     }
 
     /**
@@ -124,6 +129,7 @@ public class OrchestratorReadToolsService {
             + "it is the assembled questions with their correct answers/solutions. Metadata always carries the exercise type and, when set, difficulty / maxPoints "
             + "(plus type-specific keys such as questionCount for quizzes). The content is extracted fresh on every call, so don't call this tool repeatedly for the same exercise id.")
     public String getExerciseContent(@ToolParam(description = "id of the exercise whose content should be extracted") Long exerciseId, ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
@@ -150,7 +156,9 @@ public class OrchestratorReadToolsService {
             // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
             String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
-            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, extracted.metadata()));
+            ExtractedContentDTO safeContent = new ExtractedContentDTO(safeTitle, safeText, extracted.metadata());
+            markWorkerRead(toolContext);
+            return toJson(objectMapper, safeContent);
         }
         catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.

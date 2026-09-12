@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -117,10 +118,14 @@ class OrchestratorPlanningToolsServiceTest {
         when(exerciseRepository.findAllExercisesByCourseId(COURSE_ID)).thenReturn(Set.of());
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
+        ctx.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong(4));
+        ctx.put(OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY, new AtomicLong());
+        ctx.put(OrchestratorToolContextKeys.LAST_DELEGATION_SEQUENCE_KEY, new AtomicLong(4));
 
         String result = service.listCompetencyIndex(new ToolContext(ctx));
 
         assertThat(result).contains("Algorithms and Complexity").doesNotContain("No course context");
+        assertThat(((AtomicLong) ctx.get(OrchestratorToolContextKeys.LAST_INDEX_READ_SEQUENCE_KEY)).get()).isGreaterThan(4);
     }
 
     @Test

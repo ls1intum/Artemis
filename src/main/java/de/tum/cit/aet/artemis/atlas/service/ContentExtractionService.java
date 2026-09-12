@@ -96,8 +96,8 @@ public class ContentExtractionService {
     private final double flavorStripTemperature;
 
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
-            @Value("${artemis.atlas.flavor-strip-model:gpt-5.4-mini}") String flavorStripModel,
-            @Value("${artemis.atlas.flavor-strip-reasoning-effort:medium}") String flavorStripReasoningEffort,
+            @Value("${artemis.atlas.flavor-strip-model:gpt-5.6-luna}") String flavorStripModel,
+            @Value("${artemis.atlas.flavor-strip-reasoning-effort:high}") String flavorStripReasoningEffort,
             @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;

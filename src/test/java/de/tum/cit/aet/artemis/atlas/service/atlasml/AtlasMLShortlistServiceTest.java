@@ -38,7 +38,7 @@ class AtlasMLShortlistServiceTest {
     private FeatureToggleService featureToggleService;
 
     private AtlasMLShortlistService createService(Optional<AtlasMLApi> api, Optional<FeatureToggleService> toggle, int budget) {
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", 300, 10, 30000L, budget);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", "gpt-worker-test", "", 300, 10, 30000L, budget);
         return new AtlasMLShortlistService(api, toggle, properties);
     }
 
