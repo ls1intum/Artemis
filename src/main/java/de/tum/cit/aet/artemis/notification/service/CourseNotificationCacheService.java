@@ -67,14 +67,17 @@ public class CourseNotificationCacheService {
      */
     @Async
     protected void invalidateCourseNotificationCacheForUsers(Set<User> users, long courseId) throws IllegalArgumentException {
+        Set<String> pagePrefixes = HashSet.newHashSet(users.size());
+        Set<String> countKeys = HashSet.newHashSet(users.size());
         for (User user : users) {
             if (user.getId() == null) {
                 throw new IllegalArgumentException("Cannot invalidate cache for user without id.");
             }
-
-            invalidateCacheForKeyStartingWith(USER_COURSE_NOTIFICATION_CACHE, USER_COURSE_NOTIFICATION_CACHE_KEY_PREFIX + user.getId() + '_' + courseId);
-            invalidateCacheForKey(USER_COURSE_NOTIFICATION_CACHE, USER_COURSE_NOTIFICATION_COUNT_CACHE_KEY_PREFIX + user.getId() + '_' + courseId);
+            // The trailing separator matters: without it, course 45 also matches the keys of course 456.
+            pagePrefixes.add(USER_COURSE_NOTIFICATION_CACHE_KEY_PREFIX + user.getId() + '_' + courseId + '_');
+            countKeys.add(USER_COURSE_NOTIFICATION_COUNT_CACHE_KEY_PREFIX + user.getId() + '_' + courseId);
         }
+        invalidateCacheForUserCourseKeys(USER_COURSE_NOTIFICATION_CACHE, pagePrefixes, countKeys);
     }
 
     /**
@@ -89,33 +92,74 @@ public class CourseNotificationCacheService {
     }
 
     /**
-     * Invalidates cache entries whose keys start with the specified prefix.
-     * Since we cannot tag our cache, this method is used to clear paging-related caches
-     * by matching and removing entries with keys that start with the given prefix.
+     * Invalidates every paged and count entry belonging to any of the given user/course pairs, in a single pass.
+     * <p>
+     * Enumerating the keys is the expensive part: on a distributed cache it pulls the whole key set over the network,
+     * and the cache holds one entry per user, course and page. Doing that once per user made a course-wide
+     * notification quadratic - announcing to 3000 students enumerated a 40000 entry cache 3000 times. The pairs are
+     * therefore collected first and matched against one enumeration.
+     * <p>
+     * Matching reconstructs each key's own {@code <userId>_<courseId>_} prefix and looks it up, rather than testing
+     * every candidate prefix against every key, so the cost stays linear in the number of keys instead of growing
+     * with the number of users as well.
      *
-     * @param cacheName The name of the cache to invalidate entries from
-     * @param keyPrefix The key prefix to match against cache entries
+     * @param cacheName    the name of the cache to invalidate entries from
+     * @param pagePrefixes the {@code <userId>_<courseId>_} key prefixes whose paged entries should go
+     * @param countKeys    the exact count keys that should go
      */
-    private void invalidateCacheForKeyStartingWith(String cacheName, String keyPrefix) {
-        Cache cache = cacheManager.getCache(cacheName);
-        if (cache == null) {
-            log.warn("Cannot invalidate entries of cache '{}' with prefix '{}': the cache is not configured", cacheName, keyPrefix);
+    private void invalidateCacheForUserCourseKeys(String cacheName, Set<String> pagePrefixes, Set<String> countKeys) {
+        if (pagePrefixes.isEmpty() && countKeys.isEmpty()) {
             return;
         }
-        // Spring's Cache API cannot enumerate keys, so the prefix scan has to go through the cache that @Cacheable
-        // actually writes to. Reading the distributed data provider's map directly instead would be a silent no-op:
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            log.warn("Cannot invalidate entries of cache '{}': the cache is not configured", cacheName);
+            return;
+        }
+        // Spring's Cache API cannot enumerate keys, so the scan has to go through the cache that @Cacheable actually
+        // writes to. Reading the distributed data provider's map directly instead would be a silent no-op:
         // @Cacheable resolves against the primary cache manager, and only that manager knows which store serves this
         // cache name. Getting that wrong once already left users looking at stale notifications.
         Set<Object> cacheKeys = cacheKeys(cache);
         if (cacheKeys == null) {
+            // The paged entries cannot be found without enumeration, but the count keys are exact and work on any
+            // store, so evict those rather than leaving the user with a stale unread count.
             log.warn("Cannot invalidate entries of cache '{}' by key prefix: its backing store does not expose its keys", cacheName);
+            countKeys.forEach(countKey -> evict(cache, countKey));
             return;
         }
         for (Object cacheKey : cacheKeys) {
-            if (cacheKey != null && cacheKey.toString().startsWith(keyPrefix)) {
+            if (cacheKey == null) {
+                continue;
+            }
+            String key = cacheKey.toString();
+            String pagePrefix = userCoursePrefixOf(key);
+            if (countKeys.contains(key) || (pagePrefix != null && pagePrefixes.contains(pagePrefix))) {
                 evict(cache, cacheKey);
             }
         }
+    }
+
+    /**
+     * Reads back the {@code user_course_notification_<userId>_<courseId>_} prefix of a paged notification key.
+     * <p>
+     * Count keys carry a literal segment where the user id sits in a paged key, so they never produce a prefix that
+     * can collide with one: they are matched by their exact key instead.
+     *
+     * @param key the cache key to inspect
+     * @return the prefix, or {@code null} if the key is not a paged notification key
+     */
+    @Nullable
+    private static String userCoursePrefixOf(String key) {
+        if (!key.startsWith(USER_COURSE_NOTIFICATION_CACHE_KEY_PREFIX)) {
+            return null;
+        }
+        int endOfUserId = key.indexOf('_', USER_COURSE_NOTIFICATION_CACHE_KEY_PREFIX.length());
+        if (endOfUserId < 0) {
+            return null;
+        }
+        int endOfCourseId = key.indexOf('_', endOfUserId + 1);
+        return endOfCourseId < 0 ? null : key.substring(0, endOfCourseId + 1);
     }
 
     /**

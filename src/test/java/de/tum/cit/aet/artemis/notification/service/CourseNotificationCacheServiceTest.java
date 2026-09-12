@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,11 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.cache.support.NoOpCacheManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.cache.KeyEnumerableCache;
 
 /**
  * Exercises cache invalidation against the cache that Spring actually writes to.
@@ -193,6 +198,87 @@ class CourseNotificationCacheServiceTest {
 
         assertThatCode(() -> service.invalidateCourseNotificationCacheForUsers(Set.of(createUserWithId(1L)), COURSE_ID)).doesNotThrowAnyException();
         assertThatCode(service::clearCourseNotificationCache).doesNotThrowAnyException();
+    }
+
+    /**
+     * Course 12 and course 123 share a key prefix. Matching on the prefix without its trailing separator evicted both,
+     * so a notification in one course silently dropped the other course's cached pages.
+     */
+    @Test
+    void shouldKeepEntriesOfACourseWhoseIdStartsWithTheInvalidatedOne() {
+        User user = createUserWithId(1L);
+        seedCacheEntries(user.getId(), 12L);
+        seedCacheEntries(user.getId(), 123L);
+
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user), 12L);
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(cachedKeys()).noneMatch(key -> key.toString().endsWith("_1_12_page0"));
+            assertThat(cachedKeys()).anyMatch(key -> key.toString().endsWith("_1_123_page0"));
+            assertThat(cachedKeys()).anyMatch(key -> key.toString().equals("user_course_notification_count_1_123"));
+        });
+    }
+
+    /**
+     * Enumerating the keys is the expensive part of an invalidation: on a distributed cache it pulls the whole key set
+     * over the network. A course-wide notification invalidates for every enrolled user at once, so the enumeration has
+     * to happen once for the whole set rather than once per user.
+     */
+    @Test
+    void shouldEnumerateTheCacheOnceRegardlessOfHowManyUsersAreInvalidated() {
+        var countingCache = new KeyCountingCache(CACHE_NAME);
+        var service = new CourseNotificationCacheService(new SingleCacheManager(countingCache));
+        Set<User> users = new HashSet<>();
+        for (long userId = 1; userId <= 50; userId++) {
+            countingCache.put("user_course_notification_" + userId + "_" + COURSE_ID + "_page0", "cached");
+            countingCache.put("user_course_notification_count_" + userId + "_" + COURSE_ID, "cached");
+            users.add(createUserWithId(userId));
+        }
+
+        service.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(countingCache.keyEnumerations()).isEqualTo(1);
+            assertThat(countingCache.cacheKeys()).isEmpty();
+        });
+    }
+
+    /**
+     * A cache that reports how often its keys were enumerated, so the test can pin the cost of an invalidation.
+     */
+    private static final class KeyCountingCache extends ConcurrentMapCache implements KeyEnumerableCache {
+
+        private final AtomicInteger keyEnumerations = new AtomicInteger();
+
+        private KeyCountingCache(String name) {
+            super(name);
+        }
+
+        @Override
+        public Set<Object> cacheKeys() {
+            keyEnumerations.incrementAndGet();
+            return new HashSet<>(getNativeCache().keySet());
+        }
+
+        private int keyEnumerations() {
+            return keyEnumerations.get();
+        }
+    }
+
+    /**
+     * A cache manager serving exactly one cache, so the counting cache above is the one the service resolves.
+     */
+    private record SingleCacheManager(Cache cache) implements CacheManager {
+
+        @Override
+        public Cache getCache(String name) {
+            return cache.getName().equals(name) ? cache : null;
+        }
+
+        @Override
+        public Collection<String> getCacheNames() {
+            return Set.of(cache.getName());
+        }
     }
 
     private User createUserWithId(Long id) {
