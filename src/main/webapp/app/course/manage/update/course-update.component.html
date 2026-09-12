@@ -461,48 +461,6 @@
                         </div>
                     }
                 </jhi-feature-overlay>
-                @if (isAtLeastInstructor() && isAthenaEnabled()) {
-                    <div class="nested-form-group-head flex items-center gap-2">
-                        <tum-ui-checkbox
-                            inputId="field_athenaFeedbackEnabled"
-                            name="athenaFeedbackEnabled"
-                            [checked]="athenaFeedbackEnabled()"
-                            (changed)="changeAthenaFeedbackEnabled()"
-                        />
-                        <label jhiTranslate="artemisApp.course.athenaConfig.aiFeedbackEnabled.label" for="field_athenaFeedbackEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip' | artemisTranslate" />
-                    </div>
-                    @if (athenaFeedbackEnabled()) {
-                        <div class="nested-form-group flex items-center gap-2">
-                            <tum-ui-checkbox
-                                inputId="field_athenaFormativeFeedbackEnabled"
-                                name="athenaFormativeFeedbackEnabled"
-                                [checked]="!!course.athenaFormativeFeedbackEnabled"
-                                (changed)="changeAthenaFormativeFeedback()"
-                            />
-                            <label jhiTranslate="artemisApp.course.athenaConfig.formativeFeedbackEnabled.label" for="field_athenaFormativeFeedbackEnabled"></label>
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-secondary"
-                                [tumUiTooltip]="'artemisApp.course.athenaConfig.formativeFeedbackEnabled.tooltip' | artemisTranslate"
-                            />
-                        </div>
-                        <div class="nested-form-group flex items-center gap-2">
-                            <tum-ui-checkbox
-                                inputId="field_athenaGradingFeedbackEnabled"
-                                name="athenaGradingFeedbackEnabled"
-                                [checked]="!!course.athenaGradingFeedbackEnabled"
-                                (changed)="changeAthenaGradingFeedback()"
-                            />
-                            <label jhiTranslate="artemisApp.course.athenaConfig.gradingFeedbackEnabled.label" for="field_athenaGradingFeedbackEnabled"></label>
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-secondary"
-                                [tumUiTooltip]="'artemisApp.course.athenaConfig.gradingFeedbackEnabled.tooltip' | artemisTranslate"
-                            />
-                        </div>
-                    }
-                }
                 <!-- Not part of model -->
                 <div class="nested-form-group-head flex items-center gap-2">
                     <tum-ui-checkbox

@@ -17,7 +17,9 @@
             "copied": "Kopiert",
             "new": "Neu",
             "expand": "Erweitern",
-            "collapse": "Einklappen"
+            "collapse": "Einklappen",
+            "enabled": "Aktiviert",
+            "disabled": "Deaktiviert"
         },
         "weekdays": {
             "monday": "Montag",
