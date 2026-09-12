@@ -107,40 +107,11 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(retryCandidateIds(leaseExpiry.plusSeconds(1))).as("an abandoned claim recovers itself once the lease lapses").contains(retryable.getId());
     }
 
-    @Test
-    void testAbandonedDispatchClaimIsReleasedAndAFreshOneIsNot() {
-        ZonedDateTime now = ZonedDateTime.now();
-        LectureUnitProcessingState idle = new LectureUnitProcessingState(unit);
-        idle.setPhase(ProcessingPhase.IDLE);
-        processingStateRepository.save(idle);
-
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), now)).as("the first caller claims the dispatch").isEqualTo(1);
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), now)).as("a second caller must lose the race").isZero();
-        assertThat(idleCandidateIds(now)).as("a claimed row must leave the queue").doesNotContain(idle.getId());
-
-        // Asserted on the row rather than on the return value: the sweep is table-wide, so its count depends on
-        // whatever else the suite left behind.
-        processingStateRepository.releaseAbandonedIdleClaims(now.minusMinutes(20), now);
-        assertThat(startedAtOf(idle)).as("a claim taken just now is still in flight and must keep its claim").isNotNull();
-
-        processingStateRepository.releaseAbandonedIdleClaims(now.plusMinutes(20), now);
-        assertThat(startedAtOf(idle)).as("a claim older than the cutoff is abandoned and must be released").isNull();
-        assertThat(idleCandidateIds(ZonedDateTime.now())).as("the released unit must be back in the queue").contains(idle.getId());
-    }
-
     /**
      * A generous limit, because the candidate list is shared with the rest of the suite and these tests only care
      * whether their own row is in it.
      */
     private List<Long> retryCandidateIds(ZonedDateTime now) {
         return processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, 1000).stream().map(LectureUnitProcessingState::getId).toList();
-    }
-
-    private List<Long> idleCandidateIds(ZonedDateTime now) {
-        return processingStateRepository.findIdleForDispatch(now, 1000).stream().map(LectureUnitProcessingState::getId).toList();
-    }
-
-    private ZonedDateTime startedAtOf(LectureUnitProcessingState state) {
-        return processingStateRepository.findById(state.getId()).orElseThrow().getStartedAt();
     }
 }

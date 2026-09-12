@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Stage ledger, dispatch priority, and quality re-ingestion memory for lecture unit processing.
+
+        The stage columns let stuck detection distinguish three states that one heartbeat timer cannot:
+        dead (no heartbeats), stalled (heartbeats arrive but the progress counter stopped moving), and
+        merely slow (progress keeps moving through a long stage). current_stage/stage_started_at/
+        stage_progress/stage_total mirror the optional stage fields Iris reports with its heartbeats;
+        last_progress_at records when the progress counter last advanced.
+
+        dispatch_priority orders the queue: 0 for user- and content-triggered work, higher values for
+        backfill and reconcile requeues, so draining old courses never starves a fresh upload. NULL is
+        read as 0 so pre-existing rows keep their behavior.
+
+        force_reingest marks a quality re-ingestion: the dispatch forwards it to Iris, which then
+        bypasses its structural skip checks so unchanged content is genuinely re-processed.
+        last_quality_pipeline_version records the newest ingestion pipeline version a quality requeue
+        was already issued for, which is what guarantees at most one quality re-run per version.
+
+        All columns are nullable and carry no data migration: rows ingested before this change simply
+        have no stage or quality history until their next dispatch.
+    -->
+    <changeSet id="20260909120000-1" author="artemis">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="current_stage" type="VARCHAR(64)"/>
+            <column name="stage_started_at" type="timestamp(3)"/>
+            <column name="stage_progress" type="INT"/>
+            <column name="stage_total" type="INT"/>
+            <column name="last_progress_at" type="timestamp(3)"/>
+            <column name="dispatch_priority" type="SMALLINT"/>
+            <column name="force_reingest" type="BOOLEAN"/>
+            <column name="last_quality_pipeline_version" type="INT"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

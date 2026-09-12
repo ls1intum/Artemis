@@ -199,8 +199,11 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
             // Update lastUpdated on every non-terminal callback so stuck detection
-            // can use "time since last callback" instead of "time since phase started"
-            processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
+            // can use "time since last callback" instead of "time since phase started".
+            // The optional stage fields feed the stage ledger, which distinguishes a
+            // stalled run (heartbeats without progress) from a merely slow one.
+            processingStateCallbackApi
+                    .ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId(), statusUpdate.stageName(), statusUpdate.stageProgress(), statusUpdate.stageTotal()));
         }
     }
 
