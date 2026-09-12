@@ -49,6 +49,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -121,6 +124,8 @@ describe('ModelingAssessmentEditorComponent', () => {
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
         mockAuth.hasAnyAuthorityDirect([]);
         mockAuth.identity();
+        // Athena active by default; the "module inactive" case is covered explicitly below.
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
         fixture.detectChanges();
 
         router = TestBed.inject(Router);
@@ -275,6 +280,9 @@ describe('ModelingAssessmentEditorComponent', () => {
             // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
             // without clearing them left the page blank instead of saying that there is nothing to assess.
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module' } as unknown as ModelingExercise);
+            component.isAssessor.set(true);
+            component.hasAutomaticFeedback.set(true);
 
             paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
             await fixture.whenStable();
@@ -282,6 +290,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.submission()).toBeUndefined();
             expect(component.loadingInitialSubmission()).toBe(false);
             expect(component.isLoading()).toBe(false);
+            // Regression: stale exercise/assessor/feedback state from a previous submission must not keep the
+            // opt-in banner alive, and fetchAndApplyFeedbackSuggestions() must no longer be callable without a submission.
+            expect(component.modelingExercise()).toBeUndefined();
+            expect(component.isAssessor()).toBe(false);
+            expect(component.hasAutomaticFeedback()).toBe(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {
@@ -366,6 +380,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
             submission.results![0].feedbacks = [];
             vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
             const suggestion = { ...new Feedback(), reference: 'element:1', type: FeedbackType.MANUAL };
             const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
 
@@ -419,6 +434,48 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.submission()).toBe(mockSubmission);
             expect(component.assessmentsAreValid()).toBe(false);
+        });
+
+        it('should not automatically fetch feedback suggestions when the assessor has not accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling' } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions');
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should automatically fetch feedback suggestions once Athena is active and the assessor has accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling', course: { athenaGradingFeedbackEnabled: true } } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalled();
         });
     });
 
@@ -810,7 +867,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should report feedback suggestions not enabled', () => {
         component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
         component.ngOnInit();
-        expect(component.isFeedbackSuggestionsEnabled).toBe(false);
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
     it('should report feedback suggestions enabled', () => {
@@ -818,10 +875,24 @@ describe('ModelingAssessmentEditorComponent', () => {
         courseWithAthena.athenaGradingFeedbackEnabled = true;
         component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
         component.ngOnInit();
-        expect(component.isFeedbackSuggestionsEnabled).toBe(true);
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(true);
+    });
+
+    it('should report feedback suggestions not enabled when the Athena module is inactive, even if the course flag is set', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        const courseWithAthena = new Course();
+        courseWithAthena.athenaGradingFeedbackEnabled = true;
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
+        component.ngOnInit();
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
     describe('feedback suggestions chrome', () => {
+        beforeEach(() => {
+            // These tests cover notice resolution once the assessor has already opted into AI usage; the opt-in gating itself is covered separately below.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+        });
+
         const setNoticeInputs = (overrides: Partial<{ loading: boolean; automatic: boolean; assessor: boolean; enabled: boolean }> = {}) => {
             const course = new Course();
             course.athenaGradingFeedbackEnabled = overrides.enabled ?? false;
@@ -934,5 +1005,46 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
         expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            const courseWithAthena = new Course();
+            courseWithAthena.athenaGradingFeedbackEnabled = true;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should not require opt-in when feedback suggestions are not enabled for the course', () => {
+            const courseWithoutAthena = new Course();
+            courseWithoutAthena.athenaGradingFeedbackEnabled = false;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithoutAthena, undefined));
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should fetch feedback suggestions once the assessor opts in via the hint', () => {
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            component.submission.set(getSubmissionWithData());
+            component.result.set(getSubmissionWithData().results![0] as unknown as Result);
+
+            component.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
     });
 });

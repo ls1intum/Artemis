@@ -47,6 +47,9 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -76,6 +79,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
 
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
@@ -250,7 +255,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        if (this.isFeedbackSuggestionsEnabled) {
+        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn()) {
             this.loadFeedbackSuggestions();
         }
 
@@ -286,8 +291,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
-    get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
+    // `exercise` is a plain field, not a signal, so these must stay getters: a `computed()` would only track
+    // `hasAcceptedAiUsage()` and never re-run when a new exercise is assigned in setPropertiesFromServerResponse().
+    isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+    }
+
+    requiresAiExperienceOptIn(): boolean {
+        return this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage();
+    }
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());
     }
 
     private checkPermissions(result?: Result): void {
