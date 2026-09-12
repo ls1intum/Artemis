@@ -10,7 +10,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -25,7 +24,7 @@ public record QuizExerciseWithoutQuestionsDTO(Long id, String title, String shor
         ZonedDateTime assessmentDueDate, DifficultyLevel difficulty, boolean visibleToStudents, CourseForQuizExerciseDTO course, String type, Boolean randomizeQuestionOrder,
         Integer allowedNumberOfAttempts, Integer remainingNumberOfAttempts, QuizMode quizMode, Integer duration, Set<QuizBatchDTO> quizBatches, boolean quizStarted,
         boolean quizEnded, IncludedInOverallScore includedInOverallScore, ExerciseMode mode, Double maxPoints, Double bonusPoints,
-        @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements CourseManagementExerciseDTO {
+        @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup) {
 
     /**
      * Creates a QuizExerciseWithoutQuestionsDTO object from a QuizExercise object.

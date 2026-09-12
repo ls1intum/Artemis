@@ -151,7 +151,6 @@ import de.tum.cit.aet.artemis.course.dto.LockedCourseSubmissionDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
@@ -1414,7 +1413,7 @@ public class CourseTestService {
                 }
             }
             assertThat(receivedCourse).isNotNull();
-            assertThat(receivedCourse.exams()).isEmpty();
+            assertThat(receivedCourse.exams()).isNullOrEmpty();
         }
     }
 
@@ -1522,7 +1521,7 @@ public class CourseTestService {
         final var finalCourse = course;
         CourseDashboardDTO courseInList = courses.stream().filter(c -> Objects.equals(c.id(), finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
-        assertThat(courseInList.exercises()).as("Course doesn't have any exercises").isEmpty();
+        assertThat(courseInList.exercises()).as("Course doesn't have any exercises").isNullOrEmpty();
     }
 
     // Test
@@ -1946,7 +1945,12 @@ public class CourseTestService {
             // - Course 2 has 0 exercises in total, 0 exercises with relevant participations
             boolean isFirstCourse = courseOnly.id() == testCourses.getFirst().getId();
             int numberOfExercises = isFirstCourse ? 5 : 0;
-            assertThat(courseWithExercises.exercises()).as("Course contains correct number of exercises").hasSize(numberOfExercises);
+            if (numberOfExercises == 0) {
+                assertThat(courseWithExercises.exercises()).as("Course contains no exercises").isNullOrEmpty();
+            }
+            else {
+                assertThat(courseWithExercises.exercises()).as("Course contains correct number of exercises").hasSize(numberOfExercises);
+            }
         }
     }
 

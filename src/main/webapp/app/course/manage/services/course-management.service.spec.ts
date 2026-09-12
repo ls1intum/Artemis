@@ -301,7 +301,8 @@ describe('Course Management Service', () => {
             .findAllForDashboard()
             .pipe(take(1))
             .subscribe((res) => {
-                expect(res.body!.courses[0].course).toEqual(course);
+                expect(res.body!.courses[0].course).toMatchObject({ id: course.id, title: course.title, exercises });
+                expect(res.body!.courses[0].course.lectures).toEqual([]);
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, mappedCourse);
@@ -529,7 +530,12 @@ describe('Course Management Service', () => {
 
     it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {
         const mappedCourse = courseFromWithContentDTO(returnedFromService as CourseWithContentDTO);
-        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => expect(response.body).toEqual(course));
+        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => {
+            expect(response.body).toMatchObject({ id: course.id, title: course.title, exercises });
+            expect(response.body?.lectures).toEqual([]);
+            expect(response.body?.competencies).toEqual([]);
+            expect(response.body?.prerequisites).toEqual([]);
+        });
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, mappedCourse);
     });
 

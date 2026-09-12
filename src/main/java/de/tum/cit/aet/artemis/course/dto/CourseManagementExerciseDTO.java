@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 @JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExerciseResponseDTO.class, name = "programming"), @JsonSubTypes.Type(value = TextExerciseResponseDTO.class, name = "text"),
         @JsonSubTypes.Type(value = ModelingExerciseResponseDTO.class, name = "modeling"), @JsonSubTypes.Type(value = FileUploadExerciseDTO.class, name = "file-upload"),
-        @JsonSubTypes.Type(value = QuizExerciseWithoutQuestionsDTO.class, name = "quiz") })
+        @JsonSubTypes.Type(value = CourseManagementQuizExerciseDTO.class, name = "quiz") })
 public interface CourseManagementExerciseDTO {
 
     Long id();
@@ -48,7 +47,7 @@ public interface CourseManagementExerciseDTO {
             case TextExercise textExercise -> TextExerciseResponseDTO.of(textExercise);
             case ModelingExercise modelingExercise -> ModelingExerciseResponseDTO.of(modelingExercise);
             case FileUploadExercise fileUploadExercise -> FileUploadExerciseDTO.forCourseList(fileUploadExercise);
-            case QuizExercise quizExercise -> QuizExerciseWithoutQuestionsDTO.of(quizExercise);
+            case QuizExercise quizExercise -> CourseManagementQuizExerciseDTO.of(quizExercise);
             default -> throw new IllegalArgumentException("Unsupported exercise type: " + exercise.getClass().getName());
         };
     }
