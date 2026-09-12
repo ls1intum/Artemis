@@ -1,0 +1,132 @@
+{
+    "artemisApp": {
+        "courseIngestionDashboard": {
+            "title": "Index Dashboard",
+            "subtitle": "Per course, how complete the global-search index is compared to what the database expects. Read-only.",
+            "loading": "Loading...",
+            "overview": {
+                "title": "Search index overview",
+                "refresh": "Reload overview",
+                "error": "Failed to load the index overview. Please try again."
+            },
+            "services": {
+                "title": "Services",
+                "reachable": "Weaviate reachable",
+                "unreachable": "Weaviate unreachable",
+                "address": "Address",
+                "irisReachable": "Iris reachable",
+                "irisUnreachable": "Iris unreachable",
+                "irisDisabled": "Iris disabled"
+            },
+            "collections": {
+                "title": "Indexed collections",
+                "collection": "Collection",
+                "objects": "Objects",
+                "unavailable": "Unavailable",
+                "contents": {
+                    "slides": "Slides",
+                    "transcript": "Transcript",
+                    "segments": "Aligned segments",
+                    "unitSummary": "Unit summary"
+                }
+            },
+            "matrix": {
+                "title": "Coverage by course",
+                "lastUpdatedLabel": "Last updated",
+                "refresh": "Refresh data",
+                "refreshHint": "Recomputes coverage across all courses; may take a while and load Weaviate.",
+                "search": "Search courses",
+                "sortBy": "Sort by",
+                "filterByStatus": "Filter by status",
+                "filterByActive": "Filter by activity",
+                "empty": "No courses to show.",
+                "error": "Failed to load course coverage. Please try again.",
+                "courseFallback": "Course",
+                "legend": "Each cell shows indexed / expected per type. Green = complete, red = missing, grey = none expected.",
+                "sort": {
+                    "name": "Name",
+                    "release": "Release date",
+                    "worstFirst": "Worst first",
+                    "lastIngested": "Last ingested"
+                },
+                "status": {
+                    "all": "All"
+                },
+                "active": {
+                    "all": "All",
+                    "active": "Active",
+                    "inactive": "Inactive"
+                },
+                "group": {
+                    "metadata": "Entity metadata",
+                    "content": "Lecture content"
+                },
+                "column": {
+                    "course": "Course",
+                    "release": "Release date",
+                    "status": "Status",
+                    "lastIngested": "Last ingested at"
+                },
+                "type": {
+                    "exercise": "Exercise",
+                    "lecture": "Lecture",
+                    "lecture_unit": "Unit",
+                    "exam": "Exam",
+                    "faq": "FAQ",
+                    "channel": "Channel",
+                    "course": "Course",
+                    "slides": "Slides",
+                    "transcript": "Transcript",
+                    "segment_summary": "Seg. summary",
+                    "unit_summary": "Unit summary"
+                },
+                "openBrowser": "Show indexed content for this course"
+            },
+            "browser": {
+                "ariaLabel": "Indexed content for this course",
+                "subtitle": "Browse everything indexed for this course: drill from lecture to unit to collection, or pick a metadata type to see what is missing.",
+                "typesIncomplete": "types incomplete",
+                "selectPrompt": "Select an item on the left to inspect what is stored in Weaviate.",
+                "empty": "Nothing is indexed in Weaviate for this course yet.",
+                "error": "Failed to load the indexed content for this course. Please try again.",
+                "navigationLabel": "Indexed content navigation",
+                "entityMetadata": "Entity metadata",
+                "browseLectures": "Browse lectures",
+                "toggleLecture": "Show or hide this lecture's units",
+                "toggleUnit": "Show or hide this unit's content",
+                "untitledLecture": "Untitled lecture",
+                "untitledUnit": "Untitled unit",
+                "lectureNotIndexed": "not indexed",
+                "content_slides": "Slides",
+                "content_transcript": "Transcript",
+                "content_unit_summary": "Unit summary",
+                "content_segments": "Aligned segments",
+                "typeIncomplete": "type incomplete",
+                "detailError": "Failed to load what is stored here. Please try again.",
+                "storedObjects": "Stored objects",
+                "noObjects": "No objects are stored here yet.",
+                "noContentUnit": "No content is stored for this unit yet.",
+                "noFields": "No populated fields.",
+                "notIngested": "Expected but not indexed:",
+                "notIndexedRecord": "This is not indexed, so there is no stored record.",
+                "statIndexed": "Indexed",
+                "statExpected": "Expected",
+                "statMissing": "Missing",
+                "breadcrumb": "Breadcrumb",
+                "unitCount": "{{count}} lecture units",
+                "storedIn": "Stored in",
+                "dotComplete": "Complete",
+                "dotIncomplete": "Incomplete",
+                "missingContent": "Missing content:",
+                "openLecture": "Open lecture",
+                "openUnit": "Open unit",
+                "openCourse": "Open course"
+            },
+            "status": {
+                "COMPLETE": "Complete",
+                "INCOMPLETE": "Incomplete",
+                "EMPTY": "Empty"
+            }
+        }
+    }
+}

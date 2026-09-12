@@ -101,15 +101,31 @@
             "awaitingProcessing": "Wartet auf Verarbeitung",
             "processingTranscribing": "Transkription läuft",
             "processingIngesting": "Indizierung läuft",
-            "processingComplete": "Verarbeitung abgeschlossen",
+            "processingVerifying": "Wird überprüft",
+            "processingLostContact": "Verbindung verloren",
+            "processingComplete": "Indiziert",
             "processingFailed": "Verarbeitung fehlgeschlagen",
+            "processingSkipped": "Nicht indiziert",
+            "processingSkippedTooltip": "Iris ist für diese Einheit nicht verfügbar, daher wurde ihr Inhalt nicht indiziert. Sie wird automatisch verarbeitet, sobald Iris für den Kurs aktiviert ist.",
             "videoSlideSync": {
                 "toggle": "Folien und Video synchronisieren"
             },
             "processing": {
+                "lostContactTooltip": "Iris meldet für diesen Lauf keine Aktivität mehr. Er wird automatisch zurückgeholt und erneut gestartet, ohne das Wiederholungsbudget zu verbrauchen.",
+                "lastSeen": "zuletzt vor {{ time }}",
                 "cancelled": "Verarbeitung wurde abgebrochen",
+                "retriedLabelOne": "Wiederholung",
+                "retriedLabelOther": "Wiederholungen",
+                "retriedTooltip": "Nach einem vorübergehenden Fehler automatisch {{ count }}-mal wiederholt.",
+                "stage": {
+                    "readingSlides": "Folien werden gelesen",
+                    "summarizingSlides": "Folien werden zusammengefasst",
+                    "summarizingTranscript": "Transkript wird zusammengefasst",
+                    "indexingTranscript": "Transkript wird indiziert"
+                },
                 "error": {
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "attachmentUnreadable": "Die Anhangsdatei konnte nicht vom Server gelesen werden. Lade die Datei erneut hoch, um die Verarbeitung neu zu starten.",
                     "processingFailed": "Verarbeitung fehlgeschlagen",
                     "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
                     "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",

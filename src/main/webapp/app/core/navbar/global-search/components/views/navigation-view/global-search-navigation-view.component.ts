@@ -1,33 +1,11 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
-import {
-    faBook,
-    faCalendarCheck,
-    faCheckDouble,
-    faComment,
-    faComments,
-    faCube,
-    faFileLines,
-    faFileUpload,
-    faFont,
-    faGraduationCap,
-    faHashtag,
-    faKeyboard,
-    faProjectDiagram,
-    faQuestion,
-    faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
+import { faCalendarCheck, faCheckDouble, faFileUpload, faFont, faHashtag, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
+import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
+import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
@@ -35,34 +13,17 @@ import { SearchOverlayService } from 'app/core/navbar/global-search/services/sea
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 
-// Number of fixed action buttons rendered above the search results.
-// Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
-// Increment this constant when adding a new action button.
-export const NAV_ACTION_COUNT = 1;
-
-/** Keyboard-navigation index of the lecture-search action button. */
-export const LECTURE_SEARCH_ACTION_INDEX = 0;
-
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        GlobalSearchActionItemComponent,
-        GlobalSearchIrisAnswerComponent,
-        FaIconComponent,
-        SearchableEntityItemComponent,
-        SearchResultItemComponent,
-        SkeletonModule,
-        ArtemisTranslatePipe,
-    ],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
-    private readonly profileService = inject(ProfileService);
-    private readonly accountService = inject(AccountService);
+    private readonly availability = inject(IrisSearchAvailabilityService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -72,6 +33,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
     readonly activeFilters = input<string[]>([]);
+    /** Active course filter id, forwarded to the Iris answer so it scopes its retrieval. */
+    readonly activeCourseId = input<number | undefined>(undefined);
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -94,34 +57,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    // Emits when an action button is activated (click or Enter); the modal navigates to that view.
-    readonly viewSelected = output<SearchView>();
-    readonly entityClick = output<SearchableEntity>();
-
     private readonly router = inject(Router);
     private readonly overlay = inject(SearchOverlayService);
-
-    protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
-    protected readonly LECTURE_SEARCH_ACTION_INDEX = LECTURE_SEARCH_ACTION_INDEX;
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // False when artemis.iris.enabled = false in the server config.
-    private readonly irisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-    // True only when the module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
-    protected readonly irisEnabled = computed(() => {
-        if (!this.irisModuleEnabled) return false;
-        const usage = this.accountService.userIdentity()?.selectedLLMUsage;
-        return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
-    });
-    // Lecture search button is only visible when no filter is active
-    protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
-    // Number of action buttons currently visible (only the lecture search button now)
-    protected readonly actionButtonCount = computed(() => {
-        if (!this.irisEnabled()) return 0;
-        return this.showLectureButton() ? 1 : 0;
-    });
+    // True only when the Iris module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
+    protected readonly irisEnabled = this.availability.contentSearchAvailable;
 
     constructor() {
         super();
@@ -150,116 +93,26 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Searchable entities for initial view
-    protected searchableEntities: SearchableEntity[] = [
-        {
-            id: 'courses',
-            title: 'global.search.entities.coursesTitle',
-            description: 'global.search.entities.coursesDescription',
-            icon: faGraduationCap,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['course'],
-        },
-        {
-            id: 'exercises',
-            title: 'global.search.entities.exercisesTitle',
-            description: 'global.search.entities.exercisesDescription',
-            icon: faCube,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exercise'],
-        },
-        {
-            id: 'lectures',
-            title: 'global.search.entities.lecturesTitle',
-            description: 'global.search.entities.lecturesDescription',
-            icon: faBook,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['lecture', 'lecture_unit'],
-        },
-        {
-            id: 'communication',
-            title: 'global.search.entities.communicationTitle',
-            description: 'global.search.entities.communicationDescription',
-            icon: faComments,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['channel', 'post', 'answer_post'],
-        },
-        {
-            id: 'faqs',
-            title: 'global.search.entities.faqsTitle',
-            description: 'global.search.entities.faqsDescription',
-            icon: faQuestionCircle,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['faq'],
-        },
-        {
-            id: 'exams',
-            title: 'global.search.entities.examsTitle',
-            description: 'global.search.entities.examsDescription',
-            icon: faCalendarCheck,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exam'],
-        },
-    ];
-
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => {
-        const buttonCount = this.actionButtonCount();
-        if (this.showResults()) {
-            // When showing results, action buttons may be visible + results
-            return buttonCount + this.results().length;
-        } else {
-            // When showing entities, count action buttons + entities
-            return buttonCount + this.searchableEntities.length;
-        }
-    });
+    readonly itemCount = computed(() => this.results().length);
 
-    protected readonly SearchView = SearchView;
-    protected readonly faFileLines = faFileLines;
     protected readonly faHashtag = faHashtag;
 
-    protected onEntityItemClick(entity: SearchableEntity) {
-        this.entityClick.emit(entity);
-    }
-
     protected getIconForType(type?: string, badge?: string): IconDefinition {
-        if (type === 'exercise') {
-            const normalizedBadge = badge?.toLowerCase();
-            if (normalizedBadge === 'programming') return this.faKeyboard;
-            if (normalizedBadge === 'modeling') return this.faProjectDiagram;
-            if (normalizedBadge === 'text') return this.faFont;
-            if (normalizedBadge === 'file upload') return this.faFileUpload;
-            if (normalizedBadge === 'quiz') return this.faCheckDouble;
-            return this.faQuestion;
-        }
-        if (type === 'lecture' || type === 'lecture_unit') {
-            return faBook;
-        }
-        if (type === 'channel') {
-            return faHashtag;
-        }
-        if (type === 'post' || type === 'answer_post') {
-            return faComment;
-        }
-        if (type === 'faq') {
-            return faQuestionCircle;
-        }
-        if (type === 'exam') {
-            return this.faCalendarCheck;
-        }
-        if (type === 'course') {
-            return faGraduationCap;
-        }
-        return this.faQuestion;
+        return iconForEntityType(type, badge);
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        if (result.type === LECTURE_CONTENT_TYPE) {
+            const link = result.metadata?.['link'];
+            const queryParams = result.metadata?.['queryParams'];
+            if (link) {
+                void this.router.navigate([link], { queryParams });
+            }
+            this.overlay.close();
+            return;
+        }
+
         const courseId = result.metadata?.['courseId'];
         if (!courseId) {
             this.overlay.close();
@@ -321,7 +174,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
-        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
+        // The badge is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
+        // exam exercise-group route segment prefix. Guard against an unknown badge (e.g. the generic "exercise"
+        // fallback) so it can never build an invalid segment like "exercise-exercises".
+        const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
+        const segment = result.badge && validExerciseSegments.has(result.badge) ? result.badge : 'text';
+        const typeSegment = segment + '-exercises';
         void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
     }
 
@@ -376,32 +234,11 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
         if (idx < 0) return;
-        const buttonCount = this.actionButtonCount();
 
-        // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled() && idx === LECTURE_SEARCH_ACTION_INDEX) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Lecture);
-            return;
-        }
-
-        // Handle items after action buttons
-        const itemIndex = idx - buttonCount;
-
-        if (this.showResults()) {
-            // When showing results
-            event.preventDefault();
-            const result = this.results()[itemIndex];
-            if (result) {
-                this.navigateToResult(result);
-            }
-        } else {
-            // When showing entities
-            event.preventDefault();
-            const entity = this.searchableEntities[itemIndex];
-            if (entity && entity.enabled) {
-                this.entityClick.emit(entity);
-            }
+        event.preventDefault();
+        const result = this.results()[idx];
+        if (result) {
+            this.navigateToResult(result);
         }
     }
 }

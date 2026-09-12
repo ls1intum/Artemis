@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -33,12 +35,24 @@ public class ExamRepositoryApi extends AbstractExamApi {
         return examRepository.findByIdElseThrow(id);
     }
 
+    public Optional<Exam> findById(long id) {
+        return examRepository.findById(id);
+    }
+
     public Set<Exam> findActiveExams(Set<Long> courseIds, long userId, ZonedDateTime visible, ZonedDateTime end) {
         return examRepository.findActiveExams(courseIds, userId, visible, end);
     }
 
     public List<Exam> findByCourseId(long courseId) {
         return examRepository.findByCourseId(courseId);
+    }
+
+    public List<CourseEntityIdDTO> findExamIdCourseIdPairsForCourses(Collection<Long> courseIds) {
+        return examRepository.findExamIdCourseIdPairsForCourses(courseIds);
+    }
+
+    public List<Exam> findAllById(Iterable<Long> examIds) {
+        return examRepository.findAllById(examIds);
     }
 
     public Set<Exam> findByCourseIdForUser(Long courseId, long userId, ZonedDateTime now) {

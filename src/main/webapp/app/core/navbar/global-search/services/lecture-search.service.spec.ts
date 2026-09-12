@@ -44,6 +44,34 @@ describe('LectureSearchService', () => {
         req.flush([]);
     });
 
+    it('should include courseIds in the body when a non-empty array is passed', () => {
+        service.search('signals', 10, [3, 7]).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10, courseIds: [3, 7] });
+
+        req.flush([]);
+    });
+
+    it('should omit courseIds from the body when an empty array is passed', () => {
+        service.search('signals', 10, []).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).not.toHaveProperty('courseIds');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10 });
+
+        req.flush([]);
+    });
+
+    it('should omit courseIds from the body when the argument is omitted', () => {
+        service.search('signals').subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).not.toHaveProperty('courseIds');
+
+        req.flush([]);
+    });
+
     it('should return the results from the server', () => {
         const mockResults: LectureSearchResult[] = [
             {

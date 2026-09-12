@@ -107,6 +107,7 @@ public class ProcessingStateRecoveryService {
         state.setStartedAt(null);
         state.setRetryEligibleAt(null);
         state.setLastUpdated(ZonedDateTime.now());
+        state.clearStageProgress();
         processingStateRepository.save(state);
 
         notifyProcessingStateChange(state, transcriptionStatus);

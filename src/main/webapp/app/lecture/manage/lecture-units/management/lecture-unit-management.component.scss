@@ -33,24 +33,19 @@
     }
 
     .lecture-unit-type-container {
-        position: relative;
         flex: 1 0 0;
         margin: 0 20px;
 
+        // The markers sit in flow directly above the card and share its left edge, so the row height is
+        // whatever the markers need. They used to be absolutely positioned at a negative offset, with the
+        // container reserving space through a hand-tuned margin-top, which left the badges hanging off the
+        // card's left edge and had to be re-tuned by hand whenever a badge changed size.
         .unit-badges {
-            position: absolute;
-            left: -0.75rem;
-            top: -10px;
-        }
-    }
-
-    &.attachment {
-        // margin-top is set dynamically via getContainerMarginTop() based on badge count
-
-        .lecture-unit-type-container .unit-badges {
-            > div {
-                width: min-content;
-            }
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25rem;
+            margin-bottom: 0.375rem;
         }
     }
 }

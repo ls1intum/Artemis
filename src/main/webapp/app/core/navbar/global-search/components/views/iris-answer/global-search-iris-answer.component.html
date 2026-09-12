@@ -13,15 +13,38 @@
                 <jhi-iris-thinking-bubble [message]="'global.search.irisAnswerThinking' | artemisTranslate" />
             </div>
         } @else {
-            <!-- Answer window with optional collapse -->
-            <div class="iris-answer-region">
+            <!-- Answer window with optional collapse. The wrapper delegates hover/tap
+                 on the inline citation chips rendered inside the markdown innerHTML. -->
+            <div
+                class="iris-answer-region"
+                (mouseover)="onAnswerOver($event)"
+                (mouseout)="onAnswerOut($event)"
+                (focus)="onAnswerOver($event)"
+                (blur)="onAnswerOut($event)"
+                (click)="onAnswerClick($event)"
+                (keydown.escape)="clearCitationHighlight()"
+            >
                 <div
                     #answerBody
                     class="iris-answer-text markdown-preview"
                     [class.is-clamped]="shouldClamp()"
                     [class.is-expanded]="isOverflowing() && isExpanded()"
-                    [jhiMarkdown]="irisResult()?.answer"
+                    [jhiMarkdown]="citationView().html"
+                    (markdownRendered)="onMarkdownRendered()"
                 ></div>
+                @if (citationPopover(); as popover) {
+                    <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">
+                        <fa-icon
+                            [icon]="popover.icon"
+                            class="iris-chip-icon flex-shrink-0"
+                            [attr.aria-label]="popover.entityTypeKey ? (popover.entityTypeKey | artemisTranslate) : undefined"
+                        />
+                        <span class="iris-cite-popover-name text-truncate">{{ popover.name }}</span>
+                        @if (popover.meta) {
+                            <span class="iris-chip-meta text-body-secondary">· {{ popover.meta }}</span>
+                        }
+                    </div>
+                }
             </div>
 
             <!-- Show more / less — sits below the text, never overlapping -->
@@ -37,20 +60,51 @@
             }
 
             <!-- Source chips — first INITIAL_VISIBLE_SOURCE_COUNT inline; all chips in one wrapping row when expanded -->
-            @if (sources().length > 0) {
+            @if (sources().length > 0 || entitySources().length > 0) {
                 <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
                     @for (source of visibleSources(); track $index) {
                         <a
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
+                            [class.iris-chip-lit]="activeCitations().has($index + 1)"
+                            (mouseenter)="setChipHighlight($index + 1)"
+                            (mouseleave)="setChipHighlight(undefined)"
                             [routerLink]="source.lectureUnit.link"
                             [queryParams]="source.lectureUnit.queryParams"
                         >
+                            @if (hasCitations()) {
+                                <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ $index + 1 }}</span>
+                            }
                             <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
                             @if (source.lectureUnit.displayMeta) {
                                 <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit.displayMeta }}</span>
                             }
                         </a>
+                    }
+                    <!-- Entity sources (course information): few by construction, numbered after the lecture sources -->
+                    @for (entitySource of entitySources(); track $index) {
+                        <button
+                            class="iris-chip d-inline-flex align-items-center text-nowrap rounded-pill"
+                            type="button"
+                            data-testid="iris-entity-chip"
+                            [class.iris-chip-lit]="activeCitations().has(sources().length + $index + 1)"
+                            (mouseenter)="setChipHighlight(sources().length + $index + 1)"
+                            (mouseleave)="setChipHighlight(undefined)"
+                            (click)="openEntitySource(entitySource)"
+                        >
+                            @if (hasCitations()) {
+                                <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ sources().length + $index + 1 }}</span>
+                            }
+                            <fa-icon
+                                [icon]="entityIcon(entitySource)"
+                                class="iris-chip-icon flex-shrink-0"
+                                [attr.aria-label]="entityTypeLabelKey(entitySource.entityType) | artemisTranslate"
+                            />
+                            <span class="iris-chip-name text-truncate">{{ entitySource.title }}</span>
+                            @if (entitySource.course?.name) {
+                                <span class="iris-chip-meta text-body-secondary">· {{ entitySource.course?.name }}</span>
+                            }
+                        </button>
                     }
                     @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
                         <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">

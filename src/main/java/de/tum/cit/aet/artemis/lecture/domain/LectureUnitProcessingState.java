@@ -54,6 +54,16 @@ public class LectureUnitProcessingState extends DomainObject {
     private int retryCount = 0;
 
     /**
+     * Number of long-loop revivals of a FAILED unit (the reconciler's cooldown-spaced retries), bounding
+     * how long a genuinely-unprocessable unit that reports a generic error keeps being re-attempted. Unlike
+     * {@link #retryCount} it is NOT reset on each revival; it resets only when the unit reaches DONE, so a
+     * transient failure that eventually succeeds regains a full budget while a permanently-broken unit stops
+     * being revived after a bounded number of attempts and is left FAILED for manual attention.
+     */
+    @Column(name = "revival_count")
+    private int revivalCount = 0;
+
+    /**
      * Hash of the video source URL to detect changes.
      * When the video URL changes, processing should restart from the beginning.
      */
@@ -109,6 +119,93 @@ public class LectureUnitProcessingState extends DomainObject {
      */
     @Column(name = "retry_eligible_at")
     private ZonedDateTime retryEligibleAt;
+
+    /**
+     * Fingerprint of the source content sent with the current or most recent ingestion job.
+     * Computed at dispatch time and forwarded to Iris, which stamps it verbatim into the vector store.
+     */
+    @Column(name = "content_fingerprint", length = 80)
+    private String contentFingerprint;
+
+    /**
+     * Fingerprint of the last ingestion run whose terminal success callback arrived.
+     * The unit is verifiably up to date exactly when this matches the fingerprint of its current content.
+     */
+    @Column(name = "confirmed_fingerprint", length = 80)
+    private String confirmedFingerprint;
+
+    /**
+     * Name of the pipeline stage Iris last reported for the running job (e.g. "vision", "embedding").
+     * Stage-level liveness: together with the progress columns this distinguishes a stalled run
+     * (heartbeats arrive but progress stopped) from a merely slow one.
+     */
+    @Column(name = "current_stage", length = 64)
+    private String currentStage;
+
+    /**
+     * When the currently reported stage was first observed.
+     */
+    @Column(name = "stage_started_at")
+    private ZonedDateTime stageStartedAt;
+
+    /**
+     * Progress counter within the current stage, as reported by Iris (e.g. page 41 of 180).
+     */
+    @Column(name = "stage_progress")
+    private Integer stageProgress;
+
+    /**
+     * Total work items of the current stage, as reported by Iris.
+     */
+    @Column(name = "stage_total")
+    private Integer stageTotal;
+
+    /**
+     * When the progress counter last advanced. A running job whose heartbeats keep arriving while
+     * this timestamp ages past the stall window is wedged, not slow.
+     */
+    @Column(name = "last_progress_at")
+    private ZonedDateTime lastProgressAt;
+
+    /**
+     * When the worker holding this run last renewed its lease. Renewed on a fixed short interval by
+     * the Pyris worker, decoupled from pipeline progress, so a fresh value proves the worker process
+     * is alive even while a single stage runs for many minutes. Null for runs dispatched through the
+     * legacy push path (or by an Iris without worker support), which keep timeout-based stuck
+     * detection on {@code lastUpdated} instead.
+     */
+    @Column(name = "last_heartbeat_at")
+    private ZonedDateTime lastHeartbeatAt;
+
+    /**
+     * Boot id of the Pyris worker process holding this run's lease. Purely observational plus
+     * restart forensics: the lease expiry on {@code lastHeartbeatAt} is what reclaims the run, and a
+     * changed boot id in the worker's next call is what lets a restart be detected instantly.
+     */
+    @Column(name = "locked_by")
+    private String lockedBy;
+
+    /**
+     * Dispatch queue priority: 0 (or null) for user- and content-triggered work, higher values for
+     * backfill and reconcile requeues. Lower values dispatch first.
+     */
+    @Column(name = "dispatch_priority")
+    private Integer dispatchPriority;
+
+    /**
+     * True when the next dispatch is a quality re-ingestion: Iris bypasses its structural skip
+     * checks so unchanged content is genuinely re-processed. Cleared on terminal success.
+     */
+    @Column(name = "force_reingest")
+    private Boolean forceReingest;
+
+    /**
+     * Newest ingestion pipeline version a quality requeue was already issued for.
+     * Guarantees at most one quality re-run per pipeline version, which is what makes the
+     * quality re-ingestion loop terminate.
+     */
+    @Column(name = "last_quality_pipeline_version")
+    private Integer lastQualityPipelineVersion;
 
     public LectureUnitProcessingState() {
         // Default constructor for JPA
@@ -201,6 +298,133 @@ public class LectureUnitProcessingState extends DomainObject {
         this.retryEligibleAt = retryEligibleAt;
     }
 
+    public String getContentFingerprint() {
+        return contentFingerprint;
+    }
+
+    public void setContentFingerprint(String contentFingerprint) {
+        this.contentFingerprint = contentFingerprint;
+    }
+
+    public String getConfirmedFingerprint() {
+        return confirmedFingerprint;
+    }
+
+    public void setConfirmedFingerprint(String confirmedFingerprint) {
+        this.confirmedFingerprint = confirmedFingerprint;
+    }
+
+    public String getCurrentStage() {
+        return currentStage;
+    }
+
+    public ZonedDateTime getStageStartedAt() {
+        return stageStartedAt;
+    }
+
+    public Integer getStageProgress() {
+        return stageProgress;
+    }
+
+    public Integer getStageTotal() {
+        return stageTotal;
+    }
+
+    public ZonedDateTime getLastProgressAt() {
+        return lastProgressAt;
+    }
+
+    public ZonedDateTime getLastHeartbeatAt() {
+        return lastHeartbeatAt;
+    }
+
+    public void setLastHeartbeatAt(ZonedDateTime lastHeartbeatAt) {
+        this.lastHeartbeatAt = lastHeartbeatAt;
+    }
+
+    public String getLockedBy() {
+        return lockedBy;
+    }
+
+    /**
+     * Renew this run's worker lease: stamp the heartbeat time and record which worker process holds
+     * the run. Called for every worker heartbeat that lists this run's job token.
+     *
+     * @param workerBootId boot id of the Pyris worker process renewing the lease
+     */
+    public void renewLease(String workerBootId) {
+        this.lastHeartbeatAt = ZonedDateTime.now();
+        this.lockedBy = workerBootId;
+    }
+
+    public int getDispatchPriority() {
+        return dispatchPriority != null ? dispatchPriority : 0;
+    }
+
+    public void setDispatchPriority(Integer dispatchPriority) {
+        this.dispatchPriority = dispatchPriority;
+    }
+
+    public boolean isForceReingest() {
+        return Boolean.TRUE.equals(forceReingest);
+    }
+
+    public void setForceReingest(Boolean forceReingest) {
+        this.forceReingest = forceReingest;
+    }
+
+    public Integer getLastQualityPipelineVersion() {
+        return lastQualityPipelineVersion;
+    }
+
+    public void setLastQualityPipelineVersion(Integer lastQualityPipelineVersion) {
+        this.lastQualityPipelineVersion = lastQualityPipelineVersion;
+    }
+
+    /**
+     * Record the stage and progress a heartbeat reported.
+     * Tracks stage entry and progress-advance times so stuck detection can tell a stalled run
+     * (progress frozen while heartbeats arrive) from a slow one (progress keeps moving).
+     *
+     * @param stageName     the reported stage name; null leaves the stage ledger untouched
+     * @param stageProgress the progress counter within the stage; may be null
+     * @param stageTotal    the total work items of the stage; may be null
+     * @return true when the stage or the progress counter actually changed, so the caller can push a
+     *         live UI update only on real progress rather than on every bare heartbeat
+     */
+    public boolean recordStageProgress(String stageName, Integer stageProgress, Integer stageTotal) {
+        if (stageName == null) {
+            return false;
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        boolean stageChanged = !stageName.equals(this.currentStage);
+        boolean progressAdvanced = stageProgress != null && !stageProgress.equals(this.stageProgress);
+        if (stageChanged) {
+            this.currentStage = stageName;
+            this.stageStartedAt = now;
+        }
+        if (stageChanged || progressAdvanced) {
+            this.lastProgressAt = now;
+        }
+        this.stageProgress = stageProgress;
+        this.stageTotal = stageTotal;
+        return stageChanged || progressAdvanced;
+    }
+
+    /**
+     * Clear the run-scoped ledger (stage progress and worker lease), e.g. when a run leaves the
+     * in-flight phases. Both describe one specific run and must never leak into the next.
+     */
+    public void clearStageProgress() {
+        this.lastHeartbeatAt = null;
+        this.lockedBy = null;
+        this.currentStage = null;
+        this.stageStartedAt = null;
+        this.stageProgress = null;
+        this.stageTotal = null;
+        this.lastProgressAt = null;
+    }
+
     /**
      * Increment the retry count.
      */
@@ -228,6 +452,32 @@ public class LectureUnitProcessingState extends DomainObject {
         this.lastUpdated = ZonedDateTime.now();
         this.errorKey = null; // Clear error on phase transition
         this.retryEligibleAt = null; // Clear retry scheduling on phase transition
+        clearStageProgress(); // A new phase starts a fresh stage ledger
+        if (newPhase == ProcessingPhase.DONE) {
+            // A successful completion earns a fresh revival budget: a later transient failure of this unit
+            // should be revived from scratch, while only consecutive-without-success revivals are bounded.
+            this.revivalCount = 0;
+        }
+    }
+
+    /**
+     * Number of long-loop revivals this unit has had without an intervening successful completion.
+     *
+     * @return the revival count
+     */
+    public int getRevivalCount() {
+        return revivalCount;
+    }
+
+    public void setRevivalCount(int revivalCount) {
+        this.revivalCount = revivalCount;
+    }
+
+    /**
+     * Count another long-loop revival of a FAILED unit.
+     */
+    public void incrementRevivalCount() {
+        this.revivalCount++;
     }
 
     /**
@@ -263,6 +513,22 @@ public class LectureUnitProcessingState extends DomainObject {
     }
 
     /**
+     * Put this state back into the IDLE queue for a fresh dispatch.
+     * Clears every marker of the previous run except the retry budget and the fingerprints:
+     * callers that requeue for new work reset the budget themselves, and callers that
+     * invalidate the verification evidence clear the confirmed fingerprint explicitly.
+     */
+    public void requeue() {
+        this.phase = ProcessingPhase.IDLE;
+        this.startedAt = null;
+        this.ingestionJobToken = null;
+        this.retryEligibleAt = null;
+        this.errorKey = null;
+        this.lastUpdated = ZonedDateTime.now();
+        clearStageProgress();
+    }
+
+    /**
      * Check if processing is currently active (not idle, done, or failed).
      *
      * @return true if processing is active
@@ -272,12 +538,12 @@ public class LectureUnitProcessingState extends DomainObject {
     }
 
     /**
-     * Check if this is a terminal state (done or failed).
+     * Check if this is a terminal state (done, failed, or skipped).
      *
      * @return true if in terminal state
      */
     public boolean isTerminal() {
-        return phase == ProcessingPhase.DONE || phase == ProcessingPhase.FAILED;
+        return phase == ProcessingPhase.DONE || phase == ProcessingPhase.FAILED || phase == ProcessingPhase.SKIPPED;
     }
 
     @Override

@@ -237,10 +237,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // + 1 bulk UPDATE incrementing the recipients' unread counters. This one is deliberately synchronous: the read
         // side resets the counter to zero and nothing orders the two, so incrementing from the async notification
         // path let a late increment overwrite a recipient's read. Most other write work here stays async.
+        // + 1 durable outbox enqueue (a synchronous INSERT recording the SearchableEntities upsert intent, which replaced
+        // the former fire-and-forget async Weaviate write). The actual Weaviate write still happens later off the request.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(9);
+                .hasBeenCalledTimes(10);
     }
 
     @ParameterizedTest
