@@ -175,7 +175,7 @@ export class ResultHistoryDropdownComponent {
         if (!templateStatus || !participation) {
             return faQuestionCircle;
         }
-        return getResultIconClass(result, participation, templateStatus);
+        return getResultIconClass(result, participation, templateStatus, this.exercise());
     }
 
     getResultIconAnimation(result: Result): AnimationProp | undefined {
@@ -188,7 +188,7 @@ export class ResultHistoryDropdownComponent {
         if (!templateStatus || !participation) {
             return 'text-muted-color';
         }
-        return getTextColorClass(result, participation, templateStatus);
+        return getTextColorClass(result, participation, templateStatus, this.exercise());
     }
 
     private isUnfinishedAthenaFeedback(result: Result): boolean {

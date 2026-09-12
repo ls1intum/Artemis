@@ -53,7 +53,6 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 
@@ -606,12 +605,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     onModelPatch(patch: string) {
         if (this.modelingExercise().teamMode) {
-            const submissionPatch = new SubmissionPatch(patch);
-            submissionPatch.participation = this.participation();
-            if (submissionPatch.participation?.exercise) {
-                submissionPatch.participation.exercise.studentParticipations = [];
-            }
-            this.submissionPatchObservable.next(deepClone(submissionPatch));
+            this.submissionPatchObservable.next(new SubmissionPatch(patch));
         }
     }
 

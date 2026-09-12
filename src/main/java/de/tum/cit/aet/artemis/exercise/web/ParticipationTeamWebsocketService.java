@@ -31,15 +31,19 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatch;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayload;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayload;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayloadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayloadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamModelingSubmissionUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
@@ -191,15 +195,20 @@ public class ParticipationTeamWebsocketService {
     /**
      * Called by a student of a team to update the modeling submission of the team for their participation
      *
-     * @param participationId    id of participation
-     * @param modelingSubmission updated modeling submission
-     * @param principal          principal of user who wants to update the text submission
+     * @param participationId id of participation
+     * @param update          updated modeling submission
+     * @param principal       principal of user who wants to update the text submission
      */
     @MessageMapping("topic/participations/{participationId}/team/modeling-submissions/update")
-    public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
+    public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload TeamModelingSubmissionUpdateDTO update, Principal principal) {
         long start = System.currentTimeMillis();
-        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions", false);
-        log.debug("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
+        ModelingSubmission modelingSubmission = new ModelingSubmission();
+        modelingSubmission.setId(update.id());
+        modelingSubmission.setModel(update.model());
+        modelingSubmission.setExplanationText(update.explanationText());
+        modelingSubmission.setSubmitted(Boolean.TRUE.equals(update.submitted()));
+        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions", null);
+        log.debug("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, update.id());
     }
 
     /**
@@ -210,7 +219,7 @@ public class ParticipationTeamWebsocketService {
      * @param principal       principal of user who wants to update the text submission
      */
     @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/patch")
-    public void patchModelingSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal) {
+    public void patchModelingSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatchDTO submissionPatch, Principal principal) {
         long start = System.currentTimeMillis();
         patchSubmission(participationId, submissionPatch, principal, "/modeling-submissions");
         log.debug("Websocket endpoint patchModelingSubmission took {}ms", System.currentTimeMillis() - start);
@@ -220,14 +229,20 @@ public class ParticipationTeamWebsocketService {
      * Called by a student of a team to update the text submission of the team for their participation
      *
      * @param participationId id of participation
-     * @param textSubmission  updated text submission
+     * @param update          updated text submission
      * @param principal       principal of user who wants to update the text submission
      */
     @MessageMapping("topic/participations/{participationId}/team/text-submissions/update")
-    public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
+    public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TeamTextSubmissionUpdateDTO update, Principal principal) {
         long start = System.currentTimeMillis();
-        updateSubmission(participationId, textSubmission, principal, "/text-submissions", true);
-        log.debug("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
+        TextSubmission textSubmission = new TextSubmission();
+        // A submission the client already holds a result for starts a new submission rather than overwriting the assessed one.
+        textSubmission.setId(update.hasResults() ? null : update.id());
+        textSubmission.setText(update.text());
+        textSubmission.setLanguage(update.language());
+        textSubmission.setSubmitted(Boolean.TRUE.equals(update.submitted()));
+        updateSubmission(participationId, textSubmission, principal, "/text-submissions", update);
+        log.debug("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, update.id());
     }
 
     /**
@@ -237,9 +252,10 @@ public class ParticipationTeamWebsocketService {
      * @param submission      updated modeling text submission
      * @param principal       principal of user who wants to update the submission
      * @param topicPath       path of websocket destination topic where to send the new submission
-     * @param syncTeammates   flag whether to send the updated submission to all teammates
+     * @param textUpdate      the text update to broadcast to the teammates, or null when the teammates are not synced
      */
-    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath, boolean syncTeammates) {
+    private void updateSubmission(@DestinationVariable Long participationId, Submission submission, Principal principal, String topicPath,
+            @Nullable TeamTextSubmissionUpdateDTO textUpdate) {
         // The websocket message carries a real principal, which this keeps; it only stands in if one is missing.
         SecurityUtils.setAuthorizationObject();
 
@@ -271,12 +287,12 @@ public class ParticipationTeamWebsocketService {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
         }
 
-        if (syncTeammates) {
+        if (textUpdate != null) {
             // update the last action date for the user and send out list of team members
             updateValue(getLastActionTracker(), participationId, principal.getName());
             sendOnlineTeamStudents(participationId);
 
-            SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
+            SubmissionSyncPayloadDTO payload = new SubmissionSyncPayloadDTO(TeamTextSubmissionDTO.of(submission), UserNameDTO.of(user));
             websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
         }
     }
@@ -289,7 +305,7 @@ public class ParticipationTeamWebsocketService {
      * @param principal       principal of user who wants to update the submission
      * @param topicPath       path of websocket destination topic where to send the new submission
      */
-    private void patchSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal, String topicPath) {
+    private void patchSubmission(Long participationId, SubmissionPatchDTO submissionPatch, Principal principal, String topicPath) {
         // The websocket message carries a real principal, which this keeps; it only stands in if one is missing.
         SecurityUtils.setAuthorizationObject();
 
@@ -304,7 +320,7 @@ public class ParticipationTeamWebsocketService {
         updateValue(getLastActionTracker(), participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
-        SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, principal.getName());
+        SubmissionPatchPayloadDTO payload = new SubmissionPatchPayloadDTO(submissionPatch, principal.getName());
         websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
     }
 
