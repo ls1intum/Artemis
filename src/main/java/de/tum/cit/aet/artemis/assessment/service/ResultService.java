@@ -960,7 +960,7 @@ public class ResultService {
             entry.setValue(rounded);
         });
 
-        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
+        return new ResultWithPointsPerGradingCriterionDTO(ResultWithPointsPerGradingCriterionDTO.ResultForExportDTO.of(result), totalPoints, pointsPerCriterion);
     }
 
 }
