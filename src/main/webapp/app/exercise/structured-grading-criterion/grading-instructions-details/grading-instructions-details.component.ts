@@ -49,6 +49,13 @@ interface AssessmentCriteriaGenerationState {
     disabledReason?: string;
 }
 
+/** Which persisted entity each parsed row would reclaim, decided before anything is mutated. */
+type ReconciliationPlan = {
+    parsedCriterion: GradingCriterion;
+    previousCriterion?: GradingCriterion;
+    instructions: { parsedInstruction: GradingInstruction; previousInstruction?: GradingInstruction }[];
+}[];
+
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -495,111 +502,121 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
     /**
      * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
-     * database IDs (and feedback links). Match by `{@id:N}` markers from markdown first, then
-     * title / content fingerprint. Instruction id matching uses a cross-criterion pool so a moved
-     * marked instruction keeps its id. A marker repeated across rows (copied block) never claims the
-     * persisted entity by position; when no row can reclaim it by content, the parse is rejected
-     * instead of applied, because saving without the id deletes the instruction and
-     * `GradingInstruction.preRemove()` would detach its existing feedback.
+     * database IDs (and feedback links). The match is planned first and only applied once it is
+     * valid, because applying writes the parsed values onto the persisted objects and could not be
+     * undone afterwards. A rejected parse leaves the previous model in place: saving an entity
+     * without its id deletes it, and `GradingInstruction.preRemove()` detaches its existing feedback.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
         const previousInstructions = previousCriteria.flatMap((criterion) => [...(criterion.structuredGradingInstructions ?? [])]);
-        const parsedInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions ?? []);
-        const ambiguousCriterionIds = this.duplicateParsedIds(parsedCriteria);
-        const ambiguousInstructionIds = this.duplicateParsedIds(parsedInstructions);
-
-        if (
-            this.hasUnreclaimableDuplicateMarker(previousCriteria, parsedCriteria, ambiguousCriterionIds, (criterion) => criterion.title ?? '') ||
-            this.hasUnreclaimableDuplicateMarker(previousInstructions, parsedInstructions, ambiguousInstructionIds, (instruction) => this.instructionFingerprint(instruction))
-        ) {
-            // Keep the previous model untouched — nothing has been mutated yet at this point.
+        const plan = this.planReconciliation(previousCriteria, previousInstructions, parsedCriteria);
+        if (!plan) {
+            // Nothing has been mutated yet at this point, so the previous objects are still intact.
             this.exercise().gradingCriteria = previousCriteria;
             this.criteria.set(previousCriteria);
             this.instructions = previousInstructions;
-            this.alertService.error('artemisApp.exercise.duplicateIdentityMarker');
+            this.alertService.error('artemisApp.exercise.identityMarkerConflict');
             return;
         }
-
-        // Shared pool so an instruction moved between criteria can still reclaim by marker id.
-        const unusedInstructions = [...previousInstructions];
-        const reconciled = this.reconcileCriteriaByContent(previousCriteria, parsedCriteria, ambiguousCriterionIds, ambiguousInstructionIds, unusedInstructions);
+        const reconciled = plan.map(({ parsedCriterion, previousCriterion, instructions }) => {
+            const criterion = previousCriterion ?? parsedCriterion;
+            if (!previousCriterion) {
+                delete criterion.id;
+            }
+            criterion.title = parsedCriterion.title;
+            criterion.structuredGradingInstructions = instructions.map(({ parsedInstruction, previousInstruction }) => {
+                if (!previousInstruction) {
+                    delete parsedInstruction.id;
+                    return parsedInstruction;
+                }
+                return this.applyInstructionFields(previousInstruction, parsedInstruction);
+            });
+            return criterion;
+        });
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
     }
 
     /**
-     * True when a persisted entity's id is repeated across parsed rows and none of those rows still
-     * carries its content, so no row can reclaim it and applying the parse would drop the entity.
+     * Decides which persisted criterion / instruction each parsed row reclaims, without mutating
+     * anything. Returns undefined when the result would lose or misplace a persisted identity.
      */
-    private hasUnreclaimableDuplicateMarker<T extends { id?: number }>(previous: T[], parsed: T[], ambiguousIds: Set<number>, contentKey: (entity: T) => string): boolean {
-        return previous.some(
-            (entity) =>
-                entity.id != undefined &&
-                ambiguousIds.has(entity.id) &&
-                !parsed.some((parsedEntity) => parsedEntity.id === entity.id && contentKey(parsedEntity) === contentKey(entity)),
-        );
-    }
-
-    private reconcileCriteriaByContent(
+    private planReconciliation(
         previousCriteria: GradingCriterion[],
+        previousInstructions: GradingInstruction[],
         parsedCriteria: GradingCriterion[],
-        ambiguousCriterionIds: Set<number>,
-        ambiguousInstructionIds: Set<number>,
-        unusedInstructions: GradingInstruction[],
-    ): GradingCriterion[] {
+    ): ReconciliationPlan | undefined {
+        const parsedInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions ?? []);
+        const ambiguousCriterionIds = this.duplicateParsedIds(parsedCriteria);
+        const ambiguousInstructionIds = this.duplicateParsedIds(parsedInstructions);
         const unusedCriteria = [...previousCriteria];
-        return parsedCriteria.map((parsedCriterion) => {
-            let matchIndex = this.findUnusedById(unusedCriteria, parsedCriterion.id, ambiguousCriterionIds);
-            if (matchIndex < 0 && (parsedCriterion.title ?? '') !== '') {
-                matchIndex = unusedCriteria.findIndex((criterion) => (criterion.title ?? '') === (parsedCriterion.title ?? ''));
-            }
-            if (matchIndex < 0) {
-                // Unknown, unused, or ambiguous duplicate marker: keep it as a new criterion instead of
-                // letting row order decide which content inherits the persisted identity.
-                delete parsedCriterion.id;
-                parsedCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
-                    unusedInstructions,
-                    parsedCriterion.structuredGradingInstructions ?? [],
-                    ambiguousInstructionIds,
-                );
-                return parsedCriterion;
-            }
-            const [existingCriterion] = unusedCriteria.splice(matchIndex, 1);
-            existingCriterion.title = parsedCriterion.title;
-            existingCriterion.structuredGradingInstructions = this.reconcileInstructionsByContent(
-                unusedInstructions,
-                parsedCriterion.structuredGradingInstructions ?? [],
-                ambiguousInstructionIds,
-            );
-            return existingCriterion;
-        });
+        // Shared pool so an instruction moved between criteria can still reclaim by marker id.
+        const unusedInstructions = [...previousInstructions];
+
+        const plan: ReconciliationPlan = parsedCriteria.map((parsedCriterion) => ({
+            parsedCriterion,
+            previousCriterion: this.takeMatch(
+                unusedCriteria,
+                parsedCriterion,
+                ambiguousCriterionIds,
+                (criterion) => this.criterionSignature(criterion),
+                (criterion) => criterion.title || undefined,
+            ),
+            instructions: (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => ({
+                parsedInstruction,
+                previousInstruction: this.takeMatch(unusedInstructions, parsedInstruction, ambiguousInstructionIds, (instruction) => this.instructionFingerprint(instruction)),
+            })),
+        }));
+
+        // A persisted instruction inside a criterion that is sent as new would reach the server as a
+        // detached entity and re-parent its feedback, so that plan is not applied.
+        const misplacedInstruction = plan.some((entry) => !entry.previousCriterion && entry.instructions.some(({ previousInstruction }) => previousInstruction));
+        // Deleting a row is legitimate, but a persisted entity whose marker was copied is never meant
+        // to be deleted: no copy could reclaim it, so applying the parse would drop it silently.
+        const isLost = <T extends { id?: number }>(unused: T[], ambiguousIds: Set<number>) => unused.some((entity) => entity.id != undefined && ambiguousIds.has(entity.id));
+        if (misplacedInstruction || isLost(unusedCriteria, ambiguousCriterionIds) || isLost(unusedInstructions, ambiguousInstructionIds)) {
+            return undefined;
+        }
+        return plan;
     }
 
-    private reconcileInstructionsByContent(
-        unusedInstructions: GradingInstruction[],
-        parsedInstructions: GradingInstruction[],
-        ambiguousInstructionIds: Set<number>,
-    ): GradingInstruction[] {
-        return parsedInstructions.map((parsedInstruction) => {
-            let matchIndex = this.findUnusedById(unusedInstructions, parsedInstruction.id, ambiguousInstructionIds);
-            if (matchIndex < 0) {
-                const fingerprint = this.instructionFingerprint(parsedInstruction);
-                matchIndex = unusedInstructions.findIndex((instruction) => this.instructionFingerprint(instruction) === fingerprint);
-            }
-            if (matchIndex < 0) {
-                delete parsedInstruction.id;
-                return parsedInstruction;
-            }
-            const [existingInstruction] = unusedInstructions.splice(matchIndex, 1);
-            return this.applyInstructionFields(existingInstruction, parsedInstruction);
-        });
+    /**
+     * Removes and returns the persisted entity the parsed row reclaims: by marker id, else by content.
+     * A marker repeated across rows (copied block) must not be resolved by a weaker key such as the
+     * criterion title, which the copy shares — only the row that still carries the whole content,
+     * nested instructions included, may reclaim it. Otherwise row order would decide which content
+     * inherits the identity and its feedback.
+     */
+    private takeMatch<T extends { id?: number }>(
+        unused: T[],
+        parsed: T,
+        ambiguousIds: Set<number>,
+        signature: (entity: T) => string,
+        weakKey?: (entity: T) => string | undefined,
+    ): T | undefined {
+        const isAmbiguous = parsed.id != undefined && ambiguousIds.has(parsed.id);
+        let matchIndex = parsed.id != undefined && !isAmbiguous ? unused.findIndex((entity) => entity.id === parsed.id) : -1;
+        if (matchIndex < 0) {
+            const parsedSignature = signature(parsed);
+            matchIndex = unused.findIndex((entity) => signature(entity) === parsedSignature);
+        }
+        if (matchIndex < 0 && !isAmbiguous) {
+            const key = weakKey?.(parsed);
+            matchIndex = key != undefined ? unused.findIndex((entity) => weakKey!(entity) === key) : -1;
+        }
+        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
+    }
+
+    /** Identifies a criterion by its own title plus the content of its instructions. */
+    private criterionSignature(criterion: GradingCriterion): string {
+        return [criterion.title ?? '', ...(criterion.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction))].join('\u0001');
     }
 
     /**
      * Ids repeated across parsed rows (copied marked blocks). Such a marker never claims the persisted
-     * entity: only a row whose content still matches can reclaim it by fingerprint, so a copy and an
-     * edited original both end up without an id rather than inheriting one by position.
+     * entity by id: only the row whose content still matches may reclaim it, and when no row does the
+     * parse is rejected rather than letting row order decide which content inherits the identity.
      */
     private duplicateParsedIds(parsed: { id?: number }[]): Set<number> {
         const seenIds = new Set<number>();

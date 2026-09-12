@@ -1103,7 +1103,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[0]).toBe(originalInstruction);
         expect(instructions[0].id).toBe(1);
         expect(instructions[0].feedback).toBe('feedback');
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.duplicateIdentityMarker');
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
     });
 
     it('should reject the parse and keep the previous model when both duplicate criterion copies are edited', () => {
@@ -1140,7 +1140,59 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
         expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
         expect(exercise.gradingCriteria![0].id).toBe(1);
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.duplicateIdentityMarker');
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
+    });
+
+    it('should keep the persisted criterion with its instruction when an unrenamed criterion copy precedes the original', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const criterionAction = domainActions[0].action;
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        // The whole criterion was copied above the original without renaming it, and only the copy's
+        // instruction was edited, so both criteria carry {@id:1} and the same title.
+        const copied = [
+            { text: '{@id:1} testCriteria', action: criterionAction },
+            { text: '{@id:1}', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'copied feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            ...domainActions,
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(copied);
+
+        // The title alone cannot tell the copy from the original, so the nested instructions decide:
+        // the persisted criterion stays with the row that still carries its instruction.
+        const criteria = exercise.gradingCriteria!;
+        expect(criteria).toHaveLength(2);
+        expect(criteria[0].id).toBeUndefined();
+        expect(criteria[0].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(criteria[0].structuredGradingInstructions[0].feedback).toBe('copied feedback');
+        expect(criteria[1]).toBe(gradingCriterion);
+        expect(criteria[1].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(criteria[1].structuredGradingInstructions[0].id).toBe(1);
+    });
+
+    it('should reject the parse when a persisted instruction is moved into a new criterion', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        vi.spyOn(alertService, 'error');
+        const domainActions = getDomainActionArray({ instructionId: 1 });
+        domainActions[0] = { text: 'brand new criterion', action: domainActions[0].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        // A new criterion holding an existing instruction id reaches the server as a detached entity
+        // and would re-parent the instruction's feedback.
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
     });
 
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
