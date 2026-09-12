@@ -16,8 +16,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -153,12 +153,12 @@ public class ComplaintUtilService {
      * @param tutorLogin login of the tutor responding to the complaint.
      * @return an assessment update with the complaint response.
      */
-    public AssessmentUpdateDTO createComplaintAndResponse(Result textResult, String tutorLogin) {
+    public AssessmentUpdate createComplaintAndResponse(Result textResult, String tutorLogin) {
         Complaint complaint = new Complaint().result(textResult).complaintText("This is not fair");
         complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = createInitialEmptyResponse(tutorLogin, complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
-        return new AssessmentUpdateDTO(null, complaintResponse, null);
+        return new AssessmentUpdate(null, complaintResponse, null);
     }
 }

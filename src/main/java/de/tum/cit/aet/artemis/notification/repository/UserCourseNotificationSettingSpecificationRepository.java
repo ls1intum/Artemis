@@ -2,11 +2,9 @@ package de.tum.cit.aet.artemis.notification.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingSpecification;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO;
 
 /**
  * Repository for the {@link UserCourseNotificationSettingSpecification} entity.
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpec
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-@CacheConfig(cacheNames = "userCourseNotificationSettingSpecification")
 public interface UserCourseNotificationSettingSpecificationRepository extends ArtemisJpaRepository<UserCourseNotificationSettingSpecification, Long> {
 
     /***
@@ -54,8 +52,27 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
             WHERE s.user.id = :userId
                 AND s.course.id = :courseId
             """)
-    @Cacheable(key = "'setting_specifications_' + #userId + '_' + #courseId")
     List<UserCourseNotificationSettingSpecificationDTO> findAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /***
+     * Get the setting specifications of every given user in a course, in one query.
+     * <p>
+     * The counterpart of the batched preset read: only users on a custom preset need their specifications, and asking
+     * per user put a query on every one of them.
+     *
+     * @param userIds  the users to query for
+     * @param courseId to query for
+     *
+     * @return one entry per user and notification type the users have specifications for
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO(
+                s.user.id, s.courseNotificationType, s.email, s.push, s.webapp)
+            FROM UserCourseNotificationSettingSpecification s
+            WHERE s.user.id IN :userIds
+                AND s.course.id = :courseId
+            """)
+    List<UserCourseNotificationSettingSpecificationEntryDTO> findAllByUserIdsAndCourseId(@Param("userIds") Collection<Long> userIds, @Param("courseId") Long courseId);
 
     /***
      * Get the setting specification entities for a given user id and course id, for a caller that has to write them.
@@ -78,7 +95,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      *
      * @return Newly stored {@link UserCourseNotificationSettingSpecification}
      */
-    @CacheEvict(key = "'setting_specifications_' + #userCourseNotificationSettingSpecification.user.id + '_' + #userCourseNotificationSettingSpecification.course.id")
     @Transactional // OK because of modifying query
     @Modifying
     @Override
@@ -89,7 +105,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      *
      * @param userCourseNotificationSettingSpecification to delete
      */
-    @CacheEvict(key = "'setting_specifications_' + #userCourseNotificationSettingSpecification.user.id + '_' + #userCourseNotificationSettingSpecification.course.id")
     @Transactional // OK because of delete
     @Modifying
     @Override
@@ -104,7 +119,6 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
     List<UserCourseNotificationSettingSpecification> findAllByUserId(long userId);
 
     // NOTE: we need to clear all cached entries because we don't know which users had a specification for the course
-    @CacheEvict(allEntries = true)
     @Transactional // OK because of delete
     @Modifying
     void deleteAllByCourseId(long courseId);
