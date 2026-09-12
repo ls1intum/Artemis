@@ -277,6 +277,13 @@ not saved exercises. A worker disconnect cannot authorize a replacement to save
 under the old execution identity. Inspect incomplete accounting as unknown usage,
 not as zero usage.
 
+A provider error status (408, 429, 5xx) or a request that never left the worker
+carries no completion, so Hyperion sends it again itself with a bounded backoff
+of up to five retries over about five minutes; this is why the SDK's own retries
+can stay disabled for exact accounting. Only a request whose outcome is unknown,
+such as a read timeout after the request was sent, marks accounting incomplete
+and ends the run.
+
 Once persistence begins, cancellation and ordinary edits are blocked. Shutdown
 allows the non-cancellable phase to drain; keep the process termination grace
 period longer than `artemis.hyperion.generation.shutdown-drain-timeout` (default
