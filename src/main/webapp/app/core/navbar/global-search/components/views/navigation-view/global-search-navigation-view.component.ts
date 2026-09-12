@@ -4,7 +4,6 @@ import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
-    faComment,
     faComments,
     faCube,
     faFileUpload,
@@ -20,6 +19,9 @@ import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } fro
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
+import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
+import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
@@ -47,6 +49,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
     readonly activeFilters = input<string[]>([]);
+    /** Active course filter id, forwarded to the Iris answer so it scopes its retrieval. */
+    readonly activeCourseId = input<number | undefined>(undefined);
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -113,34 +117,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faHashtag = faHashtag;
 
     protected getIconForType(type?: string, badge?: string): IconDefinition {
-        if (type === 'exercise') {
-            const normalizedBadge = badge?.toLowerCase();
-            if (normalizedBadge === 'programming') return this.faKeyboard;
-            if (normalizedBadge === 'modeling') return this.faProjectDiagram;
-            if (normalizedBadge === 'text') return this.faFont;
-            if (normalizedBadge === 'file-upload') return this.faFileUpload;
-            if (normalizedBadge === 'quiz') return this.faCheckDouble;
-            return this.faQuestion;
-        }
-        if (type === 'lecture' || type === 'lecture_unit' || type === LECTURE_CONTENT_TYPE) {
-            return faBook;
-        }
-        if (type === 'channel') {
-            return faHashtag;
-        }
-        if (type === 'post' || type === 'answer_post') {
-            return faComment;
-        }
-        if (type === 'faq') {
-            return faQuestionCircle;
-        }
-        if (type === 'exam') {
-            return this.faCalendarCheck;
-        }
-        if (type === 'course') {
-            return faGraduationCap;
-        }
-        return this.faQuestion;
+        return iconForEntityType(type, badge);
     }
 
     protected navigateToResult(result: GlobalSearchResult) {

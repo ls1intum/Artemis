@@ -144,7 +144,18 @@
             "irisAnswerMore": "more",
             "irisAnswerThinking": "Iris is thinking…",
             "irisCollapseSources": "Show fewer sources",
-            "irisAiBadge": "AI"
+            "irisAiBadge": "AI",
+            "entityType": {
+                "exercise": "Exercise",
+                "lecture": "Lecture",
+                "lecture_unit": "Lecture unit",
+                "exam": "Exam",
+                "faq": "FAQ",
+                "channel": "Channel",
+                "course": "Course",
+                "post": "Post",
+                "answer_post": "Reply"
+            }
         },
         "menu": {
             "home": "Home",
