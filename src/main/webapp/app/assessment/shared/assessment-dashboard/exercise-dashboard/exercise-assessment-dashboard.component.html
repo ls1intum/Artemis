@@ -34,17 +34,6 @@
                     <p>
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
                     </p>
-
-                    @if (exercise().isAtLeastInstructor && exam()?.numberOfCorrectionRoundsInExam && exam()?.numberOfCorrectionRoundsInExam! > 1 && isExamMode() && !isTestRun()) {
-                        <div class="d-inline-block">
-                            <jhi-second-correction-enable-button
-                                data-testid="toggle-second-correction"
-                                (ngModelChange)="toggleSecondCorrection()"
-                                [secondCorrectionEnabled]="secondCorrectionEnabled()"
-                                [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
-                            />
-                        </div>
-                    }
                 </div>
 
                 @if (numberOfSubmissions().total > 0) {
@@ -249,6 +238,32 @@
             </div>
         }
 
+        @if (
+            tutorParticipationStatus() === NOT_PARTICIPATED &&
+            exercise().isAtLeastInstructor &&
+            exam()?.numberOfCorrectionRoundsInExam &&
+            exam()?.numberOfCorrectionRoundsInExam! > 1 &&
+            isExamMode() &&
+            !isTestRun()
+        ) {
+            <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
+                <div class="flex items-center gap-1">
+                    <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
+                    <fa-icon
+                        class="text-muted-color"
+                        [icon]="faQuestionCircle"
+                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                    />
+                </div>
+                <jhi-second-correction-enable-button
+                    data-testid="toggle-second-correction"
+                    (ngModelChange)="toggleSecondCorrection()"
+                    [secondCorrectionEnabled]="secondCorrectionEnabled()"
+                    [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
+                />
+            </div>
+        }
+
         @if (tutorParticipationStatus() !== NOT_PARTICIPATED || isTestRun()) {
             <div class="d-flex">
                 <div class="flex-grow-1">
@@ -346,28 +361,46 @@
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </p-message>
                     }
-                    @for (roundState of numberOfAssessmentsOfCorrectionRounds(); track roundState; let correctionRound = $index) {
-                        <div>
+                    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
+                        <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
-                                @if (!isExamMode()) {
-                                    <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
-                                }
-                                @if (isExamMode()) {
-                                    <h4
-                                        class="d-inline-block"
-                                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
-                                        [translateValues]="{ round: correctionRound + 1 }"
-                                    ></h4>
-                                }
-                                @if (correctionRound > 0) {
-                                    <fa-icon
-                                        class="text-secondary"
-                                        [icon]="faQuestionCircle"
-                                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                                    />
-                                }
+                                <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
+                                    <div class="flex items-center gap-1">
+                                        @if (!isExamMode()) {
+                                            <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
+                                        }
+                                        @if (isExamMode()) {
+                                            <h4
+                                                class="m-0"
+                                                jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
+                                                [translateValues]="{ round: correctionRound + 1 }"
+                                            ></h4>
+                                        }
+                                        @if (correctionRound > 0) {
+                                            <fa-icon
+                                                class="text-muted-color"
+                                                [icon]="faQuestionCircle"
+                                                ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                                            />
+                                        }
+                                    </div>
+                                    @if (
+                                        correctionRound === 1 &&
+                                        exercise().isAtLeastInstructor &&
+                                        exam()?.numberOfCorrectionRoundsInExam &&
+                                        exam()?.numberOfCorrectionRoundsInExam! > 1 &&
+                                        isExamMode()
+                                    ) {
+                                        <jhi-second-correction-enable-button
+                                            data-testid="toggle-second-correction"
+                                            (ngModelChange)="toggleSecondCorrection()"
+                                            [secondCorrectionEnabled]="secondCorrectionEnabled()"
+                                            [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
+                                        />
+                                    }
+                                </div>
                             }
-                            @if (numberOfCorrectionRoundsEnabled() > correctionRound) {
+                            @if (numberOfCorrectionRoundsEnabled() > correctionRound && numberOfAssessmentsOfCorrectionRounds().length > correctionRound) {
                                 @if (isTestRun()) {
                                     <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
                                 }
@@ -504,7 +537,7 @@
                                         @if (
                                             isExamMode() &&
                                             (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
-                                            numberOfSubmissions().inTime !== roundState.inTime
+                                            numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
                                             <div class="alert alert-info">
                                                 <span

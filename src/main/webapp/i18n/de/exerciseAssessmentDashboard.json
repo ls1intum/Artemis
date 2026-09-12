@@ -24,8 +24,9 @@
                     "COMPLETED": ""
                 }
             },
-            "toggleSecondCorrectionOn": "Zweitkorrektur erlauben",
-            "toggleSecondCorrectionOff": "Zweitkorrektur verbieten",
+            "secondCorrection": "Zweitkorrektur",
+            "enabled": "Aktiviert",
+            "disabled": "Deaktiviert",
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
             "needToReadGradingInstructions": "Du musst die Bewertungsanweisungen lesen, bevor du mit der Bewertung beginnen kannst.",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
