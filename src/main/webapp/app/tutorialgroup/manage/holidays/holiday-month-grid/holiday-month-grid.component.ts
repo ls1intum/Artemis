@@ -277,6 +277,20 @@ export class HolidayMonthGridComponent {
         if (!day.inDisplayedMonth || event.button !== 0) {
             return;
         }
+        // A touch is left to tap and edit. Following it would mean taking the pan gesture off the browser
+        // (`touch-action: none`), and a calendar that can no longer be scrolled by dragging it is the worse trade: the
+        // end date in the dialog a tap opens reaches the same span. Without a drag to start, the tap falls through to
+        // the button's click exactly as before.
+        if (event.pointerType === 'touch') {
+            return;
+        }
+        // A pen captures the pointer to the element it went down on, so the enter events this drag follows would never
+        // reach the other days and the range would stay stuck on its first one. Handing the capture back puts them on
+        // whichever day is under the pointer. A mouse never takes the capture, so this is a no-op for it.
+        const target = event.target as Element;
+        if (target.hasPointerCapture?.(event.pointerId)) {
+            target.releasePointerCapture(event.pointerId);
+        }
         this.dragAnchor.set(day.date);
         this.dragCurrent.set(day.date);
     }

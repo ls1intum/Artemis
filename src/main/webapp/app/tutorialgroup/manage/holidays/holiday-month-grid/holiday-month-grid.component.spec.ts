@@ -52,8 +52,8 @@ describe('HolidayMonthGridComponent', () => {
         const dayButton = (dayKey: string) => fixture.debugElement.query(By.css(`[data-day="${dayKey}"]`)).nativeElement as HTMLButtonElement;
 
         /** The primary button; a drag must not start on any other, so the tests say which one they press. */
-        function pressOn(dayKey: string): void {
-            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true }));
+        function pressOn(dayKey: string, pointerType = 'mouse'): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType }));
             fixture.detectChanges();
         }
 
@@ -111,6 +111,41 @@ describe('HolidayMonthGridComponent', () => {
 
             release();
             expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+
+        it('should leave a touch to the tap that opens one day, rather than starting a drag it cannot follow', () => {
+            // A touch is captured to the button it went down on, so the enter events a drag follows never reach the
+            // other days. Rather than take the pan gesture off the browser to fix that, a touch does not start a drag
+            // at all - which is also what keeps the calendar scrollable on a phone.
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            pressOn('2025-12-22', 'touch');
+            moveOver('2025-12-26');
+            release();
+
+            expect(range).toBeUndefined();
+            expect(fixture.debugElement.queryAll(By.css('[data-in-pending-range]'))).toHaveLength(0);
+        });
+
+        it('should hand back the capture a pen takes, so the drag can follow it onto other days', () => {
+            const button = dayButton('2025-12-22');
+            // jsdom implements neither implicit capture nor the release, so both are stood in for: the element reports
+            // itself captured, and the call that gives it back is recorded.
+            button.hasPointerCapture = () => true;
+            const released: number[] = [];
+            button.releasePointerCapture = (pointerId: number) => released.push(pointerId);
+            let range: { start: dayjs.Dayjs; end: dayjs.Dayjs } | undefined;
+            fixture.componentRef.instance.rangeSelected.subscribe((emitted) => (range = emitted));
+
+            button.dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'pen', pointerId: 7 }));
+            fixture.detectChanges();
+            moveOver('2025-12-24');
+            release();
+
+            expect(released).toEqual([7]);
+            expect(range?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(range?.end.format('YYYY-MM-DD')).toBe('2025-12-24');
         });
 
         it('should forget a drag the pointer cancelled rather than reporting it', () => {
