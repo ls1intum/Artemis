@@ -108,11 +108,12 @@ public class QuizExerciseRetrievalResource {
         log.debug("REST request to get all quiz exercises for the course with id : {}", courseId);
         var user = userRepository.getUserWithAuthorities();
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
+        Set<Long> idsWithDragAndDrop = findIdsWithDragAndDropQuestions(quizExercises);
         var quizExerciseDTOs = new ArrayList<QuizExerciseForCourseDTO>();
         for (QuizExercise quizExercise : quizExercises) {
             setQuizBatches(user, quizExercise);
             boolean isEditable = quizExerciseService.isEditable(quizExercise);
-            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable));
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, idsWithDragAndDrop.contains(quizExercise.getId())));
         }
 
         return ResponseEntity.ok(quizExerciseDTOs);
@@ -143,12 +144,26 @@ public class QuizExerciseRetrievalResource {
         ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
         boolean examEnded = latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
 
+        Set<Long> idsWithDragAndDrop = findIdsWithDragAndDropQuestions(quizExercises);
         List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
         for (QuizExercise quizExercise : quizExercises) {
             quizExercise.setQuizBatches(null);
-            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, examEnded));
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, examEnded, idsWithDragAndDrop.contains(quizExercise.getId())));
         }
         return ResponseEntity.ok(quizExerciseDTOs);
+    }
+
+    /**
+     * Resolves which of the given quizzes contain at least one drag-and-drop question, in a single query — the
+     * question graph itself is not part of these list responses. Drives the client's AI-variant-generation button
+     * visibility (drag-and-drop quizzes are not supported).
+     *
+     * @param quizExercises the quizzes of the response
+     * @return the ids of those quizzes that have at least one drag-and-drop question
+     */
+    private Set<Long> findIdsWithDragAndDropQuestions(List<QuizExercise> quizExercises) {
+        Set<Long> exerciseIds = quizExercises.stream().map(QuizExercise::getId).collect(Collectors.toSet());
+        return exerciseIds.isEmpty() ? Set.of() : quizExerciseRepository.findIdsWithDragAndDropQuestions(exerciseIds);
     }
 
     /**

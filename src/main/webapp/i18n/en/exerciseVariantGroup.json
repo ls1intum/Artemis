@@ -4,7 +4,6 @@
             "detail": {
                 "variants": "Variants",
                 "pointsTooltip": "The variants in this group total {{ total }} pts, but only {{ cap }} pts count toward your course score.",
-                "noProblemStatement": "No problem statement configured.",
                 "callout": {
                     "heading": "Choose a variant to work on",
                     "body": "This group has {{ count }} variants. You can work on any or all of them.",
