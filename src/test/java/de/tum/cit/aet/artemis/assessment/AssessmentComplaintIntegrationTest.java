@@ -648,7 +648,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 SubmissionWithComplaintDTO.class, params);
 
         assertThat(submissionWithComplaintDTOs).hasSize(1);
-        assertThat(submissionWithComplaintDTOs.getFirst().complaint().getResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(submissionWithComplaintDTOs.getFirst().complaint().result().assessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
     }
 
     @Test
@@ -670,6 +670,27 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getComplaintsForAssessmentDashboard_rejectedComplaint_staysRejectedOnTheWire() throws Exception {
+        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        complaint.setAccepted(false);
+        complaint.getResult().setHasComplaint(true);
+        complaint.getResult().setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        resultRepository.save(complaint.getResult());
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var json = request.get("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK, String.class, params);
+
+        // the dashboard prints "rejected" for false and "no reply" for absent, so a dropped false would silently
+        // reopen every rejected complaint on the tutor dashboard
+        assertThat(json).contains("\"complaintIsAccepted\":false");
+        // the dashboard filters the listed results by assessment type before it links into the assessment editor
+        assertThat(json).contains("\"assessmentType\":");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsForAssessmentDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
@@ -682,13 +703,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {
-            final var participation = (StudentParticipation) dto.complaint().getResult().getSubmission().getParticipation();
-            assertThat(participation.getStudent()).as("No student information").isEmpty();
-            assertThat(dto.complaint().getParticipant()).as("No student information").isNull();
-            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
-            assertThat(((StudentParticipation) dto.submission().getParticipation()).getParticipant()).as("No student information in participation").isNull();
-            assertThat(dto.submission().getParticipation().getExercise()).as("No additional exercise information").isNull();
-
+            assertThat(dto.complaint().participant()).as("No student information").isNull();
+            assertThat(dto.complaint().result().submission().participation().exercise()).as("No additional exercise information").isNull();
+            assertThat(dto.submission().participation().participantName()).as("No student information in participation").isNull();
         });
     }
 
