@@ -653,6 +653,7 @@ public class DockerSandbox implements InteractiveSandbox {
 
     /**
      * Isolates creation, lost-create recovery and cleanup to one immutable execution identity.
+     *
      * @param executionId the admitted execution
      * @return its scoped sandbox client
      */
@@ -662,6 +663,7 @@ public class DockerSandbox implements InteractiveSandbox {
 
     /**
      * Removes only the named execution's containers, including a lost Docker CREATE response.
+     *
      * @param identity the execution to clean up
      */
     public void destroyExecution(de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity identity) {

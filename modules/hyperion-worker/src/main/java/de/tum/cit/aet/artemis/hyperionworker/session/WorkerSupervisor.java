@@ -2,9 +2,8 @@ package de.tum.cit.aet.artemis.hyperionworker.session;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -12,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -32,9 +32,9 @@ import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
+import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCapacity;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerEvent;
-import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCapacity;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperionworker.config.WorkerSettings;
@@ -171,8 +171,8 @@ public class WorkerSupervisor implements AutoCloseable {
             admitted.put(identity.executionId(), assignment.authoringDeadline());
         }
         GenerationEngine policy = engine.get();
-        if (!ready() || policy == null || identity.slot() >= settings.maxConcurrentGenerations()
-                || occupiedExecutions().stream().anyMatch(id -> id.slot() == identity.slot()) || !imageDigest.equals(assignment.imageDigest())) {
+        if (!ready() || policy == null || identity.slot() >= settings.maxConcurrentGenerations() || occupiedExecutions().stream().anyMatch(id -> id.slot() == identity.slot())
+                || !imageDigest.equals(assignment.imageDigest())) {
             publishBestEffort(event(WorkerEvent.Type.ERROR, identity, "Generation worker is not available for this assignment.", null, null));
             return;
         }
@@ -285,7 +285,8 @@ public class WorkerSupervisor implements AutoCloseable {
     }
 
     private synchronized boolean ready() {
-        return prepared && !draining && (active.size() + pendingTerminals.size()) < settings.maxConcurrentGenerations() && admitted.size() < MAX_RECENT_ASSIGNMENTS && engine.get() != null;
+        return prepared && !draining && (active.size() + pendingTerminals.size()) < settings.maxConcurrentGenerations() && admitted.size() < MAX_RECENT_ASSIGNMENTS
+                && engine.get() != null;
     }
 
     @Nullable
