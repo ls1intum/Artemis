@@ -57,7 +57,7 @@ public record ExamImportErrorExerciseGroupDTO(@Nullable String title, @Nullable 
      * Builds the error-body projection of the exercise groups of a rejected import.
      *
      * @param exerciseGroups the exercise groups of the rejected import
-     * @return the projections, in the iteration order of the given groups and their exercises
+     * @return the projections (the exercises of a group come out of a {@link java.util.HashSet}, so their order is not the submitted one)
      */
     public static List<ExamImportErrorExerciseGroupDTO> ofAll(List<ExerciseGroup> exerciseGroups) {
         return exerciseGroups.stream().map(ExamImportErrorExerciseGroupDTO::of).toList();

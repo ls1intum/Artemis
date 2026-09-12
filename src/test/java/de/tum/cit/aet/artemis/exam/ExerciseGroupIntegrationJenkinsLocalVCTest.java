@@ -360,6 +360,35 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
                 HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_duplicatedTitle_errorBodyKeepsTheShortNames() throws Exception {
+        // Counterpart of importExerciseGroup_preCheckFailed, where the server blanks both fields: here only the duplicated
+        // title is blanked, so this is the case that proves the title and the short name reach the import dialog at all.
+        // The dialog echoes the short name back into the retry request (exam-management.service.ts), so a wrong or missing
+        // one silently imports a short name the user never saw.
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        exercise1.setShortName("shortone");
+        exercise2.setShortName("shorttwo");
+        exercise1.setTitle("duplicated title");
+        exercise2.setTitle("duplicated title");
+        examRepository.save(exam);
+
+        var response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group",
+                List.of(ExerciseGroupImportDTO.of(exerciseGroup)), HttpStatus.BAD_REQUEST, null);
+
+        var error = request.getObjectMapper().readTree(response.getContentAsString());
+        assertThat(error.get("errorKey").asString()).isEqualTo("duplicatedProgrammingExerciseTitle");
+        var exercises = error.get("params").get("exerciseGroups").get(0).get("exercises");
+        assertThat(exercises).hasSize(2);
+        // Both short names survive untouched; only one of the two duplicated titles is blanked, and a blank one is not serialized.
+        assertThat(exercises).extracting(exercise -> exercise.path("shortName").asString()).containsExactlyInAnyOrder("shortone", "shorttwo");
+        assertThat(exercises).extracting(exercise -> exercise.path("title").asString()).containsExactlyInAnyOrder("duplicated title", "");
+    }
+
     private static List<ExerciseGroupImportDTO> toImportDTOs(List<ExerciseGroup> exerciseGroups) {
         return exerciseGroups.stream().map(ExerciseGroupImportDTO::of).toList();
     }
