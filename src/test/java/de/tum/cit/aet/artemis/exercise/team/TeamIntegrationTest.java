@@ -563,8 +563,11 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         assertThat(course1.id()).as("The course the team belongs to was returned").isEqualTo(course.getId());
         assertThat(course1.exercises()).as("All exercises of team 1 in course were returned").hasSize(3);
         assertThat(course1.exercises()).as("Every exercise carries the team instance the client links to").allSatisfy(exercise -> assertThat(exercise.teams()).hasSize(1));
-        assertThat(course1.exercises()).as("Every exercise carries the title and dates the participation table renders")
-                .allSatisfy(exercise -> assertThat(exercise.title()).isNotNull());
+        assertThat(course1.exercises()).as("Every exercise carries the title and dates the participation table renders").allSatisfy(teamExercise -> {
+            assertThat(teamExercise.title()).isNotNull();
+            assertThat(teamExercise.releaseDate()).isNotNull();
+            assertThat(teamExercise.dueDate()).isNotNull();
+        });
         assertThat(course1.exercises().stream().flatMap(exercise -> participationsOf(exercise).stream()).toList()).as("All participations of team 1 in course were returned")
                 .hasSize(2);
 
@@ -588,6 +591,10 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         assertThat(returnedSubmission.submitted()).as("Latest submission is present").isTrue();
         assertThat(returnedSubmission.submissionExerciseType()).as("Submission reports its kind so the client can discriminate it").isEqualTo("text");
         assertThat(returnedSubmission.results()).as("Latest result is present").hasSize(1);
+        var returnedResult = returnedSubmission.results().getFirst();
+        // The assessment button of the participation table reads the completion date of the latest result.
+        assertThat(returnedResult.completionDate()).as("The result reports when it was completed").isNotNull();
+        assertThat(returnedResult.score()).as("The result reports its score").isEqualTo(100D);
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
         submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);

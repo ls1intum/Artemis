@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayloadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamModelingSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamTextSubmissionUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -59,6 +60,9 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private SubmissionTestRepository submissionTestRepository;
 
     private StudentParticipation participation;
 
@@ -204,6 +208,29 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         assertThat(payload.submission().submitted()).as("The receiving editor saves the submitted flag back").isTrue();
         assertThat(payload.submission().participation()).as("The receiving editor rebuilds its participation from the payload").isNotNull();
         assertThat(payload.submission().participation().id()).isEqualTo(textParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateTextSubmissionWithResultsStartsANewSubmission() {
+        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), new TeamTextSubmissionUpdateDTO(null, "First", Language.ENGLISH, true, null),
+                getPrincipalMock("student1"));
+
+        ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(textParticipation) + "/text-submissions"), payloadCaptor.capture());
+        Long assessedSubmissionId = ((SubmissionSyncPayloadDTO) payloadCaptor.getValue()).submission().id();
+        assertThat(assessedSubmissionId).isNotNull();
+
+        // The editor holds a result for that submission, so the next update must not overwrite the assessed one.
+        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(assessedSubmissionId, "Second", Language.ENGLISH, true,
+                List.of(new TeamTextSubmissionUpdateDTO.ResultIdDTO(1L)));
+        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), update, getPrincipalMock("student1"));
+
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq(websocketTopic(textParticipation) + "/text-submissions"), payloadCaptor.capture());
+        SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getAllValues().getLast();
+        assertThat(payload.submission().id()).as("A submission the client holds a result for is not overwritten").isNotEqualTo(assessedSubmissionId);
+        assertThat(payload.submission().text()).isEqualTo("Second");
+        assertThat(submissionTestRepository.findById(assessedSubmissionId)).as("The assessed submission is kept").isPresent();
     }
 
     @Test

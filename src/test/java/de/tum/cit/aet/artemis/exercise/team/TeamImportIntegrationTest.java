@@ -351,19 +351,20 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
      *
      * @param name          the team name
      * @param shortName     the team short name
+     * @param image         the team image, which the import carries over as well
      * @param studentLogins the logins of the team members
      * @param ownerLogin    the login of the owning tutor, or null when the team has none
      */
-    private record TeamSignature(String name, String shortName, Set<String> studentLogins, String ownerLogin) {
+    private record TeamSignature(String name, String shortName, String image, Set<String> studentLogins, String ownerLogin) {
     }
 
     private static TeamSignature signatureOf(TeamResponseDTO team) {
-        return new TeamSignature(team.name(), team.shortName(), team.students().stream().map(TeamMemberDTO::login).collect(Collectors.toSet()),
+        return new TeamSignature(team.name(), team.shortName(), team.image(), team.students().stream().map(TeamMemberDTO::login).collect(Collectors.toSet()),
                 team.owner() == null ? null : team.owner().login());
     }
 
     private static TeamSignature signatureOf(Team team) {
-        return new TeamSignature(team.getName(), team.getShortName(), team.getStudents().stream().map(User::getLogin).collect(Collectors.toSet()),
+        return new TeamSignature(team.getName(), team.getShortName(), team.getImage(), team.getStudents().stream().map(User::getLogin).collect(Collectors.toSet()),
                 team.getOwner() == null ? null : team.getOwner().getLogin());
     }
 
