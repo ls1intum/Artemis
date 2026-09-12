@@ -31,7 +31,7 @@ type SortMode = 'name' | 'release' | 'worstFirst';
 
 type SortDirection = 'asc' | 'desc';
 
-/** Each sort mode's backend field (stored and live variants), its default direction, and whether it needs the stored projection. */
+/** Each sort mode's server field (stored and live variants), its default direction, and whether it needs the stored projection. */
 const SORT_CONFIG: Record<SortMode, { storedField: string; liveField: string; defaultDirection: SortDirection; requiresStored: boolean }> = {
     name: { storedField: 'courseTitle', liveField: 'title', defaultDirection: 'asc', requiresStored: false },
     release: { storedField: 'releaseDate', liveField: 'startDate', defaultDirection: 'desc', requiresStored: false },
