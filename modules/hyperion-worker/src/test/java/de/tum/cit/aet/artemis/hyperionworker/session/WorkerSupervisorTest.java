@@ -31,7 +31,6 @@ class WorkerSupervisorTest {
 
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
-
     @Test
     void fourSlotsOverlapAndCancellationOnlyCleansItsOwnExecution() throws InterruptedException {
         var events = new LinkedBlockingQueue<WorkerEvent>();
@@ -41,8 +40,7 @@ class WorkerSupervisorTest {
         var cleanupEntered = new CountDownLatch(1);
         var releaseCleanup = new CountDownLatch(1);
         var cleaned = new java.util.concurrent.CopyOnWriteArrayList<UUID>();
-        var settings = new WorkerSettings("worker-1", IMAGE, "runc", 128 * 1024 * 1024, 100_000, 32,
-                Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5), 4);
+        var settings = new WorkerSettings("worker-1", IMAGE, "runc", 128 * 1024 * 1024, 100_000, 32, Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofSeconds(5), 4);
         GenerationEngine engine = (assignment, cancelled, progress, checkpoint) -> {
             entered.countDown();
             await(releases.get(assignment.identity().executionId()));
