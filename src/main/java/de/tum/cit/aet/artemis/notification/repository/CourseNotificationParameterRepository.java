@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -38,6 +37,5 @@ public interface CourseNotificationParameterRepository extends ArtemisJpaReposit
             FROM CourseNotificationParameter p
             WHERE p.courseNotification.id = :notificationId
             """)
-    @Cacheable(cacheNames = "notificationParameters", key = "'notification_params_' + #notificationId", unless = "#result.isEmpty()")
     Set<CourseNotificationParameterDTO> findByCourseNotificationIdEquals(@Param("notificationId") Long notificationId);
 }

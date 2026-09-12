@@ -232,6 +232,11 @@ export const TRUST_LINKS: LinkCard[] = [
         href: 'https://docs.artemis.tum.de/about/trust#accessibility',
     },
     {
+        titleKey: 'landing.trust.items.performance.title',
+        descriptionKey: 'landing.trust.items.performance.description',
+        href: 'https://docs.artemis.tum.de/admin/benchmarking-tool#reference-run',
+    },
+    {
         titleKey: 'landing.trust.items.releases.title',
         descriptionKey: 'landing.trust.items.releases.description',
         href: 'https://docs.artemis.tum.de/about/releases',
