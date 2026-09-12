@@ -629,7 +629,8 @@ public class CourseTestService {
         assertThat(updatedCourse.maxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
         assertThat(updatedCourse.courseInformationSharingConfiguration()).as("information sharing config value updated successfully")
                 .isEqualTo(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-        assertThat(updatedCourse.maxRequestMoreFeedbackTimeDays()).as("Course has right requestMoreFeedbackEnabled Value").isPositive();
+        assertThat(updatedCourse.maxRequestMoreFeedbackTimeDays()).as("maxRequestMoreFeedbackTimeDays Value updated successfully")
+                .isEqualTo(course.getMaxRequestMoreFeedbackTimeDays());
     }
 
     // Test
