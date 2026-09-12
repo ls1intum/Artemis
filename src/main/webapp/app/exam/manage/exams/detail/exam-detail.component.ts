@@ -4,6 +4,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -63,6 +64,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
+
+    protected readonly isRealExam = isRealExam;
 
     readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
@@ -218,7 +221,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
-        const isTestExam = this.exam().testExam ?? false;
+        const isTestExam = !isRealExam(this.exam());
         const isTestCourse = this.exam().course?.testCourse ?? false;
 
         return {

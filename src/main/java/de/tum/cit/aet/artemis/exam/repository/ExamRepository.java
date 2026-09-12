@@ -45,16 +45,16 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     /**
-     * Reads only the dates that decide whether a submission is in time.
+     * Reads only the schedule and mode that decide whether a submission is in time.
      * <p>
-     * The submission gate runs on every autosave of every student and reads nothing from the exam but these three
+     * The submission gate runs on every autosave of every student and reads nothing from the exam but these
      * values, so loading the entity (and with it the course, through an eager association) is wasted work.
      *
      * @param examId the id of the exam
-     * @return the exam's start date, end date and grace period
+     * @return the exam's dates, grace period, mode and working time
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.testExam)
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.examMode, exam.workingTime)
             FROM Exam exam
             WHERE exam.id = :examId
             """)
@@ -107,13 +107,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO(
-                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.testExam
+                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.examMode
             )
             FROM Exam e
             WHERE e.course.id = :courseId
                 AND e.visibleDate <= :now
                 AND (
-                    e.testExam = TRUE
+                    e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                     OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
                     OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                 )
@@ -130,7 +130,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND (
                     eu.user.id = :userId
                     OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = c.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
-                    OR e.testExam = TRUE
+                    OR e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 )
             """)
     Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
@@ -171,7 +171,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO(
-                e.id, e.title, e.startDate, e.endDate, e.testExam, e.course.id, e.course.title
+                e.id, e.title, e.startDate, e.endDate, e.examMode, e.course.id, e.course.title
             )
             FROM Exam e
             WHERE :fromDate <= e.visibleDate
@@ -281,20 +281,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
-
-    /**
-     * Reads the single flag the exam preparation needs off the exam, rather than the whole row: the exam texts are
-     * unbounded in length and none of them is read there.
-     *
-     * @param examId the id of the exam
-     * @return whether the exam is a test exam, empty if no exam with that id exists
-     */
-    @Query("""
-            SELECT exam.testExam
-            FROM Exam exam
-            WHERE exam.id = :examId
-            """)
-    Optional<Boolean> findIsTestExamById(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT e
@@ -564,7 +550,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :visible
                 AND e.endDate >= :end
-                AND e.testExam = FALSE
+                AND e.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
@@ -599,7 +585,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             JOIN exam.studentExams se
             WHERE exam.course.id = :courseId
               AND se.user.id  = :studentId
-              AND exam.testExam  = FALSE
+              AND se.testRun = FALSE
+              AND exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
               AND exam.visibleDate <= :now
             """)
 

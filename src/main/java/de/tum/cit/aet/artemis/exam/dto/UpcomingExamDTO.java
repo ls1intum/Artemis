@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
 /**
  * Slim projection of an {@link Exam} for the admin "upcoming exams" overview table.
@@ -18,14 +19,14 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  *
  * @param id          the id of the exam
  * @param title       the title of the exam
- * @param testExam    whether the exam is a test exam
+ * @param examMode    the mode of the exam (REAL, TEST, or TEST_WITH_SIMULATION)
  * @param course      the (slim) course the exam belongs to
  * @param visibleDate the date from which the exam is visible to students
  * @param startDate   the date from which students can start the exam
  * @param endDate     the date until which students can work on the exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpcomingExamDTO(Long id, String title, Boolean testExam, @Nullable CourseForUpcomingExamDTO course, ZonedDateTime visibleDate, ZonedDateTime startDate,
+public record UpcomingExamDTO(Long id, String title, ExamMode examMode, @Nullable CourseForUpcomingExamDTO course, ZonedDateTime visibleDate, ZonedDateTime startDate,
         ZonedDateTime endDate) {
 
     /**
@@ -56,6 +57,6 @@ public record UpcomingExamDTO(Long id, String title, Boolean testExam, @Nullable
      */
     public static UpcomingExamDTO of(Exam exam) {
         CourseForUpcomingExamDTO courseDTO = exam.getCourse() == null ? null : CourseForUpcomingExamDTO.of(exam.getCourse());
-        return new UpcomingExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), courseDTO, exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate());
+        return new UpcomingExamDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), courseDTO, exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate());
     }
 }

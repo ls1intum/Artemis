@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
@@ -38,18 +39,18 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
 
     /**
      * Slim exam projection embedded in a single-group response. Carries only the fields the exam-exercise editors read
-     * off {@code exerciseGroup.exam} (the test-exam flag, the example-solution publication date the programming-exercise
+     * off {@code exerciseGroup.exam} (the exam mode, the example-solution publication date the programming-exercise
      * editor uses to gate the "release tests with example solution" checkbox, and the nested course used to rebuild
      * request references).
      *
      * @param id                             the id of the exam
-     * @param testExam                       whether the exam is a test exam
+     * @param examMode                       the mode of the exam
      * @param exampleSolutionPublicationDate the exam's example-solution publication date (gates the programming-exercise
      *                                           editor's "release tests with example solution" checkbox)
      * @param course                         the (slim) course of the exam
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamForExerciseGroupDTO(long id, boolean testExam, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExerciseGroupDTO course) {
+    public record ExamForExerciseGroupDTO(long id, ExamMode examMode, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExerciseGroupDTO course) {
 
         /**
          * Builds the slim exam projection from an exam entity.
@@ -59,7 +60,7 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
          */
         public static ExamForExerciseGroupDTO of(Exam exam) {
             CourseForExerciseGroupDTO courseDTO = exam.getCourse() == null ? null : CourseForExerciseGroupDTO.of(exam.getCourse());
-            return new ExamForExerciseGroupDTO(exam.getId(), exam.isTestExam(), exam.getExampleSolutionPublicationDate(), courseDTO);
+            return new ExamForExerciseGroupDTO(exam.getId(), exam.getExamMode(), exam.getExampleSolutionPublicationDate(), courseDTO);
         }
     }
 

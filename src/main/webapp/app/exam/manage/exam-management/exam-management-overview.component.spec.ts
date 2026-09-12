@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,8 +24,8 @@ describe('ExamManagementOverviewComponent', () => {
     let router: Router;
 
     const course: Course = { id: 456, isAtLeastInstructor: true } as Course;
-    const exam1: Exam = { id: 1, title: 'Exam 1', testExam: false } as Exam;
-    const exam2: Exam = { id: 2, title: 'Exam 2', testExam: true } as Exam;
+    const exam1: Exam = { id: 1, title: 'Exam 1', examMode: ExamMode.REAL } as Exam;
+    const exam2: Exam = { id: 2, title: 'Exam 2', examMode: ExamMode.TEST } as Exam;
 
     const courseSignal = signal<Course>(course);
     const examsSignal = signal<Exam[]>([exam1, exam2]);

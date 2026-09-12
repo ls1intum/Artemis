@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DialogService } from 'primeng/dynamicdialog';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',

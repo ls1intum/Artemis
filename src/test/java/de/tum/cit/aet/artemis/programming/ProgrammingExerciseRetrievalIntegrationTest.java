@@ -145,7 +145,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.exerciseGroup().exam()).isNotNull();
         assertThat(response.exerciseGroup().exam().id()).isEqualTo(exam.getId());
         assertThat(response.exerciseGroup().exam().title()).isEqualTo(exam.getTitle());
-        assertThat(response.exerciseGroup().exam().testExam()).isEqualTo(exam.isTestExam());
+        assertThat(response.exerciseGroup().exam().examMode()).isEqualTo(exam.getExamMode());
         assertThat(response.exerciseGroup().exam().numberOfCorrectionRoundsInExam()).isEqualTo(exam.getNumberOfCorrectionRoundsInExam());
         assertSameInstant(response.exerciseGroup().exam().publishResultsDate(), exam.getPublishResultsDate());
         assertSameInstant(response.exerciseGroup().exam().exampleSolutionPublicationDate(), exam.getExampleSolutionPublicationDate());

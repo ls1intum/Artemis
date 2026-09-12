@@ -126,6 +126,16 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
+            WHERE se.testRun = :isTestRun
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+            """)
+    List<StudentExam> findAllWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH e.studentParticipations sp
                 LEFT JOIN FETCH sp.submissions s
             WHERE se.id = :studentExamId
@@ -267,6 +277,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             WHERE se.testRun = FALSE
             	AND se.exam.id = :examId
             	AND se.user.id = :userId
+            ORDER BY se.createdDate ASC, se.id ASC
+            LIMIT 1
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
@@ -486,7 +498,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.course.id = :courseId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
@@ -496,7 +508,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
@@ -517,7 +529,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
                 AND se.athenaFeedbackRequestedDate IS NOT NULL
             """)
@@ -542,7 +554,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(@Param("userId") Long userId, @Param("examId") Long examId);
@@ -747,7 +759,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.testRun = FALSE
-                AND se.exam.testExam = FALSE
+                AND se.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.exam.course.id IN :courseIds
             """)
     Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);

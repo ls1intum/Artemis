@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { QuizSubmissionDTO, toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -196,7 +196,7 @@ describe('toSubmitStudentExamDTO', () => {
         if (mappedSubmission.submissionExerciseType !== SubmissionExerciseType.QUIZ) {
             throw new Error('expected a quiz submission');
         }
-        expect(mappedSubmission.submittedAnswers).toEqual([]);
+        expect((mappedSubmission as QuizSubmissionDTO).submittedAnswers).toEqual([]);
     });
 
     it('skips a submitted answer with an unknown type and tolerates undefined nested collections', () => {
@@ -231,7 +231,7 @@ describe('toSubmitStudentExamDTO', () => {
             throw new Error('expected a quiz submission');
         }
         // the malformed answer is dropped; the three valid ones keep their type with empty nested collections
-        expect(mappedSubmission.submittedAnswers).toEqual([
+        expect((mappedSubmission as QuizSubmissionDTO).submittedAnswers).toEqual([
             { type: 'multiple-choice', quizQuestion: { id: undefined }, selectedOptions: [] },
             { type: 'drag-and-drop', quizQuestion: { id: 30 }, mappings: [] },
             { type: 'short-answer', quizQuestion: { id: 31 }, submittedTexts: [] },

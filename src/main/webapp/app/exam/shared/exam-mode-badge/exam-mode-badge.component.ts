@@ -1,7 +1,8 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumUiTagComponent } from '@tumaet/ui-angular';
-import { faGraduationCap, faVial } from '@fortawesome/free-solid-svg-icons';
+import { faFlaskVial, faGraduationCap, faVial } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -12,8 +13,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamModeBadgeComponent {
-    testExam = input.required<boolean>();
+    examMode = input.required<ExamMode>();
 
+    protected readonly ExamMode = ExamMode;
+    protected readonly faFlaskVial = faFlaskVial;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faVial = faVial;
 }

@@ -7,11 +7,11 @@ import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
 import { isManualResult } from 'app/exercise/result/result.utils';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).

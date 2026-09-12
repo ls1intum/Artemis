@@ -96,7 +96,7 @@ public class ExamQuizService {
                     result.evaluateQuizSubmission(quizExercise);
                     result.setExerciseId(quizExercise.getId());
                     result.setCompletionDate(ZonedDateTime.now());
-                    if (studentExam.isTestExam()) {
+                    if (!studentExam.getExamMode().isReal()) {
                         result.rated(true);
                     }
                     result = resultRepository.save(result);
@@ -120,12 +120,12 @@ public class ExamQuizService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
                     result.setCompletionDate(ZonedDateTime.now());
-                    if (studentExam.isTestExam()) {
+                    if (!studentExam.getExamMode().isReal()) {
                         result.rated(true);
                     }
                     resultRepository.save(result);
                 }
-                if (studentExam.isTestExam()) {
+                if (!studentExam.getExamMode().isReal()) {
                     changedQuizIds.add(quizExercise.getId());
                 }
                 submissionRepository.save(quizSubmission);

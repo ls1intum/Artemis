@@ -49,6 +49,20 @@ describe('CourseOverviewTabDataService', () => {
         expect(second).toBe(exams);
     });
 
+    it('should let the exam child route reuse the list loaded by its parent navigation', async () => {
+        const exams: ExamForOverview[] = [{ id: 21, title: 'Exam 21' }];
+        findExams.mockReturnValue(of(exams));
+        vi.spyOn(service['router'], 'currentNavigation').mockReturnValue({ id: 1 } as any);
+
+        const first = await firstValueFrom(service.loadExamsIfNeeded(1));
+        vi.mocked(service['router'].currentNavigation).mockReturnValue({ id: 2 } as any);
+        const second = await firstValueFrom(service.loadExamsIfNeeded(1, true));
+
+        expect(findExams).toHaveBeenCalledExactlyOnceWith(1);
+        expect(first).toBe(exams);
+        expect(second).toBe(exams);
+    });
+
     it('should share an in-flight request between concurrent tab consumers', () => {
         const response = new Subject<LectureForOverview[]>();
         const lectures: LectureForOverview[] = [{ id: 12, title: 'Concurrent lecture' }];

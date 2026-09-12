@@ -39,7 +39,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     exam!: Exam;
     predicate = signal<string>('id');
     ascending = signal<boolean>(true);
-    isTestExam!: boolean;
     allExamUsersAttendanceCheck = signal<ExamUserAttendanceCheckDTO[]>([]);
     filteredUsersSize = 0;
     paramSub?: Subscription;
@@ -73,7 +72,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.exam = exam;
             this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
-            this.isTestExam = this.exam.testExam!;
         });
         if (this.hasExamStarted()) {
             this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({

@@ -29,6 +29,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -249,7 +250,7 @@ describe('CoursesComponent', () => {
             visibleDate: visibleDate1.subtract(10, 'minutes'),
             course: courseEmpty,
             workingTime: 3600,
-            testExam: true,
+            examMode: ExamMode.TEST,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
         const coursesForDashboard = new CoursesForDashboardDTO();

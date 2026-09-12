@@ -93,7 +93,7 @@ public class StudentExamAthenaFeedbackService {
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             throw new BadRequestAlertException("Student exam must be submitted before requesting feedback", "StudentExam", "studentExamNotSubmitted");
         }
-        if (!studentExam.isTestExam()) {
+        if (studentExam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
         }
         if (athenaFeedbackApi.isEmpty() || (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty())) {

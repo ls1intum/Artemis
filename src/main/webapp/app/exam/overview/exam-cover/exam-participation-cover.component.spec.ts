@@ -30,6 +30,7 @@ import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-ex
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;
@@ -54,7 +55,7 @@ describe('ExamParticipationCoverComponent', () => {
         exam = new Exam();
         exam.course = course;
         exam.id = 123;
-        exam.testExam = false;
+        exam.examMode = ExamMode.REAL;
         studentExam = new StudentExam();
         studentExam.testRun = false;
         studentExam.id = 1;
@@ -131,7 +132,7 @@ describe('ExamParticipationCoverComponent', () => {
         const rescheduledExam = new Exam();
         rescheduledExam.course = course;
         rescheduledExam.id = 123;
-        rescheduledExam.testExam = false;
+        rescheduledExam.examMode = ExamMode.REAL;
         rescheduledExam.startDate = dayjs().add(2, 'minutes');
         fixture.componentRef.setInput('exam', rescheduledExam);
         flushInputs();
@@ -165,7 +166,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examWithStartDate = new Exam();
         examWithStartDate.course = course;
         examWithStartDate.id = 123;
-        examWithStartDate.testExam = false;
+        examWithStartDate.examMode = ExamMode.REAL;
         examWithStartDate.startDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('exam', examWithStartDate);
 
@@ -180,7 +181,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examFutureStart = new Exam();
         examFutureStart.course = course;
         examFutureStart.id = 123;
-        examFutureStart.testExam = false;
+        examFutureStart.examMode = ExamMode.REAL;
         examFutureStart.startDate = startDate.add(1, 'hours');
         fixture.componentRef.setInput('exam', examFutureStart);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -194,7 +195,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examNoStart = new Exam();
         examNoStart.course = course;
         examNoStart.id = 123;
-        examNoStart.testExam = false;
+        examNoStart.examMode = ExamMode.REAL;
         examNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', examNoStart);
         component.startExam();
@@ -214,7 +215,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExam = new Exam();
         testExam.course = course;
         testExam.id = 123;
-        testExam.testExam = true;
+        testExam.examMode = ExamMode.TEST;
         testExam.startDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('exam', testExam);
 
@@ -229,7 +230,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExamFuture = new Exam();
         testExamFuture.course = course;
         testExamFuture.id = 123;
-        testExamFuture.testExam = true;
+        testExamFuture.examMode = ExamMode.TEST;
         testExamFuture.startDate = startDate1.add(2, 'hours');
         fixture.componentRef.setInput('exam', testExamFuture);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
@@ -243,7 +244,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExamNoStart = new Exam();
         testExamNoStart.course = course;
         testExamNoStart.id = 123;
-        testExamNoStart.testExam = true;
+        testExamNoStart.examMode = ExamMode.TEST;
         testExamNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', testExamNoStart);
         component.startExam();
@@ -270,7 +271,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examWithDate = new Exam();
         examWithDate.course = course;
         examWithDate.id = 123;
-        examWithDate.testExam = false;
+        examWithDate.examMode = ExamMode.REAL;
         examWithDate.startDate = dayjs();
         fixture.componentRef.setInput('exam', examWithDate);
 
@@ -326,7 +327,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examVisible = new Exam();
         examVisible.course = course;
         examVisible.id = 123;
-        examVisible.testExam = false;
+        examVisible.examMode = ExamMode.REAL;
         examVisible.visibleDate = dayjs().subtract(1, 'hours');
         fixture.componentRef.setInput('exam', examVisible);
         expect(component.startButtonEnabled).toBe(true);
@@ -357,7 +358,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examFuture = new Exam();
         examFuture.course = course;
         examFuture.id = 123;
-        examFuture.testExam = false;
+        examFuture.examMode = ExamMode.REAL;
         examFuture.visibleDate = dayjs().add(1, 'hours');
         fixture.componentRef.setInput('exam', examFuture);
         expect(component.startButtonEnabled).toBe(false);

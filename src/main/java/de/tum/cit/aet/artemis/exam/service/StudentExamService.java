@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.util.SubmissionComparisonUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -207,7 +207,7 @@ public class StudentExamService {
         log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
         // NOTE: from here on, we only handle test runs and test exams
-        if (!studentExamFromClient.isTestRun() && !studentExamFromClient.isTestExam()) {
+        if (!studentExamFromClient.isTestRun() && studentExamFromClient.getExamMode().isReal()) {
             return;
         }
 
@@ -318,7 +318,7 @@ public class StudentExamService {
     private void saveSubmissionModelingExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
         ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
-        if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
+        if (!SubmissionComparisonUtil.isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
             modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class)).save(modelingSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
@@ -327,7 +327,7 @@ public class StudentExamService {
     private void saveSubmissionTextExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
-        if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
+        if (!SubmissionComparisonUtil.isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
             textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).saveTextSubmission(textSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
@@ -351,7 +351,7 @@ public class StudentExamService {
         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
-        if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
+        if (!SubmissionComparisonUtil.isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
             quizSubmissionRepository.save(quizSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
@@ -591,8 +591,10 @@ public class StudentExamService {
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         // Since students can participate in the test exam multiple times, we need to associate their exercise participations with a specific student exam
         if (!generatedParticipations.isEmpty()) {
-            studentExam.setStudentParticipations(generatedParticipations);
-            this.studentExamRepository.save(studentExam);
+            var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+            freshStudentExam.getStudentParticipations().addAll(generatedParticipations);
+            this.studentExamRepository.save(freshStudentExam);
+            studentExam.setStudentParticipations(freshStudentExam.getStudentParticipations());
         }
         studentParticipationRepository.saveAll(generatedParticipations);
     }
@@ -608,9 +610,10 @@ public class StudentExamService {
         List<Exercise> exercises = studentExam.getExercises();
         // A single student exam is a handful of exercises, so asking per exercise is cheap here. The bulk preparation in
         // startExercises asks for a whole cohort at once instead.
-        Set<Long> startedExerciseIds = studentExam.isTestExam() ? Set.of()
+        Set<Long> startedExerciseIds = studentExam.getExam().isTestOrPractice(ZonedDateTime.now()) ? Set.of()
                 : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student)).map(Exercise::getId).collect(Collectors.toSet());
-        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), startedExerciseIds, generatedParticipations, failFast);
+        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.getExam().isTestOrPractice(ZonedDateTime.now()), startedExerciseIds,
+                generatedParticipations, failFast);
     }
 
     /**
@@ -697,7 +700,9 @@ public class StudentExamService {
     }
 
     private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
-        boolean testExam = examRepository.findIsTestExamById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var examSchedule = examRepository.findScheduleById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        boolean testExam = !examSchedule.examMode().isReal();
+        boolean createNewParticipations = examSchedule.isTestOrPractice(ZonedDateTime.now());
 
         // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its
         // student exams and their exercises instead would repeat the exam row and the full exercise row once per student
@@ -706,7 +711,7 @@ public class StudentExamService {
                 : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
         var exercisesById = loadExercisesForPreparation(exerciseStartData);
         // Which students are already set up, asked once per exercise rather than once per student and exercise
-        var startedStudentIdsByExerciseId = testExam ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
+        var startedStudentIdsByExerciseId = createNewParticipations ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
         // LinkedHashMap so the student exams are prepared in the order the query returned them
         var rowsByStudentExamId = exerciseStartData.stream()
                 .collect(Collectors.groupingBy(StudentExamExerciseStartDTO::studentExamId, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
@@ -731,12 +736,17 @@ public class StudentExamService {
                 var exercises = rows.stream().map(row -> exercisesById.get(row.exerciseId())).filter(Objects::nonNull).toList();
                 var startedExerciseIds = exercises.stream().filter(exercise -> startedStudentIdsByExerciseId.getOrDefault(exercise.getId(), Set.of()).contains(student.getId()))
                         .map(Exercise::getId).collect(Collectors.toSet());
-                return CompletableFuture
-                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, startedExerciseIds, generatedParticipations, true),
-                                threadPool)
-                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
-                                generatedParticipations.size(), startedAt, lock))
-                        .exceptionally(throwable -> {
+                return CompletableFuture.runAsync(() -> {
+                    List<StudentParticipation> localParticipations = new ArrayList<>();
+                    setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, createNewParticipations, startedExerciseIds, localParticipations, true);
+                    if (testExam && !localParticipations.isEmpty()) {
+                        var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExamId);
+                        freshStudentExam.getStudentParticipations().addAll(localParticipations);
+                        studentExamRepository.save(freshStudentExam);
+                    }
+                    generatedParticipations.addAll(localParticipations);
+                }, threadPool).thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                        generatedParticipations.size(), startedAt, lock)).exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
                             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
                                     generatedParticipations.size(), startedAt, lock);

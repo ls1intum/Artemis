@@ -84,7 +84,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                     WHERE e.course.id = :courseId
                         AND e.visibleDate <= :now
                         AND (
-                            e.testExam = TRUE
+                            e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                             OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
                             OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                         )

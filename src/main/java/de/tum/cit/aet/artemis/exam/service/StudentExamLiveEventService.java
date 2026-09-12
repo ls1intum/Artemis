@@ -72,7 +72,7 @@ public class StudentExamLiveEventService {
         // The submission overview must never become visible while this student is still writing, otherwise students who already submitted could use the summary or conduction
         // endpoint to read the exam content while the extended student is still working on it. Reject an individual extension that reaches the configured publication date;
         // the instructor has to move that date first. Test runs and test exams are exempt, mirroring Exam#isExamSummaryPublished.
-        if (!studentExam.isTestRun() && !exam.isTestExam() && exam.getExamSummaryPublicationDate() != null
+        if (!studentExam.isTestRun() && exam.getExamMode().isReal() && exam.getExamSummaryPublicationDate() != null
                 && !exam.getStartDate().plusSeconds(workingTime).isBefore(exam.getExamSummaryPublicationDate())) {
             throw new BadRequestAlertException("The working time cannot be extended to or past the submission overview publication date. Move that date first.", "studentExam",
                     "examSummaryPublicationDateConflict");

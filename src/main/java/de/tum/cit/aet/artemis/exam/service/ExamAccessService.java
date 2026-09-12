@@ -96,7 +96,7 @@ public class ExamAccessService {
             // students can always see their results during the exam.
             return;
         }
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             // results for test exams are always visible
             return;
         }
@@ -131,15 +131,17 @@ public class ExamAccessService {
         }
 
         StudentExam studentExam;
-        if (exam.isTestExam()) {
-            studentExam = getOrCreateTestExam(exam, course, currentUser);
+
+        final ZonedDateTime now = ZonedDateTime.now();
+        if (exam.isTestOrPractice(now)) {
+            studentExam = getOrCreateTestExam(exam, course, currentUser, now);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
             throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Instructors or administrators cannot participate in exams.", ENTITY_NAME,
                     "cannotParticipateInExams", true);
         }
         else {
-            studentExam = getOrCreateNormalExam(exam, currentUser);
+            studentExam = getOrCreateNormalExam(exam, currentUser, now);
         }
 
         if (!examId.equals(studentExam.getExam().getId())) {
@@ -149,7 +151,7 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser) {
+    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser, final ZonedDateTime now) {
         // Check that the student exam exists
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
 
@@ -160,7 +162,6 @@ public class ExamAccessService {
         }
         else {
 
-            ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
@@ -191,24 +192,23 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser) {
+    private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser, final ZonedDateTime now) {
         StudentExam studentExam;
 
-        if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
+        if (exam.getEndDate().isBefore(now)) {
+            throw new AccessForbiddenAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
         }
 
-        List<StudentExam> unfinishedStudentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId()).stream()
-                .filter(attempt -> !attempt.isFinished()).toList();
+        List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
+        List<StudentExam> unfinishedStudentExams = studentExams.stream().filter(attempt -> !attempt.isFinished()).toList();
 
         if (unfinishedStudentExams.isEmpty()) {
-            ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
             boolean canExamBeStarted = now.isAfter(unlockDate);
             if (!canExamBeStarted) {
-                throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
+                throw new AccessForbiddenAlertException("The exam cannot be started yet. Cannot generate student exam.", ENTITY_NAME, "examCannotBeStarted");
             }
 
             studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);

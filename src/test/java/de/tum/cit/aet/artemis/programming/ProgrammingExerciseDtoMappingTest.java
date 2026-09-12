@@ -260,7 +260,7 @@ class ProgrammingExerciseDtoMappingTest {
         Exam exam = new Exam();
         exam.setId(3L);
         exam.setTitle("Endterm");
-        exam.setTestExam(false);
+        exam.setExamMode(de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL);
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
         exam.setVisibleDate(ZonedDateTime.now().minusDays(1));
@@ -293,7 +293,7 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.exerciseGroup().exam()).isNotNull();
         assertThat(dto.exerciseGroup().exam().id()).isEqualTo(3L);
         assertThat(dto.exerciseGroup().exam().title()).isEqualTo("Endterm");
-        assertThat(dto.exerciseGroup().exam().testExam()).isFalse();
+        assertThat(dto.exerciseGroup().exam().examMode()).isEqualTo(de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL);
         assertThat(dto.exerciseGroup().exam().numberOfCorrectionRoundsInExam()).isEqualTo(2);
         assertThat(dto.exerciseGroup().exam().exampleSolutionPublicationDate()).isEqualTo(exam.getExampleSolutionPublicationDate());
         // The conduction dates and the exam metadata the IntelliJ plugin sees on the SCORPIO route.

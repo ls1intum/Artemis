@@ -122,7 +122,7 @@ public class ExamSubmissionService {
     private Optional<StudentExamSubmissionGateDTO> findSubmissionGateForUser(User user, Exam exam, long exerciseId) {
         // The query returns the newest student exam first.
         List<StudentExamSubmissionGateDTO> submissionGates = studentExamRepository.findSubmissionGatesByUserIdAndExamId(user.getId(), exam.getId(), exerciseId, false);
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             // Since multiple student exams for a test exam might exist, find the latest unsubmitted student exam based on the created date
             return submissionGates.stream().filter(submissionGate -> !submissionGate.isHandedIn()).findFirst();
         }
@@ -176,7 +176,7 @@ public class ExamSubmissionService {
     @Nullable
     public StudentParticipationSubmitTargetDTO preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
-        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExam().isTestExam()) {
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || !exercise.getExam().getExamMode().isReal()) {
             return null;
         }
 
@@ -219,7 +219,7 @@ public class ExamSubmissionService {
         if (submissionGate.hasWorkingTime()) {
             calculatedEndDate = submissionGate.individualEndDate(examSchedule, withGracePeriod);
         }
-        return examSchedule.startDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
+        return calculatedEndDate != null && examSchedule.startDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
     }
 
     /**

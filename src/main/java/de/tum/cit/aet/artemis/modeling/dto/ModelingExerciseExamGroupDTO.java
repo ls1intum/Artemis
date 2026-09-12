@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
@@ -33,7 +34,7 @@ public record ModelingExerciseExamGroupDTO(Long id, String title, Boolean isMand
      *
      * @param id                             the exam id
      * @param title                          the exam title (detail-page exam link)
-     * @param testExam                       whether this is a test exam (gates feedback-suggestion options)
+     * @param examMode                       whether this is a test exam (gates feedback-suggestion options)
      * @param publishResultsDate             when exam results are published (post-publish behavior)
      * @param exampleSolutionPublicationDate when the example solution becomes visible
      * @param numberOfCorrectionRoundsInExam number of correction rounds (assessment controls)
@@ -41,7 +42,7 @@ public record ModelingExerciseExamGroupDTO(Long id, String title, Boolean isMand
      *                                           exam's course is not loaded
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamReferenceDTO(Long id, String title, Boolean testExam, ZonedDateTime publishResultsDate, ZonedDateTime exampleSolutionPublicationDate,
+    public record ExamReferenceDTO(Long id, String title, ExamMode examMode, ZonedDateTime publishResultsDate, ZonedDateTime exampleSolutionPublicationDate,
             Integer numberOfCorrectionRoundsInExam, CourseForQuizExerciseDTO course) implements Serializable {
     }
 
@@ -65,7 +66,7 @@ public record ModelingExerciseExamGroupDTO(Long id, String title, Boolean isMand
             return new ModelingExerciseExamGroupDTO(exerciseGroup.getId(), exerciseGroup.getTitle(), exerciseGroup.getIsMandatory(), null);
         }
         CourseForQuizExerciseDTO course = Hibernate.isInitialized(exam.getCourse()) && exam.getCourse() != null ? CourseForQuizExerciseDTO.of(exam.getCourse()) : null;
-        ExamReferenceDTO examRef = new ExamReferenceDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.getPublishResultsDate(), exam.getExampleSolutionPublicationDate(),
+        ExamReferenceDTO examRef = new ExamReferenceDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), exam.getPublishResultsDate(), exam.getExampleSolutionPublicationDate(),
                 exam.getNumberOfCorrectionRoundsInExam(), course);
         return new ModelingExerciseExamGroupDTO(exerciseGroup.getId(), exerciseGroup.getTitle(), exerciseGroup.getIsMandatory(), examRef);
     }

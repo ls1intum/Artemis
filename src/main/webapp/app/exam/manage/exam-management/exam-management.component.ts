@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -37,6 +38,8 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
     ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
+    protected readonly ExamMode = ExamMode;
+
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
