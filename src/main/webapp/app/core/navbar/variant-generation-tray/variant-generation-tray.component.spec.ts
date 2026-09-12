@@ -9,8 +9,6 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/account/user/user.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -33,9 +31,6 @@ describe('VariantGenerationTrayComponent', () => {
         cancelJob: ReturnType<typeof vi.fn>;
     };
     let routerMock: { navigate: ReturnType<typeof vi.fn> };
-    let userIdentity: ReturnType<typeof signal<User | undefined>>;
-    /** Whether the mocked account passes the tray's IS_AT_LEAST_EDITOR check. */
-    let isEditor: boolean;
 
     const runningJob: VariantJob = { jobId: 'job-1', sourceExerciseId: 42, courseId: 7, sourceExerciseTitle: 'Sorting Basics', exerciseType: 'programming', phase: 'TRANSFORMING' };
     const completedJob: VariantJob = {
@@ -59,14 +54,11 @@ describe('VariantGenerationTrayComponent', () => {
             cancelJob: vi.fn().mockReturnValue(of(undefined)),
         };
         routerMock = { navigate: vi.fn() };
-        userIdentity = signal<User | undefined>({ login: 'instructor1' } as User);
-        isEditor = true;
 
         await TestBed.configureTestingModule({
             imports: [VariantGenerationTrayComponent],
             providers: [
                 { provide: ExerciseVariantGenerationService, useValue: serviceMock },
-                { provide: AccountService, useValue: { userIdentity, hasAnyAuthorityDirect: () => isEditor } },
                 { provide: Router, useValue: routerMock },
                 {
                     provide: TranslateService,
@@ -84,38 +76,8 @@ describe('VariantGenerationTrayComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('syncs the job list when the user logs in and clears it on logout', () => {
-        userIdentity.set(undefined);
-        fixture.detectChanges();
-        expect(serviceMock.loadJobs).not.toHaveBeenCalled();
-
-        userIdentity.set({ login: 'instructor1' } as User);
-        fixture.detectChanges();
-        expect(serviceMock.loadJobs).toHaveBeenCalledTimes(1);
-
-        // A refreshed identity object for the SAME user must not trigger a redundant re-sync.
-        userIdentity.set({ login: 'instructor1' } as User);
-        fixture.detectChanges();
-        expect(serviceMock.loadJobs).toHaveBeenCalledTimes(1);
-
-        userIdentity.set(undefined);
-        fixture.detectChanges();
-        expect(serviceMock.clearJobs).toHaveBeenCalled();
-    });
-
-    it('does not query the editor-only job endpoint for a student', () => {
-        // The endpoint is @EnforceAtLeastEditor; fetching as a student only produced a 403.
-        isEditor = false;
-        userIdentity.set({ login: 'student1' } as User);
-        fixture.detectChanges();
-
-        expect(serviceMock.loadJobs).not.toHaveBeenCalled();
-        expect(serviceMock.clearJobs).toHaveBeenCalled();
-    });
-
     it('shows the icon-only spinner status for a running job', () => {
         fixture.detectChanges();
-        expect(serviceMock.loadJobs).toHaveBeenCalled();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-generation-tray"]')).not.toBeNull();
 
         jobs.set([runningJob]);

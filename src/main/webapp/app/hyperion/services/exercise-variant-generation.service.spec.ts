@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
 import { VariantJob } from 'app/openapi/model/variant-job';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 
 /**
  * Vitest specs for ExerciseVariantGenerationService.
@@ -22,6 +25,8 @@ describe('ExerciseVariantGenerationService', () => {
         unsubscribeFromJob: ReturnType<typeof vi.fn>;
     };
     let eventSubjects: Map<string, Subject<VariantGenerationEvent>>;
+    let userIdentity: ReturnType<typeof signal<User | undefined>>;
+    let isEditor: boolean;
 
     beforeEach(() => {
         eventSubjects = new Map();
@@ -42,14 +47,47 @@ describe('ExerciseVariantGenerationService', () => {
             }),
             unsubscribeFromJob: vi.fn(),
         };
+        userIdentity = signal<User | undefined>(undefined);
+        isEditor = true;
         TestBed.configureTestingModule({
             providers: [
                 ExerciseVariantGenerationService,
                 { provide: HyperionExerciseVariantApi, useValue: apiMock },
                 { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
+                { provide: AccountService, useValue: { userIdentity, hasAnyAuthorityDirect: () => isEditor } },
             ],
         });
         service = TestBed.inject(ExerciseVariantGenerationService);
+    });
+
+    it('loads persisted jobs when an editor logs in and clears them on logout', () => {
+        const persistedJobs: VariantJob[] = [{ jobId: 'persisted-1', phase: 'VERIFYING' }];
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of(persistedJobs));
+
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+        expect(service.jobs()).toEqual(persistedJobs);
+
+        // Refreshing the identity object for the same login must not trigger another REST request.
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+
+        userIdentity.set(undefined);
+        TestBed.tick();
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
+    });
+
+    it('does not load persisted jobs for a user below editor authority', () => {
+        isEditor = false;
+        userIdentity.set({ login: 'student1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+        expect(service.jobs()).toEqual([]);
     });
 
     it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
