@@ -54,16 +54,9 @@
             "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
             "arrowUpAriaLabel": "Pfeil nach oben",
             "arrowDownAriaLabel": "Pfeil nach unten",
-            "searchLectureContentHint": "Tippe, um Vorlesungstranskripte und Materialien zu durchsuchen",
-            "lectureResultsAriaLabel": "Vorlesungsergebnisse",
-            "lectureSearchError": "Suche fehlgeschlagen. Bitte versuche es erneut.",
             "pageAbbreviation": "S.",
             "filterChipAriaLabel": "Filter: {{ filter }}",
             "actionBadge": "Aktion",
-            "actions": {
-                "lectureSearchTitle": "Vorlesungssuche",
-                "lectureSearchDescription": "Vorlesungsinhalte und Folien durchsuchen"
-            },
             "entities": {
                 "exercisesTitle": "Aufgaben",
                 "exercisesDescription": "Kursaufgaben ansehen und bearbeiten",
@@ -88,7 +81,8 @@
                 "point": "Punkt",
                 "points": "Punkte",
                 "examExercise": "Klausur",
-                "reply": "Antwort"
+                "reply": "Antwort",
+                "video": "Video"
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",

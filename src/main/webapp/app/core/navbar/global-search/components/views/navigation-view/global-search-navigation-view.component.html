@@ -3,22 +3,6 @@
     <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
 }
 
-<!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->
-@if (irisEnabled() && showLectureButton()) {
-    <div #selectableItem>
-        <jhi-global-search-action-item
-            [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
-            [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
-            [selected]="selectedIndex() === LECTURE_SEARCH_ACTION_INDEX"
-            accentColor="var(--global-search-lecture-accent)"
-            secondaryAccentColor="var(--bs-primary)"
-            (clicked)="viewSelected.emit(SearchView.Lecture)"
-        >
-            <fa-icon slot="icon" [icon]="faFileLines" aria-hidden="true" />
-        </jhi-global-search-action-item>
-    </div>
-}
-
 <!-- Error state -->
 @if (searchError()) {
     <div class="search-error-state mt-3 p-3 text-center text-danger">
@@ -35,7 +19,7 @@
                     <jhi-global-search-result-item
                         [result]="result"
                         [icon]="getIconForType(result.type, result.badge)"
-                        [isSelected]="selectedIndex() === actionButtonCount() + i"
+                        [isSelected]="selectedIndex() === i"
                         (resultClick)="navigateToResult($event)"
                     />
                 </div>
@@ -76,10 +60,10 @@
     </div>
 } @else {
     <!-- Searchable entities list (initial state) -->
-    <div class="entity-list" [class.mt-3]="irisEnabled()">
+    <div class="entity-list">
         @for (entity of searchableEntities; track entity.id; let i = $index) {
             <div #selectableItem>
-                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === actionButtonCount() + i" (entityClick)="onEntityItemClick($event)" />
+                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === i" (entityClick)="onEntityItemClick($event)" />
             </div>
         }
     </div>

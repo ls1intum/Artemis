@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,6 +148,24 @@ public class IrisSettingsService {
      */
     public boolean isEnabledForCourse(@NonNull Course course) {
         return isEnabledForCourse(course.getId());
+    }
+
+    /**
+     * Keeps only the course IDs whose Iris course settings are enabled.
+     * <p>
+     * A course without a settings row counts as enabled, because {@link IrisCourseSettings#defaultSettings()} defaults to enabled. The settings are resolved with a single query,
+     * so scoping to many courses does not turn into one lookup per course.
+     *
+     * @param courseIds the course IDs to filter
+     * @return the subset whose Iris settings are enabled, in the order of the input
+     */
+    public List<Long> filterCourseIdsWithIrisEnabled(Collection<Long> courseIds) {
+        if (courseIds.isEmpty()) {
+            return List.of();
+        }
+        var disabledCourseIds = irisCourseSettingsRepository.findAllByCourseIdIn(courseIds).stream().filter(entity -> !entity.getSettings().enabled())
+                .map(IrisCourseSettingsEntity::getCourseId).collect(Collectors.toSet());
+        return courseIds.stream().filter(courseId -> !disabledCourseIds.contains(courseId)).toList();
     }
 
     /**
