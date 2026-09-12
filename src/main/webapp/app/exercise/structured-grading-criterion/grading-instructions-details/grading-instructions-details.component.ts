@@ -497,19 +497,48 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
      * database IDs (and feedback links). Match by `{@id:N}` markers from markdown first, then
      * title / content fingerprint. Instruction id matching uses a cross-criterion pool so a moved
-     * marked instruction keeps its id. A marker repeated across rows (copied block) is rejected
-     * outright: only an unchanged row can still reclaim by fingerprint, and every unmatched marker
-     * id is stripped. Never match by position alone — reorders and copies would remount IDs.
+     * marked instruction keeps its id. A marker repeated across rows (copied block) never claims the
+     * persisted entity by position; when no row can reclaim it by content, the parse is rejected
+     * instead of applied, because saving without the id deletes the instruction and
+     * `GradingInstruction.preRemove()` would detach its existing feedback.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        const previousInstructions = previousCriteria.flatMap((criterion) => [...(criterion.structuredGradingInstructions ?? [])]);
+        const parsedInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions ?? []);
         const ambiguousCriterionIds = this.duplicateParsedIds(parsedCriteria);
-        const ambiguousInstructionIds = this.duplicateParsedIds(parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions ?? []));
+        const ambiguousInstructionIds = this.duplicateParsedIds(parsedInstructions);
+
+        if (
+            this.hasUnreclaimableDuplicateMarker(previousCriteria, parsedCriteria, ambiguousCriterionIds, (criterion) => criterion.title ?? '') ||
+            this.hasUnreclaimableDuplicateMarker(previousInstructions, parsedInstructions, ambiguousInstructionIds, (instruction) => this.instructionFingerprint(instruction))
+        ) {
+            // Keep the previous model untouched — nothing has been mutated yet at this point.
+            this.exercise().gradingCriteria = previousCriteria;
+            this.criteria.set(previousCriteria);
+            this.instructions = previousInstructions;
+            this.alertService.error('artemisApp.exercise.duplicateIdentityMarker');
+            return;
+        }
+
         // Shared pool so an instruction moved between criteria can still reclaim by marker id.
-        const unusedInstructions = previousCriteria.flatMap((criterion) => [...(criterion.structuredGradingInstructions ?? [])]);
+        const unusedInstructions = [...previousInstructions];
         const reconciled = this.reconcileCriteriaByContent(previousCriteria, parsedCriteria, ambiguousCriterionIds, ambiguousInstructionIds, unusedInstructions);
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
+    }
+
+    /**
+     * True when a persisted entity's id is repeated across parsed rows and none of those rows still
+     * carries its content, so no row can reclaim it and applying the parse would drop the entity.
+     */
+    private hasUnreclaimableDuplicateMarker<T extends { id?: number }>(previous: T[], parsed: T[], ambiguousIds: Set<number>, contentKey: (entity: T) => string): boolean {
+        return previous.some(
+            (entity) =>
+                entity.id != undefined &&
+                ambiguousIds.has(entity.id) &&
+                !parsed.some((parsedEntity) => parsedEntity.id === entity.id && contentKey(parsedEntity) === contentKey(entity)),
+        );
     }
 
     private reconcileCriteriaByContent(

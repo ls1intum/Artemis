@@ -132,6 +132,7 @@
             "feedbackHint": "Das Feedback ist ein erläuternder Text an Studierende, um ihr Leistungsniveau besser zu verstehen.",
             "gradingScalePlaceholder": "z. B. Gut",
             "criterionTitlePlaceholder": "Kriteriumstitel",
+            "duplicateIdentityMarker": "Dieselbe Kennung einer Bewertungsanweisung oder eines Kriteriums kommt mehrfach vor und keiner dieser Einträge entspricht noch dem gespeicherten Inhalt. Dein zuletzt eingegebener Text wurde nicht übernommen, damit vorhandenes Feedback verknüpft bleibt. Entferne die doppelte Kennung in geschweiften Klammern aus dem kopierten Eintrag und versuche es erneut.",
             "descriptionPlaceholder": "Wann soll ein:e Tutor:in diese Stufe anwenden?",
             "feedbackPlaceholder": "Was soll die oder der Studierende lesen?",
             "title": "Titel",

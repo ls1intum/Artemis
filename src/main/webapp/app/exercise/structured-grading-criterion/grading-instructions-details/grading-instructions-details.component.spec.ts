@@ -1070,8 +1070,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(moved[1].id).toBe(10);
     });
 
-    it('should reject a duplicate instruction marker when both copies are edited', () => {
+    it('should reject the parse and keep the previous model when both duplicate instruction copies are edited', () => {
         exercise.gradingCriteria = [gradingCriterion];
+        vi.spyOn(alertService, 'error');
         const originalInstruction = gradingInstruction;
         const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
         const instructionAction = domainActions[1].action;
@@ -1094,19 +1095,20 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(domainActions);
 
+        // Ordering must not decide which content inherits id 1, and dropping the id from both rows would
+        // delete the persisted instruction and detach its feedback — so the parse is rejected entirely.
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
         const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
-        expect(instructions).toHaveLength(2);
-        // Neither row may inherit id 1: ordering must not decide which content keeps the feedback links.
-        expect(instructions[0]).not.toBe(originalInstruction);
-        expect(instructions[1]).not.toBe(originalInstruction);
-        expect(instructions[0].id).toBeUndefined();
-        expect(instructions[1].id).toBeUndefined();
-        expect(instructions[0].feedback).toBe('edited copy feedback');
-        expect(instructions[1].feedback).toBe('edited original feedback');
+        expect(instructions).toEqual([originalInstruction]);
+        expect(instructions[0]).toBe(originalInstruction);
+        expect(instructions[0].id).toBe(1);
+        expect(instructions[0].feedback).toBe('feedback');
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.duplicateIdentityMarker');
     });
 
-    it('should reject a duplicate criterion marker when both copies are edited', () => {
+    it('should reject the parse and keep the previous model when both duplicate criterion copies are edited', () => {
         exercise.gradingCriteria = [gradingCriterion];
+        vi.spyOn(alertService, 'error');
         const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
         const criterionAction = domainActions[0].action;
         const instructionAction = domainActions[1].action;
@@ -1135,11 +1137,10 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(edited);
 
-        expect(exercise.gradingCriteria).toHaveLength(2);
-        expect(exercise.gradingCriteria![0].id).toBeUndefined();
-        expect(exercise.gradingCriteria![1].id).toBeUndefined();
-        expect(exercise.gradingCriteria![0]).not.toBe(gradingCriterion);
-        expect(exercise.gradingCriteria![1]).not.toBe(gradingCriterion);
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.duplicateIdentityMarker');
     });
 
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
