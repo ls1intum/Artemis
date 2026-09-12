@@ -44,7 +44,8 @@ class WorkerMessageCodecTest {
         var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of("No verified candidate")), null,
                 new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Contradiction", "Review edge cases"))), "RUN_FAILED",
                 null, GenerationOutput.AccountingState.INCOMPLETE, effortProfile);
-        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null, null, output);
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
+                null, output);
         assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
     }
 
