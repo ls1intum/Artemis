@@ -63,6 +63,7 @@ vi.mock('monaco-editor', () => ({
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NgForm } from '@angular/forms';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
@@ -818,6 +819,59 @@ describe('FileUploadExerciseUpdateComponent', () => {
             await fixture.whenStable();
 
             expect(component.isExamMode()).toBe(true);
+        });
+    });
+
+    describe('bonus points when the score no longer includes them', () => {
+        const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
+        const formIsInvalid = () => fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm).form.invalid;
+        const footerIsDisabled = () => fixture.debugElement.query(By.directive(FormFooterComponent)).componentInstance.isDisabled();
+
+        async function renderIncludedExercise(): Promise<void> {
+            const exercise = new FileUploadExercise(createCourse(), undefined);
+            exercise.id = 1;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            // Everything else the form requires, so the only thing that can hold it invalid is the bonus field.
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.filePattern = 'png,pdf';
+            routeData$.next({ fileUploadExercise: exercise });
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should take the out of range value with the field, rather than leaving the form invalid over it', async () => {
+            await renderIncludedExercise();
+            expect(bonusInput()).not.toBeNull();
+
+            // Out of range by the input's own max, which is what keeps the form invalid.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(formIsInvalid()).toBe(true);
+
+            // The score stops including bonus points, so the field goes - and its verdict has to go with it. Hidden
+            // instead of removed, the control stayed registered and Save refused to submit over a value the reader
+            // could no longer see, with nothing in its tooltip to say why.
+            // Driven through the picker, as a reader does: it writes the new mode onto the exercise and emits, and it
+            // is that event binding which marks this OnPush component dirty so the form re-reads the mode.
+            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
+            component.fileUploadExercise().includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            picker.componentInstance.includedInOverallScoreChange.emit(IncludedInOverallScore.NOT_INCLUDED);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(bonusInput()).toBeNull();
+            expect(formIsInvalid()).toBe(false);
+            expect(footerIsDisabled()).toBe(false);
         });
     });
 
