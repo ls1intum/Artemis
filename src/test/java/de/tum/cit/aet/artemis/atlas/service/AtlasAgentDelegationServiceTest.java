@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
 
 /**
  * Unit tests for the shared {@link AtlasAgentDelegationService} harness: system-prompt assembly,
@@ -121,10 +124,41 @@ class AtlasAgentDelegationServiceTest {
 
         assertThat(response).isSameAs(expected);
         // No course-id breadcrumb is appended for the orchestrator — the prompt is passed verbatim.
-        assertThat(systemTextOf(promptCaptor.getValue())).isEqualTo("ORCHESTRATOR PROMPT");
+        assertThat(systemTextOf(promptCaptor.getValue())).startsWith("ORCHESTRATOR PROMPT").contains("Shared run budget: 0/256");
         // Orchestrator runs with chat memory OFF regardless of whether a ChatMemory bean exists.
         verify(chatMemory, never()).get(anyString());
         verify(chatMemory, never()).add(anyString(), anyList());
+    }
+
+    @Test
+    void responsesAvailabilityDoesNotDependOnSharedClient() {
+        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        var missing = new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, chatMemory, CHAT_PROPERTIES, properties, null);
+        assertThat(missing.isOrchestratorAvailable()).isFalse();
+        var isolated = new AtlasAgentDelegationService(null, templateService, chatMemory, CHAT_PROPERTIES, properties, new AtlasResponsesChatClient(ChatClient.create(chatModel)));
+        assertThat(isolated.isOrchestratorAvailable()).isTrue();
+    }
+
+    @Test
+    void responsesApiEnabled_routesOnlyOrchestratorRoundsToIsolatedClient() {
+        ChatModel responsesModel = mock(ChatModel.class);
+        when(responsesModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        ChatResponse orchestratorResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("orchestrator"))));
+        when(responsesModel.call(any(Prompt.class))).thenReturn(orchestratorResponse);
+        AtlasOrchestratorProperties orchestratorProperties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        AtlasAgentDelegationService service = new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, chatMemory, CHAT_PROPERTIES, orchestratorProperties,
+                new AtlasResponsesChatClient(ChatClient.create(responsesModel)));
+
+        ChatResponse result = service.delegateOrchestratorRound("SYSTEM", "work", OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna"), new HashMap<>());
+
+        assertThat(result).isSameAs(orchestratorResponse);
+        verify(responsesModel).call(any(Prompt.class));
+        verify(chatModel, never()).call(any(Prompt.class));
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("INTERACTIVE");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("chat")))));
+        assertThat(service.delegateToAgent("prompt", "question", 42L, "session", false, null)).isEqualTo("chat");
+        verify(chatModel).call(any(Prompt.class));
     }
 
     @Test

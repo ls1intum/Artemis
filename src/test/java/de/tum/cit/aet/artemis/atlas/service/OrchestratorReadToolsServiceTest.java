@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -96,6 +97,30 @@ class OrchestratorReadToolsServiceTest {
     }
 
     @Test
+    void getExerciseContent_reusesExtractionWithinInvocationButRevalidatesAccess() {
+        Course course = courseWithId(COURSE_ID);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(contentExtractionService.extractContent(exercise, false))
+                .thenReturn(new ExtractedContentDTO("Implement Quicksort", "Sort an array in O(n log n).", Map.of("exerciseType", "programming")));
+
+        Map<String, Object> firstContext = new HashMap<>();
+        firstContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
+        AtlasToolCallBudget.budgetForContext(firstContext);
+        ToolContext firstInvocation = new ToolContext(firstContext);
+        service.getExerciseContent(20L, firstInvocation);
+        service.getExerciseContent(20L, firstInvocation);
+
+        Map<String, Object> secondContext = new HashMap<>();
+        secondContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
+        AtlasToolCallBudget.budgetForContext(secondContext);
+        service.getExerciseContent(20L, new ToolContext(secondContext));
+
+        verify(exerciseRepository, times(3)).findByIdElseThrow(20L);
+        verify(contentExtractionService, times(2)).extractContent(exercise, false);
+    }
+
+    @Test
     void getExerciseContent_quizExercise_returnsExtractedContentNotStub() {
         Course course = courseWithId(COURSE_ID);
         QuizExercise quiz = new QuizExercise();
@@ -110,7 +135,7 @@ class OrchestratorReadToolsServiceTest {
 
         // Non-programming exercises are now text-extracted (previously a title-only "only programming" stub).
         assertThat(result).contains("Data structures quiz").contains("questionCount").doesNotContain("only available for programming");
-        // The read tool skips the costly flavor-strip (passes false) since it is uncapped and re-extracts on every call.
+        // The read tool skips the costly flavor-strip (passes false); budgeted invocations cache this extraction.
         verify(contentExtractionService).extractContent(quiz, false);
     }
 

@@ -41,7 +41,7 @@ public final class OrchestratorToolContextKeys {
      * in the system prompt; enforced through {@link AppliedActionsBuffer#tryReserveSlot(int)} so a
      * hallucinating model cannot spend more than this many writes regardless of what the prompt says.
      */
-    public static final int MAX_WRITE_CALLS = 16;
+    public static final int MAX_WRITE_CALLS = AtlasToolCallBudget.LIMIT;
 
     private OrchestratorToolContextKeys() {
     }

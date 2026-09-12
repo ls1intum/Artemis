@@ -83,6 +83,44 @@ class ContentChangeSchedulerTest {
     }
 
     @Test
+    void tick_toolLimitExceeded_doesNotReplay() {
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
+                .thenReturn(CompetencyOrchestrationResultDTO.failed("Tool budget exhausted", CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED));
+        scheduler.tick();
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().exerciseCount()).isEqualTo(2);
+        assertThat(payload.getValue().successCount()).isEqualTo(0);
+        assertThat(payload.getValue().failureCount()).isEqualTo(2);
+    }
+
+    @Test
+    void tick_incompleteCompletionExceeded_doesNotReplay() {
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
+                .thenReturn(CompetencyOrchestrationResultDTO.failed("Tool budget exhausted", CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION));
+        scheduler.tick();
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().exerciseCount()).isEqualTo(2);
+        assertThat(payload.getValue().successCount()).isEqualTo(0);
+        assertThat(payload.getValue().failureCount()).isEqualTo(2);
+    }
+
+    @Test
     void tick_toggleDisabled_noWork() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(false);
 
