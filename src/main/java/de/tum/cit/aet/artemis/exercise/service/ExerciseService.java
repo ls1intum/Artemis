@@ -385,7 +385,7 @@ public class ExerciseService {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
 
-            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            // Filter out questions so users cannot see which answer options are correct.
             if (exercise instanceof QuizExercise quizExercise) {
                 quizExercise.filterSensitiveInformation();
 
@@ -396,17 +396,6 @@ public class ExerciseService {
                 }
             }
         }
-    }
-
-    /**
-     * Updates the points of related exercises if the points of exercises have changed
-     *
-     * @param originalExercise the original exercise
-     * @param updatedExercise  the updatedExercise
-     */
-    @Async
-    public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        updatePointsInRelatedParticipantScores(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
     }
 
     /**
@@ -441,7 +430,7 @@ public class ExerciseService {
         participantScoreRepository.saveAll(participantScoreList);
     }
 
-    public void logDeletion(Exercise exercise, Course course, User user) {
+    public void logDeletion(@NonNull Exercise exercise, @NonNull Course course, @NonNull User user) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
@@ -617,7 +606,7 @@ public class ExerciseService {
             if (!feedbackToBeDeleted.isEmpty()) {
                 Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
-                    existingFeedback.removeAll(feedbackToBeDeleted);
+                    feedbackToBeDeleted.forEach(existingFeedback::remove);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
                 List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));
@@ -726,10 +715,15 @@ public class ExerciseService {
                     notificationText);
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
-        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(updatedExercise.getExam().getStartDate()) && updatedExercise.isExamExercise()
-                && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
-            ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
-            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+        else if (updatedExercise.isExamExercise() && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
+            // Read the exam only once the exercise is known to have an exercise group. The guard used to sit after the
+            // dereference, so an exercise belonging to neither a course nor an exam threw a NullPointerException here,
+            // and so did an exam exercise whose graph was masked: getExam() returns null in both cases.
+            var exam = updatedExercise.getExam();
+            if (exam != null && now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(exam.getStartDate())) {
+                ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
+                api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+            }
         }
     }
 

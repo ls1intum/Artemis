@@ -55,6 +55,14 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "test_run")
     private Boolean testRun;
 
+    /**
+     * When this test-exam attempt reserved its slot against the cross-attempt Athena feedback request cap (see
+     * {@link de.tum.cit.aet.artemis.exam.service.StudentExamAthenaFeedbackService}). Null means the attempt has not requested
+     * Athena feedback yet.
+     */
+    @Column(name = "athena_feedback_requested_date")
+    private ZonedDateTime athenaFeedbackRequestedDate;
+
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
@@ -132,6 +140,14 @@ public class StudentExam extends AbstractAuditingEntity {
         this.submissionDate = submissionDate;
     }
 
+    public ZonedDateTime getAthenaFeedbackRequestedDate() {
+        return athenaFeedbackRequestedDate;
+    }
+
+    public void setAthenaFeedbackRequestedDate(ZonedDateTime athenaFeedbackRequestedDate) {
+        this.athenaFeedbackRequestedDate = athenaFeedbackRequestedDate;
+    }
+
     public Exam getExam() {
         return exam;
     }
@@ -202,16 +218,32 @@ public class StudentExam extends AbstractAuditingEntity {
      * @return true if the exam has finished, otherwise false, null if this cannot be determined
      */
     public Boolean isEnded() {
-        if (this.getExam() == null || this.getExam().getStartDate() == null || this.getWorkingTime() == null) {
+        return isEnded(exam, testRun, started, startedDate, workingTime);
+    }
+
+    /**
+     * Scalar form of {@link #isEnded()} for callers that read those five values as a projection rather than loading the
+     * student exam, which drags its eager exam, that exam's course and the course configuration behind it. Shared so
+     * the two cannot drift apart.
+     *
+     * @param exam        the exam the student exam belongs to
+     * @param testRun     whether the student exam is an instructor test run
+     * @param started     whether the student has started the exam
+     * @param startedDate when the student started, only relevant for test exams
+     * @param workingTime the working time in seconds
+     * @return true if the exam has finished, false if not, null if this cannot be determined
+     */
+    public static Boolean isEnded(Exam exam, Boolean testRun, Boolean started, ZonedDateTime startedDate, Integer workingTime) {
+        if (exam == null || exam.getStartDate() == null || workingTime == null) {
             return null;
         }
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
-        if (this.getExam().isTestExam() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
+        if (exam.isTestExam() && !Boolean.TRUE.equals(started) && startedDate == null) {
             return false;
         }
-        return ZonedDateTime.now().isAfter(getIndividualEndDate());
+        return ZonedDateTime.now().isAfter(individualEndDate(exam, startedDate, workingTime));
     }
 
     /**

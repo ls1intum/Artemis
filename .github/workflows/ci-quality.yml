@@ -55,6 +55,8 @@ jobs:
         run: ./gradlew spotlessCheck
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
+      - name: Java Test Code Style
+        run: ./gradlew checkstyleTest -x webapp
         if: ${{ !cancelled() }}
       # Tightly-coupled dependency families (HttpComponents, Bouncy Castle, JGit, SSHD) must not resolve to mixed or
       # downgraded versions: that is a runtime LinkageError rather than a build failure, so nothing else catches it.

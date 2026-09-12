@@ -86,7 +86,7 @@ export class ExerciseAPIRequests {
      *   - programmingShortName: The short name of the programming exercise
      *   - programmingLanguage: The programming language for the exercise
      *   - packageName: The package name of the programming exercise
-     *   - assessmentDate: The due date of the assessment
+     *   - assessmentDate: The due date of the assessment, which the server requires to be strictly after the due date
      *   - assessmentType: The assessment type of the exercise
      *   - buildPlanConfiguration: Serialized LocalCI build phases used when the exercise is created
      * @returns Promise<ProgrammingExercise> representing the programming exercise created.
@@ -125,7 +125,9 @@ export class ExerciseAPIRequests {
             programmingLanguage = ProgrammingLanguage.JAVA,
             projectType,
             packageName = 'de.test',
-            assessmentDate = dayjs().add(2, 'days'),
+            // Derived from the due date rather than from now: the server requires a strictly increasing date sequence, and a
+            // caller passing a due date two days out would otherwise land in the same millisecond as an absolute default
+            assessmentDate = dueDate.add(1, 'day'),
             exampleSolutionPublicationDate,
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
@@ -185,6 +187,11 @@ export class ExerciseAPIRequests {
         }
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
+        // Asserted so a rejected setup throws loudly here, instead of cascading into an undefined exercise id and a
+        // test that waits three minutes for a page it was never going to reach
+        if (!response.ok()) {
+            throw new Error(`Failed to create programming exercise: ${response.status()} ${await response.text()}`);
+        }
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
@@ -421,10 +428,8 @@ export class ExerciseAPIRequests {
             bonusPoints: exercise.bonusPoints,
             includedInOverallScore: exercise.includedInOverallScore,
             allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments ?? false,
-            allowFeedbackRequests: exercise.allowFeedbackRequests ?? false,
             presentationScoreEnabled: exercise.presentationScoreEnabled ?? false,
             secondCorrectionEnabled: exercise.secondCorrectionEnabled ?? false,
-            feedbackSuggestionModule: exercise.feedbackSuggestionModule,
             gradingInstructions: exercise.gradingInstructions,
             releaseDate: dayjsToString(due.subtract(2, 'hours')),
             startDate: fileUploadDateToString(exercise.startDate),

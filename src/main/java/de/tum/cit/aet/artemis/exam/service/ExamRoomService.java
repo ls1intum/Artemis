@@ -19,10 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -51,9 +52,9 @@ public class ExamRoomService {
 
     private final ExamRoomRepository examRoomRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper) {
+    public ExamRoomService(ExamRoomRepository examRoomRepository, JsonMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
     }
@@ -127,7 +128,9 @@ public class ExamRoomService {
             }
 
         }
-        catch (IOException e) {
+        // Jackson 3 exceptions are unchecked and no longer extend IOException, so a malformed room file no longer
+        // arrives here on its own — without naming JacksonException the upload answers 500 instead of 400.
+        catch (IOException | JacksonException e) {
             throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException");
         }
 
@@ -247,13 +250,13 @@ public class ExamRoomService {
         List<LayoutStrategy> layouts = new ArrayList<>();
 
         layoutNamesToLayoutNode.forEach((layoutName, layoutNode) -> {
-            if (layoutNode == null || !layoutNode.fieldNames().hasNext()) {
+            if (layoutNode == null || layoutNode.propertyNames().isEmpty()) {
                 throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
                         "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
             }
 
             // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
-            final String layoutType = layoutNode.fieldNames().next();
+            final String layoutType = layoutNode.propertyNames().iterator().next();
             final JsonNode layoutDetailNode = layoutNode.path(layoutType);
 
             LayoutStrategy layoutStrategy = new LayoutStrategy();
@@ -422,7 +425,7 @@ public class ExamRoomService {
             seatInputs = objectMapper.readValue(layoutStrategy.getParametersJson(), new TypeReference<>() {
             });
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("Invalid fixed-selection layout parameters", ENTITY_NAME, "room.invalidLayout",
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
@@ -485,7 +488,7 @@ public class ExamRoomService {
         try {
             relativeDistanceInput = objectMapper.readValue(layoutStrategy.getParametersJson(), RelativeDistanceInput.class);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("Invalid relative-distance layout parameters", ENTITY_NAME, "room.invalidLayout",
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }

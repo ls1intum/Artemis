@@ -82,10 +82,8 @@ export interface FileUploadExerciseDto {
     teamMode: boolean;
     teamAssignmentConfig?: FileUploadTeamAssignmentConfigDto;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
-    feedbackSuggestionModule?: string;
     gradingInstructions?: string;
     releaseDate?: string;
     startDate?: string;
@@ -117,10 +115,8 @@ export interface FileUploadExerciseInputDto {
     mode?: ExerciseMode;
     teamAssignmentConfig?: FileUploadTeamAssignmentConfigDto;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
-    feedbackSuggestionModule?: string;
     gradingInstructions?: string;
     releaseDate?: string;
     startDate?: string;
@@ -152,10 +148,8 @@ export function toFileUploadExerciseInputDTO(fileUploadExercise: FileUploadExerc
         mode: fileUploadExercise.mode,
         teamAssignmentConfig: toTeamAssignmentConfigDTO(fileUploadExercise.teamAssignmentConfig),
         allowComplaintsForAutomaticAssessments: fileUploadExercise.allowComplaintsForAutomaticAssessments,
-        allowFeedbackRequests: fileUploadExercise.allowFeedbackRequests,
         presentationScoreEnabled: fileUploadExercise.presentationScoreEnabled,
         secondCorrectionEnabled: fileUploadExercise.secondCorrectionEnabled,
-        feedbackSuggestionModule: fileUploadExercise.feedbackSuggestionModule,
         gradingInstructions: fileUploadExercise.gradingInstructions,
         releaseDate: convertDateFromClient(fileUploadExercise.releaseDate),
         startDate: convertDateFromClient(fileUploadExercise.startDate),
@@ -194,10 +188,8 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     exercise.teamMode = dto.teamMode;
     exercise.teamAssignmentConfig = dto.teamAssignmentConfig ? fromTeamAssignmentConfigDTO(dto.teamAssignmentConfig) : undefined;
     exercise.allowComplaintsForAutomaticAssessments = dto.allowComplaintsForAutomaticAssessments;
-    exercise.allowFeedbackRequests = dto.allowFeedbackRequests;
     exercise.presentationScoreEnabled = dto.presentationScoreEnabled;
     exercise.secondCorrectionEnabled = dto.secondCorrectionEnabled ?? false;
-    exercise.feedbackSuggestionModule = dto.feedbackSuggestionModule;
     exercise.gradingInstructions = dto.gradingInstructions;
     exercise.releaseDate = convertDateStringFromServer(dto.releaseDate);
     exercise.startDate = convertDateStringFromServer(dto.startDate);
