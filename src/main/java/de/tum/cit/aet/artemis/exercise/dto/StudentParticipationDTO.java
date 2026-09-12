@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
@@ -44,6 +45,38 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         @Nullable String participantName, @Nullable String participantIdentifier, @Nullable UserPublicInfoDTO student, @Nullable ParticipationTeamDTO team,
         @Nullable ParticipationExerciseContextDTO exercise, @Nullable List<ParticipationSubmissionDTO> submissions, @Nullable String repositoryUri, @Nullable String buildPlanId,
         @Nullable String branch) {
+
+    /**
+     * Builds the participation a submit response reports, from the projection the save was made against.
+     * <p>
+     * The submit path never loads the participation as an entity - doing so drags the exercise, its course and, for an
+     * exam exercise, the exercise group with its exam and that exam's course along - so the response is mapped from the
+     * projected columns plus the exercise and participant the caller already holds.
+     *
+     * @param target             the projected participation the submission was saved against
+     * @param exercise           the exercise the submission belongs to
+     * @param participant        the student or team the participation belongs to, may be null when it must be withheld
+     * @param includeParticipant whether the participant may be reported; a tutor assessing must not see it
+     * @return the participation as the response reports it
+     */
+    public static StudentParticipationDTO of(StudentParticipationSubmitTargetDTO target, Exercise exercise, @Nullable Participant participant, boolean includeParticipant) {
+        UserPublicInfoDTO studentDTO = null;
+        ParticipationTeamDTO teamDTO = null;
+        if (includeParticipant) {
+            if (participant instanceof User user) {
+                studentDTO = new UserPublicInfoDTO(user);
+            }
+            else if (participant instanceof Team participantTeam) {
+                teamDTO = ParticipationTeamDTO.of(participantTeam);
+            }
+        }
+
+        String participantName = participant != null && (studentDTO != null || teamDTO != null) ? participant.getName() : null;
+        String participantIdentifier = participant != null && (studentDTO != null || teamDTO != null) ? participant.getParticipantIdentifier() : null;
+        return new StudentParticipationDTO(target.id(), target.initializationState(), target.initializationDate(), target.individualDueDate(), target.presentationScore(),
+                target.testRun(), StudentParticipation.TYPE, null, participantName, participantIdentifier, studentDTO, teamDTO, ParticipationExerciseContextDTO.of(exercise), null,
+                null, null, null);
+    }
 
     /**
      * Maps a participation for an enclosing response without exposing its participant.

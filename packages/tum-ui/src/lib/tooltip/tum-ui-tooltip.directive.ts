@@ -13,6 +13,7 @@ let nextTooltipId = 0;
     host: {
         '(mouseenter)': 'onHoverStart()',
         '(mouseleave)': 'onHoverEnd()',
+        '(mousedown)': 'onPointerDown()',
         '(focusin)': 'onFocusStart()',
         '(focusout)': 'onFocusEnd()',
         '(keydown.escape)': 'hideNow()',
@@ -38,6 +39,7 @@ export class TumUiTooltipDirective implements OnDestroy {
     private triggerHovered = false;
     private tooltipHovered = false;
     private focused = false;
+    private pointerFocus = false;
 
     constructor() {
         effect(() => {
@@ -58,16 +60,27 @@ export class TumUiTooltipDirective implements OnDestroy {
 
     protected onHoverEnd(): void {
         this.triggerHovered = false;
+        this.pointerFocus = false;
         this.scheduleHideIfInactive();
     }
 
+    /** Clicking a trigger focuses it, and focus outlives the pointer — so that focus must not hold the tooltip open. */
+    protected onPointerDown(): void {
+        this.pointerFocus = true;
+    }
+
     protected onFocusStart(): void {
+        if (this.pointerFocus) {
+            // Pointer-driven focus: hover alone decides visibility, so the tooltip still hides on mouseleave.
+            return;
+        }
         this.focused = true;
         this.scheduleShow();
     }
 
     protected onFocusEnd(): void {
         this.focused = false;
+        this.pointerFocus = false;
         this.scheduleHideIfInactive();
     }
     private scheduleHideIfInactive(): void {
