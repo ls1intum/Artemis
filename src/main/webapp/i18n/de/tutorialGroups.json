@@ -320,6 +320,8 @@
                 "explanation": "Lege kursweite Tage fest, an denen keine Übungsgruppentermine stattfinden.",
                 "allHolidays": "Alle Feiertage",
                 "addHoliday": "Feiertag hinzufügen",
+                "loadFailed": "Die Feiertage konnten nicht geladen werden.",
+                "retry": "Erneut versuchen",
                 "editHoliday": "Feiertag bearbeiten",
                 "wholeDay": "Ganztägig",
                 "noHolidays": "Noch keine Feiertage.",

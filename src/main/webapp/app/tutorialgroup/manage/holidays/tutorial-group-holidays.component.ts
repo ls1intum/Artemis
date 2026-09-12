@@ -7,12 +7,13 @@ import { EMPTY, Subject, timer } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
@@ -50,6 +51,8 @@ const MINIMUM_ROLLOVER_DELAY_MS = 1_000;
     // Scoped to this page, so a confirmation raised here can only be answered by the dialog this page renders.
     providers: [TumUiConfirmationService],
     imports: [
+        TumUiMessageComponent,
+        ArtemisTranslatePipe,
         TumUiConfirmDialogComponent,
         FaIconComponent,
         TranslateDirective,
@@ -84,6 +87,13 @@ export class TutorialGroupHolidaysComponent {
     /** Reloads of the per-holiday counts. Switched over for the same reason: the newest load is the true one. */
     private readonly holidayCountRequests = new Subject<number>();
     protected readonly isLoading = signal(false);
+    /**
+     * Whether the last attempt to read the configuration failed.
+     *
+     * Held apart from `configuration` being undefined, which a course that simply has no tutorial groups
+     * configuration also reports. One of the two is worth offering a retry for; the other is not.
+     */
+    protected readonly loadFailed = signal(false);
     protected readonly isSaving = signal(false);
 
     protected readonly filter = signal<HolidayListFilter>('upcoming');
@@ -298,6 +308,7 @@ export class TutorialGroupHolidaysComponent {
 
     /** Drops everything read from the configuration, so nothing outlives a reload that failed. */
     private forgetLoadedConfiguration(): void {
+        this.loadFailed.set(true);
         this.configuration.set(undefined);
         this.freePeriods.set([]);
         this.sessionCountsByHoliday.set(new Map());
@@ -310,6 +321,7 @@ export class TutorialGroupHolidaysComponent {
         if (courseId === undefined) {
             return;
         }
+        this.loadFailed.set(false);
         this.isLoading.set(true);
         this.configurationRequests.next(courseId);
     }
@@ -330,12 +342,23 @@ export class TutorialGroupHolidaysComponent {
         this.loadSessionCounts();
     }
 
+    /** Asks for the configuration again after a failed read. */
+    protected retryLoad(): void {
+        this.loadConfiguration();
+    }
+
     protected openCreateDialog(day?: dayjs.Dayjs): void {
         this.openCreateDialogForRange(day ?? this.today(), day ?? this.today());
     }
 
     /** Opens the dialog on a run of days, which is what dragging across the calendar picks. */
     protected openCreateDialogForRange(start: dayjs.Dayjs, end: dayjs.Dayjs): void {
+        // Saving needs the configuration to hang the holiday off, so without one the dialog could only be filled in
+        // and dismissed. Guarded here rather than only on the button, because the calendar opens it too - by clicking
+        // a day and by dragging a run of them.
+        if (!this.configuration()) {
+            return;
+        }
         this.dialogGeneration++;
         this.editedHoliday.set(undefined);
         this.dialogInitialDay.set(start);

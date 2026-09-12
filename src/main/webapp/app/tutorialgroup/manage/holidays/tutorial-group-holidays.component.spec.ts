@@ -309,6 +309,67 @@ describe('TutorialGroupHolidaysComponent', () => {
         expect(component['isLoading']()).toBe(false);
     });
 
+    describe('when the configuration could not be read', () => {
+        async function failTheLoad(): Promise<void> {
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            component['loadConfiguration']();
+            await settle();
+        }
+
+        it('should say so and offer the read again, rather than showing an empty calendar', async () => {
+            await failTheLoad();
+
+            expect(query('holiday-load-failed')).not.toBeNull();
+            expect(query('holiday-load-retry')).not.toBeNull();
+        });
+
+        it('should stop offering to add a holiday, since a save would have nothing to hang it off', async () => {
+            // The button is projected into the course title bar, so it is not in this fixture's own DOM. Its
+            // `*titleBarActions` directive hands the template to this service and takes it back when destroyed, which
+            // is exactly what the `@if` around it does.
+            const offered = () => TestBed.inject(CourseTitleBarService).actionsTemplate() !== undefined;
+            expect(offered()).toBe(true);
+
+            await failTheLoad();
+
+            expect(offered()).toBe(false);
+        });
+
+        it('should not open the dialog from the calendar either, where the button is not the only way in', async () => {
+            await failTheLoad();
+
+            // Both routes the calendar offers: clicking one day, and dragging a run of them.
+            component['openCreateDialog'](dayjs('2025-12-22'));
+            expect(component['dialogVisible']()).toBe(false);
+
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'));
+            expect(component['dialogVisible']()).toBe(false);
+        });
+
+        it('should read again when the retry is pressed, and take the page back to normal', async () => {
+            await failTheLoad();
+
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: configurationDto as never })));
+            query('holiday-load-retry').nativeElement.click();
+            await settle();
+
+            expect(query('holiday-load-failed')).toBeNull();
+            expect(TestBed.inject(CourseTitleBarService).actionsTemplate()).toBeDefined();
+            expect(component['holidays']()).toHaveLength(2);
+        });
+
+        it('should not mistake a course with no configuration for a failed read', async () => {
+            // A 200 with no body is a course that simply has no tutorial groups configuration. There is nothing to
+            // retry there, so it must not be offered - but a holiday still cannot be added.
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: null as never })));
+            component['loadConfiguration']();
+            await settle();
+
+            expect(query('holiday-load-failed')).toBeNull();
+            expect(TestBed.inject(CourseTitleBarService).actionsTemplate()).toBeUndefined();
+        });
+    });
+
     it('should keep the newest configuration when an older reload answers last', () => {
         // Deleting and saving in quick succession leaves two reloads in flight; the earlier one still holds the
         // holiday that has just gone, and letting it land last would put it back on the page.

@@ -320,6 +320,8 @@
                 "explanation": "Define course wide days on which no tutorial group sessions take place.",
                 "allHolidays": "All holidays",
                 "addHoliday": "Add holiday",
+                "loadFailed": "The holidays could not be loaded.",
+                "retry": "Try again",
                 "editHoliday": "Edit holiday",
                 "wholeDay": "Whole day",
                 "noHolidays": "No holidays yet.",

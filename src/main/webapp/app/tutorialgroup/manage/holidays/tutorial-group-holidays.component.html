@@ -1,10 +1,25 @@
 @if (course()) {
-    <div *titleBarActions class="flex items-center gap-2">
-        <button tumUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialog()">
-            <fa-icon [icon]="faPlus" />
-            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
-        </button>
-    </div>
+    <!-- Offered only with a configuration to hang a holiday off: without one a save has nothing to send, so the
+         button would open a dialog that could be filled in and then silently do nothing. -->
+    @if (configuration()) {
+        <div *titleBarActions class="flex items-center gap-2">
+            <button tumUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialog()">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
+            </button>
+        </div>
+    }
+
+    <!-- A failed read leaves the page with nothing to show and no way forward, so it says so and offers the retry
+         rather than rendering an empty calendar that looks like a course without holidays. -->
+    @if (loadFailed()) {
+        <div class="mb-3 flex items-center gap-3" data-testid="holiday-load-failed">
+            <tum-ui-message severity="error" [text]="'artemisApp.pages.tutorialFreePeriodsManagement.loadFailed' | artemisTranslate" />
+            <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-load-retry" (click)="retryLoad()">
+                <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.retry"></span>
+            </button>
+        </div>
+    }
 
     <!-- Calendar and list sit side by side where there is room, and stack below xl so neither is squeezed. -->
     <div class="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
