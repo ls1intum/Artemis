@@ -1,0 +1,155 @@
+<tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate">
+    <div class="flex flex-wrap items-center gap-3 mb-3">
+        <input
+            #searchBox
+            tumUiInput
+            [tumUiInputSize]="'small'"
+            type="text"
+            class="w-64"
+            [placeholder]="'artemisApp.courseIngestionDashboard.matrix.search' | artemisTranslate"
+            (input)="onSearchInput(searchBox.value)"
+            data-testid="coverage-search"
+        />
+        <tum-ui-select-button
+            [options]="statusOptions()"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [ngModel]="statusFilter() ?? ''"
+            (ngModelChange)="onStatusChange($event)"
+            [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByStatus' | artemisTranslate"
+        />
+        <tum-ui-select-button
+            [options]="activeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [ngModel]="activeFilterValue()"
+            (ngModelChange)="onActiveChange($event)"
+            [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByActive' | artemisTranslate"
+        />
+        <div class="flex items-center gap-2 ms-auto">
+            @if (lastUpdated(); as updated) {
+                <span class="text-sm text-muted-color">
+                    <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.lastUpdatedLabel"></span>: {{ updated | artemisDate }}
+                </span>
+            }
+            <tum-ui-button
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                [icon]="faSync"
+                [loading]="refreshing()"
+                (clicked)="onRefresh()"
+                [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.refresh' | artemisTranslate"
+                [title]="'artemisApp.courseIngestionDashboard.matrix.refreshHint' | artemisTranslate"
+            />
+        </div>
+    </div>
+
+    @if (loading()) {
+        <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
+    }
+
+    @if (error()) {
+        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    @if (!loading() && !error()) {
+        <div class="overflow-x-auto">
+            <table tumUiTable size="small" rowHover>
+                <thead>
+                    <tr>
+                        <th colspan="2"></th>
+                        <th
+                            class="text-center {{ groupDivider }}"
+                            [attr.colspan]="metadataTypes.length"
+                            jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group.metadata"
+                        ></th>
+                        <th
+                            class="text-center {{ groupDivider }}"
+                            [attr.colspan]="contentTypes.length"
+                            jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group.content"
+                        ></th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th class="cursor-pointer select-none" (click)="toggleSort('name')">
+                            <span class="inline-flex items-center gap-1">
+                                <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.course"></span>
+                                <fa-icon [icon]="sortIcon('name')" class="text-xs text-muted-color" />
+                            </span>
+                        </th>
+                        <th class="cursor-pointer select-none" (click)="toggleSort('release')">
+                            <span class="inline-flex items-center gap-1">
+                                <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.release"></span>
+                                <fa-icon [icon]="sortIcon('release')" class="text-xs text-muted-color" />
+                            </span>
+                        </th>
+                        @for (type of allTypes; track type; let i = $index) {
+                            <th class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
+                        }
+                        <th class="cursor-pointer select-none" (click)="toggleSort('worstFirst')">
+                            <span class="inline-flex items-center gap-1">
+                                <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.status"></span>
+                                <fa-icon [icon]="sortIcon('worstFirst')" class="text-xs text-muted-color" />
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of rows(); track row.courseId) {
+                        <tr>
+                            <td>
+                                <div class="max-w-xs truncate font-medium" [title]="row.courseTitle">
+                                    @if (row.courseTitle) {
+                                        {{ row.courseTitle }}
+                                    } @else {
+                                        <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.courseFallback"></span> {{ row.courseId }}
+                                    }
+                                </div>
+                                @if (row.semester) {
+                                    <div class="text-xs text-muted-color">{{ row.semester }}</div>
+                                }
+                            </td>
+                            <td class="whitespace-nowrap text-sm text-muted-color">
+                                @if (row.releaseDate) {
+                                    {{ row.releaseDate | artemisDate: 'long-date' }}
+                                } @else {
+                                    <span>–</span>
+                                }
+                            </td>
+                            @for (type of allTypes; track type; let i = $index) {
+                                @let c = cell(row, type);
+                                <td class="text-center font-mono {{ dividerAt(i) }}">
+                                    <span class="{{ c.class }}">{{ c.text }}</span>
+                                </td>
+                            }
+                            <td>
+                                <span class="inline-flex items-center gap-2 whitespace-nowrap {{ statusClass(row.status) }}">
+                                    <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                    <span class="text-sm" [jhiTranslate]="'artemisApp.courseIngestionDashboard.status.' + row.status"></span>
+                                </span>
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td [attr.colspan]="allTypes.length + 3" class="text-muted-color text-center py-4" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.empty"></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <p class="text-xs text-muted-color mt-2 mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.legend"></p>
+
+        <tum-ui-paginator
+            class="block mt-2"
+            [totalRecords]="totalRecords()"
+            [page]="page()"
+            [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)"
+            [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate"
+        />
+    }
+</tum-ui-panel>

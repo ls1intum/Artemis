@@ -15,6 +15,7 @@ import {
     faKey,
     faList,
     faLock,
+    faMagnifyingGlassChart,
     faPlug,
     faPuzzlePiece,
     faRobot,
@@ -69,6 +70,7 @@ export class AdminSidebarComponent {
     passkeyEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
+    weaviateEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
 
@@ -232,6 +234,17 @@ export class AdminSidebarComponent {
                 testId: 'admin-websocket',
             },
         ];
+
+        // Only surface the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance.
+        if (this.weaviateEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/course-ingestion-dashboard',
+                icon: faMagnifyingGlassChart,
+                title: 'Ingestion Dashboard',
+                translation: 'global.menu.admin.sidebar.courseIngestionDashboard',
+                testId: 'admin-course-ingestion-dashboard',
+            });
+        }
 
         if (this.irisEnabled()) {
             monitoringItems.push({
