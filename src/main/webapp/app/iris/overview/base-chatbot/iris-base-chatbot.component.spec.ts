@@ -166,6 +166,16 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should hide the context selector when context selection is not available', () => {
+        expect(fixture.nativeElement.querySelector('jhi-context-selection')).toBeTruthy();
+
+        fixture.componentRef.setInput('isContextSelectionAvailable', false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-context-selection')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.textarea-controls--send-only')).toBeTruthy();
+    });
+
     it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
         expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
     });
