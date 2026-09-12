@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.within;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -13,7 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +49,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -118,12 +123,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     private static final String TEST_REPOSITORY_URI = "http://localhost:8080/git/TSTEXC/tstexc-tests.git";
 
-    /**
-     * The programming scalars the entity put on the wire before the migration, pinned by value in the contract test.
-     */
-    private static final List<String> PROGRAMMING_SCALARS = List.of("allowOnlineEditor", "allowOfflineIde", "allowOnlineIde", "staticCodeAnalysisEnabled",
-            "maxStaticCodeAnalysisPenalty", "showTestNamesToStudents", "buildAndTestStudentSubmissionsAfterDueDate", "releaseTestsWithExampleSolution", "programmingLanguage",
-            "projectType", "packageName", "projectKey", "testRepositoryUri", "testCasesChanged", "defaultTestCaseVisibility");
+    private static final String TITLE = "SCORPIO wire contract exercise";
+
+    private static final String PROBLEM_STATEMENT = "Problem statement on the wire";
+
+    private static final String GRADING_INSTRUCTIONS = "Grading instructions only staff may read";
+
+    private static final ZonedDateTime RELEASE_DATE = ZonedDateTime.parse("2023-01-02T03:04:05Z");
+
+    private static final ZonedDateTime START_DATE = ZonedDateTime.parse("2023-02-03T04:05:06Z");
+
+    private static final ZonedDateTime DUE_DATE = ZonedDateTime.parse("2023-03-04T05:06:07Z");
+
+    private static final ZonedDateTime ASSESSMENT_DUE_DATE = ZonedDateTime.parse("2023-04-05T06:07:08Z");
+
+    private static final ZonedDateTime EXAMPLE_SOLUTION_PUBLICATION_DATE = ZonedDateTime.parse("2023-05-06T07:08:09Z");
+
+    private static final ZonedDateTime BUILD_AND_TEST_DATE = ZonedDateTime.parse("2023-06-07T08:09:10Z");
 
     @BeforeEach
     void init() {
@@ -426,16 +442,44 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     /**
      * The same route is the one a SCORPIO client reads a programming exercise through, and it used to hand out the
-     * {@code ProgrammingExercise} entity. Every programming scalar the entity serialized is pinned here by value, not
-     * only by key, against the reloaded entity, because a component that silently turns null passes a key check.
+     * {@code ProgrammingExercise} entity. The whole document is compared here, values and nesting, against the entity
+     * the route used to serialize: a key-set check alone would pass a wrong title or a wrong nested course value, and
+     * NON_EMPTY would hide a dropped mapping for a field the fixture left unset, so every optional field the route can
+     * carry gets a distinct value first.
+     * <p>
+     * The entity oracle alone is not enough. Expectation and actual both flow through the same query and the same
+     * filter call, so a change to either could move them together and keep the test green. The literal block below is
+     * the guard: it is written out by hand, does not derive from the query, and pins the values the external client
+     * reads.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingExerciseCarriesTheProgrammingScalarsTheEntityUsedToSerialize() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        // Every nullable scalar needs a value: NON_EMPTY hides an unset one on both sides, which would let a dropped
-        // component pass unnoticed. The test repository uri is the one a tutor is meant to keep.
+        exercise.setTitle(TITLE);
+        exercise.setProblemStatement(PROBLEM_STATEMENT);
+        exercise.setGradingInstructions(GRADING_INSTRUCTIONS);
+        exercise.setCategories(new HashSet<>(Set.of("homework", "bonus")));
+        exercise.setReleaseDate(RELEASE_DATE);
+        exercise.setStartDate(START_DATE);
+        exercise.setDueDate(DUE_DATE);
+        exercise.setAssessmentDueDate(ASSESSMENT_DUE_DATE);
+        exercise.setExampleSolutionPublicationDate(EXAMPLE_SOLUTION_PUBLICATION_DATE);
+        exercise.setMaxPoints(42.0);
+        exercise.setBonusPoints(7.0);
+        exercise.setDifficulty(DifficultyLevel.HARD);
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setMode(ExerciseMode.TEAM);
+        TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(exercise);
+        teamAssignmentConfig.setMinTeamSize(2);
+        teamAssignmentConfig.setMaxTeamSize(4);
+        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        exercise.setSecondCorrectionEnabled(true);
+        exercise.setPresentationScoreEnabled(true);
+        exercise.setAllowComplaintsForAutomaticAssessments(true);
         exercise.setTestRepositoryUri(TEST_REPOSITORY_URI);
         exercise.setAllowOnlineEditor(true);
         exercise.setAllowOfflineIde(true);
@@ -443,13 +487,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setStaticCodeAnalysisEnabled(true);
         exercise.setMaxStaticCodeAnalysisPenalty(20);
         exercise.setShowTestNamesToStudents(true);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BUILD_AND_TEST_DATE);
         exercise.setReleaseTestsWithExampleSolution(true);
         exercise.setTestCasesChanged(true);
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setPackageName("de.tum.cit.ase");
         exerciseRepository.save(exercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
         Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
         // The entity side has to be loaded and filtered exactly as the endpoint did, otherwise a collection the query
@@ -459,13 +504,28 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         Map<String, Object> entityJson = objectMapper.convertValue(reloaded, new TypeReference<>() {
         });
 
-        assertThat(response.keySet()).as("Top-level key set the entity used to serialize").containsExactlyInAnyOrderElementsOf(entityJson.keySet());
-        assertThat(PROGRAMMING_SCALARS).allSatisfy(key -> {
-            assertThat(entityJson.get(key)).as(key + " is serialized by the entity").isNotNull();
-            assertThat(response.get(key)).as(key + " on the wire").isEqualTo(entityJson.get(key));
-        });
-        assertThat(response.get("testRepositoryUri")).isEqualTo(TEST_REPOSITORY_URI);
-        assertThat(response.get("defaultTestCaseVisibility")).isEqualTo(Visibility.ALWAYS.name());
+        assertThat(normalized(response)).as("Complete response against the entity the route used to serialize").isEqualTo(normalized(entityJson));
+
+        assertThat(response).as("Values the external client reads, pinned by hand")
+                .containsAllEntriesOf(Map.ofEntries(Map.entry("type", "programming"), Map.entry("exerciseType", "programming"), Map.entry("title", TITLE),
+                        Map.entry("problemStatement", PROBLEM_STATEMENT), Map.entry("gradingInstructions", GRADING_INSTRUCTIONS), Map.entry("maxPoints", 42.0),
+                        Map.entry("bonusPoints", 7.0), Map.entry("difficulty", "HARD"), Map.entry("mode", "TEAM"), Map.entry("teamMode", true),
+                        Map.entry("visibleToStudents", true), Map.entry("includedInOverallScore", "INCLUDED_COMPLETELY"), Map.entry("assessmentType", "SEMI_AUTOMATIC"),
+                        Map.entry("secondCorrectionEnabled", true), Map.entry("presentationScoreEnabled", true), Map.entry("allowComplaintsForAutomaticAssessments", true),
+                        Map.entry("studentAssignedTeamIdComputed", false), Map.entry("gradingInstructionFeedbackUsed", false), Map.entry("testRepositoryUri", TEST_REPOSITORY_URI),
+                        Map.entry("defaultTestCaseVisibility", "ALWAYS"), Map.entry("programmingLanguage", "JAVA"), Map.entry("projectType", "PLAIN_GRADLE"),
+                        Map.entry("packageName", "de.tum.cit.ase"), Map.entry("allowOnlineEditor", true), Map.entry("allowOfflineIde", true), Map.entry("allowOnlineIde", true),
+                        Map.entry("staticCodeAnalysisEnabled", true), Map.entry("maxStaticCodeAnalysisPenalty", 20), Map.entry("showTestNamesToStudents", true),
+                        Map.entry("releaseTestsWithExampleSolution", true), Map.entry("testCasesChanged", true)));
+        assertThat(response.get("categories")).asInstanceOf(InstanceOfAssertFactories.list(String.class)).containsExactlyInAnyOrder("homework", "bonus");
+        assertWireDate(response, "releaseDate", RELEASE_DATE);
+        assertWireDate(response, "startDate", START_DATE);
+        assertWireDate(response, "dueDate", DUE_DATE);
+        assertWireDate(response, "assessmentDueDate", ASSESSMENT_DUE_DATE);
+        assertWireDate(response, "exampleSolutionPublicationDate", EXAMPLE_SOLUTION_PUBLICATION_DATE);
+        assertWireDate(response, "buildAndTestStudentSubmissionsAfterDueDate", BUILD_AND_TEST_DATE);
+        assertThat(((Number) mapOf(response, "course").get("id")).longValue()).as("Course the client resolves").isEqualTo(course.getId());
+        assertThat(mapOf(response, "teamAssignmentConfig")).containsEntry("minTeamSize", 2).containsEntry("maxTeamSize", 4);
     }
 
     /**
@@ -509,6 +569,36 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         Map<String, Object> json = objectMapper.convertValue(entity, new TypeReference<>() {
         });
         return json.keySet();
+    }
+
+    /**
+     * Canonicalizes a parsed JSON document so two equal documents compare equal: maps become key-sorted, arrays are
+     * sorted by their canonical text because a {@code Set} on either side has no defined order on the wire, and whole
+     * numbers collapse to one type because {@code convertValue} keeps a {@code Long} where parsing the wire yields an
+     * {@code Integer}. Whole and fractional stay distinct, so a {@code 42} that should be {@code 42.0} still fails.
+     *
+     * @param node the parsed node
+     * @return the canonical form of the node
+     */
+    private static Object normalized(Object node) {
+        if (node instanceof Number number) {
+            boolean fractional = number instanceof Float || number instanceof Double || number instanceof BigDecimal;
+            return fractional ? number.doubleValue() : new BigInteger(number.toString());
+        }
+        if (node instanceof Map<?, ?> map) {
+            Map<String, Object> sorted = new TreeMap<>();
+            map.forEach((key, value) -> sorted.put(String.valueOf(key), normalized(value)));
+            return sorted;
+        }
+        if (node instanceof List<?> list) {
+            return list.stream().map(ExerciseIntegrationTest::normalized).sorted(Comparator.comparing(String::valueOf)).toList();
+        }
+        return node;
+    }
+
+    private static void assertWireDate(Map<String, Object> response, String key, ZonedDateTime expected) {
+        assertThat(response.get(key)).as(key + " is on the wire").isInstanceOf(String.class);
+        assertThat(ZonedDateTime.parse((String) response.get(key))).as(key + " on the wire").isEqualTo(expected);
     }
 
     @SuppressWarnings("unchecked")
