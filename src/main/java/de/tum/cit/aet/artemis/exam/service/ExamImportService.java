@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportErrorExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
@@ -330,17 +331,17 @@ public class ExamImportService {
         // check for duplicated titles
         boolean duplicatedTitles = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, true);
         if (duplicatedTitles) {
-            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseTitle");
+            throw new ExamConfigurationException(ExamImportErrorExerciseGroupDTO.ofAll(exerciseGroups), 0, "duplicatedProgrammingExerciseTitle");
         }
         // check for duplicated short names
         boolean duplicatedShortNames = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, false);
         if (duplicatedShortNames) {
-            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
+            throw new ExamConfigurationException(ExamImportErrorExerciseGroupDTO.ofAll(exerciseGroups), 0, "duplicatedProgrammingExerciseShortName");
         }
         // check for existing project on VCS / CI
         int numberOfInvalidProgrammingExercises = checkForExistingProjectAndRemoveTitleShortName(programmingExercises, courseShortName);
         if (numberOfInvalidProgrammingExercises > 0) {
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises, "invalidKey");
+            throw new ExamConfigurationException(ExamImportErrorExerciseGroupDTO.ofAll(exerciseGroups), numberOfInvalidProgrammingExercises, "invalidKey");
         }
     }
 

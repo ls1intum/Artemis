@@ -512,8 +512,27 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         versionControlService.createProjectForExercise(programming);
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", List.of(ExerciseGroupImportDTO.of(programmingGroup)),
-                HttpStatus.BAD_REQUEST);
+        var response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group",
+                List.of(ExerciseGroupImportDTO.of(programmingGroup)), HttpStatus.BAD_REQUEST, null);
+
+        // The import dialog renders the rejected groups from the error body and re-posts them, so pin the wire contract
+        // it reads (exam-import.component.ts / exam-update.component.ts -> error.params.exerciseGroups).
+        var error = request.getObjectMapper().readTree(response.getContentAsString());
+        assertThat(error.get("errorKey").asString()).isEqualTo("invalidKey");
+        assertThat(error.get("numberOfInvalidProgrammingExercises").asInt()).isEqualTo(1);
+        var groups = error.get("params").get("exerciseGroups");
+        assertThat(groups).hasSize(1);
+        var group = groups.get(0);
+        assertThat(group.get("title").asString()).isEqualTo(programmingGroup.getTitle());
+        assertThat(group.get("isMandatory").asBoolean()).isEqualTo(programmingGroup.getIsMandatory());
+        assertThat(group.propertyNames()).containsExactlyInAnyOrder("title", "isMandatory", "exercises");
+        assertThat(group.get("exercises")).hasSize(1);
+        var exercise = group.get("exercises").get(0);
+        assertThat(exercise.get("id").asLong()).isEqualTo(programming.getId());
+        assertThat(exercise.get("type").asString()).isEqualTo("programming");
+        assertThat(exercise.get("maxPoints").asDouble()).isEqualTo(programming.getMaxPoints());
+        // The rejected title and short name are blanked so the user must choose new ones; blank values are not serialized
+        assertThat(exercise.propertyNames()).containsExactlyInAnyOrder("id", "type", "maxPoints", "bonusPoints");
     }
 
     @Test
