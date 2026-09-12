@@ -27,8 +27,17 @@ interface SearchState {
     query: string;
 }
 
-/** Max time to wait for Iris content search before falling back to the standard metadata lecture search. */
-export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
+/**
+ * Max time to wait for Iris content search before falling back to the standard metadata lecture search.
+ * <p>
+ * DEMO BRANCH: raised from 5s. That budget was set when content search was a single hybrid query. The
+ * reranked two-stage pipeline costs an embedding call, two Weaviate lanes and a cross-encoder pass (capped
+ * at its own 2s) on top, so a cold reranker overruns 5s, and the timeout then falls back to the metadata
+ * search silently. The symptom is indistinguishable from a bug: content search never appears to run and
+ * entity results show instead. Production should decide this budget against measured p95 latency of the
+ * reranked pipeline rather than inherit the pre-rerank number.
+ */
+export const CONTENT_SEARCH_TIMEOUT_MS = 15_000;
 
 @Component({
     selector: 'jhi-global-search-modal',
