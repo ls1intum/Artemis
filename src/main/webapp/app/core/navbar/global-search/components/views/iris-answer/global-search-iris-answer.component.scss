@@ -178,3 +178,70 @@
 .iris-chip-name {
     max-width: 9rem;
 }
+
+/* ── Inline citation chips (rendered inside the markdown innerHTML) ────────── */
+
+.iris-answer-region {
+    position: relative;
+}
+
+:host ::ng-deep .iris-cite {
+    display: inline-block;
+    padding: 0 0.3rem;
+    margin-left: 0.15rem;
+    border-radius: 0.3rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+    cursor: pointer;
+    user-select: none;
+    transition: background 120ms ease;
+}
+
+:host ::ng-deep .iris-cite.iris-cite-lit {
+    background: color-mix(in srgb, var(--bs-primary) 24%, transparent);
+}
+
+:host ::ng-deep .iris-attr-lit {
+    background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+    border-radius: 0.3rem;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary) 8%, transparent);
+}
+
+.iris-cite-popover {
+    position: absolute;
+    transform: translate(-50%, calc(-100% - 0.4rem));
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 18rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
+    border-radius: 0.5rem;
+    background: var(--bs-body-bg);
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.iris-chip-n {
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--bs-secondary-color);
+}
+
+.iris-chip.iris-chip-lit {
+    border-color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep .iris-cite {
+        transition: none;
+    }
+}
