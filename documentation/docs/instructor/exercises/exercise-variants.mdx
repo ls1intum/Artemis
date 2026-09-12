@@ -22,24 +22,24 @@ A variant group gives you:
 
 <Callout variant={CalloutVariant.info}>
 
-  Exercise variant groups are a course-level concept. Exams use their own *exercise groups*, where Artemis assigns each student exactly one exercise from the group. Both are described in this page, in [Variant Groups in Exams](#variant-groups-in-exams).
+  Exercise variant groups are a course-level concept. Exams use their own **exercise groups**, where Artemis assigns each student exactly one exercise from the group. Both are described in this page, in [Variant Groups in Exams](#variant-groups-in-exams).
 
 </Callout>
 
 ## The Exercise Management Page
 
-Open **Course Management → Exercises**. All exercises of the course live on one page, and the view switch in the header decides how they are bucketed:
+The course's **Exercises** page in course management holds every exercise of the course, and the view switch in its header decides how they are bucketed:
 
 | View | What it shows |
 |---|---|
 | **List** | A flat table of every exercise in the course |
 | **Type** | One card per exercise type (programming, quiz, modeling, text, file upload) |
 | **Week** | One card per calendar week, based on the exercise dates |
-| **Group** | One card per variant group, plus an *Ungrouped* card for everything else |
+| **Group** | One card per variant group, plus an **Ungrouped** card for everything else |
 
 <Image src={groupView} alt="Exercise management in group view" size={ImageSize.large} caption="Group view: one card per variant group, with the shared timeline and points cap in the card footer" />
 
-The search bar filters across all views, rows can be multi-selected for bulk actions, and each row carries the usual actions (participations, scores, edit, delete) plus the type-specific ones.
+The search bar filters across all views, rows can be multi-selected for bulk actions, and each row carries the usual actions — **Participations**, **Scores**, **Edit** and **Delete** — plus the type-specific ones.
 
 ## Creating a Variant Group
 
@@ -53,7 +53,7 @@ There are three ways to create a group:
 
 In the **Group** view you can also drag an exercise from one card onto another to move it between groups.
 
-<Callout variant={CalloutVariant.warning}>
+<Callout variant={CalloutVariant.info}>
 
   Only quizzes in **individual** mode can join a variant group. Synchronized and batched quizzes have a single shared run for the whole course, which is incompatible with students working on different variants at their own pace.
 
@@ -78,7 +78,7 @@ Removing an exercise from a group leaves its dates as they are; from then on you
 
 **Max points** on the group caps the total contribution of the group to the course score. A student who works on several variants has their points summed and then capped at this value, so the group counts like a single exercise.
 
-Leave the field empty for no cap. Exercises outside a group are scored exactly as before.
+Leave the field empty for no cap. An exercise outside a group is scored on its own.
 
 <Callout variant={CalloutVariant.info}>
 

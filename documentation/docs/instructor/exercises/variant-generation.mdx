@@ -40,7 +40,7 @@ The action is hidden for exercises it cannot handle, and for anyone below the Ed
 
 ## Starting a Generation
 
-Open **Course Management → Exercises**, then use the overflow menu (**…**) of an exercise row and choose **Create Variant with AI**. In exams, the same action sits on the rows of an exercise group.
+On the course's **Exercises** page in course management, the overflow menu (**…**) of an exercise row offers **Create Variant with AI**. In exams, the same action sits on the rows of an exercise group.
 
 <Image src={createVariantAction} alt="Create Variant with AI in the row actions" size={ImageSize.medium} caption="The AI action in the overflow menu of an exercise row" />
 
@@ -92,13 +92,13 @@ The wizard shows the phases as they happen: the source exercise is analyzed, the
 
 <Image src={wizardGenerating} alt="Live phase timeline while generating" size={ImageSize.medium} caption="The live timeline of a running generation" />
 
-A programming variant runs real CI builds, so a generation typically takes a few minutes. Quizzes are faster.
+A programming variant runs real template and solution builds, so a generation typically takes a few minutes. Quizzes are faster.
 
 Click **Run in Background** to close the window and let the job continue. It then appears in the tray in the navigation bar, where you can follow it, reopen the full view, or cancel it.
 
 <Image src={navbarTray} alt="Variant generation tray in the navigation bar" size={ImageSize.medium} caption="Background generations in the navbar tray" />
 
-Cancelling ends the job and removes the half-finished exercise copy, including its repositories and build plans. Jobs stay in the tray for 24 hours so you can review a result later.
+Cancelling ends the job and removes the half-finished exercise copy, including its repositories and their builds. Jobs stay in the tray for 24 hours so you can review a result later.
 
 ### Review the Result
 
@@ -142,13 +142,16 @@ Generation works the same way for exercises inside an exam exercise group, with 
 
 ## Troubleshooting
 
-**The action is not visible.**
+### The Action Is Not Visible
+
 Check that the Hyperion module is enabled on your instance, that you have at least the Editor role in the course, and that the exercise is a programming exercise or a quiz without drag-and-drop questions.
 
-**The run ended as a draft with warnings.**
+### The Run Ended as a Draft with Warnings
+
 Open **Show technical details** on the result step. It names the gate that did not pass — most often a build that stayed red or a task reference that no longer resolves to a test. Fixing that in the editor is usually a small edit.
 
 <Image src={wizardResultDraft} alt="Draft with warnings result" size={ImageSize.large} caption="A flagged draft explains what to repair" />
 
-**Generation is slow.**
+### Generation Is Slow
+
 Programming variants trigger real template and solution builds in every verification round. If your build agents are busy, the run waits for them.
