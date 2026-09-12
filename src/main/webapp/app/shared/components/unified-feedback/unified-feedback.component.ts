@@ -1,18 +1,25 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faMinus, faPlus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FormsModule } from '@angular/forms';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
@@ -26,11 +33,71 @@ interface FeedbackTypeConfig {
     standalone: true,
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
-    imports: [NgClass, FaIconComponent, TooltipModule],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TumUiTooltipDirective,
+        FormsModule,
+        ConfirmIconComponent,
+        GradingInstructionLinkIconComponent,
+        FeedbackSuggestionBadgeComponent,
+        AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
+    private destroyRef = inject(DestroyRef);
+
+    constructor() {
+        // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
+        // and its viewChild query - is guaranteed to be resolved, which a plain effect() does not promise
+        // on its first flush. A brand-new feedback item (e.g. an AI suggestion appended to the list) mounts
+        // with feedbackDetail already populated, so that first flush is exactly when this matters.
+        afterRenderEffect(() => {
+            this.feedbackDetail();
+            this.feedbackTitle();
+            if (this.editable()) {
+                this.autogrowDetailTextarea();
+                this.autogrowTitleTextarea();
+            }
+        });
+
+        // Re-measuring only on feedbackDetail/feedbackTitle changes misses the case where a textarea's own
+        // available width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an
+        // AI feedback suggestion already landed) - the text then wraps into more lines than the height that was
+        // computed at mount time, with nothing left to trigger a re-measure. Watch width specifically (not
+        // the observed box as a whole) so our own height writes below don't retrigger this callback.
+        afterNextRender(() => {
+            const detailTextarea = this.detailTextarea()?.nativeElement;
+            const titleTextarea = this.titleTextarea()?.nativeElement;
+            if (!detailTextarea && !titleTextarea) {
+                return;
+            }
+            let lastDetailWidth = detailTextarea?.clientWidth;
+            let lastTitleWidth = titleTextarea?.clientWidth;
+            const resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const width = entry.contentRect.width;
+                    if (entry.target === detailTextarea && width !== lastDetailWidth) {
+                        lastDetailWidth = width;
+                        this.autogrowDetailTextarea();
+                    } else if (entry.target === titleTextarea && width !== lastTitleWidth) {
+                        lastTitleWidth = width;
+                        this.autogrowTitleTextarea();
+                    }
+                }
+            });
+            if (detailTextarea) {
+                resizeObserver.observe(detailTextarea);
+            }
+            if (titleTextarea) {
+                resizeObserver.observe(titleTextarea);
+            }
+            this.destroyRef.onDestroy(() => resizeObserver.disconnect());
+        });
+    }
 
     feedbackContent = input<string>('');
     points = input<number>(0);
@@ -42,11 +109,31 @@ export class UnifiedFeedbackComponent {
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
 
+    editable = input<boolean>(false);
+    readOnly = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    /**
+     * Whether the title may be edited while {@link editable} is true. Consumers that derive the title themselves on
+     * save (e.g. the programming inline feedback, which auto-generates "File X at line Y" for non-suggestions) set
+     * this to false so the UI never invites editing a value that would be discarded. Defaults to true.
+     */
+    titleEditable = input<boolean>(true);
+
+    feedbackTitle = model<string | undefined>(undefined);
+    feedbackDetail = model<string | undefined>(undefined);
+    feedbackCredits = model<number | undefined>(0);
+
+    readonly onDelete = output<void>();
+
+    private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
+    private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
+    private readonly confirmIcon = viewChild(ConfirmIconComponent);
+
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
-        correct: { icon: faCheck, alertClass: 'alert-success' },
-        needs_revision: { icon: faMessage, alertClass: 'alert-primary' },
-        not_attempted: { icon: faTimes, alertClass: 'alert-secondary' },
-        non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
+        correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
+        needs_revision: { icon: faExclamationTriangle, alertClass: 'unified-feedback--info' },
+        not_attempted: { icon: faMinus, alertClass: 'unified-feedback--neutral' },
+        non_compliant: { icon: faTimes, alertClass: 'unified-feedback--danger' },
     };
 
     private readonly feedbackTypeTitleKeys: Record<FeedbackType, string> = {
@@ -55,6 +142,8 @@ export class UnifiedFeedbackComponent {
         not_attempted: 'artemisApp.feedback.type.notAttempted',
         non_compliant: 'artemisApp.feedback.type.needsRevision',
     };
+
+    private readonly effectivePoints = computed(() => (this.editable() ? (this.feedbackCredits() ?? 0) : this.points()));
 
     readonly inferredType = computed(() => {
         const explicitType = this.type();
@@ -66,7 +155,7 @@ export class UnifiedFeedbackComponent {
             return 'needs_revision';
         }
 
-        const points = this.points();
+        const points = this.effectivePoints();
         if (points > 0) {
             return 'correct';
         }
@@ -112,29 +201,252 @@ export class UnifiedFeedbackComponent {
         return this.feedbackTypeConfigs[this.inferredType()].alertClass;
     });
 
-    readonly formattedPoints = computed(() => {
+    /** Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word). */
+    readonly pointsLabel = computed(() => {
         const points = this.points();
         const formatted = this.localeConversionService.toLocaleString(points, this.scoreAccuracy());
-        const key = `artemisApp.assessment.detail.points.${Math.abs(points) === 1 ? 'one' : 'many'}`;
-        return this.artemisTranslatePipe.transform(key, { points: formatted });
+        return points > 0 ? `+${formatted}` : formatted;
     });
 
-    private stripFeedbackSuggestionPrefix(text: string): string {
+    /** Read-only pill color: follows the sign of the points value directly, independent of the inferred/explicit type. */
+    readonly pointsSeverity = computed<'positive' | 'negative' | 'neutral'>(() => {
+        const points = this.points();
+        if (points > 0) {
+            return 'positive';
+        }
+        if (points < 0) {
+            return 'negative';
+        }
+        return 'neutral';
+    });
+
+    readonly displayTitle = computed(() => Feedback.stripSuggestionPrefix(this.feedbackTitle() ?? ''));
+
+    readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
+
+    readonly canDismissWithoutConfirm = computed(
+        () =>
+            (this.feedbackCredits() ?? 0) === 0 &&
+            (this.feedbackDetail() ?? '').length === 0 &&
+            this.displayTitle().length === 0 &&
+            !this.feedback()?.gradingInstruction &&
+            !this.feedback()?.id,
+    );
+
+    readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
+    readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback);
+    readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
+    readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
+    readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
+    readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
+    readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
+    /**
+     * A plain method, not a computed: consumers (drag-and-drop rubric assignment, the rubric dropdown) mutate
+     * `feedback().gradingInstruction` in place rather than replacing the feedback object, so a computed signal
+     * keyed on the `feedback` input would never see its dependency change and would keep returning a stale value.
+     */
+    gradingInstructionText(): string | undefined {
+        return this.feedback()?.gradingInstruction?.feedback;
+    }
+
+    /**
+     * A plain method, not a computed: tutor-training's `markAllFeedbackToCorrect()` and `markWrongFeedback()`
+     * mutate `feedback().correctionStatus` in place, so a computed signal keyed on the `feedback` input would
+     * never see its dependency change and would keep returning a stale label.
+     */
+    correctionStatusLabel(): string | undefined {
+        const status = this.feedback()?.correctionStatus;
+        return status ? this.artemisTranslatePipe.transform(`artemisApp.exampleSubmission.feedback.${status}`) : undefined;
+    }
+
+    /** Plain method, not computed: see {@link correctionStatusLabel} for why this must re-read on every call. */
+    isCorrectionStatusCorrect(): boolean {
+        return this.feedback()?.correctionStatus === 'CORRECT';
+    }
+
+    /** A non-graded feedback suggestion (an Athena hint with no credits) has no points pill in read-only mode. */
+    readonly showPoints = computed(() => {
+        const feedback = this.feedback();
+        return !feedback || !Feedback.isNonGradedFeedbackSuggestion(feedback);
+    });
+
+    /** Usage-limit-excess feedback whose credits are excluded from the total score, e.g. a subsequent SCA finding beyond the configured limit. */
+    readonly isSubsequentFeedback = computed(() => !!this.feedback()?.isSubsequent);
+
+    readonly subsequentFeedbackTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.subsequentFeedback'));
+
+    protected readonly Feedback = Feedback;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
+
+    /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
+    protected readonly CREDITS_STEP = 0.5;
+
+    /**
+     * The credits input's raw, not-yet-committed text, captured on a stepper button's `mousedown` (which always
+     * fires before the button steals focus and blurs the input). Without this, clicking a stepper after typing an
+     * off-grid value like `1.3` blurs the input first, which snaps it to `1.5` via {@link onCreditsChange} before
+     * the button's own `click` handler runs, and stepping from the already-snapped value overshoots. Consumed
+     * exactly once by {@link stepCredits}.
+     */
+    private pendingRawCredits: string | undefined;
+
+    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    protected stepCreditsDisabled(): boolean {
+        return this.readOnly() || !!this.feedback()?.gradingInstruction;
+    }
+
+    private currentTitlePrefix(): string {
+        const raw = this.feedbackTitle() ?? '';
         for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
-            if (text.startsWith(prefix)) {
-                return text.slice(prefix.length);
+            if (raw.startsWith(prefix)) {
+                return prefix;
             }
         }
-        return text;
+        return '';
+    }
+
+    /**
+     * The prefix to write on the next edit: an accepted suggestion transitions to adapted the moment it is
+     * touched; every other state (already adapted, not a suggestion, or the unreachable bare "suggested") is
+     * left as-is. This is a one-way, sticky transition — it never reverts even if the edit is undone later.
+     */
+    private nextTitlePrefix(): string {
+        const current = this.currentTitlePrefix();
+        return current === FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER ? FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER : current;
+    }
+
+    /**
+     * Rewrites feedbackTitle's suggestion prefix from accepted to adapted, if applicable, without changing the
+     * title text itself. Called whenever the description or the score changes, since neither of those edits
+     * goes through onTitleInput.
+     */
+    private markAdaptedIfSuggestion(): void {
+        const current = this.currentTitlePrefix();
+        if (current !== FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER) {
+            return;
+        }
+        const title = (this.feedbackTitle() ?? '').slice(current.length);
+        this.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${title}`);
+    }
+
+    onTitleInput(value: string): void {
+        this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
+    }
+
+    onTitleTextareaInput(): void {
+        this.autogrowTitleTextarea();
+    }
+
+    onDetailChange(value: string): void {
+        this.feedbackDetail.set(value);
+        this.markAdaptedIfSuggestion();
+    }
+
+    /** Clearing the field must invalidate the score immediately, without waiting for `change` to fire on blur. */
+    onCreditsInput(rawValue: string): void {
+        if (rawValue.trim() === '') {
+            this.feedbackCredits.set(undefined);
+            this.markAdaptedIfSuggestion();
+        }
+    }
+
+    onCreditsChange(value: number): void {
+        this.feedbackCredits.set(this.normalizedCredits(value));
+        this.markAdaptedIfSuggestion();
+    }
+
+    /**
+     * Increments or decrements the points by one half-point step, mirroring what typing into the field does. A
+     * hand-typed value is snapped onto the half-point grid in the direction of travel first, so stepping up from
+     * 1.3 lands on 1.5 (the next grid point) rather than skipping to 2.
+     * @param delta the signed step to apply
+     */
+    stepCredits(delta: number): void {
+        if (this.stepCreditsDisabled()) {
+            return;
+        }
+        const base = this.consumePendingRawCredits() ?? this.feedbackCredits() ?? 0;
+        const snapped = (delta > 0 ? Math.floor(base / this.CREDITS_STEP) : Math.ceil(base / this.CREDITS_STEP)) * this.CREDITS_STEP;
+        this.onCreditsChange(snapped + delta);
+    }
+
+    /** See {@link pendingRawCredits}. */
+    stashRawCredits(rawValue: string): void {
+        this.pendingRawCredits = rawValue;
+    }
+
+    private consumePendingRawCredits(): number | undefined {
+        const raw = this.pendingRawCredits;
+        this.pendingRawCredits = undefined;
+        if (raw === undefined || raw.trim() === '') {
+            return undefined;
+        }
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+
+    private normalizedCredits(value: number | null | undefined): number | undefined {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return undefined;
+        }
+        return Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
+    }
+
+    handleDeleteConfirmed(): void {
+        this.onDelete.emit();
+    }
+
+    toggleDeleteConfirm(): void {
+        if (this.canDismissWithoutConfirm()) {
+            this.handleDeleteConfirmed();
+        } else {
+            this.confirmIcon()?.toggle();
+        }
+    }
+
+    focusTextarea(): void {
+        const textarea = this.detailTextarea()?.nativeElement;
+        textarea?.focus();
+        this.autogrowDetailTextarea();
+    }
+
+    onDetailInput(): void {
+        this.autogrowDetailTextarea();
+    }
+
+    private autogrowDetailTextarea(): void {
+        const textarea = this.detailTextarea()?.nativeElement;
+        if (!textarea) {
+            return;
+        }
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    private autogrowTitleTextarea(): void {
+        const textarea = this.titleTextarea()?.nativeElement;
+        if (!textarea) {
+            return;
+        }
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
     }
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
-            if (feedback.text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
-                return this.stripFeedbackSuggestionPrefix(feedback.text);
-            }
             if (Feedback.isFeedbackSuggestion(feedback)) {
-                return this.stripFeedbackSuggestionPrefix(feedback.text);
+                return Feedback.stripSuggestionPrefix(feedback.text);
+            }
+            if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+                return feedback.text.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length);
+            }
+            if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                return feedback.text.slice(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
             }
             // Only use feedback.text as title when detailText exists as separate content;
             // otherwise text is used as content by buildFeedbackTextForReview and would duplicate here.

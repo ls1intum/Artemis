@@ -202,6 +202,28 @@ describe('TextExercise Management Detail Component', () => {
         });
     });
 
+    describe('ngOnDestroy', () => {
+        const course: Course = { id: 123 } as Course;
+        const textExerciseWithCourse: TextExercise = new TextExercise(course, undefined);
+        textExerciseWithCourse.id = 123;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ exerciseId: textExerciseWithCourse.id });
+            const headers = new HttpHeaders().append('link', 'link;link');
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExerciseWithCourse, headers })));
+            vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+        });
+
+        it('should not throw when the route subscription was already cleared', () => {
+            fixture.detectChanges();
+
+            (comp as any).subscription = undefined;
+
+            expect(() => comp.ngOnDestroy()).not.toThrow();
+        });
+    });
+
     describe('competency links display', () => {
         const course: Course = { id: 123 } as Course;
         const textExerciseWithCompetencies: TextExercise = new TextExercise(course, undefined);

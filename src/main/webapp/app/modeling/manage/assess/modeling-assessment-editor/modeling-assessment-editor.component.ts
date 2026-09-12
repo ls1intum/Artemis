@@ -102,7 +102,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = [];
     readonly highlightedElements = signal<Map<string, string>>(undefined!);
     readonly highlightMissingFeedback = signal(false);
 
@@ -170,10 +169,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (result) {
             result.assessmentNote = assessmentNote;
         }
-    }
-
-    get unreferencedFeedbackSuggestions(): Feedback[] {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
@@ -270,7 +265,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.loadingInitialSubmission.set(false);
         this.referencedFeedback = [];
         this.unreferencedFeedback.set([]);
-        this.feedbackSuggestions = [];
         this.hasAutomaticFeedback.set(false);
         this.loadingFeedbackSuggestions.set(false);
         this.highlightedElements.set(undefined!);
@@ -338,9 +332,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
-            this.feedbackSuggestions = suggestions;
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (this.result()) {
-                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...suggestions];
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
@@ -417,10 +411,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
-    }
-
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
 
     get readOnly(): boolean {

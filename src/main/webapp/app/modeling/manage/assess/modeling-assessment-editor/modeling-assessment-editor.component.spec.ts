@@ -344,7 +344,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.referencedFeedback).toHaveLength(1);
             component.loadingFeedbackSuggestions.set(true);
             component.highlightedElements.set(new Map([['element', 'red']]));
-            component.feedbackSuggestions = [createTestFeedback()];
             component.hasAutomaticFeedback.set(true);
 
             paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
@@ -354,7 +353,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.unreferencedFeedback()).toHaveLength(0);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
             expect(component.highlightedElements()).toBeUndefined();
-            expect(component.feedbackSuggestions).toHaveLength(0);
             expect(component.hasAutomaticFeedback()).toBe(false);
         });
 
@@ -373,7 +371,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
 
             expect(suggestionsSpy).toHaveBeenCalledOnce();
-            expect(component.feedbackSuggestions).toEqual([suggestion]);
             expect(component.referencedFeedback).toContainEqual(suggestion);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
@@ -419,6 +416,42 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.submission()).toBe(mockSubmission);
             expect(component.assessmentsAreValid()).toBe(false);
+        });
+
+        it('should merge unreferenced Athena feedback suggestions directly into the editable unreferenced feedback list', async () => {
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '1',
+                    exerciseId: '1',
+                }),
+            );
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                        course: { athenaGradingFeedbackEnabled: true },
+                    } as unknown as Exercise,
+                },
+                results: [{ id: 55, feedbacks: [], correctionRound: 0 } as unknown as Result],
+            } as ModelingSubmission;
+
+            const unreferencedSuggestion = { id: 42, credits: 1, text: 'FeedbackSuggestion:accepted:Suggestion', type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([unreferencedSuggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            // The suggestion must land directly in the editable feedback list (auto-accepted), not in a separate pending list.
+            expect(component.unreferencedFeedback()).toHaveLength(1);
+            expect(component.unreferencedFeedback()[0]?.id).toBe(unreferencedSuggestion.id);
+            expect(component.result()?.feedbacks).toContainEqual(unreferencedSuggestion);
         });
     });
 
@@ -918,21 +951,5 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
             expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
         });
-    });
-
-    it('should return unreferenced feedback only', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.ngOnInit();
-
-        const unreferencedFeedback = createTestFeedback();
-        const referencedFeedback = createTestFeedback();
-
-        referencedFeedback.type = FeedbackType.MANUAL;
-        referencedFeedback.reference = 'element_id';
-
-        component.feedbackSuggestions = [unreferencedFeedback, referencedFeedback];
-
-        expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
-        expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
     });
 });

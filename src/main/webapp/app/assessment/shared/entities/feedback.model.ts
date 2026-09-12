@@ -27,7 +27,7 @@ export enum FeedbackSuggestionType {
     NO_SUGGESTION = 'NO_SUGGESTION', // No suggestion at all
     SUGGESTED = 'SUGGESTED', // Suggestion is made, but not accepted yet
     ACCEPTED = 'ACCEPTED', // Suggestion is accepted
-    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the TA
+    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the assessor
 }
 
 // Prefixes for the feedback text to identify the feedback type more specifically without having to change the database schema:
@@ -120,11 +120,12 @@ export class Feedback implements BaseEntity {
         return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
     }
 
-    public static isFeedbackSuggestion(that: Feedback): boolean {
-        if (!that.text) {
+    public static isFeedbackSuggestion(that: Feedback | string | undefined): boolean {
+        const text = typeof that === 'object' ? that.text : that;
+        if (!text) {
             return false;
         }
-        return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
+        return text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
     }
 
     public static isNonGradedFeedbackSuggestion(that: Feedback): boolean {
@@ -136,20 +137,35 @@ export class Feedback implements BaseEntity {
 
     /**
      * Determine the type of the feedback suggestion. See FeedbackSuggestionType for more details on the meanings.
-     * @param that feedback to determine the type of
+     * @param that feedback (or its bare `text`) to determine the type of
      */
-    public static getFeedbackSuggestionType(that: Feedback): FeedbackSuggestionType {
+    public static getFeedbackSuggestionType(that: Feedback | string | undefined): FeedbackSuggestionType {
         if (!Feedback.isFeedbackSuggestion(that)) {
             return FeedbackSuggestionType.NO_SUGGESTION;
         }
-        // that.text is guaranteed to be defined here because the feedback is a suggestion, which must have a text
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
-            return FeedbackSuggestionType.ACCEPTED;
-        }
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
+        // guaranteed to be defined here because isFeedbackSuggestion returned true, which requires non-empty text
+        const text = typeof that === 'object' ? that.text! : that!;
+        if (text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
             return FeedbackSuggestionType.ADAPTED;
         }
+        if (text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ACCEPTED;
+        }
         return FeedbackSuggestionType.SUGGESTED;
+    }
+
+    /**
+     * Strips the internal `FeedbackSuggestion:(suggested|accepted|adapted):` marker off a feedback's `text`, if
+     * present. That marker exists only to tag the suggestion state in the database `text` column without a schema
+     * change; it must never reach a tutor or a student as literal text.
+     */
+    public static stripSuggestionPrefix(text: string): string {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -289,13 +305,6 @@ export class Feedback implements BaseEntity {
     public static fromServerResponse(response: Feedback): Feedback {
         return hydrate(new Feedback(), response);
     }
-
-    public static updateFeedbackTypeOnChange(feedback: Feedback) {
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            // Mark as adapted feedback suggestion
-            feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
-        }
-    }
 }
 
 /**
@@ -303,25 +312,35 @@ export class Feedback implements BaseEntity {
  * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
  * it returns the detailed text and/or text properties of the feedback depending on the submission element.
  *
+ * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
+ * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
+ * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
+ * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
+ * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
+ * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
+ * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
+ * assessor-authored content is ever hiding behind the excluded `text`.
+ *
  * @param feedback that contains feedback text and grading instruction
- * @param addFeedbackText if the text of the feedback should be part of the resulting text. Defaults to true.
- *                        The detailText of the feedback is always added if present.
+ * @param addFeedbackText if the (non-suggestion) text of the feedback should be part of the resulting text.
+ *                        Defaults to true. The detailText of the feedback is always added if present.
  * @returns formatted string representing the feedback text ready to display
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
+    const includeText = addFeedbackText && !!feedback.text && !Feedback.isFeedbackSuggestion(feedback);
     let feedbackText = '';
     if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
-        if (addFeedbackText && feedback.text) {
+        if (includeText) {
             feedbackText = feedbackText + '\n' + feedback.text;
         }
     } else if (feedback.detailText) {
         feedbackText = feedback.detailText;
-    } else if (addFeedbackText && feedback.text) {
-        feedbackText = feedback.text;
+    } else if (includeText) {
+        feedbackText = feedback.text!;
     }
 
     // escape special characters like "<", ">", "&" to render them correctly

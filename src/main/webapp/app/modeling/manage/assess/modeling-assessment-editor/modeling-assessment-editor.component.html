@@ -82,11 +82,8 @@
                         <jhi-unreferenced-feedback
                             [feedbacks]="unreferencedFeedback()"
                             (feedbacksChange)="unreferencedFeedback.set($event); validateFeedback()"
-                            [feedbackSuggestions]="unreferencedFeedbackSuggestions"
                             [readOnly]="readOnly"
                             [highlightDifferences]="highlightDifferences"
-                            (onAcceptSuggestion)="removeSuggestion($event)"
-                            (onDiscardSuggestion)="removeSuggestion($event)"
                             [resultId]="result()!.id!"
                             [gradingCriteria]="modelingExercise()?.gradingCriteria ?? []"
                             [allFeedbacks]="allAssessmentFeedbacks()"
