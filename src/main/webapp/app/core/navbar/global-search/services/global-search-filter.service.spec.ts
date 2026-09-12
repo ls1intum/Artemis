@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { Observable, of } from 'rxjs';
 import { GlobalSearchFilterService } from './global-search-filter.service';
 import { FilterToken } from '../models/search-token.model';
 
@@ -19,14 +21,21 @@ describe('GlobalSearchFilterService', () => {
         getCourses: vi.fn<() => Course[]>().mockReturnValue([]),
     };
 
+    const mockEntityTitleService = {
+        getTitle: vi.fn<(type: EntityType, ids: number[]) => Observable<string>>().mockReturnValue(of('Test Course Nayer Kotry')),
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
+        mockCourseStorageService.getCourse.mockReturnValue(undefined);
         mockCourseStorageService.getCourses.mockReturnValue([]);
+        mockEntityTitleService.getTitle.mockReturnValue(of('Test Course Nayer Kotry'));
         TestBed.configureTestingModule({
             providers: [
                 GlobalSearchFilterService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: EntityTitleService, useValue: mockEntityTitleService },
             ],
         });
         service = TestBed.inject(GlobalSearchFilterService);
@@ -35,6 +44,40 @@ describe('GlobalSearchFilterService', () => {
         exitFilterMenu = vi.fn<() => void>();
         refreshSearch = vi.fn<() => void>();
         service.configure({ applyTokens, requestFocus, exitFilterMenu, refreshSearch });
+    });
+
+    describe('course chip titles', () => {
+        it('names a course the course store has not loaded, instead of the Course {id} fallback', () => {
+            // The palette opened on a course management page: the store is filled by the student dashboard,
+            // so it knows nothing about course 26 and the chip would otherwise render its id.
+            service.tokens.set([{ facet: 'course', value: '26' }]);
+            TestBed.tick();
+
+            expect(mockEntityTitleService.getTitle).toHaveBeenCalledWith(EntityType.COURSE, [26]);
+            expect(service.chips()[0].label).toBe('Test Course Nayer Kotry');
+        });
+
+        it('prefers the loaded course and never asks for its title', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 26, title: 'Stored Course Title' } as Course);
+
+            service.tokens.set([{ facet: 'course', value: '26' }]);
+            TestBed.tick();
+
+            expect(mockEntityTitleService.getTitle).not.toHaveBeenCalled();
+            expect(service.chips()[0].label).toBe('Stored Course Title');
+        });
+
+        it('asks for each unknown course once, however often the tokens change', () => {
+            service.tokens.set([{ facet: 'course', value: '26' }]);
+            TestBed.tick();
+            service.tokens.set([
+                { facet: 'course', value: '26' },
+                { facet: 'type', value: 'lecture' },
+            ]);
+            TestBed.tick();
+
+            expect(mockEntityTitleService.getTitle).toHaveBeenCalledOnce();
+        });
     });
 
     describe('derived query params', () => {

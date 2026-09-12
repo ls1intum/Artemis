@@ -888,6 +888,23 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('deep learning', 'lecture,lecture_unit,course', undefined, undefined);
         });
 
+        it('routes to Iris content search from a course-scoped page with the lecture chip added', () => {
+            // Reproduces opening the palette on /course-management/26/... : the course token is derived
+            // from the URL (so it carries no negate flag), then the lecture chip is added by hand.
+            component['tokens'].set(component['filter'].deriveContextTokens('/course-management/26/iris-settings')!);
+            expect(component['tokens']()).toEqual([{ facet: 'course', value: '26' }]);
+
+            component['onSearchInput']('what is deep learning');
+            vi.advanceTimersByTime(300);
+
+            component['toggleFilterMenu']();
+            choose('operator', 'type:');
+            choose('value', 'lecture');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('what is deep learning', 10, [26]);
+        });
+
         it('walks the exclude branch and offers the right way back at every level', () => {
             component['openFilterPicker']();
             expect(component['menuHeaderKey']()).toBe('global.search.addFilter');

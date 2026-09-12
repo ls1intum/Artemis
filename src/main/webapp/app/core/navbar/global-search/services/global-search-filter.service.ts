@@ -1,6 +1,9 @@
-import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { FilterChipView, FilterMenuOption } from '../models/search-menu.model';
 import { buildFilterMenuOptions, toChipView } from '../models/search-menu.util';
 import { SearchEntityType } from '../models/searchable-entity.model';
@@ -8,6 +11,7 @@ import { FilterToken, TypeFacetValue } from '../models/search-token.model';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from '../models/facet-catalog';
 import { addOrToggleToken, excludedCourseIds, expandTypeTokens, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
 import { appendOperator, parseOperator, stripOperator } from '../models/search-operator.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Side-effect callbacks the host component wires into the filter store so the store can stay free of the
@@ -41,6 +45,17 @@ export interface FilterSideEffects {
 export class GlobalSearchFilterService {
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly translateService = inject(TranslateService);
+    private readonly entityTitleService = inject(EntityTitleService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    /**
+     * Titles for course chips whose course is not in the client course store. That store is filled by the
+     * student dashboard, so a palette opened on a course management page has nothing to read and the chip
+     * would otherwise render the "Course 26" fallback next to a breadcrumb naming the same course. Resolved
+     * through the title endpoint, which is cached server-side and shared with the breadcrumbs.
+     */
+    private readonly resolvedCourseTitles: WritableSignal<Record<number, string>> = signal({});
+    private readonly requestedCourseTitles = new Set<number>();
 
     /** The current text in the search input (may be a `facet:` operator being typed). */
     readonly searchQuery: WritableSignal<string> = signal('');
@@ -83,7 +98,7 @@ export class GlobalSearchFilterService {
                 index,
                 this.selectedChip(),
                 (key, params) => this.translateService.instant(key, params),
-                (id) => this.courseStorageService.getCourse(id)?.title,
+                (id) => this.courseTitle(id),
             ),
         ),
     );
@@ -154,6 +169,40 @@ export class GlobalSearchFilterService {
      * palette mid-composition. A dead end has no level behind it, so it offers the literal search instead.
      */
     readonly canGoBack: Signal<boolean> = computed(() => (!!this.operator() || this.excludeMode()) && !this.deadEnd());
+
+    constructor() {
+        // Resolve the title of any course chip the course store cannot name. Kept in an effect rather than in
+        // the chips computed so the lookup stays a side effect and the computed stays pure.
+        effect(() => {
+            for (const token of this.tokens()) {
+                if (token.facet !== 'course') {
+                    continue;
+                }
+                const id = Number(token.value);
+                if (!Number.isFinite(id) || this.courseStorageService.getCourse(id)?.title || this.requestedCourseTitles.has(id)) {
+                    continue;
+                }
+                this.requestedCourseTitles.add(id);
+                this.entityTitleService
+                    .getTitle(EntityType.COURSE, [id])
+                    .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+                    .subscribe((title) => {
+                        if (title) {
+                            this.resolvedCourseTitles.update((titles) => cloneWith(titles, { [id]: title }));
+                        }
+                    });
+            }
+        });
+    }
+
+    /**
+     * Display title for a course chip: the stored course when the dashboard has loaded it, otherwise the title
+     * resolved through the title endpoint. Undefined until one of the two answers, which is what makes the chip
+     * fall back to its "Course {id}" label.
+     */
+    private courseTitle(id: number): string | undefined {
+        return this.courseStorageService.getCourse(id)?.title ?? this.resolvedCourseTitles()[id];
+    }
 
     private sideEffects: FilterSideEffects = {
         applyTokens: () => {},
