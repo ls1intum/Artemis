@@ -25,8 +25,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.ObjectProvider;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -83,6 +86,31 @@ class LectureContentProcessingServiceTest {
 
     private LectureUnitProcessingState testState;
 
+    /**
+     * Builds an {@link ObjectProvider} around the given API mock, mirroring how Spring resolves the
+     * deferred {@code irisLectureApi} dependency at runtime. Pass {@code null} for the Iris-disabled case.
+     */
+    @SuppressWarnings("unchecked")
+    private static ObjectProvider<IrisLectureApi> providerOf(IrisLectureApi api) {
+        ObjectProvider<IrisLectureApi> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(api);
+        if (api != null) {
+            when(provider.getObject()).thenReturn(api);
+        }
+        return provider;
+    }
+
+    /**
+     * A distributed data provider whose maps are plain mocks: worker-mode lookups read null (no
+     * worker seen), which keeps these tests on the push-dispatch path they exercise.
+     */
+    @SuppressWarnings("unchecked")
+    private static DistributedDataProvider distributedDataProviderMock() {
+        DistributedDataProvider provider = mock(DistributedDataProvider.class);
+        when(provider.getMap(anyString())).thenReturn(mock(DistributedMap.class));
+        return provider;
+    }
+
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
@@ -99,8 +127,8 @@ class LectureContentProcessingServiceTest {
         when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
         // The atomic terminal-callback claim succeeds by default; duplicate-claim tests override this
         when(processingStateRepository.clearIngestionJobTokenIfMatches(anyLong(), anyString())).thenReturn(1);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
-                websocketMessagingService, contentFingerprintService, 2);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, providerOf(irisLectureApi),
+                websocketMessagingService, contentFingerprintService, distributedDataProviderMock(), 2);
         recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
@@ -168,7 +196,7 @@ class LectureContentProcessingServiceTest {
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
-                    Optional.empty(), mock(WebsocketMessagingService.class), contentFingerprintService, 2);
+                    providerOf(null), mock(WebsocketMessagingService.class), contentFingerprintService, distributedDataProviderMock(), 2);
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository);
 
             service.triggerProcessing(testUnit);
@@ -1202,6 +1230,42 @@ class LectureContentProcessingServiceTest {
             assertThat(recoverableState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             verify(processingStateRepository).save(recoverableState);
             verify(websocketMessagingService).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
+        }
+    }
+
+    @Nested
+    class Heartbeats {
+
+        @Test
+        void shouldBroadcastLiveStageProgressWhenTheCounterAdvances() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
+
+            // The stage progress is persisted AND pushed to the client so the badge can render "Indexing 5/64".
+            assertThat(testState.getStageProgress()).isEqualTo(5);
+            assertThat(testState.getStageTotal()).isEqualTo(64);
+            verify(websocketMessagingService).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
+        }
+
+        @Test
+        void shouldNotBroadcastWhenTheHeartbeatCarriesNoNewProgress() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
+            // A repeat of the same stage and number is a bare liveness heartbeat: it refreshes lastUpdated
+            // but must not spam the WebSocket.
+            callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
+
+            verify(websocketMessagingService, times(1)).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }

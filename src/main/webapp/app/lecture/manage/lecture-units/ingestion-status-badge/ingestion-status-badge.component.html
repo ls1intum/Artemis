@@ -1,36 +1,37 @@
 @if (state(); as badgeState) {
-    <div
-        class="badge ingestion-status-badge"
-        [class]="badgeClass()"
+    <tum-ui-tag
+        rounded
+        size="sm"
+        class="ingestion-status-badge"
+        [severity]="severity()"
         data-testid="ingestion-status-badge"
         [attr.data-state]="badgeState"
         [ngbTooltip]="tooltipKey() ? (tooltipKey()! | artemisTranslate) : undefined"
     >
-        @switch (badgeState) {
-            @case ('queued') {
-                <fa-icon [icon]="faClock" class="me-1" />
-            }
-            @case ('done') {
-                <fa-icon [icon]="faFileLines" class="me-1" />
-            }
-            @case ('failed') {
-                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-            }
-            @case ('skipped') {
-                <fa-icon [icon]="faCircleMinus" class="me-1" />
-            }
-            @default {
-                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-            }
+        @if (icon(); as runningIcon) {
+            <fa-icon [icon]="runningIcon" animation="spin" />
         }
-        <!-- role="status" only on the phase label: it announces phase transitions (Queued -> Indexing ->
-             Verifying -> Complete) without re-reading the fast-ticking stage counter on every heartbeat. -->
+        <!-- role="status" only on the phase label: it announces phase transitions (Queued -> Reading slides ->
+             Indexing -> Verifying -> Indexed) without re-reading the fast-ticking counter or clock on every tick. -->
         <span role="status" [jhiTranslate]="labelKey()"></span>
         @if (progressText(); as progress) {
             <span class="stage-counter" data-testid="ingestion-stage-counter" aria-hidden="true">{{ progress }}</span>
         }
-        @if (progressPercent() !== undefined) {
-            <span class="stage-underbar" [style.width.%]="progressPercent()" aria-hidden="true"></span>
+        @if (elapsed(); as time) {
+            <span class="stage-elapsed" data-testid="ingestion-elapsed" aria-hidden="true">{{ time }}</span>
         }
-    </div>
+        @if (lastSeenAgo(); as seen) {
+            <span class="stage-elapsed" data-testid="ingestion-last-seen">{{ 'artemisApp.attachmentVideoUnit.processing.lastSeen' | artemisTranslate: { time: seen } }}</span>
+        }
+        @if (showRetry()) {
+            <span
+                class="stage-retry"
+                data-testid="ingestion-retry"
+                [ngbTooltip]="'artemisApp.attachmentVideoUnit.processing.retriedTooltip' | artemisTranslate: { count: retryCount() }"
+            >
+                {{ retryCount() }}
+                <span [jhiTranslate]="retryLabelKey()"></span>
+            </span>
+        }
+    </tum-ui-tag>
 }

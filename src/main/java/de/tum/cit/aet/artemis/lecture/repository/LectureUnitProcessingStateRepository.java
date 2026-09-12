@@ -40,6 +40,10 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * Find processing states that are stuck (no callback received recently) or past the absolute deadline.
      * Uses {@code lastUpdated} instead of {@code startedAt} so that heartbeat callbacks
      * from Iris keep resetting the clock — a healthy job is never considered stuck.
+     * <p>
+     * Runs holding a worker lease ({@code lastHeartbeatAt} set) are excluded from the no-callback arm:
+     * their liveness is judged by the much tighter lease expiry in {@link #findRunsWithLapsedLease}.
+     * The absolute deadline still applies to every run.
      * The absolute deadline on {@code startedAt} is the backstop for jobs that keep sending
      * heartbeats without ever terminating: no single ingestion run may exceed it.
      * <p>
@@ -54,11 +58,43 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase IN :phases
-            AND (ps.lastUpdated < :cutoffTime OR ps.startedAt < :absoluteCutoffTime)
+            AND ((ps.lastHeartbeatAt IS NULL AND ps.lastUpdated < :cutoffTime) OR ps.startedAt < :absoluteCutoffTime)
             AND ps.retryEligibleAt IS NULL
             """)
     List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime,
             @Param("absoluteCutoffTime") ZonedDateTime absoluteCutoffTime);
+
+    /**
+     * Find in-flight runs whose worker lease has lapsed: the run was claimed by a Pyris worker
+     * (proven by at least one recorded heartbeat) and that worker has not renewed the lease since
+     * the cutoff. A lapsed lease is a strong infrastructure signal — the fixed-interval heartbeat is
+     * a timer, not the pipeline's work, so its silence means the worker process is gone, not that a
+     * stage is slow. Recovery therefore preserves the retry budget, unlike {@link #findStuckStates}.
+     * <p>
+     * Runs without any recorded heartbeat (legacy push dispatch, or an Iris without worker support)
+     * never match here and stay under the timeout-based stuck detection.
+     *
+     * @param phases      the in-flight phases to check
+     * @param leaseCutoff the time before which an unrenewed lease counts as lapsed
+     * @return runs whose lease has lapsed
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            WHERE ps.phase IN :phases
+            AND ps.lastHeartbeatAt IS NOT NULL
+            AND ps.lastHeartbeatAt < :leaseCutoff
+            AND ps.retryEligibleAt IS NULL
+            """)
+    List<LectureUnitProcessingState> findRunsWithLapsedLease(@Param("phases") List<ProcessingPhase> phases, @Param("leaseCutoff") ZonedDateTime leaseCutoff);
+
+    /**
+     * Find the processing state currently carrying the given ingestion job token. Backs worker lease
+     * renewal: each heartbeat lists the tokens of the runs the worker is executing.
+     *
+     * @param token the ingestion job token
+     * @return the state currently associated with this token, if any
+     */
+    Optional<LectureUnitProcessingState> findByIngestionJobToken(String token);
 
     /**
      * Resolve the identity of the ingestion job currently associated with the given token.

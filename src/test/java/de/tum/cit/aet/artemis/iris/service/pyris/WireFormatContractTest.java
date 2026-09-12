@@ -9,6 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerClaimRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerClaimResponseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatResponseDTO;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 /**
@@ -64,5 +68,36 @@ class WireFormatContractTest {
         // if Pyris accidentally sends "errorCode" instead of "error": {"code": ...}, we will silently see null.
         var dto = mapper.readValue(wire, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.error()).isNull();
+    }
+
+    @Test
+    void workerClaimRequestReadsBootIdAndMaxJobs() throws Exception {
+        String json = "{\"bootId\":\"boot-1\",\"maxJobs\":2}";
+        var dto = mapper.readValue(json, PyrisWorkerClaimRequestDTO.class);
+        assertThat(dto.bootId()).isEqualTo("boot-1");
+        assertThat(dto.maxJobs()).isEqualTo(2);
+    }
+
+    @Test
+    void workerHeartbeatRequestToleratesMissingActiveJobTokens() throws Exception {
+        // An idle worker may heartbeat without any active runs; the field must stay optional.
+        String json = "{\"bootId\":\"boot-1\"}";
+        var dto = mapper.readValue(json, PyrisWorkerHeartbeatRequestDTO.class);
+        assertThat(dto.bootId()).isEqualTo("boot-1");
+        assertThat(dto.activeJobTokens()).isNull();
+    }
+
+    @Test
+    void workerHeartbeatResponseSerializesRevokedTokensCamelCase() throws Exception {
+        String json = mapper.writeValueAsString(new PyrisWorkerHeartbeatResponseDTO(java.util.List.of("tok-a")));
+        assertThat(json).contains("\"revokedJobTokens\":[\"tok-a\"]");
+        assertThat(json).doesNotContain("revoked_job_tokens");
+    }
+
+    @Test
+    void workerClaimResponseSerializesJobsField() throws Exception {
+        String json = mapper.writeValueAsString(new PyrisWorkerClaimResponseDTO(java.util.List.of()));
+        // NON_EMPTY drops the empty list entirely — the worker treats a missing "jobs" as none.
+        assertThat(mapper.readTree(json).has("jobs")).isFalse();
     }
 }

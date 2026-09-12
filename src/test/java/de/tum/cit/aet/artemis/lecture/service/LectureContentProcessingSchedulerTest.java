@@ -45,6 +45,8 @@ class LectureContentProcessingSchedulerTest {
 
     private LectureIngestionReconcileService reconcileService;
 
+    private ProcessingStateRecoveryService recoveryService;
+
     private static final int MAX_CONCURRENT_JOBS = 2;
 
     private AttachmentVideoUnit testUnit;
@@ -58,6 +60,7 @@ class LectureContentProcessingSchedulerTest {
         processingService = mock(LectureContentProcessingService.class);
         callbackService = mock(ProcessingStateCallbackService.class);
         reconcileService = mock(LectureIngestionReconcileService.class);
+        recoveryService = mock(ProcessingStateRecoveryService.class);
         FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
@@ -65,7 +68,7 @@ class LectureContentProcessingSchedulerTest {
         when(callbackService.getMaxConcurrentJobs()).thenReturn(MAX_CONCURRENT_JOBS);
 
         scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, callbackService, reconcileService,
-                featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45));
+                recoveryService, featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45));
 
         Lecture testLecture = new Lecture();
         testLecture.setId(1L);
@@ -76,6 +79,69 @@ class LectureContentProcessingSchedulerTest {
 
         testState = new LectureUnitProcessingState(testUnit);
         testState.setId(1L);
+    }
+
+    @Nested
+    class LeaseReaper {
+
+        @Test
+        void shouldReclaimRunWhoseLeaseLapsedWithoutSpendingRetryBudget() {
+            // Given: an in-flight run whose worker stopped renewing its lease two minutes ago
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setRetryEligibleAt(null);
+            testState.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
+
+            when(processingStateRepository.findRunsWithLapsedLease(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
+                    .thenReturn(List.of(testState));
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then: reclaimed through the budget-preserving reset, never through the failure path
+            verify(recoveryService).resetToIdleForRecovery(testState);
+            verify(callbackService, never()).handleProcessingFailure(testState);
+        }
+
+        @Test
+        void shouldNotReclaimRunWhoseLeaseWasRenewedSinceTheBatchRead() {
+            // Given: the batch read returned the run, but a heartbeat arrived before the re-check
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setRetryEligibleAt(null);
+            testState.setLastHeartbeatAt(ZonedDateTime.now());
+
+            when(processingStateRepository.findRunsWithLapsedLease(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
+                    .thenReturn(List.of(testState));
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then
+            verify(recoveryService, never()).resetToIdleForRecovery(any());
+        }
+
+        @Test
+        void shouldNotReclaimRunThatCompletedSinceTheBatchRead() {
+            // Given: the run finished between the batch read and the re-check
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setRetryEligibleAt(null);
+            testState.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
+
+            LectureUnitProcessingState finished = new LectureUnitProcessingState(testState.getLectureUnit());
+            finished.setPhase(ProcessingPhase.DONE);
+            finished.setLastHeartbeatAt(ZonedDateTime.now().minusMinutes(2));
+
+            when(processingStateRepository.findRunsWithLapsedLease(eq(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)), any(ZonedDateTime.class)))
+                    .thenReturn(List.of(testState));
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(finished));
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then
+            verify(recoveryService, never()).resetToIdleForRecovery(any());
+        }
     }
 
     @Nested

@@ -204,6 +204,15 @@ export interface LectureUnitProcessingStatus {
     stageName?: string;
     stageProgress?: number;
     stageTotal?: number;
+    /** Server time of the worker's last lease renewal; absent for runs without a worker lease. */
+    lastHeartbeatAt?: string;
+    /**
+     * Client clock when this status was received. Liveness staleness is computed against this rather
+     * than against the server timestamp, so clock skew between browser and server cannot fake or
+     * hide a lost run: lease renewals arrive as updates every few seconds, and their receipt time is
+     * measured on the same clock the badge ticks with.
+     */
+    receivedAt?: number;
 }
 
 /**
@@ -232,6 +241,7 @@ export interface LectureUnitCombinedStatus {
     stageName?: string;
     stageProgress?: number;
     stageTotal?: number;
+    lastHeartbeatAt?: string;
 }
 
 /**
@@ -248,5 +258,7 @@ export function toProcessingStatus(status: LectureUnitCombinedStatus): LectureUn
         stageName: status.stageName,
         stageProgress: status.stageProgress,
         stageTotal: status.stageTotal,
+        lastHeartbeatAt: status.lastHeartbeatAt,
+        receivedAt: Date.now(),
     };
 }

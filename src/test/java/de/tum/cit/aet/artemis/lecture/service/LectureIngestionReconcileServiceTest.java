@@ -9,6 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -72,7 +74,7 @@ class LectureIngestionReconcileServiceTest {
         processingService = mock(LectureContentProcessingService.class);
 
         reconcileService = new LectureIngestionReconcileService(processingStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService,
-                processingService, 5, 10, 0.8);
+                processingService, 5, 10, 0.8, Duration.ofHours(1));
 
         course = new Course();
         course.setId(COURSE_ID);
@@ -110,12 +112,113 @@ class LectureIngestionReconcileServiceTest {
 
     private IngestionCensusUnitDTO censusEntry(long unitId, String fingerprint, int unitRowCount, int chunkCount, Integer expectedChunkCount, Integer pipelineVersion,
             Double qualityScore) {
-        return new IngestionCensusUnitDTO(lecture.getId(), unitId, fingerprint, unitRowCount, expectedChunkCount, pipelineVersion, qualityScore, chunkCount, 1, 5, 3, 3, 0, 5, 1,
-                5);
+        return censusEntry(unitId, fingerprint, unitRowCount, chunkCount, 1, expectedChunkCount, pipelineVersion, qualityScore);
+    }
+
+    private IngestionCensusUnitDTO censusEntry(long unitId, String fingerprint, int unitRowCount, int chunkCount, int generationCount, Integer expectedChunkCount,
+            Integer pipelineVersion, Double qualityScore) {
+        // A structurally complete unit by default: contiguous page coverage (no missing pages), segments
+        // present, no null display numbers. Divergence tests override one field to exercise a signal.
+        return new IngestionCensusUnitDTO(lecture.getId(), unitId, fingerprint, unitRowCount, expectedChunkCount, pipelineVersion, qualityScore, chunkCount, generationCount, 1, 5,
+                3, 3, 0, 5, 1, 5, 0, 0, "en");
+    }
+
+    /**
+     * A census entry with one clean generation and full coverage, varying only the structural fields the
+     * completeness signals inspect: unit rows, chunk count, segment count, missing pages, and null displays.
+     */
+    private IngestionCensusUnitDTO structuralEntry(int unitRowCount, int chunkCount, int segmentCount, int missingPageCount, int nullDisplayCount) {
+        return new IngestionCensusUnitDTO(lecture.getId(), unit.getId(), FINGERPRINT, unitRowCount, null, CURRENT_PIPELINE_VERSION, null, chunkCount, 1, 1, 5, 3, 3, 0,
+                segmentCount, 1, 5, missingPageCount, nullDisplayCount, "en");
+    }
+
+    /** Make the unit an attachment (PDF) unit, so page chunks and slide segments are expected. */
+    private void givenPdfUnit() {
+        unit.setVideoSource(null);
+        Attachment attachment = new Attachment();
+        attachment.setLink("/attachments/lecture/1/file.pdf");
+        unit.setAttachment(attachment);
     }
 
     private void givenCensus(IngestionCensusUnitDTO... entries) {
         when(irisLectureApi.getIngestionCensus(COURSE_ID)).thenReturn(new IngestionCensusDTO(COURSE_ID, CURRENT_PIPELINE_VERSION, List.of(entries)));
+    }
+
+    @Nested
+    class FailedUnitRevival {
+
+        @BeforeEach
+        void markFailed() {
+            state.setPhase(ProcessingPhase.FAILED);
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+            state.setLastUpdated(ZonedDateTime.now().minusHours(2));
+            givenCensus();
+        }
+
+        @Test
+        void shouldReviveTransientFailureAfterCooldownIntoIdle() {
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.getErrorKey()).isNull();
+            verify(processingStateRepository).save(state);
+        }
+
+        @Test
+        void shouldNotReviveBeforeTheCooldownElapses() {
+            state.setLastUpdated(ZonedDateTime.now());
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isZero();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNeverReviveAPermanentContentFailure() {
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isZero();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotReviveWhenTheStoreIsUnavailable() {
+            when(irisLectureApi.getIngestionCensus(COURSE_ID)).thenReturn(null);
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isZero();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldCountEachRevival() {
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            // The revival budget is consumed by one so a unit that keeps failing is eventually bounded.
+            assertThat(state.getRevivalCount()).isEqualTo(1);
+        }
+
+        @Test
+        void shouldNotReviveAfterExhaustingTheRevivalBudget() {
+            // Already revived MAX_REVIVALS (10) times without ever succeeding: a generic error that keeps
+            // recurring is treated as effectively permanent and left FAILED for the manual retry button.
+            state.setRevivalCount(10);
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isZero();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            verify(processingStateRepository, never()).save(any());
+        }
     }
 
     @Nested
@@ -187,17 +290,138 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
-        void shouldRequeueWhenChunkCountDivergesFromTheCertifiedExpectation() {
+        void shouldRequeueAndForceReingestWhenChunkCountFallsBelowExpectation() {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
-            // 10 chunks stored, but the certified run recorded 12: drift below page granularity
-            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1, 10, 12, CURRENT_PIPELINE_VERSION, null));
+            // 10 chunks stored, but the certified run recorded 12: rows were lost (a shortfall).
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1, 10, 1, 12, CURRENT_PIPELINE_VERSION, null));
 
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
             assertThat(spent).isEqualTo(1);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getConfirmedFingerprint()).isNull();
+            // The re-queue must force a full re-ingest, or the skip-check would treat the unit as complete.
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldRequeueAndForceReingestWhenGenerationsCoexist() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // Two ingestion generations coexist (stale generation not swept): the authoritative dirty signal.
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1, 14, 2, 12, CURRENT_PIPELINE_VERSION, null));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.getConfirmedFingerprint()).isNull();
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldNotRequeueSingleGenerationCountDrift() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // One clean generation, but the live count exceeds a stale certified expectation. This is benign
+            // (a stale expectation, not lost data or coexisting generations), so it must NOT be re-queued —
+            // re-queuing it is exactly the churn we are eliminating.
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1, 14, 1, 12, CURRENT_PIPELINE_VERSION, null));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(0);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(state.getConfirmedFingerprint()).isEqualTo(FINGERPRINT);
+        }
+
+        @Test
+        void shouldRequeueAndForceReingestWhenUnitRowsCoexist() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // Two unit rows coexist (a crash between the unit-row write and its purge).
+            givenCensus(structuralEntry(2, 10, 5, 0, 0));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldRequeueAndForceReingestWhenAPdfUnitHasNoChunks() {
+            givenPdfUnit();
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // DONE with a PDF but no page chunks: the content was lost or never written. Independent of the
+            // certified expectation (null here), so a legacy/pre-ledger empty unit is still healed.
+            givenCensus(structuralEntry(1, 0, 0, 0, 0));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldRequeueAndForceReingestWhenPagesAreMissingFromCoverage() {
+            givenPdfUnit();
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // A hole in the page coverage: some PDF page produced no chunk.
+            givenCensus(structuralEntry(1, 40, 5, 2, 0));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldRequeueAndForceReingestWhenSlideSegmentsAreMissing() {
+            givenPdfUnit();
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // Slides present but their per-slide segment summaries are gone.
+            givenCensus(structuralEntry(1, 40, 0, 0, 0));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldRequeueAndForceReingestWhenDisplayPageNumbersAreUnresolved() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // Legacy chunks whose display page number was never resolved (null); a re-ingest repopulates them.
+            givenCensus(structuralEntry(1, 40, 5, 0, 3));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldNotRequeueACompleteUnit() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            // One generation, one unit row, full coverage, segments present, no null displays: nothing to do.
+            givenCensus(structuralEntry(1, 40, 5, 0, 0));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isEqualTo(0);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(state.getConfirmedFingerprint()).isEqualTo(FINGERPRINT);
         }
 
         @Test
@@ -542,7 +766,7 @@ class LectureIngestionReconcileServiceTest {
     @Test
     void shouldSpendNothingWithoutIrisApi() {
         LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, attachmentVideoUnitRepository, Optional.empty(),
-                contentFingerprintService, processingService, 5, 10, 0.8);
+                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1));
 
         assertThat(withoutIris.walkNextCourses()).isZero();
         assertThat(withoutIris.resolveStuckIngestionWithoutRetryPenalty(state)).isFalse();

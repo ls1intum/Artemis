@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,13 +86,44 @@ public class LectureIngestionReconcileService {
 
     private final double qualityThreshold;
 
+    /**
+     * How long a unit must sit FAILED before the reconciler revives it for another attempt. This is
+     * the long-loop counterpart to the scheduler's short retry loop: the short loop (five attempts,
+     * minutes-scale backoff) catches momentary faults, while this catches failures whose cause is
+     * slow to clear — a locked resource, an API key that was later restored, a vector store that was
+     * down for hours. The cooldown is measured from {@code lastUpdated}, which for a FAILED row is
+     * the moment it failed, so no extra state is needed to space revivals per unit.
+     */
+    private final Duration failedRevivalCooldown;
+
+    /**
+     * Error keys that are permanent by nature: the content or configuration is the problem, and no
+     * amount of waiting fixes it (a private/too-long video, an unreadable attachment, a wrong unit
+     * type). These are never revived automatically — they stay FAILED for the manual retry button.
+     * Every other failure (the generic {@code processingFailed} that vector-store, audit, timeout,
+     * and unknown failures collapse to) is treated as transient and eligible for revival.
+     */
+    private static final Set<String> PERMANENT_ERROR_KEYS = Set.of("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate",
+            "artemisApp.attachmentVideoUnit.processing.error.youtubeLive", "artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong",
+            "artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType",
+            "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
+
+    /**
+     * How many times a FAILED unit is revived without an intervening successful completion before it is left
+     * FAILED for manual attention. The backstop for a generic (unclassified) error that is really permanent:
+     * with the ~hours-long cooldown this spans days of retrying, far longer than any transient outage, and the
+     * count resets on a successful DONE, so it never shortens genuine transient recovery.
+     */
+    private static final int MAX_REVIVALS = 10;
+
     private final AtomicLong courseCursor = new AtomicLong(0);
 
     public LectureIngestionReconcileService(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             Optional<IrisLectureApi> irisLectureApi, LectureUnitContentFingerprintService contentFingerprintService, LectureContentProcessingService processingService,
             @Value("${artemis.iris.ingestion.reconcile.courses-per-run:5}") int coursesPerRun,
             @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:10}") int requeueLimitPerRun,
-            @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold) {
+            @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
+            @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT3H}") Duration failedRevivalCooldown) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureApi = irisLectureApi;
@@ -99,6 +132,7 @@ public class LectureIngestionReconcileService {
         this.coursesPerRun = coursesPerRun;
         this.requeueLimitPerRun = requeueLimitPerRun;
         this.qualityThreshold = qualityThreshold;
+        this.failedRevivalCooldown = failedRevivalCooldown;
     }
 
     /**
@@ -196,8 +230,10 @@ public class LectureIngestionReconcileService {
                 spent += switch (state.getPhase()) {
                     case DONE -> reconcileDoneUnit(unit, state, census, censusByUnitId.get(unit.getId()));
                     case SKIPPED -> reconcileSkippedUnit(unit, state);
-                    // IDLE, TRANSCRIBING, INGESTING, and FAILED are owned by the normal dispatch,
-                    // stuck-recovery, and retry machinery; FAILED stays terminal for the manual retry button.
+                    // A FAILED unit is revived once its transient cause has had time to clear (see
+                    // reconcileFailedUnit); only permanent content failures stay terminal for the manual button.
+                    case FAILED -> reconcileFailedUnit(state, censusAvailable);
+                    // IDLE, TRANSCRIBING, and INGESTING are owned by the normal dispatch and stuck-recovery machinery.
                     default -> 0;
                 };
             }
@@ -210,6 +246,20 @@ public class LectureIngestionReconcileService {
             deleteOrphanedIndexRows(census, units);
         }
         return spent;
+    }
+
+    /**
+     * Reset a state so its next dispatch is a full re-ingest rather than a skip: clear the confirmed
+     * fingerprint and set the force-reingest flag. Every reconcile re-queue that heals a divergence uses
+     * this, because without forcing the re-run the pipeline's skip-check would treat the unit as complete
+     * and skip — so the re-queue would loop forever without ever rewriting the unit. Forcing guarantees the
+     * unit is deleted and rewritten to a single clean generation, which converges and stops the re-queue.
+     *
+     * @param fresh the freshly-loaded state to mutate inside the requeue's optimistic update
+     */
+    private static void forceRebuild(LectureUnitProcessingState fresh) {
+        fresh.setConfirmedFingerprint(null);
+        fresh.setForceReingest(true);
     }
 
     /**
@@ -240,13 +290,22 @@ public class LectureIngestionReconcileService {
         if (census != null) {
             if (censusEntry == null || censusEntry.unitRowCount() == 0 || !currentFingerprint.equals(censusEntry.contentFingerprint())) {
                 // The run was confirmed, but the index no longer holds a matching stamp: the data was lost
-                // or replaced after the fact (backup restore, collection recreate, raced delete).
-                requeueForReconcile(state, observedFingerprint, "index stamp missing or different from the confirmed fingerprint", fresh -> fresh.setConfirmedFingerprint(null));
+                // or replaced after the fact (backup restore, collection recreate, raced delete). Force a
+                // full re-ingest so the run rewrites the unit instead of the skip-check treating it as done.
+                requeueForReconcile(state, observedFingerprint, "index stamp missing or different from the confirmed fingerprint", fresh -> forceRebuild(fresh));
                 return 1;
             }
-            if (censusEntry.expectedChunkCount() != null && censusEntry.chunkCount() != censusEntry.expectedChunkCount()) {
-                // Drift below page granularity: rows were lost after certification.
-                requeueForReconcile(state, observedFingerprint, "chunk count diverges from the certified expectation", fresh -> fresh.setConfirmedFingerprint(null));
+            // Re-queue on any structural divergence between what the index holds and what a complete unit
+            // must hold. Every signal below is healed by a forced full re-ingest and then reported clean, so
+            // the re-queue converges and stops rather than looping: generations counted after excluding inert
+            // object-store ghosts (so a ghost-carrying unit is not re-queued forever), rows lost below the
+            // certified count, a page-coverage hole against the PDF, a PDF unit left with no chunks, duplicate
+            // unit rows, missing slide segments, and legacy null display numbers. A benign single-generation
+            // count difference is deliberately not a signal, so a stale expectation alone does not cause churn.
+            boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+            String divergence = divergenceReason(censusEntry, hasPdf);
+            if (divergence != null) {
+                requeueForReconcile(state, observedFingerprint, divergence, fresh -> forceRebuild(fresh));
                 return 1;
             }
             if (isQualityRequeueDue(state, census, censusEntry)) {
@@ -262,6 +321,53 @@ public class LectureIngestionReconcileService {
             }
         }
         return 0;
+    }
+
+    /**
+     * The first structural divergence that warrants a forced full re-ingest of a DONE unit, or {@code null}
+     * when the unit is structurally complete. Every reason here is resolved deterministically by a re-ingest
+     * (which then reports clean), so acting on it converges instead of looping — unlike a signal keyed on the
+     * raw, ghost-inflated counts. All counts are the census's object-store-confirmed counts (inert ghost rows
+     * excluded), so a ghost-carrying but otherwise healthy unit yields no reason.
+     *
+     * @param censusEntry the unit's confirmed index state
+     * @param hasPdf      whether the unit has a PDF attachment (so page chunks and slide segments are expected)
+     * @return a human-readable reason, or {@code null} when nothing diverges
+     */
+    @Nullable
+    private static String divergenceReason(IngestionCensusUnitDTO censusEntry, boolean hasPdf) {
+        // Stale generations coexist. Counted after excluding object-store ghosts, so a healed unit with inert
+        // ghost rows reports 1 and is left alone; a genuine second real generation is rewritten to one.
+        if (censusEntry.generationCount() > 1) {
+            return censusEntry.generationCount() + " ingestion generations coexist";
+        }
+        // Duplicate unit rows (a crash between the unit-row write and its purge). Also ghost-excluded.
+        if (censusEntry.unitRowCount() > 1) {
+            return censusEntry.unitRowCount() + " unit rows coexist";
+        }
+        // A PDF unit that ended DONE with no page chunks: the content was lost or never written. Checked
+        // independently of the certified expectation so a legacy/pre-ledger empty unit is still healed.
+        if (hasPdf && censusEntry.chunkCount() == 0) {
+            return "a PDF unit has no page chunks";
+        }
+        // Rows lost below the count the last certified run recorded.
+        if (censusEntry.expectedChunkCount() != null && censusEntry.chunkCount() < censusEntry.expectedChunkCount()) {
+            return "chunk count fell below the certified expectation";
+        }
+        // A hole in the page coverage: some page of the source PDF produced no chunk (the pipeline's own
+        // skip-check requires every page 1..N to be present, so a gap means an incomplete run).
+        if (censusEntry.missingPageCount() > 0) {
+            return censusEntry.missingPageCount() + " page(s) missing from the chunk coverage";
+        }
+        // Slides present but their per-slide segment summaries are missing.
+        if (hasPdf && censusEntry.chunkCount() > 0 && censusEntry.segmentCount() == 0) {
+            return "slide segments are missing for a unit with page chunks";
+        }
+        // Legacy chunks whose display page number was never resolved; a re-ingest repopulates real numbers.
+        if (censusEntry.nullDisplayCount() > 0) {
+            return censusEntry.nullDisplayCount() + " chunk(s) have an unresolved display page number";
+        }
+        return null;
     }
 
     private boolean isQualityRequeueDue(LectureUnitProcessingState state, IngestionCensusDTO census, IngestionCensusUnitDTO censusEntry) {
@@ -300,6 +406,54 @@ public class LectureIngestionReconcileService {
      * @param reason              human-readable reason for the log line
      * @param applyIntent         mutates the fresh row with the branch-specific decision before requeue
      */
+    /**
+     * Revive a FAILED unit for another attempt once its failure has had time to clear — the long-loop
+     * retry that complements the scheduler's short one. A unit is revived only when all of the following
+     * hold, so genuinely-broken content and a sick store are never re-run pointlessly:
+     * <ul>
+     * <li>the failure was <em>transient-class</em> (not a permanent content/config error, see
+     * {@link #PERMANENT_ERROR_KEYS}) — a private video is never revived, a store outage always is;</li>
+     * <li>it has sat FAILED longer than {@link #failedRevivalCooldown}, measured from {@code lastUpdated},
+     * which both proves the cause had time to clear and spaces successive revivals per unit;</li>
+     * <li>the vector store answered this run's census, so a revival is not dispatched into a store that is
+     * itself still down.</li>
+     * </ul>
+     * Revivals are bounded, but generously: after {@link #MAX_REVIVALS} revivals without an intervening
+     * successful completion the unit is left FAILED for the manual retry button instead of being re-attempted
+     * forever. This is the backstop for a genuinely-unprocessable unit that reports a generic (unclassified)
+     * error and so is not in {@link #PERMANENT_ERROR_KEYS} — without it, such a unit would revive every
+     * cooldown indefinitely. The cap does not shorten recovery from a real outage: a store that is down does
+     * not answer the census, so those passes neither revive nor count (only revivals dispatched into a
+     * healthy store that still fail are counted), and the count resets on a successful DONE, so a transient
+     * failure that later succeeds regains a full budget. The requeue itself reuses {@link #requeueForReconcile},
+     * whose re-fetch guard makes it a no-op if the row changed since the batch read; passing the unit's own
+     * confirmed fingerprint makes that guard neutral.
+     *
+     * @param state           the FAILED processing state from the batch read
+     * @param censusAvailable whether the vector store answered the census for this course
+     * @return 1 if the unit was revived, 0 otherwise
+     */
+    private int reconcileFailedUnit(LectureUnitProcessingState state, boolean censusAvailable) {
+        if (!censusAvailable) {
+            return 0;
+        }
+        if (state.getErrorKey() != null && PERMANENT_ERROR_KEYS.contains(state.getErrorKey())) {
+            return 0;
+        }
+        if (state.getRevivalCount() >= MAX_REVIVALS) {
+            // Exhausted its revival budget without ever succeeding: treat a generic error that keeps
+            // recurring as effectively permanent and leave it FAILED for manual attention rather than
+            // re-attempting it forever.
+            return 0;
+        }
+        if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(failedRevivalCooldown))) {
+            return 0;
+        }
+        requeueForReconcile(state, state.getConfirmedFingerprint(), "transient failure cooled down, reviving for another attempt",
+                LectureUnitProcessingState::incrementRevivalCount);
+        return 1;
+    }
+
     private void requeueForReconcile(LectureUnitProcessingState state, String observedFingerprint, String reason, Consumer<LectureUnitProcessingState> applyIntent) {
         long unitId = state.getLectureUnit().getId();
         ProcessingPhase decidedPhase = state.getPhase();

@@ -25,10 +25,14 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
  * @param stageName           name of the pipeline stage Iris last reported; {@code null} when unknown
  * @param stageProgress       progress counter within the stage; {@code null} when the stage has no counter
  * @param stageTotal          total work items of the stage; {@code null} when the stage has no counter
+ * @param lastHeartbeatAt     when the worker holding this run last renewed its lease; {@code null} for
+ *                                runs without a worker lease (legacy push dispatch or older Iris). The
+ *                                client derives liveness from the freshness of these values: a running
+ *                                unit whose renewals stop is rendered as having lost contact.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LectureUnitCombinedStatusDTO(Long lectureUnitId, ProcessingPhase processingPhase, int retryCount, ZonedDateTime startedAt, String processingErrorKey,
-        TranscriptionStatus transcriptionStatus, String stageName, Integer stageProgress, Integer stageTotal) {
+        TranscriptionStatus transcriptionStatus, String stageName, Integer stageProgress, Integer stageTotal, ZonedDateTime lastHeartbeatAt) {
 
     /**
      * Create a DTO from a processing state entity and transcription status.
@@ -41,8 +45,9 @@ public record LectureUnitCombinedStatusDTO(Long lectureUnitId, ProcessingPhase p
     public static LectureUnitCombinedStatusDTO of(Long unitId, LectureUnitProcessingState processingState, TranscriptionStatus transcriptionStatus) {
         if (processingState != null) {
             return new LectureUnitCombinedStatusDTO(unitId, processingState.getPhase(), processingState.getRetryCount(), processingState.getStartedAt(),
-                    processingState.getErrorKey(), transcriptionStatus, processingState.getCurrentStage(), processingState.getStageProgress(), processingState.getStageTotal());
+                    processingState.getErrorKey(), transcriptionStatus, processingState.getCurrentStage(), processingState.getStageProgress(), processingState.getStageTotal(),
+                    processingState.getLastHeartbeatAt());
         }
-        return new LectureUnitCombinedStatusDTO(unitId, ProcessingPhase.IDLE, 0, null, null, transcriptionStatus, null, null, null);
+        return new LectureUnitCombinedStatusDTO(unitId, ProcessingPhase.IDLE, 0, null, null, transcriptionStatus, null, null, null, null);
     }
 }

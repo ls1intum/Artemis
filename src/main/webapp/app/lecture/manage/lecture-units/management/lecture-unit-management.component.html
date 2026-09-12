@@ -15,12 +15,7 @@
         }
         <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
             @for (lectureUnit of lectureUnits(); track identify(i, lectureUnit); let i = $index) {
-                <div
-                    class="lecture-unit-container"
-                    [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO"
-                    [style.margin-top]="getContainerMarginTop(lectureUnit)"
-                    cdkDrag
-                >
+                <div class="lecture-unit-container" [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO" cdkDrag>
                     <div class="custom-handle d-none d-sm-flex">
                         <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
@@ -38,44 +33,42 @@
                         </svg>
                     </div>
                     <div class="lecture-unit-type-container">
-                        <div class="unit-badges d-flex flex-column gap-1" [style.top]="getBadgeTopOffset(lectureUnit)">
-                            <div class="badge bg-info">
+                        <!-- One in-flow row of status markers directly above the card, sharing the card's left edge.
+                             Every marker is the same small tag, so the row reads as one band of metadata rather than
+                             as competing badges. -->
+                        <div class="unit-badges">
+                            <tum-ui-tag rounded size="sm" severity="secondary">
                                 {{
                                     getLectureUnitReleaseDate(lectureUnit)
                                         ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
                                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                                 }}
-                            </div>
+                            </tum-ui-tag>
 
-                            <!-- Transcription + Processing badges in a row -->
                             @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                                <div class="d-flex flex-row gap-1">
-                                    <!-- Transcription Status Badge (hidden when transcribing to avoid redundancy) -->
-                                    @if (!isProcessingTranscribing(lectureUnit)) {
-                                        @if (isTranscriptionPending(lectureUnit)) {
-                                            <div class="badge bg-info">
-                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
-                                            </div>
-                                        } @else if (isTranscriptionFailed(lectureUnit)) {
-                                            <div class="badge bg-danger">
-                                                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
-                                            </div>
-                                        } @else if (hasTranscription(lectureUnit)) {
-                                            <div class="badge bg-success">
-                                                <fa-icon [icon]="faFileLines" class="me-1" />
-                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
-                                            </div>
-                                        }
+                                <!-- Transcription Status Badge (hidden when transcribing to avoid redundancy) -->
+                                @if (!isProcessingTranscribing(lectureUnit)) {
+                                    @if (isTranscriptionPending(lectureUnit)) {
+                                        <tum-ui-tag rounded size="sm" severity="info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
+                                        </tum-ui-tag>
+                                    } @else if (isTranscriptionFailed(lectureUnit)) {
+                                        <tum-ui-tag rounded size="sm" severity="danger">
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
+                                        </tum-ui-tag>
+                                    } @else if (hasTranscription(lectureUnit)) {
+                                        <tum-ui-tag rounded size="sm" severity="success">
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                        </tum-ui-tag>
                                     }
+                                }
 
-                                    <!-- Processing Pipeline Status Badge -->
-                                    <jhi-ingestion-status-badge [status]="processingStatus()[lectureUnit.id!]" [awaiting]="isAwaitingProcessing(lectureUnit)" />
-                                </div>
+                                <!-- Processing Pipeline Status Badge -->
+                                <jhi-ingestion-status-badge [status]="processingStatus()[lectureUnit.id!]" [awaiting]="isAwaitingProcessing(lectureUnit)" />
                             }
                         </div>
-                        <div class="mt-2">
+                        <div>
                             @switch (lectureUnit.type) {
                                 @case (LectureUnitType.ATTACHMENT_VIDEO) {
                                     <jhi-attachment-video-unit [courseId]="lecture()!.course!.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />

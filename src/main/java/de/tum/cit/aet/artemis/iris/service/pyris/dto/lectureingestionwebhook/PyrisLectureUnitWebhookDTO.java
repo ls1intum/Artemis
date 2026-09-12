@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, PyrisLectureTranscriptionDTO transcription, long lectureUnitId, String lectureUnitName,
         long lectureId, String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink, VideoSourceType videoSourceType,
-        String contentFingerprint, boolean forceReingest) {
+        String contentFingerprint, boolean forceReingest, String courseLanguage) {
 
     /**
      * Compatibility constructor for callers that do not request a forced re-ingestion
@@ -37,6 +37,6 @@ public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, 
             String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink, VideoSourceType videoSourceType,
             String contentFingerprint) {
         this(pdfFile, attachmentVersion, transcription, lectureUnitId, lectureUnitName, lectureId, lectureName, courseId, courseName, courseDescription, lectureUnitLink, videoLink,
-                videoSourceType, contentFingerprint, false);
+                videoSourceType, contentFingerprint, false, null);
     }
 }

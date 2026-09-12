@@ -69,6 +69,18 @@ public class LectureContentProcessingScheduler {
     private static final int NO_CALLBACK_TIMEOUT_MINUTES = 20;
 
     /**
+     * How long a worker lease may go unrenewed before the run counts as lost. The worker renews on a
+     * fixed 5-second timer that is decoupled from pipeline progress, so unlike
+     * {@link #NO_CALLBACK_TIMEOUT_MINUTES} this threshold describes a sleep loop, never the
+     * unpredictable duration of an AI stage: a lapse is a strong infrastructure signal (worker
+     * process dead or partitioned). Recovery through this path therefore preserves the retry budget.
+     * Sized like the Kubernetes node-lease grace: several missed intervals, so one dropped request
+     * never reclaims a healthy run. Effective detection latency adds the scan interval of
+     * {@link #processScheduledRetries}.
+     */
+    private static final Duration LEASE_EXPIRY = Duration.ofSeconds(30);
+
+    /**
      * Absolute upper bound in hours for a single ingestion run, regardless of heartbeats.
      * A pipeline that keeps sending heartbeats without ever terminating would otherwise never
      * time out, because every heartbeat resets {@code lastUpdated}. Twelve hours is far beyond
@@ -108,17 +120,20 @@ public class LectureContentProcessingScheduler {
 
     private final LectureIngestionReconcileService reconcileService;
 
+    private final ProcessingStateRecoveryService recoveryService;
+
     private final FeatureToggleService featureToggleService;
 
     public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             LectureContentProcessingService processingService, ProcessingStateCallbackService callbackService, LectureIngestionReconcileService reconcileService,
-            FeatureToggleService featureToggleService, @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
+            ProcessingStateRecoveryService recoveryService, FeatureToggleService featureToggleService, @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
             @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
         this.callbackService = callbackService;
         this.reconcileService = reconcileService;
+        this.recoveryService = recoveryService;
         this.featureToggleService = featureToggleService;
         this.stallWindow = stallWindow;
         this.slowStageWarningAfter = slowStageWarningAfter;
@@ -135,8 +150,14 @@ public class LectureContentProcessingScheduler {
      * <p>
      * The dispatcher is also triggered by job creation and completion callbacks, so this
      * scheduled run serves as a safety net for edge cases (missed callbacks, node restarts).
+     * <p>
+     * This interval is also the granularity of the retry backoff: a unit whose {@code retryEligibleAt}
+     * has passed waits here until the next pass, so the scan interval is added to the backoff whenever
+     * no other job completes in the meantime. Keep it well below the smallest backoff step (2 minutes)
+     * so it does not dominate the wait. {@code fixedDelay} rather than {@code fixedRate}: the pass does
+     * real work, and overlapping passes would contend on the same claim rows for nothing.
      */
-    @Scheduled(fixedRate = 300000) // 5 minutes
+    @Scheduled(fixedDelayString = "${artemis.iris.ingestion.retry-scan.interval:PT1M}")
     public void processScheduledRetries() {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping scheduled retries");
@@ -156,6 +177,10 @@ public class LectureContentProcessingScheduler {
             log.warn("dispatch-claim-expired released={} — claims older than {} minutes were requeued", releasedClaims, CLAIM_EXPIRY_MINUTES);
         }
 
+        // Lease reaper: reclaim runs whose worker stopped renewing its lease. A lapsed lease means
+        // the worker process is gone (crash, restart, partition), so the retry budget is preserved.
+        reclaimLapsedLeases();
+
         // Stage-level liveness: kill stalled runs (heartbeats without progress), warn about slow ones
         detectStalledAndSlowRuns();
 
@@ -165,6 +190,27 @@ public class LectureContentProcessingScheduler {
 
         // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
         callbackService.dispatchPendingJobs();
+    }
+
+    /**
+     * Reclaim in-flight runs whose worker lease has lapsed: reset them to IDLE for re-dispatch
+     * without touching the retry budget. Re-fetches each row and re-checks the lease under current
+     * time so a heartbeat that arrived since the batch read cancels the reclaim.
+     */
+    private void reclaimLapsedLeases() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minus(LEASE_EXPIRY);
+        List<LectureUnitProcessingState> lapsed = processingStateRepository.findRunsWithLapsedLease(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING), cutoff);
+        for (LectureUnitProcessingState candidate : lapsed) {
+            LectureUnitProcessingState freshState = processingStateRepository.findById(candidate.getId()).orElse(null);
+            boolean stillLapsed = freshState != null && freshState.isProcessing() && freshState.getRetryEligibleAt() == null && freshState.getLastHeartbeatAt() != null
+                    && freshState.getLastHeartbeatAt().isBefore(ZonedDateTime.now().minus(LEASE_EXPIRY));
+            if (!stillLapsed) {
+                continue;
+            }
+            log.warn("lease-lapsed unit={} locked_by={} last_heartbeat={} — worker stopped renewing, reclaiming the run (retry budget preserved)",
+                    freshState.getLectureUnit() != null ? freshState.getLectureUnit().getId() : null, freshState.getLockedBy(), freshState.getLastHeartbeatAt());
+            recoveryService.resetToIdleForRecovery(freshState);
+        }
     }
 
     /**
@@ -367,6 +413,11 @@ public class LectureContentProcessingScheduler {
         if (spent > 0) {
             log.info("Ingestion reconcile requeued or triggered {} units, dispatching", spent);
             callbackService.dispatchPendingJobs();
+        }
+        else {
+            // Logged even when the pass changes nothing: without this line a healthy reconciler and one that
+            // never ran look identical in the log, which is the only place its liveness is observable.
+            log.info("Ingestion reconcile pass completed with nothing to requeue");
         }
     }
 }

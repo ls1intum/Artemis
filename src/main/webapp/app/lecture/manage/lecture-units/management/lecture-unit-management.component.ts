@@ -15,6 +15,7 @@ import {
     ProcessingPhase,
     toProcessingStatus,
 } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { TumUiTagComponent } from '@tumaet/ui-angular';
 import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/ingestion-status-badge/ingestion-status-badge.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -61,6 +62,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         PdfDropZoneComponent,
+        TumUiTagComponent,
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
@@ -473,27 +475,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
         // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)
         return this.isCourseActive();
-    }
-
-    getBadgeTopOffset(lectureUnit: LectureUnit) {
-        // Row 1: Release date badge (always)
-        // Row 2: Transcription + Processing badges side by side (for attachment video units)
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
-            return hasSecondRow ? '-40px' : '-18px';
-        }
-        return '-18px';
-    }
-
-    /**
-     * Calculate the margin-top needed for a lecture unit container to accommodate its badges.
-     */
-    getContainerMarginTop(lectureUnit: LectureUnit): string | null {
-        if (lectureUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
-            return null;
-        }
-        const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
-        return hasSecondRow ? '67px' : '45px';
     }
 
     /**
