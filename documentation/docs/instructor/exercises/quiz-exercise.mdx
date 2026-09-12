@@ -1,75 +1,72 @@
+---
+id: quiz-exercise
+title: Quiz Exercise
+sidebar_label: Quiz Exercise
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
-import courseManagement from './assets/general/course-management.png';
-import courseDashboard from './assets/quiz/course-dashboard.png';
-import createQuizButton from './assets/quiz/create-quiz-button.png';
+import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
 import createAQuizForm from './assets/quiz/create-a-quiz-form.png';
+import exerciseInList from './assets/quiz/course-dashboard-exercise-quiz.png';
 import multipleChoiceQuestion from './assets/quiz/multiple-choice-question.png';
 import dragAndDropQuestion from './assets/quiz/drag-and-drop-question.png';
 import apollonDiagrams from './assets/quiz/apollon-diagrams.png';
-import createANewApollonDiagram from './assets/quiz/create-a-new-apollon-diagram.png';
 import apollonForm from './assets/quiz/Apollon-form.png';
 import apollonEditor from './assets/quiz/apollon-editor.png';
 import shortAnswerQuestion from './assets/quiz/short-answer-question.png';
 import existingQuestion from './assets/quiz/existing-question.png';
-import addSelectedQuestionsButton from './assets/quiz/add-selected-questions-button.png';
 import footer from './assets/quiz/footer.png';
-import importQuizButton from './assets/quiz/import-quiz-button.png';
 import importListQuizzes from './assets/quiz/import-list-quizzes.png';
-import importButton from './assets/quiz/import-button.png';
-import exportQuizButton from './assets/quiz/export-quiz-button.png';
 import exportQuizzesList from './assets/quiz/export-quizzes-list.png';
-import exportButton from './assets/quiz/export-button.png';
-import createDragAndDropQuizButton from './assets/quiz/create-drag-and-drop-quiz.png';
 import aiGenerationModal from './assets/quiz/ai-generation-modal.png';
 import aiRefinementPanel from './assets/quiz/ai-refinement-panel.png';
 import aiBulkRefinement from './assets/quiz/ai-bulk-refinement.png';
 
-# Quiz Exercise
+A quiz exercise is marked the moment it closes: every question type Artemis offers has a machine-checkable
+answer, so students see their score without waiting for anybody to read their work. That makes quizzes the one
+exercise type that scales to any cohort size at no marking cost, and the one where the wording of a question has to
+carry all the precision, because no assessor is there to interpret a near-miss.
 
-## Overview
+Four question types are available:
 
-Instructors and editors can create, import, and export quiz exercises. Quiz exercises support four types of questions:
+- **Multiple choice** — several options, one or more of them correct.
+- **Drag and drop** — students drag items onto a background image.
+- **Apollon drag and drop** — the same, onto a UML diagram built in the [Apollon editor](https://github.com/ls1intum/Apollon).
+- **Short answer** — students type into gaps in a text.
 
-- **Multiple-Choice Questions**: Questions with multiple answer options where one or more can be correct
-- **Drag-and-Drop Questions**: Questions where students drag items onto a background image
-- **Apollon Drag-and-Drop Questions**: Questions where students drag items onto a UML diagram created with the [Apollon editor](https://github.com/ls1intum/Apollon) inside Artemis
-- **Short-Answer Questions**: Questions where students fill in text answers
+## Create the Exercise
 
-## Setup
+**Create** on the course's **Exercises** page in course management opens the **Manage Exercises** dialog. Its
+**Create** tab lists the exercise types; picking **Quiz** opens the quiz editor.
 
-The following sections describe the process of creating and managing quiz exercises.
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
 
-- On the Artemis home page, click on the Course Management button <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
-- Navigate into **Exercises** of a specific course by clicking on the exercise button
+The editor has two cards. **Quiz Settings** holds everything about the quiz as a whole, and **Questions** holds the
+questions themselves. **Max Points**, in the corner of the settings card, is the sum of the questions' points rather
+than something you set.
 
-<Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management Dashboard" />
+<Image src={createAQuizForm} alt="Quiz Settings card of the quiz editor" size={ImageSize.large} caption="Quiz Settings" />
 
-## Create Quiz Exercise
+**General** carries the **Title**, the **Channel Name** of the communication channel Artemis opens for the quiz, and
+its **Categories**, alongside three choices:
 
-In the quiz exercises section, click on the <img src={createQuizButton} alt="Create Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to open the quiz creation form.
+- **Difficulty** — **No Level**, **Easy**, **Medium** or **Hard**.
+- **Include in Course Score Calculation** — **Yes** counts the points toward the course score, **Bonus** counts
+  them as bonus points, **No** leaves them out.
+- **Present Questions in Random Order** — whether every student sees the questions in the same order.
 
-<Image src={createAQuizForm} alt="Create a Quiz Form" size={ImageSize.large} caption="Quiz Creation Form" />
+**Schedule & Mode** decides when the quiz runs and how students reach it:
 
-### Batch Mode
-Controls how students can participate in the quiz
-- **Synchronized**: There is exactly one opportunity for all students to participate in the quiz
-- **Batched**: There are multiple opportunities for students to participate in the quiz by using a password
-- **Individual**: Students can participate in the quiz by themselves at any time while it is released
-
-### Schedule Quiz Start
-Establish the date and hour at which the quiz will be available for solving
-
-**Start of working time**: Set the time for the students to see the questions and start answering them. Students can start working on the quiz from this time until the duration ends
-
-### Course Score Calculation
-Should this exercise be included in the course score calculation?
-- **Yes**: the points will be included in the course score calculation
-- **No**: the points will not be included in the course score calculation
-- **Bonus**: the points will be considered as bonus points
+- **Duration** is the working time, in hours, minutes and seconds. It starts when a student begins, not when the
+  quiz becomes visible.
+- **Batch Mode** decides how many opportunities there are. **Synchronized** runs the quiz once for everybody at a
+  time you start. **Batched** lets you open it several times, each batch reached with a password. **Individual**
+  lets each student take it whenever they like while it is released.
+- **Visible from** is when students can see that the quiz exists, and **Due Date** is when it stops being available.
 
 ## Question Types
 
@@ -97,7 +94,7 @@ This kind of question is composed of a problem statement with multiple options.
 - **Preview View**: Enables the student view
 - **Visual View**: This view shows the question from the Edit view as a rendered question. The different parts of the question are editable and answer options can be added and removed. It is possible to toggle between the Visual and the Edit view at all times and changes to the question will be respected
 
-<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/26851" title="Creating Quiz Exercises" height={400} />
+<TumLiveVideo src="26851" title="Creating Quiz Exercises" height={400} />
 
 <Callout variant={CalloutVariant.info}>
 
@@ -162,13 +159,15 @@ This kind of question is composed of a problem statement, a background image, an
 
 ### Add Apollon Drag-and-Drop Question
 
-In the quiz edit view click the button <img src={createDragAndDropQuizButton} alt="Create Drag and Drop Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
+A drag-and-drop question can be generated from a UML diagram instead of a picture: Artemis cuts the diagram's
+elements out as drag items and leaves their places as drop locations. **Add Apollon Drag-And-Drop Question** opens
+the **Apollon Diagrams** dialog, which lists the diagrams the course already has.
 
-<Image src={apollonDiagrams} alt="Apollon Diagrams" size={ImageSize.large} caption="Apollon Diagrams Overview" />
+<Image src={apollonDiagrams} alt="Dialog listing the course's Apollon diagrams" size={ImageSize.large} caption="The course's Apollon diagrams" />
 
-Clicking on the creation of a new Apollon Diagram button <img src={createANewApollonDiagram} alt="Create a New Apollon Diagram" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the following form:
+**Create a new Apollon Diagram** opens the form for a new one, which asks for a title and the diagram type:
 
-<Image src={apollonForm} alt="Apollon Form" size={ImageSize.medium} caption="Apollon Diagram Creation Form" />
+<Image src={apollonForm} alt="Form for a new Apollon diagram" size={ImageSize.medium} caption="Creating a diagram" />
 
 - Supported Diagram Types
   - Class Diagram
@@ -182,9 +181,10 @@ Clicking on the creation of a new Apollon Diagram button <img src={createANewApo
   - Syntax Tree
   - Flowchart
 
-After creating or opening an Apollon diagram, it can be edited in the edit view.
+**Open** on a diagram opens it in the Apollon editor, where the palette on the left holds the components its
+diagram type offers.
 
-<Image src={apollonEditor} alt="Apollon Editor" size={ImageSize.large} caption="Apollon Diagram Editor" />
+<Image src={apollonEditor} alt="Apollon editor with a class diagram in it" size={ImageSize.large} caption="Editing a diagram" />
 
 ### Add Short-Answer Question
 
@@ -231,37 +231,47 @@ This option allows to import existing questions from other quiz exercises, cours
 
 <Image src={existingQuestion} alt="Existing Question" size={ImageSize.large} caption="Import Existing Questions" />
 
-- At the end of the list, click the <img src={addSelectedQuestionsButton} alt="Add Selected Questions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to import all selected questions
+**Add Selected Questions**, at the end of the list, brings every question you ticked into the quiz.
 
-### Footer
+### Errors and Warnings
 
-On the creation quiz page there is a footer with the following fields:
+The footer of the creation form collects everything that would stop the quiz working: errors that prevent saving,
+and warnings about questions that will save but probably do not do what you meant.
 
-<Image src={footer} alt="Footer" size={ImageSize.medium} caption="Quiz Creation Form Footer" />
-
-- Error messages
-- Warning messages
+<Image src={footer} alt="Footer of the quiz creation form showing errors and warnings" size={ImageSize.medium} caption="Errors and warnings on the creation form" />
 
 ### Import a Quiz
 
-In the quiz exercises section, click on the <img src={importQuizButton} alt="Import Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+The **Import** tab of the **Manage Exercises** dialog, with **Quiz** picked, lists the quizzes available to copy.
 
-The list of existing quizzes will appear.
+<Image src={importListQuizzes} alt="Dialog listing the quizzes available to import" size={ImageSize.medium} caption="Choosing a quiz to import" />
 
-<Image src={importListQuizzes} alt="Import List Quizzes" size={ImageSize.medium} caption="Quiz Import List" />
+**Import** on one of them opens the quiz editor with its questions already in place, where every setting can be changed exactly as when creating a quiz from scratch.
 
-- Clicking the <img src={importButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in the create new quiz exercise section
+### Export Questions
 
-### Export a Quiz
+The **Export** tab of the same dialog lists every quiz question in the course.
 
-In the quiz exercises section, click on the <img src={exportQuizButton} alt="Export Quiz Exercises" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and the list of quizzes will be shown.
+<Image src={exportQuizzesList} alt="Dialog listing the course's quiz questions with a checkbox each" size={ImageSize.medium} caption="Choosing questions to export" />
 
-<Image src={exportQuizzesList} alt="Export Quizzes List" size={ImageSize.medium} caption="Quiz Export List" />
-
-The <img src={exportButton} alt="Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will download the quiz in a JSON file
+**Export** writes the questions you ticked to a JSON file, which the **From a file** tab of **Add Existing
+Questions** reads back — that is how a question travels between Artemis instances.
 
 <Callout variant={CalloutVariant.info}>
 
   <strong>Note:</strong> Artemis uses an npm package called <a href="https://www.npmjs.com/package/@tumaet/apollon">Apollon</a> as its modeling editor. It has a standalone version which can be accessed via <a href="https://apollon.ase.in.tum.de/">apollon.ase.in.tum.de</a>. The standalone version is free to use without the necessity of creating an account and offers additional features, including sharing and exporting diagrams. For more information, visit <a href="https://github.com/ls1intum/Apollon_standalone">Apollon Standalone</a>.
 
 </Callout>
+
+## Manage the Exercise
+
+The quiz appears on the course's exercise list. Beside the actions every exercise has, a quiz row carries a
+lifecycle button — **Start** while the quiz is waiting, **End** while it is running — and, behind the overflow menu,
+**Statistics**, **Preview** and **Solution**. **Re-evaluate** appears there once the quiz has ended.
+
+<Image src={exerciseInList} alt="Course exercise list with the actions available on a quiz" size={ImageSize.large} caption="The quiz on the course's exercise list" />
+
+## What Students See
+
+Students open the quiz, answer the questions and get their score the moment it closes — see
+[Quiz Exercise](/student/exercises/quiz-exercise) on the student pages.

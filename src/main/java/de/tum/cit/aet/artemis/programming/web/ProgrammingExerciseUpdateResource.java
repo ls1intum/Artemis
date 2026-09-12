@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -51,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -140,8 +139,8 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
         if (updateDTO.id() == null || updateDTO.id() == 0) {
@@ -206,7 +205,8 @@ public class ProgrammingExerciseUpdateResource {
         final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExerciseBeforeUpdate))
                 .orElse(null);
 
-        // Update the existing exercise with DTO values
+        // Update the existing exercise with DTO values — including pinning a variant group member's shared dates back
+        // to its group, which update() does last so the dates are already correct here.
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
 
         // Validate the updated exercise
@@ -278,6 +278,9 @@ public class ProgrammingExerciseUpdateResource {
             updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
         }
 
+        // Validate the effective LocalCI timeline before auxiliary repository handlers can cause DB or VCS side effects.
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(updatedProgrammingExercise, originalBuildAndTestOffset);
+
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
@@ -308,7 +311,7 @@ public class ProgrammingExerciseUpdateResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, originalDueDate);
         slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
-        return ResponseEntity.ok(savedProgrammingExercise);
+        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedProgrammingExercise));
     }
 
     /**
@@ -381,12 +384,16 @@ public class ProgrammingExerciseUpdateResource {
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+        if (exercise.isCourseExercise() && exercise.getDueDate() == null) {
+            exercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        }
 
         if (dto.testCasesChanged() != null) {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
 
-        exercise.setSubmissionPolicy(dto.submissionPolicy());
+        // toEntity() copies the id through, so an existing policy keeps its identity instead of inserting a second row
+        exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 
@@ -398,6 +405,9 @@ public class ProgrammingExerciseUpdateResource {
 
         // Update build config
         updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
+
+        // Update plagiarism detection config
+        PlagiarismDetectionConfigHelper.applyToExercise(exercise, dto.plagiarismDetectionConfig());
 
         // Update grading criteria
         updateGradingCriteria(dto, exercise);
@@ -492,8 +502,8 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
         // Load the exercise with all associations needed by update() and reEvaluateExercise()
@@ -522,9 +532,12 @@ public class ProgrammingExerciseUpdateResource {
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
+
+        programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, originalBuildAndTestOffset);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
@@ -540,6 +553,6 @@ public class ProgrammingExerciseUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
         exerciseVersionService.createExerciseVersion(savedExercise, user);
 
-        return ResponseEntity.ok(savedExercise);
+        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedExercise));
     }
 }

@@ -324,8 +324,6 @@ public final class Constants {
 
     public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
 
-    public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
-
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
     public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
