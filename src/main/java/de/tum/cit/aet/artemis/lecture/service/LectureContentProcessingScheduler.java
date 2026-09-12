@@ -217,9 +217,10 @@ public class LectureContentProcessingScheduler {
      * Distinguish the three liveness states of an in-flight run:
      * <ul>
      * <li><b>Dead</b> — heartbeats stopped: handled by {@link #recoverStuckPhase} via the no-callback timeout.</li>
-     * <li><b>Stalled</b> — heartbeats keep arriving but the stage progress counter stopped moving for the
-     * whole stall window. The run is wedged mid-stage (hung request, blocked IO) and is treated like a
-     * stuck run: failed with retry budget, because the content itself may be the cause.</li>
+     * <li><b>Stalled</b> — the run is still alive (status callbacks still arriving, or a worker lease still
+     * held) but the stage progress counter stopped moving for the whole stall window. The run is wedged
+     * mid-stage (hung request, blocked IO) and is treated like a stuck run: failed with retry budget,
+     * because the content itself may be the cause.</li>
      * <li><b>Slow</b> — the progress counter keeps moving but the stage has been running longer than the
      * warning threshold. Logged for visibility and never killed: a three-hour lecture video legitimately
      * transcribes for a long time.</li>
@@ -231,10 +232,20 @@ public class LectureContentProcessingScheduler {
         ZonedDateTime now = ZonedDateTime.now();
         List<LectureUnitProcessingState> inFlightStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
         for (LectureUnitProcessingState state : inFlightStates) {
+            // Classify only runs that have reported a stage: the stall window needs a progress clock to
+            // compare against. A run with no progress yet — the whole transcription phase, which sends no
+            // stage name — is judged instead by findStuckStates' no-callback arm on lastUpdated (bumped by
+            // every raw checkpoint), the right signal for an opaque AI stage the stall window cannot size.
             if (state.getLastProgressAt() == null || state.getRetryEligibleAt() != null) {
                 continue;
             }
-            boolean heartbeatsAlive = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES));
+            // Alive means recent status callbacks OR a still-held lease. renewLease bumps only
+            // lastHeartbeatAt, so a run wedged mid-stage under a healthy worker keeps a fresh lease while
+            // callbacks fall silent; without the lease arm such a run (having reported a stage) would still
+            // escape this detector, findStuckStates and reclaimLapsedLeases alike.
+            boolean callbacksRecent = state.getLastUpdated() != null && state.getLastUpdated().isAfter(now.minusMinutes(NO_CALLBACK_TIMEOUT_MINUTES));
+            boolean leaseHeld = state.getLastHeartbeatAt() != null && state.getLastHeartbeatAt().isAfter(now.minus(LEASE_EXPIRY));
+            boolean heartbeatsAlive = callbacksRecent || leaseHeld;
             boolean progressFrozen = state.getLastProgressAt().isBefore(now.minus(stallWindow));
             if (heartbeatsAlive && progressFrozen) {
                 failStalledState(state);

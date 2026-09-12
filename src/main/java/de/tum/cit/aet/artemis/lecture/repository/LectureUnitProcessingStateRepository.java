@@ -41,11 +41,14 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * Uses {@code lastUpdated} instead of {@code startedAt} so that heartbeat callbacks
      * from Iris keep resetting the clock — a healthy job is never considered stuck.
      * <p>
-     * Runs holding a worker lease ({@code lastHeartbeatAt} set) are excluded from the no-callback arm:
-     * their liveness is judged by the much tighter lease expiry in {@link #findRunsWithLapsedLease}.
-     * The absolute deadline still applies to every run.
-     * The absolute deadline on {@code startedAt} is the backstop for jobs that keep sending
-     * heartbeats without ever terminating: no single ingestion run may exceed it.
+     * A leased run ({@code lastHeartbeatAt} set) that has reported a stage ({@code lastProgressAt} set) is
+     * excluded from the no-callback arm: its liveness is judged by the stall detector and the much tighter
+     * lease expiry in {@link #findRunsWithLapsedLease}. A leased run that has NOT reported a stage — the
+     * whole transcription phase, which sends no stage name — stays in the no-callback arm, because
+     * {@code lastUpdated} (bumped by every raw transcription checkpoint) is its only liveness signal, just
+     * as in push mode; otherwise a silently wedged transcription would hide behind its fresh lease until
+     * the absolute deadline. The absolute deadline on {@code startedAt} is the backstop for jobs that keep
+     * sending heartbeats without ever terminating: no single ingestion run may exceed it.
      * <p>
      * Only finds states that are NOT already scheduled for retry (retryEligibleAt IS NULL).
      * This prevents stuck detection from interfering with states waiting for their backoff period.
@@ -58,7 +61,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase IN :phases
-            AND ((ps.lastHeartbeatAt IS NULL AND ps.lastUpdated < :cutoffTime) OR ps.startedAt < :absoluteCutoffTime)
+            AND (((ps.lastHeartbeatAt IS NULL OR ps.lastProgressAt IS NULL) AND ps.lastUpdated < :cutoffTime) OR ps.startedAt < :absoluteCutoffTime)
             AND ps.retryEligibleAt IS NULL
             """)
     List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime,

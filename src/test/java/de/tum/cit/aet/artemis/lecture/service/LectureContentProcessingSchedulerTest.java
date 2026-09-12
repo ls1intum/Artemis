@@ -17,6 +17,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -379,7 +380,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setIngestionJobToken("token");
             // Heartbeats arrive (lastUpdated fresh), but the progress counter froze 40 minutes ago
             testState.recordStageProgress("vision", 41, 180);
-            org.springframework.test.util.ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(testState));
@@ -394,12 +395,33 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
+        void shouldFailLeasedRunsWedgedMidStageEvenWhenCallbacksWentSilent() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken("token");
+            // The worker keeps renewing its lease (fresh lastHeartbeatAt), but the pipeline wedged mid-stage:
+            // no status callbacks for 40 minutes (stale lastUpdated) and the progress counter is frozen.
+            // The held lease is the liveness signal here; without it this run would escape every detector.
+            testState.recordStageProgress("vision", 41, 180);
+            ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(40));
+            testState.setLastHeartbeatAt(ZonedDateTime.now());
+
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+
+            scheduler.processScheduledRetries();
+
+            verify(callbackService).handleProcessingFailure(testState);
+        }
+
+        @Test
         void shouldNotFailAStalledRunThatCompletedSinceTheBatchRead() {
             // Batch read saw it stalled and INGESTING; the re-fetch finds it already DONE
             // (a success callback landed in the window). It must not be reverted to FAILED.
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.recordStageProgress("vision", 41, 180);
-            org.springframework.test.util.ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
+            ReflectionTestUtils.setField(testState, "lastProgressAt", ZonedDateTime.now().minusMinutes(40));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
 
             LectureUnitProcessingState completed = new LectureUnitProcessingState(testUnit);
@@ -421,7 +443,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setIngestionJobToken("token");
             // In one stage for a long time, but the progress counter advanced recently
             testState.recordStageProgress("whisper", 10, 200);
-            org.springframework.test.util.ReflectionTestUtils.setField(testState, "stageStartedAt", ZonedDateTime.now().minusHours(2));
+            ReflectionTestUtils.setField(testState, "stageStartedAt", ZonedDateTime.now().minusHours(2));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(1));
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(testState));
