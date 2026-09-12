@@ -301,8 +301,18 @@ export class TutorialGroupHolidaysComponent {
                 this.configuration.set(configuration);
                 this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
                 this.isLoading.set(false);
-                this.loadSessionCounts();
-                this.loadSessionCountsPerHoliday();
+                if (configuration) {
+                    this.loadSessionCounts();
+                    this.loadSessionCountsPerHoliday();
+                } else {
+                    // An empty body is a course that has no tutorial groups configuration, which is a state it is
+                    // allowed to be in. Both count endpoints need that configuration and answer 400 without it, so
+                    // asking anyway turned a supported state into two error alerts. There is nothing to count there
+                    // either: no configuration means no holidays, and no sessions for one to cancel. Anything still
+                    // held describes the course as it was before, so it goes the same way the reloads drop theirs.
+                    this.sessionCountsByDay.set(new Map());
+                    this.sessionCountsByHoliday.set(new Map());
+                }
             });
     }
 

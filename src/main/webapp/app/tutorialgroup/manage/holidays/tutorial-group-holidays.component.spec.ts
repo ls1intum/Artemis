@@ -368,6 +368,23 @@ describe('TutorialGroupHolidaysComponent', () => {
             expect(query('holiday-load-failed')).toBeNull();
             expect(TestBed.inject(CourseTitleBarService).actionsTemplate()).toBeUndefined();
         });
+
+        it('should not ask for counts a course without a configuration cannot answer', async () => {
+            // Both count endpoints resolve the configuration first and answer 400 without one, so asking anyway turned
+            // a supported state into two error alerts.
+            vi.mocked(freePeriodService.getSessionCounts).mockClear();
+            vi.mocked(freePeriodService.getSessionCountsPerFreePeriod).mockClear();
+
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: null as never })));
+            component['loadConfiguration']();
+            await settle();
+
+            expect(freePeriodService.getSessionCounts).not.toHaveBeenCalled();
+            expect(freePeriodService.getSessionCountsPerFreePeriod).not.toHaveBeenCalled();
+            // Nothing to count, so nothing may be left over from the course as it was before.
+            expect(component['sessionCountsByDay']().size).toBe(0);
+            expect(component['sessionCountsByHoliday']().size).toBe(0);
+        });
     });
 
     it('should keep the newest configuration when an older reload answers last', () => {
