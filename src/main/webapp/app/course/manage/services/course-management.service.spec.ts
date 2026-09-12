@@ -307,51 +307,6 @@ describe('Course Management Service', () => {
         req.flush(null);
     });
 
-    // `findOneForDashboard` is deprecated for the web client but the endpoint stays for the iOS, Android and
-    // VS Code clients, so these three tests are the only remaining coverage of it and have to keep calling it.
-    it('should find one course for dashboard', () => {
-        returnedFromService = { ...courseForDashboard };
-        courseStorageService
-            .subscribeToCourseUpdates(course.id!)
-            .pipe(take(1))
-            .subscribe((updatedCourse) => {
-                expect(updatedCourse).toEqual(course);
-            });
-        courseManagementService
-            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note above this test
-            .findOneForDashboard(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
-    });
-
-    it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note on the test above
-        courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
-
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
-        req.flush(null);
-    });
-
-    it('should set the totalScores, the scoresPerExerciseType, and the participantScores in the scoresStorageService', () => {
-        const setStoredTotalScoresSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
-        const setStoredScoresPerExerciseTypeSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
-        const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
-        const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
-        courseManagementService
-            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note two tests above
-            .findOneForDashboard(course.id!)
-            .pipe(take(1))
-            .subscribe(() => {
-                expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
-                expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
-                expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
-                expect(setAchievedGroupPointsSpy).toHaveBeenCalledWith(course.id!, courseForDashboard.achievedPointsPerVariantGroup);
-            });
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
-        req.flush(courseForDashboard);
-    });
-
     it('should find grade scores for the course', () => {
         const gradeInformation = {
             gradeScores: [],
@@ -618,6 +573,18 @@ describe('Course Management Service', () => {
         expect(courseStorageService.getCourse(7)?.exercises).toHaveLength(1);
         expect(courseStorageService.getCourse(7)?.exercises?.[0].id).toBe(99);
         expect(courseStorageService.getCourse(7)?.title).toBe('Course');
+    });
+
+    it('should hydrate the course-level Athena flags from the lean course-overview response', () => {
+        // Student-facing feedback-request controls gate on these flags, so the lean projection must carry them
+        // even though it stays lean for everything else Athena-related.
+        let responseCourse: Course | null | undefined;
+        courseManagementService.findCourseForOverview(7).subscribe((response) => (responseCourse = response.body));
+        httpMock
+            .expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' })
+            .flush({ id: 7, title: 'Course', athenaGradingFeedbackEnabled: true, athenaFormativeFeedbackEnabled: true, courseNotificationCount: 0 });
+
+        expect(responseCourse).toMatchObject({ athenaGradingFeedbackEnabled: true, athenaFormativeFeedbackEnabled: true });
     });
 
     it('should drop a stored course when the lean-course response is empty', () => {

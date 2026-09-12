@@ -81,10 +81,10 @@ export class StudentExamManagementPage {
     }
 
     async typeSearchText(text: string) {
-        // The exam students page renders the shared search-filter component, whose input carries the stable
-        // aria-label "Filter Search Field". Target that instead of the user-facing placeholder copy (which has
-        // changed before and is translated), so the locator survives wording changes.
-        const searchTextField = this.page.getByRole('textbox', { name: 'Filter Search Field' });
+        // The exam students page renders the shared search-filter component. Its own test id is the contract:
+        // both the role and the accessible name of the inner control are implementation details of the field,
+        // and targeting either broke this test when the component changed.
+        const searchTextField = this.page.locator('[data-testid="search-filter"] input');
         await searchTextField.clear();
         await searchTextField.fill(text);
     }

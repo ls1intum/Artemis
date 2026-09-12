@@ -102,7 +102,7 @@ public class AttachmentVideoUnitService {
 
         // Trigger automated content processing (transcription and ingestion)
         contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
-        irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
+        irisLectureUnitSyncService.markVisibilityDirty(buildSnapshot(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
@@ -213,11 +213,11 @@ public class AttachmentVideoUnitService {
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
-            irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);
+            irisLectureUnitSyncService.markMetadataDirty(afterSnapshot);
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
-            irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(afterSnapshot);
+            irisLectureUnitSyncService.markVisibilityDirty(afterSnapshot);
         }
     }
 
@@ -396,7 +396,6 @@ public class AttachmentVideoUnitService {
         if (lectureUnits != null && !lectureUnits.isEmpty()) {
             lecture.setLectureUnits(null);
         }
-        lecture.setAttachments(null);
         lectureUnitService.disconnectCompetencyLectureUnitLinks(attachmentVideoUnit);
     }
 }

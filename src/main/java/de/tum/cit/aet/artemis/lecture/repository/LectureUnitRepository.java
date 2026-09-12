@@ -150,6 +150,29 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             """)
     List<LectureUnit> findAllByIdsWithLecture(@Param("ids") Collection<Long> ids);
 
+    /**
+     * Loads a lecture unit with everything its details projection reads: the competency links (with competencies), the
+     * lecture with its course, and, for attachment video units, the attachment.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @return the lecture unit, if it exists
+     */
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH lu.attachment
+                JOIN FETCH lu.lecture l
+                JOIN FETCH l.course
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findWithCompetencyLinksAndLectureAndCourseById(@Param("lectureUnitId") long lectureUnitId);
+
+    default LectureUnit findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(long lectureUnitId) {
+        return getValueElseThrow(findWithCompetencyLinksAndLectureAndCourseById(lectureUnitId), lectureUnitId);
+    }
+
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
     }

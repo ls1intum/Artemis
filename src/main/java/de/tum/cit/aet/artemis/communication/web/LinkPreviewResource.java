@@ -36,6 +36,9 @@ public class LinkPreviewResource {
 
     private static final Logger log = LoggerFactory.getLogger(LinkPreviewResource.class);
 
+    /** The start of an address in the private 172.16.0.0/12 range. */
+    private static final Pattern PRIVATE_172_RANGE = Pattern.compile("^172\\.(1[6-9]|2[0-9]|3[0-1])\\.");
+
     private final LinkPreviewService linkPreviewService;
 
     // Regular expression to match valid domain names with a TLD
@@ -150,6 +153,6 @@ public class LinkPreviewResource {
 
     private boolean isPrivateNetwork(String host) {
         return host.equals("localhost") || host.equals("127.0.0.1") || host.equals("::1") || host.equals("0.0.0.0") || host.startsWith("192.168.") || host.startsWith("10.")
-                || Pattern.matches("^172\\.(1[6-9]|2[0-9]|3[0-1])\\.", host);
+                || PRIVATE_172_RANGE.matcher(host).lookingAt();
     }
 }

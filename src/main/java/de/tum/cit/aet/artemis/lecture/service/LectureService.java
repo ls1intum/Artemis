@@ -41,7 +41,9 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
@@ -61,6 +63,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
@@ -71,6 +74,12 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 @Lazy
 @Service
 public class LectureService {
+
+    /** The title Artemis gives a lecture it created without one. */
+    private static final Pattern DEFAULT_LECTURE_NAME = Pattern.compile("^Lecture (\\d+)$");
+
+    /** The channel name that follows from such a title. */
+    private static final Pattern DEFAULT_LECTURE_CHANNEL_NAME = Pattern.compile("^lecture-lecture-(\\d+)$");
 
     private final LectureRepository lectureRepository;
 
@@ -100,11 +109,16 @@ public class LectureService {
 
     private final SlideRepository slideRepository;
 
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
             LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -119,49 +133,8 @@ public class LectureService {
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
         this.slideRepository = slideRepository;
-    }
-
-    /**
-     * For tutors, admins and instructors returns lecture with all attachments, for students lecture with only active attachments
-     *
-     * @param lectureWithAttachments lecture that has attachments
-     * @param user                   the user for which this call should filter
-     * @return lecture with filtered attachments
-     */
-    public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
-        Course course = lectureWithAttachments.getCourse();
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lectureWithAttachments;
-        }
-
-        HashSet<Attachment> filteredAttachments = new HashSet<>();
-        for (Attachment attachment : lectureWithAttachments.getAttachments()) {
-            if (attachment.getReleaseDate() == null || attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
-                filteredAttachments.add(attachment);
-            }
-        }
-        lectureWithAttachments.setAttachments(filteredAttachments);
-        return lectureWithAttachments;
-    }
-
-    /**
-     * Filter active attachments for a set of lectures. All lectures must be from the same course.
-     *
-     * @param course                  course all the lectures are from
-     * @param lecturesWithAttachments lectures that have attachments
-     * @param user                    the user for which this call should filter
-     * @return lectures with filtered attachments
-     */
-    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lecturesWithAttachments;
-        }
-
-        Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
-        for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-        }
-        return lecturesWithFilteredAttachments;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -193,7 +166,7 @@ public class LectureService {
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         // Clean up external processing resources (delete from Pyris)
-        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
         List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
@@ -223,6 +196,9 @@ public class LectureService {
             service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         });
 
+        // Removing the lecture cascades to its units, and each attachment video unit cascades to its attachment. An
+        // attachment no longer names a lecture of its own, so this is the only path that reaches one, and the
+        // ON DELETE RESTRICT constraint that used to make the order of these deletions matter is gone with the column.
         lectureRepository.deleteById(lecture.getId());
     }
 
@@ -231,7 +207,7 @@ public class LectureService {
      * <p>
      * This method:
      * <ul>
-     * <li>Fetches the lecture with units and attachments.</li>
+     * <li>Fetches the lecture with its units.</li>
      * <li>Ensures the lecture is linked to a valid course.</li>
      * <li>Determines which lecture units the user has completed and updates them accordingly.</li>
      * <li>Optionally enriches the lecture with competency links via the injected {@code competencyApi}.</li>
@@ -247,7 +223,7 @@ public class LectureService {
      * @throws BadRequestAlertException if the lecture is not linked to a course
      */
     public LectureDetailsDTO getForDetails(long lectureId, User user) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
@@ -269,7 +245,6 @@ public class LectureService {
      * <p>
      * This method:
      * <ul>
-     * <li>Filters out inactive attachments not visible to the user.</li>
      * <li>Removes Hibernate-added {@code null} lecture units to maintain integrity.</li>
      * <li>Collects exercises from the lecture units and filters out those the user should not see.</li>
      * <li>Enriches permitted exercises with full details needed for the dashboard.</li>
@@ -279,13 +254,11 @@ public class LectureService {
      * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
      * access control and information completeness for the dashboard.
      *
-     * @param lecture the {@link Lecture} to filter which includes lecture units (with competency links) and attachments
+     * @param lecture the {@link Lecture} to filter which includes lecture units with their competency links
      * @param user    the user requesting access
      * @return the filtered {@link Lecture}
      */
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
-        lecture = filterActiveAttachments(lecture, user);
-
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
         Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
@@ -322,14 +295,18 @@ public class LectureService {
 
     private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
-        List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
-        List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(lecture.getId(), lecture.isTutorialLecture(), null);
+        List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull)
+                .map(lectureUnit -> mapLectureUnit(lectureUnit, lectureReference)).toList();
         return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
-                courseDTO, lectureUnits, attachments);
+                courseDTO, lectureUnits);
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
-        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName());
+        // the discussion section reads this switch, and neither details query fetches the lazy configuration
+        courseAthenaConfigRepository.attachTo(course);
+        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getCourseInformationSharingConfiguration(),
+                course.isAthenaFormativeFeedbackEnabled());
     }
 
     private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {
@@ -373,13 +350,33 @@ public class LectureService {
         return visibleDisplayPageNumbers;
     }
 
-    private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit) {
+    /**
+     * Loads a single lecture unit the way the lecture details page projects it, for the user requesting it.
+     * <p>
+     * The unit's lecture reference carries the course, since this response has no lecture envelope around it. Exercise
+     * units carry the exercise as the course overview projects it, including the user's participations.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @param user          the user requesting the unit; decides the completion flag and the participations
+     * @return the projected lecture unit
+     */
+    public LectureDetailsDTO.LectureUnitDetailsDTO getUnitForDetails(long lectureUnitId, User user) {
+        LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        lectureUnit.setCompleted(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnitId, user.getId()).isPresent());
+        if (lectureUnit instanceof ExerciseUnit exerciseUnit && exerciseUnit.getExercise() != null) {
+            exerciseService.loadExercisesWithInformationForDashboard(Set.of(exerciseUnit.getExercise().getId()), user).stream().findFirst().ifPresent(exerciseUnit::setExercise);
+        }
+        Lecture lecture = lectureUnit.getLecture();
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(lecture.getId(), lecture.isTutorialLecture(),
+                mapCourse(lecture.getCourse()));
+        return mapLectureUnit(lectureUnit, lectureReference);
+    }
+
+    private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit, LectureDetailsDTO.LectureReferenceDTO lectureReference) {
         List<LectureDetailsDTO.CompetencyLinkDTO> competencyLinks = lectureUnit.getCompetencyLinks() == null ? List.of()
                 : lectureUnit.getCompetencyLinks().stream().filter(Objects::nonNull).map(this::mapCompetencyLink).toList();
         boolean completed = lectureUnit.isCompleted();
         boolean visibleToStudents = lectureUnit.isVisibleToStudents();
-        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(
-                lectureUnit.getLecture() != null ? lectureUnit.getLecture().getId() : null);
 
         switch (lectureUnit) {
             case AttachmentVideoUnit attachmentVideoUnit -> {
@@ -394,8 +391,9 @@ public class LectureService {
                         attachmentVideoUnit.getVideoSource(), videoSourceType, youtubeVideoId, null);
             }
             case ExerciseUnit exerciseUnit -> {
+                ExerciseOverviewDTO exerciseOverview = Optional.ofNullable(exerciseUnit.getExercise()).map(ExerciseOverviewDTO::of).orElse(null);
                 return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,
-                        visibleToStudents, competencyLinks, exerciseUnit.getExercise(), null);
+                        visibleToStudents, competencyLinks, exerciseOverview, null);
             }
             case TextUnit textUnit -> {
                 return new LectureDetailsDTO.TextUnitDTO(textUnit.getId(), lectureReference, textUnit.getName(), textUnit.getReleaseDate(), completed, visibleToStudents,
@@ -518,23 +516,20 @@ public class LectureService {
                 .thenComparing(Lecture::getId);
         List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
 
-        Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
-        Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
-
         Set<Lecture> lecturesToUpdate = new HashSet<>();
         Set<Channel> channelsToUpdate = new HashSet<>();
 
         for (int index = 0; index < existingLectures.size(); index++) {
             Lecture lecture = existingLectures.get(index);
             String newTitle = "Lecture " + (index + 1);
-            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
+            if (DEFAULT_LECTURE_NAME.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
                 lecture.setTitle(newTitle);
                 lecturesToUpdate.add(lecture);
             }
             Channel channel = lectureToChannelMap.get(lecture.getId());
             String channelName = channel.getName();
             String newChannelName = "lecture-lecture-" + (index + 1);
-            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
+            if (channelName != null && DEFAULT_LECTURE_CHANNEL_NAME.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
                 channel.setName(newChannelName);
                 channelsToUpdate.add(channel);
             }

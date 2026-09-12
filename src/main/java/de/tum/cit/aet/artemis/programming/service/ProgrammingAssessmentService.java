@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -55,14 +55,17 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
             SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
             TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.testCasePointsService = testCasePointsService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
@@ -176,7 +179,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
 
         sendFeedbackToAthena(exercise, submission, assessmentFeedback);
-        handleResolvedFeedbackRequest(participation);
 
         return newManualResult;
     }
@@ -185,24 +187,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final Collection<Feedback> feedbacks) {
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackApi.get().sendFeedback(exercise, programmingSubmission, new ArrayList<>(feedbacks));
-        }
-    }
-
-    private void handleResolvedFeedbackRequest(StudentParticipation participation) {
-        var exercise = participation.getExercise();
-        var isManualFeedbackRequest = exercise.getAllowFeedbackRequests() && participation.getIndividualDueDate() != null
-                && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
-        // We need to use the general exercise due date here and not the individual participation due date.
-        // This feature temporarily locks the repository by setting the individual due date to the past.
-        // If the general exercise due date is in the future,
-        // the exercise now gets unlocked and the individual due date gets removed.
-        var isBeforeDueDate = exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now());
-
-        if (isManualFeedbackRequest && isBeforeDueDate) {
-            participation.setIndividualDueDate(null);
-            studentParticipationRepository.save(participation);
         }
     }
 
