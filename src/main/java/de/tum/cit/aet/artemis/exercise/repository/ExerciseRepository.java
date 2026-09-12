@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -595,7 +594,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
             WHERE exercise.id = :exerciseId
             """)
-    @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);
 
     /**
