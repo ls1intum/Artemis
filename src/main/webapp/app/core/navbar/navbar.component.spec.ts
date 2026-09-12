@@ -69,6 +69,7 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { LoginService } from 'app/core/login/login.service';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 
 class MockBreadcrumb {
     label!: string;
@@ -177,6 +178,13 @@ describe('NavbarComponent', () => {
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
+    });
+
+    it('should not render the variant generation tray host without jobs', () => {
+        TestBed.inject(ExerciseVariantGenerationService).jobs.set([]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-variant-generation-tray')).toBeNull();
     });
 
     it('should display the current course next to the logo', () => {
@@ -345,7 +353,7 @@ describe('NavbarComponent', () => {
             { url: '/courses/123/tutorial-groups/tutorial-lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures', '1'] },
             { url: '/courses/123/communication?conversationId=123', course: tutorCourse, expected: ['/course-management', '123', 'communication'] },
             { url: '/courses/123/learning-path', course: instructorCourse, expected: ['/course-management', '123', 'learning-path-management'] },
-            { url: '/courses/123/competencies', course: instructorCourse, expected: ['/course-management', '123', 'competency-management'] },
+            { url: '/courses/123/competencies', course: editorCourse, expected: ['/course-management', '123', 'competency-management'] },
             { url: '/courses/123/faq', course: tutorCourse, expected: ['/course-management', '123', 'faqs'] },
             { url: '/courses/123/tutorial-groups', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups'] },
             { url: '/courses/123/tutorial-groups/41', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups', '41'] },
@@ -404,7 +412,6 @@ describe('NavbarComponent', () => {
         it.each([
             { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
-            { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
         ])('should default management view link when access is missing for $url', ({ course, url, expected }) => {
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(course.isAtLeastEditor ?? false);

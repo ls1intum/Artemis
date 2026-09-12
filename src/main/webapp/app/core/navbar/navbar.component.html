@@ -22,6 +22,9 @@
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
             <jhi-global-search-navbar />
         }
+        @if (variantGenerationService.hasJobs()) {
+            <jhi-variant-generation-tray />
+        }
         @if (!currAccount() && languages && languages.length > 1) {
             <div ngbDropdown class="dropdown pointer" display="dynamic">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">

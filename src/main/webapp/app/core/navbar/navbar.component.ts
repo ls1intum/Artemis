@@ -33,6 +33,7 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
+import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -42,6 +43,7 @@ import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRout
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -71,6 +73,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
+        VariantGenerationTrayComponent,
         CourseNotificationOverviewComponent,
     ],
 })
@@ -90,6 +93,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly courseStorageService = inject(CourseStorageService);
+    protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
 
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;

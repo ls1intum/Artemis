@@ -620,8 +620,11 @@ public class SharedQueueManagementService {
     }
 
     private void updateBuildAgentCapacity() {
-        buildAgentsCapacity = distributedDataAccessService.getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
-        runningBuildJobCount = distributedDataAccessService.getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
+        // Read the agents once: this runs on every build agent map event, and each read costs two distributed map
+        // reads plus a CLIENT LIST round trip. Asking twice for two sums over the same list doubled all of it.
+        List<BuildAgentInformation> buildAgents = distributedDataAccessService.getBuildAgentInformation();
+        buildAgentsCapacity = buildAgents.stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
+        runningBuildJobCount = buildAgents.stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
     }
 
     /**
