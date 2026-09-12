@@ -120,6 +120,7 @@ public class MailService {
 
     public void sendPasswordResetMail(MailRecipientDTO recipient) {
         log.debug("Sending password reset email to '{}'", recipient.email());
+        assert recipient.resetKey() != null;
         sendEmailFromTemplate(recipient, "mail/passwordResetEmail", "email.reset.title");
     }
 
