@@ -24,15 +24,12 @@ public class CourseNotificationCleanupService {
 
     private final CourseNotificationRepository courseNotificationRepository;
 
-    private final CourseNotificationCacheService courseNotificationCacheService;
-
-    public CourseNotificationCleanupService(CourseNotificationRepository courseNotificationRepository, CourseNotificationCacheService courseNotificationCacheService) {
+    public CourseNotificationCleanupService(CourseNotificationRepository courseNotificationRepository) {
         this.courseNotificationRepository = courseNotificationRepository;
-        this.courseNotificationCacheService = courseNotificationCacheService;
     }
 
     /**
-     * Cleans up all notifications that are past their deletion date and clears the notification cache.
+     * Cleans up all notifications that are past their deletion date.
      */
     @Scheduled(cron = "0 0 0 * * *")
     public void cleanupCourseNotifications() {
@@ -42,7 +39,5 @@ public class CourseNotificationCleanupService {
 
             courseNotificationRepository.deleteAll(courseNotificationsToDelete);
         }
-
-        courseNotificationCacheService.clearCourseNotificationCache();
     }
 }
