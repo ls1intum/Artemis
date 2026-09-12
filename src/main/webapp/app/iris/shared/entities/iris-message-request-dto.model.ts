@@ -14,28 +14,14 @@ export interface IrisPendingContextDTO {
  * DTO for sending messages to Iris with optional uncommitted file changes and optional context information.
  * Matches the server IrisMessageRequestDTO structure.
  */
-export class IrisMessageRequestDTO {
+export interface IrisMessageRequestDTO {
     content: IrisMessageContentDTO[];
     messageDifferentiator?: number;
     uncommittedFiles: { [path: string]: string };
+    /** Context switch to apply atomically before the message is saved. */
     pendingContext?: IrisPendingContextDTO;
+    /** What the user is currently viewing; forwarded to Pyris, not persisted. */
     context?: IrisMessageContextDTO[];
-
-    constructor(
-        content: IrisMessageContentDTO[],
-        messageDifferentiator?: number,
-        uncommittedFiles: { [path: string]: string } = {},
-        pendingContextOrContext?: IrisPendingContextDTO | IrisMessageContextDTO[],
-        context?: IrisMessageContextDTO[],
-    ) {
-        this.content = content;
-        this.messageDifferentiator = messageDifferentiator;
-        this.uncommittedFiles = uncommittedFiles;
-        if (Array.isArray(pendingContextOrContext)) {
-            this.context = pendingContextOrContext;
-        } else {
-            this.pendingContext = pendingContextOrContext;
-            this.context = context;
-        }
-    }
+    /** Identifies the sending browser tab, so a command Iris issues while answering is addressed back to it. */
+    clientId?: string;
 }

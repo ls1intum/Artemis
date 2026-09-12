@@ -56,6 +56,8 @@ import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisPointOut, formatTimestamp } from 'app/iris/shared/entities/iris-point-out.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -64,6 +66,10 @@ import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
+
+/** Tolerance the video player applies when matching a position to a transcript segment; mirrored where we have to
+ * anticipate which segment a player will report for a timestamp. */
+const SEGMENT_BOUNDARY_TOLERANCE = 0.3;
 
 /** Sentinel in {@link Attachment.displayPageNumbers} meaning the slide has no detected display page number. */
 const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
@@ -103,9 +109,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
+    private readonly chatService = inject(IrisChatService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
+    /**
+     * Whether the deep link that opened this unit asks for the combined view. An Iris point-out marker sets it, so
+     * that clicking one from elsewhere in the app arrives in the same view as clicking it on this page does —
+     * the position alone is not the whole target, the toggle and its explanation live in that view too.
+     */
+    targetCombinedView = input<boolean>(false);
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
     contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
@@ -118,10 +131,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+    /**
+     * Whether the transcript request is still in flight. It is started just before the loading flag clears, so an empty
+     * transcript only means "there is none" once this has settled too — see {@link isPointOutUnreachable}.
+     */
+    private readonly isTranscriptLoading = signal<boolean>(false);
 
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
-    readonly youtubePlayerFailed = signal(false);
+    /**
+     * Whether the rendered video player reported that it cannot play. Exactly one player is ever rendered, so one
+     * latch describes both: it puts the YouTube player on its iframe fallback, and in either case it ends the wait
+     * for a seekable player, so a point-out is answered right away instead of sitting out the server-side ack
+     * timeout. It belongs to the player instance and is therefore cleared whenever that one goes.
+     */
+    readonly playerFailed = signal(false);
 
     // For iframe fallback: YouTube watch/share URLs cannot be framed, so we
     // construct a privacy-enhanced embed URL from the video ID when available.
@@ -159,6 +183,18 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private pendingPdfTargetPage?: number;
     private isApplyingVideoSeek = false;
 
+    /** Latches the one-off combined-view opening a deep link asks for, so a closed view stays closed. */
+    private hasOpenedCombinedViewFromDeepLink = false;
+
+    // A point-out navigation target waiting to be applied once the combined view is open and the
+    // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
+    private readonly pendingPointOut = signal<IrisPointOut | undefined>(undefined);
+
+    // The position a point-out turned synchronization off for, ready to be named in the notice that explains the
+    // switched-off toggle. The page is the number printed on the slide, so the notice agrees with the chip in the chat.
+    private readonly syncDisabledByPointOutState = signal<{ page: number; time: string } | undefined>(undefined);
+    readonly syncDisabledByPointOut = this.syncDisabledByPointOutState.asReadonly();
+
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
         return page && Number.isInteger(page) && page > 0 ? page : undefined;
@@ -167,7 +203,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
-    readonly hasSyncCapableVideo = computed(() => !!this.playlistUrl() || (!!this.youtubeVideoId() && !this.youtubePlayerFailed()));
+    readonly hasSyncCapableVideo = computed(() => (!!this.playlistUrl() || !!this.youtubeVideoId()) && !this.playerFailed());
     readonly synchronizationState = computed(() => this.computeSynchronizationState());
     readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
@@ -224,16 +260,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const viewer = this.pdfViewer();
             return viewer ? viewer.currentPageSignal() : undefined;
         },
-        getCurrentVideoTimestamp: () => {
-            const videoPlayer = this.videoPlayer();
-            const youtubePlayer = this.youtubePlayer();
-            return videoPlayer?.getCurrentTime() ?? youtubePlayer?.getCurrentTime();
-        },
-        hasVideoBeenPlayed: () => {
-            const videoPlayer = this.videoPlayer();
-            const youtubePlayer = this.youtubePlayer();
-            return videoPlayer?.hasBeenPlayed() ?? youtubePlayer?.hasBeenPlayed() ?? false;
-        },
+        getCurrentVideoTimestamp: () => this.activePlayer()?.getCurrentTime(),
+        hasVideoBeenPlayed: () => this.activePlayer()?.hasBeenPlayed() ?? false,
     }));
 
     readonly ownContextsProvider = computed<LectureContextsProvider>(() => ({
@@ -284,7 +312,18 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const id = this.lectureUnit()?.id;
             // read id to create the dependency; then schedule reset
             void id;
-            untracked(() => this.youtubePlayerFailed.set(false));
+            untracked(() => this.playerFailed.set(false));
+        });
+
+        // A deep link asking for the combined view opens it as soon as there is something to show. The content is
+        // still being resolved when this unit is first built, so the effect waits for it rather than giving up.
+        // It fires once: the student closing the view again must not be overruled by it reopening on the next run.
+        effect(() => {
+            if (!this.targetCombinedView() || this.hasOpenedCombinedViewFromDeepLink || !this.hasFullscreenContent()) {
+                return;
+            }
+            this.hasOpenedCombinedViewFromDeepLink = true;
+            untracked(() => this.openFullscreen());
         });
 
         // Update dark-mode class based on theme
@@ -298,6 +337,213 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.clearSynchronizationTargets();
             }
         });
+
+        // Iris points the student to a position in the combined view, either pushed by the server while the
+        // pipeline waits or raised by a marker click in the chat history.
+        this.chatService.pointOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pointOut) => this.handlePointOut(pointOut));
+
+        // Apply a pending point-out target once the combined view is open and the viewer it needs has rendered, or
+        // drop it once that viewer turns out not to be coming. Reading the viewChild signals here re-runs this effect
+        // as they become available.
+        effect(() => {
+            const pointOut = this.pendingPointOut();
+            // A marker click opens the combined view first, so isFullscreen() is still false on the initial
+            // run here and the target simply stays pending until the view (and its viewer) is up.
+            if (!pointOut || !this.isFullscreen()) {
+                return;
+            }
+            // Give up as soon as the viewer this target needs is known not to be coming. Without this the wait below
+            // never ends, so nobody would answer and a waiting pipeline would sit out its full ack timeout. Evaluating
+            // it here rather than in handlePointOut is what makes it safe: the effect re-runs as the viewers settle,
+            // so a target is only dropped once "not there yet" has turned into "not coming".
+            if (this.isPointOutUnreachable(pointOut)) {
+                untracked(() => {
+                    this.acknowledgeAsDropped(pointOut);
+                    this.pendingPointOut.set(undefined);
+                });
+                return;
+            }
+            // A rendered viewer whose document is still loading reports 0 pages and would reject every target, so wait
+            // for the page count as well — otherwise a perfectly valid point-out would be reported as not applied.
+            const pdfReady = pointOut.page == undefined || (this.pdfViewer()?.getTotalPages() ?? 0) > 0;
+            // Same for whichever video player is rendered: a seek is only judgeable once the player exists *and* knows
+            // how long the video is — before that it accepts a target past the end and reports it back unchanged, so
+            // acknowledging then would claim a jump the later clamp undoes. Reading the signal here re-runs this
+            // effect once it flips, and a video that never gets there is dropped by isPointOutUnreachable instead.
+            const videoReady = pointOut.timestamp == undefined || (this.activePlayer()?.isSeekable() ?? false);
+            if (!pdfReady || !videoReady) {
+                return;
+            }
+            untracked(() => {
+                const applied = this.applyPointOut(pointOut);
+                // Acknowledge a waiting pipeline only now — once the view has really moved — so Iris learns
+                // "applied" for the actual navigation, not merely because the combined view was open.
+                if (pointOut.correlationId) {
+                    this.chatService.sendCommandAck(pointOut.correlationId, applied);
+                }
+                this.pendingPointOut.set(undefined);
+            });
+        });
+    }
+
+    /**
+     * Handles a point-out targeting this unit; requests for other units are ignored (the matching unit, or the
+     * server-side timeout, handles them). If the combined view is closed, a marker click (forceOpen) opens it
+     * first, while a server-pushed point-out is acknowledged straight away as not applied. The actual page jump
+     * / video seek is deferred to the pendingPointOut effect, which waits until the relevant viewer is ready and then
+     * acknowledges the outcome that viewer reported — or drops the target once that viewer turns out not to be coming.
+     * @param pointOut the requested navigation target
+     */
+    private handlePointOut(pointOut: IrisPointOut): void {
+        if (pointOut.lectureUnitId !== this.lectureUnit()?.id) {
+            return;
+        }
+        if (!this.isFullscreen()) {
+            // A marker click opens the view first, but only where there is one to open: openFullscreen is a no-op
+            // without fullscreen content, and a target stored regardless would wait for a view that never comes.
+            // Nothing would clear it either — the drop on close runs on the close transition, which a view that
+            // never opened never makes — so it would sit there and jump some later, unrelated reopen.
+            if (!pointOut.forceOpen || !this.hasFullscreenContent()) {
+                this.acknowledgeAsDropped(pointOut);
+                return;
+            }
+            this.openFullscreen();
+        }
+        this.acknowledgeAsDropped(this.pendingPointOut());
+        this.pendingPointOut.set(pointOut);
+    }
+
+    /**
+     * Moves the viewers to a point-out's position, with both viewers ready.
+     *
+     * A point-out naming only a page (or only a timestamp) leaves the other pane to synchronization on purpose —
+     * the video following Iris to the slide it named is what the toggle is for. A point-out naming both is applied
+     * as given, and where that contradicts synchronization the toggle gives way first, so the seek cannot drag the
+     * PDF back off the page Iris named.
+     *
+     * @param pointOut the navigation target to apply
+     * @return whether the view really moved to it. Iris proposes the page, so it can name one the deck does not
+     *         have (a slide's printed number rather than its index, say), which must be reported back as not
+     *         applied: an unconditional success would leave Iris claiming a jump that never happened and put a
+     *         dead point-out chip into the chat history.
+     */
+    private applyPointOut(pointOut: IrisPointOut): boolean {
+        const page = pointOut.page;
+        const timestamp = pointOut.timestamp;
+
+        // All or nothing. Both targets are checked before either viewer or the toggle is touched, because a
+        // point-out that moved only one of its two panes is worse than one that moved neither: it is reported as not
+        // applied and gets no marker, so nothing in the chat leads back to the half-position the student is left in,
+        // and Iris' answer describes a place they are not.
+        if (!this.canApplyPointOut(page, timestamp)) {
+            return false;
+        }
+
+        // A point-out supersedes the explanation left by an earlier one, whether or not it disables the toggle again.
+        this.syncDisabledByPointOutState.set(undefined);
+        if (page != undefined && timestamp != undefined && this.contradictsSynchronization(page, timestamp)) {
+            this.synchronizeVideoAndSlides.set(false);
+            this.clearSynchronizationTargets();
+            this.syncDisabledByPointOutState.set({ page: pointOut.displayPage ?? page, time: formatTimestamp(timestamp) });
+        }
+
+        let applied = true;
+        if (page != undefined) {
+            applied = this.pdfViewer()?.goToPage(page) ?? false;
+        }
+        if (timestamp != undefined) {
+            // The player reports whether it moved to the requested position; a refused or dropped seek is not a
+            // navigation.
+            applied = (this.activePlayer()?.seekTo(timestamp, false) ?? false) && applied;
+        }
+        return applied;
+    }
+
+    /** Whether every target a point-out names would be taken, each viewer answering for its own without moving. */
+    private canApplyPointOut(page: number | undefined, timestamp: number | undefined): boolean {
+        if (page != undefined && !(this.pdfViewer()?.canGoToPage(page) ?? false)) {
+            return false;
+        }
+        return timestamp == undefined || (this.activePlayer()?.canSeekTo(timestamp) ?? false);
+    }
+
+    /**
+     * Whether a point-out asks for a position the two panes cannot hold while synchronized — the page it names is
+     * not the one synchronization pairs with the slide its timestamp falls on. Left switched on, the toggle would
+     * undo the point-out: the student's next scroll or the video playing on would snap one pane away from where
+     * Iris pointed them, which reads as a glitch. So the point-out wins and the toggle is switched off, honestly
+     * showing the mismatch and leaving it to the student to re-synchronize.
+     *
+     * That Iris contradicts synchronization does not make Iris wrong: synchronization pairs a slide with the
+     * *first* transcript segment mentioning it and rests on the slide detection in the transcript, which makes it
+     * the weaker of the two statements.
+     *
+     * @param page the slide page the point-out asks for
+     * @param timestamp the video position the point-out asks for
+     * @return whether synchronization has to give way for them
+     */
+    private contradictsSynchronization(page: number, timestamp: number): boolean {
+        if (!this.synchronizeVideoAndSlides()) {
+            return false;
+        }
+        // Each player resolves a timestamp to a segment itself, and at a shared boundary the two disagree: the video
+        // player takes the earlier segment (it allows a 0.3s tolerance), the YouTube player the later one. Since Iris
+        // tends to name exactly such boundary timestamps, every segment either of them could land on has to map back
+        // to the page Iris named — judging by one player's rule would let the other's echo drag the PDF off it.
+        const candidates = this.transcriptSegments().filter(
+            (segment) => timestamp >= (segment.startTime ?? Infinity) - SEGMENT_BOUNDARY_TOLERANCE && timestamp <= (segment.endTime ?? -Infinity) + SEGMENT_BOUNDARY_TOLERANCE,
+        );
+        const pdfPages = this.synchronizationState().displayedPageNumberToPdfPage;
+        // No segment at all, or a slide with no page of its own, has no synchronization partner either, so it is
+        // just as little a position the toggle can hold.
+        return candidates.length === 0 || candidates.some((segment) => segment.slideNumber == undefined || pdfPages.get(segment.slideNumber) !== page);
+    }
+
+    /**
+     * Whether the viewer a point-out needs can no longer appear in this combined view, which makes its target
+     * unreachable for good. Only settled facts count here — "still loading" is not an answer, since the effect that
+     * asks re-runs once it becomes one, and giving up early would report a perfectly good point-out as not applied.
+     *
+     * Slides: the unit either has no PDF at all, or its PDF failed to load, in which case the viewer is replaced by an
+     * error message for as long as the view stays open. That the URL has not arrived yet is not decisive.
+     *
+     * Video: only a seekable player can hold a timestamp, and anything else falls back to a bare iframe, which cannot.
+     * The conditions below mirror the template's, since a player that is never rendered can never be seeked either:
+     * the video player needs a resolved playlist *and* a transcript, while the YouTube player needs neither and renders
+     * on the video id alone. A playlist without a transcript therefore ends in the iframe, not in a player — waiting on
+     * it would block until the server-side ack timeout, which is the very thing this method exists to prevent. A player
+     * that did render but reported failure counts the same way: it will never state a length, so the effect's wait for
+     * a seekable player would otherwise never end.
+     *
+     * Both requests must have settled before their outcome counts. The transcript is requested just before the loading
+     * flag clears and settles after it, so an empty transcript is only final once its own request has finished too;
+     * judging by the loading flag alone would drop a perfectly good point-out in that window.
+     * @param pointOut the pending navigation target
+     * @return whether it can be given up on
+     */
+    private isPointOutUnreachable(pointOut: IrisPointOut): boolean {
+        if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
+            return true;
+        }
+        // A rendered player on an unbounded stream has no length to place a position in and never will, so the wait
+        // for seekability below could not end there either.
+        if (pointOut.timestamp != undefined && this.videoPlayer()?.isUnbounded()) {
+            return true;
+        }
+        const hasSeekableVideo = ((!!this.playlistUrl() && this.hasTranscript()) || !!this.youtubeVideoId()) && !this.playerFailed();
+        return pointOut.timestamp != undefined && !this.isLoading() && !this.isTranscriptLoading() && !hasSeekableVideo;
+    }
+
+    /**
+     * Acknowledges a pending point-out that is being dropped as not applied. The client knows at that moment that the
+     * target will never be reached, so reporting it right away releases a waiting Iris pipeline instead of making it
+     * sit out the server-side ack timeout. Marker clicks carry no correlation id and have nobody waiting on them.
+     * @param pointOut the point-out being dropped, if any
+     */
+    private acknowledgeAsDropped(pointOut: IrisPointOut | undefined): void {
+        if (pointOut?.correlationId) {
+            this.chatService.sendCommandAck(pointOut.correlationId, false);
+        }
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
@@ -348,6 +594,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
             this.isLoading.set(true);
+            this.isTranscriptLoading.set(false);
 
             const src = this.lectureUnit().videoSource;
 
@@ -391,7 +638,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.loadPdf();
             }
         } else {
-            this.youtubePlayerFailed.set(false);
+            // The latch describes the player instance being torn down here, so it must not outlive it — reopening the
+            // unit builds a fresh one, and a stale failure would make every later point-out for this unit be given up
+            // on as unreachable.
+            this.playerFailed.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
@@ -407,6 +657,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        this.isTranscriptLoading.set(true);
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
@@ -416,10 +667,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             .subscribe({
                 next: (segments) => {
                     this.transcriptSegments.set(segments);
+                    this.isTranscriptLoading.set(false);
                 },
                 error: () => {
                     // Failed to fetch transcript, video player will work without it
                     this.transcriptSegments.set([]);
+                    this.isTranscriptLoading.set(false);
                 },
             });
     }
@@ -526,14 +779,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
-        // Note: the floating Iris chat widget was previously force-closed here via MatDialog.closeAll() when entering
-        // fullscreen. The widget has since migrated to PrimeNG's DynamicDialog, which has no globally reachable
-        // close-all from this injector (its DialogService is component-scoped to the chatbot button). The widget still
-        // auto-closes on navigation; if it visibly overlays the fullscreen view, reintroduce an explicit close via a
-        // shared Iris widget service rather than a Material dependency.
+        if (!isFullscreen) {
+            // The view was closed before a point-out could be applied, so its target is now unreachable.
+            // Dropping it here (on the close transition, not on the closed state, which a marker click starts
+            // out in) keeps it from being applied on a later, unrelated reopen.
+            this.acknowledgeAsDropped(this.pendingPointOut());
+            this.pendingPointOut.set(undefined);
+            // The toggle it explains goes away with the view; a later reopen starts without a stale explanation.
+            this.syncDisabledByPointOutState.set(undefined);
+        }
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {
+        // The student is deciding about the toggle themselves, so the explanation for its state has served its purpose.
+        this.syncDisabledByPointOutState.set(undefined);
         if (!enabled || !this.synchronizationAvailable()) {
             this.synchronizeVideoAndSlides.set(false);
             this.clearSynchronizationTargets();
@@ -653,24 +912,30 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // the PDF back. The flag is only ever set for the duration of this synchronous call.
         this.isApplyingVideoSeek = true;
         try {
-            const videoPlayer = this.videoPlayer();
-            if (videoPlayer) {
-                videoPlayer.seekTo(timestamp, shouldResumePlayback);
-                return;
-            }
-
-            this.youtubePlayer()?.seekTo(timestamp, shouldResumePlayback);
+            this.activePlayer()?.seekTo(timestamp, shouldResumePlayback);
         } finally {
             this.isApplyingVideoSeek = false;
         }
     }
 
+    /**
+     * Whichever video player is rendered — the template shows exactly one of them, and both expose the same seeking
+     * and position API. Everything that drives the video goes through here rather than asking the two in turn, so
+     * a rendered player is never silently passed over because it answered "no" rather than "I am not here".
+     *
+     * Deliberately a method and not a computed: it reads the two viewChild signals on every call, which keeps it
+     * tracked by whichever effect asks — the pending-point-out effect has to re-run once a player appears.
+     */
+    private activePlayer(): VideoPlayerComponent | YouTubePlayerComponent | undefined {
+        return this.videoPlayer() ?? this.youtubePlayer();
+    }
+
     private isVideoCurrentlyPlaying(): boolean {
-        return this.videoPlayer()?.isPlaying() ?? this.youtubePlayer()?.isPlaying() ?? false;
+        return this.activePlayer()?.isPlaying() ?? false;
     }
 
     private getActiveVideoSlideNumber(): number | undefined {
-        return this.videoPlayer()?.getCurrentSlideNumber() ?? this.youtubePlayer()?.getCurrentSlideNumber();
+        return this.activePlayer()?.getCurrentSlideNumber();
     }
 
     private clearSynchronizationTargets(): void {
@@ -783,8 +1048,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    onYouTubePlayerFailed(): void {
-        this.youtubePlayerFailed.set(true);
+    onPlayerFailed(): void {
+        this.playerFailed.set(true);
     }
 
     hasAttachment(): boolean {

@@ -13,9 +13,11 @@ package de.tum.cit.aet.artemis.iris.domain.message;
  * Persisted in the chat history so the LLM can interpret previous messages against the previous context.
  * The stored content is the new context's entity name; the LLM-facing marker prefix is added by Pyris.
  * <p>
+ * COMMAND: A marker for a client action Iris performed, such as pointing to a slide page or video timestamp
+ * <p>
  * Note: The ARTEMIS message sender variant was removed, as its original intent was
  * based on an incomplete understanding of the requirements of the Iris subsystem.
  */
 public enum IrisMessageSender {
-    USER, LLM, ARTIFACT, CTXSWAP
+    USER, LLM, ARTIFACT, CTXSWAP, COMMAND
 }
