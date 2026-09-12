@@ -33,12 +33,14 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -101,11 +103,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ResultRepository resultRepository;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
             Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -119,6 +123,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
         this.resultRepository = resultRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -203,7 +208,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         long exerciseNanos = System.nanoTime() - stageStart;
 
         stageStart = System.nanoTime();
-        StudentParticipation participationFromExamGate = null;
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
@@ -225,9 +230,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             textSubmission.setId(null);
         }
         stageStart = System.nanoTime();
-        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, participationFromExamGate);
+        var saved = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, participationFromExamGate);
+        textSubmission = saved.submission();
         long saveNanos = System.nanoTime() - stageStart;
-        textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
         // A slow autosave is worth attributing to a stage rather than guessing at, so the breakdown names which of them
         // took the time.
@@ -238,7 +243,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         // Include the student: this is the student's own submission and the client checks participation ownership
         // (isOwnerOfParticipation) on the returned participation. hideDetails keeps the participant for the owner.
-        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, true));
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, saved.participation()));
     }
 
     /**
@@ -324,6 +329,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // assessment editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
                 skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
 
@@ -348,7 +356,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
         User user = userRepository.getUserWithAuthorities();
-        textSubmissionService.hideDetails(textSubmission, user);
 
         // The client resolves the participation via submission.participation; it carries the exercise and the locked
         // submission with its results. Tutors must not see the student (double-blind); instructors may, matching the

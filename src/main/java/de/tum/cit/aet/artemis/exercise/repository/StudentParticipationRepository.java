@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -418,7 +420,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
             WHERE p.exercise.course.id = :courseId
                 AND p.team.shortName = :teamShortName
@@ -449,22 +451,139 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
 
+    /**
+     * The student's graded or practice participation in an exercise, as far as saving a submission needs it.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param testRun    whether to look for the test run participation
+     * @return the projected participation, or empty when the student has none
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun, p.presentationScore)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND p.testRun = :testRun
+            """)
+    Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
+            @Param("testRun") boolean testRun);
+
+    /**
+     * The student's newest participation in an exercise, as far as saving a submission needs it.
+     * <p>
+     * A test exam can be taken more than once, so the caller asks for the first row of a descending order rather than
+     * matching a maximum in a subquery. Ordering by id as well breaks a tie between two attempts that share an
+     * initialization date, which the greatest id resolves the same way a MAX would.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param pageable   the page to read, {@code PageRequest.of(0, 1)} for the newest
+     * @return the projected participations, newest first
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun, p.presentationScore)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+            ORDER BY p.initializationDate DESC, p.id DESC
+            """)
+    List<StudentParticipationSubmitTargetDTO> findLatestSubmitTargetsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
+            Pageable pageable);
+
+    /**
+     * The student's newest participation in an exercise, as far as saving a submission needs it.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the projected participation, or empty when the student has none
+     */
+    default Optional<StudentParticipationSubmitTargetDTO> findLatestSubmitTargetByExerciseIdAndStudentId(long exerciseId, long studentId) {
+        return findLatestSubmitTargetsByExerciseIdAndStudentId(exerciseId, studentId, PageRequest.of(0, 1)).stream().findFirst();
+    }
+
+    /**
+     * A team's participation in an exercise, as far as saving a submission needs it.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return the projected participation, or empty when the team has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO(
+                p.id, p.initializationState, p.initializationDate, p.individualDueDate, p.testRun, p.presentationScore)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.team.id = :teamId
+            """)
+    Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
+    /**
+     * The id of the student's most recently initialized participation in an exercise.
+     * <p>
+     * Read on its own so the fetch join below can be addressed by id: pairing a collection fetch with a page limit
+     * makes Hibernate apply the limit in memory, and matching a maximum in a subquery is what the query guidelines ask
+     * callers to avoid. Ordering by id as well breaks a tie between two participations sharing an initialization date.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param pageable   the page to read, {@code PageRequest.of(0, 1)} for the newest
+     * @return the ids of the student's participations, newest first
+     */
+    @Query("""
+            SELECT p.id
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+            ORDER BY p.initializationDate DESC, p.id DESC
+            """)
+    List<Long> findLatestIdsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId, Pageable pageable);
+
+    /**
+     * A participation with its submissions, by id.
+     * <p>
+     * No SELECT DISTINCT - Hibernate de-duplicates a fetch join itself, and passing DISTINCT through to SQL would sort
+     * rows carrying the whole exercise and course.
+     *
+     * @param participationId the id of the participation
+     * @return the participation, or empty when there is none with that id
+     */
+    @Query("""
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.initializationDate = (
-                SELECT MAX(p2.initializationDate)
-                FROM StudentParticipation p2
-                    LEFT JOIN p2.submissions s2
-                WHERE p2.exercise.id = :exerciseId
-                    AND p2.student.id = :studentId
-            )
+            WHERE p.id = :participationId
             """)
-    Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    Optional<StudentParticipation> findWithSubmissionsById(@Param("participationId") long participationId);
 
+    /**
+     * The student's most recently initialized participation in an exercise, with its submissions.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the participation, or empty when the student has none
+     */
+    default Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentId(long exerciseId, long studentId) {
+        return findLatestIdsByExerciseIdAndStudentId(exerciseId, studentId, PageRequest.of(0, 1)).stream().findFirst().flatMap(this::findWithSubmissionsById);
+    }
+
+    /**
+     * The student's graded or practice participation in an exercise, with its submissions and the exercise context.
+     * <p>
+     * The exercise, its course and the exercise group with its exam are fetched because each of those hops is a
+     * {@code @ManyToOne} and therefore eager: leaving them out does not avoid reading them, it turns them into one
+     * secondary select each. No SELECT DISTINCT - Hibernate de-duplicates a fetch join itself, and passing DISTINCT
+     * through to SQL would sort rows carrying the whole exercise and course, problem statement included.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param testRun    whether to look for the test run participation
+     * @return the participation, or empty when the student has none
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.exercise ex
@@ -481,15 +600,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("testRun") boolean testRun);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
             """)
     Optional<StudentParticipation> findOneByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
+    /**
+     * A team's participation in an exercise, with its submissions and the team members.
+     * <p>
+     * No SELECT DISTINCT over the two collection joins: Hibernate de-duplicates a fetch join itself, and passing
+     * DISTINCT through to SQL would sort every selected column.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return the participation, or empty when the team has none
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.team t
@@ -649,23 +778,55 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") long participationId);
 
+    /**
+     * The student's participations in an exercise, as far as the exam submission gate needs them.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return one row per participation, graded before test run and oldest first, carrying the id of one existing
+     *         submission if there is one
+     */
     @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.exercise ex
-                LEFT JOIN FETCH ex.course
-                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
-                LEFT JOIN FETCH p.student
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO(
+                participation.id, MIN(submission.id), participation.initializationState, participation.initializationDate, participation.individualDueDate,
+                participation.testRun, student.id, student.login, student.firstName, student.lastName)
+            FROM StudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.submissions submission
+            WHERE participation.exercise.id = :exerciseId
+                AND student.id = :studentId
+            GROUP BY participation.id, participation.initializationState, participation.initializationDate, participation.individualDueDate, participation.testRun,
+                student.id, student.login, student.firstName, student.lastName
+            ORDER BY participation.testRun ASC, participation.id ASC
             """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * The same rows as {@link #findExamSubmissionGateByExerciseIdAndStudentId} for a team exercise, where the
+     * participation belongs to a team rather than to a student. The student fields are those of the team owner.
+     *
+     * @param exerciseId the id of the exercise
+     * @param teamId     the id of the team
+     * @return one row per participation, carrying the id of one existing submission if there is one
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO(
+                participation.id, MIN(submission.id), participation.initializationState, participation.initializationDate, participation.individualDueDate,
+                participation.testRun, owner.id, owner.login, owner.firstName, owner.lastName)
+            FROM StudentParticipation participation
+                JOIN participation.team team
+                LEFT JOIN team.owner owner
+                LEFT JOIN participation.submissions submission
+            WHERE participation.exercise.id = :exerciseId
+                AND team.id = :teamId
+            GROUP BY participation.id, participation.initializationState, participation.initializationDate, participation.individualDueDate, participation.testRun,
+                owner.id, owner.login, owner.firstName, owner.lastName
+            ORDER BY participation.testRun ASC, participation.id ASC
+            """)
+    List<ExamSubmissionGateDTO> findExamSubmissionGateByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -694,24 +855,27 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<Long> findStudentIdsWithParticipationInStateByExerciseId(@Param("exerciseId") long exerciseId,
             @Param("initializationStates") Collection<InitializationState> initializationStates);
 
+    /**
+     * The student's participations in an exercise, with their submissions and results.
+     * <p>
+     * The collection joins repeat a participation once per submission and result, and there is deliberately no SELECT
+     * DISTINCT: Hibernate passes that through to SQL, where it becomes a sort over every selected column. Hibernate
+     * hands back the same instance for each repeated row, so the caller collapses them - see
+     * {@code ParticipationService#findByExerciseAndStudentIdWithSubmissionsAndResults}.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the student's participations in that exercise, repeated once per fetched row
+     */
     @Query("""
-            SELECT DISTINCT p
+            SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.team.id = :teamId
-            """)
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerSubmissions(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<StudentParticipation> findWithSubmissionsAndResultsByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p

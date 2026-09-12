@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -42,6 +44,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -70,6 +73,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
+
+    /** Any whitespace inside a file pattern, removed before the pattern is split into its endings. */
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -143,7 +149,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
         validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
 
-        StudentParticipation participationFromExamGate = null;
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
             // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
@@ -190,8 +196,12 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // Check the pattern
         final String[] splittedFileName = file.getOriginalFilename().split("\\.");
         final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase(Locale.ROOT);
-        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase(Locale.ROOT).replaceAll("\\s", "").split(","));
-        if (!fileSuffix.matches(filePattern)) {
+        // The pattern is a comma separated list of plain file endings, so the check is a membership test. Joining
+        // them into an alternation and matching against that would let a metacharacter in instructor input decide what
+        // the expression means. Set.copyOf rather than Set.of, because the exercise validation accepts a pattern that
+        // names the same ending twice and Set.of rejects duplicates.
+        Set<String> allowedFileEndings = Set.copyOf(Arrays.asList(WHITESPACE.matcher(exercise.getFilePattern().toLowerCase(Locale.ROOT)).replaceAll("").split(",")));
+        if (!allowedFileEndings.contains(fileSuffix)) {
             throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
         }
     }

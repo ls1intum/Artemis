@@ -48,8 +48,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -146,7 +146,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     private ExerciseDeletionService exerciseDeletionService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -755,7 +755,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 .getList("/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", OK, QuizExerciseForCourseDTO.class);
         assertThat(allQuizExercisesForCourse).hasSize(1);
         QuizExerciseForCourseDTO fromServer = allQuizExercisesForCourse.getFirst();
-        assertThat(fromServer).isEqualTo(QuizExerciseForCourseDTO.of(quizExerciseGet, true));
+        assertThat(fromServer)
+                .isEqualTo(QuizExerciseForCourseDTO.of(quizExerciseGet, true, quizExerciseGet.getQuizQuestions().stream().anyMatch(DragAndDropQuestion.class::isInstance)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

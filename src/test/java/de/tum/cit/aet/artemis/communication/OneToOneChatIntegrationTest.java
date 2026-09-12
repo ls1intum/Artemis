@@ -154,7 +154,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student1", "student2");
         // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost);
         // match by post id since record equality between PostResponseDTO and Post entity wouldn't hold.
-        verify(websocketMessagingService, timeout(10000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+        verify(websocketMessagingService, timeout(10000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
 
@@ -239,4 +239,18 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
         request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/" + student2Id, null, OneToOneChatDTO.class, HttpStatus.FORBIDDEN);
     }
+
+    /**
+     * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
+     * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
+     * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
+     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * of which a bare {@code anyString()} would have accepted.
+     *
+     * @return a Mockito matcher for a canonical post broadcast destination
+     */
+    private static String aCanonicalPostBroadcastTopic() {
+        return argThat((String topic) -> topic != null && (topic.matches("/topic/user/\\d+/notifications/conversations") || topic.matches("/topic/communication/courses/\\d+")));
+    }
+
 }
