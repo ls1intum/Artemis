@@ -9,7 +9,13 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
@@ -156,6 +162,48 @@ class AtlasToolCallBudgetTest {
     }
 
     @Test
+    void indexReadStartedDuringActiveWorkCannotVerifyCompletion() throws Exception {
+        AtlasToolCallBudget budget = new AtlasToolCallBudget();
+        CountDownLatch workStarted = new CountDownLatch(1);
+        CountDownLatch allowWorkToFinish = new CountDownLatch(1);
+        CountDownLatch indexStarted = new CountDownLatch(1);
+        CountDownLatch allowIndexToFinish = new CountDownLatch(1);
+        ToolCallback write = decorate(callback("assignExerciseToCompetency", () -> {
+            workStarted.countDown();
+            await(allowWorkToFinish);
+            return "ok";
+        }), budget);
+        ToolCallback index = decorate(callback("listCompetencyIndex", () -> {
+            indexStarted.countDown();
+            await(allowIndexToFinish);
+            return "{}";
+        }), budget);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<String> work = executor.submit(() -> write.call("{}"));
+            assertThat(workStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<String> staleIndex = executor.submit(() -> index.call("{}"));
+            assertThat(indexStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            allowWorkToFinish.countDown();
+            assertThat(work.get(5, TimeUnit.SECONDS)).contains("ok");
+            allowIndexToFinish.countDown();
+            assertThat(staleIndex.get(5, TimeUnit.SECONDS)).contains("atlasBudget");
+
+            assertThatThrownBy(() -> budget.complete(true, "stale verification")).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("successful index refresh after the latest work");
+            index.call("{}");
+            budget.complete(true, "fresh verification");
+            assertThat(budget.completion().message()).isEqualTo("fresh verification");
+        }
+        finally {
+            allowWorkToFinish.countDown();
+            allowIndexToFinish.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void failedCallbacksCountAndEvidenceContainsHashesInsteadOfArguments() {
         AtlasToolCallBudget budget = new AtlasToolCallBudget();
         ToolCallback callback = decorate(callback("failing", new AtomicInteger(), true), budget);
@@ -232,6 +280,16 @@ class AtlasToolCallBudgetTest {
     }
 
     private static ToolCallback callback(String name, AtomicInteger calls, boolean fail) {
+        return callback(name, () -> {
+            calls.incrementAndGet();
+            if (fail) {
+                throw new IllegalStateException("callback failed");
+            }
+            return "ok";
+        });
+    }
+
+    private static ToolCallback callback(String name, Supplier<String> invocation) {
         ToolDefinition definition = ToolDefinition.builder().name(name).description("test tool").inputSchema("{}").build();
         ToolMetadata metadata = DefaultToolMetadata.builder().returnDirect(false).build();
         return new ToolCallback() {
@@ -248,13 +306,21 @@ class AtlasToolCallBudgetTest {
 
             @Override
             public String call(String arguments) {
-                calls.incrementAndGet();
-                if (fail) {
-                    throw new IllegalStateException("callback failed");
-                }
-                return "ok";
+                return invocation.get();
             }
         };
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out waiting for concurrent callback ordering");
+            }
+        }
+        catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(ex);
+        }
     }
 
     private static ChatResponse toolCallResponse(String name) {

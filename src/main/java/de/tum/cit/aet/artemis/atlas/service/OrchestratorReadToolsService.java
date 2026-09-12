@@ -145,7 +145,7 @@ public class OrchestratorReadToolsService {
             // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call, so a repeated
             // lookup would burn tokens on the strip model. The raw problem statement is complete enough for the
             // orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
-            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, false);
+            ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "exercise:" + exerciseId, () -> contentExtractionService.extractContent(exercise, false));
             // Neutralize prompt-injection fences and cap length before this instructor-authored content re-enters the
             // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);

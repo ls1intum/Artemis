@@ -532,6 +532,37 @@ class CompetencyOrchestrationServiceTest {
         verify(runMap).remove(COURSE_ID);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { true, false })
+    void runBatch_terminalFailureRequeuesSkippedExercise(boolean toolLimitReached) {
+        ProgrammingExercise healthy = courseExercise(10L);
+        QuizExercise doomedQuiz = quizExercise(12L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(healthy, doomedQuiz));
+        stubRunMap();
+        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Survivor", "Survivor body", Map.of()));
+        when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    if (toolLimitReached) {
+                        throw new AtlasToolCallBudget.LimitReachedException("Tool budget exhausted.");
+                    }
+                    Map<String, Object> context = invocation.getArgument(3);
+                    AtlasToolCallBudget.budgetForContext(context).complete(false, "Completion could not be verified.");
+                    return new ChatResponse(List.of(new Generation(new AssistantMessage("Incomplete"))));
+                });
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L, 12L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(toolLimitReached ? CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
+                : CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(runMap).remove(COURSE_ID);
+    }
+
     @Test
     void runBatch_requeueOfSkippedIdThrowsAfterCommittedActions_isSwallowedAndSuccessPreserved() {
         // Same shape as the SUCCESS-requeue test, but the post-mutation requeue itself fails (e.g. Hazelcast down).

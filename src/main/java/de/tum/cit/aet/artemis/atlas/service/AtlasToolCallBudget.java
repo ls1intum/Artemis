@@ -93,8 +93,9 @@ public final class AtlasToolCallBudget {
         if (work) {
             activeWork++;
             mutationVersion++;
+            return mutationVersion;
         }
-        return mutationVersion;
+        return activeWork == 0 ? mutationVersion : -1;
     }
 
     private synchronized void finish(boolean work, long version, boolean verifiedIndex) {

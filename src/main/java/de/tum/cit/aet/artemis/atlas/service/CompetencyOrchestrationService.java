@@ -517,9 +517,11 @@ public class CompetencyOrchestrationService {
         }
         catch (AtlasToolCallBudget.LimitReachedException ex) {
             log.warn("Atlas orchestration tool budget exhausted for course {}", courseId);
+            requeueSkippedExercises(courseId, skipped);
             return toolLimitResult(appliedActions, ex.summary());
         }
         catch (IncompleteOrchestrationException ex) {
+            requeueSkippedExercises(courseId, skipped);
             return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
                     : CompetencyOrchestrationResultDTO.partial(ex.getMessage(), List.copyOf(appliedActions),
                             CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
@@ -545,10 +547,11 @@ public class CompetencyOrchestrationService {
 
     /**
      * Requeue exercise ids that were dropped mid-batch because their content extraction threw. Only
-     * called on the SUCCESS / PARTIAL paths, where the caller keeps the drained accumulator bucket;
-     * on FAILED the caller requeues the whole batch instead. The reservation is kept (a run did
-     * happen), so the per-course daily cap still bounds retries. Safe on PARTIAL: skipped ids never
-     * reached the prompt, so no mutation was committed for them.
+     * called on paths where the caller keeps the drained accumulator bucket, including terminal
+     * tool-budget and incomplete-orchestration failures; on other FAILED paths the caller requeues
+     * the whole batch instead. The reservation is kept (a run did happen), so the per-course daily
+     * cap still bounds retries. Safe after committed work: skipped ids never reached the prompt, so
+     * no mutation was committed for them.
      * <p>
      * The requeue is best-effort and must never throw: by the time it runs the LLM has already
      * committed its competency tool mutations. If a requeue failure escaped {@code runBatch},
