@@ -51,6 +51,19 @@ export interface HolidayBar {
     readonly endTime?: string;
 }
 
+/**
+ * The bar a holiday would occupy, drawn while the reader is choosing days rather than after they have.
+ *
+ * Carries the geometry of a real bar and none of its content: there is no reason to write yet, and no holiday to open.
+ */
+export interface HolidayPreviewBar {
+    readonly startColumn: number;
+    readonly span: number;
+    readonly lane: number;
+    readonly startsRun: boolean;
+    readonly endsRun: boolean;
+}
+
 /** One cell of the grid. Carries the day number and its session count; holidays are drawn over it as bars. */
 export interface HolidayCalendarDay {
     readonly date: dayjs.Dayjs;
@@ -75,6 +88,8 @@ export interface HolidayCalendarWeek {
     readonly id: string;
     readonly days: readonly HolidayCalendarDay[];
     readonly bars: readonly HolidayBar[];
+    /** Set only in the week the pointer is choosing days in. */
+    readonly previewBar?: HolidayPreviewBar;
     /** Rows of bars this week needs, which makes its cells as tall as they have to be and no taller. */
     readonly laneCount: number;
     /** Height of the week in rem, derived from its lanes so a busy week grows and an empty one does not. */
@@ -139,6 +154,7 @@ export class HolidayMonthGridComponent {
         const holidays = this.holidays();
         const sessionCountsByDay = this.sessionCountsByDay();
         const todayKey = this.today().format(DAY_KEY_FORMAT);
+        const preview = this.previewRange();
 
         const weeks: HolidayCalendarWeek[] = [];
         let weekStart = month.startOf('month').startOf('isoWeek');
@@ -146,6 +162,18 @@ export class HolidayMonthGridComponent {
 
         while (weekStart.isBefore(gridEnd)) {
             const bars = this.barsForWeek(holidays, weekStart);
+            // Placed after the real bars and through the same lane search, so a preview lands where the holiday would:
+            // beside an existing one on a day they share rather than on top of it.
+            const previewClip = preview && this.clipToWeek(preview.from, preview.to, weekStart);
+            const previewBar: HolidayPreviewBar | undefined = previewClip
+                ? {
+                      startColumn: previewClip.startColumn,
+                      span: previewClip.span,
+                      startsRun: previewClip.startsRun,
+                      endsRun: previewClip.endsRun,
+                      lane: this.firstFreeLane(bars, previewClip.startColumn, previewClip.span),
+                  }
+                : undefined;
             const coveredColumns = new Set(bars.flatMap((bar) => Array.from({ length: bar.span }, (_, offset) => bar.startColumn + offset)));
 
             const isLastWeek = !weekStart.add(1, 'week').isBefore(gridEnd);
@@ -166,11 +194,15 @@ export class HolidayMonthGridComponent {
                 });
             }
 
-            const laneCount = bars.reduce((highest, bar) => Math.max(highest, bar.lane + 1), 0);
+            // The preview counts towards the height like any other bar, so the week makes room for it rather than
+            // letting it hang over the one below. A week holding no holiday does not change height at all: one lane
+            // still fits inside the minimum every week already keeps.
+            const laneCount = [...bars, ...(previewBar ? [previewBar] : [])].reduce((highest, bar) => Math.max(highest, bar.lane + 1), 0);
             weeks.push({
                 id: days[0].dayKey,
                 days,
                 bars,
+                previewBar,
                 laneCount,
                 heightRem: Math.max(MIN_WEEK_HEIGHT_REM, HEADER_HEIGHT_REM + laneCount * LANE_HEIGHT_REM + WEEK_BOTTOM_PADDING_REM),
             });
@@ -185,25 +217,41 @@ export class HolidayMonthGridComponent {
      * A holiday's own times describe its two ends, so a time is carried only where that end actually falls: the middle
      * of a run says nothing beyond the reason, because those days are cancelled outright.
      */
-    private barsForWeek(holidays: readonly Holiday[], weekStart: dayjs.Dayjs): HolidayBar[] {
+    /**
+     * Where a run of days falls inside one week, or undefined when it misses the week entirely.
+     *
+     * Shared by the holidays and by the preview, so a run being chosen is clipped to a week exactly as a saved one is
+     * and the two cannot disagree about where a week boundary falls.
+     */
+    private clipToWeek(firstDay: dayjs.Dayjs, lastDay: dayjs.Dayjs, weekStart: dayjs.Dayjs) {
         const weekEnd = weekStart.add(DAYS_PER_WEEK - 1, 'day');
+        if (lastDay.isBefore(weekStart, 'day') || firstDay.isAfter(weekEnd, 'day')) {
+            return undefined;
+        }
+        const clipStart = firstDay.isBefore(weekStart, 'day') ? weekStart : firstDay;
+        const clipEnd = lastDay.isAfter(weekEnd, 'day') ? weekEnd : lastDay;
+        return {
+            startColumn: clipStart.diff(weekStart, 'day'),
+            span: clipEnd.diff(clipStart, 'day') + 1,
+            startsRun: clipStart.isSame(firstDay, 'day'),
+            endsRun: clipEnd.isSame(lastDay, 'day'),
+        };
+    }
+
+    private barsForWeek(holidays: readonly Holiday[], weekStart: dayjs.Dayjs): HolidayBar[] {
         const bars: HolidayBar[] = [];
 
         for (const holiday of holidays) {
             const firstDay = holiday.start.startOf('day');
-            const lastDay = holiday.lastDay;
-            if (lastDay.isBefore(weekStart, 'day') || firstDay.isAfter(weekEnd, 'day')) {
+            const clipped = this.clipToWeek(firstDay, holiday.lastDay, weekStart);
+            if (!clipped) {
                 continue;
             }
 
-            const clipStart = firstDay.isBefore(weekStart, 'day') ? weekStart : firstDay;
-            const clipEnd = lastDay.isAfter(weekEnd, 'day') ? weekEnd : lastDay;
-            const startsRun = clipStart.isSame(firstDay, 'day');
-            const endsRun = clipEnd.isSame(lastDay, 'day');
+            const { startColumn, span, startsRun, endsRun } = clipped;
             const startsPartway = startsRun && !startsAtBeginningOfDay(holiday.start);
             const endsPartway = endsRun && !coversLastDayFully(holiday.end);
-            const startColumn = clipStart.diff(weekStart, 'day');
-            const span = clipEnd.diff(clipStart, 'day') + 1;
+            const clipStart = weekStart.add(startColumn, 'day');
 
             bars.push({
                 key: `${holiday.period.id}-${clipStart.format(DAY_KEY_FORMAT)}`,
@@ -254,6 +302,9 @@ export class HolidayMonthGridComponent {
     private readonly dragAnchor = signal<dayjs.Dayjs | undefined>(undefined);
     private readonly dragCurrent = signal<dayjs.Dayjs | undefined>(undefined);
 
+    /** The day the pointer is resting on, so a single day can be previewed without dragging anything. */
+    private readonly hoveredDay = signal<dayjs.Dayjs | undefined>(undefined);
+
     protected readonly isDragging = computed(() => this.dragAnchor() !== undefined);
 
     /** The run the pointer currently covers, ordered, so dragging backwards reads the same as dragging forwards. */
@@ -264,6 +315,20 @@ export class HolidayMonthGridComponent {
             return undefined;
         }
         return anchor.isAfter(current) ? { from: current, to: anchor } : { from: anchor, to: current };
+    });
+
+    /**
+     * The run a holiday would cover if the reader acted now: the days being dragged across, or the one under the
+     * pointer. Drawn as a bar rather than as a tint on the cells, so what is previewed has the shape of the thing it
+     * would become.
+     */
+    private readonly previewRange = computed<{ from: dayjs.Dayjs; to: dayjs.Dayjs } | undefined>(() => {
+        const dragged = this.pendingRange();
+        if (dragged) {
+            return dragged;
+        }
+        const hovered = this.hoveredDay();
+        return hovered ? { from: hovered, to: hovered } : undefined;
     });
 
     /** Days the drag would take, so the reader sees the span before releasing rather than after. */
@@ -296,9 +361,19 @@ export class HolidayMonthGridComponent {
     }
 
     protected onDayPointerEnter(day: HolidayCalendarDay): void {
-        if (this.isDragging() && day.inDisplayedMonth) {
-            this.dragCurrent.set(day.date);
+        if (!day.inDisplayedMonth) {
+            return;
         }
+        if (this.isDragging()) {
+            this.dragCurrent.set(day.date);
+            return;
+        }
+        this.hoveredDay.set(day.date);
+    }
+
+    /** Clears the hover at the edge of the grid, which a day's own leave cannot do when the pointer exits between cells. */
+    protected onGridPointerLeave(): void {
+        this.hoveredDay.set(undefined);
     }
 
     /**
@@ -313,6 +388,8 @@ export class HolidayMonthGridComponent {
         const range = this.pendingRange();
         this.dragAnchor.set(undefined);
         this.dragCurrent.set(undefined);
+        // The dialog opens over the calendar, so the pointer never leaves a cell the way it normally would.
+        this.hoveredDay.set(undefined);
         if (range && !range.from.isSame(range.to, 'day')) {
             this.rangeSelected.emit({ start: range.from, end: range.to });
         }

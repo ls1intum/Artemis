@@ -23,10 +23,14 @@
 }
 
 /*
- * The run a drag would take. Tinted rather than filled, because the day numbers underneath - and any holiday bar drawn
- * over them - have to stay readable while the pointer is still moving. Mixed the same way the bar's own background is,
- * so the two sit on one scale rather than two.
+ * The holiday that is not there yet. Same frame as a real bar so the shape is recognisable, but paler and dashed: it
+ * has to read as something the reader is about to make rather than something already saved, at a glance and without
+ * relying on the colour difference alone. Transparent to the pointer, so the day underneath still takes the drag.
  */
-.day-in-pending-range {
-    background-color: color-mix(in srgb, var(--tumaet-ui-primary-color) 18%, transparent);
+.holiday-bar-preview {
+    border-left-style: dashed;
+    border-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 55%, transparent);
+    background-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 6%, transparent);
+    color: color-mix(in srgb, var(--tumaet-ui-state-danger-foreground) 70%, transparent);
+    pointer-events: none;
 }

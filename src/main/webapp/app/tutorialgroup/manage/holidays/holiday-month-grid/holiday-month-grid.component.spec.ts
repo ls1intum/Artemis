@@ -162,6 +162,74 @@ describe('HolidayMonthGridComponent', () => {
         });
     });
 
+    describe('previewing the holiday that is not there yet', () => {
+        const dayButton = (dayKey: string) => fixture.debugElement.query(By.css(`[data-day="${dayKey}"]`)).nativeElement as HTMLButtonElement;
+
+        function hoverOver(dayKey: string): void {
+            dayButton(dayKey).dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+            fixture.detectChanges();
+        }
+
+        function previews(): { span: number; left: string }[] {
+            return queryAll('holiday-calendar-preview').map((bar) => ({
+                span: Number(bar.attributes['data-span']),
+                left: (bar.nativeElement as HTMLElement).style.left,
+            }));
+        }
+
+        it('should show one day under the pointer, so hovering says where a holiday would go', () => {
+            expect(previews()).toHaveLength(0);
+
+            hoverOver('2025-12-10');
+
+            expect(previews()).toEqual([{ span: 1, left: expect.any(String) }]);
+        });
+
+        it('should stretch across the days a drag covers', () => {
+            dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-26');
+
+            expect(previews()).toEqual([{ span: 5, left: expect.any(String) }]);
+        });
+
+        it('should break across a week boundary the way a saved holiday does', () => {
+            // The 22nd is a Monday and the 29th the Monday after, so this run covers one whole week and one day.
+            dayButton('2025-12-22').dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true, pointerType: 'mouse' }));
+            fixture.detectChanges();
+            hoverOver('2025-12-29');
+
+            expect(previews().map((preview) => preview.span)).toEqual([7, 1]);
+        });
+
+        it('should sit beside a holiday on the same day rather than on top of it', () => {
+            setHolidays(period(1, '2025-12-09T23:00:00', '2025-12-10T22:59:00'));
+
+            hoverOver('2025-12-10');
+
+            const bar = query('holiday-calendar-event').parent!.nativeElement as HTMLElement;
+            const preview = query('holiday-calendar-preview').nativeElement as HTMLElement;
+            expect(preview.style.top).not.toBe(bar.style.top);
+        });
+
+        it('should forget the hover when the pointer leaves the grid', () => {
+            hoverOver('2025-12-10');
+            expect(previews()).toHaveLength(1);
+
+            query('holiday-calendar-grid').nativeElement.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
+            fixture.detectChanges();
+
+            expect(previews()).toHaveLength(0);
+        });
+
+        it('should not preview a day of a neighbouring month, which cannot be chosen anyway', () => {
+            // December 2025 starts on a Monday, so the grid's last row spills into January.
+            hoverOver('2026-01-01');
+
+            expect(previews()).toHaveLength(0);
+        });
+    });
+
     it('should render whole weeks, so the grid is always a multiple of seven days', () => {
         const days = fixture.debugElement.queryAll(By.css('[data-day]'));
 

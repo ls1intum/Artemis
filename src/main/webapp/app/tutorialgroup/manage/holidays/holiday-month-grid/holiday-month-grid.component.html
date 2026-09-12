@@ -31,7 +31,7 @@
     </div>
 </div>
 
-<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()">
+<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()" (pointerleave)="onGridPointerLeave()">
     <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
         @for (weekdayKey of weekdayKeys; track weekdayKey) {
             <div class="px-3 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
@@ -65,7 +65,6 @@
                         [attr.data-outside-month]="day.inDisplayedMonth ? undefined : true"
                         [attr.data-has-holiday]="day.hasHoliday ? true : undefined"
                         [attr.data-in-pending-range]="isInPendingRange(day) ? true : undefined"
-                        [class.day-in-pending-range]="isInPendingRange(day)"
                         [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.addHolidayOn' | artemisTranslate: { date: day.dayKey }"
                         (pointerdown)="onDayPointerDown(day, $event)"
                         (pointerenter)="onDayPointerEnter(day)"
@@ -97,6 +96,31 @@
 
             <!-- Only the bars themselves take clicks, so the free part of a day still offers to create a holiday there. -->
             <div class="pointer-events-none absolute inset-x-0 bottom-0" [style.top.rem]="headerHeightRem">
+                <!--
+                    What a holiday would look like here, drawn before there is one: same lane, same span, same frame,
+                    only lighter. It takes no pointer events, so it never stands between the pointer and the day it is
+                    describing.
+                -->
+                @if (week.previewBar; as preview) {
+                    <div
+                        class="absolute px-1 py-0.5"
+                        data-testid="holiday-calendar-preview"
+                        [attr.data-span]="preview.span"
+                        [style.left.%]="preview.startColumn * columnWidthPercent"
+                        [style.width.%]="preview.span * columnWidthPercent"
+                        [style.top.rem]="preview.lane * laneHeightRem"
+                        [style.height.rem]="laneHeightRem"
+                    >
+                        <div
+                            class="holiday-bar holiday-bar-preview flex h-full w-full flex-col justify-center overflow-hidden rounded px-2"
+                            [class.holiday-bar-continues-before]="!preview.startsRun"
+                            [class.holiday-bar-continues-after]="!preview.endsRun"
+                        >
+                            <span class="truncate text-[0.8125rem] leading-tight font-semibold" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
+                        </div>
+                    </div>
+                }
+
                 @for (bar of week.bars; track bar.key) {
                     <!-- Inset inside its lane, so two holidays on one day are separated by the cell behind them. -->
                     <div
