@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperionworker.generation.agent;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
@@ -22,6 +24,12 @@ final class SandboxPathPolicy {
     private static final String WORKSPACE = "/workspace";
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
+
+    /**
+     * The {@code .gradle} and {@code .m2} cache directories (as a path segment, so {@code settings.gradle} is not one), the {@code javap} disassembler, and any JAR file, on a
+     * lowercased command line.
+     */
+    private static final Pattern INSPECTS_DEPENDENCY_ARTIFACTS = Pattern.compile("(?:^|[\\s/~'\"=])\\.(?:gradle|m2)(?=[/\\s'\"]|$)|\\bjavap\\b|\\.jar\\b");
 
     private SandboxPathPolicy() {
     }
@@ -54,7 +62,7 @@ final class SandboxPathPolicy {
      * @return whether it looks like a rewrite of managed build infrastructure
      */
     static boolean mutatesManagedBuildInfrastructure(String command) {
-        String lower = command.toLowerCase(java.util.Locale.ROOT);
+        String lower = command.toLowerCase(Locale.ROOT);
         if (!lower.matches(
                 "(?s).*(?:tests|solution|template)/(buildsrc/.*|gradle/.*|pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
                         + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*")) {
@@ -62,6 +70,24 @@ final class SandboxPathPolicy {
         }
         return lower.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ") || lower.contains(" rm ")
                 || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
+    }
+
+    /**
+     * A best-effort textual guess at whether a {@code bash} command line reads the dependency cache or disassembles a dependency JAR, so that the observation can name the
+     * contract instead. The build is offline and the harness immutable, so nothing in the cache is actionable; a model that starts reading Ares bytecode there spends every
+     * remaining step on it and never writes a test. Same textual best effort as {@link #mutatesManagedBuildInfrastructure}.
+     *
+     * @param command the command line the model asked to run
+     * @return whether it looks like an inspection of dependency artifacts
+     */
+    static boolean inspectsDependencyArtifacts(String command) {
+        return INSPECTS_DEPENDENCY_ARTIFACTS.matcher(command.toLowerCase(Locale.ROOT)).find();
+    }
+
+    static String dependencyArtifactsError() {
+        return "exit=2\nThe dependency cache and dependency JARs are not inspectable: the build is offline and the test harness is immutable, so nothing in there is actionable. "
+                + "The Ares and JUnit API to use (@Public, @WhitelistPath, @BlacklistPath, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
+                + "reference/style/tests.md. Write the tests against that contract instead.";
     }
 
     static String invalidPathError(String path) {
