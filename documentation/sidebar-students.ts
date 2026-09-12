@@ -24,6 +24,8 @@ const sidebars: SidebarsConfig = {
                 'exercises/modeling-exercise',
                 'exercises/text-exercise',
                 'exercises/file-upload-exercise',
+                'exercises/exercise-variants',
+                'exercises/practice-mode',
                 'exercises/quiz-training',
             ],
         },
