@@ -92,6 +92,17 @@ describe('TumUiTooltipDirective', () => {
         expect(bubble()).toBeNull();
     });
 
+    it('hides on mouseleave when the trigger was clicked, since the click focused it', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        button.dispatchEvent(new MouseEvent('mousedown'));
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).not.toBeNull();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
     it('stays visible when focus leaves but the mouse is still hovering', () => {
         button.dispatchEvent(new Event('focusin', { bubbles: true }));
         button.dispatchEvent(new MouseEvent('mouseenter'));
