@@ -1,0 +1,62 @@
+<div *titleBarTitle class="flex items-center">
+    <jhi-course-title-bar-title title="artemisApp.course.athenaConfig.settingsPage.title" />
+</div>
+
+<div class="athena-settings-content">
+    <p-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)">
+        <p-tablist>
+            <p-tab value="general">
+                <fa-icon [icon]="faCog" class="me-2" />
+                <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.generalTab"></span>
+            </p-tab>
+            @if (isAdmin()) {
+                <p-tab value="admin">
+                    <fa-icon [icon]="faShieldHalved" class="me-2" />
+                    <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.adminTab"></span>
+                </p-tab>
+            }
+        </p-tablist>
+
+        <p-tabpanels>
+            <!-- ── GENERAL TAB ── -->
+            <p-tabpanel value="general">
+                <div class="athena-general-panel">
+                    @for (feature of features; track feature.key) {
+                        @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key + '.label';
+                        <div>
+                            <div class="athena-setting-label">
+                                <span [jhiTranslate]="labelKey"></span>
+                                <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="'artemisApp.course.athenaConfig.' + feature.key + '.tooltip' | artemisTranslate" />
+                            </div>
+                            @if (isLoaded()) {
+                                <jhi-enabled-toggle
+                                    [enabled]="feature.enabled()"
+                                    [ariaLabel]="labelKey | artemisTranslate"
+                                    [testId]="feature.testId"
+                                    (enabledChange)="setEnabled(feature.key, $event)"
+                                />
+                                <small class="athena-setting-hint text-muted-color">
+                                    {{ 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledHint' : '.disabledHint') | artemisTranslate }}
+                                </small>
+                            } @else {
+                                <p-skeleton [attr.data-testid]="feature.testId + '-loading'" height="2.375rem" borderRadius="0.625rem" />
+                            }
+                        </div>
+                    }
+                </div>
+            </p-tabpanel>
+
+            <!-- ── ADMIN TAB ── -->
+            @if (isAdmin()) {
+                <p-tabpanel value="admin">
+                    <div class="athena-admin-panel">
+                        <p class="text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.settingsPage.adminOnly"></p>
+                        <p-message severity="info" styleClass="w-full">
+                            <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.rateLimit.description" [translateValues]="{ limit: allowedFeedbackRequests() }"></span>
+                        </p-message>
+                    </div>
+                </p-tabpanel>
+            }
+        </p-tabpanels>
+    </p-tabs>
+</div>

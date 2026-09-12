@@ -7,6 +7,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
+import { AboutAthenaModalComponent } from 'app/course/manage/control-center/about-athena-modal/about-athena-modal.component';
 
 @Component({
     selector: 'jhi-control-center',
@@ -18,6 +19,7 @@ export class ControlCenterComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
     private dialogService = inject(DialogService);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+    private aboutAthenaDialogRef: DynamicDialogRef<AboutAthenaModalComponent> | undefined;
 
     course = input.required<Course>();
     irisEnabled = input.required<boolean>();
@@ -36,6 +38,21 @@ export class ControlCenterComponent {
                 width: '40rem',
                 breakpoints: { '640px': '95vw' },
                 data: { hideTryButton: true },
+            }) ?? undefined;
+    }
+
+    openAboutAthenaModal(): void {
+        this.aboutAthenaDialogRef?.close();
+        this.aboutAthenaDialogRef =
+            this.dialogService.open(AboutAthenaModalComponent, {
+                modal: true,
+                closable: false,
+                dismissableMask: true,
+                showHeader: false,
+                styleClass: 'about-athena-dialog',
+                maskStyleClass: 'about-athena-dialog',
+                width: '40rem',
+                breakpoints: { '640px': '95vw' },
             }) ?? undefined;
     }
 }

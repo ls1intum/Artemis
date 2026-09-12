@@ -5,6 +5,7 @@ import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
+import { AthenaGuard } from 'app/course/manage/services/athena-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
@@ -80,6 +81,15 @@ export const courseManagementRoutes: Routes = [
                 },
                 canActivate: [UserRouteAccessService, IrisGuard],
                 canDeactivate: [PendingChangesGuard],
+            },
+            {
+                path: ':courseId/athena-settings',
+                loadComponent: () => import('app/course/manage/athena-settings-update/athena-settings-update.component').then((m) => m.AthenaSettingsUpdateComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.course.athenaConfig.settingsPage.title',
+                },
+                canActivate: [UserRouteAccessService, AthenaGuard],
             },
             {
                 path: ':courseId/lectures',

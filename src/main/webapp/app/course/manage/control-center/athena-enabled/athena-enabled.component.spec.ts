@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { Subject, of } from 'rxjs';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
@@ -31,7 +32,7 @@ describe('AthenaEnabledComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [AthenaEnabledComponent, TranslatePipeMock],
-            providers: [MockProvider(AthenaCourseConfigService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideRouter([]), MockProvider(AthenaCourseConfigService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AthenaEnabledComponent);
@@ -50,283 +51,107 @@ describe('AthenaEnabledComponent', () => {
         fixture.detectChanges();
 
         expect(getSpy).toHaveBeenCalledExactlyOnceWith(5);
-        expect(comp.gradingEnabled()).toBe(true);
-        expect(comp.formativeEnabled()).toBe(false);
+        expect(comp.masterEnabled()).toBe(true);
     });
 
-    it('should show both features as disabled and alert when the configuration cannot be loaded', () => {
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+    it('should show disabled while the configuration is still loading', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
         componentRef.setInput('course', course);
-        fixture.detectChanges();
 
-        expect(comp.config()).toBeUndefined();
-        expect(comp.gradingEnabled()).toBe(false);
-        expect(comp.formativeEnabled()).toBe(false);
-        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
+        expect(comp.masterEnabled()).toBe(false);
     });
 
-    it('should still save a switched feature when no configuration was loaded', () => {
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        componentRef.setInput('course', course);
-        fixture.detectChanges();
-        const expected = { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false };
-        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: expected })));
+    describe('setEnabled', () => {
+        it('should turn both features on when switched on', () => {
+            initWith(bothDisabled);
+            const updateSpy = vi
+                .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+                .mockReturnValue(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
 
-        comp.setEnabled('gradingFeedbackEnabled', true);
+            comp.setEnabled(true);
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { gradingFeedbackEnabled: true });
-        expect(comp.gradingEnabled()).toBe(true);
+            expect(updateSpy).toHaveBeenCalledWith(5, { gradingFeedbackEnabled: true });
+            expect(updateSpy).toHaveBeenCalledWith(5, { formativeFeedbackEnabled: true });
+            expect(comp.masterEnabled()).toBe(true);
+        });
+
+        it('should turn both features off when switched off', () => {
+            initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: bothDisabled })));
+
+            comp.setEnabled(false);
+
+            expect(updateSpy).toHaveBeenCalledWith(5, { gradingFeedbackEnabled: false });
+            expect(updateSpy).toHaveBeenCalledWith(5, { formativeFeedbackEnabled: false });
+            expect(comp.masterEnabled()).toBe(false);
+        });
+
+        it('should do nothing when the course has no id', () => {
+            const courseWithoutId = new Course();
+            componentRef.setInput('course', courseWithoutId);
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');
+
+            comp.setEnabled(true);
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
     });
 
-    it.each([
-        { feature: 'formativeFeedbackEnabled' as const, expected: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } },
-        { feature: 'gradingFeedbackEnabled' as const, expected: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } },
-    ])('should save $feature without touching the other feature', ({ feature, expected }) => {
-        initWith(bothDisabled);
-        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: expected })));
+    describe('settingsRoute', () => {
+        it('should return the correct route for the course settings page', () => {
+            componentRef.setInput('course', course);
 
-        comp.setEnabled(feature, true);
-
-        // Only the switched feature is sent: restating the other one would write back the value this component last
-        // read, undoing a change made elsewhere in the meantime.
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
-        expect(comp.config()).toEqual(expected);
-    });
-
-    it('should keep a feature switched while the configuration was still loading', () => {
-        // The load is answered only after the instructor has already switched a feature. Applying it then would put
-        // the state the server held before the switch back on screen.
-        const load = new Subject<AthenaCourseConfigDTO>();
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(new Subject<never>().asObservable());
-        componentRef.setInput('course', course);
-        fixture.detectChanges();
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        load.next(bothDisabled);
-
-        expect(comp.gradingEnabled()).toBe(true);
-    });
-
-    it('should only revert the feature whose save failed', () => {
-        initWith(bothDisabled);
-        const formative = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(formative.asObservable()).mockReturnValueOnce(new Subject<never>().asObservable());
-
-        comp.setEnabled('formativeFeedbackEnabled', true);
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        formative.error(new HttpErrorResponse({ status: 400 }));
-
-        // Restoring the whole snapshot this switch was clicked on would also drop the grading switch made after it.
-        expect(comp.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
-    });
-
-    it('should keep showing the stored state when a feature is switched twice and both saves fail', () => {
-        initWith(bothDisabled);
-        const first = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        const second = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        comp.setEnabled('gradingFeedbackEnabled', false);
-        first.error(new HttpErrorResponse({ status: 400 }));
-        second.error(new HttpErrorResponse({ status: 400 }));
-
-        // Rolling the second switch back to the state it replaced would restore the first switch, which failed as
-        // well, and leave the feature shown as enabled although nothing was ever stored.
-        expect(comp.gradingEnabled()).toBe(false);
-    });
-
-    it('should roll a failed switch back to the last state the server stored', () => {
-        initWith(bothDisabled);
-        const failing = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig')
-            .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })))
-            .mockReturnValueOnce(failing.asObservable());
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        comp.setEnabled('gradingFeedbackEnabled', false);
-        failing.error(new HttpErrorResponse({ status: 400 }));
-
-        expect(comp.gradingEnabled()).toBe(true);
-    });
-
-    it('should drop an answer that a newer switch of the same feature has replaced', () => {
-        initWith(bothDisabled);
-        const first = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(new Subject<never>().asObservable());
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        comp.setEnabled('gradingFeedbackEnabled', false);
-        first.next(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } }));
-
-        // The instructor last asked for disabled, so the answer to the switch before that is only history.
-        expect(comp.gradingEnabled()).toBe(false);
-    });
-
-    it('should apply the loaded state of the feature that was not switched', () => {
-        const load = new Subject<AthenaCourseConfigDTO>();
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(new Subject<never>().asObservable());
-        componentRef.setInput('course', course);
-        fixture.detectChanges();
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        load.next({ gradingFeedbackEnabled: false, formativeFeedbackEnabled: true });
-
-        expect(comp.gradingEnabled()).toBe(true);
-        expect(comp.formativeEnabled()).toBe(true);
-    });
-
-    it('should show the loaded state when the load answers after a failed switch', () => {
-        // A feature stored as enabled still shows as disabled while the configuration is loading, so Enable is what the
-        // instructor clicks. Its save failing confirms nothing, which leaves the load answering afterwards the first
-        // thing the server has said about the feature.
-        const load = new Subject<AthenaCourseConfigDTO>();
-        const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
-        componentRef.setInput('course', course);
-        fixture.detectChanges();
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        save.error(new HttpErrorResponse({ status: 400 }));
-        load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
-
-        expect(comp.gradingEnabled()).toBe(true);
-    });
-
-    it('should roll a failed switch back to the state the load supplied while it was in flight', () => {
-        const load = new Subject<AthenaCourseConfigDTO>();
-        const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(load.asObservable());
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
-        componentRef.setInput('course', course);
-        fixture.detectChanges();
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-        load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
-        save.error(new HttpErrorResponse({ status: 400 }));
-
-        // The load is not shown while the switch is in flight, but it is what the failed switch falls back to.
-        expect(comp.gradingEnabled()).toBe(true);
+            expect(comp.settingsRoute()).toEqual(['/course-management', '5', 'athena-settings']);
+        });
     });
 
     describe('when the course changes', () => {
-        // The course detail page is reused when only its course id changes, so the panel stays while its input
-        // switches to another course.
         const otherCourse = new Course();
         otherCourse.id = 6;
-
-        const switchCourse = (next: Course) => {
-            componentRef.setInput('course', next);
-            fixture.detectChanges();
-        };
 
         it('should load the configuration of the new course', () => {
             initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
             const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
 
-            switchCourse(otherCourse);
+            componentRef.setInput('course', otherCourse);
+            fixture.detectChanges();
 
             expect(getSpy).toHaveBeenCalledTimes(2);
             expect(getSpy).toHaveBeenLastCalledWith(6);
-            expect(comp.gradingEnabled()).toBe(false);
-        });
-
-        it('should switch the new course even where the previous one already had the requested state', () => {
-            initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
-            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(new Subject<AthenaCourseConfigDTO>().asObservable());
-            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(new Subject<never>().asObservable());
-            switchCourse(otherCourse);
-
-            comp.setEnabled('gradingFeedbackEnabled', true);
-
-            // Carrying over the enabled grading feedback of course 5 would have made this switch look like a no-op.
-            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(6, { gradingFeedbackEnabled: true });
-        });
-
-        it('should ignore answers that arrive for the previous course', () => {
-            const load = new Subject<AthenaCourseConfigDTO>();
-            const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
-            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValueOnce(load.asObservable()).mockReturnValueOnce(of(bothDisabled));
-            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
-            componentRef.setInput('course', course);
-            fixture.detectChanges();
-            comp.setEnabled('formativeFeedbackEnabled', true);
-
-            switchCourse(otherCourse);
-            load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
-            save.next(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } }));
-
-            expect(comp.config()).toEqual(bothDisabled);
-        });
-
-        it('should keep its state when the course is replaced by a copy with the same id', () => {
-            initWith(bothDisabled);
-            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(
-                of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })),
-            );
-            comp.setEnabled('gradingFeedbackEnabled', true);
-            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig');
-            const copy = new Course();
-            copy.id = 5;
-
-            switchCourse(copy);
-
-            expect(getSpy).toHaveBeenCalledOnce();
-            expect(comp.gradingEnabled()).toBe(true);
+            expect(comp.masterEnabled()).toBe(false);
         });
     });
 
-    it('should not send a request when the feature already has the requested state', () => {
-        initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
-        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-
-        expect(updateSpy).not.toHaveBeenCalled();
-    });
-
-    it('should revert the toggle and alert when saving fails', () => {
-        initWith(bothDisabled);
-        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-        comp.setEnabled('gradingFeedbackEnabled', true);
-
-        expect(comp.gradingEnabled()).toBe(false);
-        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
-    });
-
-    it('should render a toggle pair per feature', () => {
+    it('should render the toggle and the configure link', () => {
         initWith(bothDisabled);
 
         const element = fixture.nativeElement;
-        expect(element.querySelector('[data-testid="athena-formative-feedback-enable"]')).toBeTruthy();
-        expect(element.querySelector('[data-testid="athena-formative-feedback-disable"]')).toBeTruthy();
-        expect(element.querySelector('[data-testid="athena-grading-feedback-enable"]')).toBeTruthy();
-        expect(element.querySelector('[data-testid="athena-grading-feedback-disable"]')).toBeTruthy();
+        expect(element.querySelector('[data-testid="athena-enabled-enable"]')).toBeTruthy();
+        expect(element.querySelector('[data-testid="athena-enabled-disable"]')).toBeTruthy();
+        expect(element.querySelector('.athena-configure-link')).toBeTruthy();
     });
 
-    it('should mark the button matching the stored state as active', () => {
-        initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+    it('should render a loading placeholder instead of the toggle before the configuration answers', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(new Subject<AthenaCourseConfigDTO>().asObservable());
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
 
         const element = fixture.nativeElement;
-        expect(element.querySelector('[data-testid="athena-grading-feedback-enable"]').classList).toContain('enabled-toggle-btn--active-on');
-        expect(element.querySelector('[data-testid="athena-grading-feedback-disable"]').classList).not.toContain('enabled-toggle-btn--active-off');
-        expect(element.querySelector('[data-testid="athena-formative-feedback-disable"]').classList).toContain('enabled-toggle-btn--active-off');
+        expect(element.querySelector('[data-testid="athena-enabled-loading"]')).toBeTruthy();
+        expect(element.querySelector('[data-testid="athena-enabled-enable"]')).toBeFalsy();
+        // The configure link is not gated on the load: it only navigates, so there is nothing there to get wrong.
+        expect(element.querySelector('.athena-configure-link')).toBeTruthy();
     });
 
-    it('should save the feature when its toggle button is clicked', () => {
+    it('should save the switched state when the toggle button is clicked', () => {
         initWith(bothDisabled);
         const updateSpy = vi
             .spyOn(athenaCourseConfigService, 'updateCourseConfig')
-            .mockReturnValue(of(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } })));
+            .mockReturnValue(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
 
-        fixture.nativeElement.querySelector('[data-testid="athena-formative-feedback-enable"]').click();
+        fixture.nativeElement.querySelector('[data-testid="athena-enabled-enable"]').click();
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { formativeFeedbackEnabled: true });
+        expect(updateSpy).toHaveBeenCalledWith(5, { gradingFeedbackEnabled: true });
+        expect(updateSpy).toHaveBeenCalledWith(5, { formativeFeedbackEnabled: true });
     });
 });

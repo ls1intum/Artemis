@@ -8,6 +8,13 @@ import { Observable, catchError, concatMap, finalize, of, shareReplay } from 'rx
 export interface AthenaCourseConfigDTO {
     gradingFeedbackEnabled: boolean;
     formativeFeedbackEnabled: boolean;
+    /**
+     * The instance-wide cap on successful automatic Athena feedback requests per participation. Read-only: it comes
+     * from server configuration, not from this course, and is never sent back in an update. Optional so the many
+     * existing callers of this DTO (course overview toggle, onboarding wizard) that never read it can keep
+     * constructing it without this field.
+     */
+    allowedFeedbackRequests?: number;
 }
 
 /**
