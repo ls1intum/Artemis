@@ -162,14 +162,16 @@ export class TutorialGroupHolidaysComponent {
         this.monthCountRequests
             .pipe(
                 switchMap((month) => {
+                    // Cleared before anything is decided: a save reloads these, and a day whose sessions were just
+                    // cancelled or restored would otherwise keep its previous number - indefinitely if the request
+                    // fails, and briefly even when it succeeds.
+                    this.sessionCountsByDay.set(new Map());
                     const courseId = this.course()?.id;
-                    if (courseId === undefined) {
+                    // Nothing to count without a configuration, and the endpoint answers 400 without one. Reaching
+                    // here at all is the point: it cancelled whatever was in flight before returning nothing.
+                    if (courseId === undefined || !this.configuration()) {
                         return EMPTY;
                     }
-                    // Cleared for the same reason as the per-holiday counts: a save reloads these, and a day whose
-                    // sessions were just cancelled or restored would otherwise keep its previous number - indefinitely
-                    // if the request fails.
-                    this.sessionCountsByDay.set(new Map());
                     // The whole grid, so the days of the neighbouring months it shows carry their counts too.
                     const from = month.startOf('month').startOf('isoWeek');
                     const to = month.endOf('month').endOf('isoWeek');
@@ -196,6 +198,11 @@ export class TutorialGroupHolidaysComponent {
                     // request would leave that number on screen for good, because the error path emits nothing to
                     // replace it with. Empty renders no badge at all, which is the honest answer until one arrives.
                     this.sessionCountsByHoliday.set(new Map());
+                    // As above: without a configuration nothing is asked, but getting here has already cancelled the
+                    // request that was running.
+                    if (!this.configuration()) {
+                        return EMPTY;
+                    }
                     return this.freePeriodService.getSessionCountsPerFreePeriod(courseId).pipe(
                         catchError((response: HttpErrorResponse) => {
                             onError(this.alertService, response);
@@ -305,18 +312,12 @@ export class TutorialGroupHolidaysComponent {
                 this.configuration.set(configuration);
                 this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
                 this.isLoading.set(false);
-                if (configuration) {
-                    this.loadSessionCounts();
-                    this.loadSessionCountsPerHoliday();
-                } else {
-                    // An empty body is a course that has no tutorial groups configuration, which is a state it is
-                    // allowed to be in. Both count endpoints need that configuration and answer 400 without it, so
-                    // asking anyway turned a supported state into two error alerts. There is nothing to count there
-                    // either: no configuration means no holidays, and no sessions for one to cancel. Anything still
-                    // held describes the course as it was before, so it goes the same way the reloads drop theirs.
-                    this.sessionCountsByDay.set(new Map());
-                    this.sessionCountsByHoliday.set(new Map());
-                }
+                // Asked for either way, even when there is no configuration to count against. The request that
+                // follows is what the pipelines decide; the emission itself is what cancels one already in flight.
+                // Clearing the maps here instead would leave that request running, free to answer afterwards and put
+                // the counts of the course as it was back on screen.
+                this.loadSessionCounts();
+                this.loadSessionCountsPerHoliday();
             });
     }
 

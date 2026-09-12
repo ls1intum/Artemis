@@ -407,6 +407,29 @@ describe('TutorialGroupHolidaysComponent', () => {
             expect(TestBed.inject(CourseTitleBarService).actionsTemplate()).toBeUndefined();
         });
 
+        it('should drop a count request still in flight when the configuration turns out to be gone', async () => {
+            // Clearing the maps is not enough on its own: a request issued before the configuration went away is still
+            // running, and switchMap only cancels it when something new is emitted. Left alone it answers afterwards
+            // and puts the counts of the course as it was back on screen.
+            const pendingDays = new Subject<{ date: string; count: number }[]>();
+            const pendingHolidays = new Subject<{ freePeriodId: number; count: number }[]>();
+            vi.mocked(freePeriodService.getSessionCounts).mockReturnValue(pendingDays);
+            vi.mocked(freePeriodService.getSessionCountsPerFreePeriod).mockReturnValue(pendingHolidays);
+            component['loadSessionCounts']();
+            component['loadSessionCountsPerHoliday']();
+
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: null as never })));
+            component['loadConfiguration']();
+            await settle();
+
+            // The answers the cancelled requests would have given, arriving late.
+            pendingDays.next([{ date: '2025-12-17', count: 7 }]);
+            pendingHolidays.next([{ freePeriodId: 11, count: 7 }]);
+
+            expect(component['sessionCountsByDay']().size).toBe(0);
+            expect(component['sessionCountsByHoliday']().size).toBe(0);
+        });
+
         it('should not ask for counts a course without a configuration cannot answer', async () => {
             // Both count endpoints resolve the configuration first and answer 400 without one, so asking anyway turned
             // a supported state into two error alerts.
