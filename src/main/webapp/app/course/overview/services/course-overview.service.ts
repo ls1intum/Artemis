@@ -260,7 +260,7 @@ export class CourseOverviewService {
         return groupedExerciseGroups;
     }
 
-    buildGroupedExerciseData(exercises: Exercise[], courseId: number): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
+    buildGroupedExerciseData(exercises: Exercise[]): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
         for (const group of buildGroupsFromExercises(exercises)) {
             for (const member of group.exercises ?? []) {
@@ -280,7 +280,7 @@ export class CourseOverviewService {
                 if (group.id !== undefined && !emittedGroups.has(group.id)) {
                     emittedGroups.add(group.id);
                     const members = exercises.filter((e) => e.id !== undefined && groupByExerciseId.get(e.id) === group);
-                    const card = this.groupCard(group, members, courseId);
+                    const card = this.groupCard(group, members);
                     groupedData[this.categorizeGroup(group, members)].entityData.push(card);
                     ungroupedData.push(card);
                 }
@@ -294,7 +294,7 @@ export class CourseOverviewService {
         return { groupedData, ungroupedData };
     }
 
-    private groupCard(group: CourseExerciseGroup, members: Exercise[], courseId: number): SidebarCardElement {
+    private groupCard(group: CourseExerciseGroup, members: Exercise[]): SidebarCardElement {
         const dueDate = group.dueDate ?? members[0]?.dueDate;
         return {
             title: group.title ?? '',
@@ -306,10 +306,8 @@ export class CourseOverviewService {
             subtitleLeft: dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
             startDate: dueDate,
             size: 'M',
-            groupHeaderStyle: 'card',
-            groupConnected: true,
-            groupClickable: 'group',
-            routerLink: `/courses/${courseId}/exercises/group/${group.id}`,
+            // The members are not rendered as nested cards; they mark group membership so a search on a variant title
+            // still surfaces the group and the group card stays highlighted while one of its variants is open.
             groupedItems: members.map((member) => this.mapExerciseToSidebarCardElement(member)),
         };
     }
