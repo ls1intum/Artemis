@@ -20,8 +20,6 @@ import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } fro
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
@@ -109,72 +107,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Searchable entities for initial view
-    protected searchableEntities: SearchableEntity[] = [
-        {
-            id: 'courses',
-            title: 'global.search.entities.coursesTitle',
-            description: 'global.search.entities.coursesDescription',
-            icon: faGraduationCap,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['course'],
-        },
-        {
-            id: 'exercises',
-            title: 'global.search.entities.exercisesTitle',
-            description: 'global.search.entities.exercisesDescription',
-            icon: faCube,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exercise'],
-        },
-        {
-            id: 'lectures',
-            title: 'global.search.entities.lecturesTitle',
-            description: 'global.search.entities.lecturesDescription',
-            icon: faBook,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['lecture', 'lecture_unit'],
-        },
-        {
-            id: 'communication',
-            title: 'global.search.entities.communicationTitle',
-            description: 'global.search.entities.communicationDescription',
-            icon: faComments,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['channel', 'post', 'answer_post'],
-        },
-        {
-            id: 'faqs',
-            title: 'global.search.entities.faqsTitle',
-            description: 'global.search.entities.faqsDescription',
-            icon: faQuestionCircle,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['faq'],
-        },
-        {
-            id: 'exams',
-            title: 'global.search.entities.examsTitle',
-            description: 'global.search.entities.examsDescription',
-            icon: faCalendarCheck,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exam'],
-        },
-    ];
-
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
     readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities.length));
 
     protected readonly faHashtag = faHashtag;
-
-    protected onEntityItemClick(entity: SearchableEntity) {
-        this.entityClick.emit(entity);
-    }
 
     protected getIconForType(type?: string, badge?: string): IconDefinition {
         if (type === 'exercise') {
@@ -182,7 +118,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (normalizedBadge === 'programming') return this.faKeyboard;
             if (normalizedBadge === 'modeling') return this.faProjectDiagram;
             if (normalizedBadge === 'text') return this.faFont;
-            if (normalizedBadge === 'file upload') return this.faFileUpload;
+            if (normalizedBadge === 'file-upload') return this.faFileUpload;
             if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
@@ -279,7 +215,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
-        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
+        // The badge is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
+        // exam exercise-group route segment prefix. Guard against an unknown badge (e.g. the generic "exercise"
+        // fallback) so it can never build an invalid segment like "exercise-exercises".
+        const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
+        const segment = result.badge && validExerciseSegments.has(result.badge) ? result.badge : 'text';
+        const typeSegment = segment + '-exercises';
         void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
     }
 

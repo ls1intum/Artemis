@@ -24,13 +24,14 @@ export class GlobalSearchApi {
 
     /**
      * Perform a unified semantic search across entity types
-     * Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts) with a consistent response format. When courseId is not specified, the search is performed globally across all courses the authenticated user has access to. Per-type access rules are enforced server-side via compound Weaviate filters.
+     * Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts) with a consistent response format. When courseIds is not specified, the search is performed globally across all courses the authenticated user has access to. Per-type access rules are enforced server-side via compound Weaviate filters.
      * @param q Search query; can be empty to retrieve recent items
      * @param types Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or \&#39;all\&#39;; default \&#39;all\&#39;
-     * @param courseId Course ID to restrict the search to a single course
+     * @param courseIds Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored
+     * @param excludeCourseIds Course IDs to exclude from the search; results in these courses are hidden
      * @param limit Maximum number of results (1–25, default 10)
      */
-    globalSearch(q: string, types?: string, courseId?: number, limit?: number): Observable<Array<GlobalSearchResult>> {
+    globalSearch(q: string, types?: string, courseIds?: Array<number>, excludeCourseIds?: Array<number>, limit?: number): Observable<Array<GlobalSearchResult>> {
         const queryParams = new URLSearchParams();
         if (q !== undefined && q !== null) {
             queryParams.set('q', String(q));
@@ -38,8 +39,11 @@ export class GlobalSearchApi {
         if (types !== undefined && types !== null) {
             queryParams.set('types', String(types));
         }
-        if (courseId !== undefined && courseId !== null) {
-            queryParams.set('courseId', String(courseId));
+        if (courseIds !== undefined && courseIds !== null) {
+            courseIds.forEach(item => queryParams.append('courseIds', String(item)));
+        }
+        if (excludeCourseIds !== undefined && excludeCourseIds !== null) {
+            excludeCourseIds.forEach(item => queryParams.append('excludeCourseIds', String(item)));
         }
         if (limit !== undefined && limit !== null) {
             queryParams.set('limit', String(limit));
