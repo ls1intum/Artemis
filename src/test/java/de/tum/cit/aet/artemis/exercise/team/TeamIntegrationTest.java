@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -603,6 +605,24 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         CourseWithTeamExercisesDTO course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
         participation = participationsOf(course4.exercises().stream().filter(exercise -> exercise.id().equals(textExercise.getId())).findAny().orElseThrow()).getFirst();
         assertThat(participation.submissions()).as("Latest submission is not present").isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getCourseWithExercisesAndParticipationsForTeam_KeepsProgrammingRepositoryAndCommit() throws Exception {
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+        Team team = teamUtilService.addTeamsForExercise(programmingExercise, TEST_PREFIX + "progteam", TEST_PREFIX + "progstudent", 1, tutor).getFirst();
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true, "1234567890abcdef", SubmissionType.MANUAL);
+        programmingExerciseUtilService.addProgrammingSubmissionToTeamExercise(programmingExercise, submission, team);
+
+        CourseWithTeamExercisesDTO response = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, CourseWithTeamExercisesDTO.class);
+
+        TeamParticipationDTO participation = participationsOf(response.exercises().iterator().next()).getFirst();
+        // The code and clone actions of the exercise header only appear when the participation carries its repository.
+        assertThat(participation.repositoryUri()).as("Participation reports the repository of the team").isNotEmpty();
+        assertThat(participation.submissions()).hasSize(1);
+        // The feedback dialog only loads the referenced source files when the submission carries its commit.
+        assertThat(participation.submissions().iterator().next().commitHash()).as("Submission reports the commit it was built from").isEqualTo("1234567890abcdef");
     }
 
     @Test

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
  * A team's participation in an exercise, as the team detail page and the team assignment websocket topic report it.
@@ -26,12 +27,15 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  * @param individualDueDate   the team's own due date, when one was granted
  * @param presentationScore   the presentation score, when one was given
  * @param submissionCount     how many submissions the participation has
+ * @param repositoryUri       the repository of a programming participation, which the client needs for the code and
+ *                                clone actions
  * @param team                the team owning the participation, which the client matches the logged-in login against
  * @param submissions         the submissions with their results
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TeamParticipationDTO(Long id, String type, Boolean testRun, InitializationState initializationState, ZonedDateTime initializationDate,
-        ZonedDateTime individualDueDate, Double presentationScore, Integer submissionCount, TeamDTO team, Set<SubmissionOverviewDTO> submissions) implements Serializable {
+        ZonedDateTime individualDueDate, Double presentationScore, Integer submissionCount, String repositoryUri, TeamDTO team, Set<SubmissionOverviewDTO> submissions)
+        implements Serializable {
 
     /**
      * Projects a participation of a team.
@@ -48,8 +52,9 @@ public record TeamParticipationDTO(Long id, String type, Boolean testRun, Initia
         if (Hibernate.isInitialized(participation.getSubmissions())) {
             submissions = SubmissionOverviewDTO.of(participation.getSubmissions());
         }
+        String repositoryUri = participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation ? programmingParticipation.getRepositoryUri() : null;
         return new TeamParticipationDTO(participation.getId(), participation.getType(), participation.isTestRun(), participation.getInitializationState(),
-                participation.getInitializationDate(), participation.getIndividualDueDate(), participation.getPresentationScore(), participation.getSubmissionCount(), team,
-                submissions);
+                participation.getInitializationDate(), participation.getIndividualDueDate(), participation.getPresentationScore(), participation.getSubmissionCount(),
+                repositoryUri, team, submissions);
     }
 }
