@@ -173,8 +173,9 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
             assertPostExistsInWeaviate(weaviateService, post.getId());
 
-            // Simulate content update
+            // Simulate a content update. Persist it, since the dispatcher re-derives the entity from the database at dispatch time
             post.setContent("Updated content");
+            postRepository.save(post);
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {

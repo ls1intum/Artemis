@@ -100,6 +100,8 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             double updatedMaxPoints = 42.0;
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
+            // Persist the change, since the dispatcher re-derives the entity from the database at dispatch time
+            programmingExerciseRepository.save(programmingExercise);
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 

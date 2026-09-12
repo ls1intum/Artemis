@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,10 @@ public class ExamRepositoryApi extends AbstractExamApi {
 
     public Exam findByIdElseThrow(long id) {
         return examRepository.findByIdElseThrow(id);
+    }
+
+    public Optional<Exam> findById(long id) {
+        return examRepository.findById(id);
     }
 
     public Set<Exam> findActiveExams(Set<Long> courseIds, long userId, ZonedDateTime visible, ZonedDateTime end) {

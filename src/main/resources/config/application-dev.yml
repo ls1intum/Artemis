@@ -168,6 +168,17 @@ artemis:
         # open-ai-embedding-model: your-embedding-model              # Embedding model name served by the OpenAI-compatible API
         # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://your-openai-compatible-endpoint for a remote GPU server
         # gpu-api-key: yourApiKey                                    # API key for the remote server (use any non-empty value for Ollama)
+        # Outbox dispatcher and schema-migration tuning for the durable global-search metadata sync. The values below
+        # are the built-in defaults; uncomment and change only to override. Freshness is driven by an after-commit
+        # nudge, so the drain interval is only a cross-node safety net.
+        # outbox:
+        #     drain-interval-seconds: 5              # Cadence of the safety-net drain tick
+        #     batch-size: 100                        # Outbox rows processed per drain batch
+        #     base-backoff-seconds: 10               # First retry delay after a failed Weaviate write (doubles each attempt)
+        #     max-backoff-seconds: 300               # Cap on the retry backoff
+        #     migration-initial-delay-seconds: 30    # Delay before the first schema-migration attempt after startup
+        #     migration-max-attempts: 5              # Bounded in-process retries for a failed schema migration
+        #     migration-retry-delay-seconds: 120     # Delay between schema-migration retries
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
