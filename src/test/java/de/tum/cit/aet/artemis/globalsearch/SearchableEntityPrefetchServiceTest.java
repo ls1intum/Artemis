@@ -43,7 +43,7 @@ class SearchableEntityPrefetchServiceTest {
         var course = new de.tum.cit.aet.artemis.course.domain.Course();
         course.setId(9L);
         course.setTitle("Patterns in Software Engineering");
-        when(accessFilterService.buildSearchableItemFilter(any(), any(), anySet()))
+        when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), java.util.Set.of(), java.util.Set.of()));
         when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(rows);
     }
@@ -89,7 +89,7 @@ class SearchableEntityPrefetchServiceTest {
 
     @Test
     void returnsEmptyWithoutAccessibleCourses() {
-        when(accessFilterService.buildSearchableItemFilter(any(), any(), anySet()))
+        when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, false, null, null, null));
 
         assertThat(prefetchService.prefetchCandidates(new User(), "q", 10, null)).isEmpty();

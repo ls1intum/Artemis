@@ -271,29 +271,6 @@ describe('GlobalSearchModalComponent', () => {
             expect(event.preventDefault).toHaveBeenCalled();
         });
 
-        it('returns to the guided picker when the lecture view is left with nothing to show', () => {
-            // The course-page path: the lecture view strips the course filter, so backing out of it arrives
-            // with no query and no chips, which used to expose the searchable-entity list.
-            (component as any).tokens.set([{ facet: 'course', value: '42' }]);
-            (component as any).filterPickerOpen.set(false);
-            (component as any).navigateTo(SearchView.Lecture);
-            expect((component as any).tokens()).toHaveLength(0);
-            expect((component as any).filterPickerOpen()).toBe(false);
-
-            (component as any).navigateTo(SearchView.Navigation);
-
-            expect((component as any).filterPickerOpen()).toBe(true);
-        });
-
-        it('does not cover the lecture view with the picker, which cannot carry filters', () => {
-            (component as any).navigateTo(SearchView.Lecture);
-            (component as any).filterPickerOpen.set(false);
-
-            pressFilterShortcut();
-
-            expect((component as any).filterPickerOpen()).toBe(false);
-        });
-
         it('closes the modal on Escape at the root picker, since nothing sits behind the home screen', () => {
             const event = new KeyboardEvent('keydown', { key: 'Escape' });
 
@@ -377,12 +354,6 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).searchQuery()).toBe('nsjkfncs type:candle');
             expect((component as any).filterPickerOpen()).toBe(true);
             expect((component as any).deadEnd()).toBe(false);
-        });
-
-        it('disables the filter trigger in the lecture view, which cannot carry filters', () => {
-            (component as any).navigateTo(SearchView.Lecture);
-
-            expect((component as any).filterTriggerDisabled()).toBe(true);
         });
 
         it('drops a keyboard chip selection when the picker takes over', () => {
@@ -854,7 +825,9 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['searchQuery']()).toBe('linear regression');
             expect(component['tokens']()).toHaveLength(3);
-            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'lecture,lecture_unit', [1, 2], undefined);
+            // The lecture chip alone routes to Iris content search, so the accumulated course scope
+            // arrives there rather than on the metadata endpoint.
+            expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('linear regression', 10, [1, 2]);
         });
 
         it('walks the exclude branch and offers the right way back at every level', () => {
@@ -950,7 +923,7 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should call LectureSearchService with (query, 10, undefined) and NOT globalSearch when lecture chip + iris + valid query', () => {
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([{ facet: 'type', value: 'lecture' }]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
@@ -959,8 +932,10 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should pass [courseId] to LectureSearchService when a course filter is set', () => {
-            component['activeCourseId'].set(42);
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([
+                { facet: 'type', value: 'lecture' },
+                { facet: 'course', value: '42' },
+            ]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
@@ -970,7 +945,7 @@ describe('GlobalSearchModalComponent', () => {
         it('should render mapped results with type lecture_content', () => {
             mockLectureSearchService.search.mockReturnValue(of<LectureSearchResult[]>([contentResult]));
 
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([{ facet: 'type', value: 'lecture' }]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
@@ -984,11 +959,11 @@ describe('GlobalSearchModalComponent', () => {
         it('should fall back to globalSearch with the lecture type filter when iris is unavailable', () => {
             mockAvailability.contentSearchAvailable.set(false);
 
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([{ facet: 'type', value: 'lecture' }]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture,lecture_unit', undefined, undefined);
             expect(mockLectureSearchService.search).not.toHaveBeenCalled();
         });
 
@@ -997,11 +972,11 @@ describe('GlobalSearchModalComponent', () => {
             mockLectureSearchService.search.mockReturnValue(throwError(() => new Error('content search failed')));
             mockSearchService.globalSearch.mockReturnValue(of(metadataResults));
 
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([{ facet: 'type', value: 'lecture' }]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture,lecture_unit', undefined, undefined);
             expect(component['results']()).toEqual(metadataResults);
             expect(component['searchError']()).toBeUndefined();
             expect(component['isLoading']()).toBe(false);
@@ -1012,13 +987,13 @@ describe('GlobalSearchModalComponent', () => {
             mockLectureSearchService.search.mockReturnValue(NEVER); // never emits -> triggers the rxjs timeout
             mockSearchService.globalSearch.mockReturnValue(of(metadataResults));
 
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([{ facet: 'type', value: 'lecture' }]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300); // debounce elapses, content search is subscribed and hangs
             expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
 
             vi.advanceTimersByTime(CONTENT_SEARCH_TIMEOUT_MS + 1); // timeout fires -> metadata fallback
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture,lecture_unit', undefined, undefined);
             expect(component['results']()).toEqual(metadataResults);
             expect(component['searchError']()).toBeUndefined();
             expect(component['isLoading']()).toBe(false);
@@ -1028,7 +1003,7 @@ describe('GlobalSearchModalComponent', () => {
             mockLectureSearchService.search.mockReturnValue(throwError(() => new Error('content search failed')));
             mockSearchService.globalSearch.mockReturnValue(throwError(() => new Error('metadata failed')));
 
-            component['activeFilters'].set(['lecture']);
+            component['tokens'].set([{ facet: 'type', value: 'lecture' }]);
             component['onSearchInput']('signals');
             vi.advanceTimersByTime(300);
 
@@ -1042,17 +1017,17 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(placeholder));
 
             // Empty query + lecture chip -> metadata placeholder browse (content search requires a valid query)
-            component['addFilter'](['lecture']);
+            component['applyTokens']([{ facet: 'type', value: 'lecture' }]);
             vi.advanceTimersByTime(300);
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'lecture', undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'lecture,lecture_unit', undefined, undefined);
             expect(mockLectureSearchService.search).not.toHaveBeenCalled();
             expect(component['results']()).toEqual(placeholder);
 
             // Remove then re-add -> served from cache, no new HTTP call, content search still untouched
-            component['removeFilter']('lecture');
+            component['applyTokens']([]);
             vi.advanceTimersByTime(300);
-            component['addFilter'](['lecture']);
+            component['applyTokens']([{ facet: 'type', value: 'lecture' }]);
             vi.advanceTimersByTime(300);
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
             expect(mockLectureSearchService.search).not.toHaveBeenCalled();

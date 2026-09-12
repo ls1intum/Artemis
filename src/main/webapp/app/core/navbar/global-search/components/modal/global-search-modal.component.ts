@@ -34,14 +34,7 @@ export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        DialogModule,
-        FaIconComponent,
-        ArtemisTranslatePipe,
-        GlobalSearchNavigationViewComponent,
-        SearchInputComponent,
-        GlobalSearchFilterMenuComponent,
-    ],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent, GlobalSearchFilterMenuComponent],
     providers: [GlobalSearchFilterService],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
@@ -267,9 +260,17 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     // and the query is valid, route to Iris content search. If that request fails or
                     // exceeds CONTENT_SEARCH_TIMEOUT_MS, fall back to the standard metadata lecture search
                     // so the user still gets results. Every other path is the metadata search as before.
-                    const activeFilters = this.activeFilters();
+                    // "Lecture chip only" is asked of the tokens, not of activeFilters: the lecture facet
+                    // expands to several server types (lecture, lecture_unit), so the expanded list never has
+                    // length one. Course scoping rides along; an exclusion cannot be expressed to Iris.
+                    const typeTokens = this.tokens().filter((token) => token.facet === 'type');
                     const useContentSearch =
-                        activeFilters.length === 1 && activeFilters[0] === 'lecture' && this.availability.contentSearchAvailable() && hasValidQuery;
+                        typeTokens.length === 1 &&
+                        !typeTokens[0].negate &&
+                        typeTokens[0].value === 'lecture' &&
+                        excludeCourseIds.length === 0 &&
+                        this.availability.contentSearchAvailable() &&
+                        hasValidQuery;
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() => {

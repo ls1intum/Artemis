@@ -13,7 +13,6 @@ import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import {
@@ -44,7 +43,6 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 GlobalSearchNavigationViewComponent,
                 MockComponent(GlobalSearchIrisAnswerComponent),
                 MockComponent(SearchResultItemComponent),
-                MockComponent(SearchableEntityItemComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
@@ -77,11 +75,6 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('itemCount', () => {
-            it('should equal the searchable entity count when not searching', () => {
-                // searchableEntities.length = 6 (no action button)
-                expect(component.itemCount()).toBe(6);
-            });
-
             it('should equal the result count when searching', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '1' }, { id: '2' }] as GlobalSearchResult[]);
@@ -91,32 +84,6 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('Keyboard navigation', () => {
-            it('should emit entityClick for the entity at the selected index on Enter', () => {
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 0);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][0]);
-            });
-
-            it('should emit entityClick for a later entity index on Enter', () => {
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 1);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][1]);
-            });
-
             it('should call preventDefault on Enter', () => {
                 fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
@@ -130,30 +97,23 @@ describe('GlobalSearchNavigationViewComponent', () => {
             });
 
             it('should do nothing when Enter is pressed at index -1', () => {
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
                 fixture.componentRef.setInput('selectedIndex', -1);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(spy).not.toHaveBeenCalled();
                 expect(router.navigate).not.toHaveBeenCalled();
             });
 
             it('should ignore non-Enter keys', () => {
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
                 fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
                 component.handleKeydown(event);
 
-                expect(spy).not.toHaveBeenCalled();
+                expect(router.navigate).not.toHaveBeenCalled();
             });
 
             it('should navigate to the result at the selected index on Enter when showing results', () => {
@@ -366,9 +326,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(component).toBeTruthy();
         });
 
-        it('itemCount should equal the searchable entity count when iris is disabled', () => {
-            // no action button; searchableEntities.length = 6
-            expect(component.itemCount()).toBe(6);
+        it('itemCount should be zero when there are no results', () => {
+            expect(component.itemCount()).toBe(0);
         });
     });
 
@@ -382,9 +341,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(fixture.nativeElement.querySelector('jhi-global-search-iris-answer')).toBeNull();
         });
 
-        it('itemCount should equal the searchable entity count', () => {
-            // searchableEntities.length = 6
-            expect(component.itemCount()).toBe(6);
+        it('itemCount should be zero when there are no results', () => {
+            expect(component.itemCount()).toBe(0);
         });
     });
 });

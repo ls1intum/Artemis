@@ -188,11 +188,6 @@ public class LectureContentProcessingScheduler {
         recoverStuckPhase(ProcessingPhase.TRANSCRIBING, NO_CALLBACK_TIMEOUT_MINUTES);
         recoverStuckPhase(ProcessingPhase.INGESTING, NO_CALLBACK_TIMEOUT_MINUTES);
 
-        // Then release dispatch claims whose owner never finished dispatching them, e.g. a node killed by a rolling
-        // deploy between taking the claim and writing the phase. Nothing else selects those rows, so without this the
-        // unit waits forever; see reclaimLapsedLeases.
-        releaseAbandonedDispatchClaims();
-
         // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
         callbackService.dispatchPendingJobs();
     }

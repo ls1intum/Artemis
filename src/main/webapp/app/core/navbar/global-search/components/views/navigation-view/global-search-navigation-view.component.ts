@@ -1,27 +1,11 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
-import {
-    faBook,
-    faCalendarCheck,
-    faCheckDouble,
-    faComments,
-    faCube,
-    faFileUpload,
-    faFont,
-    faGraduationCap,
-    faHashtag,
-    faKeyboard,
-    faProjectDiagram,
-    faQuestion,
-    faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck, faCheckDouble, faFileUpload, faFont, faHashtag, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
@@ -33,7 +17,7 @@ import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/c
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchIrisAnswerComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -73,8 +57,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    readonly entityClick = output<SearchableEntity>();
-
     private readonly router = inject(Router);
     private readonly overlay = inject(SearchOverlayService);
 
@@ -112,7 +94,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faCalendarCheck = faCalendarCheck;
 
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities.length));
+    readonly itemCount = computed(() => this.results().length);
 
     protected readonly faHashtag = faHashtag;
 
@@ -253,18 +235,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const idx = this.selectedIndex();
         if (idx < 0) return;
 
-        if (this.showResults()) {
-            event.preventDefault();
-            const result = this.results()[idx];
-            if (result) {
-                this.navigateToResult(result);
-            }
-        } else {
-            event.preventDefault();
-            const entity = this.searchableEntities[idx];
-            if (entity && entity.enabled) {
-                this.entityClick.emit(entity);
-            }
+        event.preventDefault();
+        const result = this.results()[idx];
+        if (result) {
+            this.navigateToResult(result);
         }
     }
 }

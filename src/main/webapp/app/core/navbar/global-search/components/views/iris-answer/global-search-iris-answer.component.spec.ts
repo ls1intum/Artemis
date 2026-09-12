@@ -334,7 +334,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
-            expect(mockAsk).toHaveBeenCalledWith('abcdef');
+            expect(mockAsk).toHaveBeenCalledWith('abcdef', 5, undefined);
         });
 
         it('should NOT call ask() before the debounce period has elapsed', () => {

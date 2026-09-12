@@ -128,7 +128,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * This query is mutually exclusive with findStuckStates (which requires retryEligibleAt IS NULL).
      * <p>
      * This is a plain read that takes no row locks: it lists candidates, and the caller then competes for each one
-     * through {@link #claimRetryEligible}. Locking here would only be meaningful while a transaction spans the read
+     * through {@link #claimJobsForDispatch}. Locking here would only be meaningful while a transaction spans the read
      * and the later write, and declaring that boundary in a service is not allowed.
      *
      * @param phase the processing phase to check (enum name as string, e.g. "FAILED")

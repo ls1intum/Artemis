@@ -88,25 +88,6 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(retryCandidateIds(ZonedDateTime.now())).doesNotContain(permanentFailure.getId());
     }
 
-    @Test
-    void testOnlyOneCallerClaimsARetryAndTheClaimHidesTheRow() {
-        ZonedDateTime now = ZonedDateTime.now();
-        LectureUnitProcessingState retryable = new LectureUnitProcessingState(unit);
-        retryable.setPhase(ProcessingPhase.FAILED);
-        retryable.setRetryCount(1);
-        retryable.setRetryEligibleAt(now.minusMinutes(5));
-        processingStateRepository.save(retryable);
-
-        assertThat(retryCandidateIds(now)).as("a retry whose backoff has passed must be a candidate").contains(retryable.getId());
-
-        ZonedDateTime leaseExpiry = now.plusMinutes(20);
-        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), now, leaseExpiry)).as("the first caller claims the retry").isEqualTo(1);
-        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), now, leaseExpiry)).as("a second caller must lose the race").isZero();
-
-        assertThat(retryCandidateIds(now)).as("the claim must hide the row for the length of the lease").doesNotContain(retryable.getId());
-        assertThat(retryCandidateIds(leaseExpiry.plusSeconds(1))).as("an abandoned claim recovers itself once the lease lapses").contains(retryable.getId());
-    }
-
     /**
      * A generous limit, because the candidate list is shared with the rest of the suite and these tests only care
      * whether their own row is in it.

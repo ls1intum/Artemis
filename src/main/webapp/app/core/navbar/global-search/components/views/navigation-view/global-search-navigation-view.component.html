@@ -58,13 +58,4 @@
             </div>
         }
     </div>
-} @else {
-    <!-- Searchable entities list (initial state) -->
-    <div class="entity-list">
-        @for (entity of searchableEntities; track entity.id; let i = $index) {
-            <div #selectableItem>
-                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === i" (entityClick)="onEntityItemClick($event)" />
-            </div>
-        }
-    </div>
 }
