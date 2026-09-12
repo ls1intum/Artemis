@@ -229,7 +229,9 @@ public class PyrisConnectorService {
     public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
-            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue());
+            // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
+            // which this service forwards to the client as partial WebSocket updates.
+            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {

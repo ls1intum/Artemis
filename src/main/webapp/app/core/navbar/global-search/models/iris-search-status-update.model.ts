@@ -3,7 +3,8 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 /**
  * WebSocket message pushed by Artemis during an async lecture-search/ask-Iris request.
  *
- * - `isThinking: true`  → Pyris classified the query as a real question; LLM is running. Show thinking animation.
+ * - `isThinking: true`  → Pyris classified the query as a real question; LLM is running. Show thinking animation,
+ *   or the streamed `partialResult` draft once it starts arriving.
  * - `isThinking: false` → Pipeline done. Show `answer` card if non-null, hide everything otherwise.
  */
 export interface IrisSearchStatusUpdate {
@@ -11,4 +12,8 @@ export interface IrisSearchStatusUpdate {
     isThinking: boolean;
     answer?: string;
     sources?: LectureSearchResult[];
+    /** Streamed draft of the answer so far (`isThinking: true` updates while the LLM generates). */
+    partialResult?: string;
+    /** Monotonic sequence number of the streamed draft; lower numbers are stale. */
+    partialSeq?: number;
 }

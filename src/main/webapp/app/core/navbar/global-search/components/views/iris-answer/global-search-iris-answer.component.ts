@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -10,6 +10,7 @@ import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
@@ -27,6 +28,14 @@ const DEFAULT_LINE_HEIGHT_PX = 20;
  */
 const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
 
+/**
+ * Marker bound for STREAMED drafts: partial updates carry no sources yet, but their raw
+ * markers still reference the numbered answer context (server-capped well below this),
+ * so they render as chips immediately instead of flashing bracket text. The terminal
+ * update replaces them with markers validated against the real sources list.
+ */
+const PARTIAL_CITATION_MARKER_BOUND = 20;
+
 @Component({
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
@@ -37,6 +46,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
 })
 export class GlobalSearchIrisAnswerComponent {
     private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);
+    private readonly router = inject(Router);
 
     readonly searchQuery = input.required<string>();
 
@@ -63,6 +73,24 @@ export class GlobalSearchIrisAnswerComponent {
     };
 
     protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
+
+    /** Whether the current answer text is a streamed draft (no sources attached yet). */
+    protected readonly isPartialAnswer = signal(false);
+    /** Highest partial sequence number seen for the current run; lower numbers are stale. */
+    private lastPartialSeq = 0;
+
+    /** Answer markdown with `[n]` citation markers converted to chip elements, plus the cited numbers. */
+    protected readonly citationView = computed(() =>
+        renderCitationMarkers(this.irisResult()?.answer, this.sources().length || (this.isPartialAnswer() ? PARTIAL_CITATION_MARKER_BOUND : 0)),
+    );
+    /** Whether the answer carries inline citations; gates the chip numbering. */
+    protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
+    /** Source numbers currently highlighted, linking answer passages and source chips in both directions. */
+    protected readonly activeCitations = signal<ReadonlySet<number>>(new Set());
+    /** Popover state for a hovered inline citation, positioned inside the answer region. */
+    protected readonly citationPopover = signal<{ sourceIndex: number; left: number; top: number } | undefined>(undefined);
+    /** Bumped when the lazily-rendered markdown lands, so the highlight effect re-runs over the new DOM. */
+    private readonly markdownRenderTick = signal(0);
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
@@ -97,6 +125,28 @@ export class GlobalSearchIrisAnswerComponent {
             onCleanup(() => observer.disconnect());
         });
 
+        // Bidirectional attribution highlight: wash the passages a hovered source
+        // chip supports, and light the chips a hovered passage cites. The answer
+        // is directive-rendered innerHTML, so classes are toggled on the real DOM;
+        // clearing first keeps a paragraph lit when only one of its citation
+        // chips matches the active set.
+        effect(() => {
+            const active = this.activeCitations();
+            this.markdownRenderTick();
+            const element = this.answerBody()?.nativeElement;
+            if (!element) {
+                return;
+            }
+            element.querySelectorAll('.iris-attr-lit').forEach((lit) => lit.classList.remove('iris-attr-lit'));
+            for (const chip of element.querySelectorAll<HTMLElement>('.iris-cite')) {
+                const isLit = parseCitationNumbers(chip.dataset.n).some((n) => active.has(n));
+                chip.classList.toggle('iris-cite-lit', isLit);
+                if (isLit) {
+                    chip.closest('p, li')?.classList.add('iris-attr-lit');
+                }
+            }
+        });
+
         // Iris answer pipeline — runs alongside the main search.
         // ask() emits multiple values: first a thinking update, then the final result.
         // The outer switchMap ensures every new searchQuery emission immediately cancels
@@ -110,6 +160,8 @@ export class GlobalSearchIrisAnswerComponent {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
+                    this.isPartialAnswer.set(false);
+                    this.lastPartialSeq = 0;
                     if (!query.trim()) {
                         return of(undefined);
                     }
@@ -128,12 +180,26 @@ export class GlobalSearchIrisAnswerComponent {
                 }
                 if (update.isThinking) {
                     this.currentRunId.set(update.runId);
-                    this.irisThinking.set(true);
+                    if (update.partialResult) {
+                        // Streamed draft: render the text as it grows; ignore out-of-order snapshots.
+                        const seq = update.partialSeq ?? 0;
+                        if (seq <= this.lastPartialSeq) {
+                            return;
+                        }
+                        this.lastPartialSeq = seq;
+                        this.irisThinking.set(false);
+                        this.isPartialAnswer.set(true);
+                        this.irisResult.set({ answer: update.partialResult, sources: [] });
+                    } else if (!this.isPartialAnswer()) {
+                        this.irisThinking.set(true);
+                    }
                 } else {
                     if (this.currentRunId() !== undefined && update.runId !== this.currentRunId()) {
                         return; // stale response from a superseded pipeline run
                     }
                     this.irisThinking.set(false);
+                    this.isPartialAnswer.set(false);
+                    this.lastPartialSeq = 0;
                     this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [] } : undefined);
                 }
             });
@@ -141,5 +207,68 @@ export class GlobalSearchIrisAnswerComponent {
 
     collapse(): void {
         this.isExpanded.set(false);
+    }
+
+    protected onMarkdownRendered(): void {
+        this.markdownRenderTick.update((tick) => tick + 1);
+    }
+
+    /** Hovering an inline citation highlights its sources and shows the preview popover. */
+    protected onAnswerOver(event: Event): void {
+        const chip = (event.target as HTMLElement).closest<HTMLElement>('.iris-cite');
+        if (!chip) {
+            return;
+        }
+        const numbers = parseCitationNumbers(chip.dataset.n);
+        this.activeCitations.set(new Set(numbers));
+        this.showCitationPopover(chip, numbers[0]);
+    }
+
+    protected onAnswerOut(event: Event): void {
+        if ((event.target as HTMLElement).closest('.iris-cite')) {
+            this.activeCitations.set(new Set());
+            this.citationPopover.set(undefined);
+        }
+    }
+
+    /** Clicking an inline citation opens the cited source, exactly like clicking its chip below. */
+    protected onAnswerClick(event: Event): void {
+        const chip = (event.target as HTMLElement).closest<HTMLElement>('.iris-cite');
+        if (!chip) {
+            return;
+        }
+        const source = this.sources()[(parseCitationNumbers(chip.dataset.n)[0] ?? 0) - 1];
+        if (!source) {
+            return; // streamed draft: sources arrive with the terminal update
+        }
+        void this.router.navigate([source.lectureUnit.link], { queryParams: source.lectureUnit.queryParams });
+    }
+
+    protected clearCitationHighlight(): void {
+        this.activeCitations.set(new Set());
+        this.citationPopover.set(undefined);
+    }
+
+    /** Hovering a source chip highlights the answer passages it supports. */
+    protected setChipHighlight(sourceNumber: number | undefined): void {
+        this.activeCitations.set(sourceNumber ? new Set([sourceNumber]) : new Set());
+    }
+
+    private showCitationPopover(chip: HTMLElement, sourceNumber: number | undefined): void {
+        if (!sourceNumber || sourceNumber > this.sources().length) {
+            this.citationPopover.set(undefined);
+            return;
+        }
+        const region = chip.closest('.iris-answer-region');
+        if (!(region instanceof HTMLElement)) {
+            return;
+        }
+        const chipRect = chip.getBoundingClientRect();
+        const regionRect = region.getBoundingClientRect();
+        this.citationPopover.set({
+            sourceIndex: sourceNumber - 1,
+            left: chipRect.left - regionRect.left + chipRect.width / 2,
+            top: chipRect.top - regionRect.top,
+        });
     }
 }
