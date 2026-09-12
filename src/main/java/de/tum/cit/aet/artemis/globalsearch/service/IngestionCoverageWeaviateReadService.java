@@ -50,8 +50,11 @@ public class IngestionCoverageWeaviateReadService {
     /**
      * The metadata entity types diffed exactly. Posts and answer posts are deliberately excluded: they are the
      * high-volume firehose the coverage feature reports as present-only, never id-diffed (design page 18).
+     * <p>
+     * Public because the content browser enumerates exactly these types too. Sharing one list is what keeps the
+     * browser's stored-object lists and the matrix's counts talking about the same set of rows.
      */
-    private static final List<String> METADATA_TYPES = List.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
+    public static final List<String> METADATA_TYPES = List.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
             SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
             SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE);
 

@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
  * coverage projection (cross-course views), a live-per-page coverage view (default matrix view), and a manual refresh.
- * Only available when Weaviate is enabled; every endpoint requires admin.
+ * Only available when Weaviate is enabled.
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
@@ -106,20 +106,23 @@ public class IngestionCoverageResource {
 
     /**
      * GET .../coverage : the stored per-course coverage projection for the cross-course matrix views (worst-first,
-     * release-date, most-recent-ingestion, status filter), paginated and sorted on the projection columns. Serves the
-     * stored table instantly and triggers a background recompute when it is stale (stale-while-revalidate).
+     * release-date, most-recent-ingestion, status/active filter), paginated and sorted on the projection columns and
+     * optionally narrowed by a course-title search. Serves the stored table instantly and triggers a background recompute
+     * when it is stale (stale-while-revalidate).
      *
      * @param status   an optional status to filter by
      * @param active   an optional active/inactive course filter
+     * @param search   an optional case-insensitive course-title search, applied alongside the filters rather than
+     *                     instead of them
      * @param pageable the page and sort
      * @return the requested page of stored coverage rows
      */
     @GetMapping("coverage")
     public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
-            @RequestParam(required = false) Boolean active, Pageable pageable) {
+            @RequestParam(required = false) Boolean active, @RequestParam(required = false) String search, Pageable pageable) {
         // Cross-bean call so the @Async recompute actually runs off the request thread.
         coverageRecomputeService.triggerRecomputeIfStale();
-        Page<IngestionCoverageDTO> page = coverageRecomputeService.readStoredCoverage(status, active, pageable);
+        Page<IngestionCoverageDTO> page = coverageRecomputeService.readStoredCoverage(status, active, search, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
