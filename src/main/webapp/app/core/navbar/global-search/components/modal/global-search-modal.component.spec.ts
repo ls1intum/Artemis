@@ -830,6 +830,26 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('linear regression', 10, [1, 2]);
         });
 
+        it('keeps routing to Iris content search when a course chip is added after the lecture chip', () => {
+            component['onSearchInput']('deep learning');
+            vi.advanceTimersByTime(300);
+
+            component['toggleFilterMenu']();
+            choose('operator', 'type:');
+            choose('value', 'lecture');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('deep learning', 10, undefined);
+
+            component['toggleFilterMenu']();
+            choose('operator', 'course:');
+            choose('value', '1');
+            vi.advanceTimersByTime(300);
+
+            expect(component['tokens']()).toHaveLength(2);
+            expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('deep learning', 10, [1]);
+        });
+
         it('walks the exclude branch and offers the right way back at every level', () => {
             component['openFilterPicker']();
             expect(component['menuHeaderKey']()).toBe('global.search.addFilter');
