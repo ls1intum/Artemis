@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.notification.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyShort;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +33,8 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
-import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationSettingPresetTestRepository;
@@ -54,9 +58,6 @@ class CourseNotificationSettingServiceTest {
     private CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
     @Mock
-    private CourseNotificationCacheService courseNotificationCacheService;
-
-    @Mock
     private de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset mockPreset;
 
     private final Long userId = 1L;
@@ -69,8 +70,8 @@ class CourseNotificationSettingServiceTest {
 
     @BeforeEach
     void setUp() {
-        courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistryService, courseNotificationCacheService,
-                userCourseNotificationSettingSpecificationRepository, userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService);
+        courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistryService, userCourseNotificationSettingSpecificationRepository,
+                userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService);
     }
 
     @Test
@@ -82,7 +83,6 @@ class CourseNotificationSettingServiceTest {
         courseNotificationSettingService.applyPreset((short) 2, userId, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -95,7 +95,6 @@ class CourseNotificationSettingServiceTest {
         courseNotificationSettingService.applyPreset((short) 2, userId, courseId);
 
         verify(userCourseNotificationSettingPresetRepository, never()).save(any(UserCourseNotificationSettingPreset.class));
-        verify(courseNotificationCacheService, never()).invalidateCourseNotificationSettingSpecificationCacheForUser(anyLong(), anyLong());
     }
 
     @Test
@@ -120,7 +119,6 @@ class CourseNotificationSettingServiceTest {
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -139,7 +137,6 @@ class CourseNotificationSettingServiceTest {
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
         verify(userCourseNotificationSettingSpecificationRepository).deleteAll(existingSpecs);
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -158,7 +155,6 @@ class CourseNotificationSettingServiceTest {
 
         verify(userCourseNotificationSettingPresetRepository).findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
-        verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 
     @Test
@@ -197,19 +193,16 @@ class CourseNotificationSettingServiceTest {
         User user2 = createTestUser(2L);
         List<User> recipients = List.of(user1, user2);
 
-        // The cached read answers with the preset value, so that the store never holds a settings entity.
-        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of(customPreset(1L), customPreset(2L)));
 
         Short notificationTypeId = 1;
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
-        var user1Spec = new UserCourseNotificationSettingSpecificationDTO(notificationTypeId, false, false, true);
-        var user2Spec = new UserCourseNotificationSettingSpecificationDTO(notificationTypeId, true, true, false);
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L)))
+                .thenReturn(List.of(new UserCourseNotificationSettingSpecificationEntryDTO(1L, notificationTypeId, false, false, true),
+                        new UserCourseNotificationSettingSpecificationEntryDTO(2L, notificationTypeId, true, true, false)));
 
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(eq(1L), eq(123L))).thenReturn(List.of(user1Spec));
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(eq(2L), eq(123L))).thenReturn(List.of(user2Spec));
-
-        List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP);
+        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
 
         assertThat(filteredRecipients).hasSize(1);
         assertThat(filteredRecipients).containsExactly(user1);
@@ -222,13 +215,13 @@ class CourseNotificationSettingServiceTest {
         User user2 = createTestUser(2L);
         List<User> recipients = List.of(user1, user2);
 
-        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(eq(1L), eq(123L))).thenReturn((short) 1);
-        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(eq(2L), eq(123L))).thenReturn((short) 2);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L)))
+                .thenReturn(List.of(new UserCourseNotificationSettingPresetEntryDTO(1L, (short) 1), new UserCourseNotificationSettingPresetEntryDTO(2L, (short) 2)));
 
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.PUSH))).thenReturn(true);
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(2), any(), eq(NotificationChannelOption.PUSH))).thenReturn(false);
 
-        List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.PUSH);
+        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.PUSH);
 
         assertThat(filteredRecipients).hasSize(1);
         assertThat(filteredRecipients).containsExactly(user1);
@@ -241,17 +234,16 @@ class CourseNotificationSettingServiceTest {
         User user2 = createTestUser(2L);
         List<User> recipients = List.of(user1, user2);
 
-        // The cached read answers with the preset value, so that the store never holds a settings entity.
-        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of(customPreset(1L), customPreset(2L)));
 
         Short notificationTypeId = 1;
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
-        var userSpec = new UserCourseNotificationSettingSpecificationDTO(notificationTypeId, false, true, true);
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L)))
+                .thenReturn(List.of(new UserCourseNotificationSettingSpecificationEntryDTO(1L, notificationTypeId, false, true, true),
+                        new UserCourseNotificationSettingSpecificationEntryDTO(2L, notificationTypeId, false, true, true)));
 
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of(userSpec));
-
-        List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.EMAIL);
+        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.EMAIL);
 
         assertThat(filteredRecipients).isEmpty();
     }
@@ -262,20 +254,19 @@ class CourseNotificationSettingServiceTest {
         User user = createTestUser(1L);
         List<User> recipients = List.of(user);
 
-        // The cached read answers with the preset value, so that the store never holds a settings entity.
-        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of(customPreset(1L)));
 
         Short notificationTypeId = 1;
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
-        var differentSpec = new UserCourseNotificationSettingSpecificationDTO((short) 2, false, false, true); // type differs from the notificationTypeId
-
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of(differentSpec));
+        // The type differs from the notificationTypeId, so this user has no row for the notification being sent.
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L)))
+                .thenReturn(List.of(new UserCourseNotificationSettingSpecificationEntryDTO(1L, (short) 2, false, false, true)));
 
         // A custom preset with no specification row for this type must fall back to the default preset (id 1) value.
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.WEBAPP))).thenReturn(false);
 
-        List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP);
+        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
 
         assertThat(filteredRecipients).isEmpty();
     }
@@ -289,18 +280,71 @@ class CourseNotificationSettingServiceTest {
         User user = createTestUser(1L);
         List<User> recipients = List.of(user);
 
-        // The cached read answers with the preset value, so that the store never holds a settings entity.
-        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn((short) 0);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of(customPreset(1L)));
 
         // No specification row exists for this notification type (empty list), so the type identifier is never consulted.
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of());
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of());
 
         // The default preset enables this notification for WEBAPP, so the recipient must be kept.
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.WEBAPP))).thenReturn(true);
 
-        List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP);
+        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
 
         assertThat(filteredRecipients).containsExactly(user);
+    }
+
+    /**
+     * The reason the per-user reads were replaced: filtering runs once per delivery channel, so asking per recipient
+     * cost a lookup per recipient per channel. This pins the bound at one query for the presets and one for the
+     * specifications, however many recipients and channels there are.
+     */
+    @Test
+    void shouldReadSettingsOnceRegardlessOfRecipientCountAndChannels() {
+        TestNotification notification = new TestNotification(123L);
+        List<User> recipients = LongStream.rangeClosed(1, 250).mapToObj(this::createTestUser).toList();
+
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L)))
+                .thenReturn(recipients.stream().map(recipient -> customPreset(recipient.getId())).toList());
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of());
+        when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), any())).thenReturn(true);
+
+        var settings = courseNotificationSettingService.loadSettingsFor(notification.courseId, recipients);
+        for (NotificationChannelOption channel : NotificationChannelOption.values()) {
+            assertThat(courseNotificationSettingService.filterRecipientsBy(notification, recipients, channel, settings)).hasSize(250);
+        }
+
+        verify(userCourseNotificationSettingPresetRepository, times(1)).findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L));
+        verify(userCourseNotificationSettingSpecificationRepository, times(1)).findAllByUserIdsAndCourseId(anySet(), eq(123L));
+        verify(userCourseNotificationSettingPresetRepository, never()).findSettingPresetByUserIdAndCourseId(anyLong(), anyLong());
+        verify(userCourseNotificationSettingSpecificationRepository, never()).findAllByUserIdAndCourseId(anyLong(), anyLong());
+    }
+
+    /**
+     * Nobody on a custom preset means no specification rows are worth reading at all.
+     */
+    @Test
+    void shouldNotReadSpecificationsWhenNobodyUsesACustomPreset() {
+        TestNotification notification = new TestNotification(123L);
+        List<User> recipients = List.of(createTestUser(1L), createTestUser(2L));
+
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L)))
+                .thenReturn(List.of(new UserCourseNotificationSettingPresetEntryDTO(1L, (short) 1), new UserCourseNotificationSettingPresetEntryDTO(2L, (short) 2)));
+
+        courseNotificationSettingService.loadSettingsFor(notification.courseId, recipients);
+
+        verify(userCourseNotificationSettingSpecificationRepository, never()).findAllByUserIdsAndCourseId(anySet(), anyLong());
+    }
+
+    /**
+     * Reads the recipients' settings the way the send path does, then filters with them.
+     */
+    private List<User> filterWithLoadedSettings(TestNotification notification, List<User> recipients, NotificationChannelOption channel) {
+        var settings = courseNotificationSettingService.loadSettingsFor(notification.courseId, recipients);
+        return courseNotificationSettingService.filterRecipientsBy(notification, recipients, channel, settings);
+    }
+
+    private static UserCourseNotificationSettingPresetEntryDTO customPreset(long userId) {
+        return new UserCourseNotificationSettingPresetEntryDTO(userId, (short) 0);
     }
 
     private User createTestUser(Long id) {

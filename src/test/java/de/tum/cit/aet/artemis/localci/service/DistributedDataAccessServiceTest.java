@@ -48,6 +48,12 @@ class DistributedDataAccessServiceTest {
             String name = invocation.getArgument(0);
             return "buildAgentInformation".equals(name) ? buildAgentInformation : processingJobs;
         });
+        // The production code reads both identifier sets as one snapshot, so that a provider backed by Redis answers a
+        // single CLIENT LIST instead of two. A mock does not run the interface's default body, so wire it to the two
+        // stubs the individual tests set up.
+        when(distributedDataProvider.getClusterMembership())
+                .thenAnswer(invocation -> new DistributedDataProvider.ClusterMembership(distributedDataProvider.getConnectedClientNames(),
+                        distributedDataProvider.getClusterMemberAddresses()));
         distributedDataAccessService = new DistributedDataAccessService(Optional.of(distributedDataProvider));
     }
 
