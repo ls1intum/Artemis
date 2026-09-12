@@ -59,7 +59,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     private CourseAthenaConfigDTO storedConfig() {
-        return courseAthenaConfigService.getConfig(course.getId());
+        return courseAthenaConfigRepository.findConfigByCourseId(course.getId()).orElseThrow();
     }
 
     @Test
@@ -69,7 +69,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
         var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
 
-        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(true, false, 10));
+        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(true, false));
     }
 
     @Test
@@ -77,7 +77,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void getAthenaConfig_courseWithoutConfig_returnsBothDisabled() throws Exception {
         var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
 
-        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(false, false, 10));
+        assertThat(config).isEqualTo(new CourseAthenaConfigDTO(false, false));
     }
 
     @Test
@@ -87,8 +87,8 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
         var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, true, 10));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true, 10));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, true));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
     }
 
     @Test
@@ -96,8 +96,8 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     void updateAthenaConfig_courseWithoutConfig_createsIt() throws Exception {
         var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(false, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, true, 10));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, true, 10));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(false, true));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, true));
     }
 
     @Test
@@ -107,7 +107,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
         request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true, 10));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
     }
 
     @Test
@@ -119,8 +119,8 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
         // survive, even though this request carries no value for it at all.
         var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, false), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false, 10));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false, 10));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false));
     }
 
     @Test
@@ -130,8 +130,8 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
 
         var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
-        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false, 10));
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false, 10));
+        assertThat(updated).isEqualTo(new CourseAthenaConfigDTO(true, false));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, false));
     }
 
     @Test
@@ -161,7 +161,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
             executor.shutdownNow();
         }
 
-        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true, 10));
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(true, true));
     }
 
     @Test

@@ -1,16 +1,17 @@
 <div class="athena-controls">
-    @if (isLoaded()) {
-        <jhi-enabled-toggle
-            [enabled]="masterEnabled()"
-            [ariaLabel]="'artemisApp.course.athenaConfig.enabledLabel' | artemisTranslate"
-            testId="athena-enabled"
-            (enabledChange)="setEnabled($event)"
-        />
-    } @else {
-        <p-skeleton data-testid="athena-enabled-loading" height="2.375rem" borderRadius="0.625rem" />
+    @for (feature of features; track feature.key) {
+        @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key + '.label';
+        <div>
+            <div class="athena-setting-label">
+                <span [jhiTranslate]="labelKey"></span>
+                <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="'artemisApp.course.athenaConfig.' + feature.key + '.tooltip' | artemisTranslate" />
+            </div>
+            <jhi-enabled-toggle
+                [enabled]="feature.enabled()"
+                [ariaLabel]="labelKey | artemisTranslate"
+                [testId]="feature.testId"
+                (enabledChange)="setEnabled(feature.key, $event)"
+            />
+        </div>
     }
-    <a class="athena-configure-link" [routerLink]="settingsRoute()">
-        <span jhiTranslate="artemisApp.course.athenaConfig.configure"></span>
-        <fa-icon [icon]="faArrowRight" />
-    </a>
 </div>

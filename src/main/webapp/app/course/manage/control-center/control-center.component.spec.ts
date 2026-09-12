@@ -14,7 +14,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
-import { AboutAthenaModalComponent } from 'app/course/manage/control-center/about-athena-modal/about-athena-modal.component';
 
 describe('ControlCenterComponent', () => {
     let componentRef: ComponentRef<ControlCenterComponent>;
@@ -98,13 +97,5 @@ describe('ControlCenterComponent', () => {
         componentRef.setInput('irisEnabled', false);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.directive(IrisLogoComponent))).toBeFalsy();
-    });
-
-    it('should open the about Athena modal', () => {
-        const openSpy = vi.spyOn(TestBed.inject(DialogService), 'open').mockReturnValue(null);
-
-        fixture.componentInstance.openAboutAthenaModal();
-
-        expect(openSpy).toHaveBeenCalledExactlyOnceWith(AboutAthenaModalComponent, expect.objectContaining({ modal: true, styleClass: 'about-athena-dialog' }));
     });
 });

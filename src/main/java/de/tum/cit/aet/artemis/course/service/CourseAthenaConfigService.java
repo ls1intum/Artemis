@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -31,9 +30,6 @@ public class CourseAthenaConfigService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    @Value("${artemis.athena.allowed-feedback-requests:10}")
-    private int allowedFeedbackRequests;
-
     public CourseAthenaConfigService(CourseAthenaConfigRepository courseAthenaConfigRepository, ExerciseRepository exerciseRepository,
             InstanceMessageSendService instanceMessageSendService) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
@@ -48,8 +44,7 @@ public class CourseAthenaConfigService {
      * @return the course's Athena configuration, all flags disabled when the course has no configuration yet
      */
     public CourseAthenaConfigDTO getConfig(long courseId) {
-        var flags = courseAthenaConfigRepository.findConfigByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-        return new CourseAthenaConfigDTO(flags.gradingFeedbackEnabled(), flags.formativeFeedbackEnabled(), allowedFeedbackRequests);
+        return courseAthenaConfigRepository.findConfigByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
@@ -78,7 +73,7 @@ public class CourseAthenaConfigService {
             refreshAthenaSchedulingForCourseExercises(courseId);
         }
 
-        return getConfig(courseId);
+        return courseAthenaConfigRepository.getArbitraryValueElseThrow(courseAthenaConfigRepository.findConfigById(configId), String.valueOf(configId));
     }
 
     /**

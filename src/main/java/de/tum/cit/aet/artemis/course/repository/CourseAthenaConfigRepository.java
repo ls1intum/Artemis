@@ -199,4 +199,20 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
         attachAthenaConfigToCourse(courseId, config);
         return config.getId();
     }
+
+    /**
+     * Reads back what is stored for a configuration.
+     * <p>
+     * A projection rather than the entity, so the values come from the database even when a caller has already loaded
+     * the entity: the statements above are issued as SQL and do not update an entity a persistence context may hold.
+     *
+     * @param configId the id of the configuration to read
+     * @return the stored configuration, or empty if there is no configuration with that id
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(config.gradingFeedbackEnabled, config.formativeFeedbackEnabled)
+            FROM CourseAthenaConfig config
+            WHERE config.id = :configId
+            """)
+    Optional<CourseAthenaConfigDTO> findConfigById(@Param("configId") long configId);
 }

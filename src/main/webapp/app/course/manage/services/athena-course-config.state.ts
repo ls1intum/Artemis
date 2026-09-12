@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -41,32 +41,6 @@ export class AthenaCourseConfigState {
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
 
     /**
-     * Whether either feature is on, for the single course-overview toggle. There is no separate stored "master" flag:
-     * this is derived from the two features so that a course configured before this toggle existed still shows the
-     * right state.
-     */
-    readonly masterEnabled: Signal<boolean> = computed(() => this.formativeFeedbackEnabled() || this.gradingFeedbackEnabled());
-
-    /**
-     * The instance-wide allowed-feedback-requests cap the last load reported; undefined until a load has answered.
-     * Read-only and never switched, so unlike the two features above it is set straight from the load response
-     * rather than routed through {@link apply}, which only ever touches the one feature a switch was about.
-     */
-    readonly allowedFeedbackRequests = signal<number | undefined>(undefined);
-
-    /**
-     * Whether the first load has answered, successfully or not. False only for the brief window before the very
-     * first response — including for a course a caller already has this state cached for, where it flips to true the
-     * moment the state is created and never goes back. A caller shows a loading placeholder instead of the toggle
-     * while this is false, rather than the "both off" {@link config} defaults to before its first answer, so a
-     * course that turns out to have Athena enabled never flashes as disabled first.
-     */
-    readonly isLoaded = signal(false);
-
-    /** Whether {@link load} has been started, so {@link ensureLoaded} fires it at most once per instance. */
-    private loadStarted = false;
-
-    /**
      * The state the server confirmed per feature; a failed switch rolls back to it. A feature the server has not
      * spoken about yet is missing here rather than stored as disabled, so that a load answering afterwards still
      * counts.
@@ -97,7 +71,6 @@ export class AthenaCourseConfigState {
     load(): void {
         this.athenaCourseConfigService.getCourseConfig(this.courseId).subscribe({
             next: (loaded) => {
-                this.allowedFeedbackRequests.set(loaded.allowedFeedbackRequests);
                 for (const feature of ATHENA_FEATURES) {
                     if (this.confirmed[feature] !== undefined) {
                         continue;
@@ -107,28 +80,9 @@ export class AthenaCourseConfigState {
                         this.apply(feature, loaded[feature]);
                     }
                 }
-                this.isLoaded.set(true);
             },
-            error: (error: HttpErrorResponse) => {
-                // The load has still answered, with "both off" per the fallback documented on setEnabled — a caller
-                // waiting on isLoaded must not wait forever just because this attempt failed.
-                this.isLoaded.set(true);
-                onError(this.alertService, error);
-            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
-    }
-
-    /**
-     * Starts {@link load} the first time it is called on this instance and does nothing after that, so a state shared
-     * by several callers (see {@link AthenaCourseConfigStore}) is only ever fetched once no matter how many of them
-     * ask for it.
-     */
-    ensureLoaded(): void {
-        if (this.loadStarted) {
-            return;
-        }
-        this.loadStarted = true;
-        this.load();
     }
 
     /**
@@ -166,20 +120,6 @@ export class AthenaCourseConfigState {
                 onError(this.alertService, error);
             },
         });
-    }
-
-    /**
-     * Switches the single course-overview toggle. Since there is no stored master flag, switching it on and off is
-     * defined in terms of the two features it derives from: on turns both on, off turns both off. Reading it back is
-     * still the OR of the two (see {@link masterEnabled}), so a course set up from the settings page to run only one
-     * of them keeps showing as enabled here — switching this toggle off then on again does turn both on, though,
-     * rather than restoring that finer configuration.
-     *
-     * @param enabled whether Athena should be on for the course
-     */
-    setMasterEnabled(enabled: boolean): void {
-        this.setEnabled('gradingFeedbackEnabled', enabled);
-        this.setEnabled('formativeFeedbackEnabled', enabled);
     }
 
     /**
@@ -221,74 +161,32 @@ export class AthenaCourseConfigState {
 }
 
 /**
- * One {@link AthenaCourseConfigState} per course, shared by every caller of {@link createAthenaCourseConfigState}
- * for the lifetime of the app.
- *
- * The course-overview card and the settings page each mount their own instance of the component that follows a
- * course's Athena configuration, and an instructor commonly moves from one to the other for the same course. Without
- * this store each mount would start from scratch — an unanswered load, "both off" on screen — and repeat the fetch
- * the other page just made, flashing disabled before the answer no one needed to ask for again arrived. Handing out
- * the same instance for a courseId already seen makes the second page show the first page's answer immediately, with
- * no request and no flash.
- *
- * A course is never evicted once loaded: the entries are small, and the alternative — a course whose toggles were
- * open a minute ago quietly re-fetching and flashing disabled again the next time it is opened — is worse than
- * holding a few extra booleans for the rest of the session.
- */
-@Injectable({ providedIn: 'root' })
-export class AthenaCourseConfigStore {
-    private readonly athenaCourseConfigService = inject(AthenaCourseConfigService);
-    private readonly alertService = inject(AlertService);
-
-    private readonly states = new Map<number, AthenaCourseConfigState>();
-
-    /**
-     * The Athena configuration state of the given course, creating it if this is the first time it is asked for.
-     * Pure with respect to an already-cached course: called from a `computed`, it must not itself start the load
-     * (see {@link createAthenaCourseConfigState}), only hand back the (possibly brand new, not-yet-loading) instance.
-     *
-     * @param courseId the id of the course to look up or create the state for
-     * @return that course's state, the same instance every time it is asked for again
-     */
-    getOrCreate(courseId: number): AthenaCourseConfigState {
-        let state = this.states.get(courseId);
-        if (!state) {
-            state = new AthenaCourseConfigState(courseId, this.athenaCourseConfigService, this.alertService);
-            this.states.set(courseId, state);
-        }
-        return state;
-    }
-}
-
-/**
- * The Athena configuration state of whichever course `courseId` currently names, shared with every other caller
- * following the same course (see {@link AthenaCourseConfigStore}) and loaded the first time any of them asks for it.
+ * The Athena configuration state of whichever course `courseId` currently names, loaded as soon as it is created.
  *
  * Angular reuses a route whose only change is its `:courseId`, so the toggles can stay on screen while their course is
- * replaced by another one. Each course has a state of its own rather than one state being reset: answers still on
- * their way for the previous course land in the state that was left behind, so none of them can show up for the new
- * course, and a switch of the new course never starts from what was known about the previous one. A course replaced by
- * a copy with the same id, as the onboarding wizard does on every change, keeps its state, provided `courseId` is a
- * computed signal that only notifies when the id itself changes.
+ * replaced by another one. Each course therefore gets a state of its own rather than one state being reset: answers
+ * still on their way for the previous course land in the state that was dropped with it, so none of them can show up
+ * for the new course, and a switch of the new course never starts from what was known about the previous one. A course
+ * replaced by a copy with the same id, as the onboarding wizard does on every change, keeps its state, provided
+ * `courseId` is a computed signal that only notifies when the id itself changes.
  *
  * Must be called in an injection context, such as a component field initializer.
  *
  * @param courseId the id of the course to show; undefined shows no configuration and loads nothing
  */
 export function createAthenaCourseConfigState(courseId: Signal<number | undefined>): Signal<AthenaCourseConfigState | undefined> {
-    const store = inject(AthenaCourseConfigStore);
+    const athenaCourseConfigService = inject(AthenaCourseConfigService);
+    const alertService = inject(AlertService);
 
     const state = computed(() => {
         const id = courseId();
-        return id ? store.getOrCreate(id) : undefined;
+        return id ? new AthenaCourseConfigState(id, athenaCourseConfigService, alertService) : undefined;
     });
 
     effect(() => {
         const current = state();
-        // A state already loaded, or already loading for another caller following the same course, ignores this;
-        // see AthenaCourseConfigState#ensureLoaded. Outside the computed above so this effect rerunning for some
-        // unrelated reason can never retrigger it.
-        untracked(() => current?.ensureLoaded());
+        // Loading writes the configuration on screen, which must not become something this effect reruns for.
+        untracked(() => current?.load());
     });
 
     return state;
