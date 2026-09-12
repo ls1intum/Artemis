@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -75,9 +76,7 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
         return of(submission, true);
     }
 
-    private static SubmissionResponseDTO of(Submission submission, boolean includeParticipationSubmissions) {
-        Objects.requireNonNull(submission, "The submission must be set");
-
+    private static SubmissionResponseDTO of(@NonNull Submission submission, boolean includeParticipationSubmissions) {
         SubmissionParticipationDTO participation = null;
         if (submission.getParticipation() != null && Hibernate.isInitialized(submission.getParticipation())) {
             participation = SubmissionParticipationDTO.of(submission.getParticipation(), includeParticipationSubmissions);
