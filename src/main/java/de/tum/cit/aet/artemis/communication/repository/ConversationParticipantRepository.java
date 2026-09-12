@@ -110,15 +110,33 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     List<Long> findConversationIdsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
+    /**
+     * Counts how many of the given conversations the user may read.
+     * <p>
+     * Written as an {@code EXISTS} rather than a join to the participants. Joining produces a row per participant, so
+     * a course-wide channel with several thousand members multiplies the conversation out that many times and the
+     * {@code DISTINCT} then sorts it all back down again - the cost grew with the size of the cohort rather than with
+     * the number of conversations asked about, and this runs on every message fetch. {@code EXISTS} stops at the first
+     * membership row and reads it through the unique index on (conversation_id, user_id).
+     *
+     * @param conversationIds the conversations to check
+     * @param userId          the user whose access is being checked
+     * @param courseId        the course the conversations must belong to
+     * @return how many of the given conversations the user may read
+     */
     @Query("""
-            SELECT COUNT(DISTINCT conversation.id)
+            SELECT COUNT(conversation.id)
             FROM Conversation conversation
-                LEFT JOIN conversation.conversationParticipants conversationParticipant
             WHERE conversation.id IN :conversationIds
                 AND conversation.course.id = :courseId
                 AND (
-                    (conversationParticipant.user.id = :userId)
-                    OR (TYPE(conversation) = Channel AND TREAT(conversation AS Channel).isCourseWide = TRUE)
+                    (TYPE(conversation) = Channel AND TREAT(conversation AS Channel).isCourseWide = TRUE)
+                    OR EXISTS (
+                        SELECT 1
+                        FROM ConversationParticipant participant
+                        WHERE participant.conversation.id = conversation.id
+                            AND participant.user.id = :userId
+                    )
                 )
             """)
     long countAccessibleConversations(@Param("conversationIds") Collection<Long> conversationIds, @Param("userId") Long userId, @Param("courseId") Long courseId);

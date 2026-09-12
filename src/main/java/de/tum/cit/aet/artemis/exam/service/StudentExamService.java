@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -125,6 +127,8 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
+    private final ExamUserRepository examUserRepository;
+
     private final CacheManager cacheManager;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -137,8 +141,8 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager,
-            WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
+            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, ExamUserRepository examUserRepository,
+            CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
             StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
@@ -156,6 +160,7 @@ public class StudentExamService {
         this.programmingTriggerService = programmingTriggerService;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
+        this.examUserRepository = examUserRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
@@ -851,7 +856,12 @@ public class StudentExamService {
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
         Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student)).getFirst();
+        StudentExam studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
+        // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
+        // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
+        // flush can turn it into an update.
+        studentExam.setUser(student);
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
@@ -868,15 +878,15 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        this.invalidateExerciseStartStatus(exam.getId());
-        Exam examWithUsersAndExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
-
-        final var existingStudentExams = studentExamRepository.findByExamId(examWithUsersAndExercises.getId());
-        // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
-        studentExamRepository.deleteAll(existingStudentExams);
+        // The caller has already deleted the existing student exams and invalidated the exercise start status, and
+        // hands over an exam that carries its exercise groups. Re-reading the exam graph here loaded it a second time
+        // and re-ran a delete that had nothing left to remove. Only the registered students are still missing, and
+        // those are read as ids: ExamUser holds an eager association to User, so assembling them from the graph cost
+        // one select per student.
+        Set<Long> registeredUserIds = examUserRepository.findUserIdsByExamId(exam.getId());
 
         // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(examWithUsersAndExercises, examWithUsersAndExercises.getRegisteredUsers());
+        return studentExamRepository.createRandomStudentExams(exam, registeredUserIds);
     }
 
     /**
@@ -896,16 +906,14 @@ public class StudentExamService {
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
         this.invalidateExerciseStartStatus(exam.getId());
-        Exam examWithUsersAndExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
 
-        // Get all users who already have an individual exam
-        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examWithUsersAndExercises.getId());
-
-        // Get all students who don't have an exam yet
-        Set<User> missingUsers = examWithUsersAndExercises.getRegisteredUsers();
-        missingUsers.removeAll(usersWithStudentExam);
+        // Both sides of this subtraction are only ever compared, so ids are enough. Reading them as users loaded one
+        // entity per registered student and one per student who already has an exam.
+        Set<Long> missingUserIds = new HashSet<>(examUserRepository.findUserIdsByExamId(examWithExercises.getId()));
+        missingUserIds.removeAll(studentExamRepository.findUserIdsWithStudentExamsForExam(examWithExercises.getId()));
 
         // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(examWithUsersAndExercises, missingUsers);
+        return studentExamRepository.createRandomStudentExams(examWithExercises, missingUserIds);
     }
 }
