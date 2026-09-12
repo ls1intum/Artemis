@@ -826,6 +826,17 @@ describe('FileUploadExerciseUpdateComponent', () => {
         const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
         const formIsInvalid = () => fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm).form.invalid;
         const footerIsDisabled = () => fixture.debugElement.query(By.directive(FormFooterComponent)).componentInstance.isDisabled();
+        const gradingSectionIsValid = () => component.formStatusSections().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
+
+        /** Switches the score mode the way the picker does: it writes onto the exercise, then emits. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
+            component.fileUploadExercise().includedInOverallScore = mode;
+            picker.componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
 
         async function renderIncludedExercise(): Promise<void> {
             const exercise = new FileUploadExercise(createCourse(), undefined);
@@ -860,18 +871,40 @@ describe('FileUploadExerciseUpdateComponent', () => {
             // The score stops including bonus points, so the field goes - and its verdict has to go with it. Hidden
             // instead of removed, the control stayed registered and Save refused to submit over a value the reader
             // could no longer see, with nothing in its tooltip to say why.
-            // Driven through the picker, as a reader does: it writes the new mode onto the exercise and emits, and it
-            // is that event binding which marks this OnPush component dirty so the form re-reads the mode.
-            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
-            component.fileUploadExercise().includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
-            picker.componentInstance.includedInOverallScoreChange.emit(IncludedInOverallScore.NOT_INCLUDED);
-            fixture.detectChanges();
-            await fixture.whenStable();
-            fixture.detectChanges();
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
 
             expect(bonusInput()).toBeNull();
             expect(formIsInvalid()).toBe(false);
             expect(footerIsDisabled()).toBe(false);
+        });
+
+        it('should not call the grading section invalid just because the field is absent', async () => {
+            await renderIncludedExercise();
+            expect(gradingSectionIsValid()).toBe(true);
+
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            // Nothing is wrong: the field is gone because the score does not include bonus points, and Save agrees.
+            expect(gradingSectionIsValid()).toBe(true);
+            expect(footerIsDisabled()).toBe(false);
+        });
+
+        it('should keep following the field after it is rebuilt, not the one it first saw', async () => {
+            await renderIncludedExercise();
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            // Back again: a brand new control, which the wiring done once at view init would never have heard from.
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(bonusInput()).not.toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(gradingSectionIsValid()).toBe(false);
         });
     });
 

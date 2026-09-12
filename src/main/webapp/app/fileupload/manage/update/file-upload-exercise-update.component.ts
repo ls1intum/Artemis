@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -197,11 +197,25 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
         this.isSaving.set(false);
     }
 
+    /**
+     * Follows the bonus field as the score mode creates and destroys it.
+     *
+     * The wiring used to run once, when the view was first built, which was enough while the field merely hid itself.
+     * Now that it is removed and rebuilt, a subscription to the control that happened to exist then would stop
+     * reporting the moment the reader switched modes - and the section status would sit on whatever it last heard.
+     * Recalculated on every appearance and disappearance too, since both change what the section is worth.
+     */
+    protected readonly followBonusPointsControl = effect((onCleanup) => {
+        const control = this.bonusPoints();
+        // Untracked: the calculation reads half the form, and tracking all of it here would re-run this on every
+        // keystroke rather than when the control itself comes or goes.
+        untracked(() => this.calculateFormSectionStatus());
+        const subscription = control?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        onCleanup(() => subscription?.unsubscribe());
+    });
+
     ngAfterViewInit() {
         this.points()
-            ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPoints()
             ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.calculateFormSectionStatus());
         this.teamConfigFormGroupComponent()

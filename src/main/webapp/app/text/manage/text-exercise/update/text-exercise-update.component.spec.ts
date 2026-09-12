@@ -777,4 +777,70 @@ describe('TextExercise Management Update Component', () => {
             expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
     });
+
+    describe('bonus points as the score mode changes', () => {
+        const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
+        const gradingSectionIsValid = () => component.formSectionStatus().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
+
+        /** Switches the score mode the way the picker does: it writes onto the exercise, then emits. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
+            component.textExercise.includedInOverallScore = mode;
+            picker.componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            component.calculateFormSectionStatus();
+        }
+
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            routeData$.next({ textExercise: exercise });
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            // The status is only computed once the title field resolves, and the real one is stubbed out here.
+            component.exerciseTitleChannelNameComponent = (() => ({
+                titleChannelNameComponent: () => new MockTitleChannelNameComponent(),
+            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
+            // Exam mode short-circuits the plagiarism and timeline half of the grading verdict, leaving the points
+            // and the bonus points - which is the part these tests are about.
+            component.isExamMode.set(true);
+            component.calculateFormSectionStatus();
+            fixture.detectChanges();
+        });
+
+        it('should not call the grading section invalid just because the field is absent', async () => {
+            expect(bonusInput()).not.toBeNull();
+            // Guarded, or the assertion after the switch would pass without the field having been the reason.
+            expect(gradingSectionIsValid()).toBe(true);
+
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            // The field is gone because the score does not include bonus points, which is not a fault to report.
+            expect(bonusInput()).toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+        });
+
+        it('should keep following the field after it is rebuilt, not the one it first saw', async () => {
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(bonusInput()).not.toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // Not recalculated by hand here: the point is that the subscription to the rebuilt control does it.
+            // Wiring done once at view init would still be listening to the control destroyed two switches ago.
+            expect(gradingSectionIsValid()).toBe(false);
+        });
+    });
 });
