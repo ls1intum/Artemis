@@ -60,9 +60,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -121,6 +121,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepos
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
@@ -279,7 +280,7 @@ public class CourseTestService {
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -612,7 +613,6 @@ public class CourseTestService {
 
     // Test
     public void testDeleteCourseWithPermission() throws Exception {
-        // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5));
         Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), true);
         course3 = courseRepo.save(course3);
@@ -687,7 +687,7 @@ public class CourseTestService {
             // assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty(); // TODO: Readd this and check only for notifications of course
             assertThat(examRepo.findByCourseId(course.getId())).as("All exams are deleted").isEmpty();
             assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
-            assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
+            assertThat(lectureRepo.findAllByCourseId(course.getId())).as("All Lectures are deleted").isEmpty();
             assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
 
             // Verify new data is also deleted
@@ -1033,50 +1033,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses.getFirst().getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        Course receivedCourse = receivedCourseForDashboard.course();
-
-        // Test that the received course has five exercises
-        assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
-        // Test that the received course has two lectures
-        assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
-        // Test that the received course has two competencies
-
-        assertThat(receivedCourse.getCompetencies()).isEmpty();
-        assertThat(receivedCourse.getPrerequisites()).isEmpty();
-        assertThat(receivedCourse.getTutorialGroups()).isEmpty();
-        assertThat(receivedCourse.getTutorialGroupsConfiguration()).isNull();
-
-        // Iterate over all exercises of the remaining course
-        for (Exercise exercise : courses.getFirst().getExercises()) {
-            // Test that the exercise does not have more than one participation.
-            assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-            if (!exercise.getStudentParticipations().isEmpty()) {
-                // Buffer participation so that null checking is easier.
-                Participation participation = exercise.getStudentParticipations().iterator().next();
-                if (!participation.getSubmissions().isEmpty()) {
-                    // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                    assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
-                    Submission submission = participation.getSubmissions().iterator().next();
-                    if (submission != null) {
-                        // Test that the correct text submission was filtered.
-                        if (submission instanceof TextSubmission textSubmission) {
-                            assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
-                        }
-                        // Test that the correct modeling submission was filtered.
-                        else if (submission instanceof ModelingSubmission modelingSubmission) {
-                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Test
     public void testGetCourseAvailableTabs() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courses.getFirst().getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
@@ -1120,6 +1076,26 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForOverviewIncludesAthenaFlags() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+
+        // Course-level Athena config is what gates student-facing feedback-request controls on the overview path,
+        // so the lean projection must carry it even though most other Athena/instructor-facing fields stay off it.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.athenaGradingFeedbackEnabled()).isTrue();
+        assertThat(overview.athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    // Test
     public void testGetCourseForOverviewForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(false);
         unenrollStudent1FromAllCourses();
@@ -1133,11 +1109,17 @@ public class CourseTestService {
         ZonedDateTime now = ZonedDateTime.now();
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
 
+        // allowFeedbackRequests is now derived from the course-wide Athena config rather than a per-exercise field.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
         // Pin every programming action field read by the overview. The graded participation deliberately differs from
         // the practice participation so the projection cannot accidentally copy the wrong repository.
         ProgrammingExercise programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst()
                 .orElseThrow();
-        programmingExercise.setAllowFeedbackRequests(true);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setAllowOfflineIde(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -1191,7 +1173,7 @@ public class CourseTestService {
         assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
 
         var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
-        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("reflects the course-level Athena formative feedback setting").isTrue();
         assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
         assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
         assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
@@ -1210,18 +1192,6 @@ public class CourseTestService {
         assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
         assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
         assertThat(exercises.totalScores().studentScores().presentationScore()).as("the stateless calculator counts projected basic presentation scores").isEqualTo(1.0);
-
-        // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
-        // the entity-based endpoint while native clients still use that path.
-        CourseForDashboardDTO dashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        assertThat(exercises.totalScores()).isEqualTo(dashboard.totalScores());
-        assertThat(exercises.textScores()).isEqualTo(dashboard.textScores());
-        assertThat(exercises.programmingScores()).isEqualTo(dashboard.programmingScores());
-        assertThat(exercises.modelingScores()).isEqualTo(dashboard.modelingScores());
-        assertThat(exercises.fileUploadScores()).isEqualTo(dashboard.fileUploadScores());
-        assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
-        assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
-        assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
 
         var programmingGradeBeforePendingSubmission = exercises.participationResults().stream()
                 .filter(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).findFirst().orElseThrow();
@@ -1349,21 +1319,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
-        Course course = createCourseWithEnrollmentEnabled(true);
-        unenrollStudent1FromAllCourses();
-        request.get("/api/course/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
-    public void testGetCourseForDashboardForbiddenWithEnrollmentPossible() throws Exception {
-        Course course = createCourseWithEnrollmentEnabled(true);
-        unenrollStudent1FromAllCourses();
-        // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
-        request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
     public void testGetCourseForEnrollment() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
         // remove student from course so that they are not already enrolled (UCR-based unenrollment)
@@ -1435,19 +1390,6 @@ public class CourseTestService {
             registeredStudent.setExam(examRegistered);
             examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
-            CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
-                    CourseForDashboardDTO.class);
-            Course receivedCourse = receivedCourseForDashboard.course();
-            assertThat(receivedCourse).isNotNull();
-            if (i == 0) {
-                assertThat(receivedCourse.getExams()).isEmpty();
-            }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examRegistered, testExam);
-            }
-            else {
-                assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
-            }
         }
         var receivedCoursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         List<Course> receivedCourses = receivedCoursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
@@ -1500,21 +1442,16 @@ public class CourseTestService {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
 
         var receivedCoursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         Course finalCourse = course;
         CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream()
                 .filter(dto -> dto.course().getId().equals(finalCourse.getId())).findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
-        assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(1);
-        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(2);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
-        assertThat(receivedCourseForDashboard.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
         assertThat(receivedCourseForDashboardFromGeneralCall.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
-        assertThat(receivedCourseForDashboard.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
     }
 
     // Test
@@ -3341,11 +3278,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JacksonException {
         return buildCreateCourse(course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JacksonException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
@@ -3368,16 +3305,17 @@ public class CourseTestService {
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(),
-                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
+                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
+                course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JacksonException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + id).file(coursePart);
         if (fileContent != null) {

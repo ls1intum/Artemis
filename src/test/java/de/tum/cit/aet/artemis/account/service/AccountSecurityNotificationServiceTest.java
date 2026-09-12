@@ -151,7 +151,7 @@ class AccountSecurityNotificationServiceTest {
         //
         // The failure is thrown from the send itself rather than from the settings lookup: throwing from the lookup would
         // mean the mail was never attempted, so the test would not cover the case it is named after.
-        doThrow(new RuntimeException("mail backend unreachable")).when(mailSendingService).buildAndSendAsync(any(), any(), any(), any());
+        doThrow(new RuntimeException("mail transport unreachable")).when(mailSendingService).buildAndSendAsync(any(), any(), any(), any());
 
         accountSecurityNotificationService.credentialsRevoked(user, new CredentialRevocationChoiceDTO(true, false, false));
 

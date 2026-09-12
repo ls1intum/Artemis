@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
@@ -44,9 +45,15 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @Service
 public class ChannelService {
 
+    /** Every run of characters that is neither a digit nor a letter, replaced by a single hyphen in a generated name. */
+    private static final Pattern SPECIAL_CHARACTER_RUN = Pattern.compile("[^a-z0-9]+");
+
+    /** A trailing hyphen, removed from a generated name. */
+    private static final Pattern TRAILING_HYPHEN = Pattern.compile("-$");
+
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
-    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$][a-z0-9:\\-]{0,30}$";
+    private static final Pattern CHANNEL_NAME_PATTERN = Pattern.compile("^[a-z0-9$][a-z0-9:\\-]{0,30}$");
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
@@ -236,7 +243,7 @@ public class ChannelService {
      * @param channel  the channel to check
      */
     public void channelIsValidOrThrow(Long courseId, @Valid Channel channel) {
-        if (channel.getName() != null && !channel.getName().matches(CHANNEL_NAME_REGEX)) {
+        if (channel.getName() != null && !CHANNEL_NAME_PATTERN.matcher(channel.getName()).matches()) {
             throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, colons and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
 
@@ -310,7 +317,7 @@ public class ChannelService {
             channelToCreate.setCreator(creator);
             channelToCreate.setCourse(course);
             channelToCreate.setIsArchived(false);
-            if (!channelToCreate.getName().matches(CHANNEL_NAME_REGEX)) {
+            if (!CHANNEL_NAME_PATTERN.matcher(channelToCreate.getName()).matches()) {
                 throw new IllegalArgumentException("A channel name that was derived from a lecture title did not satisfy the channel name format");
             }
             channelsToCreate.add(channelToCreate);
@@ -491,12 +498,8 @@ public class ChannelService {
      */
     private static String generateChannelNameFromTitle(@NonNull String prefix, Optional<String> title) {
         String channelName = prefix + title.orElse("");
-        // [^a-z0-9]+ matches all occurrences of single or consecutive characters that
-        // are no digits and letters
-        String specialCharacters = "[^a-z0-9]+";
-        // -+$ matches a trailing hyphen at the end of a string
-        String leadingTrailingHyphens = "-$";
-        channelName = channelName.toLowerCase(Locale.ROOT).replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
+        channelName = SPECIAL_CHARACTER_RUN.matcher(channelName.toLowerCase(Locale.ROOT)).replaceAll("-");
+        channelName = TRAILING_HYPHEN.matcher(channelName).replaceFirst("");
         if (channelName.length() > 30) {
             channelName = channelName.substring(0, 30);
         }

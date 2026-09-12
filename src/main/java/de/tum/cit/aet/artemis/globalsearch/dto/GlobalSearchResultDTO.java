@@ -81,7 +81,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
         }
 
-        // Role metadata: used by the frontend to route tutors to the assessment dashboard
+        // Role metadata: used by the client to route tutors to the assessment dashboard
         // and editors to the exercise details page
         if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
             metadata.put("isAtLeastEditor", true);

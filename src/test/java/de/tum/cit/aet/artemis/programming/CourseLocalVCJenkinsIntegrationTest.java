@@ -251,26 +251,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         courseTestService.testGetCoursesWithQuizExercises();
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @ValueSource(booleans = { true, false })
-    void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        courseTestService.testGetCourseForDashboard(userRefresh);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @ValueSource(booleans = { true, false })
-    void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
-        courseTestService.testGetCourseForDashboardAccessDenied(userRefresh);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
-        courseTestService.testGetCourseForDashboardForbiddenWithEnrollmentPossible();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseAvailableTabs() throws Exception {
@@ -287,6 +267,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForOverviewIsLean() throws Exception {
         courseTestService.testGetCourseForOverviewIsLean();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForOverviewIncludesAthenaFlags() throws Exception {
+        courseTestService.testGetCourseForOverviewIncludesAthenaFlags();
     }
 
     @Test

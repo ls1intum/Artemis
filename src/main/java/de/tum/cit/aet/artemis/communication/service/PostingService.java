@@ -62,13 +62,6 @@ public abstract class PostingService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
-
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
@@ -133,7 +126,6 @@ public abstract class PostingService {
      *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
      *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
-    @SuppressWarnings("deprecation")
     public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
         // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
@@ -154,8 +146,6 @@ public abstract class PostingService {
             String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
                 websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
-                // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-                websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
             }
             else {
                 if (recipients == null) {
@@ -168,7 +158,6 @@ public abstract class PostingService {
         else if (post.getPlagiarismCase() != null) {
             String plagiarismCaseSuffix = "plagiarismCase/" + post.getPlagiarismCase().getId();
             websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
-            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
         }
     }
 
@@ -210,7 +199,6 @@ public abstract class PostingService {
      * @param action       the CRUD action this broadcast describes
      * @param conversation the conversation the post belongs to
      */
-    @SuppressWarnings("deprecation")
     private void broadcastPostWithPendingIrisReply(Post post, MetisCrudAction action, Conversation conversation) {
         // Tutor payload first, while the pending reply is still attached.
         PostBroadcastDTO tutorPayload = PostBroadcastDTO.from(post, action);

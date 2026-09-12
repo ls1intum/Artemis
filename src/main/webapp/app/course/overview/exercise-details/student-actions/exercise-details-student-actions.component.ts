@@ -65,6 +65,7 @@ export class ExerciseDetailsStudentActionsComponent {
     protected readonly ExerciseType = ExerciseType;
     protected readonly InitializationState = InitializationState;
     protected readonly ButtonType = ButtonType;
+    protected readonly AssessmentType = AssessmentType;
 
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);

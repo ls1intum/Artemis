@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service.connectors;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
@@ -22,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -32,6 +31,8 @@ import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSendingService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -82,6 +83,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @Autowired
     private AthenaFeedbackSendingService athenaFeedbackSendingService;
 
+    private Course course;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -104,9 +107,17 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
-        textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExercise = textExerciseRepository.save(textExercise);
+        course = courseUtilService.createCourse();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        course = courseRepository.save(course);
+        // Course.athenaConfig is lazy, so an exercise that comes back from a save carries a course without it. In
+        // production the entry point resolves it with CourseAthenaConfigRepository before anything asks the exercise;
+        // here the course that already holds it is put back, which leaves the service under test the same input.
+
+        textExercise = textExerciseUtilService.createSampleTextExercise(course);
 
         var textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
@@ -127,8 +138,12 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         textFeedback = feedbackRepository.save(textFeedback);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setCourse(course);
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.setCourse(course);
 
         var programmingParticipation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
 
@@ -190,6 +205,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         GradingCriterion gradingCriterion = createExampleGradingCriterion();
         textExercise.setGradingCriteria(Set.of(gradingCriterion));
         textExercise = textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course);
 
         final GradingInstruction instruction = GradingCriterionUtil.findAnyInstructionWhere(textExercise.getGradingCriteria(),
                 gradingInstruction -> "Give this feedback if xyz".equals(gradingInstruction.getInstructionDescription())).orElseThrow();
@@ -245,16 +261,14 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.setFeedbackSuggestionModule(null);
-        textExercise = textExerciseRepository.save(textExercise);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
         await().untilAsserted(
                 () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
 
         asyncExceptionLogAppender.list.clear();
 
-        programmingExercise.setFeedbackSuggestionModule(null);
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
         await().untilAsserted(
                 () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));

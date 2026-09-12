@@ -585,7 +585,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         /**
          * Role flags should be present on regular exercises too, since they are used by the
-         * frontend for routing (e.g. tutors to student view, editors to management page).
+         * client for routing (e.g. tutors to student view, editors to management page).
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

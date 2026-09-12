@@ -44,6 +44,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.DragAndDropSubmittedAnswerAfterEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerAfterEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
@@ -310,8 +313,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
                 "/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit?isRated=true", submittedAnswer,
                 SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
 
-        assertThat(result).isNotNull();
-        assertThat(result.multipleChoiceSubmittedAnswer()).isNotNull();
+        assertThat(result).isNotNull().isInstanceOf(MultipleChoiceSubmittedAnswerAfterEvaluationDTO.class);
+        assertThat(((MultipleChoiceSubmittedAnswerAfterEvaluationDTO) result).multipleChoiceSubmittedAnswer()).isNotNull();
         assertThat(result.scoreInPoints()).isNotNull();
 
         Optional<QuizQuestionProgress> savedProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, mcQuestion.getId());
@@ -402,9 +405,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
                 "/api/quiz/courses/" + course.getId() + "/training-questions/" + dndQuestion.getId() + "/submit?isRated=true", correctAnswer,
                 SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
 
-        assertThat(result).isNotNull();
-        assertThat(result.dragAndDropSubmittedAnswer()).isNotNull();
-        Assertions.assertThat(result.dragAndDropSubmittedAnswer().mappings()).as("the server must persist all drag-and-drop mappings").hasSize(correctAnswer.getMappings().size());
+        assertThat(result).isNotNull().isInstanceOf(DragAndDropSubmittedAnswerAfterEvaluationDTO.class);
+        var dragAndDropResult = ((DragAndDropSubmittedAnswerAfterEvaluationDTO) result).dragAndDropSubmittedAnswer();
+        assertThat(dragAndDropResult).isNotNull();
+        Assertions.assertThat(dragAndDropResult.mappings()).as("the server must persist all drag-and-drop mappings").hasSize(correctAnswer.getMappings().size());
         // Correct mappings → full score for this question.
         assertThat(result.scoreInPoints()).isEqualTo(dndQuestion.getPoints());
 
@@ -430,10 +434,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
                 "/api/quiz/courses/" + course.getId() + "/training-questions/" + saQuestion.getId() + "/submit?isRated=true", correctAnswer,
                 SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
 
-        assertThat(result).isNotNull();
-        assertThat(result.shortAnswerSubmittedAnswer()).isNotNull();
-        Assertions.assertThat(result.shortAnswerSubmittedAnswer().submittedTexts()).as("the server must persist one submitted text per filled spot")
-                .hasSize(saQuestion.getSpots().size());
+        assertThat(result).isNotNull().isInstanceOf(ShortAnswerSubmittedAnswerAfterEvaluationDTO.class);
+        var shortAnswerResult = ((ShortAnswerSubmittedAnswerAfterEvaluationDTO) result).shortAnswerSubmittedAnswer();
+        assertThat(shortAnswerResult).isNotNull();
+        Assertions.assertThat(shortAnswerResult.submittedTexts()).as("the server must persist one submitted text per filled spot").hasSize(saQuestion.getSpots().size());
         assertThat(result.scoreInPoints()).isEqualTo(saQuestion.getPoints());
 
         Optional<QuizQuestionProgress> savedProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, saQuestion.getId());

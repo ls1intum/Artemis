@@ -44,3 +44,19 @@
         </tum-ui-list>
     }
 }
+
+<tum-ui-dialog
+    [(visible)]="conflictDialogVisible"
+    size="large"
+    [header]="'artemisApp.iris.memories.conflict.modalTitle' | artemisTranslate"
+    (visibleChange)="conflictDialogVisible.set($event)"
+>
+    @if (conflictDialogVisible()) {
+        <jhi-resolve-memories-conflicts-modal
+            [conflictGroups]="conflictDialogGroups()"
+            [details]="conflictDialogDetails()"
+            (resolved)="onConflictsResolved($event)"
+            (closed)="conflictDialogVisible.set(false)"
+        />
+    }
+</tum-ui-dialog>

@@ -165,7 +165,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit.setDescription("Changed");
         var updatedOnlineUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit),
@@ -192,7 +192,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(onlineUnit), OnlineUnitDTO.class, HttpStatus.OK);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -208,7 +208,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         onlineUnit.setCompetencyLinks(links);
         lecture1.addLectureUnit(onlineUnit);
         lecture1 = lectureRepository.save(lecture1);
-        onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test
@@ -216,7 +216,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class,
@@ -228,7 +228,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         OnlineUnitDTO onlineUnitWithoutId = new OnlineUnitDTO(null, this.onlineUnit.getName(), this.onlineUnit.getReleaseDate(), this.onlineUnit.getDescription(),
                 this.onlineUnit.getSource(), null, null);
         request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitWithoutId, OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
@@ -239,7 +239,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void updateOnlineUnit_incorrectLectureId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         Lecture otherLecture = lectureUtilService.createLecture(lecture1.getCourse());
         request.putWithResponseBody("/api/lecture/lectures/" + otherLecture.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class,
                 HttpStatus.BAD_REQUEST);
@@ -250,7 +250,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         OnlineUnitDTO onlineUnitFromRequest = request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK,
                 OnlineUnitDTO.class);
         assertThat(onlineUnitFromRequest.id()).isEqualTo(this.onlineUnit.getId());
@@ -265,7 +265,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void getOnlineUnit_incorrectId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         request.get("/api/lecture/lectures/999/online-units/" + this.onlineUnit.getId(), HttpStatus.BAD_REQUEST, OnlineUnitDTO.class);
     }
 
@@ -303,7 +303,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.FORBIDDEN, OnlineUnitDTO.class);
