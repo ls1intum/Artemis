@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -32,6 +33,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @EnforceAdmin
 @FeatureUsage("authoring-assistance/generation-recovery")
 public class AdminHyperionGenerationResource {
+
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cntrl}]+");
 
     private final Optional<GenerationJobService> jobs;
 
@@ -69,7 +72,7 @@ public class AdminHyperionGenerationResource {
      */
     @DeleteMapping("{exerciseId}/hyperion-wedged-slots/{token}")
     public ResponseEntity<Void> recoverWedgedSlot(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
-        String boundedReason = reason.replaceAll("[\\p{Cntrl}]+", " ").trim();
+        String boundedReason = CONTROL_CHARACTERS.matcher(reason).replaceAll(" ").trim();
         if (boundedReason.isBlank() || boundedReason.length() > 500) {
             return ResponseEntity.badRequest().build();
         }

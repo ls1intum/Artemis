@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,6 +50,8 @@ import reactor.core.scheduler.Schedulers;
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class HyperionExerciseMetadataSuggestionService {
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final Logger log = LoggerFactory.getLogger(HyperionExerciseMetadataSuggestionService.class);
 
@@ -263,7 +266,7 @@ public class HyperionExerciseMetadataSuggestionService {
         if (courseShortName == null || courseShortName.isBlank()) {
             return true;
         }
-        String projectKey = (courseShortName + shortName).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
+        String projectKey = WHITESPACE.matcher((courseShortName + shortName).toUpperCase(Locale.ROOT)).replaceAll("");
         return programmingExerciseRepository.countByProjectKey(projectKey) == 0;
     }
 }

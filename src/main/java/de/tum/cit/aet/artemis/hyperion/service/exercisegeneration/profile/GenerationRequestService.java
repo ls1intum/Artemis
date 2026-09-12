@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -29,6 +30,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 @Service
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationRequestService {
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -86,7 +89,7 @@ public class GenerationRequestService {
 
     /** Whitespace-insensitive, because the statement reaches the server over HTTP and its line endings need not match the classpath resource it is compared against. */
     private static String normalizeStatement(String statement) {
-        return statement.replaceAll("\\s+", " ").strip();
+        return WHITESPACE.matcher(statement).replaceAll(" ").strip();
     }
 
     /** Minimum stripped length for a problem statement to be a candidate specification rather than an empty field or a short placeholder. */

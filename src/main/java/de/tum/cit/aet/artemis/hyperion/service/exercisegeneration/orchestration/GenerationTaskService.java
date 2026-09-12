@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -64,6 +65,8 @@ import io.micrometer.observation.ObservationRegistry;
 @Lazy
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationTaskService {
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final Logger log = LoggerFactory.getLogger(GenerationTaskService.class);
 
@@ -503,7 +506,7 @@ public class GenerationTaskService {
     }
 
     private static String conciseReason(String reason) {
-        String normalized = reason.replaceAll("\\s+", " ").trim();
+        String normalized = WHITESPACE.matcher(reason).replaceAll(" ").trim();
         return normalized.length() <= 600 ? normalized : normalized.substring(0, 597) + "...";
     }
 
