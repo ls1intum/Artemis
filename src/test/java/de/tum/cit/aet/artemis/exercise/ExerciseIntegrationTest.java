@@ -38,10 +38,11 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.UpcomingExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -49,7 +50,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -237,54 +237,45 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseServer = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+                ExerciseResponseDTO exerciseServer = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
 
                 // Test that certain properties were set correctly
-                assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();
-                assertThat(exerciseServer.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseServer.getMaxPoints()).as("Max score was set correctly").isEqualTo(5.0);
-                assertThat(exerciseServer.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+                assertThat(exerciseServer.type()).as("Discriminator is present").isEqualTo(exercise.getType());
+                assertThat(exerciseServer.releaseDate()).as("Release date is present").isNotNull();
+                assertThat(exerciseServer.dueDate()).as("Due date is present").isNotNull();
+                assertThat(exerciseServer.maxPoints()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseServer.difficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+                assertThat(exerciseServer.course()).as("Course context is present").isNotNull();
+                assertThat(exerciseServer.course().id()).as("Course id was set correctly").isEqualTo(course.getId());
 
                 // Test that certain properties were filtered out as the test user is a student
-                assertThat(exerciseServer.getGradingInstructions()).as("Grading instructions were filtered out").isNull();
-                assertThat(exerciseServer.getTutorParticipations()).as("Tutor participations not included").isEmpty();
-                assertThat(exerciseServer.getExampleSubmissions()).as("Example submissions not included").isEmpty();
+                assertThat(exerciseServer.gradingInstructions()).as("Grading instructions were filtered out").isNull();
+                assertThat(exerciseServer.gradingCriteria()).as("Grading criteria were filtered out").isNull();
+                assertThat(exerciseServer.tutorParticipations()).as("Tutor participations not included").isNull();
+                assertThat(exerciseServer.exampleSubmissions()).as("Example submissions not included").isNull();
 
                 // Test presence and absence of exercise type specific properties
-                switch (exerciseServer) {
-                    case FileUploadExercise fileUploadExercise -> assertFileUploadExercise(fileUploadExercise, "png", null);
-                    case ModelingExercise modelingExercise -> assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
-                    case ProgrammingExercise programmingExerciseExercise -> assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
-                    case QuizExercise quizExercise -> assertQuizExercise(quizExercise, 120, 1, List.of());
-                    case TextExercise textExercise -> assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
-                    default -> {
+                switch (exercise) {
+                    case FileUploadExercise ignored -> {
+                        assertThat(exerciseServer.filePattern()).as("File pattern was set correctly").isEqualTo("png");
+                        assertThat(exerciseServer.exampleSolution()).as("Example solution was filtered out").isNull();
                     }
-                }
-
-                // Test that the exercise does not have more than one participation.
-                assertThat(exerciseServer.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-
-                if (exerciseServer.getStudentParticipations().isEmpty()) {
-                    continue;
-                }
-                // Buffer participation so that null checking is easier.
-                Participation participation = exerciseServer.getStudentParticipations().iterator().next();
-
-                if (participation.getSubmissions().isEmpty()) {
-                    continue;
-                }
-                // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
-                Submission submission = participation.getSubmissions().iterator().next();
-
-                switch (submission) {
-
-                    // Test that the correct text submission was filtered.
-                    case TextSubmission textSubmission -> assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
-
-                    // Test that the correct modeling submission was filtered.
-                    case ModelingSubmission modelingSubmission -> assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model2");
-                    case null, default -> {
+                    case ModelingExercise ignored -> {
+                        assertThat(exerciseServer.diagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
+                        assertThat(exerciseServer.exampleSolutionModel()).as("Example solution model was filtered out").isNull();
+                        assertThat(exerciseServer.exampleSolutionExplanation()).as("Example solution explanation was filtered out").isNull();
+                    }
+                    case ProgrammingExercise ignored -> {
+                        assertThat(exerciseServer.projectKey()).as("Project key was set").isNotNull();
+                        assertThat(exerciseServer.allowOfflineIde()).as("Offline IDE was set correctly").isTrue();
+                        assertThat(exerciseServer.templateParticipation()).as("Template participation not loaded by this endpoint").isNull();
+                    }
+                    case QuizExercise ignored -> {
+                        assertThat(exerciseServer.duration()).as("Duration was set correctly").isEqualTo(120);
+                        assertThat(exerciseServer.allowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
+                    }
+                    case TextExercise ignored -> assertThat(exerciseServer.exampleSolution()).as("Sample solution was filtered out").isNull();
+                    default -> {
                     }
                 }
             }
@@ -341,7 +332,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     private void getExamExercise() throws Exception {
         TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
-        request.get("/api/exercise/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
         request.get("/api/exercise/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -349,9 +340,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetUpcomingExercises() throws Exception {
         var now = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
-        List<Exercise> exercises = request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        List<UpcomingExerciseDTO> exercises = request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.OK, UpcomingExerciseDTO.class);
         for (var exercise : exercises) {
-            assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
+            assertThat(exercise.dueDate()).isAfterOrEqualTo(now);
         }
         var size = exercises.size();
 
@@ -359,26 +350,34 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var exercise = course.getExercises().iterator().next();
         assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
-        exercises = request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
-        assertThat(exercises).hasSize(size + 1).contains(exercise);
+        exercises = request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.OK, UpcomingExerciseDTO.class);
+        assertThat(exercises).hasSize(size + 1);
+        var added = exercises.stream().filter(dto -> dto.id() == exercise.getId()).findFirst().orElseThrow();
+        assertThat(added.type()).isEqualTo(exercise.getType());
+        assertThat(added.title()).isEqualTo(exercise.getTitle());
+        assertThat(added.dueDate()).isEqualTo(exercise.getDueDate());
+        assertThat(added.course()).isNotNull();
+        assertThat(added.course().id()).isEqualTo(course.getId());
+        assertThat(added.course().title()).isEqualTo(course.getTitle());
+        assertThat(exercises).extracting(UpcomingExerciseDTO::dueDate).isSortedAccordingTo(Comparator.naturalOrder());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetUpcomingExercisesAsStudentForbidden() throws Exception {
-        request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, UpcomingExerciseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetUpcomingExercisesAsInstructorForbidden() throws Exception {
-        request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, UpcomingExerciseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetUpcomingExercisesAsTutorForbidden() throws Exception {
-        request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.FORBIDDEN, UpcomingExerciseDTO.class);
     }
 
     @Test
@@ -422,20 +421,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
 
-                request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
+                request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
 
                 exercise.setExampleSolutionPublicationDate(now.minusHours(1));
                 exerciseRepository.save(exercise);
 
-                Exercise exerciseForExampleSolution = request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK, Exercise.class);
-                assertThat(exerciseForExampleSolution.getExampleSolutionPublicationDate()).isBeforeOrEqualTo(now);
-                switch (exerciseForExampleSolution) {
-                    case FileUploadExercise fileUploadExercise -> assertThat(fileUploadExercise.getExampleSolution()).isEqualTo("Example Solution");
-                    case ModelingExercise modelingExercise -> {
-                        assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo("Example solution model");
-                        assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo("Example Solution");
+                ExerciseResponseDTO exerciseForExampleSolution = request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK,
+                        ExerciseResponseDTO.class);
+                assertThat(exerciseForExampleSolution.exampleSolutionPublicationDate()).isBeforeOrEqualTo(now);
+                assertThat(exerciseForExampleSolution.type()).isEqualTo(exercise.getType());
+                assertThat(exerciseForExampleSolution.problemStatement()).isEqualTo(exercise.getProblemStatement());
+                switch (exercise) {
+                    case FileUploadExercise ignored -> assertThat(exerciseForExampleSolution.exampleSolution()).isEqualTo("Example Solution");
+                    case ModelingExercise ignored -> {
+                        assertThat(exerciseForExampleSolution.exampleSolutionModel()).isEqualTo("Example solution model");
+                        assertThat(exerciseForExampleSolution.exampleSolutionExplanation()).isEqualTo("Example Solution");
                     }
-                    case TextExercise textExercise -> assertThat(textExercise.getExampleSolution()).isEqualTo("Example Solution");
+                    case TextExercise ignored -> assertThat(exerciseForExampleSolution.exampleSolution()).isEqualTo("Example Solution");
                     default -> {
                     }
                 }
@@ -452,16 +454,21 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
         TextExercise exercise = (TextExercise) exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
-        request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
 
         ZonedDateTime now = ZonedDateTime.now();
         exam.setExampleSolutionPublicationDate(now.minusHours(1));
         examUtilService.addStudentExamWithUser(exam, user);
         examRepository.save(exam);
 
-        TextExercise exerciseForExampleSolution = request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK, TextExercise.class);
+        ExerciseResponseDTO exerciseForExampleSolution = request.get("/api/exercise/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK, ExerciseResponseDTO.class);
 
-        assertThat(exerciseForExampleSolution.getExampleSolution()).isEqualTo("This is my example solution");
+        assertThat(exerciseForExampleSolution.exampleSolution()).isEqualTo("This is my example solution");
+        assertThat(exerciseForExampleSolution.course()).as("An exam exercise reports its course through the exercise group").isNull();
+        assertThat(exerciseForExampleSolution.exerciseGroup()).isNotNull();
+        assertThat(exerciseForExampleSolution.exerciseGroup().exam()).isNotNull();
+        assertThat(exerciseForExampleSolution.exerciseGroup().exam().course()).isNotNull();
+        assertThat(exerciseForExampleSolution.exerciseGroup().exam().course().id()).isEqualTo(course.getId());
 
     }
 
@@ -604,7 +611,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         // Use a course without TEST_PREFIX enrollment so student11 is not enrolled (it should be FORBIDDEN)
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text");
         var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
         request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -614,31 +621,56 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseForAssessmentDashboard = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
-                assertThat(exerciseForAssessmentDashboard.getTutorParticipations()).as("Tutor participation was created").hasSize(1);
-                assertThat(exerciseForAssessmentDashboard.getExampleSubmissions()).as("Example submissions are not null").isEmpty();
+                ExerciseResponseDTO exerciseForAssessmentDashboard = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK,
+                        ExerciseResponseDTO.class);
+                assertThat(exerciseForAssessmentDashboard.tutorParticipations()).as("Tutor participation was created").hasSize(1);
+                assertThat(exerciseForAssessmentDashboard.exampleSubmissions()).as("No example submissions, so the list is omitted from the response").isNullOrEmpty();
 
                 // Test that certain properties were set correctly
-                assertThat(exerciseForAssessmentDashboard.getReleaseDate()).as("Release date is present").isNotNull();
-                assertThat(exerciseForAssessmentDashboard.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseForAssessmentDashboard.getMaxPoints()).as("Max score was set correctly").isEqualTo(5.0);
-                assertThat(exerciseForAssessmentDashboard.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+                assertThat(exerciseForAssessmentDashboard.type()).as("Discriminator is present").isEqualTo(exercise.getType());
+                assertThat(exerciseForAssessmentDashboard.releaseDate()).as("Release date is present").isNotNull();
+                assertThat(exerciseForAssessmentDashboard.dueDate()).as("Due date is present").isNotNull();
+                assertThat(exerciseForAssessmentDashboard.maxPoints()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseForAssessmentDashboard.difficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+                assertThat(exerciseForAssessmentDashboard.course()).as("Course context is present").isNotNull();
 
                 // Test presence of exercise type specific properties
-                switch (exerciseForAssessmentDashboard) {
-                    case FileUploadExercise fileUploadExercise -> assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    case ModelingExercise modelingExercise ->
-                        assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    case ProgrammingExercise programmingExerciseExercise -> assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    case QuizExercise quizExercise -> {
-                        assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(120);
-                        assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
+                switch (exercise) {
+                    case FileUploadExercise ignored -> assertThat(exerciseForAssessmentDashboard.filePattern()).as("File pattern was set correctly").isEqualTo("png");
+                    case ModelingExercise ignored ->
+                        assertThat(exerciseForAssessmentDashboard.diagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
+                    case ProgrammingExercise ignored -> assertThat(exerciseForAssessmentDashboard.projectKey()).as("Project key was set").isNotNull();
+                    case QuizExercise ignored -> {
+                        assertThat(exerciseForAssessmentDashboard.duration()).as("Duration was set correctly").isEqualTo(120);
+                        assertThat(exerciseForAssessmentDashboard.allowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
                     }
                     default -> {
                     }
                 }
             }
         }
+    }
+
+    /**
+     * The assessment dashboard renders a programming exercise's problem statement through the instructions component,
+     * which it feeds with {@code templateParticipation}, and offers the solution repository through the code button,
+     * which reads {@code solutionParticipation.repositoryUri}. Both are fetch-joined by the dashboard's programming
+     * query, so both have to reach the client.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExerciseForAssessmentDashboard_programmingExerciseCarriesTemplateAndSolutionParticipation() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exerciseRepository.save(exercise);
+
+        ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
+
+        assertThat(response.templateParticipation()).as("Template participation the instructions component needs").isNotNull();
+        assertThat(response.templateParticipation().id()).isNotNull();
+        assertThat(response.solutionParticipation()).as("Solution participation the code button needs").isNotNull();
+        assertThat(response.solutionParticipation().repositoryUri()).as("Repository URI the code button links to").isNotBlank();
     }
 
     @Test
@@ -649,8 +681,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
-        Exercise receivedExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
-        assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
+        ExerciseResponseDTO receivedExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
+        assertThat(receivedExercise.exampleSubmissions()).as("Example submission without assessment is removed from exercise").isNullOrEmpty();
     }
 
     @Test
@@ -659,14 +691,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
         // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
         var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text").getExercises().iterator().next();
-        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, ExerciseResponseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
         var exercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX).getExercises().iterator().next();
-        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
+        request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, ExerciseResponseDTO.class);
     }
 
     @Test
@@ -676,8 +708,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
-        var textExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
-        assertThat(textExercise.getTutorParticipations().iterator().next().getStatus()).as("Status was changed to trained").isEqualTo(TutorParticipationStatus.TRAINED);
+        var textExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
+        assertThat(textExercise.tutorParticipations().getFirst().status()).as("Status was changed to trained").isEqualTo(TutorParticipationStatus.TRAINED);
     }
 
     private List<User> findTutors(Course course) {
