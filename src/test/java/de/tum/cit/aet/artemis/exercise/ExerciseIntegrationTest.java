@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -113,6 +115,15 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     private GradingCriterionRepository gradingCriterionRepository;
 
     static final int NUMBER_OF_TUTORS = 1;
+
+    private static final String TEST_REPOSITORY_URI = "http://localhost:8080/git/TSTEXC/tstexc-tests.git";
+
+    /**
+     * The programming scalars the entity put on the wire before the migration, pinned by value in the contract test.
+     */
+    private static final List<String> PROGRAMMING_SCALARS = List.of("allowOnlineEditor", "allowOfflineIde", "allowOnlineIde", "staticCodeAnalysisEnabled",
+            "maxStaticCodeAnalysisPenalty", "showTestNamesToStudents", "buildAndTestStudentSubmissionsAfterDueDate", "releaseTestsWithExampleSolution", "programmingLanguage",
+            "projectType", "packageName", "projectKey", "testRepositoryUri", "testCasesChanged", "defaultTestCaseVisibility");
 
     @BeforeEach
     void init() {
@@ -411,6 +422,64 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         assertThat(examNode.get("examMaxPoints")).isEqualTo(90);
         assertThat(examNode.get("examiner")).isEqualTo("Prof. Krusche");
         assertThat(examNode.get("examArchivePath")).isEqualTo("Exam_archive.zip");
+    }
+
+    /**
+     * The same route is the one a SCORPIO client reads a programming exercise through, and it used to hand out the
+     * {@code ProgrammingExercise} entity. Every programming scalar the entity serialized is pinned here by value, not
+     * only by key, against the reloaded entity, because a component that silently turns null passes a key check.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingExerciseCarriesTheProgrammingScalarsTheEntityUsedToSerialize() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        // Every nullable scalar needs a value: NON_EMPTY hides an unset one on both sides, which would let a dropped
+        // component pass unnoticed. The test repository uri is the one a tutor is meant to keep.
+        exercise.setTestRepositoryUri(TEST_REPOSITORY_URI);
+        exercise.setAllowOnlineEditor(true);
+        exercise.setAllowOfflineIde(true);
+        exercise.setAllowOnlineIde(true);
+        exercise.setStaticCodeAnalysisEnabled(true);
+        exercise.setMaxStaticCodeAnalysisPenalty(20);
+        exercise.setShowTestNamesToStudents(true);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setReleaseTestsWithExampleSolution(true);
+        exercise.setTestCasesChanged(true);
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        exercise.setPackageName("de.tum.cit.ase");
+        exerciseRepository.save(exercise);
+
+        Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
+        Map<String, Object> entityJson = objectMapper.convertValue(exerciseRepository.findByIdElseThrow(exercise.getId()), new TypeReference<>() {
+        });
+
+        assertThat(PROGRAMMING_SCALARS).allSatisfy(key -> {
+            assertThat(entityJson.get(key)).as(key + " is serialized by the entity").isNotNull();
+            assertThat(response.get(key)).as(key + " on the wire").isEqualTo(entityJson.get(key));
+        });
+        assertThat(response.get("testRepositoryUri")).isEqualTo(TEST_REPOSITORY_URI);
+        assertThat(response.get("defaultTestCaseVisibility")).isEqualTo(Visibility.ALWAYS.name());
+    }
+
+    /**
+     * The student path runs {@code filterSensitiveInformation}, which clears the test repository uri. NON_EMPTY then
+     * drops the key, exactly as the entity dropped it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseHidesTheTestRepositoryUriFromStudents() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        exercise.setTestRepositoryUri(TEST_REPOSITORY_URI);
+        exerciseRepository.save(exercise);
+
+        Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
+
+        assertThat(response).as("Test repository uri stays hidden from students").doesNotContainKey("testRepositoryUri");
+        assertThat(response.get("defaultTestCaseVisibility")).isEqualTo(Visibility.ALWAYS.name());
     }
 
     /**
