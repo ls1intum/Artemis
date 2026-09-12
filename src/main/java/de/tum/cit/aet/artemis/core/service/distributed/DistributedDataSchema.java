@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -93,6 +93,29 @@ public final class DistributedDataSchema {
             // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * The structures carried from version 1 into version 2. Declared separately from
+     * {@link #LEGACY_TO_V1_STRUCTURES} because each transition owns its own carry-over decision, even where the two
+     * lists happen to name the same structures.
+     *
+     * <p>
+     * What made this bump necessary is the {@code features} map. Its keys are {@link
+     * de.tum.cit.aet.artemis.core.service.feature.Feature} constants, and Kryo encodes an enum by ordinal, so a build
+     * whose enum is one constant shorter cannot decode a key a newer build wrote. {@code FeatureToggleService}
+     * iterates that map to answer which features are on, which is where such a key would be read. The second change
+     * in the same release is a new {@code PyrisJob} implementation in {@code pyris-job-map}, which an older build
+     * likewise has no class for. Both are reads an older build performs against data a newer one wrote, which is what
+     * the version namespace separates.
+     *
+     * <p>
+     * The entries that already exist in version 1 are readable by both builds, so they move as the bytes they are.
+     * The struggle maps this release adds are absent on purpose: no build that wrote version 1 knew them, and their
+     * entries are short-lived reservations that rebuild themselves.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
+            new CarriedOverStructure("features", StructureKind.MAP), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

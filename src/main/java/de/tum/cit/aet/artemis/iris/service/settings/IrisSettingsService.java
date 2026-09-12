@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -35,13 +38,28 @@ public class IrisSettingsService {
 
     private final int configuredDefaultTimeframeHours;
 
+    private final FeatureToggleService featureToggleService;
+
     public IrisSettingsService(IrisCourseSettingsRepository irisCourseSettingsRepository, CourseRepository courseRepository,
             @Value("${artemis.iris.ratelimit.default-limit:0}") int configuredDefaultRateLimit,
-            @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours) {
+            @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours, FeatureToggleService featureToggleService) {
         this.irisCourseSettingsRepository = irisCourseSettingsRepository;
         this.courseRepository = courseRepository;
         this.configuredDefaultRateLimit = configuredDefaultRateLimit;
         this.configuredDefaultTimeframeHours = configuredDefaultTimeframeHours;
+        this.featureToggleService = featureToggleService;
+    }
+
+    /**
+     * The course flag decides whether a course's students get struggle detection; this decides whether anyone can.
+     * Read live rather than snapshotted: an admin turning the feature off is meant to take effect at once, on every
+     * node, without a restart.
+     *
+     * @return {@code true} by default, unless the installation turned the mechanism off; {@code false} if the
+     *         feature state is missing or cannot be read
+     */
+    public boolean isGlobalStruggleEnabled() {
+        return featureToggleService.isFeatureEnabled(Feature.IrisProactiveStruggle);
     }
 
     /**
@@ -90,6 +108,12 @@ public class IrisSettingsService {
     public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettings payload, boolean isAdmin) {
         var current = getSettingsForCourse(courseId);
         var request = Objects.requireNonNullElse(payload, current);
+        // A full PUT cannot tell "this was cleared" from "the client does not know this field": both arrive as null.
+        // Merging the persisted value is what keeps a decision alive across a save from any of the three clients
+        // that write these settings, only one of which edits the two proactive flags.
+        request = IrisCourseSettings.of(request.enabled(), request.customInstructions(), request.variant(), request.supportLevel(), request.rateLimit(),
+                mergeOmitted(request.proactiveStruggleEnabled(), current.proactiveStruggleEnabled()),
+                mergeOmitted(request.legacyBuildTriggersEnabled(), current.legacyBuildTriggersEnabled()));
         var sanitizedRequest = sanitizePayload(request);
         var sanitizedCurrent = sanitizePayload(current);
 
@@ -109,14 +133,13 @@ public class IrisSettingsService {
         return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);
     }
 
-    /**
-     * Validates that non-admin users are not trying to change restricted settings.
-     * Instructors can only modify enabled status and custom instructions; variant and rate limits are admin-only.
-     *
-     * @param request the requested new settings
-     * @param current the current settings
-     * @throws AccessForbiddenAlertException if the request attempts to change variant or rate limits
-     */
+    // Resolves one nullable flag of an incoming payload against what is stored.
+    private static @Nullable Boolean mergeOmitted(@Nullable Boolean requested, @Nullable Boolean stored) {
+        return requested != null ? requested : stored;
+    }
+
+    // Validates that non-admin users are not trying to change restricted settings. Variant and rate limits are deployment concerns and
+    // stay admin-only; everything else on the course, the proactive toggles included, is a teaching decision its instructor owns.
     private void enforceInstructorRestrictions(IrisCourseSettings request, IrisCourseSettings current) {
         if (!Objects.equals(request.variant(), current.variant())) {
             throw new AccessForbiddenAlertException("Only administrators can change the Iris pipeline variant", "IrisSettings", "irisVariantRestricted");
@@ -125,6 +148,7 @@ public class IrisSettingsService {
         if (!Objects.equals(request.rateLimit(), current.rateLimit())) {
             throw new AccessForbiddenAlertException("Only administrators can change Iris rate limits", "IrisSettings", "irisRateLimitRestricted");
         }
+
     }
 
     /**
@@ -208,7 +232,10 @@ public class IrisSettingsService {
             return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
-        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), payload.supportLevel(), sanitizedRateLimit);
+        // The raw nullable value, not the effective one: collapsing null to true here would destroy the
+        // "undecided" state before updateCourseSettings gets to merge it.
+        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), payload.supportLevel(), sanitizedRateLimit,
+                payload.proactiveStruggleEnabled(), payload.legacyBuildTriggersEnabled());
     }
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {

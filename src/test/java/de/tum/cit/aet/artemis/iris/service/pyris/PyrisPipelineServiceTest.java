@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -29,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 class PyrisPipelineServiceTest {
@@ -99,6 +103,35 @@ class PyrisPipelineServiceTest {
         // The failed run-state callback must reference the translation key the client still ships, not the removed stage key.
         assertThat(capturedError.get()).isNotNull();
         assertThat(capturedError.get().message()).isEqualTo("artemisApp.iris.error.internal");
+    }
+
+    @Test
+    void struggleInterventionPipelineFailure_emitsTerminalCompletionBeforeReleasingSlot() {
+        var pyrisConnectorService = mock(PyrisConnectorService.class);
+        var pyrisJobService = mock(PyrisJobService.class);
+        var userRepository = mock(UserRepository.class);
+        var irisChatWebsocketService = mock(IrisChatWebsocketService.class);
+        var user = new User();
+        user.setId(7L);
+        user.setLogin("student");
+        var job = new StruggleInterventionJob("job-x", 5L, 42L, 7L, "decide", "ep-1", null, null, null);
+        when(pyrisJobService.getJob("job-x")).thenReturn(job);
+
+        var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), irisChatWebsocketService,
+                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class));
+        ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
+
+        doThrow(new PyrisConnectorException("boom")).when(pyrisConnectorService).executePipeline(eq("struggle-intervention"), any(), any());
+
+        service.executeStruggleInterventionPipeline("default", "moderate", "job-x", user, null, null, null, null, List.of(), 42L, "decide", null, null);
+
+        // Pyris never accepted the run, so no async status callback will arrive; the client's in-flight decide is
+        // completed with a silent frame here, before the single-flight slot is released. The order is the assertion:
+        // releasing first would leave no job to build the frame from, and two independent verifies would not notice.
+        InOrder inOrder = inOrder(irisChatWebsocketService, pyrisJobService);
+        inOrder.verify(irisChatWebsocketService).sendStruggleEvent(eq(user),
+                argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action()) && "ep-1".equals(e.episodeId())));
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightJob("job-x", 7L, 42L);
     }
 
     /**

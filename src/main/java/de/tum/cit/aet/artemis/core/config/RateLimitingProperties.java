@@ -74,6 +74,12 @@ public class RateLimitingProperties {
     private Integer aiSearchPipelineRequestsPerMinute;
 
     /**
+     * Requests per minute for the proactive struggle-intervention trigger endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#STRUGGLE_INTERVENTION}.
+     */
+    private Integer struggleInterventionRequestsPerMinute;
+
+    /**
      * Requests per minute for the build agent clone-token check on the git https path.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
      */
@@ -141,5 +147,13 @@ public class RateLimitingProperties {
 
     public void setAiSearchPipelineRequestsPerMinute(Integer aiSearchPipelineRequestsPerMinute) {
         this.aiSearchPipelineRequestsPerMinute = aiSearchPipelineRequestsPerMinute;
+    }
+
+    public Integer getStruggleInterventionRequestsPerMinute() {
+        return struggleInterventionRequestsPerMinute;
+    }
+
+    public void setStruggleInterventionRequestsPerMinute(Integer struggleInterventionRequestsPerMinute) {
+        this.struggleInterventionRequestsPerMinute = struggleInterventionRequestsPerMinute;
     }
 }

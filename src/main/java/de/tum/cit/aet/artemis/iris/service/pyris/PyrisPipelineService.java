@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
+import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecu
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
@@ -44,6 +48,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
@@ -216,6 +223,56 @@ public class PyrisPipelineService {
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error)
         );
         // @formatter:on
+    }
+
+    /**
+     * Fires the proactive struggle-intervention pipeline with a pre-minted job token and pre-built data DTOs, which
+     * the caller loaded off-thread by id. The status consumer releases the single-flight slot on an error, since no
+     * callback will then arrive.
+     *
+     * @param variant         resolved Iris variant (e.g. "default")
+     * @param supportLevel    the instructional support level ("low" / "moderate" / "high")
+     * @param jobToken        the token already registered in the job map (StruggleInterventionJob)
+     * @param user            the student (for the AI selection + user DTO)
+     * @param signal          the struggle signal from the client engine
+     * @param exerciseDTO     the exercise DTO (problem statement + repos)
+     * @param submissionDTO   the submission DTO (merged live + committed code), or null if no submission yet
+     * @param courseDTO       the course DTO
+     * @param chatHistory     read-only exercise-chat history (empty if no session exists yet)
+     * @param exerciseId      for the single-flight release key on an ERROR stage
+     * @param intent          the slot intent ({@code decide} | {@code confirm_close} | {@code help_request})
+     * @param episode         the client-allocated episode block (null when not sent)
+     * @param proactivityMode the presence level ({@code pull} | {@code push}), passed to Pyris as prompt tone context
+     */
+    public void executeStruggleInterventionPipeline(String variant, String supportLevel, String jobToken, User user, PyrisStruggleSignalDTO signal,
+            PyrisProgrammingExerciseDTO exerciseDTO, @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId,
+            @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String proactivityMode) {
+        var pyrisUser = toPyrisUserDTO(user);
+        executePipeline("struggle-intervention", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, Optional.empty(), jobToken,
+                executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
+                        intent, episode, proactivityMode),
+                (runId, runState, error) -> {
+                    if (runState == PyrisRunState.FAILED) {
+                        // A preparation failure never reached Pyris, but a connector failure is ambiguous and the
+                        // exception carries nothing that tells the two apart. Releasing either way makes the
+                        // guarantee "at most one deliverable result" rather than "at most one Pyris run": the job
+                        // entry goes with it, so a late callback for this token fails authentication. Holding the
+                        // marker instead would suppress every further intervention for this student for the whole
+                        // job timeout, precisely when Pyris is struggling and so is the student. The frame is sent
+                        // from here rather than through IrisStruggleTriggerService to avoid a bean cycle.
+                        try {
+                            if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
+                                irisChatWebsocketService.sendStruggleEvent(user,
+                                        StruggleInterventionEventDTO.terminalCompletion(failedJob.intent(), failedJob.exerciseId(), failedJob.episodeId()));
+                            }
+                        }
+                        catch (Exception e) {
+                            // A missing frame degrades to a client timeout; the slot release matters more.
+                            log.warn("Could not emit terminal completion for failed struggle pipeline job {} exercise {} user {}", jobToken, exerciseId, user.getId(), e);
+                        }
+                        pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);
+                    }
+                });
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {

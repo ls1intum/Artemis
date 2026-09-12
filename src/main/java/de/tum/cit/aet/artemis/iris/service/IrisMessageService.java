@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import java.time.ZonedDateTime;
-
 import jakarta.ws.rs.BadRequestException;
 
 import org.hibernate.Hibernate;
@@ -43,20 +41,15 @@ public class IrisMessageService {
             throw new BadRequestException("Message must have at least one content element");
         }
 
-        if (!Hibernate.isInitialized(session.getMessages())) {
-            session = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        // The write itself is a repository operation: it locks the session row, reloads the ordered message list under
+        // that lock, appends and cascades in ONE transaction, because a stale list merged back over the committed rows
+        // loses a concurrent append. See IrisSessionWriteRepository#appendMessage for why each of those steps is there.
+        var savedSession = irisSessionRepository.appendMessage(session.getId(), message, sender);
+        if (Hibernate.isInitialized(session.getMessages())) {
+            // Keep the caller's own instance consistent, as before; an uninitialized one is left alone so it
+            // still loads the committed state lazily.
+            session.setMessages(savedSession.getMessages());
         }
-
-        message.setSender(sender);
-        message.setSentAt(ZonedDateTime.now());
-        message.setSession(session);
-        message.getContent().forEach(content -> content.setMessage(message));
-
-        session.getMessages().add(message);
-        // saveAndFlush so the cascaded message has its generated id; the returned managed entity
-        // replaces the previous full-session reload that ran on every message save.
-        var savedSession = irisSessionRepository.saveAndFlush(session);
-        session.setMessages(savedSession.getMessages()); // Keep the caller's session instance consistent with the managed state.
 
         return savedSession.getMessages().getLast();
     }

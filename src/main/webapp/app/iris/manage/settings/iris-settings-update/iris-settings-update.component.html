@@ -163,6 +163,53 @@
                                     </div>
                                 </div>
 
+                                <!-- Proactive mechanisms card -->
+                                <div class="iris-card">
+                                    <h6 class="iris-card-title mb-3" jhiTranslate="artemisApp.iris.settings.proactiveHelp"></h6>
+
+                                    <!-- Proactive struggle detection -->
+                                    <div class="mb-4 iris-toggle-line">
+                                        <p-toggleswitch
+                                            inputId="proactiveStruggleEnabled"
+                                            [ngModel]="settingsValue.proactiveStruggleEnabled"
+                                            (ngModelChange)="updateProactiveStruggleEnabled($event)"
+                                            [disabled]="!struggleAvailable()"
+                                            [ariaLabel]="'artemisApp.iris.settings.proactiveStruggle' | artemisTranslate"
+                                        />
+                                        <label for="proactiveStruggleEnabled">
+                                            <strong jhiTranslate="artemisApp.iris.settings.proactiveStruggle"></strong>
+                                            <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
+                                        </label>
+                                    </div>
+
+                                    @if (!struggleAvailable()) {
+                                        <div class="iris-info-banner mb-4" role="note">
+                                            <fa-icon [icon]="faLightbulb" />
+                                            <span jhiTranslate="artemisApp.iris.settings.proactiveStruggleUnavailable"></span>
+                                        </div>
+                                    }
+
+                                    <!-- Artemis' own build-triggered proactive events (build_failed / progress_stalled) -->
+                                    <div class="iris-toggle-line">
+                                        <p-toggleswitch
+                                            inputId="legacyBuildTriggersEnabled"
+                                            [ngModel]="settingsValue.legacyBuildTriggersEnabled ?? true"
+                                            (ngModelChange)="updateLegacyBuildTriggersEnabled($event)"
+                                            [ariaLabel]="'artemisApp.iris.settings.legacyBuildTriggers' | artemisTranslate"
+                                        />
+                                        <label for="legacyBuildTriggersEnabled">
+                                            <strong jhiTranslate="artemisApp.iris.settings.legacyBuildTriggers"></strong>
+                                            <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.legacyBuildTriggersHelp"></small>
+                                        </label>
+                                    </div>
+
+                                    @if (bothProactiveMechanismsActive()) {
+                                        <p-message severity="warn" styleClass="w-full mt-4">
+                                            <span jhiTranslate="artemisApp.iris.settings.bothProactiveActiveWarning"></span>
+                                        </p-message>
+                                    }
+                                </div>
+
                                 <!-- Global restriction banner -->
                                 <div class="iris-info-banner" role="note">
                                     <fa-icon [icon]="faLightbulb" />
