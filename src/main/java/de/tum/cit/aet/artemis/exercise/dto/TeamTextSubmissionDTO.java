@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * A team's text submission as it is broadcast to the other members of the team while they collaborate on it.
@@ -30,17 +31,22 @@ public record TeamTextSubmissionDTO(Long id, String submissionExerciseType, Stri
         StudentParticipationDTO participation) implements Serializable {
 
     /**
-     * Projects a saved text submission for the team sync topic.
+     * Projects a saved text submission for the team sync topic. Text and language come from the saved submission, so
+     * the teammates see what was persisted rather than what the sender typed.
      *
      * @param submission the submission to project
-     * @param text       the text of the submission
-     * @param language   the language of the submission
      * @return the projected submission
      */
-    public static TeamTextSubmissionDTO of(Submission submission, String text, Language language) {
+    public static TeamTextSubmissionDTO of(Submission submission) {
         StudentParticipationDTO participation = submission.getParticipation() instanceof StudentParticipation studentParticipation
                 ? StudentParticipationDTO.of(studentParticipation, true)
                 : null;
+        String text = null;
+        Language language = null;
+        if (submission instanceof TextSubmission textSubmission) {
+            text = textSubmission.getText();
+            language = textSubmission.getLanguage();
+        }
         return new TeamTextSubmissionDTO(submission.getId(), submission.getSubmissionExerciseType(), text, language, submission.isSubmitted(), submission.getSubmissionDate(),
                 submission.getType(), participation);
     }

@@ -13,20 +13,23 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 /**
  * A team as the team management pages render it.
  * <p>
- * {@code lastModifiedDate}, {@code lastModifiedBy} and {@code createdBy} are deliberately absent: they are
- * {@code @JsonIgnore} on the auditing entity, so the entity payload never carried them either.
+ * The auditing fields are part of the contract: {@link Team} re-enables them with {@code @JsonIgnore(false)}, so the
+ * entity payload carried them and the team detail header renders them.
  *
- * @param id          the id of the team
- * @param name        the team name
- * @param shortName   the team short name, which identifies the team across the exercises of a course
- * @param image       the team image, when one was set
- * @param createdDate when the team was created
- * @param owner       the tutor owning the team, when one was assigned
- * @param students    the team members; absent when the students are not loaded
+ * @param id               the id of the team
+ * @param name             the team name
+ * @param shortName        the team short name, which identifies the team across the exercises of a course
+ * @param image            the team image, when one was set
+ * @param createdBy        the login of the user who created the team
+ * @param createdDate      when the team was created
+ * @param lastModifiedBy   the login of the user who last changed the team
+ * @param lastModifiedDate when the team was last changed
+ * @param owner            the tutor owning the team, when one was assigned
+ * @param students         the team members; absent when the students are not loaded
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TeamResponseDTO(Long id, String name, String shortName, String image, Instant createdDate, TeamMemberDTO owner, List<TeamMemberDTO> students)
-        implements Serializable {
+public record TeamResponseDTO(Long id, String name, String shortName, String image, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate,
+        TeamMemberDTO owner, List<TeamMemberDTO> students) implements Serializable {
 
     /**
      * Converts a {@link Team} into a {@link TeamResponseDTO}. The members are only mapped when the {@code students}
@@ -43,7 +46,8 @@ public record TeamResponseDTO(Long id, String name, String shortName, String ima
         if (Hibernate.isInitialized(team.getStudents()) && team.getStudents() != null) {
             students = team.getStudents().stream().map(TeamMemberDTO::of).toList();
         }
-        return new TeamResponseDTO(team.getId(), team.getName(), team.getShortName(), team.getImage(), team.getCreatedDate(), TeamMemberDTO.of(team.getOwner()), students);
+        return new TeamResponseDTO(team.getId(), team.getName(), team.getShortName(), team.getImage(), team.getCreatedBy(), team.getCreatedDate(), team.getLastModifiedBy(),
+                team.getLastModifiedDate(), TeamMemberDTO.of(team.getOwner()), students);
     }
 
     /**

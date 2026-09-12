@@ -293,6 +293,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         assertThat(serverTeam.name()).as("Team name was fetched correctly").isEqualTo(team.getName());
         assertThat(serverTeam.shortName()).as("Team short name was fetched correctly").isEqualTo(team.getShortName());
         assertThat(loginsOf(serverTeam)).as("Team students were fetched correctly").containsExactlyInAnyOrderElementsOf(loginsOf(team.getStudents()));
+        assertThat(serverTeam.owner()).as("Team owner was fetched correctly").isNotNull();
+        assertThat(serverTeam.owner().login()).as("The team list filters and the detail header read the owner login").isEqualTo(tutor.getLogin());
+        assertThat(serverTeam.owner().name()).as("The team list sorts on the owner name").isEqualTo(tutor.getName());
+        assertThat(serverTeam.owner().email()).as("The detail header links the owner email").isEqualTo(tutor.getEmail());
+        assertThat(serverTeam.createdBy()).as("The detail header links the creator").isNotNull().isEqualTo(team.getCreatedBy());
+        assertThat(serverTeam.createdDate()).as("The detail header shows when the team was created").isNotNull();
+        assertThat(serverTeam.lastModifiedBy()).as("The detail header links the last editor").isNotNull().isEqualTo(team.getLastModifiedBy());
+        assertThat(serverTeam.lastModifiedDate()).as("The detail header shows when the team was last changed").isNotNull();
     }
 
     @Test
@@ -325,6 +333,12 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         assertThat(serverTeams.stream().mapToInt(serverTeam -> serverTeam.students().size()).sum()).as("Correct number of students were fetched").isEqualTo(numberOfStudents);
         assertThat(serverTeams).as("Every student carries the registration number the exercise administration shows")
                 .allSatisfy(serverTeam -> assertThat(serverTeam.students()).allSatisfy(student -> assertThat(student.visibleRegistrationNumber()).isNotNull()));
+        assertThat(serverTeams).as("Every team carries the owner the team list sorts and filters on").allSatisfy(serverTeam -> {
+            assertThat(serverTeam.owner()).isNotNull();
+            assertThat(serverTeam.owner().login()).isEqualTo(tutor.getLogin());
+            assertThat(serverTeam.owner().name()).isEqualTo(tutor.getName());
+            assertThat(serverTeam.owner().email()).isEqualTo(tutor.getEmail());
+        });
     }
 
     @Test

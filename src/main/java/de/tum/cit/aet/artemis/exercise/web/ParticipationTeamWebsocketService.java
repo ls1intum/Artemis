@@ -292,7 +292,7 @@ public class ParticipationTeamWebsocketService {
             updateValue(getLastActionTracker(), participationId, principal.getName());
             sendOnlineTeamStudents(participationId);
 
-            SubmissionSyncPayloadDTO payload = new SubmissionSyncPayloadDTO(TeamTextSubmissionDTO.of(submission, textUpdate.text(), textUpdate.language()), UserNameDTO.of(user));
+            SubmissionSyncPayloadDTO payload = new SubmissionSyncPayloadDTO(TeamTextSubmissionDTO.of(submission), UserNameDTO.of(user));
             websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
         }
     }
