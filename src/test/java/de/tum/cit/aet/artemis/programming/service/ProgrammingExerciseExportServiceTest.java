@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -609,6 +610,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         createAndSeedBaseRepositories();
         programmingExercise.setProblemStatement("Implement the sorting strategies.");
         programmingExercise.setCategories(new HashSet<>(Set.of("{\"category\":\"homework\"}")));
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         // the export endpoint hands the service an exercise loaded with its configurations, so the test does the same
         var exerciseToExport = programmingExerciseRepository
@@ -633,6 +635,14 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(importRequest.allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
         assertThat(importRequest.buildConfig()).as("the build configuration is part of the create form").isNotNull();
         assertThat(importRequest.buildConfig().buildScript()).isEqualTo(exerciseToExport.getBuildConfig().getBuildScript());
+
+        // The archive carries the row ids of the source exercise's configurations. The import creates a new exercise, so
+        // it must build fresh configurations instead of adopting those ids and writing onto the source exercise's rows.
+        var importedExercise = importRequest.toEntity();
+        assertThat(importedExercise.getPlagiarismDetectionConfig()).isNotNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getId()).as("the imported plagiarism configuration does not adopt the exported id").isNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
+        assertThat(importRequest.plagiarismDetectionConfig().id()).as("the file itself still carries the id, which is why the mapper has to drop it").isNotNull();
     }
 
     @Test
