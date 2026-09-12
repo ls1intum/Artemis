@@ -1,3 +1,4 @@
+import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-search-source.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
 /**
@@ -12,6 +13,8 @@ export interface IrisSearchStatusUpdate {
     isThinking: boolean;
     answer?: string;
     sources?: LectureSearchResult[];
+    /** Entity sources (course information) the answer drew on, numbered after `sources`. */
+    entitySources?: EntitySearchSource[];
     /** Streamed draft of the answer so far (`isThinking: true` updates while the LLM generates). */
     partialResult?: string;
     /** Monotonic sequence number of the streamed draft; lower numbers are stale. */

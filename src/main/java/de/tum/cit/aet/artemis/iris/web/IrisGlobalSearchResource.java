@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -19,12 +20,14 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.globalsearch.api.SearchableEntityPrefetchApi;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
 /**
@@ -52,13 +55,19 @@ public class IrisGlobalSearchResource {
 
     private final IrisAccessContextService irisAccessContextService;
 
+    private final Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi;
+
+    /** Entity candidates handed to the answer pipeline; recall is deliberately deep, the reranker judges. */
+    private static final int ENTITY_CANDIDATE_LIMIT = 25;
+
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService) {
+            UserAiPreferenceService userAiPreferenceService, IrisAccessContextService irisAccessContextService, Optional<SearchableEntityPrefetchApi> searchableEntityPrefetchApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.irisAccessContextService = irisAccessContextService;
+        this.searchableEntityPrefetchApi = searchableEntityPrefetchApi;
     }
 
     /**
@@ -96,7 +105,14 @@ public class IrisGlobalSearchResource {
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext);
+        // Entity candidates are pre-fetched with the palette's access filtering, because channel
+        // membership, exam registrations and role-dependent release rules only exist in the Artemis
+        // database; Pyris renders them into cards and reranks them against the lecture content.
+        List<PyrisEntityCandidateDTO> entityCandidates = searchableEntityPrefetchApi
+                .map(api -> api.prefetchCandidates(user, requestDTO.query(), ENTITY_CANDIDATE_LIMIT, requestDTO.courseId()).stream().map(PyrisEntityCandidateDTO::of).toList())
+                .orElse(List.of());
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,
+                entityCandidates, requestDTO.courseId());
         return ResponseEntity.accepted().build();
     }
 }

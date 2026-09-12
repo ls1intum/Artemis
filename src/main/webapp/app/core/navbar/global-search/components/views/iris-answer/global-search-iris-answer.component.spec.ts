@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFilePdf, faFileVideo, faKeyboard, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
@@ -29,6 +29,18 @@ const SOURCES: LectureSearchResult[] = [
         course: { id: 1, name: 'Course A' },
         lecture: { id: 1, name: 'L1' },
         lectureUnit: { id: 3, name: 'Unit 3', link: '/u/3', pageNumber: 3, sourceType: 'lecture_unit_slide_video', queryParams: { unit: 3, page: 3, timestamp: 42 } },
+    },
+];
+
+const ENTITY_SOURCES = [
+    {
+        entityType: 'exercise',
+        exerciseType: 'programming',
+        entityId: 42,
+        course: { id: 9, name: 'Patterns in Software Engineering' },
+        title: 'W03E03 Flyweight Pattern',
+        snippet: "Programming exercise: 'W03E03 Flyweight Pattern'",
+        link: '/courses/9/exercises/42',
     },
 ];
 
@@ -272,7 +284,22 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
-            expect(mockAsk).toHaveBeenCalledWith('angular signals');
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, undefined);
+        });
+
+        it('passes the active course filter to ask() and re-asks when it changes', () => {
+            fixture.componentRef.setInput('searchQuery', 'angular signals');
+            fixture.componentRef.setInput('courseId', 14);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, 14);
+
+            fixture.componentRef.setInput('courseId', 16);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            expect(mockAsk).toHaveBeenCalledWith('angular signals', 5, 16);
         });
 
         it('should NOT call irisSearchAnswerService.ask() for an empty query', () => {
@@ -317,7 +344,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
 
             expect(component['irisThinking']()).toBe(false);
-            expect(component['irisResult']()).toEqual({ answer: 'Signals are reactive.', sources: [] });
+            expect(component['irisResult']()).toEqual({ answer: 'Signals are reactive.', sources: [], entitySources: [] });
         });
 
         it('should set irisResult to undefined if the final update has no answer', () => {
@@ -434,7 +461,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             askSubject.next({ runId: 'run-1', isThinking: true, partialResult: 'Draft.[1]', partialSeq: 5 });
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Final answer.[1]', sources: SOURCES });
             fixture.detectChanges();
-            expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES });
+            expect(component['irisResult']()).toEqual({ answer: 'Final answer.[1]', sources: SOURCES, entitySources: [] });
             expect(component['isPartialAnswer']()).toBe(false);
         });
     });
@@ -527,6 +554,81 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             const sup = injectRenderedCitation('1');
             sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             expect(navigateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('entity sources', () => {
+        beforeEach(() => {
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer: 'Worth 10 points.[4] From slides.[1]', sources: SOURCES, entitySources: ENTITY_SOURCES });
+            fixture.detectChanges();
+        });
+
+        it('renders entity chips numbered after the lecture sources, with the palette icon', () => {
+            const chips = fixture.nativeElement.querySelectorAll('[data-testid="iris-entity-chip"]');
+            expect(chips.length).toBe(1);
+            expect(chips[0].textContent).toContain('W03E03 Flyweight Pattern');
+            expect(chips[0].textContent).toContain('Patterns in Software Engineering');
+            expect(chips[0].querySelector('[data-testid="iris-chip-number"]').textContent.trim()).toBe('4');
+            expect(chips[0].querySelector('fa-icon')).toBeTruthy();
+        });
+
+        it('renders entity chips before the more-sources expander', () => {
+            const row = fixture.nativeElement.querySelector('.iris-chips');
+            const children = [...row.children];
+            const entityIndex = children.findIndex((el: Element) => el.getAttribute('data-testid') === 'iris-entity-chip');
+            const moreIndex = children.findIndex((el: Element) => el.classList.contains('iris-more-btn'));
+            expect(entityIndex).toBeGreaterThan(-1);
+            expect(moreIndex).toBeGreaterThan(entityIndex);
+        });
+
+        it('uses the same icon mapping as the palette for entity chips', () => {
+            // @ts-expect-error — protected method
+            expect(component.entityIcon(ENTITY_SOURCES[0])).toBe(faKeyboard);
+        });
+
+        it('counts entity sources when validating citation markers', () => {
+            // marker [4] indexes the entity source (3 lecture sources + 1 entity)
+            // @ts-expect-error — protected computed
+            const view = component.citationView();
+            expect(view.html).toContain('<sup class="iris-cite" data-n="4">4</sup>');
+        });
+
+        it('opens the entity link when its chip is clicked', () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            fixture.nativeElement.querySelector('[data-testid="iris-entity-chip"]').click();
+            expect(navigateSpy).toHaveBeenCalledWith('/courses/9/exercises/42');
+        });
+
+        it('opens the entity link when its inline citation is clicked', () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const body = fixture.nativeElement.querySelector('.iris-answer-text');
+            body.innerHTML = '<p>Worth 10 points.<sup class="iris-cite" data-n="4">4</sup></p>';
+            body.querySelector('.iris-cite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(navigateSpy).toHaveBeenCalledWith('/courses/9/exercises/42');
+        });
+
+        it('shows the entity popover for a hovered entity citation', () => {
+            const body = fixture.nativeElement.querySelector('.iris-answer-text');
+            body.innerHTML = '<p>Worth 10 points.<sup class="iris-cite" data-n="4">4</sup></p>';
+            body.querySelector('.iris-cite').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            fixture.detectChanges();
+            const popover = fixture.nativeElement.querySelector('[data-testid="iris-citation-popover"]');
+            expect(popover.textContent).toContain('W03E03 Flyweight Pattern');
+            expect(popover.textContent).toContain('Patterns in Software Engineering');
+        });
+
+        it('carries entity sources from the terminal update into the result', () => {
+            fixture.componentRef.setInput('searchQuery', 'flyweight points');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'A.[1]', sources: SOURCES, entitySources: ENTITY_SOURCES });
+            fixture.detectChanges();
+            // @ts-expect-error — protected signal
+            expect(component.irisResult()?.entitySources).toEqual(ENTITY_SOURCES);
         });
     });
 
