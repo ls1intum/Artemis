@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import tools.jackson.core.JacksonException;
@@ -23,6 +24,10 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  * specification's boundary inventory to executable evidence and are likewise generation metadata.
  */
 public record GeneratedTestPlan(List<Entry> tests) {
+
+    private static final Pattern SEAM_ID = Pattern.compile("S[1-9][0-9]*");
+
+    private static final Pattern PARTITION_ID = Pattern.compile("S[1-9][0-9]*\\.P[1-9][0-9]*");
 
     public record Entry(String name, String seam, double seamWeightTier, String visibility, List<String> riskPartitions) {
 
@@ -68,7 +73,7 @@ public record GeneratedTestPlan(List<Entry> tests) {
                 throw new IllegalArgumentException("Every test-plan.json entry needs a non-empty \"name\" (the exact test name verify reports).");
             }
             String seam = testNode.path("seam").asString("").strip();
-            if (!seam.isEmpty() && !seam.matches("S[1-9][0-9]*")) {
+            if (!seam.isEmpty() && !SEAM_ID.matcher(seam).matches()) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seam '" + seam + "'; use a stable SPEC seam ID such as \"S1\".");
             }
             // "weight" is accepted as a read-only alias, but never echoed back: the field carries a seam tier, not the per-case weight persistence derives from it.
@@ -108,7 +113,7 @@ public record GeneratedTestPlan(List<Entry> tests) {
         List<String> partitions = new ArrayList<>();
         for (JsonNode partitionNode : partitionsNode) {
             String partition = partitionNode.isString() ? partitionNode.asString().strip() : "";
-            if (!partition.matches("S[1-9][0-9]*\\.P[1-9][0-9]*")) {
+            if (!PARTITION_ID.matcher(partition).matches()) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has invalid risk partition '" + partition + "'; use stable SPEC IDs such as \"S1.P1\".");
             }
             if (!seam.isBlank() && !partition.startsWith(seam + ".")) {

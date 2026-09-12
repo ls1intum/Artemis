@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -32,6 +33,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @EnforceAdmin
 @FeatureUsage("authoring-assistance/generation-monitoring")
 public class AdminHyperionGenerationMonitoringResource {
+
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cntrl}]+");
 
     private final Optional<GenerationMonitoringService> jobs;
 
@@ -62,7 +65,7 @@ public class AdminHyperionGenerationMonitoringResource {
      */
     @DeleteMapping("{exerciseId}/generations/{generationId}")
     public ResponseEntity<Void> cancelGeneration(@PathVariable long exerciseId, @PathVariable String generationId, @RequestParam String reason) {
-        String boundedReason = reason.replaceAll("[\\p{Cntrl}]+", " ").trim();
+        String boundedReason = CONTROL_CHARACTERS.matcher(reason).replaceAll(" ").trim();
         if (boundedReason.isBlank() || boundedReason.length() > 500 || generationId.length() > 128) {
             return ResponseEntity.badRequest().build();
         }
