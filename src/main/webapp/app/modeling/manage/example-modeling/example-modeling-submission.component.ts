@@ -25,7 +25,7 @@ import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exe
 import { Course } from 'app/course/shared/entities/course.model';
 import { faCheck, faClipboardCheck, faSave, faShapes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { EMPTY, Observable, Subject, concatAll, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -159,28 +159,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     faShapes = faShapes;
     faClipboardCheck = faClipboardCheck;
 
-    /**
-     * Assessment saves go out one at a time. Two of them can be triggered at once, for example by leaving the assessment while a save is still open and coming
-     * back after a model change, and the assessment endpoint keeps whatever it writes last. Cancelling the older request would not order the writes, the server
-     * can commit a request the browser aborted, so the next save is only sent once the previous one has finished and the newest feedback lands last.
-     */
-    private readonly assessmentSaves = new Subject<Observable<unknown>>();
-
-    constructor() {
-        this.assessmentSaves.pipe(concatAll()).subscribe();
-    }
-
-    private enqueueAssessmentSave(save: Observable<unknown>): void {
-        this.assessmentSaves.next(
-            save.pipe(
-                catchError(() => {
-                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
-                    return EMPTY;
-                }),
-            ),
-        );
-    }
-
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
@@ -303,6 +281,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingSubmission.exampleSubmission = true;
         const result = this.result();
         if (result) {
+            const validFeedback = filterInvalidFeedback(this.referencedFeedback(), currentModel);
+            if (validFeedback.length !== this.referencedFeedback().length) {
+                // Feedback of deleted elements is dropped here but only persisted through the assessment endpoint;
+                // the submission endpoint does not touch the assessment.
+                this.feedbackChanged = true;
+            }
+            this.referencedFeedback.set(validFeedback);
             result.feedbacks = this.assessments();
             setLatestSubmissionResult(this.modelingSubmission, result);
             delete result.submission;
@@ -328,9 +313,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     }
                 }
                 this.isNewSubmission.set(false);
-                if (result) {
-                    this.pruneFeedbackOfDeletedElements(currentModel);
-                }
 
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             }),
@@ -339,19 +321,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 throw error;
             }),
         );
-    }
-
-    /**
-     * Drops the feedback of model elements the saved model no longer contains. The submission endpoint does not touch the assessment, so this only marks the
-     * assessment dirty and the pruning is persisted through the assessment endpoint. It runs on the saved model, never on a model change the server rejected.
-     */
-    private pruneFeedbackOfDeletedElements(savedModel: UMLModel | undefined) {
-        const validFeedback = filterInvalidFeedback(this.referencedFeedback(), savedModel);
-        if (validFeedback.length === this.referencedFeedback().length) {
-            return;
-        }
-        this.referencedFeedback.set(validFeedback);
-        this.feedbackChanged = true;
     }
 
     onReferencedFeedbackChanged(referencedFeedback: Feedback[]) {
@@ -368,7 +337,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (this.modelChanged()) {
             this.updateExampleModelingSubmission().subscribe(() => {
                 if (this.feedbackChanged) {
-                    this.saveExampleAssessment(() => (this.feedbackChanged = false));
+                    this.saveExampleAssessment();
+                    this.feedbackChanged = false;
                 }
             });
         }
@@ -386,62 +356,66 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     showSubmission() {
         if (this.feedbackChanged) {
-            this.saveExampleAssessment(() => (this.feedbackChanged = false));
+            this.saveExampleAssessment();
+            this.feedbackChanged = false;
         }
         this.assessmentMode.set(false);
     }
 
-    /**
-     * @param onSuccess called only once the assessment has actually been persisted and the feedback has not been edited since the request went out,
-     * never on validation failure or a failed save, so a caller can safely clear its own "unsaved changes" state from it.
-     */
-    public saveExampleAssessment(onSuccess?: () => void): void {
+    public saveExampleAssessment(): void {
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation) {
-            this.updateAssessmentExplanationAndExampleAssessment(onSuccess);
+            this.updateAssessmentExplanationAndExampleAssessment();
         } else {
-            this.updateExampleAssessment(onSuccess);
+            this.updateExampleAssessment();
         }
     }
 
-    private updateAssessmentExplanationAndExampleAssessment(onSuccess?: () => void) {
-        let sentAssessments = this.assessments();
+    private updateAssessmentExplanationAndExampleAssessment() {
         this.exampleSubmission().assessmentExplanation = this.assessmentExplanation();
         this.applySelectedModeToExampleSubmission();
-        this.enqueueAssessmentSave(
-            this.exampleSubmissionService.update(this.exampleSubmission(), this.exerciseId).pipe(
+        this.exampleSubmissionService
+            .update(this.exampleSubmission(), this.exerciseId)
+            .pipe(
                 tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                     const exampleSubmission = exampleSubmissionResponse.body!;
                     this.exampleSubmission.set(exampleSubmission);
                     this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
                 }),
-                concatMap(() => {
-                    sentAssessments = this.assessments();
-                    return this.modelingAssessmentService.saveExampleAssessment(sentAssessments, this.exampleSubmissionId);
-                }),
-                tap((result: Result) => this.applySavedAssessment(result, sentAssessments, onSuccess)),
-            ),
-        );
+                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId)),
+            )
+            .subscribe({
+                next: (result: Result) => {
+                    this.updateAssessment(result);
+                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+                },
+            });
     }
 
     private applySelectedModeToExampleSubmission(): void {
         this.exampleSubmission().usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;
     }
 
-    private updateExampleAssessment(onSuccess?: () => void) {
+    private updateExampleAssessment() {
         if (this.exampleSubmission().usedForTutorial !== (this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY)) {
-            this.updateAssessmentExplanationAndExampleAssessment(onSuccess);
+            this.updateAssessmentExplanationAndExampleAssessment();
             return;
         }
-        const sentAssessments = this.assessments();
-        this.enqueueAssessmentSave(
-            this.modelingAssessmentService
-                .saveExampleAssessment(sentAssessments, this.exampleSubmissionId)
-                .pipe(tap((result: Result) => this.applySavedAssessment(result, sentAssessments, onSuccess))),
-        );
+        this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId).subscribe({
+            next: (result: Result) => {
+                this.updateAssessment(result);
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
+            },
+            error: () => {
+                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+            },
+        });
     }
 
     async back() {
@@ -541,20 +515,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (result) {
             this.referencedExampleFeedback = result.feedbacks?.filter((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED) || [];
         }
-    }
-
-    /**
-     * Takes over the saved assessment, unless the user edited feedback while the request was in flight: the assessments signal then holds a newer
-     * array than the one that was sent, so the newer local feedback and the dirty flag are kept and the next save picks the edit up.
-     */
-    private applySavedAssessment(result: Result, sentAssessments: Feedback[], onSuccess?: () => void): void {
-        if (this.assessments() === sentAssessments) {
-            this.updateAssessment(result);
-            onSuccess?.();
-        } else {
-            this.result.set(result);
-        }
-        this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
     }
 
     private updateAssessment(result: Result) {
