@@ -1,0 +1,42 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "workspaces": {
+        ".": {
+            "entry": [
+                "src/main/webapp/**/*.routes.ts",
+                "src/main/webapp/**/*.spec.ts",
+                "src/test/javascript/**/*.spec.ts",
+                "src/test/javascript/spec/vitest-*setup.ts",
+                "vitest*.config.ts",
+                "rules/*.mjs"
+            ],
+            "project": [
+                "src/main/webapp/**/*.ts",
+                "src/test/javascript/**/*.ts"
+            ],
+            "ignore": [
+                "src/main/webapp/app/openapi/**"
+            ]
+        },
+        "packages/tum-ui": {
+            "entry": [
+                "src/public-api.ts",
+                "test-providers.ts",
+                "vitest*.config.ts",
+                "**/*.stories.ts",
+                "**/*.spec.ts"
+            ],
+            "project": [
+                "**/*.ts"
+            ]
+        }
+    },
+    "exclude": [
+        "dependencies",
+        "devDependencies",
+        "optionalPeerDependencies",
+        "unlisted",
+        "binaries",
+        "unresolved"
+    ]
+}

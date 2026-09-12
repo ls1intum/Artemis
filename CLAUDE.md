@@ -67,6 +67,8 @@ pnpm run build                       # Alternative production build
 pnpm run lint                        # ESLint
 pnpm run lint:fix                    # Fix ESLint issues
 pnpm run stylelint                   # SCSS linting
+python3 supporting_scripts/check_dead_code.py   # Unreachable Java classes (pnpm run dead-code)
+pnpm run dead-code:client            # Unreachable client TypeScript files (knip)
 pnpm run prettier:check              # Check formatting
 pnpm run prettier:write              # Fix formatting
 ```
@@ -289,6 +291,16 @@ Organized by feature module:
     - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
     - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
     - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
+
+### Dead code
+
+- **A class or file that nothing can reach is deleted, not left behind.** Two required CI checks enforce this on every pull request: `supporting_scripts/check_dead_code.py` for Java and `knip` (config in `knip.json`) for the client. Both are pure source analysis and run even on pull requests that touch neither language, because the change that creates dead code is usually one that only deletes something.
+- **Reference count decides a plain class; it decides nothing about an annotation-wired one.** Java cannot use a type without naming it, so for a plain class "no file mentions the name" and "dead" are the same statement — and that covers JPQL constructor expressions in `@Query`, class literals in `@Conditional`, and fully-qualified names in `spring.factories` or a Liquibase changelog. A class carrying `@Component`, `@Service`, `@Configuration`, `@RestController`, `@Repository`, `@Entity`, `@Converter`, `@Endpoint` or `@Aspect` is found by a framework scan instead, so zero references is its normal state and the check skips it. Decide those with bean-definition provenance (`getFactoryBeanName()` / `getFactoryMethodName()` on the definition) from a booted context, never with a text search.
+- A static nested `@Configuration` **is** component-scanned, so an un-annotated outer class does not make it dead; but a `@Bean` method returning a type that is itself a `@Component` never fires, because the scanned definition wins. `@AutoConfigureAfter` and the `@ConditionalOn*` family on a non-auto-configuration class are meaningless or order-dependent, and reliably mark a generated leftover.
+- A genuine false positive goes in `ALLOWLIST` in the script **with the mechanism that reaches it**, not just an assertion that it is used. One entry exists: `core/ApplicationWebXml`, reached through the servlet container's `ServletContainerInitializer` SPI.
+- The client gate covers unused **files** only; `pnpm run dead-code:client:report` also lists the unused exports, exported types and enum members that are still a backlog. When knip reports a file you know is loaded, check whether its entry point is missing from `knip.json` first — a vitest `setupFiles` string is a reference no import graph can see.
+- **Unused *methods* are a separate, advisory check.** `UnusedMethodArchitectureTest` reports production methods that only the tests call (`./gradlew test --tests UnusedMethodArchitectureTest -x webapp`). It logs and never fails, because method-level reachability has a false-positive floor that class-level reachability does not: Hibernate, Jackson, JPQL and AspectJ all invoke methods with no bytecode reference. It already filters entry-point annotations, overrides (decided by reflection, since external supertypes import as stubs) and accessors in all three shapes Artemis uses — `getX()`/`setX(v)`, record-style `x()`, and fluent `x(v)`. Every entry is a candidate, not a verdict.
+- Full rationale and the provenance recipe: `documentation/docs/developer/guidelines/dead-code.mdx`.
 
 ### Terminology
 
