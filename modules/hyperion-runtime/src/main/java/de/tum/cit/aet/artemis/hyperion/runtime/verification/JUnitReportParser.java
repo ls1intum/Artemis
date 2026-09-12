@@ -8,10 +8,11 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 /** Production JUnit XML semantics shared by ordinary grading and isolated generation verification. */
 public final class JUnitReportParser {
@@ -25,7 +26,7 @@ public final class JUnitReportParser {
     private final int maxFeedbackLength;
 
     // https://stackoverflow.com/a/4237934
-    private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
+    private static final Pattern INVALID_XML_CHARS = Pattern.compile("[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]");
 
     // The root element can be preceded by processing instructions (<? ... ?>), comments (<!-- ... -->),
     // a doctype declaration (<!DOCTYPE ... >) and whitespace.
@@ -92,7 +93,7 @@ public final class JUnitReportParser {
      * @throws IOException If an I/O error occurs while reading the test result file.
      */
     public void processTestResultFile(String testResultFileString, List<TestCaseResult> failedTests, List<TestCaseResult> successfulTests) throws IOException {
-        testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
+        testResultFileString = INVALID_XML_CHARS.matcher(testResultFileString).replaceAll("");
 
         // The root element can be <testsuites> or <testsuite>
         if (XML_ROOT_TAG_IS_TESTSUITES.matcher(testResultFileString).find()) {

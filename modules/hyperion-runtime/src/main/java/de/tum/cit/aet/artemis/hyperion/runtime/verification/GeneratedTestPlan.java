@@ -12,8 +12,6 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-
 /**
  * The machine-readable grading plan the TESTS stage writes to {@code /workspace/test-plan.json}, implementing the specification's Testing Strategy with Artemis' native grading
  * features: seam-level importance tiers and {@code AFTER_DUE_DATE} visibility for overfit-resistant hidden variants.
@@ -53,7 +51,7 @@ public record GeneratedTestPlan(List<Entry> tests) {
 
     private static final double MAX_SEAM_WEIGHT_TIER = 3.0;
 
-    private static final JsonMapper MAPPER = JsonObjectMapper.get();
+    private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     /**
      * Parses and validates the plan.
