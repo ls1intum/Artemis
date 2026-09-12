@@ -787,7 +787,7 @@
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
                 "submissionLimitWarning": {
-                    "pattern": "The submission limit must be and integer between 1 and 500.",
+                    "pattern": "The submission limit must be an integer between 1 and 500.",
                     "required": "The submission limit must be set."
                 }
             },

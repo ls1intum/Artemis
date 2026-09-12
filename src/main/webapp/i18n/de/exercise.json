@@ -378,7 +378,7 @@
                     "required": "'{{ dateName }}' ist erforderlich.",
                     "order": "'{{ dateName }}' muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
                     "strictOrder": "'{{ dateName }}' muss nach allen vorhergehenden Daten liegen.",
-                    "invalidInput": "'{{ dateName }}' ist kein gültiges Datum. Bitte nutze das Format DD.MM.YYYY HH:mm.",
+                    "invalidInput": "'{{ dateName }}' ist kein gültiges Datum. Bitte nutze das Format TT.MM.JJJJ HH:mm.",
                     "otherRequired": "'{{ dateName }}' kann erst gesetzt werden, wenn das vorausgesetzte Datum gesetzt ist."
                 },
                 "maxPenalty": {
