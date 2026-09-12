@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.tutorialgroup.repository;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
@@ -36,7 +35,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             FROM TutorialGroup tutorialGroup
             WHERE tutorialGroup.id = :tutorialGroupId
             """)
-    @Cacheable(cacheNames = "tutorialGroupTitle", key = "#tutorialGroupId", unless = "#result == null")
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
