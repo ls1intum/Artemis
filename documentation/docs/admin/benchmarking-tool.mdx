@@ -159,15 +159,15 @@ Here is what that looks like measured.
 | | |
 | --- | --- |
 | Students | **2,000** |
-| Requests handled | **72,024** |
+| Requests handled | **204,009** |
 | Failed requests | **0** |
-| Average response time | **0.45 seconds** |
-| Time to complete the whole exam cycle | **3 minutes** |
+| Average response time | **0.07 seconds** |
+| Git operations | **all of them, over authenticated HTTPS** |
 
 Every one of those 2,000 students logged in, opened the exam, worked on and submitted all four exercise
-types, pushed code to their own git repository and handed in the exam. No pauses anywhere: the moment
-one action finished, the next began. Not a single request failed, and the average interaction came back
-in under half a second.
+types, pushed code to their own git repository and handed in the exam, pausing only a couple of seconds
+between actions. A 90-minute exam, compressed into sixteen. Not a single request failed, and the average
+interaction came back in 70 milliseconds.
 
 ### On hardware you would not expect
 
@@ -182,40 +182,44 @@ run a large exam. Fewer machines, less power, less hardware to buy and replace.
 
 | What a student does | With 2,000 students on the system |
 | --- | --- |
-| Open the exam | 0.23 seconds |
-| Load their exam | 0.14 seconds |
-| Submit an exercise | 0.75 seconds |
-| Hand in the exam | 0.29 seconds |
-| Download their code repository | 2.04 seconds |
-| Push their code | 3.11 seconds |
+| Open the exam | 0.02 seconds |
+| Load their exam | 0.01 seconds |
+| Submit an exercise | 0.04 seconds |
+| Hand in the exam | 0.01 seconds |
+| Download their code repository | 0.27 seconds |
+| Push their code | 0.32 seconds |
 
 Programming exams are the hardest case any platform faces, because every student is moving real code in
-and out of real version control. Even so, a push completed in about three seconds.
+and out of real version control. Every one of these 2,000 students cloned and pushed over authenticated
+HTTPS, the way a student working in their own IDE does. Even so, a push completed in a third of a second.
 
 ### Where the engineering shows
 
 Three measurements say more about how Artemis is built than any total.
 
-**The database has capacity to spare.** Under the full 2,000-student load it ran at **47% CPU**.
+**The database has capacity to spare.** It answered **1.9 million statements in 54 seconds** of total
+execution time across the run, and never had more than **17 of its 90 pooled connections** busy at once.
 Databases are what usually buckle first under exam load, because a careless platform queries the same
 data over and over on every page. Artemis issues few, well-targeted queries per interaction, and the
-component most platforms saturate first finished the run with half its capacity untouched.
+component most platforms saturate first spent most of the run idle.
 
-**Handling student code is nearly free.** The file server holding every student's repository ran at
-**11% CPU**. Storage is the usual suspect when a platform slows during a programming exam. Here it was
-one of the quietest machines in the cluster.
+**Handling student code is nearly free.** Storage is the usual suspect when a platform slows during a
+programming exam, because every clone and every push is real file work on real repositories. With all
+2,000 students cloning and pushing, a clone took **0.27 seconds** and a push **0.32 seconds**. Nothing
+in that path needed extra hardware to get there.
 
-**There is room left over.** The network ran at a few percent of its capacity, and the reverse proxy at
-11%. When a course does outgrow its cluster, you add another Artemis server: they are interchangeable,
-they join automatically, and nothing needs reconfiguring. Build agents scale separately again, so how
-quickly students get feedback on their code is a decision you make rather than a limit you inherit.
+**There is room left over.** No component of the cluster ran out during this run, on virtual machines
+weaker than a laptop. When a course does outgrow its cluster, you add another Artemis server: they are
+interchangeable, they join automatically, and nothing needs reconfiguring. Build agents scale separately
+again, so how quickly students get feedback on their code is a decision you make rather than a limit you
+inherit.
 
 ### Being straight about what this shows
 
 Two honest notes, because a benchmark that flatters itself is worth nothing.
 
 **We did not find the limit.** The Artemis servers were the busiest part of the cluster and still had
-headroom at the end. 2,000 is the largest run we measured, not the largest Artemis handled.
+headroom at the end. 2,000 is the largest run reported here, not the largest Artemis handles.
 
 **A simulated student is harder work than a real one.** Real students read the question, think, and
 type; these ones pause for a couple of seconds and move on, compressing a 90-minute exam into a few
