@@ -239,6 +239,9 @@
             },
             "athenaConfig": {
                 "title": "Athena KI-Feedback",
+                "enabledLabel": "Athena aktivieren",
+                "configure": "Konfigurieren",
+                "learnMore": "Mehr erfahren",
                 "formativeFeedbackEnabled": {
                     "label": "Formative Feedbackanfragen",
                     "tooltip": "Wenn aktiviert, können Studierende vor dem Abgabedatum vorläufiges KI-Feedback von Athena anfordern.",
@@ -250,6 +253,37 @@
                     "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Abgaben von Text-, Programmier- und Modellierungsaufgaben vor.",
                     "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
                     "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
+                },
+                "settingsPage": {
+                    "title": "Athena-Einstellungen",
+                    "sidebarTitle": "Athena-Einstellungen",
+                    "generalTab": "Allgemein",
+                    "adminTab": "Administration",
+                    "adminOnly": "Diese Einstellungen sind nur für Administrator:innen sichtbar.",
+                    "rateLimit": {
+                        "label": "Erlaubte Feedbackanfragen",
+                        "description": "Studierende können pro Abgabeversuch höchstens {{ limit }} automatische Athena-Feedbackergebnisse auf dieser Artemis-Instanz anfordern."
+                    }
+                },
+                "aboutAthenaModal": {
+                    "close": "Schließen",
+                    "meetAthena": "Athena kennenlernen",
+                    "subtitle": "Der KI-Feedback-Assistent Ihres Kurses",
+                    "description": "Athena entwirft Feedback für Text-, Programmier- und Modellierungsabgaben, unterstützt Tutor:innen bei der schnelleren Bewertung und gibt Studierenden vor der Abgabefrist eine erste Rückmeldung zu ihrer Arbeit.",
+                    "whatAthenaCanDo": "Was Athena kann",
+                    "gradingFeedbackTitle": "Feedbackvorschläge zur Bewertung",
+                    "gradingFeedbackDesc": "Athena entwirft Feedbackvorschläge, während Tutor:innen Text-, Programmier- und Modellierungsabgaben bewerten.",
+                    "formativeFeedbackTitle": "Formative Feedbackanfragen",
+                    "formativeFeedbackDesc": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihrer eigenen Abgabe anfordern.",
+                    "exerciseTypesTitle": "Funktioniert bei allen Aufgabentypen",
+                    "exerciseTypesDesc": "Die beiden Schalter gelten einheitlich für Text-, Programmier- und Modellierungsaufgaben.",
+                    "whatToExpect": "Was Sie erwartet",
+                    "suggestionsNotGradesTitle": "Vorschläge, keine endgültigen Bewertungen",
+                    "suggestionsNotGradesDesc": "Tutor:innen prüfen und passen jeden Vorschlag an, bevor er Studierende erreicht; Athena veröffentlicht nie selbstständig eine Bewertung.",
+                    "requestLimitTitle": "Eine begrenzte Anzahl an Anfragen",
+                    "requestLimitDesc": "Pro Abgabeversuch ist nur eine begrenzte Anzahl automatischer Feedbackergebnisse möglich, sichtbar im Admin-Tab der Einstellungsseite.",
+                    "configurablePerFeatureTitle": "Pro Funktion konfigurierbar",
+                    "configurablePerFeatureDesc": "Feedbackvorschläge zur Bewertung und formative Feedbackanfragen können auf der Einstellungsseite unabhängig voneinander geschaltet werden."
                 }
             },
             "autoOrchestration": {

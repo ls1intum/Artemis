@@ -1826,6 +1826,21 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
+// About Athena modal — PrimeNG DynamicDialog (opened from the course overview)
+.p-dialog-mask.about-athena-dialog {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.about-athena-dialog {
+    .p-dialog-content {
+        border-radius: 1rem;
+        overflow: hidden;
+        background-color: var(--p-content-background);
+        position: relative;
+        padding: 0;
+    }
+}
+
 // Floating Iris chat widget — PrimeNG DynamicDialog (exercise/lecture chat button).
 // The widget is a non-modal, no-backdrop, bottom-right floating panel. The embedded
 // `.chat-widget` is `position: fixed` and manages its own placement, drag and resize, so the
