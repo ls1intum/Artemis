@@ -1,0 +1,38 @@
+/*
+ * The controls are projected from jhi-exercise-header-actions, so reaching them means piercing encapsulation.
+ *
+ * `title-bar-compact-controls` (which `page-top-bar` applies) centres a label by matching line-height to the pinned
+ * content height. That is only approximate — measured in the bar it left the dropdown toggle's icon and label a pixel
+ * low — and it fails outright for the exercise action button, which wraps its icon and label in a `div`: a block child
+ * gets its own line box, so the pinned line-height never reaches the label and it sat high and clipped. Centre with
+ * flex instead, which lands both on the exact middle.
+ *
+ * Two things flex would otherwise break, hence the extra rules:
+ *
+ * - It drops whitespace-only text nodes, and that whitespace is what separated the toggle's icon from its label. The
+ *   `gap` restores it at the 4px the space was worth. The action button is unaffected either way: its icon and label
+ *   sit inside the block `div`, spaced by a non-breaking space that is a real character and never at risk.
+ * - Bootstrap already spaces the toggle's caret with a margin of its own, which the gap would double.
+ *
+ * The menu items are excluded on purpose. They carry `.btn` too, but they are stacked block rows inside the dropdown,
+ * and centring them turned the menu into a column of centred labels.
+ */
+:host ::ng-deep .btn:not(.dropdown-item) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    &.dropdown-toggle::after {
+        margin-left: 0;
+    }
+
+    /*
+     * The action button's icon and label sit inside the block `div`, where the gap above cannot reach them: their
+     * spacing is the non-breaking space between them, worth about 4px. Top it up so both buttons in the bar put the
+     * same distance between icon and label.
+     */
+    > div > fa-icon {
+        margin-right: 0.25rem;
+    }
+}
