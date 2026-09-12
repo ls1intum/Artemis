@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
@@ -51,6 +50,5 @@ public interface ApollonDiagramRepository extends ArtemisJpaRepository<ApollonDi
             FROM ApollonDiagram ad
             WHERE ad.id = :diagramId
             """)
-    @Cacheable(cacheNames = "diagramTitle", key = "#diagramId", unless = "#result == null")
     String getDiagramTitle(@Param("diagramId") Long diagramId);
 }
