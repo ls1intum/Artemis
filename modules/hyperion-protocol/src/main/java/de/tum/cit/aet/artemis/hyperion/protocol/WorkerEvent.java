@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.protocol;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
@@ -12,8 +13,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
         String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output, @Nullable WorkerCapacity capacity) {
 
-    public WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity,
-            boolean ready, String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
+    private static final Pattern WORKER_ID = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
+
+    private static final Pattern IMAGE_DIGEST = Pattern.compile("sha256:[a-f0-9]{64}");
+
+    public WorkerEvent(int protocolVersion, String workerId, UUID incarnation, long sequence, Instant timestamp, Type type, @Nullable ExecutionIdentity identity, boolean ready,
+            String imageDigest, @Nullable String message, @Nullable GenerationActivity activity, @Nullable GenerationOutput output) {
         this(protocolVersion, workerId, incarnation, sequence, timestamp, type, identity, ready, imageDigest, message, activity, output, null);
     }
 
@@ -25,8 +30,8 @@ public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation
         if (incarnation == null || timestamp == null || type == null) {
             throw new IllegalArgumentException("Worker events require an incarnation, timestamp and type");
         }
-        if (protocolVersion != WorkerCommand.PROTOCOL_VERSION || workerId == null || !workerId.matches("[a-zA-Z0-9_-]{1,64}") || sequence <= 0 || imageDigest == null
-                || !imageDigest.matches("sha256:[a-f0-9]{64}") || (message != null && message.length() > 8_192)) {
+        if (protocolVersion != WorkerCommand.PROTOCOL_VERSION || workerId == null || !WORKER_ID.matcher(workerId).matches() || sequence <= 0 || imageDigest == null
+                || !IMAGE_DIGEST.matcher(imageDigest).matches() || (message != null && message.length() > 8_192)) {
             throw new IllegalArgumentException("Invalid worker event");
         }
         if (identity != null && (!workerId.equals(identity.workerId()) || !incarnation.equals(identity.workerIncarnation()))) {
