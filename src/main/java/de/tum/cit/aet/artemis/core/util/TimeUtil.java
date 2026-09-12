@@ -56,7 +56,7 @@ public class TimeUtil {
         return toRelativeTime(origin.getEpochSecond(), unit.getEpochSecond(), target.getEpochSecond());
     }
 
-    private static double toRelativeTime(@NonNull long originEpochSecond, @NonNull long unitEpochSecond, @NonNull long targetEpochSecond) {
+    private static double toRelativeTime(long originEpochSecond, long unitEpochSecond, long targetEpochSecond) {
         if (originEpochSecond == unitEpochSecond) {
             return 1;
         }
@@ -100,7 +100,7 @@ public class TimeUtil {
      *
      * @param newClock the new Clock instance to set
      */
-    public static void setClock(@NonNull Clock newClock) {
+    public static void setClock(Clock newClock) {
         // Checked rather than left to the annotation, unlike most non-null contracts in this code base. Nothing
         // dereferences this value afterwards: ThreadLocal.set(null) succeeds and now() falls back to DEFAULT_CLOCK, so
         // a test that passed null here would silently become time-dependent instead of failing.

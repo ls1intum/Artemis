@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -148,9 +147,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Returns the active courses in which the given user holds any role. For an active course (already started, not yet
-     * finished) holding any role is exactly the visibility condition evaluated by
-     * {@code CourseVisibleService.isCourseVisibleForUser} for a non-admin, so this lets the dashboard/dropdown load only
-     * the user's own courses via an indexed join instead of loading all active courses and filtering them in memory.
+     * finished) holding any role is exactly the course visibility condition for a non-admin, so this lets the
+     * dashboard/dropdown load only the user's own courses via an indexed join instead of loading all active courses and
+     * filtering them in memory.
      *
      * @param userId the id of the user
      * @param now    the current time used to determine whether a course is active
@@ -256,9 +255,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
-    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
-
     /**
      * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
      *
@@ -350,7 +346,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             FROM Course c
             WHERE c.id = :courseId
             """)
-    @Cacheable(cacheNames = "courseTitle", key = "#courseId", unless = "#result == null")
     String getCourseTitle(@Param("courseId") long courseId);
 
     /**
@@ -516,10 +511,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
     }
 
-    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
-    }
-
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)), courseId);
     }
@@ -553,15 +544,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                         || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType() != AUTOMATIC || exercise.getAllowComplaintsForAutomaticAssessments())))
                 .collect(Collectors.toSet());
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    default List<Course> findAllActive() {
-        return findAllActive(ZonedDateTime.now());
     }
 
     /**
@@ -775,11 +757,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Projects the fields the course overview container renders.
-     *
+     * <p>
      * The endpoint used to load the whole {@code Course} to read a handful of scalars off it. Selecting them directly
      * means the successful path materialises no entity at all, so nothing can lazily initialise on the way out and the
      * response cannot drift as the entity gains fields.
-     *
+     * <p>
      * The unread notification count lives outside this table, so the caller fills it in with
      * {@link CourseForOverviewDTO#withNotificationCount(long)}.
      *

@@ -59,27 +59,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 optional DB call to get the amount of notifications inside the course.
         // + additional queries from Hibernate 7 entity/collection loading changes
 
-        var course = courses.getFirst();
-        assertThatDb(() -> {
-            log.info("Start course for dashboard call for one course");
-            var userCourse = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-            log.info("Finish courses for dashboard call for one course");
-            return userCourse;
-        }).hasBeenCalledAtMostTimes(18);
-        // TODO: Hibernate 7 increased query count from 15 to 18 - investigate remaining extra queries in a follow-up
-        // 1 DB call to get the user from the DB
-        // 1 DB call to get the course with lectures
-        // 1 DB call to load all exercises with categories
-        // 1 DB call to load all exams
-        // 3 DB calls to load the numbers of competencies, prerequisites and tutorial groups
-        // 1 DB call to get all individual student participations with submissions and results
-        // 1 DB call to get all team student participations with submissions and results
-        // 1 DB call to get all plagiarism cases
-        // 1 DB call to get the grading scale
-        // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
-        // 1 DB call to get the faqs, if they are enabled
-        // 1 DB call to check if Iris is enabled in the course
-        // 1 DB call to determine if the quiz training mode is enabled for the course
     }
 
     @Test

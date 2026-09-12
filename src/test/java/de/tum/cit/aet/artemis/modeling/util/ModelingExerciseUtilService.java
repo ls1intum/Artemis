@@ -16,9 +16,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -265,7 +265,9 @@ public class ModelingExerciseUtilService {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
-        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null).submission();
+        // the save wrote the foreign key from an id; this utility holds the participation itself and saves again below
+        submission.setParticipation(participation);
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
@@ -383,7 +385,7 @@ public class ModelingExerciseUtilService {
      * @param submissionId The id of the ModelingSubmission
      * @param sentModel    The model that should have been stored
      */
-    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JsonProcessingException {
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JacksonException {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
         checkModelsAreEqual(modelingSubmission.orElseThrow().getModel(), sentModel);
@@ -395,8 +397,8 @@ public class ModelingExerciseUtilService {
      * @param storedModel The model that has been stored
      * @param sentModel   The model that should have been stored
      */
-    public void checkModelsAreEqual(String storedModel, String sentModel) throws JsonProcessingException {
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+    public void checkModelsAreEqual(String storedModel, String sentModel) throws JacksonException {
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode sentModelNode = objectMapper.readTree(sentModel);
         JsonNode storedModelNode = objectMapper.readTree(storedModel);
         assertThat(storedModelNode).as("model correctly stored").isEqualTo(sentModelNode);
