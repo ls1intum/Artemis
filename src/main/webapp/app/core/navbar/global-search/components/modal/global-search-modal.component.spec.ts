@@ -850,6 +850,44 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('deep learning', 10, [1]);
         });
 
+        it('routes to Iris content search when the chips are set before the query is typed', () => {
+            component['toggleFilterMenu']();
+            choose('operator', 'type:');
+            choose('value', 'lecture');
+            vi.advanceTimersByTime(300);
+
+            component['toggleFilterMenu']();
+            choose('operator', 'course:');
+            choose('value', '1');
+            vi.advanceTimersByTime(300);
+
+            component['onSearchInput']('deep learning');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenLastCalledWith('deep learning', 10, [1]);
+        });
+
+        it('leaves content search alone when a second type chip joins the lecture chip', () => {
+            component['onSearchInput']('deep learning');
+            vi.advanceTimersByTime(300);
+            component['toggleFilterMenu']();
+            choose('operator', 'type:');
+            choose('value', 'lecture');
+            vi.advanceTimersByTime(300);
+            expect(mockLectureSearchService.search).toHaveBeenCalled();
+            mockLectureSearchService.search.mockClear();
+
+            // A second type chip widens the question past lecture content, which Iris cannot answer,
+            // so the metadata search takes over. This is the shape that looks like "it used entities".
+            component['toggleFilterMenu']();
+            choose('operator', 'type:');
+            choose('value', 'course');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('deep learning', 'lecture,lecture_unit,course', undefined, undefined);
+        });
+
         it('walks the exclude branch and offers the right way back at every level', () => {
             component['openFilterPicker']();
             expect(component['menuHeaderKey']()).toBe('global.search.addFilter');
