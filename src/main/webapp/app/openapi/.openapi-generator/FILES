@@ -1,3 +1,4 @@
+api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -11,6 +12,7 @@ api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts
 api/tutorial-group-session-api.ts
 api/tutorial-groups-configuration-api.ts
+model/active-generation.ts
 model/answer-option-with-solution.ts
 model/answer-option-without-solution.ts
 model/artifact-location.ts
@@ -41,6 +43,8 @@ model/drag-item.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
+model/exercise-generation-feedback.ts
+model/exercise-generation-input.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
 model/global-search-result.ts

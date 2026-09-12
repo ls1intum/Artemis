@@ -11,6 +11,7 @@
 import type { ExerciseGenerationUsage } from './exercise-generation-usage';
 import type { ExerciseGenerationFileChange } from './exercise-generation-file-change';
 import type { ExerciseGenerationEvent } from './exercise-generation-event';
+import type { ExerciseGenerationInput } from './exercise-generation-input';
 
 export interface ExerciseGenerationStatus {
     jobId: string;
@@ -30,6 +31,7 @@ export interface ExerciseGenerationStatus {
     effortProfile?: string;
     /** Whether a current or retained candidate snapshot from this run is readable */
     artifactsRetained: boolean;
+    input?: ExerciseGenerationInput;
 }
 
 export type ExerciseGenerationStatusModeEnum = 'GENERATE' | 'ADAPT';

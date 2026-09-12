@@ -42,7 +42,8 @@ export type ConsistencyIssueCategoryEnum =
     | 'CONSTRUCTOR_PARAMETER_MISMATCH'
     | 'ATTRIBUTE_TYPE_MISMATCH'
     | 'VISIBILITY_MISMATCH'
-    | 'IDENTIFIER_NAMING_INCONSISTENCY';
+    | 'IDENTIFIER_NAMING_INCONSISTENCY'
+    | 'GENERATION_REVIEW_REQUIRED';
 
 export const ConsistencyIssueCategoryEnum = {
     MethodReturnTypeMismatch: 'METHOD_RETURN_TYPE_MISMATCH' as const,
@@ -51,6 +52,7 @@ export const ConsistencyIssueCategoryEnum = {
     AttributeTypeMismatch: 'ATTRIBUTE_TYPE_MISMATCH' as const,
     VisibilityMismatch: 'VISIBILITY_MISMATCH' as const,
     IdentifierNamingInconsistency: 'IDENTIFIER_NAMING_INCONSISTENCY' as const,
+    GenerationReviewRequired: 'GENERATION_REVIEW_REQUIRED' as const,
 } as const;
 
 export const ConsistencyIssueCategoryEnumValues = [
@@ -60,4 +62,5 @@ export const ConsistencyIssueCategoryEnumValues = [
     'ATTRIBUTE_TYPE_MISMATCH',
     'VISIBILITY_MISMATCH',
     'IDENTIFIER_NAMING_INCONSISTENCY',
+    'GENERATION_REVIEW_REQUIRED',
 ] as const;
