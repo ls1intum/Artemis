@@ -20,7 +20,7 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
-import { Holiday, inCourseZone, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, inCourseZone, lastDayCovered, toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
 import { HolidayMonthGridComponent } from 'app/tutorialgroup/manage/holidays/holiday-month-grid/holiday-month-grid.component';
 import { HolidayListComponent, HolidayListFilter } from 'app/tutorialgroup/manage/holidays/holiday-list/holiday-list.component';
 import { HolidayDialogComponent, HolidaySubmission } from 'app/tutorialgroup/manage/holidays/holiday-dialog/holiday-dialog.component';
@@ -435,6 +435,13 @@ export class TutorialGroupHolidaysComponent {
         // while the request is on its way - and is not left standing if it never arrives.
         this.dialogSessionCount.set(0);
         this.dialogSpanRequests.next(span);
+        // The preview follows the form rather than the run that opened it: editing the dates and watching the
+        // calendar keep the days first chosen would have shown one span while saving another. Only while creating,
+        // because a holiday being edited is already drawn by its own bar.
+        if (!this.editedHoliday()) {
+            // The form works in instants and the calendar in days, and an end at midnight belongs to the day before.
+            this.selectedRange.set({ start: span.start.startOf('day'), end: lastDayCovered(span.start, span.end) });
+        }
     }
 
     protected onSave(submission: HolidaySubmission): void {

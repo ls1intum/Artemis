@@ -341,6 +341,35 @@ describe('TutorialGroupHolidaysComponent', () => {
             expect(held?.end.format('YYYY-MM-DD')).toBe('2025-12-24');
         });
 
+        it('should follow the form when the dates are changed after it opened', () => {
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), document.createElement('button'));
+
+            // The reader extends the run in the form; the calendar has to show what would be saved, not what was
+            // first chosen.
+            component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-27T23:59') });
+
+            const held = component['selectedRange']();
+            expect(held?.start.format('YYYY-MM-DD')).toBe('2025-12-22');
+            expect(held?.end.format('YYYY-MM-DD')).toBe('2025-12-27');
+        });
+
+        it('should count an end at midnight as the day before, the way the calendar draws it', () => {
+            component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-22'), document.createElement('button'));
+
+            // An exclusive end: the span stops at the start of the 25th, so the last day it covers is the 24th.
+            component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-25T00:00') });
+
+            expect(component['selectedRange']()?.end.format('YYYY-MM-DD')).toBe('2025-12-24');
+        });
+
+        it('should leave the preview alone while an existing holiday is being edited, which has its own bar', () => {
+            component['openEditDialog'](component['holidays']()[0], document.createElement('button'));
+
+            component['onDialogSpanChange']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-27T23:59') });
+
+            expect(component['selectedRange']()).toBeUndefined();
+        });
+
         it('should stop previewing it once the form closes', () => {
             component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), document.createElement('button'));
 
