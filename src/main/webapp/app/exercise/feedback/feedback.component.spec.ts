@@ -305,6 +305,11 @@ describe('FeedbackComponent', () => {
         expect(comp.feedbackItemNodes()?.length).toBeGreaterThan(0);
         expect(comp.scoreChartData()).toBeDefined();
         expect(comp.scoreChartConfig()).toBeDefined();
+
+        // the list endpoints do not ship `submission.participation.exercise`, so the chart is gated on the exercise the popup resolved
+        expect(comp.result().submission!.participation!.exercise).toBeUndefined();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
     });
 
     it('should load historical source code from the assessed commit without blocking feedback', () => {

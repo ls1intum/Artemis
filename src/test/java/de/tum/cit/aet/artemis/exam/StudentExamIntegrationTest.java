@@ -801,7 +801,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // deduplicated message) - the assessment draft must copy and expose it
         var testRunParticipation = studentParticipationRepository
                 .findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(), List.of(programmingExercise)).getFirst();
-        var submission = testRunParticipation.findLatestSubmission().orElseThrow();
+        var submission = (ProgrammingSubmission) testRunParticipation.findLatestSubmission().orElseThrow();
+        submission.setCommitHash("1234abcd");
+        submission = programmingSubmissionRepository.save(submission);
         var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testRunTest");
         participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test-run failure message");
@@ -816,6 +818,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             assertThat(feedback.id()).isNegative();
             assertThat(feedback.detailText()).isEqualTo("test-run failure message");
         });
+        // the feedback popup of a programming result prints the commit the submission was built from
+        assertThat(response.getFirst().commitHash()).isEqualTo("1234abcd");
     }
 
     @Test

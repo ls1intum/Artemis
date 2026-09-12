@@ -78,7 +78,7 @@
                     </div>
                 }
 
-                @if (scoreChartVisible() && result().submission?.participation?.exercise) {
+                @if (scoreChartVisible() && resolvedExercise()) {
                     <div class="mb-12">
                         <div data-testid="feedback-chart" class="chart-space h-20">
                             <tum-ui-bar-chart

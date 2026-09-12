@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * @param participation          the participation the submission belongs to, without its exercise
  * @param results                the results of the submission, or null when they were not loaded
  * @param buildFailed            whether the programming build failed, for programming submissions
+ * @param commitHash             the commit the submission was built from, for programming submissions
  * @param text                   the submitted text, for text submissions
  * @param language               the language of the text, for text submissions
  * @param model                  the submitted model, for modeling submissions
@@ -51,7 +52,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable SubmissionType type, Boolean exampleSubmission, @Nullable ZonedDateTime submissionDate,
         String submissionExerciseType, @Nullable SubmissionParticipationDTO participation, @Nullable List<SubmissionResultDTO> results, @Nullable Boolean buildFailed,
-        @Nullable String text, @Nullable Language language, @Nullable String model) {
+        @Nullable String commitHash, @Nullable String text, @Nullable Language language, @Nullable String model) {
 
     /**
      * Maps a submission without the sibling submissions of its participation.
@@ -83,11 +84,13 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
         }
 
         Boolean buildFailed = null;
+        String commitHash = null;
         String text = null;
         Language language = null;
         String model = null;
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
             buildFailed = programmingSubmission.isBuildFailed();
+            commitHash = programmingSubmission.getCommitHash();
         }
         else if (submission instanceof TextSubmission textSubmission) {
             text = textSubmission.getText();
@@ -98,7 +101,7 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
         }
 
         return new SubmissionResponseDTO(submission.getId(), submission.isSubmitted(), submission.getType(), submission.isExampleSubmission(), submission.getSubmissionDate(),
-                submission.getSubmissionExerciseType(), participation, resultsOf(submission), buildFailed, text, language, model);
+                submission.getSubmissionExerciseType(), participation, resultsOf(submission), buildFailed, commitHash, text, language, model);
     }
 
     @Nullable
@@ -141,15 +144,20 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
 
     /**
      * A sibling submission of the participation, carrying only what the client needs to resolve the displayed result.
+     * <p>
+     * {@code submissionDate} is how the client decides whether the participation was in due time: it reads the date of
+     * the first sibling, not the one of the listed submission, and without it every listed result is labelled late.
      *
-     * @param id      the submission id
-     * @param results the results of that submission, or null when they were not loaded
+     * @param id                     the submission id
+     * @param submissionDate         when that submission was made
+     * @param submissionExerciseType the polymorphic discriminator of {@link Submission}
+     * @param results                the results of that submission, or null when they were not loaded
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ParticipationSubmissionDTO(Long id, @Nullable List<SubmissionResultDTO> results) {
+    public record ParticipationSubmissionDTO(Long id, @Nullable ZonedDateTime submissionDate, String submissionExerciseType, @Nullable List<SubmissionResultDTO> results) {
 
         static ParticipationSubmissionDTO of(Submission submission) {
-            return new ParticipationSubmissionDTO(submission.getId(), resultsOf(submission));
+            return new ParticipationSubmissionDTO(submission.getId(), submission.getSubmissionDate(), submission.getSubmissionExerciseType(), resultsOf(submission));
         }
     }
 

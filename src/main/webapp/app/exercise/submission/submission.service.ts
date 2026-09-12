@@ -90,9 +90,32 @@ export class SubmissionService {
         const body = (res.body ?? []).map((dto) => {
             const submission = SubmissionService.convertSubmissionDateFromServer(dto.submission)!;
             this.setSubmissionAccessRights(submission);
-            return { submission, complaint: this.complaintService.convertComplaintFromServerInList(dto.complaint) };
+            const complaint = this.complaintService.convertComplaintFromServerInList(dto.complaint);
+            SubmissionService.completeComplainedResult(complaint, submission);
+            return { submission, complaint };
         });
         return res.clone({ body });
+    }
+
+    /**
+     * The complaint carries a reduced copy of the complained-about result, and the more feedback request table renders
+     * that copy. The listed submission holds the same result in full, so take the programming numbers from there and
+     * hang the submission itself on the result: the result string, the code issue warning, the build log request and
+     * the commit line all read those. The result is matched by id, the latest result is not always the complained one.
+     */
+    private static completeComplainedResult(complaint: Complaint, submission: Submission) {
+        const complainedResult = complaint.result;
+        if (!complainedResult) {
+            return;
+        }
+        complainedResult.submission = submission;
+        const listedResult = submission.results?.find((result) => result.id === complainedResult.id);
+        if (listedResult) {
+            complainedResult.successful = listedResult.successful;
+            complainedResult.testCaseCount = listedResult.testCaseCount;
+            complainedResult.passedTestCaseCount = listedResult.passedTestCaseCount;
+            complainedResult.codeIssueCount = listedResult.codeIssueCount;
+        }
     }
 
     public static convertSubmissionDateFromServer(submission: Submission | undefined) {

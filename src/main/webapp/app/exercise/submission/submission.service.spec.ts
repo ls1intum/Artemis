@@ -168,7 +168,11 @@ describe('Submission Service', () => {
         const complaint: ComplaintDTO = {
             submittedTime: complaintSubmittedTimeStr as any, // String should be converted to proper type by the tested service.
             complaintIsAccepted: false,
+            result: { id: 2374 },
         };
+        submission.results![0].testCaseCount = 10;
+        submission.results![0].passedTestCaseCount = 7;
+        submission.results![0].codeIssueCount = 3;
         const returnedFromService = [
             {
                 submission,
@@ -187,6 +191,12 @@ describe('Submission Service', () => {
                 expect(submissionWithComplaint.complaint.submittedTime).toEqual(dayjs(complaintSubmittedTimeStr));
                 // a rejected complaint must stay rejected: `complaintIsAccepted: false` maps to `accepted: false`, not to undefined
                 expect(submissionWithComplaint.complaint.accepted).toBe(false);
+                // the reduced result of the complaint is what the more feedback request table renders: it needs the
+                // programming numbers and the submission of the listed result with the same id
+                expect(submissionWithComplaint.complaint.result!.testCaseCount).toBe(10);
+                expect(submissionWithComplaint.complaint.result!.passedTestCaseCount).toBe(7);
+                expect(submissionWithComplaint.complaint.result!.codeIssueCount).toBe(3);
+                expect(submissionWithComplaint.complaint.result!.submission).toBe(submissionWithComplaint.submission);
             });
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/submissions-with-complaints`, method: 'GET' });
         req.flush(returnedFromService);

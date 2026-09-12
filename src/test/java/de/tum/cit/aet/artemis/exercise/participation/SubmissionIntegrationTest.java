@@ -189,6 +189,9 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         assertThat(listed.participation().participantName()).isNotBlank();
         assertThat(listed.participation().submissions()).isNotEmpty();
         assertThat(listed.participation().submissions().getFirst().results()).isNotEmpty();
+        // the client decides over the sibling date whether the participation was in due time, without it every listed result is late
+        assertThat(listed.participation().submissions().getFirst().submissionDate()).isNotNull();
+        assertThat(listed.participation().submissions().getFirst().submissionExerciseType()).isEqualTo("text");
     }
 
     @Test
