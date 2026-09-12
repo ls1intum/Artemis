@@ -7,13 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyExerciseLinkResponseDTO(double weight, @Nullable ExerciseForCompetencyDTO exercise) {
+public record CompetencyExerciseLinkResponseDTO(double weight, boolean generatedByAi, @Nullable ExerciseForCompetencyDTO exercise) {
 
     @Nullable
     public static CompetencyExerciseLinkResponseDTO of(@Nullable CompetencyExerciseLink link) {
         if (link == null) {
             return null;
         }
-        return new CompetencyExerciseLinkResponseDTO(link.getWeight(), ExerciseForCompetencyDTO.of(link.getExercise()));
+        return new CompetencyExerciseLinkResponseDTO(link.getWeight(), link.isGeneratedByAi(), ExerciseForCompetencyDTO.of(link.getExercise()));
     }
 }

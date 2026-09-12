@@ -898,7 +898,7 @@ export class ChecklistPanelComponent {
                         return EMPTY;
                     }
                     const create$ = toCreate.map((comp) =>
-                        this.competencyService.create(comp, courseId).pipe(
+                        this.competencyService.createFromHyperionChecklist(comp, courseId).pipe(
                             map((response) => ({ success: true as const, response })),
                             catchError(() => of({ success: false as const, response: undefined })),
                         ),
@@ -917,7 +917,7 @@ export class ChecklistPanelComponent {
                                 }
                                 const created = result.response?.body;
                                 if (created?.id && !linkedIds.has(created.id)) {
-                                    allLinks.push(new CompetencyExerciseLink(created, exercise, this.computeRelevanceWeight(toCreateInferred[i])));
+                                    allLinks.push(new CompetencyExerciseLink(created, exercise, this.computeRelevanceWeight(toCreateInferred[i]), true));
                                     linkedIds.add(created.id);
                                     newlyCreated.add((created.title ?? '').toLowerCase());
                                     this.courseCompetencies.update((current) => [...current, created]);
@@ -996,7 +996,7 @@ export class ChecklistPanelComponent {
             }
 
             if (courseComp?.id && !linkedIds.has(courseComp.id)) {
-                allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp)));
+                allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp), true));
                 linkedIds.add(courseComp.id);
                 newlyLinked.add(title.toLowerCase());
             } else if (!courseComp && !reconciledCreated.has(title.toLowerCase())) {

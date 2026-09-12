@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
@@ -91,6 +92,10 @@ class CreatorToolsServiceTest {
         String result = service.createCompetency("Sorting Algorithms", "Understand sorting basics.", "UNDERSTAND", JUSTIFICATION, toolContext);
 
         assertThat(result).contains("\"id\":101").contains("Sorting Algorithms").contains("UNDERSTAND");
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Competency>> competencyCaptor = ArgumentCaptor.forClass(List.class);
+        verify(competencyService).createCompetencies(competencyCaptor.capture(), eq(course));
+        assertThat(competencyCaptor.getValue()).singleElement().satisfies(competency -> assertThat(competency.isGeneratedByAi()).isTrue());
         assertThat(appliedActions).singleElement().satisfies(action -> {
             assertThat(action.type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
             assertThat(action.competencyId()).isEqualTo(101L);

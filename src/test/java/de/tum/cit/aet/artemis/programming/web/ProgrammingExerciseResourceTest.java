@@ -964,6 +964,28 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_withHyperionCompetencyLink_persistsProvenanceAtomically() throws Exception {
+        addInstructorToCourse();
+        Competency competency = competencyUtilService.createCompetency(course);
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setShortName("hyperionLink");
+        newExercise.setTitle("Exercise with Hyperion competency");
+        newExercise.setChannelName("testchannel-hyperion");
+        var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
+        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
+
+        String path = "/api/programming/programming-exercises/setup?hyperionCompetencyId=" + competency.getId();
+        var created = request.postWithResponseBody(path, newExercise, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(created.id())).singleElement()
+                .satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
+    }
+
     /**
      * The response of the update endpoint is the object the client rebuilds its next request body from. This test pins
      * the full traced read contract for a course exercise.

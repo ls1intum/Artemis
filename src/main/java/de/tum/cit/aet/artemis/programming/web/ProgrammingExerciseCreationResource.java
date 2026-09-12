@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -101,15 +102,17 @@ public class ProgrammingExerciseCreationResource {
     /**
      * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
-     * @param createDTO         the programmingExercise to set up
-     * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
+     * @param createDTO             the programmingExercise to set up
+     * @param emptyRepositories     if true, clear sources in template, solution, and test repositories after setup
+     * @param hyperionCompetencyIds IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping("programming-exercises/setup")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> createProgrammingExercise(@RequestBody CreateProgrammingExerciseDTO createDTO,
-            @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories) {
+            @RequestParam(name = "emptyRepositories", defaultValue = "false") boolean emptyRepositories,
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to setup ProgrammingExercise : {}", createDTO.title());
 
         // The id is mapped onto the entity so that the existing "a new exercise must not have an id" validation still fires
@@ -126,7 +129,7 @@ public class ProgrammingExerciseCreationResource {
         // The request DTO does not bind the competency links itself: they need managed competencies, which only this
         // service resolves. The creation pipeline then reads them off the exercise, exactly as the entity request body
         // used to leave them there.
-        competencyExerciseLinkService.updateCompetencyLinks(createDTO, programmingExercise);
+        competencyExerciseLinkService.updateCompetencyLinks(createDTO, programmingExercise, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
 
         try {
             // Setup all repositories etc
