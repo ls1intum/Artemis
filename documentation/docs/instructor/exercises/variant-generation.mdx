@@ -18,8 +18,6 @@ import wizardResultDraft from './assets/variant-generation/wizard-result-draft.p
 import navbarTray from './assets/variant-generation/navbar-tray.png';
 import examWizard from './assets/variant-generation/exam-wizard.png';
 
-# Generate Variants with AI
-
 Writing a second version of an exercise by hand is the expensive part of [exercise variants](/instructor/exercises/exercise-variants). For a programming exercise it means re-theming the problem statement, template, solution and tests consistently, keeping every task-to-test link intact, and making sure the solution still builds green while the template still fails.
 
 Artemis can do that work for you. **Create Variant with AI** takes an existing exercise, asks what should change, and produces a complete, verified Artemis exercise in the background.
@@ -29,8 +27,6 @@ Artemis can do that work for you. **Create Variant with AI** takes an existing e
   Variant generation is part of [Hyperion](/admin/hyperion) and is available only when your Artemis instance has the Hyperion module enabled. It requires at least the **Editor** role in the course.
 
 </Callout>
-
----
 
 ## Supported Exercise Types
 
@@ -42,15 +38,15 @@ Artemis can do that work for you. **Create Variant with AI** takes an existing e
 
 The action is hidden for exercises it cannot handle, and for anyone below the Editor role.
 
----
-
 ## Starting a Generation
 
 Open **Course Management → Exercises**, then use the overflow menu (**…**) of an exercise row and choose **Create Variant with AI**. In exams, the same action sits on the rows of an exercise group.
 
 <Image src={createVariantAction} alt="Create Variant with AI in the row actions" size={ImageSize.medium} caption="The AI action in the overflow menu of an exercise row" />
 
-### Step 1 — Select what should change
+A wizard opens and walks through the five stages below in order.
+
+### Select What Should Change
 
 Pick one or more aspects. You can combine them freely.
 
@@ -63,7 +59,7 @@ Pick one or more aspects. You can combine them freely.
 | **Storytelling** | Sets the narrative style, from a plain technical description to a fully told story |
 | **Custom** | Free-text instructions of your own |
 
-### Step 2 — Configure
+### Configure the Aspects
 
 Fill in the details for the aspects you selected: the target difficulty, the new domain, the narrative style, and your custom instructions.
 
@@ -78,7 +74,7 @@ The narrative styles are:
 | **Creative** | A story carries the task: themed setting, named actors, story-driven examples |
 | **Imaginative** | Fully creative storytelling inside a rich narrative world |
 
-### Step 3 — Placement
+### Choose the Placement
 
 Decide where the finished variant goes.
 
@@ -90,7 +86,7 @@ Decide where the finished variant goes.
 | **Add to group "…"** | The variant joins the group the source exercise already belongs to |
 | **Add as standalone exercise** | No group — the variant appears on its own in the exercise list |
 
-### Step 4 — Generating
+### Follow the Generation
 
 The wizard shows the phases as they happen: the source exercise is analyzed, the change is planned, a real copy is provisioned, the changes are applied, and the result is verified and — if needed — repaired.
 
@@ -104,13 +100,11 @@ Click **Run in Background** to close the window and let the job continue. It the
 
 Cancelling ends the job and removes the half-finished exercise copy, including its repositories and build plans. Jobs stay in the tray for 24 hours so you can review a result later.
 
-### Step 5 — Result
+### Review the Result
 
 <Image src={wizardResult} alt="Successful generation result" size={ImageSize.large} caption="A finished variant with every check green" />
 
 The result step summarizes what the AI did per phase, how many tokens the run used, and offers **Open in Editor** to review the variant.
-
----
 
 ## What Artemis Checks
 
@@ -121,8 +115,6 @@ Before a variant is accepted, it has to pass objective gates. They run cheapest 
 - Every **task-to-test reference** in the problem statement resolves to an active test case, so grading stays wired up.
 - **Quiz validity**: questions, answer options and points are consistent.
 - A **semantic consistency check** compares problem statement, template, solution and tests against each other (the same check described under [Consistency Check](/instructor/exercises/consistency-check)).
-
----
 
 ## Outcomes
 
@@ -139,8 +131,6 @@ Before a variant is accepted, it has to pass objective gates. They run cheapest 
 
 </Callout>
 
----
-
 ## Exam Exercises
 
 Generation works the same way for exercises inside an exam exercise group, with two deliberate differences:
@@ -149,8 +139,6 @@ Generation works the same way for exercises inside an exam exercise group, with 
 - There is **no difficulty option**. Exam difficulty is reviewed in advance, and handing students variants of differing difficulty would be unfair.
 
 <Image src={examWizard} alt="Wizard for an exam exercise" size={ImageSize.large} caption="For exam exercises the wizard has no placement step and no difficulty card" />
-
----
 
 ## Troubleshooting
 

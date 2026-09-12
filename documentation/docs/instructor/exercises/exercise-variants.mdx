@@ -12,8 +12,6 @@ import groupView from './assets/exercise-variants/group-view.png';
 import manageExercisesModal from './assets/exercise-variants/manage-exercises-modal.png';
 import editGroup from './assets/exercise-variants/edit-group.png';
 
-# Exercise Variants
-
 Courses often offer the same task in several versions: a programming exercise in two languages, a quiz in an easy and a hard flavor, or the same problem set in different application domains. An **exercise variant group** ties those versions together so that Artemis treats them as one task instead of several independent exercises.
 
 A variant group gives you:
@@ -27,8 +25,6 @@ A variant group gives you:
   Exercise variant groups are a course-level concept. Exams use their own *exercise groups*, where Artemis assigns each student exactly one exercise from the group. Both are described in this page, in [Variant Groups in Exams](#variant-groups-in-exams).
 
 </Callout>
-
----
 
 ## The Exercise Management Page
 
@@ -44,8 +40,6 @@ Open **Course Management → Exercises**. All exercises of the course live on on
 <Image src={groupView} alt="Exercise management in group view" size={ImageSize.large} caption="Group view: one card per variant group, with the shared timeline and points cap in the card footer" />
 
 The search bar filters across all views, rows can be multi-selected for bulk actions, and each row carries the usual actions (participations, scores, edit, delete) plus the type-specific ones.
-
----
 
 ## Creating a Variant Group
 
@@ -65,8 +59,6 @@ In the **Group** view you can also drag an exercise from one card onto another t
 
 </Callout>
 
----
-
 ## The Shared Timeline
 
 The group owns the timeline of all its variants. Open **Edit group** on a group card to change it.
@@ -82,8 +74,6 @@ Artemis validates a new timeline against **all** member exercises before saving 
 
 Removing an exercise from a group leaves its dates as they are; from then on you manage them on the exercise itself.
 
----
-
 ## The Points Cap
 
 **Max points** on the group caps the total contribution of the group to the course score. A student who works on several variants has their points summed and then capped at this value, so the group counts like a single exercise.
@@ -96,13 +86,9 @@ Leave the field empty for no cap. Exercises outside a group are scored exactly a
 
 </Callout>
 
----
-
 ## Deleting a Group
 
 **Delete group** removes the group only. Its exercises are kept and become ungrouped, with the dates they had at that moment. You are asked to type the group name to confirm.
-
----
 
 ## Reusing Variants in Another Course
 
@@ -113,8 +99,6 @@ The **Import** tab of the exercise dialog imports exercises one type at a time; 
   Exams do have a group-level import: **Import Exercise Group** on the exam's Exercise Groups page copies a whole exam exercise group with its exercises.
 
 </Callout>
-
----
 
 ## Variant Groups in Exams
 
