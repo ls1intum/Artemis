@@ -52,8 +52,9 @@ public class WeaviateMigrationStartupService {
     private final long initialDelaySeconds;
 
     /**
-     * Bounded in-process retry. An attempt can fail if the embedding backend is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
-     * scheduling-node restart) lets the migration self-heal once the backend recovers. Re-running is safe because the migration is idempotent: target UUIDs are deterministic and
+     * Bounded in-process retry. An attempt can fail if the embedding service is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
+     * scheduling-node restart) lets the migration self-heal once the embedding service recovers. Re-running is safe because the migration is idempotent: target UUIDs are
+     * deterministic and
      * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete. Overridable via
      * {@code artemis.weaviate.outbox.migration-max-attempts} (default 5).
      */
