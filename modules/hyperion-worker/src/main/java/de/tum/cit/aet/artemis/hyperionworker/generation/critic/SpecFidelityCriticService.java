@@ -259,6 +259,10 @@ public class SpecFidelityCriticService {
                 settings.contextWindowTokens(), profileOptions);
     }
 
+    void setProviderRetryTimingForTests(long baseMillis, long capMillis) {
+        reviewer.setProviderRetryTimingForTests(baseMillis, capMillis);
+    }
+
     private static String modelOf(@Nullable ChatOptions options) {
         return options == null || options.getModel() == null ? "" : options.getModel();
     }
