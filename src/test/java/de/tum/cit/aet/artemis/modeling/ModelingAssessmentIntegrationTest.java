@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
@@ -45,6 +44,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
@@ -997,7 +997,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // could throw exception
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");  // 1,5/10 points
-        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
+        final var assessmentUpdate = new AssessmentUpdate(feedbacks, complaintResponse, null);
         Result resultAfterComplaint = assessmentService.updateAssessmentAfterComplaint(submission.getLatestResult(), modelingExercise, assessmentUpdate);
 
         List<Feedback> overrideFeedback = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54745.json"); // 4/10 points
@@ -1117,7 +1117,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         List<FeedbackDTO> longFeedbackDtos = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
             String detailText = ("long feedback " + i + " ").repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
-            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null));
+            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null));
         }
         ResultDTO stored = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment", new ModelingAssessmentDTO(longFeedbackDtos, "text"),
                 ResultDTO.class, HttpStatus.OK);
@@ -1154,7 +1154,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         for (int i = 0; i < 12; i++) {
             GradingInstruction instruction = instructions.get(i % instructions.size());
             GradingInstructionDTO gradingInstructionDto = GradingInstructionDTO.of(instruction);
-            structuredFeedbackDtos.add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto));
+            structuredFeedbackDtos.add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto, null));
         }
 
         // One batch query for grading instructions; the count must not grow with the number of feedbacks.
