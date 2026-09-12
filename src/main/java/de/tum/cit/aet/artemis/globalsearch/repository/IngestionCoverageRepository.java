@@ -59,12 +59,18 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
     List<IngestionCoverageEntry> findAllByCourseIdIn(Collection<Long> courseIds);
 
     /**
-     * Reads the projection rows for the cross-course matrix, optionally filtered by overall status and/or by whether the
-     * course is currently active. A {@code null} filter means "any", so passing {@code null} for both returns every row;
-     * this single query backs the unfiltered view and the status and active filters in any combination.
+     * Reads the projection rows for the cross-course matrix, optionally filtered by overall status, by whether the course
+     * is currently active, and by a case-insensitive course-title search. A {@code null} filter means "any", so passing
+     * {@code null} for all three returns every row; this single query backs the unfiltered view and every combination of
+     * the three filters.
+     * <p>
+     * The title search is applied here rather than only on the live path because the two are used together: filtering by
+     * status and typing a course name is one question, and answering it by ignoring half of it returns the wrong rows.
+     * {@code %} and {@code _} in the term are escaped so a typed wildcard searches for itself.
      *
      * @param status   the coverage status to filter by, or {@code null} for any status
      * @param active   {@code true}/{@code false} to keep only active/inactive courses, or {@code null} for either
+     * @param search   a case-insensitive substring of the course title, or {@code null}/blank for any title
      * @param pageable the page and sort
      * @return the matching page of coverage rows
      */
@@ -73,6 +79,7 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
             FROM IngestionCoverageEntry e
             WHERE (:status IS NULL OR e.status = :status)
                 AND (:active IS NULL OR e.active = :active)
+                AND (:search IS NULL OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:search, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
             """)
-    Page<IngestionCoverageEntry> findFiltered(@Param("status") IngestionCoverageStatus status, @Param("active") Boolean active, Pageable pageable);
+    Page<IngestionCoverageEntry> findFiltered(@Param("status") IngestionCoverageStatus status, @Param("active") Boolean active, @Param("search") String search, Pageable pageable);
 }
