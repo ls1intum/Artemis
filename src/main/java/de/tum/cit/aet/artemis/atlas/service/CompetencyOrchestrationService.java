@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -612,12 +613,20 @@ public class CompetencyOrchestrationService {
             throw ex;
         }
         Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-        if (chatResponse != null && !Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY))) {
+        if (chatResponse != null) {
             llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+            if (Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY))) {
+                if (chatResponse.getMetadata().getUsage() instanceof EmptyUsage) {
+                    log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
+                }
+                else {
+                    log.warn("Atlas orchestration usage is incomplete for course {}; storing the reported partial usage", courseId);
+                }
+            }
         }
         else {
-            log.warn("Atlas orchestration usage is unavailable or incomplete for course {}; no zero-cost record is stored", courseId);
+            log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
         }
         AtlasToolCallBudget.checkResponse(chatResponse, toolContext);
         if (chatResponse != null && chatResponse.getResult() != null) {

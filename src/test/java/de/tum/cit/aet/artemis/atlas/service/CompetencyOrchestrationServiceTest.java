@@ -47,6 +47,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.openai.OpenAiChatOptions;
@@ -412,6 +414,29 @@ class CompetencyOrchestrationServiceTest {
         assertThat(providerCaptor.getAllValues()).containsExactly(orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, creatorToolCallbackProvider,
                 editorToolCallbackProvider, assignerToolCallbackProvider, terminalToolCallbackProvider);
         assertThat(providerCaptor.getAllValues()).contains(creatorToolCallbackProvider, editorToolCallbackProvider, assignerToolCallbackProvider, terminalToolCallbackProvider);
+    }
+
+    @Test
+    void run_mixedMissingAndReportedUsage_tracksKnownAggregate() {
+        ProgrammingExercise exercise = courseExercise(17L);
+        when(exerciseRepository.findByIdElseThrow(17L)).thenReturn(exercise);
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+
+        ChatResponseMetadata metadata = ChatResponseMetadata.builder().model("gpt-test").usage(new DefaultUsage(20, 3, 23))
+                .keyValue(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY, false).build();
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))), metadata);
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class))).thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(17L);
+
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        verify(runMap).remove(COURSE_ID);
     }
 
     @Test
