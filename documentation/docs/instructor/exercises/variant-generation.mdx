@@ -10,7 +10,6 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import createVariantAction from './assets/variant-generation/create-variant-action.png';
 import wizardSelect from './assets/variant-generation/wizard-select.png';
-import wizardConfigure from './assets/variant-generation/wizard-configure.png';
 import wizardPlacement from './assets/variant-generation/wizard-placement.png';
 import wizardGenerating from './assets/variant-generation/wizard-generating.png';
 import wizardResult from './assets/variant-generation/wizard-result.png';
@@ -63,8 +62,6 @@ Pick one or more aspects. You can combine them freely.
 
 Fill in the details for the aspects you selected: the target difficulty, the new domain, the narrative style, and your custom instructions.
 
-<Image src={wizardConfigure} alt="Wizard configure step" size={ImageSize.large} caption="Configure the selected aspects" />
-
 The narrative styles are:
 
 | Style | Description |
@@ -72,7 +69,6 @@ The narrative styles are:
 | **Technical** | No story — a plain, concise focus on the technical concepts |
 | **Realistic** | A short real-world scenario introduces the task, the rest stays technical |
 | **Creative** | A story carries the task: themed setting, named actors, story-driven examples |
-| **Imaginative** | Fully creative storytelling inside a rich narrative world |
 
 ### Choose the Placement
 
@@ -121,9 +117,26 @@ Before a variant is accepted, it has to pass objective gates. They run cheapest 
 | Outcome | Meaning |
 |---|---|
 | **Completed** | Every check passed. The variant is placed as configured and ready for review |
-| **Draft with warnings** | Some check did not pass within the attempt budget. The variant is kept as a flagged draft with a short note on what is wrong — open it in the editor, fix that, and publish it |
-| **Failed** | The run could not produce a variant. The result step explains the phase it failed in and how to continue. Any half-provisioned exercise is deleted again |
-| **Cancelled** | You stopped the run. Nothing is left behind |
+| **Draft with warnings** | Some check did not pass within the attempt budget, or the placement failed. The exercise is created and placed all the same, with a short note on what is wrong — open it in the editor and fix that |
+| **Failed** | The run could not produce a variant. The result step explains the phase it failed in and how to continue, and the half-provisioned exercise is deleted |
+| **Cancelled** | You stopped the run, and the half-provisioned exercise is deleted |
+
+<Callout variant={CalloutVariant.warning}>
+
+  **A flagged draft is not held back from students.** "Draft" describes the job, not the exercise: the variant is a
+  real exercise, already placed, and it inherits the release date of the exercise it was generated from. Generate a
+  variant of an exercise that is already released and the variant is released too, with its warnings unfixed. Clear
+  its **Release Date** before you repair it, or generate variants before releasing the original.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+  Deleting the half-finished copy of a failed or cancelled run can itself fail — if the repository or the build
+  cannot be removed, the exercise survives. Artemis says so on the result step and links the copy with **Open in
+  Editor**, so that a run reporting a cleanup problem is one to follow up on: delete that exercise by hand.
+
+</Callout>
 
 <Callout variant={CalloutVariant.warning}>
 
