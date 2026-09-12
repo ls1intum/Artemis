@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
+import de.tum.cit.aet.artemis.localci.dto.BuildPlanDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanRequestDTO;
@@ -60,7 +61,7 @@ public class BuildPlanResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/build-plan/for-editor")
     @EnforceAtLeastEditor
-    public ResponseEntity<BuildPlan> getBuildPlanForEditor(@PathVariable Long exerciseId) {
+    public ResponseEntity<BuildPlanDTO> getBuildPlanForEditor(@PathVariable Long exerciseId) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
@@ -70,7 +71,7 @@ public class BuildPlanResource {
 
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-        return ResponseEntity.ok().body(buildPlan);
+        return ResponseEntity.ok().body(BuildPlanDTO.of(buildPlan));
     }
 
     /**
@@ -79,12 +80,12 @@ public class BuildPlanResource {
      * Triggers a template and solution build to give feedback if the new build plan works as expected.
      *
      * @param exerciseId The exercise for which the build plan should be updated.
-     * @param buildPlan  The new build plan for the exercise.
+     * @param buildPlan  The new build plan script for the exercise.
      * @return The updated build plan.
      */
     @PutMapping("programming-exercises/{exerciseId}/build-plan")
     @EnforceAtLeastEditor
-    public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanRequestDTO buildPlan) {
+    public ResponseEntity<BuildPlanDTO> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanRequestDTO buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -95,6 +96,6 @@ public class BuildPlanResource {
 
         programmingTriggerService.triggerTemplateAndSolutionBuild(programmingExercise.getId());
 
-        return ResponseEntity.ok(createdBuildPlan);
+        return ResponseEntity.ok(BuildPlanDTO.of(createdBuildPlan));
     }
 }

@@ -476,11 +476,12 @@ export function getExercise(page: Page, exerciseId: number) {
 
 /**
  * Converts a title to lowercase and replaces spaces with hyphens.
+ * Truncated to 20 chars so callers can prepend a prefix and still fit the server's 31-char channel name cap.
  * @param title - The title to be converted to lowercase with hyphens.
  * @returns The converted title in lowercase with hyphens.
  */
 export function titleLowercase(title: string) {
-    return title.replace(' ', '-').toLowerCase();
+    return title.replace(/\s+/g, '-').toLowerCase().slice(0, 20).replace(/-+$/g, '');
 }
 
 /**
