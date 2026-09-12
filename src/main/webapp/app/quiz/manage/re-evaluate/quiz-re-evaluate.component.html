@@ -17,10 +17,15 @@
             <div class="quiz-options">
                 <div class="row form-group" style="width: 100%">
                     <div class="row">
-                        <!-- The marker the shared title field carries on every other exercise form, which this page
-                             hand-rolls its own title input instead of using. Hidden from assistive technology because
-                             `required` on the input already conveys it. -->
-                        <label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label><span class="text-state-danger" aria-hidden="true">*</span>
+                        <!--
+                            The marker the shared title field carries on every other exercise form, which this page
+                            hand-rolls its own title input instead of using. Hidden from assistive technology because
+                            `required` on the input already conveys it.
+
+                            Label and marker share one child of the row: Bootstrap gives every direct child of a `.row`
+                            `width: 100%`, so as two children they took a line each and the star sat under the label.
+                        -->
+                        <div><label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label><span class="text-state-danger" aria-hidden="true">*</span></div>
                     </div>
                     <div class="row">
                         <div class="col-11">
