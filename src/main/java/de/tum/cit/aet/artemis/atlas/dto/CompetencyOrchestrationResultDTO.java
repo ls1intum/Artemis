@@ -1,18 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.util.List;
-import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyOrchestrationResultDTO(Status status, String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
 
     public CompetencyOrchestrationResultDTO {
-        Objects.requireNonNull(status, "status must not be null");
-        Objects.requireNonNull(summary, "summary must not be null");
         appliedActions = appliedActions == null ? List.of() : List.copyOf(appliedActions);
         if (status == Status.SUCCESS && summary.isBlank()) {
             throw new IllegalArgumentException("summary must not be blank when status is SUCCESS");

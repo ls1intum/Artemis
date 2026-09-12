@@ -11,7 +11,7 @@ import { checkViteOverride, runViteOverrideCheck } from './check-vite-override.m
  * @param {{angularBuildVite?: string | null, installedVite?: string | null, hideVitePackageJson?: boolean}} tree
  *     `angularBuildVite` is what `@angular/build` declares (null omits the package entirely);
  *     `installedVite` is the version actually installed; `hideVitePackageJson` gives that package an
- *     `exports` map without `./package.json`, the way `vite-tsconfig-paths` already ships.
+ *     `exports` map without `./package.json`, the way some published packages ship.
  * @returns {string} The directory to pass as `resolveFrom`.
  */
 function createTree({ angularBuildVite, installedVite, hideVitePackageJson = false }) {

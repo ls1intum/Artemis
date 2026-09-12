@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
@@ -26,7 +26,7 @@ class StaticCodeAnalysisParserUnitTest {
 
     private static final Path REPORTS_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
 
-    private final ObjectMapper mapper = JsonObjectMapper.get();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     private void testParserWithFile(String toolGeneratedReportFileName, String expectedJSONReportFileName) throws IOException {
         testParserWithFileNamed(toolGeneratedReportFileName, toolGeneratedReportFileName, expectedJSONReportFileName);

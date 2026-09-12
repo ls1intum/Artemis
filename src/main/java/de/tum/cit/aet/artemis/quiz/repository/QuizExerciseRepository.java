@@ -41,6 +41,20 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    /**
+     * Filters the given quiz exercise ids down to those containing at least one drag-and-drop question. Lets the
+     * exercise-list endpoints report the flag without fetching the whole question graph of every quiz.
+     *
+     * @param exerciseIds the quiz exercise ids to check
+     * @return the subset of ids whose quiz has at least one drag-and-drop question
+     */
+    @Query("""
+            SELECT DISTINCT question.exercise.id
+            FROM DragAndDropQuestion question
+            WHERE question.exercise.id IN :exerciseIds
+            """)
+    Set<Long> findIdsWithDragAndDropQuestions(@Param("exerciseIds") Set<Long> exerciseIds);
+
     @Query("""
             SELECT qe
             FROM QuizExercise qe
@@ -64,14 +78,16 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             """)
     List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "categories", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCategoriesAndBatchesById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndBatchesById(Long quizExerciseId);
 
     // exerciseVariantGroup is LAZY, and QuizExerciseWithoutQuestionsDTO reads its title/maxPoints/dates, so it must be
     // loaded here — otherwise the DTO mapping would trigger a proxy initialization outside the session.
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
-            "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "categories", "competencyLinks.competency", "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
@@ -176,14 +192,25 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
+    /**
+     * Get one quiz exercise by id and eagerly load questions and batches.
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
     @NonNull
-    default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
-        return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
+    default QuizExercise findByIdWithQuestionsAndBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndBatchesById(quizExerciseId), quizExerciseId);
     }
 
     @NonNull
-    default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
-        return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
+    default QuizExercise findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCategoriesAndBatchesById(quizExerciseId), quizExerciseId);
+    }
+
+    @NonNull
+    default QuizExercise findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }
 
     /**

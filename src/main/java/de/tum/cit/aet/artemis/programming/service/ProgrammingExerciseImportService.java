@@ -11,12 +11,12 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -33,6 +33,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 @Lazy
 @Service
 public class ProgrammingExerciseImportService {
+
+    /** Everything that is not alphanumeric, which a short name may not contain. */
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -158,24 +161,19 @@ public class ProgrammingExerciseImportService {
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
-            boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
-        newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
+        newExercise.setShortName(NON_ALPHANUMERIC.matcher(newExercise.getShortName()).replaceAll(""));
         newExercise.generateAndSetProjectKey();
         programmingExerciseValidationService.checkIfProjectExists(newExercise);
-
-        if (newExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
-        }
 
         newExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(sourceExercise, newExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise);
             final boolean buildAndTestDateChanged = !Objects.equals(newExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
-            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newExercise, computedBuildAndTestDate);
-            if (buildAndTestDateChanged || feedbackRequestsChanged) {
+            newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            if (buildAndTestDateChanged) {
                 programmingExerciseRepository.save(newExercise);
             }
         }
@@ -205,16 +203,6 @@ public class ProgrammingExerciseImportService {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newExercise);
         return newExercise;
-    }
-
-    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
-            return false;
-        }
-
-        programmingExercise.setAllowFeedbackRequests(false);
-        return true;
     }
 
 }

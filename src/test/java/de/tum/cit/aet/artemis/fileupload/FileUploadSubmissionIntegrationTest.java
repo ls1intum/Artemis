@@ -135,9 +135,18 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(TEST_PREFIX + "student3")
     void submitFileSpecialExtensions() throws Exception {
-        releasedFileUploadExercise.setFilePattern("ipynb");
-        exerciseRepository.save(releasedFileUploadExercise);
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "ipynb");
         submitFile("test.ipynb", false, MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    @WithMockUser(TEST_PREFIX + "student3")
+    void submitFileWithAFilePatternThatRepeatsAnEnding() throws Exception {
+        // The exercise validation accepts a pattern that names the same ending twice, so the check on submission has
+        // to tolerate the duplicate rather than reject an upload that the pattern allows.
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "png,png");
+
+        submitFile("file.png", false);
     }
 
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
@@ -177,7 +186,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         var fileBytes = Files.readAllBytes(actualFilePath);
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
         MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }

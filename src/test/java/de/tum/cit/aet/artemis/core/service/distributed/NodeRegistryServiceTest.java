@@ -18,9 +18,9 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 /**
- * Exercises the registry against the local provider. The registry is intentionally backend-agnostic (it is built on the
+ * Exercises the registry against the local provider. The registry is intentionally provider-agnostic (it is built on the
  * expiring map plus a heartbeat), so the local provider is enough to cover its logic and the map contract itself is
- * covered for every backend by {@link AbstractDistributedDataTest}.
+ * covered for every provider by {@link AbstractDistributedDataTest}.
  */
 class NodeRegistryServiceTest {
 

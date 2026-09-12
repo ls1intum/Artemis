@@ -33,6 +33,7 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
+import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -72,6 +73,7 @@ import { CourseNotificationOverviewComponent } from 'app/notification/course-not
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
+        VariantGenerationTrayComponent,
         CourseNotificationOverviewComponent,
     ],
 })
@@ -333,7 +335,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         ide: 'artemisApp.editor.home.title',
         lectures: 'artemisApp.lecture.home.title',
         tutorial_lectures: 'artemisApp.lecture.tutorialLecture.title',
-        attachments: 'artemisApp.lecture.attachments.title',
         unit_management: 'artemisApp.lectureUnit.home.title',
         exams: 'artemisApp.examManagement.title',
         exercise_groups: 'artemisApp.examManagement.exerciseGroups',
@@ -518,9 +519,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
-                break;
-            case 'attachments':
-                this.addBreadcrumb(currentPath, segment, false);
                 break;
             // No breadcrumbs for those segments
             case 'competency-management':

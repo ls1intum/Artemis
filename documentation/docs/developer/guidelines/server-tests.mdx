@@ -1,9 +1,13 @@
+---
+id: server-tests
+title: Server Tests
+sidebar_label: Server Tests
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, { ImageSize } from '../../../src/components/Image/Image';
 import FileUploadUtilServiceFactory from './assets/FileUpload_UtilService_Factory.png';
-
-# Server Tests
 
 This section covers recommended practices for writing Artemis server tests.
 
@@ -126,10 +130,10 @@ The assertion checks the number of database accesses and returns the original re
 class TestClass {
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     void testQueryCount() throws Exception {
-        Course course = assertThatDb(() -> request.get("/api/core/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
-        assertThat(course).isNotNull();
+        var courses = assertThatDb(() -> request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class)).hasBeenCalledAtMostTimes(8);
+        assertThat(courses).isNotNull();
     }
 }
 ```

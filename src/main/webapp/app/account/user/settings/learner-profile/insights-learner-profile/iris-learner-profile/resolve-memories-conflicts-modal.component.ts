@@ -1,6 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumUiButtonComponent, TumUiButtonDirective, TumUiButtonGroupComponent, TumUiCardComponent } from '@tumaet/ui-angular';
 import { MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
@@ -14,15 +13,17 @@ import { firstValueFrom } from 'rxjs';
     imports: [CommonModule, TranslateDirective, TumUiButtonComponent, TumUiButtonDirective, TumUiButtonGroupComponent, TumUiCardComponent],
     templateUrl: './resolve-memories-conflicts-modal.component.html',
 })
-export class ResolveMemoriesConflictsModalComponent implements OnInit {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+export class ResolveMemoriesConflictsModalComponent {
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
 
-    // Inputs provided via the dialog config data
-    conflictGroups = signal<string[][]>([]);
-    details = signal<Record<string, MemirisMemoryWithRelationsDTO | undefined>>({});
+    readonly conflictGroups = input<string[][]>([]);
+    readonly details = input<Record<string, MemirisMemoryWithRelationsDTO | undefined>>({});
+
+    /** Emits the ids that were deleted once every conflict is resolved, so the host can apply them. */
+    readonly resolved = output<string[]>();
+    /** Emits when the user dismisses the dialog without finishing. */
+    readonly closed = output<void>();
 
     // Local state
     groups = signal<string[][]>([]);
@@ -36,20 +37,18 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
         return g.length > 0 && idx >= 0 && idx < g.length ? g[idx] : [];
     });
 
-    /**
-     * Initializes local modal state from the conflict groups provided via the dialog config data.
-     */
-    ngOnInit(): void {
-        const data = this.dialogConfig.data;
-        this.conflictGroups.set(data?.conflictGroups ?? []);
-        this.details.set(data?.details ?? {});
-        this.groups.set(this.conflictGroups().map((arr) => [...arr]));
-        this.currentIndex.set(0);
+    constructor() {
+        // The host may hand over a fresh set of conflicts while the dialog stays mounted, so the working copy
+        // follows the input rather than being taken once on init.
+        effect(() => {
+            this.groups.set(this.conflictGroups().map((group) => [...group]));
+            this.currentIndex.set(0);
+        });
     }
 
     /** Closes the modal without applying changes. */
     close(): void {
-        this.dialogRef.close();
+        this.closed.emit();
     }
 
     /**
@@ -78,7 +77,7 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
             this.groups.set(g);
             // Move to next available group or finish
             if (g.length === 0) {
-                this.dialogRef.close(this.deletedIds);
+                this.resolved.emit(this.deletedIds);
             } else if (this.currentIndex() >= g.length) {
                 this.currentIndex.set(g.length - 1);
             }

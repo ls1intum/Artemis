@@ -6,8 +6,7 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -17,7 +16,7 @@ class ResultDTOSerializationTest {
 
     private static final ZonedDateTime COMPLETION_DATE = ZonedDateTime.parse("2026-01-15T10:00:00Z");
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final JsonMapper objectMapper = new JsonMapper();
 
     /**
      * The client matches a result to a correction round by this field, so it has to survive serialization. Round 0 is

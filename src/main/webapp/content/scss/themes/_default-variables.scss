@@ -424,9 +424,6 @@ $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
 $lecture-unit-create-row-hover-background: $gray-400;
 
-// Lecture Attachments
-$lecture-attachment-edit-overlay-color: rgba($gray-300, 0.9);
-
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;
 $notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
@@ -689,6 +686,11 @@ $ai-modal-description-color: $gray-600;
 $ai-modal-bg: rgba(0, 0, 0, 0.85);
 $ai-modal-subtitle: $black;
 $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
+
+// Exercise variant AI wizard
+// Colour only — each call site keeps its own offsets and blur, so one token covers both the
+// option-card hover lift and the smaller icon-tile depth.
+$variant-wizard-elevation-shadow: rgba(0, 0, 0, 0.1);
 
 // Global search navbar (same in both themes since navbar bg is always artemis-dark)
 $global-search-navbar-kbd-bg: #6c757d;

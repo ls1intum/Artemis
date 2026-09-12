@@ -45,11 +45,12 @@ export { TumUiPaginatorComponent } from './lib/paginator/tum-ui-paginator.compon
 export { TumUiPanelComponent } from './lib/panel/tum-ui-panel.component';
 export { TumUiPopoverTriggerDirective } from './lib/popover/tum-ui-popover-trigger.directive';
 export { TumUiPopoverComponent } from './lib/popover/tum-ui-popover.component';
-export { TumUiProgressBarComponent, type TumUiProgressBarSeverity } from './lib/progress-bar/tum-ui-progress-bar.component';
+export { TumUiProgressBarComponent, type TumUiProgressBarSeverity, type TumUiProgressBarSize } from './lib/progress-bar/tum-ui-progress-bar.component';
 export { TumUiProgressSpinnerComponent } from './lib/progress-spinner/tum-ui-progress-spinner.component';
 export { TumUiRadioButtonComponent, type TumUiRadioButtonSelectEvent } from './lib/radio-button/tum-ui-radio-button.component';
-export { TumUiSelectButtonComponent, type TumUiSelectButtonOption, type TumUiSelectButtonSize } from './lib/select-button/tum-ui-select-button.component';
+export { TumUiSearchFieldComponent } from './lib/search-field/tum-ui-search-field.component';
 export { TumUiSelectComponent, type TumUiSelectSize } from './lib/select/tum-ui-select.component';
+export { TumUiSelectButtonComponent, type TumUiSelectButtonOption, type TumUiSelectButtonSize } from './lib/select-button/tum-ui-select-button.component';
 export { TumUiTableSortableColumnComponent } from './lib/table-directive/tum-ui-table-sortable-column.component';
 export { TumUiTableVirtualScrollComponent } from './lib/table-directive/tum-ui-table-virtual-scroll.component';
 export { TumUiTableDirective, type TumUiTableSize, type TumUiTableSortEvent } from './lib/table-directive/tum-ui-table.directive';

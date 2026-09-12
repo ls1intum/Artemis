@@ -107,6 +107,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
+                LEFT JOIN FETCH c.athenaConfig
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
@@ -147,9 +148,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Returns the active courses in which the given user holds any role. For an active course (already started, not yet
-     * finished) holding any role is exactly the visibility condition evaluated by
-     * {@code CourseVisibleService.isCourseVisibleForUser} for a non-admin, so this lets the dashboard/dropdown load only
-     * the user's own courses via an indexed join instead of loading all active courses and filtering them in memory.
+     * finished) holding any role is exactly the course visibility condition for a non-admin, so this lets the
+     * dashboard/dropdown load only the user's own courses via an indexed join instead of loading all active courses and
+     * filtering them in memory.
      *
      * @param userId the id of the user
      * @param now    the current time used to determine whether a course is active
@@ -252,12 +253,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
-    // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
-    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
 
     /**
      * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
@@ -265,8 +262,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
      * @param courseId The id of the course to find
      * @return the populated course or an empty optional if no course was found
      */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup",
-            "lectures.attachments" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup", "lectures" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
@@ -310,7 +306,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
     // per-course Atlas auto-orchestration settings for editing.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
@@ -517,10 +513,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
     }
 
-    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
-    }
-
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)), courseId);
     }
@@ -554,15 +546,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                         || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType() != AUTOMATIC || exercise.getAllowComplaintsForAutomaticAssessments())))
                 .collect(Collectors.toSet());
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    default List<Course> findAllActive() {
-        return findAllActive(ZonedDateTime.now());
     }
 
     /**
@@ -776,11 +759,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     /**
      * Projects the fields the course overview container renders.
-     *
+     * <p>
      * The endpoint used to load the whole {@code Course} to read a handful of scalars off it. Selecting them directly
      * means the successful path materialises no entity at all, so nothing can lazily initialise on the way out and the
      * response cannot drift as the entity gains fields.
-     *
+     * <p>
      * The unread notification count lives outside this table, so the caller fills it in with
      * {@link CourseForOverviewDTO#withNotificationCount(long)}.
      *
@@ -810,8 +793,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 course.maxComplaintTimeDays,
                 course.maxComplaintTextLimit,
                 course.maxComplaintResponseTextLimit,
-                course.maxRequestMoreFeedbackTimeDays)
+                course.maxRequestMoreFeedbackTimeDays,
+                COALESCE(athenaConfig.gradingFeedbackEnabled, false),
+                COALESCE(athenaConfig.formativeFeedbackEnabled, false))
             FROM Course course
+                LEFT JOIN course.athenaConfig athenaConfig
             WHERE course.id = :courseId
             """)
     Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);
