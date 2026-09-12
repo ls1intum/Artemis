@@ -431,7 +431,7 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
         });
 
-        it("should drop a quiz card's due date, the slot a running countdown takes over", () => {
+        it('should drop the due date of a quiz card, the slot a running countdown takes over', () => {
             // This arrived asserting that the panel's quiz-time box is dropped. That box no longer exists here - the
             // countdown moved to the title bar - so the assertion could not fail. What the group timeline suppresses
             // on a quiz card is the same due date slot it suppresses everywhere else, which is what is checked now.
