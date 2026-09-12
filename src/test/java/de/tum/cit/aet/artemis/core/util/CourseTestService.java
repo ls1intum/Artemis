@@ -108,11 +108,13 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -3491,5 +3493,114 @@ public class CourseTestService {
         // Regression guard: short names were never returned because includeShortNames compared the lowercase request param
         // ("programming") against ExerciseType.PROGRAMMING.toString() ("PROGRAMMING"), which is always false (#12940).
         assertThat(details.shortNames()).contains(programmingExercise.getShortName());
+    }
+
+    /**
+     * Test: search by login prefix returns matching users with the login prefix.
+     */
+    public void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(result).allMatch(u -> u.login().startsWith(userPrefix + "student"));
+    }
+
+    /**
+     * Test: a user already enrolled in the course role is flagged with {@code isRegistered = true}.
+     */
+    public void searchUsersForCourseRole_marksAlreadyEnrolledUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        // student1 is enrolled as STUDENT in this course
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student1");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(userPrefix + "student1");
+        assertThat(result.getFirst().isRegistered()).isTrue();
+    }
+
+    /**
+     * Test: a user that exists in Artemis but is not enrolled in the given role is flagged with {@code isRegistered = false}.
+     */
+    public void searchUsersForCourseRole_nonEnrolledUserNotFlagged() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        // tutor1 exists but is enrolled as TEACHING_ASSISTANT, not STUDENT
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "tutor1");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(userPrefix + "tutor1");
+        assertThat(result.getFirst().isRegistered()).isFalse();
+    }
+
+    /**
+     * Test: an unknown search term returns an empty result.
+     */
+    public void searchUsersForCourseRole_noResultsForUnknownTerm() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", "zzz_no_match_zzz");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Test: a non-instructor (tutor or student) receives 403 Forbidden.
+     */
+    public void searchUsersForCourseRole_forbiddenForNonInstructor() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
+    }
+
+    private static MultiValueMap<String, String> pagedMembersParams(String page, String pageSize) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", page);
+        params.add("pageSize", pageSize);
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "login");
+        params.add("searchTerm", "");
+        return params;
+    }
+
+    /**
+     * Test: the paged course-role endpoint returns at most {@code pageSize} members per page.
+     */
+    public void getPagedUsersInCourseRole_returnsRequestedPageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        List<CourseRoleMemberDTO> firstPage = request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.OK, CourseRoleMemberDTO.class,
+                pagedMembersParams("0", "3"));
+        assertThat(firstPage).hasSize(3);
+    }
+
+    /**
+     * Test: an omitted or zero {@code pageSize} is rejected with 400 instead of causing a server error.
+     */
+    public void getPagedUsersInCourseRole_rejectsZeroPageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("0", "0"));
+    }
+
+    /**
+     * Test: a negative {@code page} is rejected with 400 instead of causing a server error.
+     */
+    public void getPagedUsersInCourseRole_rejectsNegativePage() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("-1", "10"));
+    }
+
+    /**
+     * Test: a {@code pageSize} above the allowed maximum is rejected with 400 so it cannot load the whole membership.
+     */
+    public void getPagedUsersInCourseRole_rejectsTooLargePageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        request.getList("/api/course/courses/" + course.getId() + "/students/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedMembersParams("0", "5000"));
     }
 }

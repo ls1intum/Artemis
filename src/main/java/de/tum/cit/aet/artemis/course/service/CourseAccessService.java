@@ -17,16 +17,23 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -54,6 +61,8 @@ public class CourseAccessService {
 
     private final UserService userService;
 
+    private final UserRepository userRepository;
+
     private final UserCourseRoleRepository userCourseRoleRepository;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
@@ -65,12 +74,13 @@ public class CourseAccessService {
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
     public CourseAccessService(AuthorizationCheckService authCheckService, EnrollmentService enrollmentService, CourseRepository courseRepository, UserService userService,
-            UserCourseRoleRepository userCourseRoleRepository, Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository,
-            Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, Optional<LearnerProfileApi> learnerProfileApi,
+            AuditEventRepository auditEventRepository, Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.authCheckService = authCheckService;
         this.enrollmentService = enrollmentService;
         this.courseRepository = courseRepository;
         this.userService = userService;
+        this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.learnerProfileApi = learnerProfileApi;
         this.auditEventRepository = auditEventRepository;
@@ -219,4 +229,43 @@ public class CourseAccessService {
         return role == CourseRole.TEACHING_ASSISTANT || role == CourseRole.EDITOR || role == CourseRole.INSTRUCTOR;
     }
 
+    /**
+     * Returns a page of users in the given course that have the given role, matching the search term and sort from {@code search}.
+     *
+     * @param courseId the id of the course
+     * @param role     the course role to query for
+     * @param search   pagination, search term, and sort info
+     * @return page of matching users
+     */
+    @NonNull
+    public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, CourseRoleMembersSearchDTO search) {
+        Page<User> page = userRepository.searchUsersInCourseRole(search, courseId, role);
+        List<CourseRoleMemberDTO> members = page.getContent().stream().map(user -> {
+            user.setVisibleRegistrationNumber(user.getRegistrationNumber());
+            return new CourseRoleMemberDTO(user);
+        }).toList();
+        return new PageImpl<>(members, page.getPageable(), page.getTotalElements());
+    }
+
+    /**
+     * Searches all Artemis users by login, full name, email, or registration number,
+     * and marks each result as already registered in the given course role.
+     *
+     * @param courseId   the course to check existing registrations against
+     * @param role       the course role to check
+     * @param searchTerm the text entered by the instructor
+     * @param page       zero-based page index
+     * @param size       number of results per page
+     * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
+     */
+    public Page<UserForRegistrationDTO> searchUsersForCourseRole(long courseId, CourseRole role, String searchTerm, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
+        List<Long> userIds = users.getContent().stream().map(User::getId).toList();
+        Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : userCourseRoleRepository.findUserIdsByCourseIdAndRoleAndUserIdIn(courseId, role, userIds);
+        List<UserForRegistrationDTO> dtos = users.getContent().stream().map(
+                u -> new UserForRegistrationDTO(u.getId(), u.getLogin(), u.getName(), u.getEmail(), u.getRegistrationNumber(), u.getImageUrl(), registeredIds.contains(u.getId())))
+                .toList();
+        return new PageImpl<>(dtos, pageable, users.getTotalElements());
+    }
 }
