@@ -199,6 +199,7 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
                 exampleSolution = fileUploadExercise.getExampleSolution();
                 filePattern = fileUploadExercise.getFilePattern();
             }
+            // the cases above have to stay in sync with the @JsonSubTypes list on Exercise; a sixth subtype fails here instead of silently losing its fields
             default -> throw new IllegalArgumentException("Unsupported exercise type: " + exercise.getClass().getName());
         }
 

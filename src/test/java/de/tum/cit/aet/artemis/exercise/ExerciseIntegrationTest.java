@@ -709,6 +709,35 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         assertThat(response.solutionParticipation().repositoryUri()).as("Repository URI the code button links to").isNotBlank();
     }
 
+    /**
+     * The exam assessment dashboard builds one submission fetch and one submission section per correction round from
+     * {@code exerciseGroup.exam.numberOfCorrectionRoundsInExam}, and renders the exam dates instead of a course, so the
+     * exam context has to reach the client with those fields. A dropped field degrades silently: the page would render
+     * zero assessable rounds with a 200 and no error.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamExerciseForAssessmentDashboardCarriesExamContext() throws Exception {
+        TextExercise exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam exam = exercise.getExerciseGroup().getExam();
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        exam = examRepository.save(exam);
+
+        ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
+
+        assertThat(response.course()).as("An exam exercise reports its course through the exercise group").isNull();
+        assertThat(response.exerciseGroup()).isNotNull();
+        assertThat(response.exerciseGroup().title()).isEqualTo(exercise.getExerciseGroup().getTitle());
+        var examContext = response.exerciseGroup().exam();
+        assertThat(examContext).isNotNull();
+        assertThat(examContext.numberOfCorrectionRoundsInExam()).as("The dashboard iterates over the correction rounds").isEqualTo(2);
+        assertThat(examContext.endDate()).as("Exam end date the dashboard shows instead of a course").isCloseTo(exam.getEndDate(), within(1, ChronoUnit.SECONDS));
+        assertThat(examContext.publishResultsDate()).isCloseTo(exam.getPublishResultsDate(), within(1, ChronoUnit.SECONDS));
+        assertThat(examContext.course()).isNotNull();
+        assertThat(examContext.course().id()).isEqualTo(exam.getCourse().getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
