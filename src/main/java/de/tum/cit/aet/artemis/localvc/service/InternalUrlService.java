@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ public abstract class InternalUrlService {
      * @param vcsRepositoryUri the vcs repository uri
      * @return the vcs repository uri with the internal url
      */
-    public VcsRepositoryUri toInternalVcsUrl(VcsRepositoryUri vcsRepositoryUri) {
+    public VcsRepositoryUri toInternalVcsUrl(@NonNull VcsRepositoryUri vcsRepositoryUri) {
         if (vcsRepositoryUri.getURI() == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
             return vcsRepositoryUri;

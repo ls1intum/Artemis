@@ -70,7 +70,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH c.lectureUnitLinks lul
                 LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
-                LEFT JOIN FETCH l.attachments
             WHERE c.course.id = :courseId
             """)
     Set<CourseCompetency> findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("courseId") long courseId);
@@ -84,7 +83,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.lectureUnits
-                LEFT JOIN FETCH l.attachments
             WHERE c.id = :id
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsAndLectures(@Param("id") long id);
@@ -101,7 +99,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH c.lectureUnitLinks lul
                 LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
-                LEFT JOIN FETCH l.attachments
             WHERE c.id IN :ids
             """)
     Set<CourseCompetency> findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("ids") Set<Long> ids);

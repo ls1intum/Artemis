@@ -6,7 +6,7 @@ import java.util.Set;
  * A set shared across all nodes of the cluster.
  *
  * <p>
- * Kept deliberately narrow: only the operations that callers actually need, so that every backend can support the whole
+ * Kept deliberately narrow: only the operations that callers actually need, so that every provider can support the whole
  * interface. Iteration is exposed as {@link #getAll()} returning a snapshot rather than as {@link Iterable}, because
  * streaming a live distributed collection is unreliable while it is being mutated concurrently.
  *

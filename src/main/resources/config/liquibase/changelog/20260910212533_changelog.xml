@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Gives forwarded_message the check constraint its entity already declares.
+
+    ForwardedMessage carries @Check(constraints = "((destination_post_id IS NOT NULL AND
+    destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT
+    NULL))"), but ddl-auto is none in every profile, so Hibernate never emits it and no changeset
+    ever created it. The TUM production database has it as CHECK_DESTINATION_POST_OR_ANSWER, applied
+    outside Liquibase in the same way as the reconciliations in 20260728220917_changelog.xml. A
+    database built from these changelogs does not, so the invariant is enforced in production and
+    unenforced everywhere else, including every test environment.
+
+    Liquibase's addCheckConstraint is a Pro change type, so the DDL is raw SQL. It is the same
+    statement on both engines and was checked against MySQL 26.7.0 and PostgreSQL 18.6: a row with
+    one destination is accepted and a row with neither is rejected on both.
+    -->
+
+    <!--
+    information_schema is portable but the "current schema" function is not, following
+    20260728220917_changelog.xml. Every changeset interpolating ${lbSchema} must carry
+    dbms="mysql,postgresql" so the placeholder does not reach another engine verbatim.
+    -->
+    <property name="lbSchema" value="DATABASE()" dbms="mysql"/>
+    <property name="lbSchema" value="current_schema()" dbms="postgresql"/>
+
+    <!--
+    A forwarded message with no destination is unreachable: the retrieval endpoint groups messages by
+    their destination id, so nothing can ever return one. Until ForwardedMessageDTO started rejecting
+    the combination (#13776) an installation without the constraint accepted them, so they are
+    deleted here rather than allowed to abort the constraint below. Rows with both destinations set
+    are not cleaned up because they cannot be created: both setters on the entity have always
+    rejected the second destination.
+    -->
+    <changeSet id="20260910212533-01-delete-destinationless-forwarded-messages" author="krusche">
+        <comment>Remove forwarded messages that point at neither a post nor an answer post.</comment>
+        <sql>
+            DELETE FROM forwarded_message WHERE destination_post_id IS NULL AND destination_answer_id IS NULL;
+        </sql>
+        <!-- The deleted rows are unreachable through the API, so there is nothing to restore. -->
+        <rollback/>
+    </changeSet>
+
+    <!--
+    MARK_RAN rather than the CONTINUE this project normally prefers: the condition guarded here is
+    "the constraint already exists", which is a permanent and correct end state, not a transient one
+    worth retrying. CONTINUE would log a warning on every startup of the production database for
+    good. The changeset above removes the only violation an installation can have accumulated, so
+    the constraint cannot be skipped for want of clean data.
+
+    UPPER() on the name because PostgreSQL folds an unquoted identifier to lower case while MySQL
+    keeps it as written, so the same constraint is stored under two spellings.
+    -->
+    <changeSet id="20260910212533-02-forwarded-message-exactly-one-destination" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE table_schema = ${lbSchema} AND table_name = 'forwarded_message'
+                  AND UPPER(constraint_name) = 'CHECK_DESTINATION_POST_OR_ANSWER'
+            </sqlCheck>
+        </preConditions>
+        <comment>Enforce the one-destination invariant that ForwardedMessage declares with @Check.</comment>
+        <sql>
+            ALTER TABLE forwarded_message ADD CONSTRAINT CHECK_DESTINATION_POST_OR_ANSWER
+            CHECK ((destination_post_id IS NOT NULL AND destination_answer_id IS NULL)
+                OR (destination_post_id IS NULL AND destination_answer_id IS NOT NULL));
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE forwarded_message DROP CONSTRAINT CHECK_DESTINATION_POST_OR_ANSWER;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

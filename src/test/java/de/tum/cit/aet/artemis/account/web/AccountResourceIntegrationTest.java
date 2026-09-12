@@ -19,6 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
@@ -302,11 +304,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
 
-        // Serialize with a plain ObjectMapper (no Hibernate module) to simulate Jackson 3,
-        // which does not have the Hibernate7Module registered. If the DTO still holds an
-        // uninitialized PersistentSet, this will throw LazyInitializationException.
-        var plainMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        plainMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        // Serialize with a bare mapper that has no Hibernate module, so nothing papers over an uninitialized
+        // proxy. If the DTO still holds an uninitialized PersistentSet, this throws LazyInitializationException.
+        var plainMapper = new JsonMapper();
         assertThatCode(() -> plainMapper.writeValueAsString(dto)).doesNotThrowAnyException();
     }
 

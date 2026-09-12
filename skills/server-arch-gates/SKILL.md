@@ -39,16 +39,31 @@ A single class while iterating:
 | An entity or an association            | Caching, entity conventions                         |
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
+| Anything that serializes JSON          | Jackson version                                      |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
+
+**Jackson 2 must not appear in production code.** Artemis serializes with Jackson 3, whose packages are
+`tools.jackson`. Jackson 2 stays on the runtime classpath for third-party libraries that carry their own
+mapper, so a `com.fasterxml.jackson.databind`, `.core`, `.dataformat`, `.datatype`, `.module`, `.jr` or
+`.jaxrs` import still compiles — `testNoJackson2InProductionCode` in `ArchitectureTest` is what rejects it.
+The one exception is `com.fasterxml.jackson.annotation`: `jackson-annotations` never moved to the
+`tools.jackson` group, so `@JsonInclude`, `@JsonProperty` and `@JsonTypeInfo` stay where they are and must
+not be "fixed". Mappers are immutable in Jackson 3 — derive one with `JsonMapper.builder()` or
+`rebuild()`, never `configure()` or `registerModule()` on a built instance — and its exceptions are
+unchecked, so a `catch (IOException)` no longer catches a parse failure.
 
 ## The rules most often broken
 
 **No transaction boundaries in services or controllers.** `@Transactional`,
 `TransactionTemplate`, and `PlatformTransactionManager` belong in repositories, typically on
-modifying queries. Enforced by `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`.
+modifying queries, and `TransactionSynchronizationManager` is banned outright. Enforced globally by
+`testTransactionBoundariesOnlyInRepositories`, `testNoProgrammaticTransactionManagement` and
+`testNoTransactionSynchronization` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`. The replacements
+are a check in the `WHERE` clause of a `@Modifying` query, or explicit compensation in a `catch`
+block.
 
 **No direct persistence access.** No injected `EntityManager` or `EntityManagerFactory`, and no
 `JdbcClient`, `JdbcTemplate`, or `DataSource`. Write the statement as a `@Query` on a repository,
@@ -67,7 +82,7 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 `DistributedDataProvider` in
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
-The backend is configurable, so direct usage does not fail loudly, it silently loses the state.
+The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection
@@ -91,9 +106,9 @@ rationale, and `reference/gates.md` for the pattern if you do proceed.
 
 ## Adding a capability to the distributed data layer
 
-If `DistributedDataProvider` lacks what you need, add it there, implement it for all three backends
+If `DistributedDataProvider` lacks what you need, add it there, implement it for all three providers
 (Hazelcast, Redis, Local), and add a case to `AbstractDistributedDataTest`. That suite is what keeps
-the backends in agreement. Request entry lifetimes at the call site with
-`getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a backend
-map configuration only applies to that one backend. Full guidance:
+the providers in agreement. Request entry lifetimes at the call site with
+`getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a provider
+map configuration only applies to that one provider. Full guidance:
 `documentation/docs/developer/guidelines/distributed-data.mdx`.
