@@ -277,12 +277,14 @@ not saved exercises. A worker disconnect cannot authorize a replacement to save
 under the old execution identity. Inspect incomplete accounting as unknown usage,
 not as zero usage.
 
-A provider error status (408, 429, 5xx) or a request that never left the worker
-carries no completion, so Hyperion sends it again itself with a bounded backoff
-of up to five retries over about five minutes; this is why the SDK's own retries
-can stay disabled for exact accounting. Only a request whose outcome is unknown,
-such as a read timeout after the request was sent, marks accounting incomplete
-and ends the run.
+A rate-limit rejection (HTTP 429) or a request that never left the worker can be
+retried with a bounded backoff of up to five retries over about five minutes.
+Keep SDK retries disabled when exact accounting is required. A server or gateway
+failure (HTTP 5xx), HTTP 408, or a read timeout after sending the request leaves
+usage unknown: the model may have run before the error was returned. Hyperion
+does not automatically replay these calls and marks accounting incomplete.
+A previously verified candidate can still be saved with incomplete accounting;
+an error response must never be treated as proof of zero usage.
 
 Once persistence begins, cancellation and ordinary edits are blocked. Shutdown
 allows the non-cancellable phase to drain; keep the process termination grace
