@@ -20,7 +20,7 @@ public enum ProviderFailureClass {
     /** The provider rejected the request with HTTP 429; a later request can succeed. */
     REJECTED_TRANSIENT,
 
-    /** The provider rejected the request with a non-timeout client error, or the local cooldown refused the call. */
+    /** The provider rejected the request with a recognized client error, or the local cooldown refused the call. */
     REJECTED,
 
     /** The request never reached the provider (connection refused, unknown host, TLS handshake, connect timeout): nothing was sent, so sending it again is safe. */
@@ -59,10 +59,11 @@ public enum ProviderFailureClass {
             }
             if (cause instanceof OpenAIServiceException serviceException) {
                 int status = serviceException.statusCode();
-                if (status == 429) {
-                    return REJECTED_TRANSIENT;
-                }
-                return status >= 400 && status < 500 && status != 408 ? REJECTED : INDETERMINATE;
+                return switch (status) {
+                    case 429 -> REJECTED_TRANSIENT;
+                    case 400, 401, 403, 404, 405, 413, 415, 422 -> REJECTED;
+                    default -> INDETERMINATE;
+                };
             }
             if (cause instanceof ConnectException || cause instanceof HttpConnectTimeoutException || cause instanceof UnknownHostException
                     || cause instanceof NoRouteToHostException || cause instanceof SSLHandshakeException) {

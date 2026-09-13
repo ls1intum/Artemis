@@ -9,6 +9,8 @@ import java.net.http.HttpTimeoutException;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.openai.core.http.Headers;
 import com.openai.errors.BadRequestException;
@@ -32,6 +34,17 @@ class ProviderFailureClassTest {
         // Wrapped by a client layer: the status still decides.
         assertThat(ProviderFailureClass.of(new IllegalStateException("wrapped", internal))).isEqualTo(ProviderFailureClass.INDETERMINATE);
         assertThat(ProviderFailureClass.describe(new IllegalStateException("wrapped", internal))).isEqualTo("IllegalStateException <- InternalServerException HTTP 500");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 200, 301, 408, 499, 500, 502, 503, 504 })
+    void unknownStatusesAndTimeoutResponsesCannotProveNoUsage(int status) {
+        var error = InternalServerException.builder().statusCode(status).headers(Headers.builder().build()).build();
+        var classification = ProviderFailureClass.of(error);
+
+        assertThat(classification).isEqualTo(ProviderFailureClass.INDETERMINATE);
+        assertThat(classification.provesNoUsage()).isFalse();
+        assertThat(classification.retryable()).isFalse();
     }
 
     @Test
