@@ -66,14 +66,15 @@ public record TemplateSolutionParticipationDTO(Long id, String type, String repo
     }
 
     /**
-     * Returns the same participation without the row id, for payloads that are written to a file and read back by
-     * another instance, whose import copies the id onto the participation it creates. The repository URI stays: the
-     * import from file reads it to rewrite legacy project names.
+     * Returns the participation as an export carries it: no row id, which an import would copy onto the participation
+     * it creates, and no submissions, which are build runs of this instance that nothing on the receiving side reads
+     * ({@code ImportProgrammingExerciseRequestDTO} binds id, repository URI and build plan id only). The repository
+     * URI stays: the import from file reads it to rewrite legacy project names.
      *
-     * @return a copy of this DTO with a {@code null} id
+     * @return a copy of this DTO without the id and without the submissions
      */
-    public TemplateSolutionParticipationDTO withoutId() {
-        return new TemplateSolutionParticipationDTO(null, type, repositoryUri, buildPlanId, initializationState, submissions);
+    public TemplateSolutionParticipationDTO forExport() {
+        return new TemplateSolutionParticipationDTO(null, type, repositoryUri, buildPlanId, initializationState, null);
     }
 
     private static TemplateSolutionParticipationDTO of(AbstractBaseProgrammingExerciseParticipation participation, String type) {

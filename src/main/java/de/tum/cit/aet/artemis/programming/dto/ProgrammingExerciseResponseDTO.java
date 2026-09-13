@@ -145,6 +145,10 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * The exercise's own id stays: the import drops it, and the archive names the exercise it came from. The course
      * and exercise group references keep their ids as well, because they point at rows the importing instance
      * replaces with its own target anyway.
+     * <p>
+     * The student participations are left out and the template and solution participations lose their submissions:
+     * the file is handed to another instance, the import reads none of it, and student work has no business in an
+     * exercise export.
      *
      * @param exercise the exercise to export (may be {@code null})
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -229,8 +233,11 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
             buildConfig = buildConfig == null ? null : buildConfig.withoutId();
             gradingCriteria = gradingCriteria == null ? null : gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
             auxiliaryRepositories = auxiliaryRepositories == null ? null : auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::withoutId).toList();
-            templateParticipation = templateParticipation == null ? null : templateParticipation.withoutId();
-            solutionParticipation = solutionParticipation == null ? null : solutionParticipation.withoutId();
+            templateParticipation = templateParticipation == null ? null : templateParticipation.forExport();
+            solutionParticipation = solutionParticipation == null ? null : solutionParticipation.forExport();
+            // No export query loads them today, so this only keeps a later caller with a wider graph from writing
+            // student logins, submissions and results into a file that is handed to another instance.
+            studentParticipations = null;
         }
 
         return new ProgrammingExerciseResponseDTO(exercise.getId(), TYPE, exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getProblemStatement(),

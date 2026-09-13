@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
@@ -473,6 +474,22 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(exported.auxiliaryRepositories().getFirst().name()).isEqualTo("hints");
         assertThat(exported.templateParticipation().repositoryUri()).as("the import from file reads the URI to rewrite legacy project names").isEqualTo("uri/template");
         assertThat(exported.solutionParticipation().repositoryUri()).isEqualTo("uri/solution");
+
+        // student work and build runs are nobody's business in a file handed to another instance, and the import
+        // reads neither: the request binds a participation as id, repository URI and build plan id
+        assertThat(response.studentParticipations()).as("the response carries them, the export must not").hasSize(1);
+        assertThat(response.templateParticipation().submissions()).hasSize(1);
+        assertThat(exported.studentParticipations()).as("the export carries no student participation").isNull();
+        assertThat(exported.templateParticipation().submissions()).as("the export carries no template submission").isNull();
+        assertThat(exported.solutionParticipation().submissions()).as("the export carries no solution submission").isNull();
+    }
+
+    /** A submission with a commit hash, as a participation of a loaded exercise carries it. */
+    private static ProgrammingSubmission submission(long id) {
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setId(id);
+        submission.setCommitHash("abc" + id);
+        return submission;
     }
 
     /** An exercise whose every nested association is loaded and carries an id. */
@@ -521,11 +538,23 @@ class ProgrammingExerciseDtoMappingTest {
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setId(8L);
         templateParticipation.setRepositoryUri("uri/template");
+        templateParticipation.setSubmissions(Set.of(submission(81L)));
         exercise.setTemplateParticipation(templateParticipation);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.setId(9L);
         solutionParticipation.setRepositoryUri("uri/solution");
+        solutionParticipation.setSubmissions(Set.of(submission(91L)));
         exercise.setSolutionParticipation(solutionParticipation);
+
+        User student = new User();
+        student.setId(10L);
+        student.setLogin("student1");
+        ProgrammingExerciseStudentParticipation studentParticipation = new ProgrammingExerciseStudentParticipation();
+        studentParticipation.setId(11L);
+        studentParticipation.setParticipant(student);
+        studentParticipation.setRepositoryUri("uri/student1");
+        studentParticipation.setSubmissions(Set.of(submission(111L)));
+        exercise.setStudentParticipations(Set.of(studentParticipation));
 
         return exercise;
     }

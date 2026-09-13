@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -780,6 +781,15 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         var exerciseToExport = programmingExerciseRepository
                 .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        // No export query loads participations today. They are put on the exercise here so that the file is what the
+        // projection decides rather than what a query happened to fetch: a wider graph must not leak student work.
+        var studentParticipations = seedStudentParticipations(TEST_PREFIX + "student1");
+        exerciseToExport.setStudentParticipations(new HashSet<>(studentParticipations));
+        var templateParticipation = templateParticipationTestRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        ProgrammingSubmission templateSubmission = new ProgrammingSubmission();
+        templateSubmission.setCommitHash("cafebabe1234");
+        templateParticipation.setSubmissions(Set.of(templateSubmission));
+        exerciseToExport.setTemplateParticipation(templateParticipation);
 
         Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
 
@@ -793,6 +803,9 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(written.get("teamAssignmentConfig")).as("the team assignment configuration is part of the exported details").isNotNull();
 
         assertThat(nestedIdPaths(written, "")).as("no nested id is written into the details file").isEmpty();
+        assertThat(written.has("studentParticipations")).as("no student participation is written into the details file").isFalse();
+        assertThat(details).as("no login of a student is written into the details file").doesNotContain(TEST_PREFIX + "student1");
+        assertThat(details).as("no submission and no build result is written into the details file").doesNotContain("submissions").doesNotContain("cafebabe1234");
         assertThat(written.get("id")).as("the exercise's own id stays, the import drops it").isNotNull();
     }
 
