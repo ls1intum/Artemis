@@ -222,6 +222,10 @@
                     "title": "Accessibility",
                     "description": "The WCAG 2.2 Level AA target Artemis works toward, the guidelines and tooling behind it, and an honest statement about what is not certified."
                 },
+                "performance": {
+                    "title": "Performance",
+                    "description": "A published reference run: 4,000 students sitting one exam at 0.09s average with zero failed requests, on eleven virtual machines. The load generator ships with Artemis, so you can re-run it yourself."
+                },
                 "releases": {
                     "title": "Releases & support",
                     "description": "Versioning, release cadence, which versions receive security fixes, and what an upgrade involves."
