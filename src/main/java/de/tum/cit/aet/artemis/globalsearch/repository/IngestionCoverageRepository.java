@@ -66,7 +66,10 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
      * <p>
      * The title search is applied here rather than only on the live path because the two are used together: filtering by
      * status and typing a course name is one question, and answering it by ignoring half of it returns the wrong rows.
-     * {@code %} and {@code _} in the term are escaped so a typed wildcard searches for itself.
+     * {@code %} and {@code _} in the term are escaped so a typed wildcard searches for itself. The term is cast to a
+     * string before the escaping runs: PostgreSQL infers the type of a bind parameter from its surroundings, and a bare
+     * {@code null} inside {@code REPLACE} gives it nothing to work from, so it falls back to {@code bytea} and fails the
+     * whole statement with "function replace(bytea, unknown, unknown) does not exist" for every unfiltered read.
      *
      * @param status   the coverage status to filter by, or {@code null} for any status
      * @param active   {@code true}/{@code false} to keep only active/inactive courses, or {@code null} for either
@@ -79,7 +82,7 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
             FROM IngestionCoverageEntry e
             WHERE (:status IS NULL OR e.status = :status)
                 AND (:active IS NULL OR e.active = :active)
-                AND (:search IS NULL OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:search, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                AND (:search IS NULL OR LOWER(e.courseTitle) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(CAST(:search AS string), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
             """)
     Page<IngestionCoverageEntry> findFiltered(@Param("status") IngestionCoverageStatus status, @Param("active") Boolean active, @Param("search") String search, Pageable pageable);
 }
