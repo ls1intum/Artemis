@@ -3,6 +3,7 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
     default: [
         'intro',
+        'iris-knowledge-and-context',
         {
             type: 'category',
             label: 'Course Management',

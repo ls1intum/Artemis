@@ -1,0 +1,112 @@
+---
+id: iris-knowledge-and-context
+title: What Iris Knows About Your Course
+sidebar_label: Iris Knowledge & Context
+---
+
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+
+The [Iris settings](/instructor/communication-support/iris) decide _how_ Iris answers — whether it is available and how
+much it gives away. This page covers the other half: _what_ it answers from, and _which_ part of your course a given
+conversation is about.
+
+Both matter to you as an instructor, because a tutor that has not read your lecture cannot refer to it, and a student
+who is asking about the wrong exercise gets an answer that looks confidently wrong.
+
+<Callout variant={CalloutVariant.info}>
+
+Everything here applies only once Iris is enabled for the course. If the **Iris** entry is missing from your course
+management, an administrator has not configured an Iris service for the instance.
+
+</Callout>
+
+## The Course Knowledge Base
+
+Iris does not read your course the way a student does. Course material has to be processed before it can be drawn on,
+and until it has been, Iris answers from the exercise at hand and the general knowledge of its model — which is to say,
+it will not cite your lecture even when your lecture is exactly what the student needs.
+
+Two kinds of material are processed.
+
+**Lecture content** is processed as you publish it. Attachments, slides, and transcriptions of lecture videos are picked
+up automatically, so in the ordinary case there is nothing for you to do beyond uploading the material. While a unit is
+being processed, the lecture unit management table shows it as **Indexing**; a unit that fails shows
+**Content indexing failed after multiple attempts**, and its content is not available to Iris until it is reprocessed.
+
+**FAQs** are the part you trigger yourself. On the **FAQ** page of the course, with Iris enabled, instructors get a
+**Send FAQs to Iris** button that submits the course's FAQs for processing. Artemis confirms with _All Faq processing in
+Iris started successfully_.
+
+<Callout variant={CalloutVariant.warning}>
+
+Sending FAQs is not automatic on edit. If you change the wording of an answer, or add an FAQ mid-semester, Iris keeps
+using what it processed last until you send them again. Re-send after a round of FAQ edits.
+
+</Callout>
+
+Processing is asynchronous, so the confirmation means _started_, not _finished_. If Iris does not yet reflect material
+you have just published, that is usually the answer, and waiting is the right response.
+
+### Why This Is Worth Your Attention
+
+An FAQ that Iris knows about is answered consistently, at any hour, without a student waiting for the communication
+channel. An FAQ it does not know about is answered from general knowledge — plausibly, and possibly contrary to what you
+wrote. Keeping the knowledge base current is the cheapest way to keep Iris aligned with your course.
+
+## Chat Topics
+
+A conversation with Iris is always _about_ something, and that topic decides what Iris pulls in before it answers.
+
+When a student opens Iris inside an exercise, the topic is set for them: the exercise, its problem statement, and their
+own latest submission are the context. When they open Iris from the course, the conversation starts course-wide.
+
+Students can also set the topic themselves. The chat has a **Select lecture or exercise** control that lists the
+lectures and exercises of the course, grouped under **Course**, **Lectures** and **Exercises** and searchable by name.
+The chosen topic then appears as a chip above the input, which they can remove to return to a course-wide chat. Changing
+the topic mid-conversation is allowed — Artemis marks the switch in the transcript rather than starting a new chat.
+
+<Callout variant={CalloutVariant.info}>
+
+The topic list contains what the student can see. An unreleased exercise or an unpublished lecture is not offered, so
+a student cannot use Iris to reach material you have not released yet.
+
+</Callout>
+
+For you, the practical consequence is that a student's complaint about a poor Iris answer is often a topic problem
+rather than a tutoring problem. "Iris did not know about the assignment" is frequently a course-wide chat that was never
+pointed at the exercise. Asking which topic was set is a good first question.
+
+## Following What Iris Did
+
+While Iris works, it reports what it is doing: **Reading lecture**, **Reading FAQs**, **Reading problem statement**,
+**Browsing your code**, **Checking build logs**, **Checking your progress**. When the answer arrives, those steps
+collapse into a **Thought process** summary that the student — and you, in your own account — can expand.
+
+Answers drawn from lecture material carry a citation naming the lecture and the unit it came from.
+
+This is the most direct way to diagnose a disappointing answer. If a student shows you a reply that ignored your lecture,
+the activity trail says whether Iris read the lecture at all. No **Reading lecture** step and no citation usually points
+back to the knowledge base — the material was never processed — rather than to the support level or your guidelines.
+
+## Checking It Yourself
+
+Iris in your own account uses the same settings and the same knowledge base your students get, so the quickest
+end-to-end check of a course's setup is to ask it something yourself:
+
+1. Open Iris from the course, leaving the topic course-wide, and ask a question your FAQs answer. A reply that matches
+   your wording means the FAQs were processed.
+2. Set the topic to a lecture and ask what it covers. A citation naming that lecture means its content was processed.
+3. Set the topic to an exercise and ask for a hint. This shows the [support level](/instructor/communication-support/iris)
+   you chose, in the form students will meet it.
+
+Doing this once after setting up a course, and again after a round of FAQ edits, catches nearly everything that makes
+Iris look unhelpful to students.
+
+<Callout variant={CalloutVariant.warning}>
+
+Students choose for themselves whether to use cloud AI at all, and that choice is not yours to make for them. A course
+cannot assume every student has Iris available, so anything essential belongs in the course material rather than only
+in what Iris can be asked. See [Iris](/student/learning-content/iris) for the student's side.
+
+</Callout>
