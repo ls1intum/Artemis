@@ -12,7 +12,10 @@ export type AthenaFeature = 'formativeFeedbackEnabled' | 'gradingFeedbackEnabled
 export const ATHENA_FEATURES: readonly AthenaFeature[] = ['formativeFeedbackEnabled', 'gradingFeedbackEnabled'];
 
 /** What a course whose Athena configuration has not loaded (yet) is treated as. */
-const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false };
+const DISABLED_CONFIG: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false, defaultFeedbackDetail: 0, defaultFeedbackFormality: 0 };
+
+/** The two course-level feedback style defaults, on the same 1-3 scale as a student's own learner-profile preference. */
+export type AthenaFeedbackStyleField = 'defaultFeedbackDetail' | 'defaultFeedbackFormality';
 
 /**
  * The Athena feedback configuration of one course, as the toggles that switch it show it.
@@ -39,6 +42,12 @@ export class AthenaCourseConfigState {
     readonly formativeFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.formativeFeedbackEnabled ?? false);
 
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
+
+    /** The course default for feedback detail; 0 means no course default is set. Only the settings page writes this. */
+    readonly defaultFeedbackDetail: Signal<number> = computed(() => this.config()?.defaultFeedbackDetail ?? 0);
+
+    /** The course default for feedback formality; 0 means no course default is set. Only the settings page writes this. */
+    readonly defaultFeedbackFormality: Signal<number> = computed(() => this.config()?.defaultFeedbackFormality ?? 0);
 
     /**
      * Whether either feature is on, for the single course-overview toggle. There is no separate stored "master" flag:
@@ -123,6 +132,15 @@ export class AthenaCourseConfigState {
                     this.confirmed[feature] = loaded[feature];
                     this.apply(feature, loaded[feature]);
                 }
+                // The two feedback style defaults are only ever written from the settings page (see
+                // setFeedbackStyleDefault), so unlike the two features above they need none of the revision tracking
+                // that guards against a load overwriting a switch still in flight.
+                this.config.update((current) =>
+                    cloneWith(current ?? DISABLED_CONFIG, {
+                        defaultFeedbackDetail: loaded.defaultFeedbackDetail ?? 0,
+                        defaultFeedbackFormality: loaded.defaultFeedbackFormality ?? 0,
+                    }),
+                );
                 this.isLoaded.set(true);
                 this.loadStarted = false;
             },
@@ -220,6 +238,31 @@ export class AthenaCourseConfigState {
     setMasterEnabled(enabled: boolean): void {
         this.setEnabled('gradingFeedbackEnabled', enabled);
         this.setEnabled('formativeFeedbackEnabled', enabled);
+    }
+
+    /**
+     * Sets one of the two course-level feedback style defaults and saves it right away, rolling back to the value
+     * shown before if the request fails. Unlike {@link setEnabled}, this is only ever written from the settings page
+     * - there is no course-overview toggle or onboarding wizard for it - so there is no other caller whose in-flight
+     * switch a revision would need to protect.
+     *
+     * @param field the field to change
+     * @param value the new value (1-3), or 0 to clear the course default and fall back to the student's own preference
+     */
+    setFeedbackStyleDefault(field: AthenaFeedbackStyleField, value: number): void {
+        const previous = this.config()?.[field] ?? 0;
+        if (previous === value) {
+            return;
+        }
+
+        this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [field]: value }));
+
+        this.athenaCourseConfigService.updateCourseConfig(this.courseId, { [field]: value }).subscribe({
+            error: (error: HttpErrorResponse) => {
+                this.config.update((current) => cloneWith(current ?? DISABLED_CONFIG, { [field]: previous }));
+                onError(this.alertService, error);
+            },
+        });
     }
 
     /**

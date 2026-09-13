@@ -9,6 +9,15 @@ export interface AthenaCourseConfigDTO {
     gradingFeedbackEnabled: boolean;
     formativeFeedbackEnabled: boolean;
     /**
+     * The course default for how detailed Athena feedback reads (1-3, brief to detailed), or 0 for "no course
+     * default": a student without a preference of their own then falls back to the built-in default instead. Applies
+     * only to a student who has not set their own feedback preference; see the learner profile's feedback
+     * preferences page.
+     */
+    defaultFeedbackDetail?: number;
+    /** The course default for how formal Athena feedback reads, same 1-3/0 scale and meaning as {@link defaultFeedbackDetail}. */
+    defaultFeedbackFormality?: number;
+    /**
      * The instance-wide cap on successful automatic Athena feedback requests per participation. Read-only: it comes
      * from server configuration, not from this course, and is never sent back in an update. Optional so the many
      * existing callers of this DTO (course overview toggle, onboarding wizard) that never read it can keep

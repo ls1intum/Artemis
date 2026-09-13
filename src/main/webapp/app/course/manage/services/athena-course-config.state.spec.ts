@@ -174,7 +174,7 @@ describe('AthenaCourseConfigState', () => {
         // Only the switched feature is sent: restating the other one would write back the value this state last read,
         // undoing a change made elsewhere in the meantime.
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
-        expect(state.config()).toEqual(expected);
+        expect(state.config()).toEqual({ ...expected, defaultFeedbackDetail: 0, defaultFeedbackFormality: 0 });
     });
 
     it('should not send a request when the feature already has the requested state', () => {
@@ -220,7 +220,7 @@ describe('AthenaCourseConfigState', () => {
         formative.error(new HttpErrorResponse({ status: 400 }));
 
         // Restoring the whole snapshot this switch was clicked on would also drop the grading switch made after it.
-        expect(state.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+        expect(state.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false, defaultFeedbackDetail: 0, defaultFeedbackFormality: 0 });
     });
 
     it('should keep showing the stored state when a feature is switched twice and both saves fail', () => {
@@ -252,6 +252,69 @@ describe('AthenaCourseConfigState', () => {
 
         // The instructor last asked for disabled, so the answer to the switch before that is only history.
         expect(state.gradingFeedbackEnabled()).toBe(false);
+    });
+
+    describe('feedback style defaults', () => {
+        it('should default to 0 (no course default) before anything loads', () => {
+            const { state } = createState();
+
+            expect(state.defaultFeedbackDetail()).toBe(0);
+            expect(state.defaultFeedbackFormality()).toBe(0);
+        });
+
+        it('should load the stored feedback style defaults', () => {
+            const { state, athenaCourseConfigService } = createState();
+            initWith(state, athenaCourseConfigService, { ...bothDisabled, defaultFeedbackDetail: 3, defaultFeedbackFormality: 1 });
+
+            expect(state.defaultFeedbackDetail()).toBe(3);
+            expect(state.defaultFeedbackFormality()).toBe(1);
+        });
+
+        it('should save a feedback style default and update the signal optimistically', () => {
+            const { state, athenaCourseConfigService } = createState();
+            initWith(state, athenaCourseConfigService, bothDisabled);
+            const updateSpy = vi
+                .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+                .mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackDetail: 3 } })));
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 3);
+
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackDetail: 3 });
+            expect(state.defaultFeedbackDetail()).toBe(3);
+        });
+
+        it('should not send a request when the value already matches', () => {
+            const { state, athenaCourseConfigService } = createState();
+            initWith(state, athenaCourseConfigService, { ...bothDisabled, defaultFeedbackDetail: 3 });
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 3);
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the course default back to 0', () => {
+            const { state, athenaCourseConfigService } = createState();
+            initWith(state, athenaCourseConfigService, { ...bothDisabled, defaultFeedbackDetail: 3 });
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: bothDisabled })));
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 0);
+
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackDetail: 0 });
+            expect(state.defaultFeedbackDetail()).toBe(0);
+        });
+
+        it('should roll back and alert when saving a feedback style default fails', () => {
+            const { state, athenaCourseConfigService, alertService } = createState();
+            initWith(state, athenaCourseConfigService, bothDisabled);
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 3);
+
+            expect(state.defaultFeedbackDetail()).toBe(0);
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
+        });
     });
 
     describe('masterEnabled', () => {

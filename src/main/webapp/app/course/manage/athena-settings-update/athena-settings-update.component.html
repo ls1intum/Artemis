@@ -22,24 +22,123 @@
             <p-tabpanel value="general">
                 <div class="athena-general-panel">
                     @for (feature of features; track feature.key) {
-                        @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key + '.label';
-                        <div>
-                            <div class="athena-setting-label">
-                                <span [jhiTranslate]="labelKey"></span>
-                                <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="'artemisApp.course.athenaConfig.' + feature.key + '.tooltip' | artemisTranslate" />
-                            </div>
+                        @let stateLabelKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledLabel' : '.disabledLabel');
+                        @let stateHintKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledHint' : '.disabledHint');
+                        <div class="athena-toggle-row">
                             @if (isLoaded()) {
-                                <jhi-enabled-toggle
-                                    [enabled]="feature.enabled()"
-                                    [ariaLabel]="labelKey | artemisTranslate"
-                                    [testId]="feature.testId"
-                                    (enabledChange)="setEnabled(feature.key, $event)"
+                                <p-toggleswitch
+                                    [inputId]="feature.testId + '-toggle'"
+                                    [ngModel]="feature.enabled()"
+                                    (ngModelChange)="setEnabled(feature.key, $event)"
+                                    [ariaLabel]="stateLabelKey | artemisTranslate"
+                                    [attr.data-testid]="feature.testId"
                                 />
-                                <small class="athena-setting-hint text-muted-color">
-                                    {{ 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledHint' : '.disabledHint') | artemisTranslate }}
-                                </small>
+                                <label [for]="feature.testId + '-toggle'">
+                                    <span [jhiTranslate]="stateLabelKey"></span>
+                                    <small class="athena-card-subtitle block text-muted-color" [jhiTranslate]="stateHintKey"></small>
+                                </label>
                             } @else {
                                 <p-skeleton [attr.data-testid]="feature.testId + '-loading'" height="2.375rem" borderRadius="0.625rem" />
+                            }
+                        </div>
+                    }
+                    <!-- Feedback style defaults, styled after Iris's "Level of Instructional Support" slider card.
+                         Hidden once loaded confirms neither Athena feature is on, since no one is receiving Athena
+                         feedback for these to style; kept visible (with skeletons) while that answer is still on its
+                         way, so it doesn't flash away only to reappear once loaded. -->
+                    @if (!isLoaded() || anyFeedbackEnabled()) {
+                        <div class="athena-card">
+                            <h6 class="athena-card-title" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackDetail.label"></h6>
+                            <small class="athena-card-subtitle text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackDetail.tooltip"></small>
+
+                            @if (isLoaded()) {
+                                <div class="athena-slider-wrapper mt-3">
+                                    <div class="athena-slider-track">
+                                        <div class="athena-slider-fill" [style.width.%]="tickPercent(defaultFeedbackDetail())"></div>
+                                    </div>
+                                    @if (defaultFeedbackDetail() > 0) {
+                                        <div class="athena-slider-handle" [style.left.%]="tickPercent(defaultFeedbackDetail())"></div>
+                                    }
+                                    @for (tick of feedbackDetailTicks; track tick.value) {
+                                        <button
+                                            type="button"
+                                            class="athena-slider-tick"
+                                            [style.left.%]="tickPercent(tick.value)"
+                                            [class.active]="defaultFeedbackDetail() === tick.value"
+                                            [class.covered]="tick.value < defaultFeedbackDetail()"
+                                            [attr.aria-pressed]="defaultFeedbackDetail() === tick.value"
+                                            [attr.aria-label]="tick.labelKey | artemisTranslate"
+                                            [attr.data-testid]="'athena-settings-default-feedback-detail-' + tick.value"
+                                            (click)="onFeedbackStyleTickClick('defaultFeedbackDetail', tick.value)"
+                                        ></button>
+                                    }
+                                </div>
+                                <div class="athena-slider-labels">
+                                    @for (tick of feedbackDetailTicks; track tick.value) {
+                                        <span class="athena-slider-label" [style.left.%]="tickPercent(tick.value)" [jhiTranslate]="tick.labelKey"></span>
+                                    }
+                                </div>
+
+                                <!-- Example feedback, rendered with the same component a student sees feedback in, so
+                                     the selected level's effect is concrete rather than described in prose. -->
+                                <div class="athena-example-feedback">
+                                    <small class="block mb-2" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>
+                                    <jhi-unified-feedback
+                                        data-testid="athena-settings-default-feedback-detail-example"
+                                        [points]="2"
+                                        [showReference]="false"
+                                        [feedbackContent]="feedbackDetailExampleKey() | artemisTranslate"
+                                    />
+                                </div>
+                            } @else {
+                                <p-skeleton data-testid="athena-settings-default-feedback-detail-loading" height="2.375rem" borderRadius="0.625rem" styleClass="mt-3" />
+                            }
+                        </div>
+                        <div class="athena-card">
+                            <h6 class="athena-card-title" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackFormality.label"></h6>
+                            <small class="athena-card-subtitle text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackFormality.tooltip"></small>
+
+                            @if (isLoaded()) {
+                                <div class="athena-slider-wrapper mt-3">
+                                    <div class="athena-slider-track">
+                                        <div class="athena-slider-fill" [style.width.%]="tickPercent(defaultFeedbackFormality())"></div>
+                                    </div>
+                                    @if (defaultFeedbackFormality() > 0) {
+                                        <div class="athena-slider-handle" [style.left.%]="tickPercent(defaultFeedbackFormality())"></div>
+                                    }
+                                    @for (tick of feedbackFormalityTicks; track tick.value) {
+                                        <button
+                                            type="button"
+                                            class="athena-slider-tick"
+                                            [style.left.%]="tickPercent(tick.value)"
+                                            [class.active]="defaultFeedbackFormality() === tick.value"
+                                            [class.covered]="tick.value < defaultFeedbackFormality()"
+                                            [attr.aria-pressed]="defaultFeedbackFormality() === tick.value"
+                                            [attr.aria-label]="tick.labelKey | artemisTranslate"
+                                            [attr.data-testid]="'athena-settings-default-feedback-formality-' + tick.value"
+                                            (click)="onFeedbackStyleTickClick('defaultFeedbackFormality', tick.value)"
+                                        ></button>
+                                    }
+                                </div>
+                                <div class="athena-slider-labels">
+                                    @for (tick of feedbackFormalityTicks; track tick.value) {
+                                        <span class="athena-slider-label" [style.left.%]="tickPercent(tick.value)" [jhiTranslate]="tick.labelKey"></span>
+                                    }
+                                </div>
+
+                                <!-- Example feedback, rendered with the same component a student sees feedback in, so
+                                     the selected level's effect is concrete rather than described in prose. -->
+                                <div class="athena-example-feedback">
+                                    <small class="block mb-2" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>
+                                    <jhi-unified-feedback
+                                        data-testid="athena-settings-default-feedback-formality-example"
+                                        [points]="2"
+                                        [showReference]="false"
+                                        [feedbackContent]="feedbackFormalityExampleKey() | artemisTranslate"
+                                    />
+                                </div>
+                            } @else {
+                                <p-skeleton data-testid="athena-settings-default-feedback-formality-loading" height="2.375rem" borderRadius="0.625rem" styleClass="mt-3" />
                             }
                         </div>
                     }

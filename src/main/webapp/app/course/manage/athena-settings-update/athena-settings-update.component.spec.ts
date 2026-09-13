@@ -62,7 +62,8 @@ describe('AthenaSettingsUpdateComponent', () => {
         fixture.detectChanges();
 
         const element = fixture.nativeElement;
-        expect(element.querySelectorAll('[data-testid$="-loading"]')).toHaveLength(2);
+        // The two feature toggles and the two feedback style defaults each show their own loading placeholder.
+        expect(element.querySelectorAll('[data-testid$="-loading"]')).toHaveLength(4);
         expect(element.querySelector('[data-testid="athena-settings-formative-feedback-enable"]')).toBeFalsy();
         expect(element.querySelector('[data-testid="athena-settings-grading-feedback-enable"]')).toBeFalsy();
     });
@@ -87,6 +88,32 @@ describe('AthenaSettingsUpdateComponent', () => {
         comp.setEnabled(feature, true);
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
+    });
+
+    it('should save a clicked feedback style tick', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackDetail: 3 } })));
+        createComponent();
+        fixture.detectChanges();
+
+        comp.onFeedbackStyleTickClick('defaultFeedbackDetail', 3);
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackDetail: 3 });
+        expect(comp.defaultFeedbackDetail()).toBe(3);
+    });
+
+    it('should clear a feedback style default when its already-active tick is clicked again', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ ...bothDisabled, defaultFeedbackFormality: 1 }));
+        const updateSpy = vi
+            .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+            .mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackFormality: 0 } })));
+        createComponent();
+        fixture.detectChanges();
+
+        comp.onFeedbackStyleTickClick('defaultFeedbackFormality', 1);
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackFormality: 0 });
+        expect(comp.defaultFeedbackFormality()).toBe(0);
     });
 
     it('should show the admin tab for an admin', () => {

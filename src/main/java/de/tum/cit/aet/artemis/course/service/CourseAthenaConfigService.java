@@ -49,7 +49,8 @@ public class CourseAthenaConfigService {
      */
     public CourseAthenaConfigDTO getConfig(long courseId) {
         var flags = courseAthenaConfigRepository.findConfigByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-        return new CourseAthenaConfigDTO(flags.gradingFeedbackEnabled(), flags.formativeFeedbackEnabled(), allowedFeedbackRequests);
+        return new CourseAthenaConfigDTO(flags.gradingFeedbackEnabled(), flags.formativeFeedbackEnabled(), flags.defaultFeedbackDetail(), flags.defaultFeedbackFormality(),
+                allowedFeedbackRequests);
     }
 
     /**
@@ -72,6 +73,12 @@ public class CourseAthenaConfigService {
                 && courseAthenaConfigRepository.updateGradingFeedbackEnabled(configId, update.gradingFeedbackEnabled()) > 0;
         if (update.formativeFeedbackEnabled() != null) {
             courseAthenaConfigRepository.updateFormativeFeedbackEnabled(configId, update.formativeFeedbackEnabled());
+        }
+        if (update.defaultFeedbackDetail() != null) {
+            courseAthenaConfigRepository.updateDefaultFeedbackDetail(configId, update.defaultFeedbackDetail());
+        }
+        if (update.defaultFeedbackFormality() != null) {
+            courseAthenaConfigRepository.updateDefaultFeedbackFormality(configId, update.defaultFeedbackFormality());
         }
 
         if (gradingFeedbackChanged) {

@@ -242,17 +242,46 @@
                 "enabledLabel": "Enable Athena",
                 "configure": "Configure",
                 "learnMore": "Learn more",
+                "exampleFeedbackLabel": "Example feedback",
                 "formativeFeedbackEnabled": {
                     "label": "Formative feedback requests",
                     "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date.",
+                    "enabledLabel": "Formative feedback requests are enabled",
+                    "disabledLabel": "Formative feedback requests are disabled",
                     "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
                     "disabledHint": "Students cannot request preliminary AI feedback in this course."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Grading feedback suggestions",
                     "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises.",
+                    "enabledLabel": "Grading feedback suggestions are enabled",
+                    "disabledLabel": "Grading feedback suggestions are disabled",
                     "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",
                     "disabledHint": "Tutors assess submissions in this course without Athena feedback suggestions."
+                },
+                "defaultFeedbackDetail": {
+                    "label": "Feedback Detail",
+                    "tooltip": "Sets how detailed AI feedback reads by default in this course. Applies only to students who have not set their own feedback preference.",
+                    "brief": "Brief",
+                    "neutral": "Neutral",
+                    "detailed": "Detailed",
+                    "example": {
+                        "brief": "Missing check for empty input.",
+                        "neutral": "Your solution doesn't handle an empty input - add a check before processing the list.",
+                        "detailed": "Your implementation throws an error when the input list is empty, because line 4 accesses the first element without checking its length first. Add a guard clause such as <code>if not items: return None</code>, and consider adding a test case that covers the empty-list scenario."
+                    }
+                },
+                "defaultFeedbackFormality": {
+                    "label": "Feedback Formality",
+                    "tooltip": "Sets how formal AI feedback reads by default in this course. Applies only to students who have not set their own feedback preference.",
+                    "formal": "Formal",
+                    "neutral": "Neutral",
+                    "friendly": "Friendly",
+                    "example": {
+                        "formal": "The submission does not validate negative input values. Please revise the input handling accordingly.",
+                        "neutral": "Your code doesn't check for negative input values yet. Consider adding a validation step.",
+                        "friendly": "Nice work so far! One thing to fix: negative inputs aren't checked yet, so it's worth adding a quick validation there."
+                    }
                 },
                 "settingsPage": {
                     "title": "Athena Settings",
