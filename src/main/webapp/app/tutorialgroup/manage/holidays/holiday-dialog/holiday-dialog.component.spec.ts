@@ -52,6 +52,41 @@ describe('HolidayDialogComponent', () => {
         fixture.detectChanges();
     }
 
+    describe('dates typed into the pickers', () => {
+        // The picker parses typed text with a plain dayjs, so it hands back the reader's wall clock in the reader's
+        // zone. Everything else here is the course's. Two zones far apart on purpose: whatever the machine running
+        // this is set to, it cannot be both, so at least one of these is a genuine cross-zone check.
+        for (const timeZone of ['Pacific/Auckland', 'America/Los_Angeles']) {
+            it(`should read a typed start as the course's wall clock in ${timeZone}`, async () => {
+                fixture.componentRef.setInput('timeZone', timeZone);
+                // As the page supplies it: the calendar's days are already the course's, so the dialog must not
+                // reinterpret them a second time - only what the pickers hand back.
+                fixture.componentRef.setInput('initialDay', dayjs.tz('2025-12-22', timeZone).startOf('day'));
+                await open();
+
+                // What the picker emits for someone typing "22.12.2025 12:00": that wall clock, in the browser's zone.
+                component['onStartChange'](dayjs('2025-12-22T12:00'));
+
+                expect(component['start']()!.tz(timeZone).format('YYYY-MM-DD HH:mm')).toBe('2025-12-22 12:00');
+                // The end was never touched, so it still reads as the course's last minute of that day - and with
+                // both ends in one zone the span is in order. Compared across zones it was not.
+                expect(component['end']()!.tz(timeZone).format('YYYY-MM-DD HH:mm')).toBe('2025-12-22 23:59');
+                expect(component['endIsBeforeStart']()).toBe(false);
+            });
+
+            it(`should read a typed end as the course's wall clock in ${timeZone}`, async () => {
+                fixture.componentRef.setInput('timeZone', timeZone);
+                fixture.componentRef.setInput('initialDay', dayjs.tz('2025-12-22', timeZone).startOf('day'));
+                await open();
+
+                component['onEndChange'](dayjs('2025-12-24T18:30'));
+
+                expect(component['end']()!.tz(timeZone).format('YYYY-MM-DD HH:mm')).toBe('2025-12-24 18:30');
+                expect(component['endIsBeforeStart']()).toBe(false);
+            });
+        }
+    });
+
     it('should open a new holiday on the whole day, so the common case needs no further input', async () => {
         fixture.componentRef.setInput('initialDay', dayjs('2025-12-04').startOf('day'));
         await open();

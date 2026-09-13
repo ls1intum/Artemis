@@ -65,6 +65,18 @@ export function inCourseZone(instant: dayjs.Dayjs, timeZone: string | undefined)
     return timeZone ? instant.tz(timeZone) : instant.local();
 }
 
+/**
+ * The instant at which the given wall clock falls in the course's zone.
+ *
+ * The opposite of {@link inCourseZone}, which keeps the instant and changes how it reads. A date picker parses what
+ * was typed in the reader's zone, but the reader is choosing a time in the course's - so "12:00" has to be moved to
+ * mean noon there, not noon where they are sitting. Without it a typed bound and a loaded one are instants from two
+ * different zones, and comparing them puts a perfectly ordered span out of order.
+ */
+export function wallClockInCourseZone(value: dayjs.Dayjs, timeZone: string | undefined): dayjs.Dayjs {
+    return timeZone ? dayjs.tz(value.format('YYYY-MM-DDTHH:mm:ss.SSS'), timeZone) : value;
+}
+
 /** The last minute of a day, which is how the end of a whole-day holiday is stored. */
 export function endOfHolidayDay(day: dayjs.Dayjs): dayjs.Dayjs {
     return day.startOf('day').set('hour', LAST_HOUR_OF_DAY).set('minute', LAST_MINUTE_OF_HOUR).startOf('minute');

@@ -5,7 +5,7 @@ import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiFormFieldComponent
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { Holiday, endOfHolidayDay, lastDayCovered } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { Holiday, endOfHolidayDay, lastDayCovered, wallClockInCourseZone } from 'app/tutorialgroup/manage/holidays/holiday.model';
 
 /** Mirrors the `@Size` the server puts on the reason, so the field stops where the request would be rejected. */
 const REASON_MAX_LENGTH = 256;
@@ -54,6 +54,13 @@ export class HolidayDialogComponent {
     readonly initialDay = input<dayjs.Dayjs | undefined>(undefined);
     /** The last day of a run dragged across the calendar. Defaults to {@link initialDay}, which is the single-day case. */
     readonly initialLastDay = input<dayjs.Dayjs | undefined>(undefined);
+    /**
+     * The course's time zone, which is the one the reader is choosing times in.
+     *
+     * The pickers parse what is typed in the reader's own zone, so without this a typed bound and a loaded one are
+     * instants from two different zones - and comparing them can put an ordered span out of order.
+     */
+    readonly timeZone = input<string | undefined>(undefined);
     /**
      * Every holiday the course already has, so a clash is caught here rather than by the request.
      *
@@ -192,11 +199,13 @@ export class HolidayDialogComponent {
         });
     });
 
-    protected onStartChange(value: dayjs.Dayjs | undefined): void {
-        if (!value) {
+    protected onStartChange(picked: dayjs.Dayjs | undefined): void {
+        if (!picked) {
             this.start.set(undefined);
             return;
         }
+        // Read as the course's wall clock before anything compares it with the bounds already loaded, which are.
+        const value = wallClockInCourseZone(picked, this.timeZone());
         const previousStart = this.start();
         this.start.set(value);
 
@@ -218,8 +227,8 @@ export class HolidayDialogComponent {
         this.emitSpan();
     }
 
-    protected onEndChange(value: dayjs.Dayjs | undefined): void {
-        this.end.set(value);
+    protected onEndChange(picked: dayjs.Dayjs | undefined): void {
+        this.end.set(picked ? wallClockInCourseZone(picked, this.timeZone()) : undefined);
         this.emitSpan();
     }
 

@@ -126,6 +126,8 @@ export class TutorialGroupHolidaysComponent {
     private readonly dialogSpanRequests = new Subject<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
 
     private readonly timeZone = computed(() => this.course()?.timeZone);
+    /** The same zone, for the form: its pickers parse in the reader's and have to be read back in the course's. */
+    protected readonly courseTimeZone = this.timeZone;
 
     /**
      * The moment the page reckons from, moved on at each of the course's midnights.
