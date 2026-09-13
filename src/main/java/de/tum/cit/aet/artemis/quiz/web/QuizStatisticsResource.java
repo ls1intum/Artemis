@@ -69,18 +69,29 @@ public class QuizStatisticsResource {
 
     /**
      * Gets the point-bucket histogram of a quiz.
-     * The legacy recalculation path maps here because on-demand statistics have no persisted aggregate to recalculate.
      *
      * @param quizExerciseId the id of the quiz exercise
      * @return the quiz exercise with point statistics
      */
-    @SuppressWarnings("deprecation")
-    @GetMapping({ "quiz-exercises/{quizExerciseId}/statistics/points", QuizLegacyRestPaths.RECALCULATE_STATISTICS })
+    @GetMapping("quiz-exercises/{quizExerciseId}/statistics/points")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizPointStatisticsDTO> getQuizPointStatistic(@PathVariable long quizExerciseId) {
         QuizExercise quizExercise = getQuizExerciseForStatistics(quizExerciseId);
         log.debug("REST request to calculate quiz point statistic: {}", quizExerciseId);
         return ResponseEntity.ok(quizStatisticsService.getPointStatistic(quizExercise));
+    }
+
+    /**
+     * Keeps the legacy recalculation route available while statistics are calculated on demand.
+     *
+     * @param quizExerciseId the id of the quiz exercise
+     * @return the current point statistics
+     */
+    @SuppressWarnings("deprecation")
+    @GetMapping(QuizLegacyRestPaths.RECALCULATE_STATISTICS)
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizPointStatisticsDTO> recalculateStatistics(@PathVariable long quizExerciseId) {
+        return getQuizPointStatistic(quizExerciseId);
     }
 
     /**
