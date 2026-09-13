@@ -72,6 +72,7 @@ export class ResultSimpleDTO {
     public completionDate?: dayjs.Dayjs;
     public score?: number;
     public rated?: boolean;
+    public successful?: boolean;
     public assessmentType?: AssessmentType;
     public submission?: SubmissionWithParticipationDTO;
     public assessor?: UserPublicInfoDTO;

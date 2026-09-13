@@ -106,6 +106,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
@@ -775,10 +776,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        List<Submission> response = request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK,
-                Submission.class);
+        List<SubmissionResponseDTO> response = request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK,
+                SubmissionResponseDTO.class);
         assertThat(response).isNotEmpty();
-        assertThat((response.getFirst().getParticipation()).isTestRun()).isTrue();
+        assertThat(response.getFirst().participation().testRun()).isTrue();
+        // Submission is polymorphic; the client switches on the discriminator, so it has to survive the DTO
+        assertThat(response.getFirst().submissionExerciseType()).isNotBlank();
     }
 
     @Test
@@ -798,20 +801,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // deduplicated message) - the assessment draft must copy and expose it
         var testRunParticipation = studentParticipationRepository
                 .findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(), List.of(programmingExercise)).getFirst();
-        var submission = testRunParticipation.findLatestSubmission().orElseThrow();
+        var submission = (ProgrammingSubmission) testRunParticipation.findLatestSubmission().orElseThrow();
+        submission.setCommitHash("1234abcd");
+        submission = programmingSubmissionRepository.save(submission);
         var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testRunTest");
         participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test-run failure message");
 
-        List<Submission> response = request.getList("/api/exercise/exercises/" + programmingExercise.getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
+        List<SubmissionResponseDTO> response = request.getList("/api/exercise/exercises/" + programmingExercise.getId() + "/test-run-submissions", HttpStatus.OK,
+                SubmissionResponseDTO.class);
 
         assertThat(response).hasSize(1);
-        var draft = response.getFirst().getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findFirst().orElseThrow();
+        var draft = response.getFirst().results().stream().filter(result -> result.assessmentType() == AssessmentType.SEMI_AUTOMATIC).findFirst().orElseThrow();
         // the automatic feedback was copied into the draft as typed rows and is exposed as synthesized views
-        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> {
-            assertThat(feedback.getId()).isNegative();
-            assertThat(feedback.getDetailText()).isEqualTo("test-run failure message");
+        assertThat(draft.feedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.id()).isNegative();
+            assertThat(feedback.detailText()).isEqualTo("test-run failure message");
+            // the synthesized view has no text: the test case is the only carrier of the name the popup prints
+            assertThat(feedback.testCase()).isNotNull();
+            assertThat(feedback.testCase().testName()).isEqualTo("testRunTest");
         });
+        // the feedback popup of a programming result prints the commit the submission was built from
+        assertThat(response.getFirst().commitHash()).isEqualTo("1234abcd");
     }
 
     @Test
@@ -819,7 +830,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
         course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course2, false);
-        request.getList("/api/exercise/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercise/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, SubmissionResponseDTO.class);
     }
 
     @Test
@@ -834,7 +845,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         userUtilService.changeUser(TEST_PREFIX + "student2");
-        request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, SubmissionResponseDTO.class);
     }
 
     @Test
@@ -848,7 +859,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         final var latestSubmissions = request.getList(
                 "/api/exercise/exercises/" + exam.getExerciseGroups().getFirst().getExercises().iterator().next().getId() + "/test-run-submissions", HttpStatus.OK,
-                Submission.class);
+                SubmissionResponseDTO.class);
         assertThat(latestSubmissions).isEmpty();
     }
 

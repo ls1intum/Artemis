@@ -43,8 +43,8 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      * DTO containing the minimal information of {@link Result} needed in complaint.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, SubmissionWithParticipationDTO submission,
-            UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
+    public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, Boolean successful, AssessmentType assessmentType,
+            SubmissionWithParticipationDTO submission, UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
 
         /**
          * DTO containing the {@link Feedback} information needed in the result.
@@ -95,7 +95,9 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
 
                 exerciseTitle = result.getSubmission().getParticipation().getExercise().getTitle();
             }
-            return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.getAssessmentType(),
+            // successful is what the client turns into the icon and the result string of an Athena result; it is not
+            // recoverable from the listed submission, which has its Athena results stripped
+            return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.isSuccessful(), result.getAssessmentType(),
                     result.getSubmission() != null ? SubmissionWithParticipationDTO.of(result.getSubmission()) : null, assessor, feedbackDTOs, exerciseTitle);
         }
     }

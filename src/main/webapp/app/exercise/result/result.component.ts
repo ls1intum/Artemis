@@ -118,12 +118,16 @@ export class ResultComponent {
 
     readonly textColorClass = computed(() => {
         const status = this.templateStatus();
-        return status === ResultTemplateStatus.LATE || this.displayableResult() ? getTextColorClass(this.result(), this.resolvedParticipation(), status) : '';
+        return status === ResultTemplateStatus.LATE || this.displayableResult()
+            ? getTextColorClass(this.result(), this.resolvedParticipation(), status, this.resolvedExercise())
+            : '';
     });
 
     readonly resultIconClass = computed<IconProp | undefined>(() => {
         const status = this.templateStatus();
-        return status === ResultTemplateStatus.LATE || this.displayableResult() ? getResultIconClass(this.result(), this.resolvedParticipation(), status) : undefined;
+        return status === ResultTemplateStatus.LATE || this.displayableResult()
+            ? getResultIconClass(this.result(), this.resolvedParticipation(), status, this.resolvedExercise())
+            : undefined;
     });
 
     readonly resultString = computed(() => {

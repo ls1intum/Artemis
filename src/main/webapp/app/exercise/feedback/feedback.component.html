@@ -78,7 +78,7 @@
                     </div>
                 }
 
-                @if (scoreChartVisible() && result().submission?.participation?.exercise) {
+                @if (scoreChartVisible() && resolvedExercise()) {
                     <div class="mb-12">
                         <div data-testid="feedback-chart" class="chart-space h-20">
                             <tum-ui-bar-chart
@@ -102,7 +102,7 @@
                     <hr />
                 }
 
-                @if (!loadingFailed() && resultIsPreliminary(result(), participation())) {
+                @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
                     <div>
                         <div class="flex justify-end m-1">
                             <p-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />

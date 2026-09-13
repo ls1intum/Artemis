@@ -311,6 +311,7 @@ export class ComplaintService implements IComplaintService {
         result.completionDate = resultDto.completionDate ? dayjs(resultDto.completionDate) : undefined;
         result.score = resultDto.score;
         result.rated = resultDto.rated;
+        result.successful = resultDto.successful;
         result.assessmentType = resultDto.assessmentType;
 
         if (resultDto.assessor) {
