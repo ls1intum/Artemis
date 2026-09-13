@@ -79,7 +79,19 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @return the full response DTO
      */
     public static FileUploadExerciseDTO of(FileUploadExercise exercise) {
-        return map(exercise, true, true);
+        return map(exercise, true, true, false);
+    }
+
+    /**
+     * Maps the record written into the exercise details file of an archive: the full response without the id of the
+     * team assignment configuration, which is a row of this instance and means nothing in a file read back elsewhere.
+     * The plagiarism configuration of a file upload exercise carries no id.
+     *
+     * @param exercise the exercise to export
+     * @return the export response DTO
+     */
+    public static FileUploadExerciseDTO forExport(FileUploadExercise exercise) {
+        return map(exercise, true, true, true);
     }
 
     /**
@@ -89,7 +101,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @return the lean search response DTO
      */
     public static FileUploadExerciseDTO forSearch(FileUploadExercise exercise) {
-        return map(exercise, true, false);
+        return map(exercise, true, false, false);
     }
 
     /**
@@ -100,14 +112,17 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @return the lean course-list response DTO
      */
     public static FileUploadExerciseDTO forCourseList(FileUploadExercise exercise) {
-        return map(exercise, false, false);
+        return map(exercise, false, false, false);
     }
 
-    private static FileUploadExerciseDTO map(FileUploadExercise exercise, boolean includeContext, boolean includeInitializedAssociations) {
+    private static FileUploadExerciseDTO map(FileUploadExercise exercise, boolean includeContext, boolean includeInitializedAssociations, boolean forExport) {
         Set<String> categories = initialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
         FileUploadTeamAssignmentConfigDTO teamAssignmentConfig = includeInitializedAssociations && initialized(exercise.getTeamAssignmentConfig())
                 ? FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
+        if (forExport && teamAssignmentConfig != null) {
+            teamAssignmentConfig = teamAssignmentConfig.withoutId();
+        }
         Set<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = includeInitializedAssociations && initialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())

@@ -51,6 +51,6 @@ public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSu
      */
     @Override
     protected Record exerciseDetailsForExport(Exercise exercise) {
-        return ModelingExerciseResponseDTO.of((ModelingExercise) exercise);
+        return ModelingExerciseResponseDTO.forExport((ModelingExercise) exercise);
     }
 }

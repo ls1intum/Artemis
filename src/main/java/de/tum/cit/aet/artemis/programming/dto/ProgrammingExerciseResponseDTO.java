@@ -135,11 +135,16 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
 
     /**
      * Creates the record written into the exercise details file of an export or an archive. It is the response record
-     * without the ids of the plagiarism detection configuration, the team assignment configuration and the auxiliary
-     * repositories: the file is read back by another instance, which creates a new exercise from it. An importer that
-     * copies those ids onto its new exercise, as every released version does for the plagiarism configuration, would
-     * otherwise reach persistence with the identity of the exported exercise's rows - and the creation rejects an
-     * auxiliary repository that already has an id outright.
+     * without the ids of everything nested in it: the plagiarism detection configuration, the team assignment
+     * configuration, the submission policy, the build configuration, the grading criteria with their instructions, the
+     * auxiliary repositories and the template and solution participations. The file is read back by another instance,
+     * which creates a new exercise from it, and every one of those records is bound by a {@code toEntity()} that
+     * copies the id through. An importer of any version would otherwise reach persistence with the identity of the
+     * exported exercise's rows - and the creation rejects an auxiliary repository that already has an id outright.
+     * <p>
+     * The exercise's own id stays: the import drops it, and the archive names the exercise it came from. The course
+     * and exercise group references keep their ids as well, because they point at rows the importing instance
+     * replaces with its own target anyway.
      *
      * @param exercise the exercise to export (may be {@code null})
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -172,9 +177,9 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
         Set<String> categories = copyCategories(exercise);
 
-        // A list, not a set: the download export nulls the criterion and instruction ids before projecting, and
-        // GradingCriterionDTO is a record with value equality, so a set would merge two stored criteria that only
-        // differ by id and silently drop a rubric row.
+        // A list, not a set: the export projection nulls the criterion and instruction ids, and GradingCriterionDTO is
+        // a record with value equality, so a set would merge two stored criteria that only differ by id and silently
+        // drop a rubric row.
         List<GradingCriterionDTO> gradingCriteria = null;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
@@ -189,8 +194,7 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
 
         List<AuxiliaryRepositoryDTO> auxiliaryRepositories = null;
         if (exercise.getAuxiliaryRepositories() != null && Hibernate.isInitialized(exercise.getAuxiliaryRepositories())) {
-            auxiliaryRepositories = exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).map(repository -> forExport ? repository.withoutId() : repository)
-                    .toList();
+            auxiliaryRepositories = exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();
         }
 
         List<ProgrammingExerciseStudentParticipationDTO> studentParticipations = null;
@@ -209,13 +213,25 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig = plagiarismDetectionConfigEntity != null && Hibernate.isInitialized(plagiarismDetectionConfigEntity)
                 ? PlagiarismDetectionConfigDTO.of(plagiarismDetectionConfigEntity)
                 : null;
-        if (forExport) {
-            teamAssignmentConfig = teamAssignmentConfig == null ? null : teamAssignmentConfig.withoutId();
-            plagiarismDetectionConfig = plagiarismDetectionConfig == null ? null : plagiarismDetectionConfig.withoutId();
-        }
         var submissionPolicyEntity = exercise.getSubmissionPolicy();
         SubmissionPolicyDTO submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity)
                 : null;
+        UpdateProgrammingExerciseBuildConfigDTO buildConfig = UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig());
+        TemplateSolutionParticipationDTO templateParticipation = TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation());
+        TemplateSolutionParticipationDTO solutionParticipation = TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation());
+
+        if (forExport) {
+            // Every id below is the identity of a row of this instance. The importer reading the file creates a new
+            // exercise, and each of these records is mapped by a toEntity() that copies the id onto what it creates.
+            teamAssignmentConfig = teamAssignmentConfig == null ? null : teamAssignmentConfig.withoutId();
+            plagiarismDetectionConfig = plagiarismDetectionConfig == null ? null : plagiarismDetectionConfig.withoutId();
+            submissionPolicy = submissionPolicy == null ? null : submissionPolicy.withoutId();
+            buildConfig = buildConfig == null ? null : buildConfig.withoutId();
+            gradingCriteria = gradingCriteria == null ? null : gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
+            auxiliaryRepositories = auxiliaryRepositories == null ? null : auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::withoutId).toList();
+            templateParticipation = templateParticipation == null ? null : templateParticipation.withoutId();
+            solutionParticipation = solutionParticipation == null ? null : solutionParticipation.withoutId();
+        }
 
         return new ProgrammingExerciseResponseDTO(exercise.getId(), TYPE, exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getProblemStatement(),
                 categories, exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getMaxPoints(), exercise.getBonusPoints(),
@@ -225,11 +241,10 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 exercise.getGradingInstructions(), gradingCriteria, competencyLinks, plagiarismDetectionConfig, exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getProjectType(), exercise.getProjectKey(), exercise.getTestRepositoryUri(), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(),
-                exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed,
-                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course, exerciseGroup,
-                TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()), TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()),
-                ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations, auxiliaryRepositories, exercise.getExerciseType(),
-                exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(), exercise.getDefaultTestCaseVisibility());
+                exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, buildConfig, submissionPolicy, course,
+                exerciseGroup, templateParticipation, solutionParticipation, ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations,
+                auxiliaryRepositories, exercise.getExerciseType(), exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(),
+                exercise.getDefaultTestCaseVisibility());
     }
 
     /**

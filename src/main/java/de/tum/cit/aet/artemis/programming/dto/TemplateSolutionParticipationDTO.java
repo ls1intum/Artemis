@@ -65,6 +65,17 @@ public record TemplateSolutionParticipationDTO(Long id, String type, String repo
         return of(participation, TYPE_SOLUTION);
     }
 
+    /**
+     * Returns the same participation without the row id, for payloads that are written to a file and read back by
+     * another instance, whose import copies the id onto the participation it creates. The repository URI stays: the
+     * import from file reads it to rewrite legacy project names.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public TemplateSolutionParticipationDTO withoutId() {
+        return new TemplateSolutionParticipationDTO(null, type, repositoryUri, buildPlanId, initializationState, submissions);
+    }
+
     private static TemplateSolutionParticipationDTO of(AbstractBaseProgrammingExerciseParticipation participation, String type) {
         if (participation == null || !Hibernate.isInitialized(participation)) {
             return null;

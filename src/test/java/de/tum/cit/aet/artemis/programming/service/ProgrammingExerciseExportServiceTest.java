@@ -762,6 +762,71 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(imported.getAuxiliaryRepositories().getFirst().getCheckoutDirectory()).isEqualTo("solutionhints");
     }
 
+    /**
+     * The details file is read back by another instance, which creates a new exercise from it, and every nested record
+     * is bound by a {@code toEntity()} that copies the id through. One id that slips into the file therefore lets an
+     * import write onto a row of the exporting instance, so the file carries no nested id at all: the exercise's own
+     * id and the references to its course and exercise group are the only ones, and the import replaces those.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesNoNestedIds() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise.setGradingCriteria(new HashSet<>(Set.of(criterionWithInstruction())));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        JsonNode written = JsonObjectMapper.get().readTree(details);
+        // the fixture has to reach the file, otherwise the sweep below would pass on an empty exercise
+        assertThat(written.get("buildConfig")).as("the build configuration is part of the exported details").isNotNull();
+        assertThat(written.get("gradingCriteria")).as("the rubric is part of the exported details").hasSize(1);
+        assertThat(written.get("auxiliaryRepositories")).as("the auxiliary repository is part of the exported details").hasSize(1);
+        assertThat(written.get("plagiarismDetectionConfig")).as("the plagiarism configuration is part of the exported details").isNotNull();
+        assertThat(written.get("teamAssignmentConfig")).as("the team assignment configuration is part of the exported details").isNotNull();
+
+        assertThat(nestedIdPaths(written, "")).as("no nested id is written into the details file").isEmpty();
+        assertThat(written.get("id")).as("the exercise's own id stays, the import drops it").isNotNull();
+    }
+
+    /**
+     * Collects the path of every {@code id} below the root of the given details node. The course and the exercise group
+     * are references to rows the import replaces with its own target, so their ids are not part of the result.
+     */
+    private static List<String> nestedIdPaths(JsonNode node, String path) {
+        List<String> found = new ArrayList<>();
+        if (node.isArray()) {
+            for (int index = 0; index < node.size(); index++) {
+                found.addAll(nestedIdPaths(node.get(index), path + "[" + index + "]"));
+            }
+            return found;
+        }
+        if (!node.isObject()) {
+            return found;
+        }
+        for (var property : node.properties()) {
+            String childPath = path.isEmpty() ? property.getKey() : path + "." + property.getKey();
+            if ("course".equals(property.getKey()) || "exerciseGroup".equals(property.getKey())) {
+                continue;
+            }
+            if ("id".equals(property.getKey())) {
+                if (!path.isEmpty() && !property.getValue().isNull()) {
+                    found.add(childPath);
+                }
+                continue;
+            }
+            found.addAll(nestedIdPaths(property.getValue(), childPath));
+        }
+        return found;
+    }
+
     private static TeamAssignmentConfig teamAssignmentConfig() {
         TeamAssignmentConfig config = new TeamAssignmentConfig();
         config.setMinTeamSize(1);

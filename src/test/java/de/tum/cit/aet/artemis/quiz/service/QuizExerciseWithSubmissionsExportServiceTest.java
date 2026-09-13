@@ -28,6 +28,13 @@ class QuizExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
 
     private static final String TEST_PREFIX = "quizexportservice";
 
+    /**
+     * One fixed reference instead of three calls to {@code now()}: the fixture must not depend on when the test runs.
+     * The three dates are derived from it and kept hours apart in release, due, assessment due order, so swapping two
+     * of them shows up rather than passing by luck.
+     */
+    private static final ZonedDateTime RELEASE_DATE = ZonedDateTime.parse("2020-01-10T08:00:00Z");
+
     @Autowired
     private QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService;
 
@@ -44,8 +51,8 @@ class QuizExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportExerciseWithSubmissions_writesTheQuestionsAndTheirSolutionsWithoutTheEntityGraph() throws Exception {
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2),
-                ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, RELEASE_DATE, RELEASE_DATE.plusHours(3), RELEASE_DATE.plusHours(4),
+                QuizMode.SYNCHRONIZED);
         List<String> exportErrors = new ArrayList<>();
 
         quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exportDir, exportErrors, new ArrayList<ArchivalReportEntry>());

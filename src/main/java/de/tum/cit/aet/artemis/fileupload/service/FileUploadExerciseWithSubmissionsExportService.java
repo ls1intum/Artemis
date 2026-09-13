@@ -51,6 +51,6 @@ public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWith
      */
     @Override
     protected Record exerciseDetailsForExport(Exercise exercise) {
-        return FileUploadExerciseDTO.of((FileUploadExercise) exercise);
+        return FileUploadExerciseDTO.forExport((FileUploadExercise) exercise);
     }
 }

@@ -52,6 +52,6 @@ public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmis
      */
     @Override
     protected Record exerciseDetailsForExport(Exercise exercise) {
-        return TextExerciseResponseDTO.of((TextExercise) exercise);
+        return TextExerciseResponseDTO.forExport((TextExercise) exercise);
     }
 }
