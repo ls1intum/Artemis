@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
@@ -103,12 +103,13 @@ public class TutorParticipationResource {
      * If yes, then it returns the participation, if not, it returns an error.
      *
      * @param exerciseId        the id of the exercise of the tutorParticipation
-     * @param exampleSubmission the example submission that will be added
+     * @param exampleSubmission the example submission that will be added, carrying the tutor's assessment as the feedback of its latest result
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping("exercises/{exerciseId}/assess-example-submission")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorParticipationDTO> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
+    public ResponseEntity<TutorParticipationDTO> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId,
+            @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
