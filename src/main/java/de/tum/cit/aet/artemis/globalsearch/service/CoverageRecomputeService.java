@@ -1,19 +1,12 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
-import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURES_COLLECTION;
-import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION;
-import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION;
-import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,23 +20,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
-import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageExpectedIdsRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageRepository;
-import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.PresentMetadata;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.ExpectedSets;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.PresentSets;
 
 /**
  * Recomputes the exact per-course {@link IngestionCoverageEntry} projection by reading the database (the expected id-sets)
@@ -58,8 +47,9 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * Content coverage: slides and transcript are diffed at lecture-unit granularity (expected units from the DB vs the
  * distinct present units in Weaviate). Segment and unit summaries are PRESENT-ONLY - their present counts are stored but
  * never diffed, because a summary can legitimately exist without full content and the plan decoupled summaries from
- * content-correctness. Lecture and exam data is reached through the module {@code api} packages, so when either module is
- * disabled those types are simply omitted rather than breaking the recompute.
+ * content-correctness. The expected and present id-sets themselves come from {@link IngestionCoverageSetLoader}, which the
+ * content browser reads too, so the counts reported here and the entities the browser names as missing are derived from
+ * one set of rules rather than two.
  */
 @Lazy
 @Service
@@ -84,31 +74,18 @@ public class CoverageRecomputeService {
 
     private static final Duration LOCK_WAIT = Duration.ofSeconds(1);
 
-    private final IngestionCoverageExpectedIdsRepository expectedIdsRepository;
+    private final IngestionCoverageSetLoader setLoader;
 
     private final CourseRepository courseRepository;
-
-    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
-
-    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
-
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
-
-    private final IngestionCoverageWeaviateReadService weaviateReadService;
 
     private final IngestionCoverageRepository coverageRepository;
 
     private final DistributedDataProvider distributedDataProvider;
 
-    public CoverageRecomputeService(IngestionCoverageExpectedIdsRepository expectedIdsRepository, CourseRepository courseRepository,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<ExamRepositoryApi> examRepositoryApi,
-            IngestionCoverageWeaviateReadService weaviateReadService, IngestionCoverageRepository coverageRepository, DistributedDataProvider distributedDataProvider) {
-        this.expectedIdsRepository = expectedIdsRepository;
+    public CoverageRecomputeService(IngestionCoverageSetLoader setLoader, CourseRepository courseRepository, IngestionCoverageRepository coverageRepository,
+            DistributedDataProvider distributedDataProvider) {
+        this.setLoader = setLoader;
         this.courseRepository = courseRepository;
-        this.lectureRepositoryApi = lectureRepositoryApi;
-        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
-        this.examRepositoryApi = examRepositoryApi;
-        this.weaviateReadService = weaviateReadService;
         this.coverageRepository = coverageRepository;
         this.distributedDataProvider = distributedDataProvider;
     }
@@ -190,11 +167,11 @@ public class CoverageRecomputeService {
         }
         Map<Long, IngestionCoverageEntry> existingByCourseId = existingRows.stream().collect(Collectors.toMap(IngestionCoverageEntry::getCourseId, entry -> entry));
 
-        ExpectedSets expected = loadExpectedSets(courseIds);
+        ExpectedSets expected = setLoader.loadExpected(courseIds);
         // Content only exists for courses that have lecture units, so the (heavier) per-course content aggregations are
         // read only for those courses; the rest cannot have slides, transcript, or summaries.
         Set<Long> contentCourseIds = expected.lectureUnits().keySet();
-        PresentSets present = loadPresentSets(courseIds, contentCourseIds);
+        PresentSets present = setLoader.loadPresent(courseIds, contentCourseIds);
         Instant computedAt = Instant.now();
 
         for (Course course : courses) {
@@ -214,39 +191,6 @@ public class CoverageRecomputeService {
         }
     }
 
-    // ----- Expected (database) -----
-
-    private record ExpectedSets(Map<Long, Set<Long>> exercises, Map<Long, Set<Long>> lectures, Map<Long, Set<Long>> lectureUnits, Map<Long, Set<Long>> exams,
-            Map<Long, Set<Long>> faqs, Map<Long, Set<Long>> channels, Map<Long, Set<Long>> pdfUnits, Map<Long, Set<Long>> videoUnits) {
-    }
-
-    private ExpectedSets loadExpectedSets(Collection<Long> courseIds) {
-        Map<Long, Set<Long>> exercises = bucket(expectedIdsRepository.findExerciseIdCourseIdPairsForCourses(courseIds));
-        Map<Long, Set<Long>> faqs = bucket(expectedIdsRepository.findFaqIdCourseIdPairsForCourses(courseIds));
-        Map<Long, Set<Long>> channels = bucket(expectedIdsRepository.findIndexableChannelIdCourseIdPairsForCourses(courseIds));
-        Map<Long, Set<Long>> lectures = bucket(lectureRepositoryApi.map(api -> api.findLectureIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
-        Map<Long, Set<Long>> exams = bucket(examRepositoryApi.map(api -> api.findExamIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
-        Map<Long, Set<Long>> lectureUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findIndexableUnitIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
-        Map<Long, Set<Long>> pdfUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds)).orElse(List.of()));
-        Map<Long, Set<Long>> videoUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithVideoForCourses(courseIds)).orElse(List.of()));
-        return new ExpectedSets(exercises, lectures, lectureUnits, exams, faqs, channels, pdfUnits, videoUnits);
-    }
-
-    // ----- Present (Weaviate) -----
-
-    private record PresentSets(Map<Long, Map<String, Set<Long>>> metadataByCourse, Map<Long, Instant> lastIngestedAt, Map<Long, Set<Long>> slides, Map<Long, Set<Long>> transcript,
-            Map<Long, Set<Long>> segmentSummaries, Map<Long, Set<Long>> unitSummaries) {
-    }
-
-    private PresentSets loadPresentSets(Collection<Long> courseIds, Collection<Long> contentCourseIds) {
-        PresentMetadata metadata = weaviateReadService.readPresentMetadata(courseIds);
-        Map<Long, Set<Long>> slides = weaviateReadService.readPresentContentUnitIds(LECTURES_COLLECTION, contentCourseIds);
-        Map<Long, Set<Long>> transcript = weaviateReadService.readPresentContentUnitIds(LECTURE_TRANSCRIPTIONS_COLLECTION, contentCourseIds);
-        Map<Long, Set<Long>> segmentSummaries = weaviateReadService.readPresentContentUnitIds(LECTURE_UNIT_SEGMENTS_COLLECTION, contentCourseIds);
-        Map<Long, Set<Long>> unitSummaries = weaviateReadService.readPresentContentUnitIds(LECTURE_UNITS_COLLECTION, contentCourseIds);
-        return new PresentSets(metadata.presentIdsByCourseAndType(), metadata.lastIngestedAtByCourse(), slides, transcript, segmentSummaries, unitSummaries);
-    }
-
     /**
      * Computes coverage for a set of courses live (reading the DB + Weaviate and diffing) and returns it as DTOs WITHOUT
      * persisting, for the default matrix page view. The visible page selects its courses by DB-native sort/search, so this
@@ -261,9 +205,9 @@ public class CoverageRecomputeService {
             return List.of();
         }
         List<Long> courseIds = courses.stream().map(Course::getId).toList();
-        ExpectedSets expected = loadExpectedSets(courseIds);
+        ExpectedSets expected = setLoader.loadExpected(courseIds);
         Set<Long> contentCourseIds = expected.lectureUnits().keySet();
-        PresentSets present = loadPresentSets(courseIds, contentCourseIds);
+        PresentSets present = setLoader.loadPresent(courseIds, contentCourseIds);
         ZonedDateTime computedAt = ZonedDateTime.now();
 
         List<IngestionCoverageDTO> result = new ArrayList<>();
@@ -277,17 +221,19 @@ public class CoverageRecomputeService {
 
     /**
      * Reads the stored coverage projection for the cross-course matrix views (worst-first, release-date,
-     * most-recent-ingestion, status/active filters), paginated and sorted on the projection's indexed columns. Pure table read,
-     * no Weaviate access. The caller triggers the stale-while-revalidate recompute separately (a sibling {@code @Async}
-     * call would not cross the proxy).
+     * most-recent-ingestion, status/active filters, title search), paginated and sorted on the projection's indexed
+     * columns. Pure table read, no Weaviate access. The caller triggers the stale-while-revalidate recompute separately
+     * (a sibling {@code @Async} call would not cross the proxy).
      *
      * @param status   an optional status to filter by, or {@code null} for all statuses
      * @param active   an optional active/inactive filter, or {@code null} for either
+     * @param search   an optional case-insensitive course-title search, or {@code null}/blank for all titles
      * @param pageable the page and sort (on the projection columns)
      * @return the requested page of stored coverage rows as DTOs
      */
-    public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Boolean active, Pageable pageable) {
-        return coverageRepository.findFiltered(status, active, pageable).map(this::toDto);
+    public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Boolean active, String search, Pageable pageable) {
+        String titleSearch = search == null || search.isBlank() ? null : search.trim();
+        return coverageRepository.findFiltered(status, active, titleSearch, pageable).map(this::toDto);
     }
 
     /**
@@ -395,11 +341,6 @@ public class CoverageRecomputeService {
     }
 
     // ----- Helpers -----
-
-    /** Buckets flat (courseId, entityId) pairs into a per-course id-set. */
-    private static Map<Long, Set<Long>> bucket(List<CourseEntityIdDTO> pairs) {
-        return pairs.stream().collect(Collectors.groupingBy(CourseEntityIdDTO::courseId, Collectors.mapping(CourseEntityIdDTO::entityId, Collectors.toSet())));
-    }
 
     private static ZonedDateTime toZonedDateTime(Instant instant) {
         return instant == null ? null : instant.atZone(java.time.ZoneOffset.UTC);

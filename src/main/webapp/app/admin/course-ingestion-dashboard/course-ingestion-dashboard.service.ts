@@ -3,7 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
-import { IndexOverview, IngestionCoverage, IngestionCoverageStatus } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import {
+    CourseBrowserData,
+    IndexOverview,
+    IndexedContentObject,
+    IndexedEntityRecord,
+    IngestionCoverage,
+    IngestionCoverageStatus,
+} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /** Zero-based page request against a Spring `Pageable` endpoint. `sort` follows Spring's `property,direction` form. */
 export interface CoveragePageRequest {
@@ -12,15 +19,18 @@ export interface CoveragePageRequest {
     sort?: string;
 }
 
-/** Page request for the stored cross-course view, optionally filtered by status and/or by whether the course is active. */
-export interface StoredCoverageRequest extends CoveragePageRequest {
-    status?: IngestionCoverageStatus;
-    active?: boolean;
-}
-
 /** Page request for the live per-page view, optionally filtered by a case-insensitive course-title search. */
 export interface LiveCoverageRequest extends CoveragePageRequest {
     search?: string;
+}
+
+/**
+ * Page request for the stored cross-course view: the title search of the live view, plus the two filters only the
+ * stored projection can answer. The search is shared because a filter and a search are one question, not two views.
+ */
+export interface StoredCoverageRequest extends LiveCoverageRequest {
+    status?: IngestionCoverageStatus;
+    active?: boolean;
 }
 
 /**
@@ -32,7 +42,8 @@ export interface LiveCoverageRequest extends CoveragePageRequest {
 export class CourseIngestionDashboardService {
     private http = inject(HttpClient);
 
-    private readonly baseUrl = 'api/global-search/admin';
+    // TEMPORARY (revert before merge): matches the instructor-accessible path the resources are served under.
+    private readonly baseUrl = 'api/global-search/ingestion-dashboard';
 
     /** GET the index overview: Weaviate reachability + address, whether Iris is enabled, and per-collection object counts. */
     getIndexOverview(): Observable<IndexOverview> {
@@ -41,10 +52,11 @@ export class CourseIngestionDashboardService {
 
     /**
      * GET the stored per-course coverage projection (cross-course views), paginated and sorted on the projection columns
-     * (e.g. `coverageGapScore`, `releaseDate`, `lastIngestedAt`) and optionally filtered by status.
+     * (e.g. `coverageGapScore`, `releaseDate`, `lastIngestedAt`) and optionally filtered by status, by whether the course
+     * is active, and by a case-insensitive title search.
      */
     getStoredCoverage(request: StoredCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        let params = this.paginationParams(request);
+        let params = this.searchParam(this.paginationParams(request), request.search);
         if (request.status !== undefined) {
             params = params.set('status', request.status);
         }
@@ -61,13 +73,39 @@ export class CourseIngestionDashboardService {
      * sorted on course columns (e.g. `title`, `startDate`) and optionally filtered by a case-insensitive title search.
      */
     getLiveCoveragePage(request: LiveCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
-        let params = this.paginationParams(request);
-        if (request.search !== undefined && request.search !== '') {
-            params = params.set('search', request.search);
-        }
+        const params = this.searchParam(this.paginationParams(request), request.search);
         return this.http
             .get<IngestionCoverage[]>(`${this.baseUrl}/coverage/page`, { params, observe: 'response' })
             .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
+     * GET everything the content browser needs to open a course: the stored entities, which units hold content per Iris
+     * collection, the entities the index is missing, and the per-unit content gaps.
+     *
+     * One request rather than four, because all of it derives from the same two id-sets on the server and asking
+     * separately made each request reload them.
+     */
+    getCourseBrowserData(courseId: number): Observable<CourseBrowserData> {
+        return this.http.get<CourseBrowserData>(`${this.baseUrl}/courses/${courseId}/browser`);
+    }
+
+    /**
+     * GET the full stored records of one entity type for a course, property maps included. Fetched when a type, lecture
+     * or unit is selected, because those maps carry the entity's body text and are not loaded with the course.
+     */
+    getIndexedEntityRecords(courseId: number, type: string): Observable<IndexedEntityRecord[]> {
+        const params = new HttpParams().set('type', type);
+        return this.http.get<IndexedEntityRecord[]>(`${this.baseUrl}/courses/${courseId}/entities`, { params });
+    }
+
+    /**
+     * GET the objects stored for one lecture unit in one Iris collection. Fetched only when a collection node is
+     * selected, because the property maps are heavy enough that loading them with the rest would not pay for itself.
+     */
+    getUnitContent(courseId: number, unitId: number, key: string): Observable<IndexedContentObject[]> {
+        const params = new HttpParams().set('key', key);
+        return this.http.get<IndexedContentObject[]>(`${this.baseUrl}/courses/${courseId}/units/${unitId}/content`, { params });
     }
 
     /** POST to force a background recompute of the whole projection (no-op if one is already running). */
@@ -88,5 +126,10 @@ export class CourseIngestionDashboardService {
             params = params.set('sort', request.sort);
         }
         return params;
+    }
+
+    /** Adds the title search, if there is one. Both coverage endpoints take it under the same name. */
+    private searchParam(params: HttpParams, search: string | undefined): HttpParams {
+        return search === undefined || search === '' ? params : params.set('search', search);
     }
 }

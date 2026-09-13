@@ -46,6 +46,10 @@ public class ExamRepositoryApi extends AbstractExamApi {
         return examRepository.findExamIdCourseIdPairsForCourses(courseIds);
     }
 
+    public List<Exam> findAllById(Iterable<Long> examIds) {
+        return examRepository.findAllById(examIds);
+    }
+
     public Set<Exam> findByCourseIdForUser(Long courseId, long userId, ZonedDateTime now) {
         return examRepository.findByCourseIdForUser(courseId, userId, now);
     }

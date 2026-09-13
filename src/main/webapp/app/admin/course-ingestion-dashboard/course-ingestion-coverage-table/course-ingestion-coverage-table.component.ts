@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -61,9 +61,9 @@ interface SelectOption {
  * metadata and lecture content), a release-date column, and a status dot. The header columns sort, and a toolbar filters
  * by status, searches by title, refreshes, and paginates.
  * <p>
- * Cross-course modes (worst-first, status filter) read the stored projection ({@code coverage}); the default name/release
- * /search view is computed live for the visible page ({@code coverage/page}). Both return the same row shape, so the
- * matrix renders identically from either.
+ * Cross-course modes (worst-first, status/active filter) read the stored projection ({@code coverage}); the default
+ * name/release view is computed live for the visible page ({@code coverage/page}). Both take the title search and both
+ * return the same row shape, so the matrix renders identically from either.
  */
 @Component({
     selector: 'jhi-course-ingestion-coverage-table',
@@ -98,6 +98,9 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
 
     /** Raw search input; debounced before it triggers a reload. */
     private readonly searchInput$ = new Subject<string>();
+
+    /** Emitted when a course row is activated, so the page can open the content browser for it. */
+    readonly courseSelected = output<IngestionCoverage>();
 
     protected readonly faSync = faSync;
     protected readonly metadataTypes = METADATA_TYPES;
@@ -157,6 +160,11 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         });
     }
 
+    /** Activating a row asks the page to open the content browser for that course. */
+    protected openBrowser(row: IngestionCoverage): void {
+        this.courseSelected.emit(row);
+    }
+
     ngOnInit(): void {
         this.load();
     }
@@ -168,11 +176,14 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         const size = this.pageSize();
         const config = SORT_CONFIG[this.sortMode()];
         const direction = this.sortDirection();
-        // A status/active filter or a cross-course sort (worst-first) must read the stored projection.
+        // A status/active filter or a cross-course sort (worst-first) must read the stored projection. The search goes to
+        // whichever path is chosen: it narrows the same rows either way, and dropping it on the stored path made the
+        // search box silently stop working as soon as a filter was set.
         const useStored = config.requiresStored || this.statusFilter() !== undefined || this.activeFilter() !== undefined;
+        const search = this.search() || undefined;
         const request$ = useStored
-            ? this.dashboardService.getStoredCoverage({ page, size, sort: `${config.storedField},${direction}`, status: this.statusFilter(), active: this.activeFilter() })
-            : this.dashboardService.getLiveCoveragePage({ page, size, sort: `${config.liveField},${direction}`, search: this.search() || undefined });
+            ? this.dashboardService.getStoredCoverage({ page, size, sort: `${config.storedField},${direction}`, status: this.statusFilter(), active: this.activeFilter(), search })
+            : this.dashboardService.getLiveCoveragePage({ page, size, sort: `${config.liveField},${direction}`, search });
 
         request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (result) => {
@@ -228,6 +239,13 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
 
     protected onPageChange(page: number): void {
         this.page.set(page);
+        this.load();
+    }
+
+    /** Changing the page size returns to the first page, since the old page number indexes a different-sized list. */
+    protected onPageSizeChange(size: number): void {
+        this.pageSize.set(size);
+        this.page.set(0);
         this.load();
     }
 

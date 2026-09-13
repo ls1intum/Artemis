@@ -1,0 +1,291 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
+
+import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
+import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
+import { CourseBrowserData, IndexedEntityRecord, IngestionTypeCount } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
+describe('CourseIngestionBrowserDetailComponent', () => {
+    let component: CourseIngestionBrowserDetailComponent;
+    let fixture: ComponentFixture<CourseIngestionBrowserDetailComponent>;
+    let service: CourseIngestionDashboardService;
+
+    const data: CourseBrowserData = {
+        entities: [
+            { type: 'lecture', entityId: 20, title: 'Week 1', ingestedAt: '2026-08-26T09:00:00Z' },
+            { type: 'lecture_unit', entityId: 11, title: 'Intro slides', lectureId: 20, ingestedAt: '2026-08-26T09:00:00Z' },
+        ],
+        contentPresence: [{ key: 'slides', unitIds: [11] }],
+        missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
+        contentGaps: [{ lectureUnitId: 11, title: 'Intro slides', kind: 'transcript' as const }],
+    };
+
+    const typeCounts: IngestionTypeCount[] = [{ type: 'exercise', expected: 3, indexed: 2, missing: 1, orphaned: 0 }];
+
+    const records: IndexedEntityRecord[] = [
+        { type: 'lecture', entityId: 20, title: 'Week 1', ingestedAt: '2026-08-26T09:00:00Z', properties: { title: 'Week 1', description: 'Body text' } },
+    ];
+
+    const query = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+
+    const settle = async (): Promise<void> => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [CourseIngestionBrowserDetailComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService(), provideRouter([])],
+        });
+        service = TestBed.inject(CourseIngestionDashboardService);
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of(records));
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ ingestedAt: '2026-08-26T09:00:00Z', properties: { page_number: 3, page_text_content: 'Hello' } }]));
+
+        fixture = TestBed.createComponent(CourseIngestionBrowserDetailComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('data', data);
+        fixture.componentRef.setInput('typeCounts', typeCounts);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should prompt for a selection before anything is chosen', async () => {
+        await settle();
+
+        expect(query('detail-type')).toBeFalsy();
+        expect(query('detail-collection')).toBeFalsy();
+    });
+
+    it('should show a type with its counts and name what is missing', async () => {
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+
+        expect(query('detail-type')).toBeTruthy();
+        expect(query('detail-missing-list')?.textContent).toContain('Sorting');
+
+        // Indexed, expected and missing each read as their own figure rather than a run-on line of label-colon-value.
+        const stats = query('detail-type-stats');
+        expect(stats).toBeTruthy();
+        expect(stats?.textContent).toContain('2');
+        expect(stats?.textContent).toContain('3');
+        expect(stats?.textContent).toContain('1');
+    });
+
+    it('should read the stored records for the selected type', async () => {
+        const spy = vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of(records));
+        component.selection.set({ kind: 'type', type: 'lecture' });
+        await settle();
+
+        expect(spy).toHaveBeenCalledWith(7, 'lecture');
+
+        // Exactly one record, so it renders open: a collapsed row would hide the only thing there is to show.
+        expect(query('detail-single-record')).toBeTruthy();
+        expect(query('stored-fields')).toBeTruthy();
+    });
+
+    it('should put each record behind its own disclosure once there is more than one', async () => {
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(
+            of([
+                { type: 'lecture', entityId: 20, title: 'Week 1', properties: { title: 'Week 1' } },
+                { type: 'lecture', entityId: 21, title: 'Week 2', properties: { title: 'Week 2' } },
+            ]),
+        );
+        component.selection.set({ kind: 'type', type: 'lecture' });
+        await settle();
+
+        expect(query('detail-single-record')).toBeFalsy();
+        expect(query('stored-fields')).toBeFalsy();
+
+        (query('detail-record-20') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(query('stored-fields')).toBeTruthy();
+    });
+
+    it('should name the selection in the header, from data the course already loaded', async () => {
+        // A unit is named from the tree's entities rather than from its stored record, so the heading is right on the
+        // first frame instead of reading "untitled" until the record request lands.
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of([]));
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+        expect(query('detail-heading')?.textContent?.trim()).toBe('Intro slides');
+        expect(component.heading()).toEqual({ text: 'Intro slides', key: 'artemisApp.courseIngestionDashboard.browser.untitledUnit' });
+
+        component.selection.set({ kind: 'lecture', lectureId: 20 });
+        await settle();
+        expect(query('detail-heading')?.textContent?.trim()).toBe('Week 1');
+
+        // A type and a collection are named by their translated label, not by a stored title.
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+        expect(component.heading()).toEqual({ key: 'artemisApp.courseIngestionDashboard.matrix.type.exercise' });
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+        expect(component.heading()).toEqual({ key: 'artemisApp.courseIngestionDashboard.browser.content_slides' });
+    });
+
+    it('should keep the heading and the open link on one row, so neither owns an empty band', async () => {
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+
+        const heading = query('detail-heading');
+        const open = query('detail-open');
+        expect(heading).toBeTruthy();
+        expect(open).toBeTruthy();
+        // Same row means one shared flex parent; on separate rows the button spanned the pane on its own.
+        expect(heading?.parentElement?.parentElement).toBe(open?.parentElement);
+    });
+
+    it('should show the stored record of a selected unit', async () => {
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(
+            of([{ type: 'lecture_unit', entityId: 11, title: 'Intro slides', ingestedAt: '2026-08-26T09:00:00Z', properties: { name: 'Intro slides' } }]),
+        );
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+
+        expect(query('detail-unit')).toBeTruthy();
+        expect(component.selectedRecord()?.entityId).toBe(11);
+        // The unit holds slides, so its content chip is shown.
+        expect(component.unitContentKeys()).toEqual(['slides']);
+    });
+
+    it('should fetch the objects of a collection only once it is selected', async () => {
+        const spy = vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ ingestedAt: '2026-08-26T09:00:00Z', properties: { page_number: 3 } }]));
+
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+        expect(spy).not.toHaveBeenCalled();
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(spy).toHaveBeenCalledWith(7, 11, 'slides');
+        expect(query('detail-collection')).toBeTruthy();
+    });
+
+    it('should label a content object by its page number', async () => {
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(component.labelledContent()[0].label).toBe('Page 3');
+    });
+
+    it('should fall back to a position label when an object has neither page nor segment time', async () => {
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of([{ properties: { text: 'no position markers' } }]));
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(component.labelledContent()[0].label).toBe('#1');
+    });
+
+    it('should offer a breadcrumb back up from a collection', async () => {
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        // Lecture then unit: the path the selection sits inside.
+        expect(component.breadcrumbs().map((crumb) => crumb.label)).toEqual(['Week 1', 'Intro slides']);
+
+        component.select(component.breadcrumbs()[0].selection);
+        expect(component.selection()).toEqual({ kind: 'lecture', lectureId: 20 });
+    });
+
+    it('should page long content lists rather than rendering every chunk', async () => {
+        // A slide deck runs to hundreds of chunks; rendering them all is what made the pane an endless scroll.
+        const many = Array.from({ length: 60 }, (_, index) => ({ properties: { page_number: index + 1 } }));
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of(many));
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(component.labelledContent()).toHaveLength(60);
+        expect(component.pagedContent()).toHaveLength(10);
+        expect(component.pagedContent()[0].label).toBe('Page 1');
+
+        component.contentPage.set(1);
+        fixture.detectChanges();
+
+        expect(component.pagedContent()[0].label).toBe('Page 11');
+    });
+
+    it('should honour a change of page size and return to the first page', async () => {
+        const many = Array.from({ length: 60 }, (_, index) => ({ properties: { page_number: index + 1 } }));
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of(many));
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+        component.contentPage.set(2);
+        fixture.detectChanges();
+
+        // The paginator reports a size change separately from a page change; the size must actually take effect.
+        component['onPageSizeChange'](50);
+        fixture.detectChanges();
+
+        expect(component.pageSize()).toBe(50);
+        expect(component.pagedContent()).toHaveLength(50);
+        // Page 2 of a 10-row list does not exist in a 50-row one, so the view returns to the start.
+        expect(component.contentPage()).toBe(0);
+        expect(component.pagedContent()[0].label).toBe('Page 1');
+    });
+
+    it('should surface an error rather than an empty pane when a read fails', async () => {
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(throwError(() => new Error('boom')));
+        component.selection.set({ kind: 'type', type: 'lecture' });
+        await settle();
+
+        expect(component.error()).toBe(true);
+        expect(query('detail-error')).toBeTruthy();
+    });
+
+    it('should say what content a unit is missing rather than leaving it to be inferred', async () => {
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+
+        expect(component.missingContentOfUnit()).toHaveLength(1);
+        expect(query('detail-content-gap')).toBeTruthy();
+    });
+
+    it('should not show a gap banner for a unit that has everything', async () => {
+        component.selection.set({ kind: 'unit', unitId: 99 });
+        await settle();
+
+        expect(query('detail-content-gap')).toBeFalsy();
+    });
+
+    it('should point the open action at the lecture page for a lecture', async () => {
+        component.selection.set({ kind: 'lecture', lectureId: 20 });
+        await settle();
+
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20]);
+        expect(component.openTarget()?.labelKey).toContain('openLecture');
+    });
+
+    it('should point a unit and its collections at the unit management page', async () => {
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
+
+        // A collection belongs to a unit, so it opens the same page.
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
+    });
+
+    it('should fall back to the course page for a metadata type', async () => {
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7]);
+        expect(component.openTarget()?.labelKey).toContain('openCourse');
+    });
+});

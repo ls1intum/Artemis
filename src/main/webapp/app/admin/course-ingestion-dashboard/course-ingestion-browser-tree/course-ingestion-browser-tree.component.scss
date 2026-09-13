@@ -1,0 +1,32 @@
+/*
+ * Row states for the tree. These are stateful selectors over theme variables rather than template utilities, following
+ * the same reasoning as the admin sidebar: the global unlayered rules win over layered Tailwind utilities, so the
+ * colour has to be set here. `--link-item-bg` / `--link-item-color` are the variables the sidebars and the tutorial
+ * group rows already use for a hovered or active list item, so the tree matches the rest of the admin area.
+ */
+.tree-node {
+    color: var(--p-text-color);
+
+    &:hover,
+    &.active {
+        background-color: var(--link-item-bg);
+        color: var(--link-item-color);
+    }
+
+    /* Keyboard users get the same affordance as the mouse, on top of the browser's focus ring. */
+    &:focus-visible {
+        background-color: var(--link-item-bg);
+        color: var(--link-item-color);
+    }
+}
+
+/* The chevron is its own control, so it highlights independently of the row it belongs to. */
+.tree-toggle {
+    color: var(--p-text-muted-color);
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+        background-color: var(--link-item-bg);
+        color: var(--link-item-color);
+    }
+}

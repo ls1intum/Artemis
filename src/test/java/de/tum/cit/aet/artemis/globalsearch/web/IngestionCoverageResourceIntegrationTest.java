@@ -34,7 +34,8 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     private static final String TEST_PREFIX = "ingcovres";
 
-    private static final String BASE = "/api/global-search/admin/";
+    // TEMPORARY (revert before merge): the resource is relaxed to instructor and served outside the /admin/ segment.
+    private static final String BASE = "/api/global-search/ingestion-dashboard/";
 
     @Autowired
     private IngestionCoverageRepository ingestionCoverageRepository;
@@ -83,16 +84,7 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void storedCoverageReadsAndMapsTheProjection() throws Exception {
-        // A fresh row means the endpoint's stale-while-revalidate trigger is a no-op, so this reads exactly what is stored.
-        IngestionCoverageEntry entry = new IngestionCoverageEntry();
-        entry.setCourseId(course.getId());
-        entry.setCourseTitle(course.getTitle());
-        entry.setTypeCounts(List.of(new IngestionTypeCountDTO("exercise", 5, 4, 1, 0)));
-        entry.setCoverageGapScore(1);
-        entry.setStatus(IngestionCoverageStatus.INCOMPLETE);
-        entry.setActive(true);
-        entry.setComputedAt(ZonedDateTime.now());
-        ingestionCoverageRepository.save(entry);
+        ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
 
         // The endpoint is paginated and defaults to 20 rows. The projection table is shared across test classes and
         // accumulates a row per course, so without an explicit size this course's row can sit on a later page and the
@@ -104,6 +96,25 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
             assertThat(dto.status()).isNotNull();
             assertThat(dto.typeCounts()).isNotEmpty();
         });
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void storedCoverageAppliesTheTitleSearchAlongsideTheStatusFilter() throws Exception {
+        ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
+
+        // Filter and search together. The stored path took no search parameter at all, so setting any filter silently
+        // widened the result back to every course while the search box still showed the typed term.
+        List<IngestionCoverageDTO> filtered = request.getList(BASE + "coverage?size=2000&status=INCOMPLETE&search=" + course.getTitle(), HttpStatus.OK, IngestionCoverageDTO.class);
+
+        assertThat(filtered).isNotEmpty().allSatisfy(dto -> {
+            assertThat(dto.courseTitle()).containsIgnoringCase(course.getTitle());
+            assertThat(dto.status()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
+        });
+        assertThat(filtered).extracting(IngestionCoverageDTO::courseId).contains(course.getId());
+
+        // A term no course carries returns nothing rather than falling back to the unsearched page.
+        assertThat(request.getList(BASE + "coverage?size=2000&status=INCOMPLETE&search=nosuchcoursetitle", HttpStatus.OK, IngestionCoverageDTO.class)).isEmpty();
     }
 
     @Test
@@ -122,5 +133,21 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     @WithMockUser(username = "admin", roles = "ADMIN")
     void refreshIsAccepted() throws Exception {
         request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.OK);
+    }
+
+    /**
+     * A projection row for the test course, computed now. The fresh timestamp keeps the endpoint's stale-while-revalidate
+     * trigger a no-op, so the stored-coverage tests read back exactly what they wrote.
+     */
+    private IngestionCoverageEntry storedEntry(IngestionCoverageStatus status) {
+        IngestionCoverageEntry entry = new IngestionCoverageEntry();
+        entry.setCourseId(course.getId());
+        entry.setCourseTitle(course.getTitle());
+        entry.setTypeCounts(List.of(new IngestionTypeCountDTO("exercise", 5, 4, 1, 0)));
+        entry.setCoverageGapScore(1);
+        entry.setStatus(status);
+        entry.setActive(true);
+        entry.setComputedAt(ZonedDateTime.now());
+        return entry;
     }
 }
