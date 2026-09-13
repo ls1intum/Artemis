@@ -28,6 +28,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateHealthIndicator;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 @Lazy
 @RestController
 @RequestMapping("api/global-search/ingestion-dashboard/")
+@FeatureUsage("monitoring/ingestion-dashboard")
 public class IngestionCoverageResource {
 
     /** The Iris content collections shown in the overview, addressed by their exact (unprefixed) names. */
