@@ -112,6 +112,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly faWrench = faWrench;
     protected readonly faCheckDouble = faCheckDouble;
     protected readonly faLayerGroup = faLayerGroup;
+    protected readonly faList = faList;
     protected readonly ExerciseType = ExerciseType;
 
     readonly viewOptions: { labelKey: string; value: ExerciseManagementView; icon: IconProp }[] = [
