@@ -23,6 +23,35 @@ describe('TumUiPopoverComponent', () => {
         vi.restoreAllMocks();
     });
 
+    describe('the side it grows from', () => {
+        const panel = () => document.querySelector('.tum-ui-popover-panel');
+
+        it('starts from the side it was asked for', () => {
+            fixture.componentRef.setInput('placement', 'top');
+            component.open(origin);
+            fixture.detectChanges();
+
+            // The animation grows the panel from the edge nearest its origin, which this attribute selects.
+            expect(panel()?.getAttribute('data-placement')).toBe('top');
+        });
+
+        it('follows the panel when there is no room and it is flipped', () => {
+            fixture.componentRef.setInput('placement', 'bottom');
+            component.open(origin);
+            fixture.detectChanges();
+            expect(panel()?.getAttribute('data-placement')).toBe('bottom');
+
+            // What CDK reports after flipping a panel that would not fit below its origin.
+            const strategy = component['overlayRef']!.getConfig().positionStrategy as unknown as {
+                positionChanges: { next: (change: unknown) => void };
+            };
+            strategy.positionChanges.next({ connectionPair: { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom' } });
+            fixture.detectChanges();
+
+            expect(panel()?.getAttribute('data-placement')).toBe('top');
+        });
+    });
+
     it('opens: sets isOpen and emits openChange(true)', () => {
         const emitSpy = vi.spyOn(component.openChange, 'emit');
         component.open(origin);

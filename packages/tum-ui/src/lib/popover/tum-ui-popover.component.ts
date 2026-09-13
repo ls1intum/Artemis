@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { FlexibleConnectedPositionStrategy } from '@angular/cdk/overlay';
 import { TumUiOverlayPlacement, TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 
 /**
@@ -15,6 +17,7 @@ import { TumUiOverlayPlacement, TumUiOverlayService } from '../overlay/tum-ui-ov
 @Component({
     selector: 'tum-ui-popover',
     templateUrl: './tum-ui-popover.component.html',
+    styleUrl: './tum-ui-popover.component.scss',
     imports: [A11yModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -29,7 +32,13 @@ export class TumUiPopoverComponent implements OnDestroy {
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
+    private positionSub?: Subscription;
     private readonly openState = signal(false);
+    /**
+     * Where the panel ended up, which is not always where it was asked to go: CDK flips it when the preferred side
+     * has no room. The opening animation grows the panel from the edge nearest its origin, so it has to follow.
+     */
+    protected readonly appliedPlacement = signal<TumUiOverlayPlacement>('bottom');
     /** Whether the popover is currently open. Read-only: drive it through open() / close() / toggle(). */
     readonly isOpen = this.openState.asReadonly();
 
@@ -39,6 +48,10 @@ export class TumUiPopoverComponent implements OnDestroy {
             return;
         }
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, this.placement(), { hasBackdrop: true });
+        this.appliedPlacement.set(this.placement());
+        // CDK may emit the flipped position synchronously while attaching, so this is subscribed before the portal.
+        const strategy = this.overlayRef.getConfig().positionStrategy as FlexibleConnectedPositionStrategy;
+        this.positionSub = strategy.positionChanges.subscribe((change) => this.appliedPlacement.set(this.overlayService.placementFromPosition(change.connectionPair)));
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());
         this.overlayRef.keydownEvents().subscribe((event) => {
@@ -55,6 +68,8 @@ export class TumUiPopoverComponent implements OnDestroy {
         if (!this.isOpen()) {
             return;
         }
+        this.positionSub?.unsubscribe();
+        this.positionSub = undefined;
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
         this.openState.set(false);
@@ -71,6 +86,7 @@ export class TumUiPopoverComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.positionSub?.unsubscribe();
         this.overlayRef?.dispose();
     }
 }
