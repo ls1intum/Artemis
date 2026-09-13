@@ -554,8 +554,7 @@ public class SpecFidelityCriticService {
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
-        boolean oracleReviewInvalid = oracleFindings == null || CriticVerdictParser.hasUngroundedOracleReview(oracleFindings)
-                || oracleFindings.stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+        boolean oracleReviewInvalid = oracleFindings == null || CriticVerdictParser.hasUngroundedOracleReview(oracleFindings);
         if (!cancelled.getAsBoolean() && oracleReviewInvalid && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE,
                     userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, authoritativeSource, Map.of(), "", false, false, false,
@@ -620,7 +619,10 @@ public class SpecFidelityCriticService {
         }
         catch (RuntimeException e) {
             log.warn("{} exercise review failed: {}", pass, e.getMessage());
-            return null;
+            // A missing provider response is not a malformed verdict. Only the latter can be corrected with another prompt;
+            // transport retries and usage uncertainty belong to ReviewerClient.
+            String detail = "The " + pass + " reviewer request failed; no verdict was returned.";
+            return (requireScopeVerdict ? SpecFidelityReport.adaptationScopeUnavailable(detail) : SpecFidelityReport.qualityReviewUnavailable(detail)).findings();
         }
     }
 
