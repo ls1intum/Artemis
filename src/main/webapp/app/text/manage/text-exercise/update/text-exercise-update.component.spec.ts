@@ -297,6 +297,52 @@ describe('TextExercise Management Update Component', () => {
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
 
+            it('should flush grading instructions before setting isSaving', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                let savingDuringFlush = false;
+                const prepareForSave = vi.fn(() => {
+                    savingDuringFlush = component.isSaving();
+                });
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave }) });
+                vi.spyOn(textExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+                component.save();
+                await fixture.whenStable();
+
+                expect(prepareForSave).toHaveBeenCalledOnce();
+                expect(savingDuringFlush).toBe(false);
+            });
+
+            it('should abort the save when the grading instructions could not be parsed', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave: () => false }) });
+                const update = vi.spyOn(textExerciseService, 'update');
+
+                component.save();
+                await fixture.whenStable();
+
+                // The exercise still holds the previous grading criteria, so sending it would persist
+                // criteria the user no longer sees and discard the text they typed.
+                expect(update).not.toHaveBeenCalled();
+                expect(component.isSaving()).toBe(false);
+            });
+
             it('should error during save', async () => {
                 const exercise = createExistingExercise();
                 routeData$.next({ textExercise: exercise });

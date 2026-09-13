@@ -99,6 +99,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild.required<TeamConfigFormGroupComponent>('teamConfigFormGroup');
+    gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
     examCourseId?: number;
     readonly isExamMode = signal<boolean>(undefined!);
@@ -302,6 +303,11 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     save() {
+        // Flush text-mode Monaco before isSaving disables the child (editable becomes false). A
+        // rejected parse aborts the save: the model still holds the previous grading criteria.
+        if (this.gradingInstructionsDetails()?.prepareForSave() === false) {
+            return;
+        }
         this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)

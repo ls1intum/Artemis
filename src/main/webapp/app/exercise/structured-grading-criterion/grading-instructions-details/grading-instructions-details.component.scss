@@ -1,63 +1,195 @@
 .edit-sqi {
     .grading-instructions-update-border {
-        padding: 10px;
-        border-radius: 0.1rem;
-        border-width: 1px;
-        border-style: solid;
-        border-color: var(--edit-sqi-grading-instructions-update-border);
+        padding: 1rem;
+        border-radius: 0.625rem;
+        border: 1px solid var(--border-color);
         height: auto;
     }
 
-    .re-evaluate-button {
-        display: inline-block;
-        padding: 4px;
-        cursor: default;
-
-        &:not(:disabled) {
-            cursor: pointer;
-
-            &:hover {
-                color: blue;
-            }
-        }
-    }
-
     .instruction-delete-button {
-        display: inline-block;
-        padding: 4px;
-        cursor: pointer;
-        color: #dc3545;
+        color: var(--danger);
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+    }
+}
+
+.sqi-field-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted-color);
+}
+
+.sqi-criterion {
+    /* Collapse 2-up level cards from criterion width, not viewport — split panes stay usable. */
+    container-type: inline-size;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    background-color: var(--surface-ground);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 4px;
+        background-color: var(--primary);
     }
 
-    .instructions {
+    &__header {
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        align-items: flex-end;
         justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        padding: 1.25rem 1.5rem 1.25rem 1.625rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    &__title-block {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__title-input {
         width: 100%;
+        max-width: 22.5rem;
+    }
 
-        input,
-        .input-group-btn {
-            display: inline-block;
-            width: auto;
+    &__delete {
+        flex-shrink: 0;
+    }
+
+    &__actions {
+        display: flex;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.25rem 1.5rem 1.25rem 1.625rem;
+    }
+
+    &__instructions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+
+        /* ~2×(~28rem card + gap) before 2-up; below that one level per row. */
+        @container (min-width: 58rem) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+    }
+}
 
-        .form-group {
-            display: flex;
-            align-items: center;
-            margin: 0 5px 15px;
+.sqi-instruction {
+    container-type: inline-size;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--tumaet-ui-overlay-background);
+    padding: 1rem 1.125rem;
 
-            > * {
-                margin: 0 4px;
+    &--markdown {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    &__fields-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: end;
+
+        @container (min-width: 22rem) {
+            grid-template-columns: 6.25rem minmax(0, 1fr) 6.25rem 2.5rem;
+        }
+    }
+
+    &__field {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+
+        input {
+            width: 100%;
+        }
+    }
+
+    &__delete {
+        display: inline-flex;
+        width: 2.5rem;
+        height: 2.5rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        align-self: end;
+        justify-self: end;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+
+        fa-icon {
+            font-size: 1.125rem;
+        }
+    }
+
+    &__divider {
+        height: 0;
+        margin: 1rem 0;
+        border: 0;
+        border-top: 1px solid var(--border-color);
+    }
+
+    &__textareas {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+
+        @container (min-width: 26rem) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0;
+
+            .sqi-instruction__textarea-field + .sqi-instruction__textarea-field {
+                border-left: 1px solid var(--border-color);
+                padding-left: 1rem;
+            }
+
+            .sqi-instruction__textarea-field:first-child {
+                padding-right: 1rem;
             }
         }
-
-        .background-file {
-            display: flex;
-        }
     }
 
-    .criterion-title-row {
-        background-color: var(--edit-sqi-criterion-title-row-background);
+    &__textarea-field {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+    }
+
+    &__textarea {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+        resize: vertical;
     }
 }
 

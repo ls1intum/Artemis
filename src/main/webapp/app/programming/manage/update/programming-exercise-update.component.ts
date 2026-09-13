@@ -845,6 +845,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSaving() || this.isGeneratingWithAi()) {
             return;
         }
+        // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
+        // immediately. A rejected parse aborts: the model still holds the previous grading criteria.
+        if (this.exerciseGradingComponent()?.prepareForSave() === false) {
+            return;
+        }
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 

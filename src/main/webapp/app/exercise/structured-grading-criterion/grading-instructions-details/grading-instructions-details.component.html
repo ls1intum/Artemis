@@ -1,375 +1,237 @@
 @let currentExercise = exercise();
 @let generationUnavailableReason = generationDisabledReason();
 <tum-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
-<!--- Template If Grading Instructions are not used in Assessment --->
-@if (!currentExercise.gradingInstructionFeedbackUsed) {
-    <div class="edit-sqi">
-        <div class="assessment-criteria-generation__header flex w-full flex-wrap items-start justify-between gap-2">
-            <div class="col-12 col-sm-auto d-flex me-1 mb-1">
-                <button
-                    id="edit-mode"
-                    class="btn btn-block"
-                    (click)="switchMode()"
-                    [disabled]="!editable()"
-                    [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }"
-                >
-                    <span jhiTranslate="entity.action.edit"></span>
-                </button>
-                <button
-                    id="edit-text-mode"
-                    class="btn btn-block"
-                    (click)="switchMode()"
-                    [disabled]="!editable()"
-                    [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }"
-                >
-                    <span jhiTranslate="artemisApp.exercise.editText"></span>
-                </button>
-            </div>
-            @if (canShowGenerationButton()) {
-                <div class="min-w-fit flex-1">
-                    <div class="assessment-criteria-generation__controls">
-                        <span
-                            class="assessment-criteria-generation__tooltip-trigger"
-                            [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                            [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
-                        >
-                            <tum-ui-button
-                                type="button"
-                                severity="secondary"
-                                data-testid="generate-assessment-criteria"
-                                [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
-                                [disabled]="isGenerationDisabled()"
-                                [loading]="isGenerating()"
-                                [icon]="facArtemisIntelligence"
-                                (clicked)="generateAssessmentCriteria()"
-                            >
-                                @if (isGenerating()) {
-                                    <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
-                                } @else {
-                                    <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
-                                }
-                            </tum-ui-button>
-                        </span>
-                    </div>
-                </div>
-            }
-        </div>
-        <div class="grading-instructions-update-border">
-            <!--- Edit Mode --->
-            @if (showEditMode()) {
-                <div>
-                    @for (criterion of currentExercise.gradingCriteria; track criterion) {
-                        <div>
-                            <div class="row border p-2 criterion-title-row">
-                                <div class="col-md-9 text-start">
-                                    <div class="form-inline">
-                                        <label class="form-control-label col-sm-2" jhiTranslate="artemisApp.exercise.assessmentCriterion" for="criterionTitle"
-                                            >Assessment Criterion</label
-                                        >
-                                        <input
-                                            class="form-control col-sm-6"
-                                            type="text"
-                                            id="criterionTitle"
-                                            name="criterionTitle"
-                                            [(ngModel)]="criterion.title!"
-                                            [disabled]="!editable()"
-                                            (change)="onCriterionTitleChange($event, criterion)"
-                                            placeholder="Criterion Title"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="col-md-3 text-end">
-                                    <div class="col-md-auto input-group-btn d-flex-end">
-                                        <span class="btn btn-md btn-danger" (click)="deleteGradingCriterion(criterion)">
-                                            <fa-icon [icon]="faTrash" />
-                                            <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th width="10%">
-                                                <span jhiTranslate="artemisApp.exercise.credits"></span>
-                                                <jhi-help-icon text="artemisApp.exercise.creditsHint" class="me-1" />
-                                            </th>
-                                            <th width="10%">
-                                                <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
-                                                <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" class="me-1" />
-                                            </th>
-                                            <th width="30%">
-                                                <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
-                                                <jhi-help-icon text="artemisApp.exercise.descriptionHint" class="me-1" />
-                                            </th>
-                                            <th width="30%">
-                                                <span jhiTranslate="artemisApp.exercise.feedback"></span>
-                                                <jhi-help-icon text="artemisApp.exercise.feedbackHint" class="me-1" />
-                                            </th>
-                                            <th width="10%">
-                                                <span jhiTranslate="artemisApp.exercise.limit"></span>
-                                                <jhi-help-icon text="artemisApp.exercise.usageCountHint" class="me-1" />
-                                            </th>
-                                            <th width="5%">
-                                                <span jhiTranslate="artemisApp.exercise.action"></span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (instruction of criterion.structuredGradingInstructions; track instruction; let i = $index) {
-                                            <tr class="grading-scale-table-row">
-                                                <td>
-                                                    <input
-                                                        class="form-control input-lg"
-                                                        [(ngModel)]="instruction.credits"
-                                                        [disabled]="!editable()"
-                                                        type="number"
-                                                        step="0.5"
-                                                        (change)="updateGradingInstruction(instruction, criterion)"
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        class="form-control input-lg"
-                                                        [(ngModel)]="instruction.gradingScale"
-                                                        [disabled]="!editable()"
-                                                        type="text"
-                                                        (change)="updateGradingInstruction(instruction, criterion)"
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <textarea
-                                                        class="form-control input-lg"
-                                                        [(ngModel)]="instruction.instructionDescription"
-                                                        [disabled]="!editable()"
-                                                        type="text"
-                                                        rows="2"
-                                                        (change)="updateGradingInstruction(instruction, criterion)"
-                                                    ></textarea>
-                                                </td>
-                                                <td>
-                                                    <textarea
-                                                        class="form-control input-lg"
-                                                        [(ngModel)]="instruction.feedback"
-                                                        [disabled]="!editable()"
-                                                        type="text"
-                                                        rows="2"
-                                                        (change)="updateGradingInstruction(instruction, criterion)"
-                                                    ></textarea>
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        class="form-control input-lg"
-                                                        [(ngModel)]="instruction.usageCount"
-                                                        [disabled]="!editable()"
-                                                        type="number"
-                                                        step="1"
-                                                        min="0"
-                                                        (change)="updateGradingInstruction(instruction, criterion)"
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <span class="instruction-delete-button col-2" id="delete-instruction-row" (click)="deleteInstruction(instruction, criterion)">
-                                                        <fa-icon
-                                                            [icon]="faTrash"
-                                                            size="2x"
-                                                            ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
-                                                        />
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                            <tum-ui-button
-                                type="button"
-                                class="mb-3"
-                                id="add-instruction-button"
-                                severity="secondary"
-                                variant="text"
-                                size="small"
-                                [rounded]="true"
-                                [icon]="faPlus"
-                                [disabled]="!editable()"
-                                [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                (clicked)="addNewInstruction(criterion)"
-                            />
-                        </div>
-                    }
-                    <div class="row mt-4">
-                        <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                            <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()" [disabled]="!editable()">
-                                <fa-icon [icon]="faPlus" />
-                                <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            }
-            <!--- End of Edit Mode --->
-            <!--- Edit Text Mode --->
-            @if (!showEditMode()) {
-                <div>
-                    <jhi-markdown-editor-monaco
-                        #markdownEditor
-                        class="markdown-editor"
-                        [markdown]="markdownEditorText()"
-                        [showPreviewButton]="false"
-                        [showEditButton]="false"
-                        [domainActions]="domainActionsForMainEditor"
-                        [isReadOnly]="!editable()"
-                        [enableFileUpload]="editable()"
-                        [enableResize]="false"
-                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                        (markdownChange)="prepareForSave()"
-                        (textWithDomainActionsFound)="onDomainActionsFound($event)"
-                    />
-                </div>
-            }
-            <!--- End of Edit Text Mode --->
-        </div>
-    </div>
-}
-<!--- Template If Grading Instructions are used in Assessment --->
-@if (currentExercise.gradingInstructionFeedbackUsed) {
-    <div class="edit-sqi">
+<div class="edit-sqi">
+    <div class="assessment-criteria-generation__header flex w-full flex-wrap items-start justify-between gap-3">
+        <tum-ui-select-button
+            id="edit-mode"
+            size="small"
+            [options]="editModeOptions"
+            optionLabel="labelKey"
+            optionValue="value"
+            [ngModel]="editModeValue()"
+            [ngModelOptions]="{ standalone: true }"
+            (changed)="setEditMode($event)"
+            [disabled]="!editable()"
+            [allowEmpty]="false"
+            [itemTemplate]="editModeItemTemplate"
+        />
+        <ng-template #editModeItemTemplate let-option>
+            <span [jhiTranslate]="option.labelKey"></span>
+        </ng-template>
         @if (canShowGenerationButton()) {
-            <div class="assessment-criteria-generation__controls">
-                <span
-                    class="assessment-criteria-generation__tooltip-trigger"
-                    [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                    [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
-                >
-                    <tum-ui-button
-                        type="button"
-                        severity="secondary"
-                        data-testid="generate-assessment-criteria"
-                        [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
-                        [disabled]="isGenerationDisabled()"
-                        [loading]="isGenerating()"
-                        [icon]="facArtemisIntelligence"
-                        (clicked)="generateAssessmentCriteria()"
+            <div class="min-w-fit flex-1">
+                <div class="assessment-criteria-generation__controls">
+                    <span
+                        class="assessment-criteria-generation__tooltip-trigger"
+                        [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                        [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
                     >
-                        @if (isGenerating()) {
-                            <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
-                        } @else {
-                            <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
-                        }
-                    </tum-ui-button>
-                </span>
+                        <tum-ui-button
+                            type="button"
+                            severity="secondary"
+                            data-testid="generate-assessment-criteria"
+                            [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
+                            [disabled]="isGenerationDisabled()"
+                            [loading]="isGenerating()"
+                            [icon]="facArtemisIntelligence"
+                            (clicked)="generateAssessmentCriteria()"
+                        >
+                            @if (isGenerating()) {
+                                <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
+                            }
+                        </tum-ui-button>
+                    </span>
+                </div>
             </div>
         }
+    </div>
+    @if (showEditMode()) {
         <div class="grading-instructions-update-border">
-            <div class="instructions pb-2 row-cols-2">
-                <jhi-markdown-editor-monaco
-                    #markdownEditor
-                    class="editor col-md-8"
-                    [markdown]="markdownEditorText()"
-                    [domainActions]="domainActionsForGradingInstructionParsing"
-                    [isReadOnly]="!editable()"
-                    (markdownChange)="prepareForSave()"
-                    (textWithDomainActionsFound)="setExerciseGradingInstructionText($event)"
-                    [enableFileUpload]="false"
-                    [showEditButton]="false"
-                    [showPreviewButton]="false"
-                />
-            </div>
-            @for (criteria of currentExercise.gradingCriteria; track criteria) {
-                <div>
-                    <div class="criteria-content pb-2">
-                        <div class="row">
-                            <div class="col-md-10 text-start">
-                                <div class="input-group mb-1" [style.width.%]="75">
-                                    <input
-                                        class="form-control"
-                                        type="text"
-                                        [(ngModel)]="criteria.title!"
-                                        [disabled]="!editable()"
-                                        (change)="onCriterionTitleChange($event, criteria)"
-                                        placeholder="Criterion Title"
-                                    />
-                                    <button
-                                        type="button"
-                                        class="col-md-auto input-group-btn d-flex align-items-center p-2"
-                                        style="cursor: pointer"
-                                        id="reset-criteria-button"
-                                        (click)="resetCriterionTitle(criteria)"
-                                        [disabled]="!editable()"
-                                    >
-                                        <fa-icon [icon]="faUndo" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}" />
-                                    </button>
-                                    <div class="col-md-auto input-group-btn d-flex align-items-center">
-                                        <span class="btn btn-block btn-danger" id="delete-criteria-button" (click)="deleteGradingCriterion(criteria)">
-                                            <fa-icon [icon]="faTrash" />
-                                            <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
-                                        </span>
-                                    </div>
-                                </div>
+            <!--- Edit Mode --->
+            <div class="flex flex-col gap-4">
+                @for (criterion of currentExercise.gradingCriteria; track criterion; let criterionIndex = $index) {
+                    <div class="sqi-criterion">
+                        <div class="sqi-criterion__header">
+                            <div class="sqi-criterion__title-block">
+                                <label class="sqi-field-label" jhiTranslate="artemisApp.exercise.assessmentCriterion" [attr.for]="'criterionTitle-' + criterionIndex"></label>
+                                <input
+                                    tumUiInput
+                                    class="sqi-criterion__title-input"
+                                    type="text"
+                                    [id]="'criterionTitle-' + criterionIndex"
+                                    [name]="'criterionTitle-' + criterionIndex"
+                                    [(ngModel)]="criterion.title!"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="!editable()"
+                                    (change)="onCriterionTitleChange($event, criterion)"
+                                    [placeholder]="'artemisApp.exercise.criterionTitlePlaceholder' | artemisTranslate"
+                                />
                             </div>
+                            <tum-ui-button
+                                type="button"
+                                class="sqi-criterion__delete"
+                                severity="danger"
+                                variant="outlined"
+                                size="small"
+                                [icon]="faTrash"
+                                [disabled]="!editable()"
+                                (clicked)="deleteGradingCriterion(criterion)"
+                            >
+                                <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
+                            </tum-ui-button>
                         </div>
-                        @if (criteria.structuredGradingInstructions!) {
-                            <div>
-                                @for (instruction of criteria.structuredGradingInstructions; track instruction; let index = $index) {
-                                    <div>
-                                        <div class="instructions row-cols-2 mb-1">
-                                            <jhi-markdown-editor-monaco
-                                                #markdownEditors
-                                                class="editor col-md-8"
-                                                [metaActions]="[]"
-                                                [defaultActions]="[]"
-                                                [headerActions]="undefined"
-                                                [colorAction]="undefined"
-                                                [showEditButton]="false"
-                                                [showPreviewButton]="false"
-                                                [domainActions]="[]"
-                                                [isReadOnly]="!editable()"
-                                                (markdownChange)="prepareForSave()"
-                                                (textWithDomainActionsFound)="onInstructionChange($event, instruction)"
-                                                [enableFileUpload]="false"
-                                                [enableResize]="false"
-                                                [resizableMinHeight]="MarkdownEditorHeight.INLINE"
-                                                [linkEditorHeightToContentHeight]="true"
-                                            />
-                                            <div class="form-group text-center col-md-4" style="display: block">
-                                                <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">
-                                                    <fa-icon [icon]="faUndo" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}" />
-                                                </span>
-                                                <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
-                                                    <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
-                                                </span>
-                                                <tum-ui-button
-                                                    type="button"
-                                                    id="add-button"
-                                                    severity="secondary"
-                                                    variant="text"
-                                                    size="small"
-                                                    [rounded]="true"
-                                                    [icon]="faPlus"
+                        <div class="sqi-criterion__body">
+                            <div class="sqi-criterion__instructions">
+                                @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
+                                    <div class="sqi-instruction">
+                                        <div class="sqi-instruction__fields-row">
+                                            <div class="sqi-instruction__field sqi-instruction__field--credits">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-credits-' + criterionIndex + '-' + instructionIndex">
+                                                    <span jhiTranslate="artemisApp.exercise.credits"></span>
+                                                    <jhi-help-icon text="artemisApp.exercise.creditsHint" />
+                                                </label>
+                                                <input
+                                                    tumUiInput
+                                                    [id]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
+                                                    [(ngModel)]="instruction.credits"
+                                                    [ngModelOptions]="{ standalone: true }"
                                                     [disabled]="!editable()"
-                                                    [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                                    [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                                    (clicked)="addInstruction(criteria)"
+                                                    type="number"
+                                                    step="0.5"
+                                                    (change)="updateGradingInstruction(instruction, criterion)"
                                                 />
+                                            </div>
+                                            <div class="sqi-instruction__field sqi-instruction__field--scale">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex">
+                                                    <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
+                                                    <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" />
+                                                </label>
+                                                <input
+                                                    tumUiInput
+                                                    [id]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
+                                                    [(ngModel)]="instruction.gradingScale"
+                                                    [ngModelOptions]="{ standalone: true }"
+                                                    [disabled]="!editable()"
+                                                    type="text"
+                                                    [placeholder]="'artemisApp.exercise.gradingScalePlaceholder' | artemisTranslate"
+                                                    (change)="updateGradingInstruction(instruction, criterion)"
+                                                />
+                                            </div>
+                                            <div class="sqi-instruction__field sqi-instruction__field--limit">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex">
+                                                    <span jhiTranslate="artemisApp.exercise.limit"></span>
+                                                    <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
+                                                </label>
+                                                <input
+                                                    tumUiInput
+                                                    [id]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
+                                                    [(ngModel)]="instruction.usageCount"
+                                                    [ngModelOptions]="{ standalone: true }"
+                                                    [disabled]="!editable()"
+                                                    type="number"
+                                                    step="1"
+                                                    min="0"
+                                                    (change)="updateGradingInstruction(instruction, criterion)"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                class="instruction-delete-button sqi-instruction__delete"
+                                                [id]="'delete-instruction-row-' + criterionIndex + '-' + instructionIndex"
+                                                [disabled]="!editable()"
+                                                [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
+                                                (click)="deleteInstruction(instruction, criterion)"
+                                                [ngbTooltip]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        </div>
+                                        <hr class="sqi-instruction__divider" />
+                                        <div class="sqi-instruction__textareas">
+                                            <div class="sqi-instruction__textarea-field">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-description-' + criterionIndex + '-' + instructionIndex">
+                                                    <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
+                                                    <jhi-help-icon text="artemisApp.exercise.descriptionHint" />
+                                                </label>
+                                                <textarea
+                                                    tumUiTextarea
+                                                    class="sqi-instruction__textarea"
+                                                    [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
+                                                    [(ngModel)]="instruction.instructionDescription"
+                                                    [ngModelOptions]="{ standalone: true }"
+                                                    [disabled]="!editable()"
+                                                    rows="3"
+                                                    [placeholder]="'artemisApp.exercise.descriptionPlaceholder' | artemisTranslate"
+                                                    (change)="updateGradingInstruction(instruction, criterion)"
+                                                ></textarea>
+                                            </div>
+                                            <div class="sqi-instruction__textarea-field">
+                                                <label class="sqi-field-label" [attr.for]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex">
+                                                    <span jhiTranslate="artemisApp.exercise.feedback"></span>
+                                                    <jhi-help-icon text="artemisApp.exercise.feedbackHint" />
+                                                </label>
+                                                <textarea
+                                                    tumUiTextarea
+                                                    class="sqi-instruction__textarea"
+                                                    [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
+                                                    [(ngModel)]="instruction.feedback"
+                                                    [ngModelOptions]="{ standalone: true }"
+                                                    [disabled]="!editable()"
+                                                    rows="3"
+                                                    [placeholder]="'artemisApp.exercise.feedbackPlaceholder' | artemisTranslate"
+                                                    (change)="updateGradingInstruction(instruction, criterion)"
+                                                ></textarea>
                                             </div>
                                         </div>
                                     </div>
                                 }
                             </div>
-                        }
+                            <tum-ui-button
+                                type="button"
+                                [id]="'add-instruction-button-' + criterionIndex"
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                [icon]="faPlus"
+                                [disabled]="!editable()"
+                                (clicked)="addNewInstruction(criterion)"
+                            >
+                                <span jhiTranslate="artemisApp.exercise.addAssessmentInstruction"></span>
+                            </tum-ui-button>
+                        </div>
                     </div>
-                </div>
-            }
-            <div class="row mt-2">
-                <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                    <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()" [disabled]="!editable()">
-                        <fa-icon [icon]="faPlus" />
-                        <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
-                    </button>
-                </div>
+                }
+                <tum-ui-button
+                    type="button"
+                    id="add-criterion-button"
+                    severity="primary"
+                    size="small"
+                    [icon]="faPlus"
+                    [disabled]="!editable()"
+                    (clicked)="addNewGradingCriterion()"
+                >
+                    <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
+                </tum-ui-button>
             </div>
         </div>
-    </div>
-}
+    }
+    @if (!showEditMode()) {
+        <jhi-markdown-editor-monaco
+            #markdownEditor
+            class="markdown-editor"
+            [markdown]="markdownEditorText()"
+            [showPreviewButton]="false"
+            [showEditButton]="false"
+            [domainActions]="domainActionsForMainEditor"
+            [isReadOnly]="!editable()"
+            [enableFileUpload]="editable()"
+            [enableResize]="false"
+            [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+            (markdownChange)="prepareForSave()"
+            (textWithDomainActionsFound)="onDomainActionsFound($event)"
+        />
+    }
+</div>

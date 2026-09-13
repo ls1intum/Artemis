@@ -888,11 +888,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
             // Preview must read Monaco synchronously because textChanged is debounced.
-            const liveMarkdown = this.monacoEditor()?.getText();
-            if (liveMarkdown !== undefined) {
-                this.currentMarkdown.set(liveMarkdown);
-            }
-            this.parseMarkdown();
+            this.flushLiveMarkdownAndParse();
         }
 
         // Mirror ngbNav's `(shown)` event: re-layout and focus the editor once the edit tab content is visible.
@@ -907,6 +903,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     onDiffOriginalPaneLayoutChanged(originalWidth: number): void {
         this.diffOriginalPaneWidth.set(originalWidth);
+    }
+
+    /**
+     * Reads Monaco's live buffer into {@link currentMarkdown} (user edits may still be inside the
+     * textChanged debounce window), then runs {@link parseMarkdown}.
+     */
+    flushLiveMarkdownAndParse(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
+        const liveMarkdown = this.monacoEditor()?.getText();
+        if (liveMarkdown !== undefined) {
+            this.currentMarkdown.set(liveMarkdown);
+        }
+        this.parseMarkdown(domainActionsToCheck);
     }
 
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
