@@ -12,6 +12,7 @@ import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
@@ -80,11 +81,13 @@ export class CourseExerciseService {
     /**
      * starts the exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
+     * @param exercise - the complete exercise already loaded by the caller
      */
-    startExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations`, {}).pipe(
-            map((participation: StudentParticipation) => {
-                return this.handleParticipation(participation);
+    startExercise(exerciseId: number, exercise: Exercise): Observable<StudentParticipation | null> {
+        return this.http.post<StudentParticipationDTO | null>(`api/exercise/exercises/${exerciseId}/participations`, {}).pipe(
+            map((participationDTO) => {
+                const participation = this.mapStudentParticipationDTO(participationDTO);
+                return participation ? this.handleParticipation(participation, exercise) : null;
             }),
         );
     }
@@ -93,40 +96,52 @@ export class CourseExerciseService {
      * starts the exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
      * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
+     * @param exercise - the complete exercise already loaded by the caller
      */
-    startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
-            map((participation: StudentParticipation) => {
-                return this.handleParticipation(participation);
-            }),
-        );
+    startPractice(exerciseId: number, useGradedParticipation: boolean, exercise: Exercise): Observable<StudentParticipation | null> {
+        return this.http
+            .post<StudentParticipationDTO | null>(`api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {})
+            .pipe(
+                map((participationDTO) => {
+                    const participation = this.mapStudentParticipationDTO(participationDTO);
+                    return participation ? this.handleParticipation(participation, exercise) : null;
+                }),
+            );
     }
 
     /**
      * resumes the programming exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
      * @param participationId - the unique identifier of the participation to continue
+     * @param exercise - the complete exercise already loaded by the caller
      */
-    resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {}).pipe(
-            map((participation: StudentParticipation) => {
-                return this.handleParticipation(participation);
+    resumeProgrammingExercise(exerciseId: number, participationId: number, exercise: Exercise): Observable<StudentParticipation | null> {
+        return this.http.put<StudentParticipationDTO | null>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {}).pipe(
+            map((participationDTO) => {
+                const participation = this.mapStudentParticipationDTO(participationDTO);
+                return participation ? this.handleParticipation(participation, exercise) : null;
             }),
         );
     }
 
-    requestFeedback(exerciseId: number, participationId: number): Observable<StudentParticipation> {
+    requestFeedback(exerciseId: number, participationId: number): Observable<StudentParticipation | null> {
         return this.http
-            .put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/request-feedback`, {})
-            .pipe(map((participation: StudentParticipation) => participation));
+            .put<StudentParticipationDTO | null>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/request-feedback`, {})
+            .pipe(map((participationDTO) => this.mapStudentParticipationDTO(participationDTO)));
+    }
+
+    private mapStudentParticipationDTO(participationDTO: StudentParticipationDTO | null): StudentParticipation | null {
+        return participationDTO ? fromStudentParticipationDTO(participationDTO) : null;
     }
 
     /**
      * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
+     * @param exercise - the complete exercise already loaded by the caller
      */
-    handleParticipation(participation: StudentParticipation): StudentParticipation {
+    handleParticipation(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
         if (participation) {
+            participation.exercise = exercise;
             // convert date
             participation.initializationDate = convertDateFromServer(participation.initializationDate);
             if (participation.exercise) {

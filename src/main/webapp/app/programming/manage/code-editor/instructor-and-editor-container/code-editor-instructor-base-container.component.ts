@@ -385,13 +385,16 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     createAssignmentParticipation() {
         this.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
         return this.courseExerciseService
-            .startExercise(this.exercise.id!)
+            .startExercise(this.exercise.id!, this.exercise)
             .pipe(
-                catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
                 tap((participation) => {
+                    if (!participation) {
+                        throw new Error('participationCouldNotBeCreated');
+                    }
                     this.exercise.studentParticipations = [participation];
                     this.loadingState.set(LOADING_STATE.CLEAR);
                 }),
+                catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
             )
             .subscribe({
                 error: (err: Error) => this.onError(err.message),

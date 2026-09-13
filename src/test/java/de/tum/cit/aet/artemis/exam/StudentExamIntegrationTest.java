@@ -106,6 +106,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
@@ -4053,8 +4054,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         void testStartParticipationQueryCount() throws Exception {
             // The exam participations were prepared up front, so this is the hot "participation already exists" path the
             // client hits on every (re)entry into an exercise.
-            assertThatDb(() -> request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class, HttpStatus.CREATED))
-                    .hasBeenCalledAtMostTimes(START_PARTICIPATION_QUERY_COUNT);
+            assertThatDb(() -> request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipationDTO.class,
+                    HttpStatus.CREATED)).hasBeenCalledAtMostTimes(START_PARTICIPATION_QUERY_COUNT);
         }
 
         @Test

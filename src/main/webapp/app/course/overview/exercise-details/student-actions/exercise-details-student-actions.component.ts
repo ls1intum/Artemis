@@ -199,7 +199,7 @@ export class ExerciseDetailsStudentActionsComponent {
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
-            .startExercise(this.exercise().id!)
+            .startExercise(this.exercise().id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
@@ -234,10 +234,10 @@ export class ExerciseDetailsStudentActionsComponent {
         this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
+            .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
-                next: (resumedParticipation: StudentParticipation) => {
+                next: (resumedParticipation: StudentParticipation | null) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         const currentParticipations = this._studentParticipations();

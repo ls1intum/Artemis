@@ -3,11 +3,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/course/shared/entities/course.model';
+import { Course, Language } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -21,6 +24,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;
@@ -79,24 +85,28 @@ describe('Course Management Service', () => {
         modelingExercise.dueDate = dueDate;
         modelingExercise.assessmentDueDate = assessmentDueDate;
         modelingExercise = JSON.parse(JSON.stringify(modelingExercise));
+        modelingExercise.id = exerciseId;
 
         programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.releaseDate = releaseDate;
         programmingExercise.dueDate = dueDate;
         programmingExercise.assessmentDueDate = assessmentDueDate;
         programmingExercise = JSON.parse(JSON.stringify(programmingExercise));
+        programmingExercise.id = exerciseId;
 
         textExercise = new TextExercise(course, undefined);
         textExercise.releaseDate = releaseDate;
         textExercise.dueDate = dueDate;
         textExercise.assessmentDueDate = assessmentDueDate;
         textExercise = JSON.parse(JSON.stringify(textExercise));
+        textExercise.id = exerciseId;
 
         fileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExercise.releaseDate = releaseDate;
         fileUploadExercise.dueDate = dueDate;
         fileUploadExercise.assessmentDueDate = assessmentDueDate;
         fileUploadExercise = JSON.parse(JSON.stringify(fileUploadExercise));
+        fileUploadExercise.id = exerciseId;
 
         exercises = [];
         course.exercises = exercises;
@@ -184,83 +194,167 @@ describe('Course Management Service', () => {
 
     it('should start exercise', () => {
         const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
+        const participationDTO = createProgrammingParticipationDTO(participationId, false);
+        let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .startExercise(exerciseId)
+            .startExercise(exerciseId, programmingExercise)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+            .subscribe((res) => (participation = res));
 
-        requestAndExpectDateConversion('POST', `api/exercise/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/participations` });
+        req.flush(participationDTO);
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(participation?.id).toBe(participationId);
+        expectDateConversionToBeDone(participation!.exercise!);
+        expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
+    });
+
+    it('should restore an existing text submission when starting an exercise again', () => {
+        const participationDTO: StudentParticipationDTO = {
+            id: 12345,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            exercise: {
+                id: exerciseId,
+                title: 'Text exercise',
+                exerciseType: ExerciseType.TEXT,
+                teamMode: false,
+            },
+            submissions: [
+                {
+                    id: 23456,
+                    submissionExerciseType: SubmissionExerciseType.TEXT,
+                    text: 'Saved exam answer',
+                    language: Language.ENGLISH,
+                },
+            ],
+        };
+        let participation: StudentParticipation | null | undefined;
+
+        service
+            .startExercise(exerciseId, textExercise)
+            .pipe(take(1))
+            .subscribe((res) => (participation = res));
+
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/participations` });
+        req.flush(participationDTO);
+        expect(participation?.submissions?.[0]).toBeInstanceOf(TextSubmission);
+        expect((participation?.submissions?.[0] as TextSubmission).text).toBe('Saved exam answer');
+        expect((participation?.submissions?.[0] as TextSubmission).language).toBe(Language.ENGLISH);
+    });
+
+    it('should restore the file download URL when starting an exercise again', () => {
+        const participationDTO: StudentParticipationDTO = {
+            id: 12345,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            exercise: {
+                id: exerciseId,
+                title: 'File upload exercise',
+                exerciseType: ExerciseType.FILE_UPLOAD,
+                teamMode: false,
+            },
+            submissions: [
+                {
+                    id: 23456,
+                    submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD,
+                    filePath: 'file-upload-exercises/123/submissions/23456/answer.pdf',
+                },
+            ],
+        };
+        let participation: StudentParticipation | null | undefined;
+
+        service
+            .startExercise(exerciseId, fileUploadExercise)
+            .pipe(take(1))
+            .subscribe((res) => (participation = res));
+
+        const req = httpMock.expectOne({ method: 'POST', url: `api/exercise/exercises/${exerciseId}/participations` });
+        req.flush(participationDTO);
+        expect(participation?.submissions?.[0]).toBeInstanceOf(FileUploadSubmission);
+        expect((participation?.submissions?.[0] as FileUploadSubmission).filePathUrl).toBe('api/core/files/file-upload-exercises/123/submissions/23456/answer.pdf');
     });
 
     it.each([true, false])('should start practice', (useGradedParticipation: boolean) => {
         const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
+        const participationDTO = createProgrammingParticipationDTO(participationId, true);
+        let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .startPractice(exerciseId, useGradedParticipation)
+            .startPractice(exerciseId, useGradedParticipation, programmingExercise)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+            .subscribe((res) => (participation = res));
 
-        requestAndExpectDateConversion(
-            'POST',
-            `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
-            returnedFromService,
-            participation.exercise,
-            true,
-        );
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        const req = httpMock.expectOne({
+            method: 'POST',
+            url: `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+        });
+        req.flush(participationDTO);
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(participation?.testRun).toBe(true);
+        expectDateConversionToBeDone(participation!.exercise!);
+        expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
     });
 
     it('should resume programming exercise', () => {
         const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
+        const participationDTO = createProgrammingParticipationDTO(participationId, false);
+        let participation: StudentParticipation | null | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
-            .resumeProgrammingExercise(exerciseId, participationId)
+            .resumeProgrammingExercise(exerciseId, participationId, programmingExercise)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+            .subscribe((res) => (participation = res));
 
-        requestAndExpectDateConversion(
-            'PUT',
-            `api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`,
-            returnedFromService,
-            participation.exercise,
-            true,
-        );
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        const req = httpMock.expectOne({
+            method: 'PUT',
+            url: `api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`,
+        });
+        req.flush(participationDTO);
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect((participation as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
+        expectDateConversionToBeDone(participation!.exercise!);
+        expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
+    });
+
+    it('should adapt a request-feedback response', () => {
+        const participationId = 12345;
+        let participation: StudentParticipation | null | undefined;
+
+        service
+            .requestFeedback(exerciseId, participationId)
+            .pipe(take(1))
+            .subscribe((res) => (participation = res));
+
+        const req = httpMock.expectOne({
+            method: 'PUT',
+            url: `api/exercise/exercises/${exerciseId}/participations/${participationId}/request-feedback`,
+        });
+        req.flush(createProgrammingParticipationDTO(participationId, false));
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect((participation as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
+    });
+
+    const createProgrammingParticipationDTO = (participationId: number, testRun: boolean): StudentParticipationDTO => ({
+        id: participationId,
+        testRun,
+        type: ParticipationType.PROGRAMMING,
+        repositoryUri: 'repository-uri',
+        buildPlanId: 'build-plan-id',
+        branch: 'main',
+        exercise: {
+            id: exerciseId,
+            title: 'Programming exercise',
+            exerciseType: ExerciseType.PROGRAMMING,
+            teamMode: false,
+            releaseDate: releaseDateString,
+            dueDate: dueDateString,
+            assessmentDueDate: assessmentDueDateString,
+        },
     });
 
     afterEach(() => {

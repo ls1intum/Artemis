@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -212,7 +213,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void submitEnglishTextExercise() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
-        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
+        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipationDTO.class);
         TextSubmissionRequestDTO submissionRequest = new TextSubmissionRequestDTO(textSubmission.getId(), textSubmission.getText(), textSubmission.getLanguage(),
                 textSubmission.isSubmitted());
         TextSubmissionResponseDTO submissionResponse = request.postWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/text-submissions", submissionRequest,

@@ -72,13 +72,13 @@ import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationAc
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
 import { ProgrammingExerciseExportDialog } from './pageobjects/exercises/programming/ProgrammingExerciseExportDialog';
-import type { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import type { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 
 // Define custom types for fixtures
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipation>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipationDTO>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
