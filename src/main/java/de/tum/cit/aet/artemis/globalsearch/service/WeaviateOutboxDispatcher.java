@@ -10,7 +10,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -24,6 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
@@ -73,23 +73,9 @@ public class WeaviateOutboxDispatcher {
     private static final int MAX_WARN_ATTEMPTS = 3;
 
     /**
-     * Maximum number of rows read per batch. A drain keeps reading batches until one comes back smaller than
-     * this, so a burst larger than one batch still drains fully within a single drain call.
-     * Overridable via {@code artemis.weaviate.outbox.batch-size} (default 100).
+     * Drain and retry tuning, bound from {@code artemis.weaviate.outbox}.
      */
-    private final int batchSize;
-
-    /**
-     * Base of the exponential retry backoff, overridable via {@code artemis.weaviate.outbox.base-backoff-seconds}
-     * (default 10).
-     */
-    private final long baseBackoffSeconds;
-
-    /**
-     * Cap of the exponential retry backoff, overridable via {@code artemis.weaviate.outbox.max-backoff-seconds}
-     * (default 300).
-     */
-    private final long maxBackoffSeconds;
+    private final WeaviateOutboxProperties outboxProperties;
 
     private final WeaviateOutboxRepository outboxRepository;
 
@@ -105,16 +91,12 @@ public class WeaviateOutboxDispatcher {
     private final ReentrantLock drainLock = new ReentrantLock();
 
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityWeaviateService searchableEntityWeaviateService, PlatformTransactionManager transactionManager,
-            @Value("${artemis.weaviate.outbox.batch-size:100}") int batchSize, @Value("${artemis.weaviate.outbox.base-backoff-seconds:10}") long baseBackoffSeconds,
-            @Value("${artemis.weaviate.outbox.max-backoff-seconds:300}") long maxBackoffSeconds) {
+            SearchableEntityWeaviateService searchableEntityWeaviateService, PlatformTransactionManager transactionManager, WeaviateOutboxProperties outboxProperties) {
         this.outboxRepository = outboxRepository;
         this.syncStateRepository = syncStateRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.batchSize = batchSize;
-        this.baseBackoffSeconds = baseBackoffSeconds;
-        this.maxBackoffSeconds = maxBackoffSeconds;
+        this.outboxProperties = outboxProperties;
     }
 
     /**
@@ -159,7 +141,7 @@ public class WeaviateOutboxDispatcher {
             do {
                 processed = drainBatch();
             }
-            while (processed == batchSize);
+            while (processed == outboxProperties.batchSize());
         }
         catch (Exception e) {
             // The database was unavailable while reading or recording. Give up for now; the next tick retries.
@@ -173,11 +155,11 @@ public class WeaviateOutboxDispatcher {
     /**
      * Reads one batch of due rows (no transaction, no lock) and processes each.
      *
-     * @return the number of rows read (equal to {@link #batchSize} while more may remain)
+     * @return the number of rows read (equal to the configured batch size while more may remain)
      */
     private int drainBatch() {
         ZonedDateTime now = ZonedDateTime.now();
-        List<WeaviateOutboxEntry> batch = outboxRepository.findDueForDispatch(now, batchSize);
+        List<WeaviateOutboxEntry> batch = outboxRepository.findDueForDispatch(now, outboxProperties.batchSize());
         for (WeaviateOutboxEntry entry : batch) {
             processEntry(entry, now);
         }
@@ -272,6 +254,8 @@ public class WeaviateOutboxDispatcher {
             syncStateRepository.findByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId()).ifPresentOrElse(state -> {
                 state.setContentHash(hash);
                 state.setSyncedAt(now);
+                // Writing the row is also a verification of it, so a busy entity is not re-checked for no reason.
+                state.setVerifiedAt(now);
                 syncStateRepository.save(state);
             }, () -> syncStateRepository.save(new SearchableEntitySyncState(entry.getEntityType(), entry.getEntityId(), hash, now)));
         }
@@ -281,13 +265,13 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Exponential backoff capped at {@code maxBackoffSeconds}: with the defaults, 10s, 20s, 40s, ... then a steady
+     * Exponential backoff capped at the configured maximum: with the defaults, 10s, 20s, 40s, ... then a steady
      * 5 minutes. The row is never dropped, so once Weaviate recovers the entry is applied on the next eligible
      * attempt; a later reconcile pass is the ultimate backstop for a genuinely poison row.
      */
     private long backoffSeconds(int attempts) {
         int shift = Math.min(attempts - 1, 30);
-        long backoff = baseBackoffSeconds << shift;
-        return Math.min(backoff, maxBackoffSeconds);
+        long backoff = outboxProperties.baseBackoffSeconds() << shift;
+        return Math.min(backoff, outboxProperties.maxBackoffSeconds());
     }
 }
