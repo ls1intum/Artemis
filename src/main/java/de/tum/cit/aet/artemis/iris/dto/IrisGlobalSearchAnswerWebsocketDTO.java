@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntitySourceDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
 /**
@@ -21,9 +22,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
-        @Nullable String partialResult, @Nullable Integer partialSeq) {
+        @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisEntitySourceDTO> entitySources) {
 
     public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
-        this(runId, isThinking, answer, sources, null, null);
+        this(runId, isThinking, answer, sources, null, null, null);
+    }
+
+    public IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources,
+            @Nullable String partialResult, @Nullable Integer partialSeq) {
+        this(runId, isThinking, answer, sources, partialResult, partialSeq, null);
     }
 }
