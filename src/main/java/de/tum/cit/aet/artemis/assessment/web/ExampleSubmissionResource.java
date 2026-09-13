@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.assessment.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -36,7 +39,9 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -144,12 +149,75 @@ public class ExampleSubmissionResource {
 
     @NonNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
-        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+        if (!exerciseId.equals(exampleSubmission.getExercise().getId())) {
             throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
         }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        checkSubmissionFitsExercise(exercise, exampleSubmission.getSubmission());
+        checkIdsBelongToExercise(exerciseId, exampleSubmission);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
         return ResponseEntity.ok(exampleSubmission);
+    }
+
+    /**
+     * An example submission has no participation, and its submission is of the exercise's own type. Any other shape
+     * would let the save attach the row to a student's participation or cascade into another submission type's children.
+     */
+    private void checkSubmissionFitsExercise(Exercise exercise, Submission submission) {
+        boolean fitsExercise = switch (exercise.getExerciseType()) {
+            case TEXT -> submission instanceof TextSubmission;
+            case MODELING -> submission instanceof ModelingSubmission;
+            default -> false;
+        };
+        if (!fitsExercise || submission.getParticipation() != null) {
+            throw new BadRequestAlertException("The submission does not fit an example submission of this exercise", ENTITY_NAME, "submissionInvalid");
+        }
+    }
+
+    /**
+     * The save merges the body by its ids, cascading from the submission to its results, their feedback and assessment
+     * notes. Every id must therefore name a row of the stored example submission of this exercise, and a new one may name
+     * none. Otherwise an editor could rewrite any submission or assessment on the instance, including a student's.
+     */
+    private void checkIdsBelongToExercise(long exerciseId, ExampleSubmission exampleSubmission) {
+        Set<String> storedIds = Set.of();
+        if (exampleSubmission.getId() != null) {
+            ExampleSubmission stored = exampleSubmissionRepository.findByIdWithResultsFeedbackAndAssessmentNote(exampleSubmission.getId())
+                    .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, exampleSubmission.getId()));
+            if (!stored.getExercise().getId().equals(exerciseId)) {
+                throw new BadRequestAlertException("The example submission does not belong to this exercise", ENTITY_NAME, "idsNotMatching");
+            }
+            storedIds = cascadedIds(stored.getSubmission());
+        }
+        if (!storedIds.containsAll(cascadedIds(exampleSubmission.getSubmission()))) {
+            throw new BadRequestAlertException("The example submission references entities it does not own", ENTITY_NAME, "idsNotMatching");
+        }
+    }
+
+    private static Set<String> cascadedIds(Submission submission) {
+        Set<String> ids = new HashSet<>();
+        if (submission == null) {
+            return ids;
+        }
+        addId(ids, "submission", submission.getId());
+        for (Result result : submission.getResults()) {
+            if (result == null) {
+                continue;
+            }
+            addId(ids, "result", result.getId());
+            result.getFeedbacks().forEach(feedback -> addId(ids, "feedback", feedback.getId()));
+            if (result.getAssessmentNote() != null) {
+                addId(ids, "assessmentNote", result.getAssessmentNote().getId());
+            }
+        }
+        return ids;
+    }
+
+    private static void addId(Set<String> ids, String type, Long id) {
+        if (id != null) {
+            ids.add(type + ":" + id);
+        }
     }
 
     /**

@@ -53,6 +53,17 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
             """)
     Optional<ExampleSubmission> findByIdWithResultsAndFeedback(@Param("exampleSubmissionId") long exampleSubmissionId);
 
+    @Query("""
+            SELECT DISTINCT exampleSubmission
+            FROM ExampleSubmission exampleSubmission
+                LEFT JOIN FETCH exampleSubmission.submission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessmentNote
+            WHERE exampleSubmission.id = :exampleSubmissionId
+            """)
+    Optional<ExampleSubmission> findByIdWithResultsFeedbackAndAssessmentNote(@Param("exampleSubmissionId") long exampleSubmissionId);
+
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
     Optional<ExampleSubmission> findWithResultsBySubmissionId(long submissionId);
 
