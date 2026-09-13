@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /** The two independently switchable Athena feedback features of a course. */
 export type AthenaFeature = 'formativeFeedbackEnabled' | 'gradingFeedbackEnabled';
@@ -100,20 +100,28 @@ export class AthenaCourseConfigState {
      * first one, so an instructor who has had the page open for a while still picks up a change another instructor
      * made in the meantime.
      *
-     * The answer describes the course as it is now, so it is recorded as the confirmed state for every feature
-     * unconditionally — including one this instance already had an older confirmed value for. Where it counts it is
-     * shown, unless a switch of that feature is still in flight, because what that switch put on screen is what the
-     * instructor last asked for and is newer than an answer describing the course from before that switch was made.
+     * The answer describes the course as of some point during the request, not as of when it arrives, so a feature
+     * switched while this request was on its way must not accept it: the answer may predate that switch even though
+     * it arrives after the switch's own request has already confirmed the newer value. A feature only takes the
+     * answer where nothing happened to it for the whole request: no switch already in flight when the request was
+     * made (a snapshot of {@link revisions} and {@link settled} taken before it is sent apart), and none started
+     * before the answer arrived either — as opposed to a switch that had already settled before this request was
+     * even made, which is merely old news the answer is expected to already reflect.
      */
     load(): void {
+        const revisionAtRequest = deepClone(this.revisions);
+        const settledAtRequest = deepClone(this.settled);
+
         this.athenaCourseConfigService.getCourseConfig(this.courseId).subscribe({
             next: (loaded) => {
                 this.allowedFeedbackRequests.set(loaded.allowedFeedbackRequests);
                 for (const feature of ATHENA_FEATURES) {
-                    this.confirmed[feature] = loaded[feature];
-                    if (this.settled[feature] === this.revisions[feature]) {
-                        this.apply(feature, loaded[feature]);
+                    const wasIdleForWholeRequest = settledAtRequest[feature] === revisionAtRequest[feature] && this.revisions[feature] === revisionAtRequest[feature];
+                    if (!wasIdleForWholeRequest) {
+                        continue;
                     }
+                    this.confirmed[feature] = loaded[feature];
+                    this.apply(feature, loaded[feature]);
                 }
                 this.isLoaded.set(true);
                 this.loadStarted = false;

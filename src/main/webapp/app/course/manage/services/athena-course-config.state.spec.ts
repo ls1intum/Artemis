@@ -141,6 +141,24 @@ describe('AthenaCourseConfigState', () => {
 
             expect(state.gradingFeedbackEnabled()).toBe(true);
         });
+
+        it('should not let a slow revalidation clobber a switch that started and settled after the request was sent', () => {
+            const { state, athenaCourseConfigService } = createState();
+            const get = new Subject<AthenaCourseConfigDTO>();
+            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(get.asObservable());
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(
+                of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })),
+            );
+
+            state.ensureLoaded();
+            // The switch starts, sends its PATCH and gets a confirmed answer, all before the GET above answers.
+            state.setEnabled('gradingFeedbackEnabled', true);
+            // The GET was sent before the switch and only now answers with the state from before it - it must not
+            // undo what the switch, which has since been confirmed by the server, already put on screen.
+            get.next(bothDisabled);
+
+            expect(state.gradingFeedbackEnabled()).toBe(true);
+        });
     });
 
     it.each([
