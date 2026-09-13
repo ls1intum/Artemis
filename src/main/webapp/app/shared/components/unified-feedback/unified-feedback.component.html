@@ -2,6 +2,9 @@
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
+                @if (referenceType()) {
+                    <span class="unified-feedback-reference-label">{{ referenceType() }}</span>
+                }
                 <span class="unified-feedback-reference-text" [tumUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
             </div>
         }

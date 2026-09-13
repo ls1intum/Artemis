@@ -105,6 +105,9 @@ export class UnifiedFeedbackComponent {
     type = input<FeedbackType | undefined>(undefined);
     title = input<string | undefined>(undefined);
     reference = input<string | undefined>(undefined);
+    // Plain label shown before the reference chip (e.g. "Attribute"), matching how Apollon's own
+    // feedback popup separates the element's type from its highlighted name chip.
+    referenceType = input<string | undefined>(undefined);
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);

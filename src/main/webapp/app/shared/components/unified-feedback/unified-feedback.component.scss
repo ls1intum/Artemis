@@ -25,17 +25,22 @@
 
 .unified-feedback-reference-label {
     color: var(--body-color);
+    opacity: 0.7;
+    font-size: 0.8125rem;
     font-weight: 500;
     flex-shrink: 0;
 }
 
+// Matches Apollon's own [data-slot="assessment-name-chip"]: a tinted highlight around the element's
+// name instead of a monospace "code" look, so the reference reads the same in both places.
 .unified-feedback-reference-text {
-    background-color: var(--gray-100);
+    background-color: color-mix(in srgb, var(--primary) 18%, transparent);
     border-radius: var(--tumaet-ui-radius-sm);
-    padding: 0.25rem 0.5rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    padding: 1px 6px;
+    font-family: inherit;
+    font-weight: 600;
     font-size: 0.75rem;
-    color: var(--black);
+    color: var(--body-color);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
