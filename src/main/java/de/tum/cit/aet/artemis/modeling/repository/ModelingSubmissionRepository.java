@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 @Repository
 public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {
 
+    boolean existsByIdAndParticipationId(long submissionId, long participationId);
+
     /**
      * Writes the client-editable fields of an existing modeling submission by id, provided it belongs to the given participation.
      * The id comes from the client, so the participation predicate keeps the update scoped to the caller's own participation.

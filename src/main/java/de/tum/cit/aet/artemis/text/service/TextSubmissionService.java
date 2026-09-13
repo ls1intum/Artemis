@@ -88,6 +88,9 @@ public class TextSubmissionService extends SubmissionService {
         final var target = participationFromExamGate != null ? participationFromExamGate
                 : participationService.findSubmitTargetByExerciseAndStudent(exercise, user).orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId()));
+        if (textSubmission.getId() != null && !textSubmissionRepository.existsByIdAndParticipationId(textSubmission.getId(), target.id())) {
+            throw new AccessForbiddenException();
+        }
         final var dueDate = ExerciseDateService.getDueDate(exercise, target);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(exercise, target, user) && target.initializationDate().isBefore(dueDate.get())) {
@@ -128,10 +131,6 @@ public class TextSubmissionService extends SubmissionService {
         // the foreign key is all the save needs from the participation, and the id gives it that without a load
         textSubmission.setParticipation(StudentParticipation.idOnlyReference(target.id()));
 
-        if (target.initializationState() != InitializationState.FINISHED) {
-            // Only this one column changes and the row exists, so it is an update by id rather than a save of an entity.
-            studentParticipationRepository.updateInitializationState(target.id(), InitializationState.FINISHED);
-        }
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         textSubmission.setResults(new HashSet<>());
         if (textSubmission.getId() != null) {
@@ -141,12 +140,16 @@ public class TextSubmissionService extends SubmissionService {
             int updatedRows = textSubmissionRepository.updateExistingSubmission(textSubmission.getId(), target.id(), textSubmission.getText(), textSubmission.getLanguage(),
                     textSubmission.isSubmitted(), textSubmission.getSubmissionDate(), textSubmission.getType());
             if (updatedRows == 0) {
-                // The id belongs to another participation. Refuse before a version is saved or the save is broadcast to a team.
-                throw new AccessForbiddenException();
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Submission changed during save. Please try again.");
             }
         }
         else {
             textSubmission = textSubmissionRepository.save(textSubmission);
+        }
+
+        if (target.initializationState() != InitializationState.FINISHED) {
+            // Only this one column changes and the row exists, so it is an update by id rather than a save of an entity.
+            studentParticipationRepository.updateInitializationState(target.id(), InitializationState.FINISHED);
         }
 
         // versioning of submission

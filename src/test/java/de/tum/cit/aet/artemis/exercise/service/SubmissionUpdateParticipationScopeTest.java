@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,16 +32,19 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingSubmissionRequestDTO;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -114,6 +119,9 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     private Course course;
 
@@ -338,5 +346,46 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         sendTextViaWebsocket(ownTeamParticipation.getId(), own.getId());
 
         assertThat(textSubmissionRepository.findById(own.getId()).orElseThrow().getText()).isEqualTo(UPDATE_TEXT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void textSubmissionValidationPreservesParticipationState(boolean existingSubmission) throws Exception {
+        TextSubmission stored = saveTextSubmission(textExercise, TEST_PREFIX + "student2");
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.INITIALIZED);
+        long count = textSubmissionRepository.count();
+        long submissionId = existingSubmission ? stored.getId() : Long.MAX_VALUE;
+
+        var payload = new TextSubmissionRequestDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
+        request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", payload, HttpStatus.FORBIDDEN);
+
+        assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(textSubmissionRepository.count()).isEqualTo(count);
+        assertTextUnchanged(stored);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void modelingSubmissionValidationPreservesParticipationState(boolean existingSubmission) throws Exception {
+        Course modelingCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("Modeling", TEST_PREFIX);
+        ModelingExercise exercise = ExerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "Modeling");
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        ModelingSubmission stored = modelingExerciseUtilService.addModelingSubmission(exercise, ParticipationFactory.generateModelingSubmission(EXISTING_TEXT, true),
+                TEST_PREFIX + "student2");
+        studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.INITIALIZED);
+        long count = modelingSubmissionRepository.count();
+        long submissionId = existingSubmission ? stored.getId() : Long.MAX_VALUE;
+
+        var payload = new ModelingSubmissionRequestDTO(submissionId, UPDATE_TEXT, null, true);
+        request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", payload, HttpStatus.FORBIDDEN);
+
+        assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(modelingSubmissionRepository.count()).isEqualTo(count);
+        ModelingSubmission reloaded = modelingSubmissionRepository.findByIdElseThrow(stored.getId());
+        assertThat(reloaded.getModel()).isEqualTo(EXISTING_TEXT);
+        assertThat(reloaded.getParticipation().getId()).isEqualTo(stored.getParticipation().getId());
     }
 }

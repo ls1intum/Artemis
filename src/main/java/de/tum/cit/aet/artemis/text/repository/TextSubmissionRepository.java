@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Repository
 public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmission, Long> {
 
+    boolean existsByIdAndParticipationId(long submissionId, long participationId);
+
     /**
      * Writes the client-editable fields of an existing text submission by id, provided it belongs to the given participation.
      * The id comes from the client, so the participation predicate keeps the update scoped to the caller's own participation.
