@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, DOCUMENT, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
