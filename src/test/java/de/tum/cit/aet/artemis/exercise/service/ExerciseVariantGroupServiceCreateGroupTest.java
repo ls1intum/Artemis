@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
@@ -54,7 +56,8 @@ class ExerciseVariantGroupServiceCreateGroupTest {
         courseRepository = mock(CourseTestRepository.class);
         service = new ExerciseVariantGroupService(exerciseVariantGroupRepository, mock(ExerciseTestRepository.class), courseRepository,
                 mock(ProgrammingExerciseCreationUpdateService.class), mock(ParticipationTestRepository.class), mock(ExerciseService.class), mock(ExerciseVersionService.class),
-                mock(InstanceMessageSendService.class), mock(QuizExerciseService.class), Optional.<SlideApi>empty());
+                mock(InstanceMessageSendService.class), mock(QuizExerciseService.class), Optional.<SlideApi>empty(), mock(ProgrammingExerciseMutationGuardService.class),
+                mock(ProgrammingExerciseTestRepository.class));
 
         group = new ExerciseVariantGroup();
         group.setTitle("Variants of the quiz");

@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
@@ -46,6 +47,9 @@ class ExerciseVariantGroupServiceTest {
 
     @Mock
     private ExerciseTestRepository exerciseRepository;
+
+    @Mock
+    private CourseTestRepository courseRepository;
 
     @Mock
     private ProgrammingExerciseCreationUpdateService programmingUpdateService;
@@ -78,8 +82,8 @@ class ExerciseVariantGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ExerciseVariantGroupService(groupRepository, exerciseRepository, programmingUpdateService, participationRepository, exerciseService, versionService, messages,
-                quizService, Optional.empty(), mutationGuard, programmingRepository);
+        service = new ExerciseVariantGroupService(groupRepository, exerciseRepository, courseRepository, programmingUpdateService, participationRepository, exerciseService,
+                versionService, messages, quizService, Optional.empty(), mutationGuard, programmingRepository);
     }
 
     @ParameterizedTest
@@ -104,7 +108,7 @@ class ExerciseVariantGroupServiceTest {
         assertThatThrownBy(() -> service.saveWithTimelineAppliedToMembers(group)).isInstanceOf(ConflictException.class)
                 .satisfies(error -> assertThat(error.getSuppressed()).containsExactly(releaseFails ? new Throwable[] { releaseFailure } : new Throwable[0]));
 
-        verifyNoInteractions(groupRepository, exerciseRepository, programmingUpdateService, programmingRepository, versionService);
+        verifyNoInteractions(groupRepository, exerciseRepository, courseRepository, programmingUpdateService, programmingRepository, versionService);
         assertThat(first.getDueDate()).isNull();
         assertThat(busy.getDueDate()).isNull();
         assertThat(text.getDueDate()).isNull();
@@ -120,7 +124,7 @@ class ExerciseVariantGroupServiceTest {
 
         assertThatThrownBy(() -> service.assignToGroup(exercise, group)).isInstanceOf(ConflictException.class);
 
-        verifyNoInteractions(groupRepository, exerciseRepository, programmingUpdateService, programmingRepository);
+        verifyNoInteractions(groupRepository, exerciseRepository, courseRepository, programmingUpdateService, programmingRepository);
         assertThat(group.getDueDate()).isNull();
         assertThat(exercise.getExerciseVariantGroup()).isNull();
     }
