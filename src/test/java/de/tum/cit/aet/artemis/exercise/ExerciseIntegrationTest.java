@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 
 import java.math.BigDecimal;
@@ -1066,6 +1067,36 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         tutorParticipationRepo.save(tutorParticipation);
         var textExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, ExerciseResponseDTO.class);
         assertThat(textExercise.tutorParticipations().getFirst().status()).as("Status was changed to trained").isEqualTo(TutorParticipationStatus.TRAINED);
+    }
+
+    /**
+     * The dashboard's training steps count {@code exampleSubmissions[].id} and {@code .usedForTutorial}, and tick the ones found in
+     * {@code tutorParticipations[0].trainedExampleSubmissions}. Pins those paths on the wire.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @SuppressWarnings("unchecked")
+    void testGetExerciseForAssessmentDashboard_carriesExampleSubmissionsAndTrainedExampleSubmissions() throws Exception {
+        var exercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX).getExercises().iterator().next();
+        var toAssess = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Assess this.", exercise, true, true));
+        participationUtilService.addResultToSubmission(toAssess.getSubmission(), AssessmentType.MANUAL, exercise.getId());
+        var toRead = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Read this.", exercise, true, false));
+        participationUtilService.addResultToSubmission(toRead.getSubmission(), AssessmentType.MANUAL, exercise.getId());
+        var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
+                .status(TutorParticipationStatus.TRAINED);
+        tutorParticipation.addTrainedExampleSubmissions(toAssess);
+        tutorParticipationRepo.save(tutorParticipation);
+
+        Map<String, Object> json = getJsonMap("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard");
+
+        var exampleSubmissions = (List<Map<String, Object>>) json.get("exampleSubmissions");
+        assertThat(exampleSubmissions).extracting(entry -> ((Number) entry.get("id")).longValue(), entry -> entry.get("usedForTutorial"))
+                .containsExactlyInAnyOrder(tuple(toAssess.getId(), true), tuple(toRead.getId(), false));
+        var tutorParticipations = (List<Map<String, Object>>) json.get("tutorParticipations");
+        assertThat(tutorParticipations).hasSize(1);
+        assertThat(tutorParticipations.getFirst()).containsEntry("status", "TRAINED");
+        var trained = (List<Map<String, Object>>) tutorParticipations.getFirst().get("trainedExampleSubmissions");
+        assertThat(trained).extracting(entry -> ((Number) entry.get("id")).longValue(), entry -> entry.get("usedForTutorial")).containsExactly(tuple(toAssess.getId(), true));
     }
 
     private List<User> findTutors(Course course) {

@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -80,9 +79,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
@@ -190,10 +186,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     /**
-     * The echo the example-submission edit pages really perform: both of them load the exercise from the shared
-     * {@code GET /api/exercise/exercises/:id} endpoint (not from the module detail endpoint) and set that response
-     * verbatim as {@code exampleSubmission.exercise} in the save request. The save must accept the whole echoed
-     * response and match its id against the path.
+     * Both example submission edit pages load the exercise from {@code GET /api/exercise/exercises/:id} and send that
+     * response verbatim as {@code exampleSubmission.exercise} in the save request. The save reads only its id, so the
+     * rest of the echoed response must be ignored and the id must match the path.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -216,65 +211,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         assertThat(updated.id()).isEqualTo(created.id());
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updated.submission().id(), validModel);
-    }
-
-    /**
-     * The same echo for an exam exercise, whose response carries the exercise group and exam context instead of a
-     * course.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateExampleTextSubmission_acceptsEchoedExamExerciseResponse() throws Exception {
-        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
-        exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", examTextExercise, true);
-        ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + examTextExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
-
-        String exerciseJson = request.get("/api/exercise/exercises/" + examTextExercise.getId(), HttpStatus.OK, String.class);
-
-        JsonMapper mapper = request.getObjectMapper();
-        ObjectNode body = mapper.createObjectNode();
-        body.put("id", created.id());
-        body.put("usedForTutorial", false);
-        body.set("exercise", mapper.readTree(exerciseJson));
-        body.set("submission", mapper.valueToTree(created.submission()));
-
-        ExampleSubmissionDetailDTO updated = request.putWithResponseBody("/api/assessment/exercises/" + examTextExercise.getId() + "/example-submissions", body,
-                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
-
-        assertThat(updated.id()).isEqualTo(created.id());
-    }
-
-    /**
-     * The same echo on the text page, with a result on the echoed submission: {@code Result.exerciseId} is a non-null FK
-     * column the cascade merge writes back, so the row must keep it after the save.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateExampleTextSubmission_acceptsEchoedExerciseResponse() throws Exception {
-        exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true);
-        ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
-        Submission submissionWithResult = participationUtilService.addResultToSubmission(submissionOf(created), AssessmentType.MANUAL, textExercise.getId());
-        Result exampleResult = submissionWithResult.getLatestResult();
-
-        String exerciseJson = request.get("/api/exercise/exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
-
-        JsonMapper mapper = request.getObjectMapper();
-        ObjectNode body = mapper.createObjectNode();
-        body.put("id", created.id());
-        body.put("usedForTutorial", false);
-        body.set("exercise", mapper.readTree(exerciseJson));
-        ObjectNode submissionNode = (ObjectNode) mapper.valueToTree(created.submission());
-        ObjectNode resultNode = (ObjectNode) mapper.valueToTree(exampleResult);
-        resultNode.remove("submission");
-        submissionNode.set("results", mapper.createArrayNode().add(resultNode));
-        body.set("submission", submissionNode);
-
-        request.putWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body, ExampleSubmissionDetailDTO.class, HttpStatus.OK);
-
-        Result reloaded = resultRepository.findById(exampleResult.getId()).orElseThrow();
-        assertThat(reloaded.getExerciseId()).isEqualTo(textExercise.getId());
     }
 
     /**

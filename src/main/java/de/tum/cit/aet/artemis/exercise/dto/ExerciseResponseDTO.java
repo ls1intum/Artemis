@@ -41,8 +41,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * <p>
  * One record serves the three endpoints that used to hand out the polymorphic {@code Exercise} entity - the exercise
  * by id, the exercise for the assessment dashboard and the exercise for the example solution - because they feed the
- * same client model and largely the same screens. {@code type} is the Jackson discriminator the client switches on and
- * the example submission editors echo back into the entity-typed example submission endpoints, so it is always set.
+ * same client model and largely the same screens. {@code type} is the Jackson discriminator the client switches on, so it
+ * is always set.
  * <p>
  * Which components carry a value depends on what the endpoint loaded: {@link #of(Exercise)} maps an association only
  * when it is initialized, so an endpoint that never fetched grading criteria, example submissions or tutor
