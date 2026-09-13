@@ -96,6 +96,20 @@ describe('AthenaCourseConfigState', () => {
 
             expect(getSpy).toHaveBeenCalledOnce();
         });
+
+        it('should retry a failed load the next time a caller calls ensureLoaded, rather than caching the failure', () => {
+            const { state, athenaCourseConfigService } = createState();
+            const getSpy = vi
+                .spyOn(athenaCourseConfigService, 'getCourseConfig')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400 })))
+                .mockReturnValueOnce(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+
+            state.ensureLoaded();
+            state.ensureLoaded();
+
+            expect(getSpy).toHaveBeenCalledTimes(2);
+            expect(state.gradingFeedbackEnabled()).toBe(true);
+        });
     });
 
     it.each([
@@ -122,6 +136,16 @@ describe('AthenaCourseConfigState', () => {
         state.setEnabled('gradingFeedbackEnabled', true);
 
         expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should still send a request for a feature that only displays as disabled because it has not loaded yet', () => {
+        const { state, athenaCourseConfigService } = createState();
+        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: bothDisabled })));
+
+        // No load() call: config() is undefined, even though gradingFeedbackEnabled() displays false already.
+        state.setEnabled('gradingFeedbackEnabled', false);
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { gradingFeedbackEnabled: false });
     });
 
     it('should revert the feature and alert when saving fails', () => {
@@ -203,9 +227,13 @@ describe('AthenaCourseConfigState', () => {
         it('should turn both features on', () => {
             const { state, athenaCourseConfigService } = createState();
             initWith(state, athenaCourseConfigService, bothDisabled);
+            // setMasterEnabled saves grading before formative, so the first response reflects only grading having
+            // changed server-side yet - a single mockReturnValue answering both calls with "both true" would let the
+            // grading response's cross-feature merge mark formative as already matching before its own call is made.
             const updateSpy = vi
                 .spyOn(athenaCourseConfigService, 'updateCourseConfig')
-                .mockReturnValue(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
 
             state.setMasterEnabled(true);
 
@@ -219,7 +247,12 @@ describe('AthenaCourseConfigState', () => {
         it('should turn both features off', () => {
             const { state, athenaCourseConfigService } = createState();
             initWith(state, athenaCourseConfigService, { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
-            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: bothDisabled })));
+            // See the comment in 'should turn both features on': the first response must not already claim formative
+            // is off too, or its cross-feature merge would make the second call a no-op.
+            const updateSpy = vi
+                .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: bothDisabled })));
 
             state.setMasterEnabled(false);
 

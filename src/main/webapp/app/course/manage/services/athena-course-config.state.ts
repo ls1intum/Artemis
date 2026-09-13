@@ -63,7 +63,12 @@ export class AthenaCourseConfigState {
      */
     readonly isLoaded = signal(false);
 
-    /** Whether {@link load} has been started, so {@link ensureLoaded} fires it at most once per instance. */
+    /**
+     * Whether {@link load} is in flight or has already succeeded, so {@link ensureLoaded} does not start a second
+     * request while one is outstanding. A failed load resets this to false rather than leaving it set: unlike a
+     * success, a failure has answered nothing, so the next caller that mounts and asks {@link ensureLoaded} for this
+     * course retries instead of the failure being cached here for the rest of the session.
+     */
     private loadStarted = false;
 
     /**
@@ -110,18 +115,23 @@ export class AthenaCourseConfigState {
                 this.isLoaded.set(true);
             },
             error: (error: HttpErrorResponse) => {
-                // The load has still answered, with "both off" per the fallback documented on setEnabled — a caller
-                // waiting on isLoaded must not wait forever just because this attempt failed.
+                // The toggles still need to stop showing a loading placeholder, with "both off" per the fallback
+                // documented on setEnabled — a caller waiting on isLoaded must not wait forever just because this
+                // attempt failed. But nothing here is confirmed, so unlike the success path this must not be the
+                // last word: clearing loadStarted lets a later mount for this course retry instead of every future
+                // caller being stuck with an unconfirmed "both off" for the rest of the session.
                 this.isLoaded.set(true);
+                this.loadStarted = false;
                 onError(this.alertService, error);
             },
         });
     }
 
     /**
-     * Starts {@link load} the first time it is called on this instance and does nothing after that, so a state shared
-     * by several callers (see {@link AthenaCourseConfigStore}) is only ever fetched once no matter how many of them
-     * ask for it.
+     * Starts {@link load} unless one is already in flight or has already succeeded, so a state shared by several
+     * callers (see {@link AthenaCourseConfigStore}) is fetched at most once concurrently no matter how many of them
+     * ask for it. A failed load does not count as having succeeded (see {@link loadStarted}), so a later caller for
+     * the same course — typically the next page the instructor opens for it — starts a fresh attempt.
      */
     ensureLoaded(): void {
         if (this.loadStarted) {
@@ -136,15 +146,20 @@ export class AthenaCourseConfigState {
      * the server confirmed if the request fails, so the toggle never claims a setting that was not stored.
      *
      * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
-     * cases count as "both features off" rather than blocking the toggles, so the instructor can always switch a
-     * feature on and find out from the alert if that could not be saved. A failure while the load is still on its way
-     * falls back to "off" for the same reason; correcting that is what the load is still applied for afterwards.
+     * cases show "both features off" rather than blocking the toggles, so the instructor can always switch a feature
+     * on and find out from the alert if that could not be saved. A failure while the load is still on its way falls
+     * back to "off" for the same reason; correcting that is what the load is still applied for afterwards.
+     *
+     * The no-op check below only skips a switch that repeats what {@link config} already shows, never one repeating
+     * the "off" the feature merely displays as before anything about it is known: that display is not a confirmed
+     * "off" the request would be redundant against, and the instructor pressing Disabled on a feature that looks
+     * disabled only because it never loaded must still reach the server, in case the server disagrees.
      *
      * @param feature the feature to switch
      * @param enabled whether the feature should be enabled
      */
     setEnabled(feature: AthenaFeature, enabled: boolean): void {
-        if ((this.config() ?? DISABLED_CONFIG)[feature] === enabled) {
+        if (this.config()?.[feature] === enabled) {
             return;
         }
 

@@ -64,9 +64,12 @@ describe('AthenaEnabledComponent', () => {
     describe('setEnabled', () => {
         it('should turn both features on when switched on', () => {
             initWith(bothDisabled);
+            // setMasterEnabled saves grading before formative, so the first response must not already claim
+            // formative changed too - that would let its cross-feature merge make the second call a no-op.
             const updateSpy = vi
                 .spyOn(athenaCourseConfigService, 'updateCourseConfig')
-                .mockReturnValue(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
 
             comp.setEnabled(true);
 
@@ -77,7 +80,10 @@ describe('AthenaEnabledComponent', () => {
 
         it('should turn both features off when switched off', () => {
             initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
-            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: bothDisabled })));
+            const updateSpy = vi
+                .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: bothDisabled })));
 
             comp.setEnabled(false);
 
@@ -147,7 +153,8 @@ describe('AthenaEnabledComponent', () => {
         initWith(bothDisabled);
         const updateSpy = vi
             .spyOn(athenaCourseConfigService, 'updateCourseConfig')
-            .mockReturnValue(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
+            .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
 
         fixture.nativeElement.querySelector('[data-testid="athena-enabled-enable"]').click();
 
