@@ -252,6 +252,11 @@ public class ParticipationTeamWebsocketService {
 
         final User user = userRepository.getUserWithAuthorities(principal.getName());
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+        // Only team exercises sync through this endpoint. It consults none of the exam gates the REST save applies, so an
+        // individual or exam participation must not be saved here.
+        if (!exercise.isTeamMode() || exercise.isExamExercise()) {
+            return;
+        }
 
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
             ModelingSubmissionApi api = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));

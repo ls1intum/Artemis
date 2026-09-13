@@ -138,8 +138,12 @@ public class TextSubmissionService extends SubmissionService {
             // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
             // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
             // back before writing it.
-            textSubmissionRepository.updateExistingSubmission(textSubmission.getId(), textSubmission.getText(), textSubmission.getLanguage(), textSubmission.isSubmitted(),
-                    textSubmission.getSubmissionDate(), textSubmission.getType());
+            int updatedRows = textSubmissionRepository.updateExistingSubmission(textSubmission.getId(), target.id(), textSubmission.getText(), textSubmission.getLanguage(),
+                    textSubmission.isSubmitted(), textSubmission.getSubmissionDate(), textSubmission.getType());
+            if (updatedRows == 0) {
+                // The id belongs to another participation. Refuse before a version is saved or the save is broadcast to a team.
+                throw new AccessForbiddenException();
+            }
         }
         else {
             textSubmission = textSubmissionRepository.save(textSubmission);

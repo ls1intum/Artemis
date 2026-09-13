@@ -163,8 +163,12 @@ public class ModelingSubmissionService extends SubmissionService {
             // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
             // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
             // back before writing it.
-            modelingSubmissionRepository.updateExistingSubmission(modelingSubmission.getId(), modelingSubmission.getModel(), modelingSubmission.getExplanationText(),
-                    modelingSubmission.isSubmitted(), modelingSubmission.getSubmissionDate(), modelingSubmission.getType());
+            int updatedRows = modelingSubmissionRepository.updateExistingSubmission(modelingSubmission.getId(), target.id(), modelingSubmission.getModel(),
+                    modelingSubmission.getExplanationText(), modelingSubmission.isSubmitted(), modelingSubmission.getSubmissionDate(), modelingSubmission.getType());
+            if (updatedRows == 0) {
+                // The id belongs to another participation. Refuse before a version is saved or the save is broadcast to a team.
+                throw new AccessForbiddenException();
+            }
         }
         else {
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
