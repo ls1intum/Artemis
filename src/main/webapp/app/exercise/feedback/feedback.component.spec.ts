@@ -26,6 +26,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import dayjs from 'dayjs/esm';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
@@ -310,6 +312,28 @@ describe('FeedbackComponent', () => {
         expect(comp.result().submission!.participation!.exercise).toBeUndefined();
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
+    });
+
+    it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
+        // the list endpoints do not ship `participation.exercise`, so the tag has to read the exercise the popup resolved
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            score: 50,
+            rated: true,
+            completionDate: dayjs().subtract(1, 'minute'),
+            assessmentType: AssessmentType.AUTOMATIC,
+            submission: { id: 90, participation: { id: 55, type: ParticipationType.PROGRAMMING } },
+        } as Result);
+        comp.result().feedbacks = generateFeedbacksAndExpectedItems().feedbacks;
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        expect(comp.participation()!.exercise).toBeUndefined();
+        const tagTexts = [...fixture.nativeElement.querySelectorAll('p-tag')].map((tag: Element) => tag.textContent?.trim());
+        expect(tagTexts).toContain('ARTEMISAPP.RESULT.PRELIMINARY');
     });
 
     it('should load historical source code from the assessed commit without blocking feedback', () => {
