@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -232,7 +233,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId(), false);
-        assertThat(courseForDashboard.course()).isEqualTo(course);
+        assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(course));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isZero();
         assertThat(totalCourseScores.reachablePoints()).isZero();
@@ -252,7 +253,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId(), false);
-        assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
+        assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
@@ -293,7 +294,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         }));
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId(), false);
-        assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
+        assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);

@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -70,7 +71,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
         @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed, @Nullable CourseContextDTO course,
         @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable Set<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) {
+        @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CourseManagementExerciseDTO {
 
     /**
      * Maps a full create, import, detail, update, or re-evaluation response. Optional associations are included only when Hibernate has initialized them.

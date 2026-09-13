@@ -2,6 +2,8 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import { CourseUpdateDTO, courseFromUpdateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { CourseManagementDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
@@ -96,7 +98,8 @@ export class CourseManagementAPIRequests {
         }
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, { multipart });
-        return response.json();
+        const responseDTO: CourseUpdateDTO = await response.json();
+        return courseFromUpdateDTO(responseDTO);
     }
 
     /**
@@ -143,14 +146,14 @@ export class CourseManagementAPIRequests {
      */
     async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
         const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
-        const courseData = await courseResponse.json();
+        const courseData = courseFromManagementDTO((await courseResponse.json()) as CourseManagementDTO);
         courseData.maxComplaints = maxComplaints;
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
             multipart: {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(courseData)),
+                    buffer: Buffer.from(JSON.stringify(toCourseUpdateDTO(courseData))),
                 },
             },
         });
@@ -168,14 +171,14 @@ export class CourseManagementAPIRequests {
      */
     async setCourseEndDate(courseId: number, end: dayjs.Dayjs = dayjs().subtract(1, 'hour')) {
         const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
-        const courseData = await courseResponse.json();
-        courseData.endDate = end.toISOString();
+        const courseData = courseFromManagementDTO((await courseResponse.json()) as CourseManagementDTO);
+        courseData.endDate = asModelDate(end);
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
             multipart: {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(courseData)),
+                    buffer: Buffer.from(JSON.stringify(toCourseUpdateDTO(courseData))),
                 },
             },
         });

@@ -36,6 +36,9 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { CourseDashboardDTO, CourseWithContentDTO, courseFromDashboardDTO, courseFromWithContentDTO } from 'app/course/shared/entities/course-content-response.dto';
+import { CourseForQuizSelectionDTO, courseFromQuizSelectionDTO } from 'app/course/shared/entities/course-management-response.dto';
 
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
@@ -96,21 +99,21 @@ describe('Course Management Service', () => {
         convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
-        courseForDashboard = new CourseForDashboardDTO();
-        courseForDashboard.course = course;
         courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
-        courseForDashboard.totalScores = courseScores;
-        courseForDashboard.programmingScores = courseScores;
-        courseForDashboard.modelingScores = courseScores;
-        courseForDashboard.quizScores = courseScores;
-        courseForDashboard.textScores = courseScores;
-        courseForDashboard.fileUploadScores = courseScores;
-        participationResult = new ParticipationResultDTO();
-        participationResult.participationId = 432;
-        courseForDashboard.participationResults = [participationResult];
+        participationResult = { participationId: 432 };
+        courseForDashboard = {
+            course,
+            totalScores: courseScores,
+            programmingScores: courseScores,
+            modelingScores: courseScores,
+            quizScores: courseScores,
+            textScores: courseScores,
+            fileUploadScores: courseScores,
+            participationResults: [participationResult],
+            courseNotificationCount: 0,
+        };
 
-        coursesForDashboard = new CoursesForDashboardDTO();
-        coursesForDashboard.courses = [courseForDashboard];
+        coursesForDashboard = { courses: [courseForDashboard] };
 
         scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
         scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
@@ -155,10 +158,13 @@ describe('Course Management Service', () => {
         courseManagementService
             .update(1, { ...course }, courseImage)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
+            .subscribe((res) => {
+                expect(res.body?.id).toBe(course.id);
+                expect(res.body?.title).toBe(course.title);
+            });
 
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
-        req.flush(returnedFromService);
+        req.flush(toCourseUpdateDTO(course));
     });
 
     it('should update online course configuration', () => {
@@ -279,25 +285,27 @@ describe('Course Management Service', () => {
 
     it('should find course with organizations', () => {
         course.organizations = [new Organization()];
-        returnedFromService = { ...course };
         courseManagementService
             .findWithOrganizations(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
+            .subscribe((res) => expect(res.body?.organizations).toEqual(course.organizations));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/with-organizations` });
+        req.flush({ course: returnedFromService, organizations: course.organizations });
     });
 
     it('should find all courses for dashboard', () => {
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'setCourses');
         returnedFromService = coursesForDashboard;
+        const mappedCourse = courseFromDashboardDTO(courseForDashboard.course as CourseDashboardDTO);
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
             .subscribe((res) => {
-                expect(res.body!.courses[0].course).toEqual(course);
+                expect(res.body!.courses[0].course).toMatchObject({ id: course.id, title: course.title, exercises });
+                expect(res.body!.courses[0].course.lectures).toEqual([]);
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, mappedCourse);
     });
 
     it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
@@ -328,12 +336,13 @@ describe('Course Management Service', () => {
     });
 
     it('should find all courses to register', () => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [{ ...course, prerequisites: [] }];
         courseManagementService
             .findAllForRegistration()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
+            .subscribe((res) => expect(res.body?.[0].id).toBe(course.id));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-enrollment` });
+        req.flush(returnedFromService);
     });
 
     it('should find course with interesting exercises', () => {
@@ -379,11 +388,12 @@ describe('Course Management Service', () => {
 
     it('should get all courses with quiz exercises', () => {
         returnedFromService = [{ ...course }];
+        const mappedCourse = courseFromQuizSelectionDTO(returnedFromService[0] as CourseForQuizSelectionDTO);
         courseManagementService
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, mappedCourse, true);
     });
 
     it('should get all courses for overview', () => {
@@ -519,8 +529,14 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {
-        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => expect(response.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, course);
+        const mappedCourse = courseFromWithContentDTO(returnedFromService as CourseWithContentDTO);
+        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => {
+            expect(response.body).toMatchObject({ id: course.id, title: course.title, exercises });
+            expect(response.body?.lectures).toEqual([]);
+            expect(response.body?.competencies).toEqual([]);
+            expect(response.body?.prerequisites).toEqual([]);
+        });
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, mappedCourse);
     });
 
     it('should fetch the minimal course list for dropdowns', () => {
@@ -529,8 +545,9 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch the limited course representation used by registration fallback', () => {
-        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-enrollment`, returnedFromService, course);
+        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body?.id).toBe(course.id));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-enrollment` });
+        req.flush({ ...returnedFromService, prerequisites: [] });
     });
 
     it('should fetch the course archive summaries without requesting full courses', () => {
@@ -654,6 +671,19 @@ describe('Course Management Service', () => {
         expect(request.request.params.keys()).toEqual([]);
         request.flush(tabs);
     });
+
+    it('should map notification course ids without processing them as complete courses', () => {
+        const setTitleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        let responseCourses: Course[] | null | undefined;
+
+        courseManagementService.findAllForNotifications().subscribe((response) => (responseCourses = response.body));
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/for-notifications' }).flush([{ id: 7 }]);
+
+        expect(responseCourses).toHaveLength(1);
+        expect(responseCourses?.[0]).toBeInstanceOf(Course);
+        expect(responseCourses?.[0]?.id).toBe(7);
+        expect(setTitleSpy).not.toHaveBeenCalled();
+    });
 });
 
 describe('CourseManagementService - authentication state changes', () => {
@@ -716,8 +746,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
         authState.next(undefined);
 
-        const dto = new CoursesForDashboardDTO();
-        dto.courses = [];
+        const dto: CoursesForDashboardDTO = { courses: [] };
         inFlight.flush(dto);
 
         // The in-flight response must not write back into the cleared subject.

@@ -17,7 +17,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -168,14 +167,14 @@ public class CourseAccessService {
      *
      * @param course the course
      * @param role   the course role to query for
-     * @return response containing the set of users with that role
+     * @return the set of sanitized users with that role
      */
     @NonNull
-    public ResponseEntity<Set<User>> getUsersWithRole(Course course, CourseRole role) {
+    public Set<User> getUsersWithRole(Course course, CourseRole role) {
         Set<User> usersInGroup = userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), role);
         usersInGroup.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         removeUserVariables(usersInGroup);
-        return ResponseEntity.ok().body(usersInGroup);
+        return usersInGroup;
     }
 
     /**

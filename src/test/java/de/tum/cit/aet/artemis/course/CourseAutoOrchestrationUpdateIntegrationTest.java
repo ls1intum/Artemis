@@ -15,10 +15,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseConfigurationResponseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -50,12 +54,18 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     private Course updateCourse(Course courseToUpdate) throws Exception {
+        return updateCourse(courseToUpdate.getId(), courseToUpdate);
+    }
+
+    private Course updateCourse(long courseId, Object courseToUpdate) throws Exception {
         JsonMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
-        return mapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO response = mapper.readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
+        Course updatedCourse = response.applyTo(new Course());
+        updatedCourse.setId(response.id());
+        return updatedCourse;
     }
 
     /**
@@ -143,19 +153,30 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         // Reopen the course the way the settings form does, then save an unrelated field. The configuration must round
         // trip untouched: if the update path did not load it, the submitted (stored) values would be diffed against the
         // defaults and this instructor edit would be rejected as an admin-only change.
-        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
-        assertThat(loaded.getCourseConfiguration()).isNotNull();
-        assertThat(loaded.getCourseConfiguration().isAutoOrchestratorEnabled()).isTrue();
-        assertThat(loaded.getCourseConfiguration().getDebounceWindowSecondsOverride()).isEqualTo(120);
-        loaded.setDescription("Unrelated description change");
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseConfigurationResponseDTO loadedConfiguration = loaded.courseConfiguration();
+        assertThat(loadedConfiguration).isNotNull();
+        assertThat(loadedConfiguration.autoOrchestratorEnabled()).isTrue();
+        assertThat(loadedConfiguration.debounceWindowSecondsOverride()).isEqualTo(120);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("description", "Unrelated description change");
+        copyConfigurationToUpdateRequest(update, loadedConfiguration);
 
-        Course updated = updateCourse(loaded);
+        Course updated = updateCourse(course.getId(), update);
         assertThat(updated.getDescription()).isEqualTo("Unrelated description change");
 
         var persisted = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.getId()).isEqualTo(originalConfigId);
         assertThat(persisted.isAutoOrchestratorEnabled()).isTrue();
         assertThat(persisted.getDebounceWindowSecondsOverride()).isEqualTo(120);
+    }
+
+    private static void copyConfigurationToUpdateRequest(ObjectNode update, CourseConfigurationResponseDTO configuration) {
+        update.put("gradeRelevant", configuration.gradeRelevant());
+        update.put("dataRetentionHold", configuration.dataRetentionHold());
+        update.put("autoOrchestratorEnabled", configuration.autoOrchestratorEnabled());
+        update.put("debounceWindowSecondsOverride", configuration.debounceWindowSecondsOverride());
+        update.put("maxDailyOrchestrationOverride", configuration.maxDailyOrchestrationOverride());
     }
 
     @Test
@@ -186,9 +207,9 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         setAutoOrchestration(newCourse, true, 600, 5);
 
         MvcResult result = request.performMvcRequest(courseTestService.buildCreateCourse(newCourse)).andExpect(status().isCreated()).andReturn();
-        Course created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
 
-        var persisted = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(created.getId()).orElseThrow();
+        var persisted = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(created.id()).orElseThrow();
         assertThat(persisted.autoOrchestratorEnabled()).isTrue();
         assertThat(persisted.debounceWindowSecondsOverride()).isEqualTo(600);
         assertThat(persisted.maxDailyOrchestrationOverride()).isEqualTo(5);
@@ -202,11 +223,11 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         newCourse.setShortName("autoorchdefault");
 
         MvcResult result = request.performMvcRequest(courseTestService.buildCreateCourse(newCourse)).andExpect(status().isCreated()).andReturn();
-        Course created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), Course.class);
+        CourseUpdateDTO created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), CourseUpdateDTO.class);
 
         // Every created course gets a configuration row (it also carries the data-retention flags); the pipeline must
         // simply stay disabled with no overrides.
-        var persisted = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(created.getId()).orElseThrow();
+        var persisted = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(created.id()).orElseThrow();
         assertThat(persisted.autoOrchestratorEnabled()).isFalse();
         assertThat(persisted.debounceWindowSecondsOverride()).isNull();
         assertThat(persisted.maxDailyOrchestrationOverride()).isNull();

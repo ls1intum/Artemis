@@ -127,7 +127,7 @@ public class CourseUpdateResource {
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
+    public ResponseEntity<CourseUpdateDTO> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
             @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithAuthorities();
@@ -248,7 +248,7 @@ public class CourseUpdateResource {
             refreshAthenaSchedulingForCourseExercises(courseId);
         }
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(CourseUpdateDTO.of(result));
     }
 
     /**
