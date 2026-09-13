@@ -1,0 +1,213 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import dayjs from 'dayjs/esm';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
+import { toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
+import { HolidayListComponent } from 'app/tutorialgroup/manage/holidays/holiday-list/holiday-list.component';
+
+const TIME_ZONE = 'Europe/Berlin';
+
+function period(id: number, start: string, end: string, reason: string): TutorialGroupFreePeriod {
+    const freePeriod = new TutorialGroupFreePeriod();
+    freePeriod.id = id;
+    freePeriod.start = dayjs.utc(start);
+    freePeriod.end = dayjs.utc(end);
+    freePeriod.reason = reason;
+    return freePeriod;
+}
+
+describe('HolidayListComponent', () => {
+    let fixture: ComponentFixture<HolidayListComponent>;
+
+    const today = dayjs('2025-12-10').startOf('day');
+    // One holiday before today and two after, so the upcoming filter has something to hide and something to show.
+    const holidays = toHolidays(
+        [
+            period(1, '2025-11-30T23:00:00', '2025-12-01T22:59:00', 'Past holiday'),
+            period(2, '2025-12-16T23:00:00', '2025-12-17T22:59:00', 'Christmas holidays'),
+            period(3, '2025-12-24T23:00:00', '2025-12-25T22:59:00', 'Christmas Day'),
+        ],
+        TIME_ZONE,
+    );
+
+    const query = (testId: string) => fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HolidayListComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumUiTranslator()],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(HolidayListComponent);
+        fixture.componentRef.setInput('holidays', holidays);
+        fixture.componentRef.setInput('sessionCountsByHoliday', new Map([[2, 7]]));
+        fixture.componentRef.setInput('today', today);
+        fixture.componentRef.setInput('filter', 'upcoming');
+        fixture.detectChanges();
+    });
+
+    it('should hide holidays that are already past when filtering to upcoming', () => {
+        const items = fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'));
+
+        expect(items).toHaveLength(2);
+        expect(fixture.nativeElement.textContent).not.toContain('Past holiday');
+    });
+
+    it('should point out that past holidays are hidden, rather than dropping them silently', () => {
+        expect(fixture.debugElement.query(By.css('[data-testid="holiday-list-past-note"]'))).not.toBeNull();
+    });
+
+    it('should not claim holidays are hidden when none are in the past', () => {
+        const upcomingOnly = toHolidays([period(5, '2025-12-24T23:00:00', '2025-12-25T22:59:00', 'Christmas Day')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', upcomingOnly);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="holiday-list-past-note"]'))).toBeNull();
+    });
+
+    it('should show every holiday when filtering to all', () => {
+        fixture.componentRef.setInput('filter', 'all');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(3);
+        // The note explains a filter that is no longer applied, so it goes away with it.
+        expect(fixture.debugElement.query(By.css('[data-testid="holiday-list-past-note"]'))).toBeNull();
+    });
+
+    it('should count a holiday that falls on today as upcoming', () => {
+        const onToday = toHolidays([period(4, '2025-12-09T23:00:00', '2025-12-10T22:59:00', 'Today holiday')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', onToday);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(1);
+    });
+
+    it('should show the session count only for days that hold sessions', () => {
+        const tags = fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-sessions"]'));
+
+        expect(tags).toHaveLength(1);
+    });
+
+    it('should render an empty state when nothing matches the filter', () => {
+        fixture.componentRef.setInput('holidays', []);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="holiday-list-empty"]'))).not.toBeNull();
+    });
+
+    it('should name a holiday only up to the last day it covers, since its end is exclusive', () => {
+        // 16 December 00:00 to 18 December 00:00 in the course zone: it covers the 16th and 17th, not the 18th.
+        const toMidnight = toHolidays([period(8, '2025-12-15T23:00:00', '2025-12-17T23:00:00', 'Break')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', toMidnight);
+        fixture.detectChanges();
+
+        expect(query('holiday-list-item').nativeElement.textContent).toContain('17 Dec');
+        expect(query('holiday-list-item').nativeElement.textContent).not.toContain('18 Dec');
+    });
+
+    it('should stop calling a holiday upcoming once its last covered day has passed', () => {
+        const toMidnight = toHolidays([period(8, '2025-12-15T23:00:00', '2025-12-17T23:00:00', 'Break')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', toMidnight);
+
+        // On the 17th it is still running...
+        fixture.componentRef.setInput('today', dayjs('2025-12-17').startOf('day'));
+        fixture.detectChanges();
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(1);
+
+        // ...and on the 18th, which it does not cover, it is past.
+        fixture.componentRef.setInput('today', dayjs('2025-12-18').startOf('day'));
+        fixture.detectChanges();
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'))).toHaveLength(0);
+    });
+
+    it('should call a holiday ending at an exclusive midnight a whole day, not a span of no length', () => {
+        const toMidnight = toHolidays([period(9, '2025-12-15T23:00:00', '2025-12-16T23:00:00', 'One day')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', toMidnight);
+        fixture.detectChanges();
+
+        expect(query('holiday-list-item').nativeElement.textContent).not.toContain('00:00');
+    });
+
+    it('should list a holiday covering several days once rather than once per day', () => {
+        const twoWeeks = toHolidays([period(6, '2025-12-21T23:00:00', '2026-01-04T22:59:00', 'Christmas holidays')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', twoWeeks);
+        fixture.detectChanges();
+
+        const items = fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-item"]'));
+
+        expect(items).toHaveLength(1);
+        // The row names the span rather than a weekday, so the reader can see it is not a single day.
+        expect(items[0].nativeElement.textContent).toContain('–');
+    });
+
+    it('should show the sessions a holiday actually covers, as counted by the server', () => {
+        const twoDays = toHolidays([period(7, '2025-12-16T23:00:00', '2025-12-18T22:59:00', 'Break')], TIME_ZONE);
+        fixture.componentRef.setInput('holidays', twoDays);
+        // Counted by overlap on the server, so a holiday within a day is not credited with the whole day's sessions.
+        fixture.componentRef.setInput('sessionCountsByHoliday', new Map([[7, 12]]));
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-sessions"]'))).toHaveLength(1);
+        expect(fixture.componentInstance['entries']()[0].sessionCount).toBe(12);
+    });
+
+    it('should show no badge for a holiday the server counted no sessions for', () => {
+        fixture.componentRef.setInput('sessionCountsByHoliday', new Map());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-sessions"]'))).toHaveLength(0);
+    });
+
+    it('should give a screen reader the full date, which the date block beside the row hides', () => {
+        const dates = fixture.debugElement.queryAll(By.css('[data-testid="holiday-list-accessible-date"]'));
+
+        expect(dates).toHaveLength(2);
+        // A weekday on its own would leave a listener without a date at all.
+        expect(dates[0].nativeElement.textContent).toContain('2025');
+    });
+
+    it('should offer edit and delete directly rather than behind a menu', () => {
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-edit"]'))).toHaveLength(2);
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="holiday-delete"]'))).toHaveLength(2);
+    });
+
+    it('should hand the whole holiday to the edit and delete handlers', () => {
+        let edited: number | undefined;
+        let deleted: number | undefined;
+        let editOrigin: HTMLElement | undefined;
+        fixture.componentInstance.editRequested.subscribe((request) => {
+            edited = request.holiday.period.id;
+            editOrigin = request.origin;
+        });
+        fixture.componentInstance.deleteRequested.subscribe((holiday) => (deleted = holiday.period.id));
+
+        fixture.debugElement.queryAll(By.css('[data-testid="holiday-edit"]'))[0].nativeElement.click();
+        fixture.debugElement.queryAll(By.css('[data-testid="holiday-delete"]'))[0].nativeElement.click();
+
+        expect(edited).toBe(2);
+        expect(deleted).toBe(2);
+        // The form opens against the button that asked for it, so the row has to come with the holiday.
+        expect(editOrigin).toBe(fixture.debugElement.queryAll(By.css('[data-testid="holiday-edit"]'))[0].nativeElement);
+    });
+
+    it('should request the filter the reader pressed', () => {
+        let emitted: string | undefined;
+        fixture.componentInstance.filterChange.subscribe((value) => (emitted = value));
+
+        fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement.click();
+
+        expect(emitted).toBe('all');
+    });
+
+    it('should mark the active filter, so which one applies is visible and announced', () => {
+        const upcoming = fixture.debugElement.query(By.css('[data-filter="upcoming"]')).nativeElement as HTMLButtonElement;
+        const all = fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement as HTMLButtonElement;
+
+        expect(upcoming.getAttribute('aria-pressed')).toBe('true');
+        expect(all.getAttribute('aria-pressed')).toBe('false');
+    });
+});

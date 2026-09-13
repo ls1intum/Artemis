@@ -316,12 +316,48 @@
                 }
             },
             "tutorialFreePeriodsManagement": {
-                "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",
-                "title": "Tutorial Free Periods Management",
-                "createFreePeriodButton": "Add New Free Period",
+                "title": "Holidays",
+                "explanation": "Define course wide days on which no tutorial group sessions take place.",
+                "allHolidays": "All holidays",
+                "addHoliday": "Add holiday",
+                "loadFailed": "The holidays could not be loaded.",
+                "retry": "Try again",
+                "editHoliday": "Edit holiday",
+                "wholeDay": "Whole day",
+                "noHolidays": "No holidays yet.",
+                "sessionsCancelled": "{{ count }} sessions",
+                "pastHidden": "{{ count }} holidays in the past are hidden from the upcoming filter.",
+                "filter": {
+                    "upcoming": "Upcoming",
+                    "all": "All"
+                },
+                "calendar": {
+                    "today": "Today",
+                    "previousMonth": "Previous month",
+                    "nextMonth": "Next month",
+                    "sessionsShort": "{{ count }} sess.",
+                    "fromTime": "from {{ time }}",
+                    "untilTime": "until {{ time }}",
+                    "addHolidayOn": "Add a holiday on {{ date }}"
+                },
+                "form": {
+                    "from": "From",
+                    "to": "To",
+                    "create": "Create",
+                    "reason": "Reason",
+                    "reasonPlaceholder": "e.g. Christmas holidays",
+                    "invalidRange": "The end must be after the start.",
+                    "overlapsHoliday": "This overlaps with \"{{ reason }}\". Two holidays cannot cover the same time, because a cancelled session names one of them as its reason.",
+                    "overlapsExistingHoliday": "This holiday overlaps one that was added in the meantime. The page has been refreshed; please pick a time it does not cover.",
+                    "sessionsWillBeCancelled": "{{ count }} sessions in this period will be cancelled."
+                },
                 "deleteDialog": {
-                    "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
-                }
+                    "header": "Delete holiday",
+                    "question": "Are you sure you want to delete the holiday {{ reason }}?",
+                    "multiDayQuestion": "{{ reason }} covers {{ count }} days and is stored as one holiday, so deleting it removes every one of them. Delete it?"
+                },
+                "editHolidayNamed": "Edit {{ reason }}",
+                "deleteHolidayNamed": "Delete {{ reason }}"
             },
             "createOrEditTutorialFreePeriodTitle": {
                 "create": "Create free day",

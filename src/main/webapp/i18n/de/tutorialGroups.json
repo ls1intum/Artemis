@@ -316,12 +316,48 @@
                 }
             },
             "tutorialFreePeriodsManagement": {
-                "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
-                "title": "Freie Zeiträume verwalten",
-                "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
+                "title": "Feiertage",
+                "explanation": "Lege kursweite Tage fest, an denen keine Übungsgruppentermine stattfinden.",
+                "allHolidays": "Alle Feiertage",
+                "addHoliday": "Feiertag hinzufügen",
+                "loadFailed": "Die Feiertage konnten nicht geladen werden.",
+                "retry": "Erneut versuchen",
+                "editHoliday": "Feiertag bearbeiten",
+                "wholeDay": "Ganztägig",
+                "noHolidays": "Noch keine Feiertage.",
+                "sessionsCancelled": "{{ count }} Termine",
+                "pastHidden": "{{ count }} vergangene Feiertage werden im Filter „Bevorstehend“ ausgeblendet.",
+                "filter": {
+                    "upcoming": "Bevorstehend",
+                    "all": "Alle"
+                },
+                "calendar": {
+                    "today": "Heute",
+                    "previousMonth": "Vorheriger Monat",
+                    "nextMonth": "Nächster Monat",
+                    "sessionsShort": "{{ count }} Term.",
+                    "fromTime": "ab {{ time }}",
+                    "untilTime": "bis {{ time }}",
+                    "addHolidayOn": "Feiertag am {{ date }} hinzufügen"
+                },
+                "form": {
+                    "from": "Von",
+                    "to": "Bis",
+                    "create": "Erstellen",
+                    "reason": "Grund",
+                    "reasonPlaceholder": "z. B. Weihnachtsferien",
+                    "invalidRange": "Das Ende muss nach dem Beginn liegen.",
+                    "overlapsHoliday": "Überschneidet sich mit „{{ reason }}“. Zwei Feiertage dürfen nicht denselben Zeitraum abdecken, da eine abgesagte Sitzung einen davon als Grund nennt.",
+                    "overlapsExistingHoliday": "Dieser Feiertag überschneidet sich mit einem, der zwischenzeitlich hinzugefügt wurde. Die Seite wurde aktualisiert; bitte wähle einen Zeitraum, den er nicht abdeckt.",
+                    "sessionsWillBeCancelled": "{{ count }} Termine in diesem Zeitraum werden abgesagt."
+                },
                 "deleteDialog": {
-                    "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
-                }
+                    "header": "Feiertag löschen",
+                    "question": "Sicher, dass der Feiertag {{ reason }} gelöscht werden soll?",
+                    "multiDayQuestion": "{{ reason }} umfasst {{ count }} Tage und ist als ein Feiertag gespeichert. Beim Löschen entfallen daher alle. Wirklich löschen?"
+                },
+                "editHolidayNamed": "{{ reason }} bearbeiten",
+                "deleteHolidayNamed": "{{ reason }} löschen"
             },
             "createOrEditTutorialFreePeriodTitle": {
                 "create": "Freien Tag erstellen",

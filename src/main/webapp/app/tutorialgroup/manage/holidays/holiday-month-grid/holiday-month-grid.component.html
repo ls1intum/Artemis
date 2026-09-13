@@ -1,0 +1,167 @@
+<div class="flex items-center justify-between gap-3 px-4 py-3">
+    <h2 class="m-0 text-xl font-semibold" data-testid="holiday-calendar-month">{{ monthLabel() }}</h2>
+    <div class="flex items-center gap-2">
+        <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-calendar-today" (click)="showCurrentMonth()">
+            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.calendar.today"></span>
+        </button>
+        <button
+            tumUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            type="button"
+            data-testid="holiday-calendar-previous"
+            [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.previousMonth' | artemisTranslate"
+            (click)="showPreviousMonth()"
+        >
+            <fa-icon [icon]="faChevronLeft" />
+        </button>
+        <button
+            tumUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            type="button"
+            data-testid="holiday-calendar-next"
+            [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.nextMonth' | artemisTranslate"
+            (click)="showNextMonth()"
+        >
+            <fa-icon [icon]="faChevronRight" />
+        </button>
+    </div>
+</div>
+
+<div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()">
+    <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
+        @for (weekdayKey of weekdayKeys; track weekdayKey) {
+            <div class="px-3 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
+        }
+    </div>
+
+    @for (week of weeks(); track week.id) {
+        <!-- The cells give the week its grid and borders; the bars are laid over them so one can span several days. -->
+        <div class="relative grid grid-cols-7" role="row" [style.height.rem]="week.heightRem">
+            @for (day of week.days; track day.dayKey) {
+                <!--
+                    Only the lines between cells are drawn here. The card around the calendar already draws its own
+                    edge, and a cell drawing one there too laid a second grey line beside it.
+                -->
+                <div class="border-(--tumaet-ui-border-color)" role="gridcell" [class.border-r]="day.drawsRightBorder" [class.border-b]="day.drawsBottomBorder">
+                    <!--
+                        A real button rather than a div with a role: it is focusable, it answers Enter and Space without
+                        the page scrolling, and disabling it is what makes a day of a neighbouring month inert. The cell
+                        around it stays the gridcell, so the row's children keep one role between them.
+
+                        Laid out as a column rather than left to fill: a button centres its content vertically, which put
+                        the day number in the middle of the cell and so underneath the bars drawn over it.
+                    -->
+                    <button
+                        type="button"
+                        class="flex h-full w-full cursor-pointer appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-start text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
+                        [class.cursor-default]="!day.inDisplayedMonth"
+                        [class.opacity-45]="!day.inDisplayedMonth"
+                        [disabled]="!day.inDisplayedMonth"
+                        [attr.data-day]="day.dayKey"
+                        [attr.data-outside-month]="day.inDisplayedMonth ? undefined : true"
+                        [attr.data-has-holiday]="day.hasHoliday ? true : undefined"
+                        [attr.data-in-pending-range]="isInPendingRange(day) ? true : undefined"
+                        [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.calendar.addHolidayOn' | artemisTranslate: { date: day.dayKey }"
+                        (pointerdown)="onDayPointerDown(day, $event)"
+                        (pointerenter)="onDayPointerEnter(day)"
+                        (click)="onDayClick(day, $event)"
+                    >
+                        <span class="flex items-center justify-between gap-2">
+                            <!-- Today is a filled circle, so it reads at a glance without colour alone carrying it. -->
+                            <span
+                                class="text-sm font-semibold"
+                                [class.inline-flex]="day.isToday"
+                                [class.h-6]="day.isToday"
+                                [class.min-w-6]="day.isToday"
+                                [class.items-center]="day.isToday"
+                                [class.justify-center]="day.isToday"
+                                [class.rounded-full]="day.isToday"
+                                [class.bg-(--tumaet-ui-primary-color)]="day.isToday"
+                                [class.text-(--tumaet-ui-primary-contrast-color)]="day.isToday"
+                                >{{ day.dayOfMonth }}</span
+                            >
+                            @if (day.sessionCount > 0 && !day.hasHoliday) {
+                                <span class="font-mono text-xs opacity-60" data-testid="holiday-calendar-sessions">{{
+                                    'artemisApp.pages.tutorialFreePeriodsManagement.calendar.sessionsShort' | artemisTranslate: { count: day.sessionCount }
+                                }}</span>
+                            }
+                        </span>
+                    </button>
+                </div>
+            }
+
+            <!-- Only the bars themselves take clicks, so the free part of a day still offers to create a holiday there. -->
+            <div class="pointer-events-none absolute inset-x-0 bottom-0" [style.top.rem]="headerHeightRem">
+                <!--
+                    What a holiday would look like here, drawn before there is one: same lane, same span, same frame,
+                    only lighter. It takes no pointer events, so it never stands between the pointer and the day it is
+                    describing.
+                -->
+                @if (week.previewBar; as preview) {
+                    <div
+                        class="absolute px-1 py-0.5"
+                        data-testid="holiday-calendar-preview"
+                        [attr.data-span]="preview.span"
+                        [style.left.%]="preview.startColumn * columnWidthPercent"
+                        [style.width.%]="preview.span * columnWidthPercent"
+                        [style.top.rem]="preview.lane * laneHeightRem"
+                        [style.height.rem]="laneHeightRem"
+                    >
+                        <div
+                            class="holiday-bar holiday-bar-preview flex h-full w-full flex-col justify-center overflow-hidden rounded px-2"
+                            [class.holiday-bar-continues-before]="!preview.startsRun"
+                            [class.holiday-bar-continues-after]="!preview.endsRun"
+                        >
+                            <span class="truncate text-[0.8125rem] leading-tight font-semibold" jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
+                        </div>
+                    </div>
+                }
+
+                @for (bar of week.bars; track bar.key) {
+                    <!-- Inset inside its lane, so two holidays on one day are separated by the cell behind them. -->
+                    <div
+                        class="absolute px-1 py-0.5"
+                        [style.left.%]="bar.startColumn * columnWidthPercent"
+                        [style.width.%]="bar.span * columnWidthPercent"
+                        [style.top.rem]="bar.lane * laneHeightRem"
+                        [style.height.rem]="laneHeightRem"
+                    >
+                        <!-- The bar gives the pointer up mid-drag, so a range being dragged over a holiday keeps following it. -->
+                        <button
+                            type="button"
+                            class="holiday-bar flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
+                            [class.pointer-events-auto]="!isDragging()"
+                            data-testid="holiday-calendar-event"
+                            [class.holiday-bar-continues-before]="!bar.startsRun"
+                            [class.holiday-bar-continues-after]="!bar.endsRun"
+                            [attr.data-holiday-id]="bar.holiday.period.id"
+                            [attr.data-span]="bar.span"
+                            [attr.data-continues-before]="bar.startsRun ? undefined : true"
+                            [attr.data-continues-after]="bar.endsRun ? undefined : true"
+                            [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.editHolidayNamed' | artemisTranslate: { reason: bar.reason }"
+                            (click)="onBarClick(bar, $event)"
+                        >
+                            <span class="truncate text-[0.8125rem] leading-tight font-semibold">{{ bar.reason }}</span>
+                            <!-- Only an end that actually falls in this stretch is named; days covered outright say nothing. -->
+                            @if (bar.startTime || bar.endTime) {
+                                <span class="truncate font-mono text-xs leading-tight opacity-75" data-testid="holiday-calendar-event-time">
+                                    @if (bar.startTime && bar.endTime) {
+                                        {{ bar.startTime }}–{{ bar.endTime }}
+                                    } @else if (bar.startTime) {
+                                        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.fromTime' | artemisTranslate: { time: bar.startTime } }}
+                                    } @else {
+                                        {{ 'artemisApp.pages.tutorialFreePeriodsManagement.calendar.untilTime' | artemisTranslate: { time: bar.endTime } }}
+                                    }
+                                </span>
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

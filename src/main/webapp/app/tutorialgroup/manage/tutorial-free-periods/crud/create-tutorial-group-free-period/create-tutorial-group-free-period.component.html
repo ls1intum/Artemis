@@ -1,5 +1,0 @@
-<tum-ui-dialog [header]="'artemisApp.pages.createOrEditTutorialFreePeriodTitle.create' | artemisTranslate" size="medium" [(visible)]="dialogVisible">
-    <jhi-loading-indicator-container [isLoading]="isLoading()">
-        <jhi-tutorial-free-period-form [timeZone]="course()?.timeZone" [isEditMode]="false" (formSubmitted)="createTutorialGroupFreePeriod($event)" />
-    </jhi-loading-indicator-container>
-</tum-ui-dialog>

@@ -2,19 +2,16 @@
 import { vi } from 'vitest';
 import { ComponentFixture } from '@angular/core/testing';
 import {
-    TutorialGroupFreePeriodFormComponent,
-    TutorialGroupFreePeriodFormData,
-} from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
 } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { runOnPushChangeDetection } from '../../on-push-change-detection.helper';
 import { By } from '@angular/platform-browser';
 
-type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupsConfigurationFormComponent;
+// The free period form is gone; the configuration form is the only one left following this pattern.
+type SupportedForms = TutorialGroupsConfigurationFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;
-type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupsConfigurationFormData;
+type SupportedFormData = TutorialGroupsConfigurationFormData;
 
 export const generateClickSubmitButton = (component: SupportedForms, fixture: SupportedFixtures, expectedEventFormData?: SupportedFormData) => {
     return (expectSubmitEvent: boolean) => {
