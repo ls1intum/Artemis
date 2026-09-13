@@ -10,9 +10,9 @@ describe('EnabledToggleComponent', () => {
     let componentRef: ComponentRef<EnabledToggleComponent>;
     let fixture: ComponentFixture<EnabledToggleComponent>;
 
-    function button(suffix: 'enable' | 'disable'): HTMLButtonElement {
+    const button = (suffix: 'enable' | 'disable'): HTMLButtonElement => {
         return fixture.nativeElement.querySelector(`[data-testid="feature-${suffix}"]`);
-    }
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({

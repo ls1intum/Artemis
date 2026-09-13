@@ -155,7 +155,19 @@ export class AthenaCourseConfigState {
         // for it, undoing a change made elsewhere in the meantime.
         this.athenaCourseConfigService.updateCourseConfig(this.courseId, { [feature]: enabled }).subscribe({
             next: (response) => {
-                const stored = response.body?.[feature] ?? enabled;
+                // The response is the complete stored configuration, not just the switched feature: merge in the
+                // other feature too, unless a switch of it is still in flight and would otherwise have its own
+                // optimistic value overwritten by what this request read before that switch was made.
+                const body = response.body;
+                for (const other of ATHENA_FEATURES) {
+                    if (other === feature || body?.[other] === undefined || this.settled[other] !== this.revisions[other]) {
+                        continue;
+                    }
+                    this.confirmed[other] = body[other];
+                    this.apply(other, body[other]);
+                }
+
+                const stored = body?.[feature] ?? enabled;
                 this.confirmed[feature] = stored;
                 this.settle(feature, revision);
                 this.applyIfLatest(feature, revision, stored);
