@@ -516,8 +516,22 @@ public class GenerationJobService {
      * @return whether a matching, cancellable job was cancelled
      */
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
+        return requestCancellation(exerciseId, jobId, user, USER_CANCELLATION_MESSAGE);
+    }
+
+    public boolean requestSystemCancellation(long exerciseId, String jobId) {
+        return requestSystemCancellation(exerciseId, jobId, SYSTEM_CANCELLATION_MESSAGE);
+    }
+
+    /** Cancels for a server-side guard, respecting the persistence fence without requiring caller ownership. */
+    boolean requestSystemCancellation(long exerciseId, String jobId, String message) {
+        return requestCancellation(exerciseId, jobId, null, message);
+    }
+
+    private boolean requestCancellation(long exerciseId, String jobId, @Nullable User user, String message) {
         String key = key(exerciseId);
         ExerciseGenerationEventDTO cancellationEvent;
+        String userLogin;
         lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
@@ -529,50 +543,11 @@ public class GenerationJobService {
                 return false;
             }
             GenerationJobReplayStore.CancellationReplayState replayState = replayStore.cancellationReplayState(job);
-            if (replayState == null || !replayState.userLogin().equals(user.getLogin())) {
+            if (replayState == null || (user != null && !replayState.userLogin().equals(user.getLogin()))) {
                 return false;
             }
             if (replayState.done()) {
-                return isCancelled(jobId);
-            }
-            cancellationMap.put(job.jobId(), Boolean.TRUE);
-            cancellationEvent = replayStore.appendCancellation(job, USER_CANCELLATION_MESSAGE);
-        }
-        finally {
-            unlockJobSlot(key);
-        }
-        if (cancellationEvent == null) {
-            return false;
-        }
-        publishCancellation(user.getLogin(), jobId, cancellationEvent);
-        interruptCluster(jobId);
-        return true;
-    }
-
-    public boolean requestSystemCancellation(long exerciseId, String jobId) {
-        return requestSystemCancellation(exerciseId, jobId, SYSTEM_CANCELLATION_MESSAGE);
-    }
-
-    /**
-     * Cancels a job for a server-side deadline or budget guard. This uses the same persistence fence as user cancellation but does not require a user ownership check.
-     */
-    boolean requestSystemCancellation(long exerciseId, String jobId, String message) {
-        String key = key(exerciseId);
-        ExerciseGenerationEventDTO cancellationEvent;
-        String userLogin;
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId)) {
-                return false;
-            }
-            if (!job.cancellable()) {
-                log.debug("Ignored system cancellation request for job {}: it already entered the non-cancellable persistence phase", jobId);
-                return false;
-            }
-            GenerationJobReplayStore.CancellationReplayState replayState = replayStore.cancellationReplayState(job);
-            if (replayState == null || replayState.done()) {
-                return false;
+                return user != null && isCancelled(jobId);
             }
             cancellationMap.put(job.jobId(), Boolean.TRUE);
             cancellationEvent = replayStore.appendCancellation(job, message);
