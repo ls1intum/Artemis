@@ -46,6 +46,21 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
     List<WeaviateOutboxEntry> findDueForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
+     * Whether a row is already queued for {@code (entityType, entityId)}. Rows are deleted once their write is
+     * confirmed, so any row that exists is still pending.
+     * <p>
+     * A reconcile pass checks this before enqueueing so it does not pile duplicates onto an entity that is
+     * already waiting, which matters most while a large backlog drains slowly. The check is best effort: two
+     * passes can race and both enqueue. That is harmless, because the dispatcher re-derives current state at
+     * apply time and a duplicate simply writes the same thing twice.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId   the database id of the entity
+     * @return {@code true} if a row for this entity is already queued
+     */
+    boolean existsByEntityTypeAndEntityId(String entityType, Long entityId);
+
+    /**
      * Deletes outbox rows for {@code (entityType, entityId)} with an id below {@code appliedId}. Called after a
      * per-entity write is confirmed so an older row deferred by backoff cannot retry and overwrite it
      * (latest-wins). {@code flushAutomatically} writes any pending same-entity change before the delete runs.

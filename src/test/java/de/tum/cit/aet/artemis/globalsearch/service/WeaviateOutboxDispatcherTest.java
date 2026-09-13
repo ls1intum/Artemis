@@ -28,10 +28,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 
@@ -62,13 +64,14 @@ class WeaviateOutboxDispatcherTest {
 
     @BeforeEach
     void setUp() {
-        // Construct with the production default tuning values (batch size, base and max backoff seconds).
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager, 100, 10, 300);
+        // Construct with the production default tuning values.
+        var outboxProperties = new WeaviateOutboxProperties(5, 100, 10, 300);
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager, outboxProperties);
     }
 
     @Test
     void testDrainUpsert_writesWeaviateRefreshesLedgerAndDeletesRow() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
@@ -87,7 +90,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainFailedWrite_keepsRowWithBackoffThenLaterRunSucceeds() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         doThrow(new RuntimeException("weaviate unavailable")).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
 
@@ -111,8 +114,8 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrain_processesRowsInIdOrderSoLatestWins() {
-        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
-        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
+        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(any())).thenReturn(Optional.of(HASH));
@@ -128,7 +131,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainDeleteEntity_clearsSyncLedgerRow() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(COURSE, 1L);
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
         dispatcher.drain();
@@ -141,7 +144,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainPerEntitySuccess_collapsesOlderRowsForSameEntity() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 42L);
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 42L, WeaviateOutboxOrigin.LIVE);
         entry.setId(10L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 42L)).thenReturn(Optional.empty());
@@ -155,7 +158,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainBulkDelete_doesNotCollapse() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}");
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
         entry.setId(10L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
@@ -174,10 +177,10 @@ class WeaviateOutboxDispatcherTest {
         List<WeaviateOutboxEntry> table = new ArrayList<>();
         wireInMemoryOutbox(table, weaviate);
 
-        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 42L);
+        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 42L, WeaviateOutboxOrigin.LIVE);
         older.setId(5L);
         older.setNextAttemptAt(ZonedDateTime.now().plusMinutes(1));
-        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 42L);
+        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 42L, WeaviateOutboxOrigin.LIVE);
         newer.setId(10L);
         table.add(older);
         table.add(newer);

@@ -1,11 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +24,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
@@ -96,16 +93,19 @@ public class SearchableEntityWeaviateService {
 
     private final ObjectMapper objectMapper;
 
+    private final SearchableEntityContentHasher contentHasher;
+
     private final ApplicationEventPublisher eventPublisher;
 
     private final boolean useHybridSearch;
 
     public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, ObjectMapper objectMapper,
-            ApplicationEventPublisher eventPublisher) {
+            SearchableEntityContentHasher contentHasher, ApplicationEventPublisher eventPublisher) {
         this.weaviateService = weaviateService;
         this.outboxRepository = outboxRepository;
         this.resolver = resolver;
         this.objectMapper = objectMapper;
+        this.contentHasher = contentHasher;
         this.eventPublisher = eventPublisher;
         this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
@@ -246,7 +246,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exercise without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -265,7 +265,7 @@ public class SearchableEntityWeaviateService {
                 log.warn("Cannot upsert exercise without an ID for exam {}", examId);
                 continue;
             }
-            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
+            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
             enqueued++;
         }
         if (enqueued > 0) {
@@ -286,7 +286,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- LectureUnit sync -----
@@ -301,7 +301,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -327,7 +327,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exam without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- FAQ sync -----
@@ -342,7 +342,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert faq without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Channel sync -----
@@ -357,7 +357,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert channel without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Course sync -----
@@ -372,7 +372,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert course without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Post sync -----
@@ -387,7 +387,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert post without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Answer Post sync -----
@@ -402,7 +402,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert answer post without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId(), WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -444,9 +444,7 @@ public class SearchableEntityWeaviateService {
      * @param entityId the entity id
      */
     public void deleteEntityAsync(String type, long entityId) {
-        outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(type, entityId));
-        log.debug("Enqueued delete for {} {}", type, entityId);
-        signalEnqueued();
+        enqueueDeleteEntity(type, entityId, WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -466,18 +464,45 @@ public class SearchableEntityWeaviateService {
      * identity; the dispatcher re-derives the current property map from the database when it applies the row.
      * Used both directly (single-entity upserts, followed by a signal) and in the exam-refresh loop.
      */
-    private void saveUpsert(String type, Long entityId) {
-        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId));
+    private void saveUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
+        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId, origin));
     }
 
-    private void enqueueUpsert(String type, Long entityId) {
-        saveUpsert(type, entityId);
-        log.debug("Enqueued upsert for {} {}", type, entityId);
+    /**
+     * Queues an upsert for any entity type, recording which path asked for it.
+     * <p>
+     * The typed {@code upsert*Async} methods above are the request path and pass {@link WeaviateOutboxOrigin#LIVE}.
+     * This generic form exists for a reconcile pass, which works over {@code (type, entityId)} pairs it read from
+     * the database or from the index and has no DTO in hand. The row carries identity only either way, so the
+     * dispatcher re-derives current state at apply time regardless of who enqueued it.
+     *
+     * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId the database id of the entity
+     * @param origin   which path is asking
+     */
+    public void enqueueUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
+        saveUpsert(type, entityId, origin);
+        log.debug("Enqueued upsert for {} {} ({})", type, entityId, origin);
+        signalEnqueued();
+    }
+
+    /**
+     * Queues the removal of a single entity's row, recording which path asked for it. See
+     * {@link #enqueueUpsert(String, Long, WeaviateOutboxOrigin)} for why the generic form exists.
+     *
+     * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId the database id of the entity
+     * @param origin   which path is asking
+     */
+    public void enqueueDeleteEntity(String type, long entityId, WeaviateOutboxOrigin origin) {
+        outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(type, entityId, origin));
+        log.debug("Enqueued delete for {} {} ({})", type, entityId, origin);
         signalEnqueued();
     }
 
     private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
-        outboxRepository.save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params)));
+        // Only the request path issues bulk deletes; a reconcile pass works entity by entity.
+        outboxRepository.save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE));
         log.debug("Enqueued {} with params {}", operation, params);
         signalEnqueued();
     }
@@ -491,9 +516,12 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Serializes a property/parameter map to canonical JSON (keys sorted) so equal maps hash equal. All map
-     * values are JSON-native (strings, numbers, booleans; dates are already RFC3339 strings), so the round
-     * trip through {@link #deserializeMap(String)} preserves the values the Weaviate write needs.
+     * Serializes a bulk delete's parameter map to JSON for storage in {@link WeaviateOutboxEntry#getParams()}.
+     * Keys are sorted so the stored form is stable and diffable. All values are JSON-native, so the round trip
+     * through {@link #deserializeMap(String)} preserves what the delete needs.
+     * <p>
+     * Content hashing lives in {@link SearchableEntityContentHasher}, which must stay the only implementation
+     * so the write path and a later reconcile pass cannot disagree.
      */
     private String serializeMap(Map<String, Object> map) {
         try {
@@ -501,21 +529,6 @@ public class SearchableEntityWeaviateService {
         }
         catch (JsonProcessingException e) {
             throw new WeaviateException("Failed to serialize Weaviate outbox data: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * SHA-256 of the canonical property-map JSON, recorded in the sync ledger so a later reconcile can detect drift.
-     */
-    private static String sha256Hex(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        }
-        catch (NoSuchAlgorithmException e) {
-            // SHA-256 is guaranteed to be available on every JVM.
-            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 
@@ -568,18 +581,24 @@ public class SearchableEntityWeaviateService {
      * Re-derives the entity and either upserts its current property map (returning the written content hash) or,
      * when it no longer exists or is no longer indexable, converges to a delete (returning {@link Optional#empty()}).
      * <p>
-     * The written row is stamped with {@link SearchableEntitySchema.Properties#SOURCE_SEQ} equal to this entry's
-     * outbox id, so a later bulk delete can fence it (see {@link #writtenBefore}). The stamp is intentionally
-     * excluded from the content hash, which is computed over the re-derived property map only, so the sync ledger
-     * keeps detecting content drift rather than flapping on every write.
+     * The written row carries two operational stamps that the re-derived property map does not:
+     * {@link SearchableEntitySchema.Properties#SOURCE_SEQ}, equal to this entry's outbox id, so a later bulk delete
+     * can fence it (see {@link #writtenBefore}); and {@link SearchableEntitySchema.Properties#CONTENT_HASH}, the
+     * same hash recorded in the sync ledger, so a reconcile pass can compare what the index actually holds against
+     * what we believe we wrote instead of trusting the ledger alone.
+     * <p>
+     * Both stamps are added to a copy and are therefore excluded from the hash itself, which is computed over the
+     * re-derived map only. Including them would make the hash either self-referential or different on every write,
+     * and the ledger would flap instead of detecting real content drift.
      */
     private Optional<String> applyUpsert(WeaviateOutboxEntry entry) {
         Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
         if (desired.isPresent()) {
             Map<String, Object> properties = desired.get();
-            String contentHash = sha256Hex(serializeMap(properties));
+            String contentHash = contentHasher.hash(properties);
             Map<String, Object> propertiesToWrite = new HashMap<>(properties);
             propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
+            propertiesToWrite.put(SearchableEntitySchema.Properties.CONTENT_HASH, contentHash);
             upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);
             return Optional.of(contentHash);
         }

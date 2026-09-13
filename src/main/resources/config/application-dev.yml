@@ -176,9 +176,24 @@ artemis:
         #     batch-size: 100                        # Outbox rows processed per drain batch
         #     base-backoff-seconds: 10               # First retry delay after a failed Weaviate write (doubles each attempt)
         #     max-backoff-seconds: 300               # Cap on the retry backoff
-        #     migration-initial-delay-seconds: 30    # Delay before the first schema-migration attempt after startup
-        #     migration-max-attempts: 5              # Bounded in-process retries for a failed schema migration
-        #     migration-retry-delay-seconds: 120     # Delay between schema-migration retries
+        # migration:
+        #     initial-delay-seconds: 30              # Delay before the first schema-migration attempt after startup
+        #     max-attempts: 5                        # Bounded in-process retries for a failed schema migration
+        #     retry-delay-seconds: 120               # Delay between schema-migration retries
+        # Reconcile passes that heal the index against the database. All three are off by default; switch them on one
+        # at a time, orphan last since it is the only one that deletes.
+        # reconcile:
+        #     missing-sweep-enabled: false           # Queue writes for entities the index has never confirmed holding
+        #     drift-sweep-enabled: false             # Re-derive entities and queue a repair where content no longer matches
+        #     orphan-sweep-enabled: false            # Scan the index for rows whose entity is gone or whose content disagrees
+        #     entity-types: [course, lecture, lecture_unit, exam, exercise, faq, channel]  # Posts are excluded on purpose (volume)
+        #     max-outbox-depth: 500                  # Stop queueing above this; bounds how long a live write waits behind reconcile work
+        #     missing-batch-size: 5000               # Entity ids examined per tick
+        #     drift-batch-size: 200                  # Entities re-derived per tick (each one is loaded, hence far smaller)
+        #     orphan-page-size: 1000                 # Index rows per page
+        #     orphan-pages-per-tick: 5               # Pages read per tick
+        #     orphan-delete-cap-per-tick: 100        # Most rows one tick may queue for deletion
+        #     orphan-abort-ratio: 0.25               # Abort instead if this share of scanned rows looks orphaned
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
