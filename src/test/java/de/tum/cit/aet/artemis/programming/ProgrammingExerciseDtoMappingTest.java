@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -37,12 +38,18 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
@@ -400,6 +407,156 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(importRequest.title()).isEqualTo("Smuggled");
         assertThat(createRequest.toEntity().getExerciseVariantGroup()).isNull();
         assertThat(importRequest.toEntity().getExerciseVariantGroup()).isNull();
+    }
+
+    /**
+     * The download export nulls the criterion and the instruction ids so that the import can persist them, which
+     * strips the only thing that told two otherwise identical criteria apart. A set of records would merge the two and
+     * drop a rubric row, so the import request binds them into a list and only the entities go into a set. The body is
+     * the shape a released export writes, ids and all.
+     */
+    @Test
+    void importRequestKeepsTwoIdenticalGradingCriteria() throws Exception {
+        String instructions = """
+                [{"id":null,"credits":1.0,"gradingScale":"good","instructionDescription":"same","feedback":"same","usageCount":1}]""";
+        String body = """
+                {"title":"Imported","shortName":"IMP","gradingCriteria":[
+                {"id":null,"title":"same title","structuredGradingInstructions":%s},
+                {"id":null,"title":"same title","structuredGradingInstructions":%s}]}""".formatted(instructions, instructions);
+
+        ImportProgrammingExerciseRequestDTO importRequest = objectMapper.readValue(body, ImportProgrammingExerciseRequestDTO.class);
+
+        assertThat(importRequest.gradingCriteria()).as("both criteria survive the binding").hasSize(2);
+        // an entity without an id is equal to nothing but itself, so the set keeps both
+        assertThat(importRequest.toEntity().getGradingCriteria()).as("both criteria become their own entity").hasSize(2);
+    }
+
+    /**
+     * The export projection has to strip every nested id, not the two configurations a reviewer happened to look at:
+     * the details file is read back by another instance, and each of these records is bound by a {@code toEntity()}
+     * that copies the id onto the row it creates. The plain response keeps them, so the flag is what does the work.
+     */
+    @Test
+    void exportProjectionStripsEveryNestedId() {
+        ProgrammingExercise exercise = exerciseWithEveryNestedId();
+
+        ProgrammingExerciseResponseDTO response = ProgrammingExerciseResponseDTO.of(exercise);
+        ProgrammingExerciseResponseDTO exported = ProgrammingExerciseResponseDTO.forExport(exercise);
+
+        // the response keeps the ids: the client edits a stored exercise through them
+        assertThat(response.teamAssignmentConfig().id()).isEqualTo(1L);
+        assertThat(response.plagiarismDetectionConfig().id()).isEqualTo(2L);
+        assertThat(response.submissionPolicy().id()).isEqualTo(3L);
+        assertThat(response.buildConfig().id()).isEqualTo(4L);
+        assertThat(response.gradingCriteria().getFirst().id()).isEqualTo(5L);
+        assertThat(response.gradingCriteria().getFirst().structuredGradingInstructions().getFirst().id()).isEqualTo(6L);
+        assertThat(response.auxiliaryRepositories().getFirst().id()).isEqualTo(7L);
+        assertThat(response.templateParticipation().id()).isEqualTo(8L);
+        assertThat(response.solutionParticipation().id()).isEqualTo(9L);
+
+        assertThat(exported.teamAssignmentConfig().id()).isNull();
+        assertThat(exported.plagiarismDetectionConfig().id()).isNull();
+        assertThat(exported.submissionPolicy().id()).isNull();
+        assertThat(exported.buildConfig().id()).isNull();
+        assertThat(exported.gradingCriteria().getFirst().id()).isNull();
+        assertThat(exported.gradingCriteria().getFirst().structuredGradingInstructions().getFirst().id()).isNull();
+        assertThat(exported.auxiliaryRepositories().getFirst().id()).isNull();
+        assertThat(exported.templateParticipation().id()).isNull();
+        assertThat(exported.solutionParticipation().id()).isNull();
+
+        // only the identities go: the settings the import recreates have to survive
+        assertThat(exported.id()).as("the exercise's own id stays, the import drops it").isEqualTo(42L);
+        assertThat(exported.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        assertThat(exported.submissionPolicy().submissionLimit()).isEqualTo(5);
+        assertThat(exported.buildConfig().buildScript()).isEqualTo("build.sh");
+        assertThat(exported.gradingCriteria().getFirst().title()).isEqualTo("criterion");
+        assertThat(exported.gradingCriteria().getFirst().structuredGradingInstructions().getFirst().feedback()).isEqualTo("well done");
+        assertThat(exported.auxiliaryRepositories().getFirst().name()).isEqualTo("hints");
+        assertThat(exported.templateParticipation().repositoryUri()).as("the import from file reads the URI to rewrite legacy project names").isEqualTo("uri/template");
+        assertThat(exported.solutionParticipation().repositoryUri()).isEqualTo("uri/solution");
+
+        // student work and build runs are nobody's business in a file handed to another instance, and the import
+        // reads neither: the request binds a participation as id, repository URI and build plan id
+        assertThat(response.studentParticipations()).as("the response carries them, the export must not").hasSize(1);
+        assertThat(response.templateParticipation().submissions()).hasSize(1);
+        assertThat(exported.studentParticipations()).as("the export carries no student participation").isNull();
+        assertThat(exported.templateParticipation().submissions()).as("the export carries no template submission").isNull();
+        assertThat(exported.solutionParticipation().submissions()).as("the export carries no solution submission").isNull();
+    }
+
+    /** A submission with a commit hash, as a participation of a loaded exercise carries it. */
+    private static ProgrammingSubmission submission(long id) {
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setId(id);
+        submission.setCommitHash("abc" + id);
+        return submission;
+    }
+
+    /** An exercise whose every nested association is loaded and carries an id. */
+    private static ProgrammingExercise exerciseWithEveryNestedId() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(42L);
+        exercise.setTitle("Exported exercise");
+
+        TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setId(1L);
+        teamAssignmentConfig.setMinTeamSize(2);
+        teamAssignmentConfig.setMaxTeamSize(4);
+        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+
+        PlagiarismDetectionConfig plagiarismDetectionConfig = PlagiarismDetectionConfig.createDefault();
+        plagiarismDetectionConfig.setId(2L);
+        exercise.setPlagiarismDetectionConfig(plagiarismDetectionConfig);
+
+        LockRepositoryPolicy submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.setId(3L);
+        submissionPolicy.setSubmissionLimit(5);
+        submissionPolicy.setActive(true);
+        exercise.setSubmissionPolicy(submissionPolicy);
+
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setId(4L);
+        buildConfig.setBuildScript("build.sh");
+        exercise.setBuildConfig(buildConfig);
+
+        GradingCriterion criterion = new GradingCriterion();
+        criterion.setId(5L);
+        criterion.setTitle("criterion");
+        GradingInstruction instruction = new GradingInstruction();
+        instruction.setId(6L);
+        instruction.setCredits(1.0);
+        instruction.setFeedback("well done");
+        criterion.addStructuredGradingInstruction(instruction);
+        exercise.setGradingCriteria(Set.of(criterion));
+
+        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
+        auxiliaryRepository.setId(7L);
+        auxiliaryRepository.setName("hints");
+        auxiliaryRepository.setCheckoutDirectory("hints");
+        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(8L);
+        templateParticipation.setRepositoryUri("uri/template");
+        templateParticipation.setSubmissions(Set.of(submission(81L)));
+        exercise.setTemplateParticipation(templateParticipation);
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(9L);
+        solutionParticipation.setRepositoryUri("uri/solution");
+        solutionParticipation.setSubmissions(Set.of(submission(91L)));
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        User student = new User();
+        student.setId(10L);
+        student.setLogin("student1");
+        ProgrammingExerciseStudentParticipation studentParticipation = new ProgrammingExerciseStudentParticipation();
+        studentParticipation.setId(11L);
+        studentParticipation.setParticipant(student);
+        studentParticipation.setRepositoryUri("uri/student1");
+        studentParticipation.setSubmissions(Set.of(submission(111L)));
+        exercise.setStudentParticipations(Set.of(studentParticipation));
+
+        return exercise;
     }
 
     @Test

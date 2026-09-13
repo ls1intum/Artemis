@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -13,9 +14,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
@@ -26,19 +29,31 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -84,6 +99,12 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -593,6 +614,284 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
                 .as("the problem statement is part of the material").isEqualTo("Implement the sorting strategies.");
         assertThat(ZipTestUtil.readEntryAsString(zipContent, "Exercise-Details-" + programmingExercise.getTitle() + ".json")).as("the exercise details are part of the material")
                 .isNotNull().contains(programmingExercise.getTitle());
+    }
+
+    /**
+     * The exercise details file is the create form of the import from file and of the sharing import: the client parses
+     * it and posts it back, so every field those imports bind has to survive the export.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesDetailsTheImportBindsBack() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setProblemStatement("Implement the sorting strategies.");
+        programmingExercise.setCategories(new HashSet<>(Set.of("{\"category\":\"homework\"}")));
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        // the export endpoint hands the service an exercise loaded with its configurations, so the test does the same
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        // the client compares the discriminator with the exercise type it imports, and refuses the archive without it
+        assertThat(details).as("the details keep the exercise type discriminator").contains("\"type\":\"programming\"");
+        assertThat(details).as("no student data and no entity back references are written").doesNotContain("studentParticipations").doesNotContain("\"exercises\"");
+
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+        assertThat(importRequest.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(importRequest.shortName()).isEqualTo(programmingExercise.getShortName());
+        assertThat(importRequest.problemStatement()).isEqualTo("Implement the sorting strategies.");
+        assertThat(importRequest.categories()).isEqualTo(programmingExercise.getCategories());
+        assertThat(importRequest.maxPoints()).isEqualTo(programmingExercise.getMaxPoints());
+        assertThat(importRequest.programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(importRequest.projectType()).isEqualTo(programmingExercise.getProjectType());
+        assertThat(importRequest.packageName()).isEqualTo(programmingExercise.getPackageName());
+        assertThat(importRequest.allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
+        assertThat(importRequest.buildConfig()).as("the build configuration is part of the create form").isNotNull();
+        assertThat(importRequest.buildConfig().buildScript()).isEqualTo(exerciseToExport.getBuildConfig().getBuildScript());
+
+        // The import creates a new exercise, so it must build fresh configurations instead of adopting the ids of the
+        // exported exercise's configuration rows.
+        var importedExercise = importRequest.toEntity();
+        assertThat(importedExercise.getPlagiarismDetectionConfig()).isNotNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getId()).as("the imported plagiarism configuration does not adopt an id").isNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
+    }
+
+    /**
+     * The file itself carries no configuration id either, because the importer reading it is not necessarily this
+     * version: every released version copies the id of the plagiarism configuration from the request onto the exercise
+     * it creates and clears it only after that exercise was saved, and the association cascades ALL.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(exerciseToExport.getPlagiarismDetectionConfig().getId()).isNotNull();
+        assertThat(exerciseToExport.getTeamAssignmentConfig().getId()).isNotNull();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        JsonNode written = JsonObjectMapper.get().readTree(details);
+        assertThat(written.get("plagiarismDetectionConfig").get("id")).as("the exported plagiarism configuration carries no id").isNull();
+        assertThat(written.get("teamAssignmentConfig").get("id")).as("the exported team assignment configuration carries no id").isNull();
+        // the settings themselves survive, only the identity is gone
+        assertThat(written.get("plagiarismDetectionConfig").get("similarityThreshold").asInt()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
+        assertThat(written.get("teamAssignmentConfig").get("maxTeamSize").asInt()).isEqualTo(10);
+    }
+
+    /**
+     * An importer that has not upgraded copies the id of the plagiarism configuration out of the request and saves the
+     * exercise before clearing it. Such a file therefore has to import into a configuration that is still transient,
+     * so that the save inserts a row instead of reaching persistence with the identity of the exported exercise's row.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        Long sourceConfigId = exerciseToExport.getPlagiarismDetectionConfig().getId();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+
+        // what the older mapper does with the request: copy the id, then copy the settings
+        PlagiarismDetectionConfig adopted = new PlagiarismDetectionConfig();
+        adopted.setId(importRequest.plagiarismDetectionConfig().id());
+        importRequest.plagiarismDetectionConfig().applyTo(adopted);
+        assertThat(adopted.getId()).as("the copied configuration stays transient, so the importing instance inserts its own row").isNull();
+
+        ProgrammingExercise imported = importRequest.toEntity();
+        imported.setPlagiarismDetectionConfig(adopted);
+        imported.setId(null);
+        imported.setShortName(programmingExercise.getShortName() + "imp");
+        imported.setTitle(programmingExercise.getTitle() + " imported");
+        imported.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        imported.setBuildConfig(programmingExerciseBuildConfigRepository.save(new ProgrammingExerciseBuildConfig()));
+        var saved = programmingExerciseRepository.save(imported);
+
+        assertThat(saved.getPlagiarismDetectionConfig().getId()).as("the import created its own configuration row").isNotNull().isNotEqualTo(sourceConfigId);
+        var source = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(source.getPlagiarismDetectionConfig().getId()).as("the exported exercise keeps its own configuration row").isEqualTo(sourceConfigId);
+    }
+
+    /**
+     * The sharing import posts the details file back as the create form and drops nothing but the top-level id on the
+     * way (see {@code ExerciseSharingService#getExerciseDetailsFromBasket}). An auxiliary repository that still carried
+     * its id would therefore reach the creation, which rejects it with {@code INVALID_AUXILIARY_REPOSITORY_ID}: a
+     * shared exercise with an auxiliary repository could not be imported at all.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_detailsWithAuxiliaryRepositoriesImportIntoTheSharingCreation() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        // what the sharing import does to the file before it binds it: the exercise id goes, the nested ones stay
+        ObjectNode written = (ObjectNode) JsonObjectMapper.get().readTree(details);
+        written.remove("id");
+        assertThat(written.get("auxiliaryRepositories")).as("the auxiliary repository is part of the create form").hasSize(1);
+        assertThat(written.get("auxiliaryRepositories").get(0).get("id")).as("the exported auxiliary repository carries no id").isNull();
+
+        var importRequest = JsonObjectMapper.get().treeToValue(written, ImportProgrammingExerciseRequestDTO.class);
+        ProgrammingExercise imported = importRequest.toEntity();
+        assertThatCode(() -> auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(imported, imported.getAuxiliaryRepositories()))
+                .as("the shared exercise passes the validation the creation runs").doesNotThrowAnyException();
+        // the repository itself survives, only the identity is gone
+        assertThat(imported.getAuxiliaryRepositories()).hasSize(1);
+        assertThat(imported.getAuxiliaryRepositories().getFirst().getName()).isEqualTo("solutionhints");
+        assertThat(imported.getAuxiliaryRepositories().getFirst().getCheckoutDirectory()).isEqualTo("solutionhints");
+    }
+
+    /**
+     * The details file is read back by another instance, which creates a new exercise from it, and every nested record
+     * is bound by a {@code toEntity()} that copies the id through. One id that slips into the file therefore lets an
+     * import write onto a row of the exporting instance, so the file carries no nested id at all: the exercise's own
+     * id and the references to its course and exercise group are the only ones, and the import replaces those.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesNoNestedIds() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise.setGradingCriteria(new HashSet<>(Set.of(criterionWithInstruction())));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        // No export query loads participations today. They are put on the exercise here so that the file is what the
+        // projection decides rather than what a query happened to fetch: a wider graph must not leak student work.
+        var studentParticipations = seedStudentParticipations(TEST_PREFIX + "student1");
+        exerciseToExport.setStudentParticipations(new HashSet<>(studentParticipations));
+        var templateParticipation = templateParticipationTestRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        ProgrammingSubmission templateSubmission = new ProgrammingSubmission();
+        templateSubmission.setCommitHash("cafebabe1234");
+        templateParticipation.setSubmissions(Set.of(templateSubmission));
+        exerciseToExport.setTemplateParticipation(templateParticipation);
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        JsonNode written = JsonObjectMapper.get().readTree(details);
+        // the fixture has to reach the file, otherwise the sweep below would pass on an empty exercise
+        assertThat(written.get("buildConfig")).as("the build configuration is part of the exported details").isNotNull();
+        assertThat(written.get("gradingCriteria")).as("the rubric is part of the exported details").hasSize(1);
+        assertThat(written.get("auxiliaryRepositories")).as("the auxiliary repository is part of the exported details").hasSize(1);
+        assertThat(written.get("plagiarismDetectionConfig")).as("the plagiarism configuration is part of the exported details").isNotNull();
+        assertThat(written.get("teamAssignmentConfig")).as("the team assignment configuration is part of the exported details").isNotNull();
+
+        assertThat(nestedIdPaths(written, "")).as("no nested id is written into the details file").isEmpty();
+        assertThat(written.has("studentParticipations")).as("no student participation is written into the details file").isFalse();
+        assertThat(details).as("no login of a student is written into the details file").doesNotContain(TEST_PREFIX + "student1");
+        assertThat(details).as("no submission and no build result is written into the details file").doesNotContain("submissions").doesNotContain("cafebabe1234");
+        assertThat(written.get("id")).as("the exercise's own id stays, the import drops it").isNotNull();
+    }
+
+    /**
+     * Collects the path of every {@code id} below the root of the given details node. The course and the exercise group
+     * are references to rows the import replaces with its own target, so their ids are not part of the result.
+     */
+    private static List<String> nestedIdPaths(JsonNode node, String path) {
+        List<String> found = new ArrayList<>();
+        if (node.isArray()) {
+            for (int index = 0; index < node.size(); index++) {
+                found.addAll(nestedIdPaths(node.get(index), path + "[" + index + "]"));
+            }
+            return found;
+        }
+        if (!node.isObject()) {
+            return found;
+        }
+        for (var property : node.properties()) {
+            String childPath = path.isEmpty() ? property.getKey() : path + "." + property.getKey();
+            if ("course".equals(property.getKey()) || "exerciseGroup".equals(property.getKey())) {
+                continue;
+            }
+            if ("id".equals(property.getKey())) {
+                if (!path.isEmpty() && !property.getValue().isNull()) {
+                    found.add(childPath);
+                }
+                continue;
+            }
+            found.addAll(nestedIdPaths(property.getValue(), childPath));
+        }
+        return found;
+    }
+
+    private static TeamAssignmentConfig teamAssignmentConfig() {
+        TeamAssignmentConfig config = new TeamAssignmentConfig();
+        config.setMinTeamSize(1);
+        config.setMaxTeamSize(10);
+        return config;
+    }
+
+    /**
+     * The download export nulls the criterion and instruction ids so that the import can persist them, which strips the
+     * only thing that told two otherwise identical criteria apart. The exported rubric still has to keep both rows.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_keepsIdenticalGradingCriteria() throws Exception {
+        createAndSeedBaseRepositories();
+        Set<GradingCriterion> criteria = new HashSet<>();
+        criteria.add(criterionWithInstruction());
+        criteria.add(criterionWithInstruction());
+        programmingExercise.setGradingCriteria(criteria);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(exerciseToExport.getGradingCriteria()).hasSize(2);
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        assertThat(JsonObjectMapper.get().readTree(details).get("gradingCriteria").size()).as("both stored criteria are exported").isEqualTo(2);
+
+        // the import reads the same file, so the second criterion has to survive the request binding and the database
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+        assertThat(importRequest.gradingCriteria()).as("both criteria survive the request binding").hasSize(2);
+        var importedCriteria = importRequest.toEntity().getGradingCriteria();
+        assertThat(importedCriteria).as("both criteria become their own entity").hasSize(2);
+
+        importedCriteria.forEach(criterion -> criterion.setExercise(programmingExercise));
+        gradingCriterionRepository.saveAll(importedCriteria);
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId())).as("both imported criteria are stored as their own row")
+                .hasSize(4);
+    }
+
+    private static GradingCriterion criterionWithInstruction() {
+        GradingCriterion criterion = new GradingCriterion();
+        criterion.setTitle("same title");
+        GradingInstruction instruction = new GradingInstruction();
+        instruction.setCredits(1.0);
+        instruction.setGradingScale("good");
+        instruction.setInstructionDescription("same description");
+        instruction.setFeedback("same feedback");
+        instruction.setUsageCount(1);
+        criterion.addStructuredGradingInstruction(instruction);
+        return criterion;
     }
 
     @Test

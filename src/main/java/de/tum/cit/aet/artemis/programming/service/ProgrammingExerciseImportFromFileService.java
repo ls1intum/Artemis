@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ExportedExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile(PROFILE_CORE)
@@ -147,7 +148,7 @@ public class ProgrammingExerciseImportFromFileService {
             }
 
             try {
-                programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
+                programmingExerciseRepositoryService.adjustProjectNames(getExerciseDetailsFromFile(importExerciseDir).title(), newProgrammingExercise);
             }
             catch (GitAPIException | IOException e) {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
@@ -217,18 +218,18 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Reads the programming exercise details from the JSON file in the extracted zip path.
+     * Reads the exported exercise details from the JSON file in the extracted zip path.
      *
      * @param extractedZipPath the path to the extracted zip file containing the exercise details
-     * @return the programming exercise object deserialized from the JSON file
+     * @return the exercise details deserialized from the JSON file
      * @throws IOException if there is an error reading the file
      */
-    private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
+    private ExportedExerciseDetailsDTO getExerciseDetailsFromFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
         JsonMapper objectMapper = JsonObjectMapper.get();
 
         try {
-            return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
+            return objectMapper.readValue(exerciseJsonPath.toFile(), ExportedExerciseDetailsDTO.class);
         }
         catch (JacksonException e) {
             throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");

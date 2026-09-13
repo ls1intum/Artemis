@@ -1260,11 +1260,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private static UpdateProgrammingExerciseDTO toClientUpdateDTO(ProgrammingExerciseResponseDTO response) {
         Long exerciseGroupId = response.exerciseGroup() != null ? response.exerciseGroup().id() : null;
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
+        Set<GradingCriterionDTO> gradingCriteria = response.gradingCriteria() == null ? null : new HashSet<>(response.gradingCriteria());
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
                 response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
                 response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
-                response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, response.gradingCriteria(),
-                response.competencyLinks(), response.testRepositoryUri(), null, response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(),
+                response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, gradingCriteria, response.competencyLinks(),
+                response.testRepositoryUri(), null, response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(),
                 Boolean.TRUE.equals(response.allowOnlineIde()), response.staticCodeAnalysisEnabled(), response.maxStaticCodeAnalysisPenalty(), response.programmingLanguage(),
                 response.packageName(), Boolean.TRUE.equals(response.showTestNamesToStudents()), response.buildAndTestStudentSubmissionsAfterDueDate(), response.testCasesChanged(),
                 response.projectKey(), response.submissionPolicy(), response.projectType(), Boolean.TRUE.equals(response.releaseTestsWithExampleSolution()),

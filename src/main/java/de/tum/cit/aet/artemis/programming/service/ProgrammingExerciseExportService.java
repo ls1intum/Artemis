@@ -54,8 +54,6 @@ import org.xml.sax.SAXException;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
@@ -78,6 +76,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -222,6 +221,21 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
+     * {@inheritDoc}
+     * <p>
+     * The cast is safe: this class only works with programming exercises. The record is the same one the programming
+     * exercise endpoints return, so an archive stays readable by the import from file and by the sharing import, which
+     * both bind it to {@link de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO}. The export
+     * variant leaves out the ids of the plagiarism detection configuration, the team assignment configuration and the
+     * auxiliary repositories, so that an importer of any version creates its own rows instead of adopting this
+     * exercise's.
+     */
+    @Override
+    protected Record exerciseDetailsForExport(Exercise exercise) {
+        return ProgrammingExerciseResponseDTO.forExport((ProgrammingExercise) exercise);
+    }
+
+    /**
      * Exports a programming exercise for archival purposes. This includes the instructor repositories, the student repositories, the problem statement, and the exercise details.
      *
      * @param exercise              the programming exercise
@@ -252,16 +266,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @throws IOException if an error occurs while accessing the file system
      */
     public Path exportProgrammingExerciseForDownload(@NonNull ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
-        // Reset grading criterion ids to null, such that Hibernate can persist them.
-        if (exercise.getGradingCriteria() != null) {
-            for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
-                gradingCriterion.setId(null);
-                for (GradingInstruction gradingInstruction : gradingCriterion.getStructuredGradingInstructions()) {
-                    gradingInstruction.setId(null);
-                }
-            }
-        }
-
         List<Path> pathsToBeZipped = new ArrayList<>();
         Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
