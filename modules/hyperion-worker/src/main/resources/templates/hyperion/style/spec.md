@@ -183,6 +183,10 @@ in the Public API with `/** @studentCreates */`. Keep the owner `stubbed`, prese
 assign the added members to that owner's Testing Strategy seam. They are absent from the compiling starter
 and graded reflectively. Never apply this tag to a `given` owner or copy it into exercise source. A marked
 constructor may leave the starter with Java's implicit no-argument constructor. Do not omit unmarked members.
+The tag is a Javadoc block immediately before the complete final declaration, never a trailing line comment.
+It removes the entire member from the starter, not just a return type, parameter, or `throws` clause. Keep
+checked exceptions in the final signature; if an omitted exception makes a supplied signature uncompilable,
+resolve the ownership graph rather than erasing the exception from the contract.
 
 For API use, control flow, or implementation-only tasks, provide the class and method declarations instead.
 Supply incidental enums, initialized collections, exception classes, and domain holders when declaring them
