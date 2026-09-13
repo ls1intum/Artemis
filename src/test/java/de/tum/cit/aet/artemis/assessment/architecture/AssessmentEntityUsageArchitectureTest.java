@@ -15,22 +15,16 @@ class AssessmentEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return ARTEMIS_PACKAGE + ".assessment";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities. Bonus endpoints migrated; remaining: ExampleSubmission and Result endpoints.
+    // TODO: Reduce this to 0 by returning DTOs instead of entities. Bonus and Result endpoints migrated; remaining: ExampleSubmission endpoints.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 6;
-    }
-
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart. Bonus endpoints migrated; remaining: ExampleSubmission, Result,
-    // TutorParticipation.
-    @Override
-    protected int getExpectedEntityInputViolations() {
         return 4;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs (ResultWithPointsPerGradingCriterionDTO, AssessmentUpdateDTO).
+    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart. Bonus and Result endpoints migrated; remaining: ExampleSubmission,
+    // TutorParticipation.
     @Override
-    protected int getExpectedDtoEntityFieldViolations() {
+    protected int getExpectedEntityInputViolations() {
         return 3;
     }
 }

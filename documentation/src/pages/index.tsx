@@ -35,18 +35,18 @@ interface QualityClaim {
 const qualityClaims: QualityClaim[] = [
     {
         label: 'Performance',
-        headline: '0.45s average',
-        detail: 'Across 72,024 requests while 2,000 students sat a full exam, with zero failed requests.',
+        headline: '0.09s average',
+        detail: 'Across 390,988 requests while 4,000 students sat a full exam, with zero failed requests.',
     },
     {
         label: 'User experience',
         headline: 'Fast where it counts',
-        detail: 'Opening an exam takes 0.23s and handing one in 0.29s, because waiting on a page during an exam costs exam time.',
+        detail: 'Opening an exam takes 0.02s and handing one in 0.01s, because waiting on a page during an exam costs exam time.',
     },
     {
         label: 'Sustainability',
         headline: 'Small footprint',
-        detail: 'That exam ran on eight virtual machines with four CPUs each, every one weaker than a typical laptop.',
+        detail: 'That exam ran on eleven virtual machines with four CPUs each, every one weaker than a typical laptop.',
     },
 ];
 
