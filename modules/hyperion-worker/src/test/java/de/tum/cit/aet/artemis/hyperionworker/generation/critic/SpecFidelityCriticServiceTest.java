@@ -40,6 +40,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.core.http.Headers;
 import com.openai.errors.InternalServerException;
+import com.openai.errors.RateLimitException;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport.Kind;
@@ -2117,9 +2118,26 @@ class SpecFidelityCriticServiceTest {
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"), usageSink);
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
-        verify(chatModel, times(3)).call(any(Prompt.class));
-        verify(usageSink, times(3)).markUncertain();
+        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(usageSink, times(2)).markUncertain();
         verify(usageSink, never()).accept(any());
+    }
+
+    @Test
+    void oracleServerFailureIsNotRetriedAsAMalformedVerdict() {
+        ChatModel chatModel = mock(ChatModel.class);
+        var serverError = InternalServerException.builder().statusCode(504).headers(Headers.builder().build()).build();
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}")).thenThrow(serverError).thenReturn(jsonResponse("{}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        critic.setProviderRetryTimingForTests(0, 0);
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
+
+        SpecFidelityReport report = critique(critic, UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), usageSink);
+
+        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).contains(Kind.QUALITY_REVIEW_UNAVAILABLE);
+        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(usageSink).markUncertain();
     }
 
     @Test
@@ -2192,9 +2210,9 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void providerErrorStatusIsRetriedWithinThePassWithoutMarkingUsageUncertain() {
+    void rateLimitRejectionIsRetriedWithinThePassWithoutMarkingUsageUncertain() {
         ChatModel chatModel = mock(ChatModel.class);
-        var serverError = InternalServerException.builder().statusCode(503).headers(Headers.builder().build()).build();
+        var serverError = RateLimitException.builder().headers(Headers.builder().build()).build();
         when(chatModel.call(any(Prompt.class))).thenThrow(serverError).thenReturn(jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = criticWithCooldown(ChatClient.create(chatModel), "configured-model", Duration.ofMinutes(5L), inMemoryCooldown());
