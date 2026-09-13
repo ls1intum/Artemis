@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -245,7 +246,7 @@ public class QuizSubmissionResource {
 
         QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 
-        StudentParticipation participationFromExamGate = null;
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
         if (quizExercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 

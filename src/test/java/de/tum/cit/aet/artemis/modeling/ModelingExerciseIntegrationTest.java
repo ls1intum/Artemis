@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +57,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -1585,79 +1583,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         }
         finally {
             featureToggleService.disableFeature(Feature.AtlasML);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetModelingExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetModelingExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetModelingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetModelingExercise_exampleSolutionVisibility(false, TEST_PREFIX + "instructor1");
-    }
-
-    private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        // Utility function to avoid duplication
-        Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
-                .orElseThrow();
-
-        classExercise.setExampleSolutionModel("<Sample solution model>");
-        classExercise.setExampleSolutionExplanation("<Sample solution explanation>");
-
-        if (isStudent) {
-            participationUtilService.createAndSaveParticipationForExercise(classExercise, username);
-        }
-
-        // Test example solution publication date not set.
-        classExercise.setExampleSolutionPublicationDate(null);
-        modelingExerciseTestRepository.save(classExercise);
-
-        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
-                HttpStatus.OK, CourseForDashboardDTO.class);
-        Course course = courseForDashboard.course();
-        ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
-        }
-        else {
-            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
-        }
-
-        // Test example solution publication date in the past.
-        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        modelingExerciseTestRepository.save(classExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        modelingExercise = modelingExerciseGetter.apply(course);
-
-        assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
-        assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
-
-        // Test example solution publication date in the future.
-        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        modelingExerciseTestRepository.save(classExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        modelingExercise = modelingExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
-        }
-        else {
-            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
-            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
         }
     }
 

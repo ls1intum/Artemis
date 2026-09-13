@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -453,7 +452,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
             WHERE e.id = :examId
             """)
-    @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") long examId);
 
     @Query("""

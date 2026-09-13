@@ -139,7 +139,6 @@ public class CourseMaterialImportService {
         log.info("Starting course material import from course {} to course {}", options.sourceCourseId(), targetCourseId);
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
-        Course sourceCourse = courseRepository.findByIdElseThrow(options.sourceCourseId());
 
         List<String> errors = new ArrayList<>();
         int exercisesImported = 0;
@@ -258,7 +257,7 @@ public class CourseMaterialImportService {
     /**
      * Import a single exercise based on its type.
      */
-    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) throws Exception {
+    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) {
         return switch (exercise.getExerciseType()) {
             case PROGRAMMING -> importProgrammingExercise((ProgrammingExercise) exercise, targetCourse);
             case QUIZ -> importQuizExercise((QuizExercise) exercise, targetCourse);

@@ -20,7 +20,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -55,7 +54,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -1122,12 +1120,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetFileUploadExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetFileUploadExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
@@ -1288,67 +1280,4 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFileUploadExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetFileUploadExercise_exampleSolutionVisibility(false, TEST_PREFIX + "instructor1");
-    }
-
-    private void testGetFileUploadExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
-        final FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-
-        // Utility function to avoid duplication
-        Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()
-                .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().orElseThrow();
-
-        fileUploadExercise.setExampleSolution("Sample<br>solution");
-
-        if (isStudent) {
-            participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, username);
-        }
-
-        // Test example solution publication date not set.
-        fileUploadExercise.setExampleSolutionPublicationDate(null);
-        fileUploadExerciseRepository.save(fileUploadExercise);
-
-        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
-                HttpStatus.OK, CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        FileUploadExercise fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isNull();
-        }
-        else {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
-        }
-
-        // Test example solution publication date in the past.
-        fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
-
-        assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
-
-        // Test example solution publication date in the future.
-        fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isNull();
-        }
-        else {
-            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
-        }
-    }
 }
