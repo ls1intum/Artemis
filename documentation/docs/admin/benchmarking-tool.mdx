@@ -154,20 +154,20 @@ exam, and starts submitting at once. There is no gentle ramp and no second chanc
 
 Here is what that looks like measured.
 
-### Two thousand students, and nothing broke
+### Four thousand students, and nothing broke
 
 | | |
 | --- | --- |
-| Students | **2,000** |
-| Requests handled | **72,024** |
+| Students | **4,000** |
+| Requests handled | **390,988** |
 | Failed requests | **0** |
-| Average response time | **0.45 seconds** |
-| Time to complete the whole exam cycle | **3 minutes** |
+| Average response time | **0.09 seconds** |
+| Git operations | **all of them, over authenticated HTTPS** |
 
-Every one of those 2,000 students logged in, opened the exam, worked on and submitted all four exercise
-types, pushed code to their own git repository and handed in the exam. No pauses anywhere: the moment
-one action finished, the next began. Not a single request failed, and the average interaction came back
-in under half a second.
+Every one of those 4,000 students logged in, opened the exam, worked on and submitted all four exercise
+types, pushed code to their own git repository and handed in the exam, pausing only a couple of seconds
+between actions. A 90-minute exam, compressed into sixteen. Not a single request failed, and the average
+interaction came back in 88 milliseconds.
 
 ### On hardware you would not expect
 
@@ -180,50 +180,57 @@ run a large exam. Fewer machines, less power, less hardware to buy and replace.
 
 ### Fast where students feel it
 
-| What a student does | With 2,000 students on the system |
+| What a student does | With 4,000 students on the system |
 | --- | --- |
-| Open the exam | 0.23 seconds |
-| Load their exam | 0.14 seconds |
-| Submit an exercise | 0.75 seconds |
-| Hand in the exam | 0.29 seconds |
-| Download their code repository | 2.04 seconds |
-| Push their code | 3.11 seconds |
+| Open the exam | 0.02 seconds |
+| Load their exam | 0.01 seconds |
+| Submit an exercise | 0.02 seconds |
+| Hand in the exam | 0.01 seconds |
+| Download their code repository | 0.24 seconds |
+| Push their code | 0.21 seconds |
 
 Programming exams are the hardest case any platform faces, because every student is moving real code in
-and out of real version control. Even so, a push completed in about three seconds.
+and out of real version control. Every one of these 4,000 students cloned and pushed over authenticated
+HTTPS, the way a student working in their own IDE does. Even so, a push completed in a fifth of a second.
 
 ### Where the engineering shows
 
 Three measurements say more about how Artemis is built than any total.
 
-**The database has capacity to spare.** Under the full 2,000-student load it ran at **47% CPU**.
+**The database has capacity to spare.** It answered **3.7 million statements in 303 seconds** of total
+execution time across the run. At the busiest instant **69 of its 120 pooled connections** were executing
+a query; the median across the run was two.
 Databases are what usually buckle first under exam load, because a careless platform queries the same
 data over and over on every page. Artemis issues few, well-targeted queries per interaction, and the
-component most platforms saturate first finished the run with half its capacity untouched.
+component most platforms saturate first spent most of the run idle.
 
-**Handling student code is nearly free.** The file server holding every student's repository ran at
-**11% CPU**. Storage is the usual suspect when a platform slows during a programming exam. Here it was
-one of the quietest machines in the cluster.
+**Handling student code is nearly free.** Storage is the usual suspect when a platform slows during a
+programming exam, because every clone and every push is real file work on real repositories. With all
+4,000 students cloning and pushing, a clone took **0.24 seconds** and a push **0.21 seconds**. Nothing
+in that path needed extra hardware to get there.
 
-**There is room left over.** The network ran at a few percent of its capacity, and the reverse proxy at
-11%. When a course does outgrow its cluster, you add another Artemis server: they are interchangeable,
-they join automatically, and nothing needs reconfiguring. Build agents scale separately again, so how
-quickly students get feedback on their code is a decision you make rather than a limit you inherit.
+**There is room left over.** The three Artemis servers averaged **20% to 27% CPU** across the run and the
+load balancer **under 5%**, on virtual machines weaker than a laptop. When a course does outgrow its
+cluster, you add another Artemis server: they are interchangeable, they join automatically, and nothing
+needs reconfiguring. Build agents scale separately again, so how quickly students get feedback on their
+code is a decision you make rather than a limit you inherit.
 
 ### Being straight about what this shows
 
 Two honest notes, because a benchmark that flatters itself is worth nothing.
 
-**We did not find the limit.** The Artemis servers were the busiest part of the cluster and still had
-headroom at the end. 2,000 is the largest run we measured, not the largest Artemis handled.
+**It gets cheaper per student, not dearer.** The same cluster was measured at 3,000 students first, at
+0.08 seconds. Adding a third more students cost 11% more response time, not a third more and not the
+doubling that a system near its limit would show. 4,000 is the largest run reported here, not the largest
+Artemis handles.
 
 **A simulated student is harder work than a real one.** Real students read the question, think, and
-type; these ones pause for a couple of seconds and move on, compressing a 90-minute exam into a few
-minutes. A real cohort of the same size is a considerably lighter load, so the 2,000 here stands for
-substantially more than 2,000 people in a room. The run below was measured before the tool paused
+type; these ones pause for a couple of seconds and move on, compressing a 90-minute exam into sixteen
+minutes. A real cohort of the same size is a considerably lighter load, so the 4,000 here stands for
+substantially more than 4,000 people in a room. The run below was measured before the tool paused
 between actions at all, which compressed it further still.
 
-That last point lines up with operational history: Artemis runs courses and exams with more than 2,000
+That last point lines up with operational history: Artemis runs courses and exams with thousands of
 students and has done for years. This run is independent evidence, on small hardware, that the room
 behind that number is real.
 

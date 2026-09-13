@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO.ProgrammingManualFeedbackDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
@@ -128,7 +128,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
+        final var assessmentUpdate = assessmentUpdateDTO(feedbacks, complaintResponse);
 
         Result updatedResult = request.putWithResponseBody("/api/programming/programming-submissions/" + submissionWithComplaint.getId() + "/assessment-after-complaint",
                 assessmentUpdate, Result.class, HttpStatus.OK);
@@ -160,7 +160,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
+        final var assessmentUpdate = assessmentUpdateDTO(feedbacks, complaintResponse);
         Result updatedResult = request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint",
                 assessmentUpdate, Result.class, HttpStatus.OK);
 
@@ -192,7 +192,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         complaintRepo.save(complaint);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
+        final var assessmentUpdate = assessmentUpdateDTO(new ArrayList<>(), complaintResponse);
 
         request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
@@ -209,7 +209,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         complaintRepo.save(complaint);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
+        final var assessmentUpdate = assessmentUpdateDTO(new ArrayList<>(), complaintResponse);
 
         request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
@@ -227,7 +227,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        final var assessmentUpdate = new AssessmentUpdateDTO(List.of(new Feedback()), complaintResponse, null);
+        final var assessmentUpdate = assessmentUpdateDTO(List.of(new Feedback()), complaintResponse);
 
         request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
@@ -1195,7 +1195,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         addAssessmentFeedbackAndCheckScore(complaintFeedback, 40.0, 40D);
         addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 70D);
         addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 100D);
-        final var assessmentUpdate = new AssessmentUpdateDTO(complaintFeedback, complaintResponse, null);
+        final var assessmentUpdate = assessmentUpdateDTO(complaintFeedback, complaintResponse);
 
         // update assessment after Complaint, now 100%
         Result resultAfterComplaint = request.putWithResponseBody("/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint",
@@ -1326,5 +1326,20 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
      */
     private static List<Result> resultsInCreationOrder(Submission submission) {
         return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
+    }
+
+    /**
+     * Builds the after-complaint request body the way the tutor editor does: the feedback list plus the loaded complaint
+     * response carrying the accept/reject decision.
+     */
+    private static ProgrammingAssessmentUpdateDTO assessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse) {
+        List<ProgrammingManualFeedbackDTO> feedbackDTOs = feedbacks.stream()
+                .map(feedback -> new ProgrammingManualFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(),
+                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null, null))
+                .toList();
+        var complaint = complaintResponse.getComplaint();
+        var complaintResponseDTO = new ProgrammingAssessmentUpdateDTO.ComplaintResponseDTO(complaintResponse.getId(), complaintResponse.getResponseText(),
+                new ProgrammingAssessmentUpdateDTO.ComplaintDTO(complaint.getId(), complaint.isAccepted()));
+        return new ProgrammingAssessmentUpdateDTO(feedbackDTOs, complaintResponseDTO, null);
     }
 }
