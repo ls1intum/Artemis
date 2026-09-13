@@ -44,6 +44,11 @@
             "deleted": "Organization deleted!",
             "created": "Organization created!"
         },
+        "organizationRequest": {
+            "name": "Name",
+            "shortName": "Short Name",
+            "emailPattern": "Email Pattern"
+        },
         "organizationUser": {
             "deleted": "User removed from organization!"
         }
