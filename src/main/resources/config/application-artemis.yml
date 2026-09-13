@@ -107,6 +107,8 @@ artemis:
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    # Git-backed online-editor endpoints, counted per user (each call checks out and pulls the working copy).
+    repository-editor-requests-per-minute: 120
     # Addresses exempt from every rate limit, as literal IPv4/IPv6 addresses or CIDR blocks. The limits
     # are per client address, which protects against one abusive client but throttles a load generator
     # almost immediately, since a benchmark drives thousands of logins from a single address. Leave

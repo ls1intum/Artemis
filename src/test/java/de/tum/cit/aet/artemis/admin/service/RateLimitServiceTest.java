@@ -126,6 +126,37 @@ class RateLimitServiceTest {
     }
 
     @Test
+    void testEnforcePerMinute_WithCountingKey_ShouldUseCountingKeyInBucketKey() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        when(configurationService.getEffectiveRpm(RateLimitType.REPOSITORY_EDITOR)).thenReturn(120);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(true);
+
+        IPAddress address = new IPAddressString("192.168.1.1").toAddress();
+        rateLimitService.enforcePerMinute(address, "user:alice", RateLimitType.REPOSITORY_EDITOR);
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(proxyManager).getProxy(keyCaptor.capture(), any());
+        // The bucket must be keyed by the supplied counting key (the user), not by the client address.
+        assertThat(keyCaptor.getValue()).contains(RateLimitType.REPOSITORY_EDITOR.name()).contains("user:alice").doesNotContain("192.168.1.1");
+    }
+
+    @Test
+    void testEnforcePerMinute_WithCountingKey_WhenExemptAddress_ShouldSkip() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        IPAddress address = new IPAddressString("192.168.1.1").toAddress();
+        when(configurationService.isExempt(address)).thenReturn(true);
+
+        rateLimitService.enforcePerMinute(address, "user:alice", RateLimitType.REPOSITORY_EDITOR);
+
+        // An exempt address bypasses the limit even on the per-user path, so no bucket is touched.
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
     void testEnforcePerMinute_EvenIfSpringTestProfile_ShouldStillEnforce() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
         when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);

@@ -121,4 +121,22 @@ class RateLimitConfigurationServiceTest {
 
         assertThat(rpm).isEqualTo(RateLimitType.PROBLEM_STATEMENT_RENDERING.getDefaultRpm()); // 30
     }
+
+    @Test
+    void testGetEffectiveRpm_RepositoryEditor_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getRepositoryEditorRequestsPerMinute()).thenReturn(200);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.REPOSITORY_EDITOR);
+
+        assertThat(rpm).isEqualTo(200);
+    }
+
+    @Test
+    void testGetEffectiveRpm_RepositoryEditor_WithNullValue_ShouldReturnDefault() {
+        when(properties.getRepositoryEditorRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.REPOSITORY_EDITOR);
+
+        assertThat(rpm).isEqualTo(RateLimitType.REPOSITORY_EDITOR.getDefaultRpm()); // 120
+    }
 }
