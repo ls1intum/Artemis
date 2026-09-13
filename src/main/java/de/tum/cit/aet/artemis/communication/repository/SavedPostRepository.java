@@ -5,10 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -24,7 +20,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-@CacheConfig(cacheNames = "savedPosts")
 public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Long> {
 
     /***
@@ -35,7 +30,6 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @return The amount of bookmarks of the user.
      */
-    @Cacheable(key = "'saved_post_count_' + #userId")
     Long countByUserId(Long userId);
 
     /***
@@ -73,7 +67,6 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
             WHERE s.user.id = :userId
                 AND s.postType = :postType
             """)
-    @Cacheable(key = "'saved_post_type_' + #postType + '_' + #userId")
     List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") long userId, @Param("postType") PostingType postType);
 
     /***
@@ -91,7 +84,6 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
                 AND sp.status = :status
             ORDER BY sp.completedAt DESC, sp.id DESC
             """)
-    @Cacheable(key = "'saved_post_status_' + #status + '_' + #userId")
     List<SavedPostDTO> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") long userId, @Param("status") SavedPostStatus status);
 
     /***
@@ -124,9 +116,6 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @return Newly stored saved post
      */
-    @Caching(evict = { @CacheEvict(key = "'saved_post_type_POST_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_ANSWER_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_IN_PROGRESS_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_COMPLETED_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_ARCHIVED_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
     @Override
     <S extends SavedPost> S save(S savedPost);
 
@@ -140,9 +129,6 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @param savedPost to delete
      */
-    @Caching(evict = { @CacheEvict(key = "'saved_post_type_POST_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_ANSWER_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_IN_PROGRESS_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_COMPLETED_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_ARCHIVED_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
     @Override
     void delete(SavedPost savedPost);
 
