@@ -1,0 +1,16 @@
+<div class="athena-controls">
+    @if (isLoaded()) {
+        <jhi-enabled-toggle
+            [enabled]="masterEnabled()"
+            [ariaLabel]="'artemisApp.course.athenaConfig.enabledLabel' | artemisTranslate"
+            testId="athena-enabled"
+            (enabledChange)="setEnabled($event)"
+        />
+    } @else {
+        <p-skeleton data-testid="athena-enabled-loading" height="2.375rem" borderRadius="0.625rem" />
+    }
+    <a class="athena-configure-link" [routerLink]="settingsRoute()">
+        <span jhiTranslate="artemisApp.course.athenaConfig.configure"></span>
+        <fa-icon [icon]="faArrowRight" />
+    </a>
+</div>

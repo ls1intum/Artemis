@@ -1,39 +1,66 @@
 :host {
-    display: block;
-    flex: 0 0 auto;
-    width: 280px;
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+
+    // Keep the panels side by side and sized to their own content: the control
+    // center yields width to the quick actions next to it, and only as tall as
+    // the taller panel rather than stretching to the height of the section.
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    align-self: flex-start;
 }
 
-.iris-panel {
+.ai-panel {
     border: 1px solid var(--bs-border-color);
     border-radius: 0.75rem;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
+
+    // 280px each at full size, narrowing in step with each other when the row
+    // gets tight. Both panels share one line down to the phone breakpoint below.
+    // The floor is what the panel header needs, not zero: two panels in the space
+    // the row leaves left 199px for a header wanting 202px, and being three pixels
+    // short broke both the title and its "Learn more" onto a second line. Deriving
+    // the floor from the content keeps that true for longer translations too
+    // ("Iris KI-Assistent", "Mehr erfahren").
+    flex: 1 1 280px;
+    min-width: min-content;
 }
 
-.iris-header {
+.ai-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
 }
 
-.iris-title {
+.ai-title {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
     font-size: 1rem;
+
+    // The name and its "Learn more" action are one line. This is also what gives the
+    // panel above a meaningful min-content width to refuse to shrink past.
+    white-space: nowrap;
 }
 
-.iris-toggle {
+.ai-body {
     flex: 1;
     display: flex;
     align-items: center;
 }
 
-.iris-learn-more {
+.ai-learn-more {
+    // A button rather than an anchor, because it opens a dialog instead of navigating: an anchor without an href is
+    // not keyboard-focusable, so the dialog would be unreachable without a mouse. It still reads as a link.
+    padding: 0;
+    border: none;
+    background: none;
     font-size: 0.7rem;
     font-weight: 300;
     cursor: pointer;
@@ -42,5 +69,26 @@
 
     &:hover {
         text-decoration: underline;
+    }
+}
+
+// Below roughly this width two panels side by side no longer fit: at half the row each,
+// the Enabled / Disabled buttons are wider than the panel and get clipped. Stack the
+// panels instead, so each one gets the full width of the section. The basis goes back
+// to auto because in a column it would set a 280px height, and the title may wrap as a
+// last resort on screens too narrow even for one panel.
+@media (max-width: 700px) {
+    :host {
+        flex-direction: column;
+        align-self: stretch;
+    }
+
+    .ai-panel {
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    .ai-title {
+        white-space: normal;
     }
 }

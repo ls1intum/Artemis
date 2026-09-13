@@ -238,17 +238,52 @@
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
             "athenaConfig": {
-                "aiFeedbackEnabled": {
-                    "label": "AI Assisted Feedback for Exercises Enabled",
-                    "tooltip": "When enabled, Athena AI feedback features can be activated for this course."
+                "title": "Athena AI Feedback",
+                "enabledLabel": "Enable Athena",
+                "configure": "Configure",
+                "learnMore": "Learn more",
+                "formativeFeedbackEnabled": {
+                    "label": "Formative feedback requests",
+                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date.",
+                    "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
+                    "disabledHint": "Students cannot request preliminary AI feedback in this course."
                 },
                 "gradingFeedbackEnabled": {
-                    "label": "Grading Feedback Suggestions Enabled",
-                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises."
+                    "label": "Grading feedback suggestions",
+                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises.",
+                    "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",
+                    "disabledHint": "Tutors assess submissions in this course without Athena feedback suggestions."
                 },
-                "formativeFeedbackEnabled": {
-                    "label": "Formative Feedback Requests Enabled",
-                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date."
+                "settingsPage": {
+                    "title": "Athena Settings",
+                    "sidebarTitle": "Athena",
+                    "generalTab": "General",
+                    "adminTab": "Admin",
+                    "adminOnly": "These settings are visible to administrators only.",
+                    "rateLimit": {
+                        "label": "Allowed feedback requests",
+                        "description": "Students may request at most {{ limit }} automatic Athena feedback results per submission attempt on this Artemis instance."
+                    }
+                },
+                "aboutAthenaModal": {
+                    "close": "Close",
+                    "meetAthena": "Meet Athena",
+                    "subtitle": "Your course's AI feedback assistant",
+                    "description": "Athena drafts feedback for text, programming, and modeling submissions, helping tutors grade faster and letting students get a first read on their work before the deadline.",
+                    "whatAthenaCanDo": "What Athena can do",
+                    "gradingFeedbackTitle": "Grading feedback suggestions",
+                    "gradingFeedbackDesc": "Athena drafts feedback suggestions while tutors assess text, programming, and modeling submissions.",
+                    "formativeFeedbackTitle": "Formative feedback requests",
+                    "formativeFeedbackDesc": "Students can request preliminary AI feedback on their own submission before the due date.",
+                    "exerciseTypesTitle": "Works across exercise types",
+                    "exerciseTypesDesc": "The same two switches apply uniformly to text, programming, and modeling exercises.",
+                    "whatToExpect": "What to expect",
+                    "suggestionsNotGradesTitle": "Suggestions, not final grades",
+                    "suggestionsNotGradesDesc": "Tutors review and adjust every suggestion before it reaches a student; Athena never publishes a grade on its own.",
+                    "requestLimitTitle": "A limited number of requests",
+                    "requestLimitDesc": "Each submission attempt allows only a limited number of automatic feedback results, shown on the Admin tab of the settings page.",
+                    "configurablePerFeatureTitle": "Configurable per feature",
+                    "configurablePerFeatureDesc": "Grading and formative feedback can be switched independently from the settings page."
                 }
             },
             "autoOrchestration": {

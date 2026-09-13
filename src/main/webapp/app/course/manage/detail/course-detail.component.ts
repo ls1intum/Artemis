@@ -223,28 +223,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         return [];
     }
 
-    getAthenaDetails(): Detail[] {
-        const currentCourse = this.course();
-        const athenaDetails: Detail[] = [];
-        if (this.isAthenaEnabled()) {
-            athenaDetails.push({
-                type: DetailType.Boolean,
-                title: 'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
-                data: { boolean: currentCourse?.athenaGradingFeedbackEnabled },
-            });
-            athenaDetails.push({
-                type: DetailType.Boolean,
-                title: 'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
-                data: { boolean: currentCourse?.athenaFormativeFeedbackEnabled },
-            });
-        }
-        return athenaDetails;
-    }
-
     getModeDetailSection(): DetailOverviewSection {
         const currentCourse = this.course();
         const complaintsDetails = this.getComplaintsDetails();
-        const athenaDetails = this.getAthenaDetails();
 
         const details: Detail[] = [
             {
@@ -270,7 +251,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 data: { boolean: currentCourse?.testCourse },
             },
             ...complaintsDetails,
-            ...athenaDetails,
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed

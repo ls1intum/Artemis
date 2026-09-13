@@ -1,0 +1,55 @@
+<div class="close-btn-container">
+    <button type="button" class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate">
+        <fa-icon [icon]="faXmark" aria-hidden="true" />
+    </button>
+</div>
+
+<div class="modal-content-wrapper" role="document" aria-labelledby="about-athena-title">
+    <!-- Header: Logo + title + subtexts -->
+    <div class="header-section">
+        <div class="logo-container">
+            <jhi-athena-logo [size]="40" />
+        </div>
+        <div class="header-text">
+            <h2 id="about-athena-title" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
+            <p class="subtitle" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
+            <p class="description" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
+        </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Section: What Athena can do -->
+    <section>
+        <h3 class="section-title" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
+        @for (card of whatAthenaCanDo; track card.titleKey) {
+            <div class="feature-card">
+                <div class="icon-wrapper" aria-hidden="true">
+                    <fa-icon [icon]="card.icon" />
+                </div>
+                <div>
+                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
+                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                </div>
+            </div>
+        }
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Section: What to expect -->
+    <section>
+        <h3 class="section-title" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
+        @for (card of whatToExpect; track card.titleKey) {
+            <div class="feature-card">
+                <div class="icon-wrapper icon-wrapper--expect" aria-hidden="true">
+                    <fa-icon [icon]="card.icon" />
+                </div>
+                <div>
+                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
+                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                </div>
+            </div>
+        }
+    </section>
+</div>

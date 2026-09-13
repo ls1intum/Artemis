@@ -20,6 +20,7 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -237,6 +238,17 @@ export class CourseSidebarItemService {
             title: 'IRIS Settings',
             translation: 'artemisApp.iris.settings.button.course.title',
             testId: 'iris-settings',
+            hidden: false,
+        };
+    }
+
+    getAthenaSettingsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/athena-settings`,
+            icon: faWandMagicSparkles,
+            title: 'Athena Settings',
+            translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+            testId: 'athena-settings',
             hidden: false,
         };
     }
