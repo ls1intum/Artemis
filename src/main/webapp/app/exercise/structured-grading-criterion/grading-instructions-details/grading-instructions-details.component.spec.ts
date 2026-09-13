@@ -897,6 +897,42 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1].id).toBe(1);
     });
 
+    it('should keep instruction id on a marked edited original when a markerless unchanged copy precedes it', () => {
+        exercise.gradingInstructionFeedbackUsed = true;
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalInstruction = gradingInstruction;
+        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        // Copy (unchanged content, no marker) first; original (edited, still {@id:1}) second.
+        // Fingerprint must not let the copy steal id 1 before the marker is reserved.
+        domainActions.splice(
+            1,
+            0,
+            { text: '', action: instructionAction },
+            { text: '1', action: creditsAction },
+            { text: 'scale', action: scaleAction },
+            { text: 'description', action: descriptionAction },
+            { text: 'feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+        );
+        domainActions[domainActions.length - 2] = { text: 'edited feedback', action: feedbackAction };
+
+        component.onDomainActionsFound(domainActions);
+
+        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
+        expect(instructions).toHaveLength(2);
+        expect(instructions[0].id).toBeUndefined();
+        expect(instructions[0].feedback).toBe('feedback');
+        expect(instructions[1]).toBe(originalInstruction);
+        expect(instructions[1].id).toBe(1);
+        expect(instructions[1].feedback).toBe('edited feedback');
+    });
+
     it('should keep instruction ids across reorders via identity markers', () => {
         exercise.gradingInstructionFeedbackUsed = true;
         const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;

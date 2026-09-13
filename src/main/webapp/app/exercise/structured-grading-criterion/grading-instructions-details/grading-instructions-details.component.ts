@@ -572,20 +572,31 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             }
         }
 
+        // Unique valid markers claim first across all sibling rows. Otherwise a preceding markerless
+        // copy can consume the persisted entity by fingerprint/title before the marked row runs.
+        const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
+            parsedCriterion,
+            previousCriterion: this.takeUniqueMarker(unusedCriteria, parsedCriterion, ambiguousCriterionIds),
+        }));
+        for (const entry of criterionEntries) {
+            if (!entry.previousCriterion) {
+                entry.previousCriterion = this.takeContentMatch(
+                    unusedCriteria,
+                    entry.parsedCriterion,
+                    ambiguousCriterionIds,
+                    (criterion) => this.criterionSignature(criterion),
+                    (criterion) => criterion.title || undefined,
+                );
+            }
+        }
+
         let movedInstruction = false;
-        const plan: ReconciliationPlan = parsedCriteria.map((parsedCriterion) => {
-            const previousCriterion = this.takeMatch(
-                unusedCriteria,
-                parsedCriterion,
-                ambiguousCriterionIds,
-                (criterion) => this.criterionSignature(criterion),
-                (criterion) => criterion.title || undefined,
-            );
+        const plan: ReconciliationPlan = criterionEntries.map(({ parsedCriterion, previousCriterion }) => {
             // An instruction identity only exists within its criterion: the server maps the criterion's
             // instructions with orphan removal, so one that leaves its criterion is deleted rather than
             // re-parented, and `GradingInstruction.preRemove()` detaches its existing feedback.
             const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
-            const instructions = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => {
+            const instructionEntries = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => {
                 // An ambiguous id is governed by the duplicate rules below, not read as a move.
                 if (parsedInstruction.id != undefined && !ambiguousInstructionIds.has(parsedInstruction.id)) {
                     const owner = previousOwners.get(parsedInstruction.id);
@@ -593,10 +604,17 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 }
                 return {
                     parsedInstruction,
-                    previousInstruction: this.takeMatch(unusedInstructions, parsedInstruction, ambiguousInstructionIds, (instruction) => this.instructionFingerprint(instruction)),
+                    previousInstruction: this.takeUniqueMarker(unusedInstructions, parsedInstruction, ambiguousInstructionIds),
                 };
             });
-            return { parsedCriterion, previousCriterion, instructions };
+            for (const entry of instructionEntries) {
+                if (!entry.previousInstruction) {
+                    entry.previousInstruction = this.takeContentMatch(unusedInstructions, entry.parsedInstruction, ambiguousInstructionIds, (instruction) =>
+                        this.instructionFingerprint(instruction),
+                    );
+                }
+            }
+            return { parsedCriterion, previousCriterion, instructions: instructionEntries };
         });
 
         // Deleting a row is legitimate, but a persisted entity whose marker was copied is never meant
@@ -612,14 +630,23 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         return plan;
     }
 
+    /** Removes and returns the unused entity whose id equals a unique, non-ambiguous parsed marker. */
+    private takeUniqueMarker<T extends { id?: number }>(unused: T[], parsed: T, ambiguousIds: Set<number>): T | undefined {
+        if (parsed.id == undefined || ambiguousIds.has(parsed.id)) {
+            return undefined;
+        }
+        const matchIndex = unused.findIndex((entity) => entity.id === parsed.id);
+        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
+    }
+
     /**
-     * Removes and returns the persisted entity the parsed row reclaims: by marker id, else by content.
+     * Removes and returns the persisted entity the parsed row reclaims by content after markers ran.
      * A marker repeated across rows (copied block) must not be resolved by a weaker key such as the
      * criterion title, which the copy shares — only the row that still carries the whole content,
      * nested instructions included, may reclaim it. Otherwise row order would decide which content
      * inherits the identity and its feedback.
      */
-    private takeMatch<T extends { id?: number }>(
+    private takeContentMatch<T extends { id?: number }>(
         unused: T[],
         parsed: T,
         ambiguousIds: Set<number>,
@@ -627,11 +654,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         weakKey?: (entity: T) => string | undefined,
     ): T | undefined {
         const isAmbiguous = parsed.id != undefined && ambiguousIds.has(parsed.id);
-        let matchIndex = parsed.id != undefined && !isAmbiguous ? unused.findIndex((entity) => entity.id === parsed.id) : -1;
-        if (matchIndex < 0) {
-            const parsedSignature = signature(parsed);
-            matchIndex = unused.findIndex((entity) => signature(entity) === parsedSignature);
-        }
+        let matchIndex = unused.findIndex((entity) => signature(entity) === signature(parsed));
         if (matchIndex < 0 && !isAmbiguous) {
             const key = weakKey?.(parsed);
             matchIndex = key != undefined ? unused.findIndex((entity) => weakKey!(entity) === key) : -1;
