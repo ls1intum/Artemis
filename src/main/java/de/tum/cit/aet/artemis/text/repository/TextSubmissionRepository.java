@@ -46,6 +46,7 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
      * @param submitted       whether the submission counts as submitted
      * @param submissionDate  when the submission was saved
      * @param type            how the submission was created
+     * @return the number of updated submissions
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -59,7 +60,7 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
             WHERE submission.id = :submissionId
                 AND submission.participation.id = :participationId
             """)
-    void updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("text") String text,
+    int updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("text") String text,
             @Param("language") Language language, @Param("submitted") boolean submitted, @Param("submissionDate") ZonedDateTime submissionDate, @Param("type") SubmissionType type);
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "participation.exercise" })

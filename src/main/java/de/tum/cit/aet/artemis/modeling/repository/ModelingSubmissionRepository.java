@@ -44,6 +44,7 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @param submitted       whether the submission counts as submitted
      * @param submissionDate  when the submission was saved
      * @param type            how the submission was created
+     * @return the number of updated submissions
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -57,7 +58,7 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
             WHERE submission.id = :submissionId
                 AND submission.participation.id = :participationId
             """)
-    void updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("model") String model,
+    int updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("model") String model,
             @Param("explanationText") String explanationText, @Param("submitted") boolean submitted, @Param("submissionDate") ZonedDateTime submissionDate,
             @Param("type") SubmissionType type);
 

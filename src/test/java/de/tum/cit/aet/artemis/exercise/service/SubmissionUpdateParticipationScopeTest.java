@@ -1,7 +1,17 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
@@ -17,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -35,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -99,10 +112,10 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
     @Autowired
     private ExerciseTestRepository exerciseRepository;
 
-    @Autowired
+    @MockitoSpyBean
     private TextSubmissionTestRepository textSubmissionRepository;
 
-    @Autowired
+    @MockitoSpyBean
     private ModelingSubmissionTestRepository modelingSubmissionRepository;
 
     @Autowired
@@ -122,6 +135,9 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
+
+    @MockitoSpyBean
+    private SubmissionVersionService submissionVersionService;
 
     private Course course;
 
@@ -363,6 +379,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
 
         assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(textSubmissionRepository.count()).isEqualTo(count);
+        verify(textSubmissionRepository, never()).updateExistingSubmission(eq(submissionId), anyLong(), any(), any(), anyBoolean(), any(), any());
         assertTextUnchanged(stored);
     }
 
@@ -384,8 +401,80 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
 
         assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(modelingSubmissionRepository.count()).isEqualTo(count);
+        verify(modelingSubmissionRepository, never()).updateExistingSubmission(eq(submissionId), anyLong(), any(), any(), anyBoolean(), any(), any());
         ModelingSubmission reloaded = modelingSubmissionRepository.findByIdElseThrow(stored.getId());
         assertThat(reloaded.getModel()).isEqualTo(EXISTING_TEXT);
         assertThat(reloaded.getParticipation().getId()).isEqualTo(stored.getParticipation().getId());
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void textSubmissionSaveConflictPreservesParticipationState(boolean websocket) throws Exception {
+        TextSubmission stored = (TextSubmission) participationUtilService.addSubmission(ownTeamParticipation,
+                ParticipationFactory.generateTextSubmission(EXISTING_TEXT, Language.ENGLISH, true));
+        long participationId = ownTeamParticipation.getId();
+        long submissionId = stored.getId();
+        studentParticipationRepository.updateInitializationState(participationId, InitializationState.INITIALIZED);
+        doAnswer(invocation -> {
+            boolean beforeDueDate = (boolean) invocation.callRealMethod();
+            textSubmissionRepository.deleteById(submissionId);
+            return beforeDueDate;
+        }).when(exerciseDateService).isBeforeDueDate(any(TextExercise.class), any(StudentParticipationSubmitTargetDTO.class), any(User.class));
+        clearInvocations(submissionVersionService, websocketMessagingService);
+
+        if (websocket) {
+            TextSubmission payload = ParticipationFactory.generateTextSubmission(UPDATE_TEXT, Language.ENGLISH, true);
+            payload.setId(submissionId);
+            assertThatExceptionOfType(ResponseStatusException.class)
+                    .isThrownBy(() -> participationTeamWebsocketService.updateTextSubmission(participationId, payload, principal("student1")))
+                    .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        }
+        else {
+            var payload = new TextSubmissionRequestDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
+            request.put("/api/text/exercises/" + ownTeamParticipation.getExercise().getId() + "/text-submissions", payload, HttpStatus.CONFLICT);
+        }
+
+        assertThat(textSubmissionRepository.findById(submissionId)).isEmpty();
+        assertThat(studentParticipationRepository.findByIdElseThrow(participationId).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        verifyNoInteractions(submissionVersionService);
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/participations/" + participationId + "/team/text-submissions"), any(Object.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void modelingSubmissionSaveConflictPreservesParticipationState(boolean websocket) throws Exception {
+        Course modelingCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("Modeling", TEST_PREFIX);
+        ModelingExercise exercise = ExerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "Modeling");
+        StudentParticipation participation = teamParticipationOfStudent1(exercise);
+        ModelingSubmission stored = (ModelingSubmission) participationUtilService.addSubmission(participation,
+                ParticipationFactory.generateModelingSubmission(EXISTING_TEXT, true));
+        long participationId = participation.getId();
+        long submissionId = stored.getId();
+        studentParticipationRepository.updateInitializationState(participationId, InitializationState.INITIALIZED);
+        doAnswer(invocation -> {
+            boolean beforeDueDate = (boolean) invocation.callRealMethod();
+            modelingSubmissionRepository.deleteById(submissionId);
+            return beforeDueDate;
+        }).when(exerciseDateService).isBeforeDueDate(any(ModelingExercise.class), any(StudentParticipationSubmitTargetDTO.class), any(User.class));
+        clearInvocations(submissionVersionService, websocketMessagingService);
+
+        if (websocket) {
+            ModelingSubmission payload = ParticipationFactory.generateModelingSubmission(UPDATE_TEXT, true);
+            payload.setId(submissionId);
+            assertThatExceptionOfType(ResponseStatusException.class)
+                    .isThrownBy(() -> participationTeamWebsocketService.updateModelingSubmission(participationId, payload, principal("student1")))
+                    .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        }
+        else {
+            var payload = new ModelingSubmissionRequestDTO(submissionId, UPDATE_TEXT, null, true);
+            request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", payload, HttpStatus.CONFLICT);
+        }
+
+        assertThat(modelingSubmissionRepository.findById(submissionId)).isEmpty();
+        assertThat(studentParticipationRepository.findByIdElseThrow(participationId).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        verifyNoInteractions(submissionVersionService);
+    }
+
 }
