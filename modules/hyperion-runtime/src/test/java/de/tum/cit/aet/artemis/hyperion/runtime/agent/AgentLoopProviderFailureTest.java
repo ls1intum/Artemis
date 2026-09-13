@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -24,6 +26,7 @@ import com.openai.core.http.Headers;
 import com.openai.errors.BadRequestException;
 import com.openai.errors.InternalServerException;
 import com.openai.errors.OpenAIIoException;
+import com.openai.errors.RateLimitException;
 
 class AgentLoopProviderFailureTest {
 
@@ -105,10 +108,11 @@ class AgentLoopProviderFailureTest {
     }
 
     @Test
-    void transientProviderStatusIsRetriedWithoutMarkingUsageUncertain() {
+    void rateLimitRejectionIsRetriedWithoutMarkingUsageUncertain() {
         ChatModel model = mock(ChatModel.class);
         ChatResponse completed = response("done");
-        when(model.call(any(Prompt.class))).thenThrow(serverError(503)).thenThrow(serverError(500)).thenReturn(completed);
+        when(model.call(any(Prompt.class))).thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build())
+                .thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build()).thenReturn(completed);
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
         List<String> steps = new ArrayList<>();
 
@@ -119,6 +123,21 @@ class AgentLoopProviderFailureTest {
         verify(usage, never()).markUncertain();
         verify(usage).accept(completed);
         assertThat(steps).contains("The AI service is temporarily unavailable; retrying (1 of 5).", "The AI service is temporarily unavailable; retrying (2 of 5).");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 408, 500, 502, 503, 504 })
+    void serverFailuresCannotProveThatModelExecutionDidNotConsumeUsage(int status) {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenThrow(serverError(status));
+        ProviderUsageSink usage = mock(ProviderUsageSink.class);
+
+        var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(model).call(any(Prompt.class));
+        verify(usage).markUncertain();
+        verify(usage, never()).accept(any(ChatResponse.class));
     }
 
     @Test
@@ -139,7 +158,7 @@ class AgentLoopProviderFailureTest {
     @Test
     void persistentTransientFailureStopsAfterTheRetryBudget() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenThrow(serverError(502));
+        when(model.call(any(Prompt.class))).thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build());
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
 
         var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
@@ -153,7 +172,7 @@ class AgentLoopProviderFailureTest {
     @Test
     void cancellationDuringProviderRetryBackoffStopsWithoutAnotherRequest() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenThrow(serverError(503));
+        when(model.call(any(Prompt.class))).thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build());
         AtomicBoolean cancelled = new AtomicBoolean();
 
         var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, cancelled::get, null, step -> {

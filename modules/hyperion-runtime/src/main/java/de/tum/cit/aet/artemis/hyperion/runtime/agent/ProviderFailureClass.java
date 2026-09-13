@@ -12,17 +12,15 @@ import com.openai.errors.OpenAIServiceException;
 /**
  * What a failed provider request proves about its usage, and whether sending it again can help.
  * <p>
- * The accounting rule is that an admitted request whose usage cannot be proved marks the run's accounting incomplete. That rule was written for the one failure that is
- * truly indeterminate: the request was sent and the connection died before a response arrived. A status response from the provider is not that case — the provider
- * answered, and an error status carries no completion — and neither is a request that never left the client. Treating those as indeterminate is what turned a two-minute
- * provider outage into a failed run per request.
+ * A client rejection or a request that never left the client can be accounted for without a completion. A server or gateway error cannot: model execution may have consumed
+ * tokens before the error response was produced. The absence of a completion in an error body is not proof of zero usage.
  */
 public enum ProviderFailureClass {
 
-    /** The provider answered with a transient status (408, 429, 5xx): no completion was produced and a later request can succeed. */
+    /** The provider rejected the request with HTTP 429; a later request can succeed. */
     REJECTED_TRANSIENT,
 
-    /** The provider answered with another error status, or the local cooldown refused the call: no completion was produced and the same request cannot succeed. */
+    /** The provider rejected the request with a non-timeout client error, or the local cooldown refused the call. */
     REJECTED,
 
     /** The request never reached the provider (connection refused, unknown host, TLS handshake, connect timeout): nothing was sent, so sending it again is safe. */
@@ -60,7 +58,11 @@ public enum ProviderFailureClass {
                 return REJECTED;
             }
             if (cause instanceof OpenAIServiceException serviceException) {
-                return isTransientStatus(serviceException.statusCode()) ? REJECTED_TRANSIENT : REJECTED;
+                int status = serviceException.statusCode();
+                if (status == 429) {
+                    return REJECTED_TRANSIENT;
+                }
+                return status >= 400 && status < 500 && status != 408 ? REJECTED : INDETERMINATE;
             }
             if (cause instanceof ConnectException || cause instanceof HttpConnectTimeoutException || cause instanceof UnknownHostException
                     || cause instanceof NoRouteToHostException || cause instanceof SSLHandshakeException) {
@@ -68,10 +70,6 @@ public enum ProviderFailureClass {
             }
         }
         return INDETERMINATE;
-    }
-
-    private static boolean isTransientStatus(int status) {
-        return status == 408 || status == 429 || status >= 500;
     }
 
     /**
