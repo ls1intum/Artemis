@@ -3,15 +3,12 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
@@ -27,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -51,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -112,10 +109,10 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
     @Autowired
     private ExerciseTestRepository exerciseRepository;
 
-    @MockitoSpyBean
+    @Autowired
     private TextSubmissionTestRepository textSubmissionRepository;
 
-    @MockitoSpyBean
+    @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepository;
 
     @Autowired
@@ -136,8 +133,8 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
-    @MockitoSpyBean
-    private SubmissionVersionService submissionVersionService;
+    @Autowired
+    private SubmissionVersionRepository submissionVersionRepository;
 
     private Course course;
 
@@ -373,13 +370,14 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.INITIALIZED);
         long count = textSubmissionRepository.count();
         long submissionId = existingSubmission ? stored.getId() : Long.MAX_VALUE;
+        clearInvocations(exerciseDateService);
 
         var payload = new TextSubmissionRequestDTO(submissionId, UPDATE_TEXT, Language.ENGLISH, true);
         request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", payload, HttpStatus.FORBIDDEN);
 
         assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(textSubmissionRepository.count()).isEqualTo(count);
-        verify(textSubmissionRepository, never()).updateExistingSubmission(eq(submissionId), anyLong(), any(), any(), anyBoolean(), any(), any());
+        verify(exerciseDateService, never()).isBeforeDueDate(any(TextExercise.class), any(StudentParticipationSubmitTargetDTO.class), any(User.class));
         assertTextUnchanged(stored);
     }
 
@@ -395,13 +393,14 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.INITIALIZED);
         long count = modelingSubmissionRepository.count();
         long submissionId = existingSubmission ? stored.getId() : Long.MAX_VALUE;
+        clearInvocations(exerciseDateService);
 
         var payload = new ModelingSubmissionRequestDTO(submissionId, UPDATE_TEXT, null, true);
         request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", payload, HttpStatus.FORBIDDEN);
 
         assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(modelingSubmissionRepository.count()).isEqualTo(count);
-        verify(modelingSubmissionRepository, never()).updateExistingSubmission(eq(submissionId), anyLong(), any(), any(), anyBoolean(), any(), any());
+        verify(exerciseDateService, never()).isBeforeDueDate(any(ModelingExercise.class), any(StudentParticipationSubmitTargetDTO.class), any(User.class));
         ModelingSubmission reloaded = modelingSubmissionRepository.findByIdElseThrow(stored.getId());
         assertThat(reloaded.getModel()).isEqualTo(EXISTING_TEXT);
         assertThat(reloaded.getParticipation().getId()).isEqualTo(stored.getParticipation().getId());
@@ -421,7 +420,8 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
             textSubmissionRepository.deleteById(submissionId);
             return beforeDueDate;
         }).when(exerciseDateService).isBeforeDueDate(any(TextExercise.class), any(StudentParticipationSubmitTargetDTO.class), any(User.class));
-        clearInvocations(submissionVersionService, websocketMessagingService);
+        long versionCount = submissionVersionRepository.count();
+        clearInvocations(websocketMessagingService);
 
         if (websocket) {
             TextSubmission payload = ParticipationFactory.generateTextSubmission(UPDATE_TEXT, Language.ENGLISH, true);
@@ -437,7 +437,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
 
         assertThat(textSubmissionRepository.findById(submissionId)).isEmpty();
         assertThat(studentParticipationRepository.findByIdElseThrow(participationId).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
-        verifyNoInteractions(submissionVersionService);
+        assertThat(submissionVersionRepository.count()).isEqualTo(versionCount);
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/participations/" + participationId + "/team/text-submissions"), any(Object.class));
     }
 
@@ -458,7 +458,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
             modelingSubmissionRepository.deleteById(submissionId);
             return beforeDueDate;
         }).when(exerciseDateService).isBeforeDueDate(any(ModelingExercise.class), any(StudentParticipationSubmitTargetDTO.class), any(User.class));
-        clearInvocations(submissionVersionService, websocketMessagingService);
+        long versionCount = submissionVersionRepository.count();
 
         if (websocket) {
             ModelingSubmission payload = ParticipationFactory.generateModelingSubmission(UPDATE_TEXT, true);
@@ -474,7 +474,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
 
         assertThat(modelingSubmissionRepository.findById(submissionId)).isEmpty();
         assertThat(studentParticipationRepository.findByIdElseThrow(participationId).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
-        verifyNoInteractions(submissionVersionService);
+        assertThat(submissionVersionRepository.count()).isEqualTo(versionCount);
     }
 
 }
