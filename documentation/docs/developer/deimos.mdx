@@ -42,7 +42,7 @@ module starts leaking into instances that did not enable it.
 
 Configuration is validated eagerly. `base-url` and `model` have no default: `application.yml` ships them blank, and
 enabling the module without setting them stops the boot with `DeimosConfigurationException`, rendered by
-`DeimosConfigurationFailureAnalyzer` into an actionable message. `base-url` must be an absolute http(s) URI with a
+`DeimosConfigurationFailureAnalyzer` into an actionable message. `base-url` must be an absolute https URI with a
 host, `completions-path` must be mappable, and `timeout-seconds` and `max-retries` must be sane.
 
 <Callout variant={CalloutVariant.warning}>
