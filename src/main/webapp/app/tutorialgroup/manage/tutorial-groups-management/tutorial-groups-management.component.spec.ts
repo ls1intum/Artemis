@@ -8,7 +8,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { By } from '@angular/platform-browser';
@@ -36,8 +37,8 @@ describe('TutorialGroupsManagementComponent', () => {
     const configuration = generateExampleTutorialGroupsConfiguration({});
     const course = { id: 1, title: 'Example', isAtLeastInstructor: true, isAtLeastEditor: true, tutorialGroupsConfiguration: configuration } as Course;
 
-    let tutorialGroupTwo: TutorialGroupSummary;
-    let tutorialGroupOne: TutorialGroupSummary;
+    let tutorialGroupTwo: TutorialGroup;
+    let tutorialGroupOne: TutorialGroup;
 
     let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let configurationService: TutorialGroupsConfigurationService;

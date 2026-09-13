@@ -25,6 +25,7 @@ export interface QuizExerciseForCourse {
     quizBatches?: Array<QuizBatchForCourse>;
     quizMode: QuizExerciseForCourseQuizModeEnum;
     categories?: Array<string>;
+    hasDragAndDropQuestions?: boolean;
 }
 
 export type QuizExerciseForCourseIncludedInOverallScoreEnum = 'INCLUDED_COMPLETELY' | 'INCLUDED_AS_BONUS' | 'NOT_INCLUDED';

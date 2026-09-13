@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -225,16 +225,27 @@ public class QuizExerciseRetrievalResource {
      * Search for all quiz exercises by id, title and course title. The result is pageable since there
      * might be hundreds of exercises in the DB.
      *
-     * @param search         The pageable search containing the page size, page number and query string
-     * @param isCourseFilter Whether to search in the courses for exercises
-     * @param isExamFilter   Whether to search in the groups for exercises
-     * @return The desired page, sorted and matching the given query
+     * @param page           the zero-based page number
+     * @param pageSize       the maximum number of exercises on one page
+     * @param sortingOrder   the sort direction
+     * @param sortedColumn   the exercise field used for sorting
+     * @param searchTerm     the title or id fragment to find
+     * @param isCourseFilter whether to include course exercises
+     * @param isExamFilter   whether to include exam exercises
+     * @return the matching page
      */
     @GetMapping("quiz-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<QuizExerciseForSearchDTO>> getAllExercisesOnPage(@ParameterObject SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<QuizExerciseForSearchDTO>> getAllExercisesOnPage(@RequestParam int page, @RequestParam int pageSize,
+            @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithAuthorities();
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSortingOrder(sortingOrder);
+        search.setSortedColumn(sortedColumn);
+        search.setSearchTerm(searchTerm);
+        User user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 

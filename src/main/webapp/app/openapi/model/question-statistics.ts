@@ -8,9 +8,12 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { QuizQuestionStatistic } from './quiz-question-statistic';
 
-export interface AnswerCounter {
-    answerId?: number;
-    ratedCounter?: number;
-    unRatedCounter?: number;
+export interface QuestionStatistics {
+    id?: number;
+    title?: string;
+    points?: number;
+    invalid?: boolean;
+    quizQuestionStatistic?: QuizQuestionStatistic;
 }

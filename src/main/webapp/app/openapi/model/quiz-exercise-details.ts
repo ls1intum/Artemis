@@ -11,12 +11,11 @@
 import type { CompetencyExerciseLink } from './competency-exercise-link';
 import type { CourseForQuizExercise } from './course-for-quiz-exercise';
 import type { ExerciseVariantGroupReference } from './exercise-variant-group-reference';
+import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
 import type { GradingCriterion } from './grading-criterion';
 import type { QuizBatch } from './quiz-batch';
-import type { QuizQuestionWithStatistics } from './quiz-question-with-statistics';
-import type { QuizPointStatistic } from './quiz-point-statistic';
 
-export interface QuizExerciseWithStatistics {
+export interface QuizExerciseDetails {
     id?: number;
     title?: string;
     shortName?: string;
@@ -24,26 +23,25 @@ export interface QuizExerciseWithStatistics {
     startDate?: string;
     dueDate?: string;
     assessmentDueDate?: string;
-    difficulty?: QuizExerciseWithStatisticsDifficultyEnum;
+    difficulty?: QuizExerciseDetailsDifficultyEnum;
     visibleToStudents?: boolean;
     course?: CourseForQuizExercise;
     type?: string;
     randomizeQuestionOrder?: boolean;
     allowedNumberOfAttempts?: number;
     remainingNumberOfAttempts?: number;
-    quizMode?: QuizExerciseWithStatisticsQuizModeEnum;
+    quizMode?: QuizExerciseDetailsQuizModeEnum;
     duration?: number;
     quizBatches?: Array<QuizBatch>;
     quizStarted?: boolean;
     quizEnded?: boolean;
-    includedInOverallScore?: QuizExerciseWithStatisticsIncludedInOverallScoreEnum;
-    mode?: QuizExerciseWithStatisticsModeEnum;
+    includedInOverallScore?: QuizExerciseDetailsIncludedInOverallScoreEnum;
+    mode?: QuizExerciseDetailsModeEnum;
     maxPoints?: number;
     bonusPoints?: number;
     exerciseVariantGroup?: ExerciseVariantGroupReference;
-    quizQuestions?: Array<QuizQuestionWithStatistics>;
+    quizQuestions?: Array<QuizQuestionWithSolution>;
     categories?: Array<string>;
-    quizPointStatistic?: QuizPointStatistic;
     competencyLinks?: Array<CompetencyExerciseLink>;
     gradingCriteria?: Array<GradingCriterion>;
     channelName?: string;
@@ -51,41 +49,41 @@ export interface QuizExerciseWithStatistics {
     isEditable?: boolean;
 }
 
-export type QuizExerciseWithStatisticsDifficultyEnum = 'EASY' | 'MEDIUM' | 'HARD';
+export type QuizExerciseDetailsDifficultyEnum = 'EASY' | 'MEDIUM' | 'HARD';
 
-export const QuizExerciseWithStatisticsDifficultyEnum = {
+export const QuizExerciseDetailsDifficultyEnum = {
     Easy: 'EASY' as const,
     Medium: 'MEDIUM' as const,
     Hard: 'HARD' as const,
 } as const;
 
-export const QuizExerciseWithStatisticsDifficultyEnumValues = ['EASY', 'MEDIUM', 'HARD'] as const;
+export const QuizExerciseDetailsDifficultyEnumValues = ['EASY', 'MEDIUM', 'HARD'] as const;
 
-export type QuizExerciseWithStatisticsQuizModeEnum = 'SYNCHRONIZED' | 'BATCHED' | 'INDIVIDUAL';
+export type QuizExerciseDetailsQuizModeEnum = 'SYNCHRONIZED' | 'BATCHED' | 'INDIVIDUAL';
 
-export const QuizExerciseWithStatisticsQuizModeEnum = {
+export const QuizExerciseDetailsQuizModeEnum = {
     Synchronized: 'SYNCHRONIZED' as const,
     Batched: 'BATCHED' as const,
     Individual: 'INDIVIDUAL' as const,
 } as const;
 
-export const QuizExerciseWithStatisticsQuizModeEnumValues = ['SYNCHRONIZED', 'BATCHED', 'INDIVIDUAL'] as const;
+export const QuizExerciseDetailsQuizModeEnumValues = ['SYNCHRONIZED', 'BATCHED', 'INDIVIDUAL'] as const;
 
-export type QuizExerciseWithStatisticsIncludedInOverallScoreEnum = 'INCLUDED_COMPLETELY' | 'INCLUDED_AS_BONUS' | 'NOT_INCLUDED';
+export type QuizExerciseDetailsIncludedInOverallScoreEnum = 'INCLUDED_COMPLETELY' | 'INCLUDED_AS_BONUS' | 'NOT_INCLUDED';
 
-export const QuizExerciseWithStatisticsIncludedInOverallScoreEnum = {
+export const QuizExerciseDetailsIncludedInOverallScoreEnum = {
     IncludedCompletely: 'INCLUDED_COMPLETELY' as const,
     IncludedAsBonus: 'INCLUDED_AS_BONUS' as const,
     NotIncluded: 'NOT_INCLUDED' as const,
 } as const;
 
-export const QuizExerciseWithStatisticsIncludedInOverallScoreEnumValues = ['INCLUDED_COMPLETELY', 'INCLUDED_AS_BONUS', 'NOT_INCLUDED'] as const;
+export const QuizExerciseDetailsIncludedInOverallScoreEnumValues = ['INCLUDED_COMPLETELY', 'INCLUDED_AS_BONUS', 'NOT_INCLUDED'] as const;
 
-export type QuizExerciseWithStatisticsModeEnum = 'INDIVIDUAL' | 'TEAM';
+export type QuizExerciseDetailsModeEnum = 'INDIVIDUAL' | 'TEAM';
 
-export const QuizExerciseWithStatisticsModeEnum = {
+export const QuizExerciseDetailsModeEnum = {
     Individual: 'INDIVIDUAL' as const,
     Team: 'TEAM' as const,
 } as const;
 
-export const QuizExerciseWithStatisticsModeEnumValues = ['INDIVIDUAL', 'TEAM'] as const;
+export const QuizExerciseDetailsModeEnumValues = ['INDIVIDUAL', 'TEAM'] as const;

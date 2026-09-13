@@ -16,7 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SearchResultPageDTOQuizExerciseForSearch } from '../model/search-result-page-dto-quiz-exercise-for-search';
-import { QuizExerciseWithStatistics } from '../model/quiz-exercise-with-statistics';
+import { QuizExerciseDetails } from '../model/quiz-exercise-details';
 import { QuizExerciseForStudentResponse } from '../model/quiz-exercise-for-student-response';
 import { QuizExerciseForCourse } from '../model/quiz-exercise-for-course';
 
@@ -28,18 +28,16 @@ export class QuizExerciseRetrievalApi {
     /**
      *
      *
-     * @param searchTerm
      * @param page
      * @param pageSize
      * @param sortingOrder
+     * @param sortedColumn
+     * @param searchTerm
      * @param isCourseFilter
      * @param isExamFilter
      */
-    getAllExercisesOnPage(searchTerm?: string, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING', isCourseFilter?: boolean, isExamFilter?: boolean): Observable<SearchResultPageDTOQuizExerciseForSearch> {
+    getAllExercisesOnPage(page: number, pageSize: number, sortingOrder: 'ASCENDING' | 'DESCENDING', sortedColumn: string, searchTerm: string, isCourseFilter?: boolean, isExamFilter?: boolean): Observable<SearchResultPageDTOQuizExerciseForSearch> {
         const queryParams = new URLSearchParams();
-        if (searchTerm !== undefined && searchTerm !== null) {
-            queryParams.set('searchTerm', String(searchTerm));
-        }
         if (page !== undefined && page !== null) {
             queryParams.set('page', String(page));
         }
@@ -48,6 +46,12 @@ export class QuizExerciseRetrievalApi {
         }
         if (sortingOrder !== undefined && sortingOrder !== null) {
             queryParams.set('sortingOrder', String(sortingOrder));
+        }
+        if (sortedColumn !== undefined && sortedColumn !== null) {
+            queryParams.set('sortedColumn', String(sortedColumn));
+        }
+        if (searchTerm !== undefined && searchTerm !== null) {
+            queryParams.set('searchTerm', String(searchTerm));
         }
         if (isCourseFilter !== undefined && isCourseFilter !== null) {
             queryParams.set('isCourseFilter', String(isCourseFilter));
@@ -65,9 +69,9 @@ export class QuizExerciseRetrievalApi {
      *
      * @param quizExerciseId
      */
-    getQuizExercise(quizExerciseId: number): Observable<QuizExerciseWithStatistics> {
+    getQuizExercise(quizExerciseId: number): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}`;
-        return this.http.get<QuizExerciseWithStatistics>(url);
+        return this.http.get<QuizExerciseDetails>(url);
     }
 
     /**

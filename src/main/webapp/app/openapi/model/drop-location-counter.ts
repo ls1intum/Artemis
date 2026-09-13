@@ -11,7 +11,6 @@
 
 export interface DropLocationCounter {
     dropLocationId?: number;
-    id?: number;
     ratedCounter?: number;
     unRatedCounter?: number;
 }

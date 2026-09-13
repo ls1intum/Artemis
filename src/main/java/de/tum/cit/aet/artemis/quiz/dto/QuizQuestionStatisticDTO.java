@@ -1,28 +1,44 @@
 package de.tum.cit.aet.artemis.quiz.dto;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Question statistics calculated on demand from results and submitted-answer selections.
  * Participant counts are per rating bucket: one participation can contribute its latest rated result and its latest unrated result.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizQuestionStatisticDTO(Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
-        @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO, @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO,
-        @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO, String type) {
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuestionStatisticDTO.class),
+        @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuestionStatisticDTO.class),
+        @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuestionStatisticDTO.class) }, oneOf = { MultipleChoiceQuestionStatisticDTO.class,
+                DragAndDropQuestionStatisticDTO.class, ShortAnswerQuestionStatisticDTO.class })
+@JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatisticDTO.class, name = "multiple-choice"),
+        @JsonSubTypes.Type(value = DragAndDropQuestionStatisticDTO.class, name = "drag-and-drop"),
+        @JsonSubTypes.Type(value = ShortAnswerQuestionStatisticDTO.class, name = "short-answer") })
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+public sealed interface QuizQuestionStatisticDTO permits MultipleChoiceQuestionStatisticDTO, DragAndDropQuestionStatisticDTO, ShortAnswerQuestionStatisticDTO {
+
+    Integer participantsRated();
+
+    Integer participantsUnrated();
+
+    Integer ratedCorrectCounter();
+
+    Integer unRatedCorrectCounter();
 
     /**
-     * Creates the wire-compatible statistic for a quiz question.
+     * Creates the statistic for a quiz question.
      *
      * @param question            the question that determines the statistic type
      * @param ratedParticipants   the rated participant count
@@ -32,75 +48,26 @@ public record QuizQuestionStatisticDTO(Integer participantsRated, Integer partic
      * @param componentStatistics counters keyed by answer option, drop location, or short-answer spot id
      * @return the question statistic
      */
-    public static QuizQuestionStatisticDTO of(QuizQuestion question, long ratedParticipants, long unratedParticipants, long ratedCorrect, long unratedCorrect,
+    static QuizQuestionStatisticDTO of(QuizQuestion question, long ratedParticipants, long unratedParticipants, long ratedCorrect, long unratedCorrect,
             Map<Long, QuizStatisticCounterDTO> componentStatistics) {
-        MultipleChoiceQuestionStatisticDTO multipleChoiceStatistic = null;
-        DragAndDropQuestionStatisticDTO dragAndDropStatistic = null;
-        ShortAnswerQuestionStatisticDTO shortAnswerStatistic = null;
-        String type;
+        Integer participantsRated = Math.toIntExact(ratedParticipants);
+        Integer participantsUnrated = Math.toIntExact(unratedParticipants);
+        Integer ratedCorrectCounter = Math.toIntExact(ratedCorrect);
+        Integer unRatedCorrectCounter = Math.toIntExact(unratedCorrect);
 
-        switch (question) {
-            case MultipleChoiceQuestion ignored -> {
-                type = "multiple-choice";
-                if (componentStatistics != null) {
-                    multipleChoiceStatistic = new MultipleChoiceQuestionStatisticDTO(
-                            componentStatistics.entrySet().stream().map(entry -> new AnswerCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
-                }
-            }
-            case DragAndDropQuestion ignored -> {
-                type = "drag-and-drop";
-                if (componentStatistics != null) {
-                    dragAndDropStatistic = new DragAndDropQuestionStatisticDTO(
-                            componentStatistics.entrySet().stream().map(entry -> new DropLocationCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
-                }
-            }
-            case ShortAnswerQuestion ignored -> {
-                type = "short-answer";
-                if (componentStatistics != null) {
-                    shortAnswerStatistic = new ShortAnswerQuestionStatisticDTO(
-                            componentStatistics.entrySet().stream().map(entry -> new ShortAnswerSpotCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
-                }
-            }
+        return switch (question) {
+            case MultipleChoiceQuestion ignored ->
+                new MultipleChoiceQuestionStatisticDTO(participantsRated, participantsUnrated, ratedCorrectCounter, unRatedCorrectCounter, componentStatistics == null ? null
+                        : componentStatistics.entrySet().stream().map(entry -> new AnswerCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
+            case DragAndDropQuestion ignored ->
+                new DragAndDropQuestionStatisticDTO(participantsRated, participantsUnrated, ratedCorrectCounter, unRatedCorrectCounter, componentStatistics == null ? null
+                        : componentStatistics.entrySet().stream().map(entry -> new DropLocationCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
+            case ShortAnswerQuestion ignored ->
+                new ShortAnswerQuestionStatisticDTO(participantsRated, participantsUnrated, ratedCorrectCounter, unRatedCorrectCounter, componentStatistics == null ? null
+                        : componentStatistics.entrySet().stream().map(entry -> new ShortAnswerSpotCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
             default -> throw new IllegalArgumentException("Unsupported quiz question type " + question.getClass().getName());
-        }
-
-        return new QuizQuestionStatisticDTO(Math.toIntExact(ratedParticipants), Math.toIntExact(unratedParticipants), Math.toIntExact(ratedCorrect),
-                Math.toIntExact(unratedCorrect), multipleChoiceStatistic, dragAndDropStatistic, shortAnswerStatistic, type);
+        };
     }
-}
-
-// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
-@Schema(requiredProperties = { "type" })
-@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
-        @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO) {
-}
-
-@Schema(requiredProperties = { "type" })
-@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DragAndDropQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
-        @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO) {
-}
-
-@Schema(requiredProperties = { "type" })
-@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
-        @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO) {
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuestionStatisticDTO(Set<AnswerCounterDTO> answerCounters) {
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DragAndDropQuestionStatisticDTO(Set<DropLocationCounterDTO> dropLocationCounters) {
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerQuestionStatisticDTO(Set<ShortAnswerSpotCounterDTO> shortAnswerSpotCounters) {
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

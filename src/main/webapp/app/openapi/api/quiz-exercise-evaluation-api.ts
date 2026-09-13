@@ -16,7 +16,6 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QuizExerciseReEvaluate } from '../model/quiz-exercise-re-evaluate';
-import { QuizExerciseWithStatistics } from '../model/quiz-exercise-with-statistics';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseEvaluationApi {
@@ -50,16 +49,6 @@ export class QuizExerciseEvaluationApi {
             files.forEach(item => formData.append('files', item));
         }
         return this.http.put<void>(url, formData);
-    }
-
-    /**
-     *
-     *
-     * @param quizExerciseId
-     */
-    recalculateStatistics(quizExerciseId: number): Observable<QuizExerciseWithStatistics> {
-        const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/recalculate-statistics`;
-        return this.http.get<QuizExerciseWithStatistics>(url);
     }
 
 }
