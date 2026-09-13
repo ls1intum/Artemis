@@ -23,6 +23,83 @@ describe('TumUiPopoverComponent', () => {
         vi.restoreAllMocks();
     });
 
+    describe('leaving', () => {
+        const panel = () => document.querySelector('.tum-ui-popover-panel');
+
+        /** jsdom has no animation API, so one is stood in whose finishing this test controls. */
+        function stubAnimations(): { finish: () => void } {
+            let settle: () => void = () => undefined;
+            const finished = new Promise<void>((resolve) => (settle = resolve));
+            Element.prototype.animate = (() => ({ finished })) as unknown as typeof Element.prototype.animate;
+            return { finish: settle };
+        }
+
+        afterEach(() => {
+            // @ts-expect-error - removing the stub restores jsdom's own absence of the API
+            delete Element.prototype.animate;
+        });
+
+        it('counts as closed at once, so a caller driving its own state does not wait for the fade', () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            const emitSpy = vi.spyOn(component.openChange, 'emit');
+
+            component.close();
+
+            expect(component.isOpen()).toBe(false);
+            expect(emitSpy).toHaveBeenCalledWith(false);
+            finish();
+        });
+
+        it('keeps the panel up until the fade finishes, then takes it away', async () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            fixture.detectChanges();
+            expect(panel()).not.toBeNull();
+
+            component.close();
+            // Still on screen: this is the fade the reader is watching.
+            expect(panel()).not.toBeNull();
+
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(panel()).toBeNull();
+        });
+
+        it('goes at once for a reader who has asked for no motion', () => {
+            stubAnimations();
+            const view = document.defaultView!;
+            const previous = view.matchMedia;
+            view.matchMedia = (() => ({ matches: true })) as unknown as typeof view.matchMedia;
+            component.open(origin);
+            fixture.detectChanges();
+
+            component.close();
+
+            expect(panel()).toBeNull();
+            view.matchMedia = previous;
+        });
+
+        it('opens again cleanly while the last one is still leaving', async () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            component.close();
+
+            component.open(origin);
+            fixture.detectChanges();
+
+            expect(component.isOpen()).toBe(true);
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+            // The one that was leaving took itself away; the new one stayed.
+            expect(panel()).not.toBeNull();
+            expect(component.isOpen()).toBe(true);
+        });
+    });
+
     describe('the side it grows from', () => {
         const panel = () => document.querySelector('.tum-ui-popover-panel');
 

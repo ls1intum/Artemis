@@ -1,10 +1,13 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DOCUMENT, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy } from '@angular/cdk/overlay';
 import { TumUiOverlayPlacement, TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
+
+/** Shorter than the way in: a closing only has to avoid snapping. */
+const CLOSE_DURATION_MS = 100;
 
 /**
  * Anchored panel for rich or interactive content, opened via {@link TumUiPopoverTriggerDirective}. Use the
@@ -24,6 +27,7 @@ import { TumUiOverlayPlacement, TumUiOverlayService } from '../overlay/tum-ui-ov
 export class TumUiPopoverComponent implements OnDestroy {
     private readonly overlayService = inject(TumUiOverlayService);
     private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly document = inject(DOCUMENT);
 
     readonly placement = input<TumUiOverlayPlacement>('bottom');
     /** Accessible name announced for the role="dialog" panel. Required: a dialog must have a name. */
@@ -63,17 +67,42 @@ export class TumUiPopoverComponent implements OnDestroy {
         this.openChange.emit(true);
     }
 
-    /** Close the popover and dispose its overlay. No-op if already closed. */
+    /**
+     * Close the popover and dispose its overlay. No-op if already closed.
+     *
+     * Closed straight away, though the panel fades out first: callers drive their own state off `isOpen`/`openChange`.
+     */
     close(): void {
         if (!this.isOpen()) {
             return;
         }
         this.positionSub?.unsubscribe();
         this.positionSub = undefined;
-        this.overlayRef?.dispose();
+        const closing = this.overlayRef;
         this.overlayRef = undefined;
         this.openState.set(false);
         this.openChange.emit(false);
+        this.fadeOutAndDispose(closing);
+    }
+
+    /** Fades the panel out, then disposes. Disposes at once under reduced motion or without the animation API. */
+    private fadeOutAndDispose(closing?: OverlayRef): void {
+        if (!closing) {
+            return;
+        }
+        const panel = closing.overlayElement?.querySelector<HTMLElement>('.tum-ui-popover-panel');
+        const view = this.document.defaultView;
+        const reducedMotion = typeof view?.matchMedia === 'function' && view.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!panel || reducedMotion || typeof panel.animate !== 'function') {
+            closing.dispose();
+            return;
+        }
+        const animation = panel.animate([{ opacity: 1 }, { opacity: 0 }], { duration: CLOSE_DURATION_MS, easing: 'ease-in', fill: 'forwards' });
+        // Both arms: a cancelled fade must not leak the overlay.
+        animation.finished.then(
+            () => closing.dispose(),
+            () => closing.dispose(),
+        );
     }
 
     /** Open the popover if closed, or close it if open. */
@@ -86,6 +115,7 @@ export class TumUiPopoverComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        // Straight out, with no fade: there is no view left to play it in.
         this.positionSub?.unsubscribe();
         this.overlayRef?.dispose();
     }
