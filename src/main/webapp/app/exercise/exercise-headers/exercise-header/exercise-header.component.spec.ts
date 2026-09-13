@@ -390,6 +390,56 @@ describe('ExerciseHeaderComponent', () => {
 
             expect(fixture.componentInstance.showPracticeMode()).toBe(true);
         });
+
+        // A quiz practice attempt has no participation until it is submitted, so switching back to graded used to
+        // erase the only evidence that practice exists.
+        it('should stay true after switching from practice back to graded without a practice participation', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.id = 42;
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+
+            // Both sides being offered is what makes the toggle render instead of a badge
+            const toggle = fixture.debugElement.query(By.directive(ParticipationModeToggleComponent)).componentInstance as ParticipationModeToggleComponent;
+            expect(toggle.hasPractice()).toBe(true);
+            expect(toggle.hasGraded()).toBe(true);
+        });
+
+        it('should reset when the header is reused for another exercise', () => {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.id = 42;
+            quiz.type = ExerciseType.QUIZ;
+
+            fixture.componentRef.setInput('exercise', quiz);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+
+            const otherQuiz = new QuizExercise(undefined, undefined);
+            otherQuiz.id = 43;
+            otherQuiz.type = ExerciseType.QUIZ;
+
+            fixture.componentRef.setInput('exercise', otherQuiz);
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
+        });
     });
 
     describe('showGradedMode', () => {
@@ -513,6 +563,32 @@ describe('ExerciseHeaderComponent', () => {
             expect(emitSpy).toHaveBeenCalledWith(gradedParticipation);
             expect(fixture.componentInstance.participationMode()).toBe('graded');
             expect(fixture.componentInstance.showPracticeMode()).toBe(false);
+        });
+
+        it('should drop a locally started practice participation when the header is reused for another exercise', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 42;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+            fixture.componentInstance.onNewParticipation(practiceParticipation);
+            expect(fixture.componentInstance.effectivePracticeParticipation()).toBe(practiceParticipation);
+
+            const otherExercise = new ProgrammingExercise(undefined, undefined);
+            otherExercise.id = 43;
+            otherExercise.type = ExerciseType.PROGRAMMING;
+
+            fixture.componentRef.setInput('exercise', otherExercise);
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.effectivePracticeParticipation()).toBeUndefined();
         });
     });
 
