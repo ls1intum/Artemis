@@ -37,7 +37,8 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: Sour
 
 const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serializedPartsInFile: number) => {
     const generatedModelTypes = new Set(
-        sourceFile.getImportDeclarations()
+        sourceFile
+            .getImportDeclarations()
             .filter(declaration => declaration.getModuleSpecifierValue().includes("/model/"))
             .flatMap(declaration => declaration.getNamedImports().map(namedImport => namedImport.getName())),
     );
@@ -47,17 +48,24 @@ const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serialized
             continue;
         }
 
-        const argumentsList = callExpression.getArguments();
-        const formDataValue = argumentsList[1];
-        if (!Node.isIdentifier(formDataValue)) {
+        const [partName, formDataValue] = callExpression.getArguments();
+        if (!Node.isStringLiteral(partName) || partName.getLiteralValue() !== "exercise") {
             continue;
         }
 
-        const symbol = formDataValue.getSymbol();
-        const parameterDeclaration = symbol?.getDeclarations().find(Node.isParameterDeclaration);
+        const formDataValueText = formDataValue.getText();
+        if (Node.isNewExpression(formDataValue) && formDataValueText.startsWith("new Blob([JSON.stringify(") && formDataValueText.includes("type: 'application/json'")) {
+            serializedPartsInFile++;
+            continue;
+        }
+        if (!Node.isIdentifier(formDataValue)) {
+            throw new Error(`Cannot serialize multipart exercise part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        const parameterDeclaration = formDataValue.getSymbol()?.getDeclarations().find(Node.isParameterDeclaration);
         const parameterType = parameterDeclaration?.getTypeNode()?.getText();
         if (!parameterType || !generatedModelTypes.has(parameterType)) {
-            continue;
+            throw new Error(`Multipart exercise part is not a generated model in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
         }
 
         formDataValue.replaceWithText(`new Blob([JSON.stringify(${formDataValue.getText()})], { type: 'application/json' })`);
@@ -239,6 +247,10 @@ const main = async () => {
         }
     }
 
+    if (totalSerializedFormDataParts === 0) {
+        throw new Error("No generated multipart exercise parts were serialized");
+    }
+
     console.log(
         `✅ Done. Total imports removed: ${totalRemovedImports}, ` +
         `methods renamed: ${totalRenamedMethods}, ` +
@@ -247,7 +259,7 @@ const main = async () => {
     );
 };
 
-main().catch(err => {
-    console.error("❌ Error:", err);
+main().catch((error: unknown) => {
+    console.error("OpenAPI post-processing failed:", error);
     process.exit(1);
 });

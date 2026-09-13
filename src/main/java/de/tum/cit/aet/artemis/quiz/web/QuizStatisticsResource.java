@@ -81,6 +81,19 @@ public class QuizStatisticsResource {
     }
 
     /**
+     * Keeps the legacy recalculation route available while statistics are calculated on demand.
+     *
+     * @param quizExerciseId the id of the quiz exercise
+     * @return the current point statistics
+     */
+    @SuppressWarnings("deprecation")
+    @GetMapping(QuizLegacyRestPaths.RECALCULATE_STATISTICS)
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizPointStatisticsDTO> recalculateStatistics(@PathVariable long quizExerciseId) {
+        return getQuizPointStatistic(quizExerciseId);
+    }
+
+    /**
      * Gets all counters for one question of a quiz.
      *
      * @param quizExerciseId the id of the quiz exercise

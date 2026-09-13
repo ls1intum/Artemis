@@ -10,20 +10,19 @@
 
 import type { AnswerCounter } from './answer-counter';
 
-export interface MultipleChoiceQuizQuestionStatistic {
-    id?: number;
+export interface MultipleChoiceQuestionStatistic {
     participantsRated?: number;
     participantsUnrated?: number;
     ratedCorrectCounter?: number;
     unRatedCorrectCounter?: number;
     answerCounters?: Array<AnswerCounter>;
-    type: MultipleChoiceQuizQuestionStatisticTypeEnum;
+    type: MultipleChoiceQuestionStatisticTypeEnum;
 }
 
-export type MultipleChoiceQuizQuestionStatisticTypeEnum = 'multiple-choice';
+export type MultipleChoiceQuestionStatisticTypeEnum = 'multiple-choice';
 
-export const MultipleChoiceQuizQuestionStatisticTypeEnum = {
+export const MultipleChoiceQuestionStatisticTypeEnum = {
     MultipleChoice: 'multiple-choice' as const,
 } as const;
 
-export const MultipleChoiceQuizQuestionStatisticTypeEnumValues = ['multiple-choice'] as const;
+export const MultipleChoiceQuestionStatisticTypeEnumValues = ['multiple-choice'] as const;

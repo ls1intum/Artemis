@@ -11,7 +11,6 @@
 
 export interface PointCounter {
     points?: number;
-    id?: number;
     ratedCounter?: number;
     unRatedCounter?: number;
 }

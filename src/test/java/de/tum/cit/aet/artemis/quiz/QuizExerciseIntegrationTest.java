@@ -933,6 +933,38 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectExerciseSearchWithoutSortedColumn() throws Exception {
+        request.performMvcRequest(get("/api/quiz/quiz-exercises").param("page", "0").param("pageSize", "20").param("sortingOrder", "ASCENDING").param("searchTerm", "quiz"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReturnOnDemandPointStatisticsWhenUsingLegacyRecalculationPath() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
+
+        JsonNode currentResponse = request.get(statisticsBasePath + "/statistics/points", OK, JsonNode.class);
+        JsonNode legacyResponse = request.get(statisticsBasePath + "/recalculate-statistics", OK, JsonNode.class);
+
+        assertThat(legacyResponse.path("id").asLong()).isEqualTo(quizExercise.getId());
+        assertThat(legacyResponse.path("quizQuestions")).isNotEmpty();
+        assertThat(legacyResponse.path("quizPointStatistic")).isEqualTo(currentResponse.path("quizPointStatistic"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnForbiddenWhenStudentUsesLegacyRecalculationPath() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1),
+                QuizMode.SYNCHRONIZED);
+        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
+
+        request.get(statisticsBasePath + "/statistics/points", FORBIDDEN, JsonNode.class);
+        request.get(statisticsBasePath + "/recalculate-statistics", FORBIDDEN, JsonNode.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);

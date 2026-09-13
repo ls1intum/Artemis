@@ -11,7 +11,6 @@
 
 export interface ShortAnswerSpotCounter {
     spotId?: number;
-    id?: number;
     ratedCounter?: number;
     unRatedCounter?: number;
 }

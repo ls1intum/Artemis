@@ -15,7 +15,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { QuizExerciseWithStatistics } from '../model/quiz-exercise-with-statistics';
+import { QuizExerciseDetails } from '../model/quiz-exercise-details';
 import { QuizExerciseCreate } from '../model/quiz-exercise-create';
 import { UpdateQuizExercise } from '../model/update-quiz-exercise';
 
@@ -31,7 +31,7 @@ export class QuizExerciseCreationUpdateApi {
      * @param exercise
      * @param files
      */
-    createCourseQuizExercise(courseId: number, exercise: QuizExerciseCreate, files?: Array<Blob>): Observable<QuizExerciseWithStatistics> {
+    createCourseQuizExercise(courseId: number, exercise: QuizExerciseCreate, files?: Array<Blob>): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/courses/${courseId}/quiz-exercises`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
@@ -40,7 +40,7 @@ export class QuizExerciseCreationUpdateApi {
         if (files !== undefined && files !== null) {
             files.forEach(item => formData.append('files', item));
         }
-        return this.http.post<QuizExerciseWithStatistics>(url, formData);
+        return this.http.post<QuizExerciseDetails>(url, formData);
     }
 
     /**
@@ -50,7 +50,7 @@ export class QuizExerciseCreationUpdateApi {
      * @param exercise
      * @param files
      */
-    createExamQuizExercise(exerciseGroupId: number, exercise: QuizExerciseCreate, files?: Array<Blob>): Observable<QuizExerciseWithStatistics> {
+    createExamQuizExercise(exerciseGroupId: number, exercise: QuizExerciseCreate, files?: Array<Blob>): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/exercise-groups/${exerciseGroupId}/quiz-exercises`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
@@ -59,7 +59,7 @@ export class QuizExerciseCreationUpdateApi {
         if (files !== undefined && files !== null) {
             files.forEach(item => formData.append('files', item));
         }
-        return this.http.post<QuizExerciseWithStatistics>(url, formData);
+        return this.http.post<QuizExerciseDetails>(url, formData);
     }
 
     /**
@@ -70,7 +70,7 @@ export class QuizExerciseCreationUpdateApi {
      * @param notificationText
      * @param files
      */
-    updateQuizExercise(exerciseId: number, exercise: UpdateQuizExercise, notificationText?: string, files?: Array<Blob>): Observable<QuizExerciseWithStatistics> {
+    updateQuizExercise(exerciseId: number, exercise: UpdateQuizExercise, notificationText?: string, files?: Array<Blob>): Observable<QuizExerciseDetails> {
         const queryParams = new URLSearchParams();
         if (notificationText !== undefined && notificationText !== null) {
             queryParams.set('notificationText', String(notificationText));
@@ -84,7 +84,7 @@ export class QuizExerciseCreationUpdateApi {
         if (files !== undefined && files !== null) {
             files.forEach(item => formData.append('files', item));
         }
-        return this.http.put<QuizExerciseWithStatistics>(url, formData);
+        return this.http.put<QuizExerciseDetails>(url, formData);
     }
 
 }

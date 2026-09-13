@@ -10,20 +10,19 @@
 
 import type { DropLocationCounter } from './drop-location-counter';
 
-export interface DragAndDropQuizQuestionStatistic {
-    id?: number;
+export interface DragAndDropQuestionStatistic {
     participantsRated?: number;
     participantsUnrated?: number;
     ratedCorrectCounter?: number;
     unRatedCorrectCounter?: number;
     dropLocationCounters?: Array<DropLocationCounter>;
-    type: DragAndDropQuizQuestionStatisticTypeEnum;
+    type: DragAndDropQuestionStatisticTypeEnum;
 }
 
-export type DragAndDropQuizQuestionStatisticTypeEnum = 'drag-and-drop';
+export type DragAndDropQuestionStatisticTypeEnum = 'drag-and-drop';
 
-export const DragAndDropQuizQuestionStatisticTypeEnum = {
+export const DragAndDropQuestionStatisticTypeEnum = {
     DragAndDrop: 'drag-and-drop' as const,
 } as const;
 
-export const DragAndDropQuizQuestionStatisticTypeEnumValues = ['drag-and-drop'] as const;
+export const DragAndDropQuestionStatisticTypeEnumValues = ['drag-and-drop'] as const;

@@ -10,20 +10,19 @@
 
 import type { ShortAnswerSpotCounter } from './short-answer-spot-counter';
 
-export interface ShortAnswerQuizQuestionStatistic {
-    id?: number;
+export interface ShortAnswerQuestionStatistic {
     participantsRated?: number;
     participantsUnrated?: number;
     ratedCorrectCounter?: number;
     unRatedCorrectCounter?: number;
     shortAnswerSpotCounters?: Array<ShortAnswerSpotCounter>;
-    type: ShortAnswerQuizQuestionStatisticTypeEnum;
+    type: ShortAnswerQuestionStatisticTypeEnum;
 }
 
-export type ShortAnswerQuizQuestionStatisticTypeEnum = 'short-answer';
+export type ShortAnswerQuestionStatisticTypeEnum = 'short-answer';
 
-export const ShortAnswerQuizQuestionStatisticTypeEnum = {
+export const ShortAnswerQuestionStatisticTypeEnum = {
     ShortAnswer: 'short-answer' as const,
 } as const;
 
-export const ShortAnswerQuizQuestionStatisticTypeEnumValues = ['short-answer'] as const;
+export const ShortAnswerQuestionStatisticTypeEnumValues = ['short-answer'] as const;

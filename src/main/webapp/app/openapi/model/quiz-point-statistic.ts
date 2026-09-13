@@ -12,7 +12,6 @@ import type { PointCounter } from './point-counter';
 
 export interface QuizPointStatistic {
     pointCounters?: Array<PointCounter>;
-    id?: number;
     participantsRated?: number;
     participantsUnrated?: number;
 }

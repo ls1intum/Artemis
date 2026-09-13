@@ -34,6 +34,8 @@ export interface CourseForQuizExercise {
     complaintsEnabled?: boolean;
     requestMoreFeedbackEnabled?: boolean;
     accuracyOfScores?: number;
+    athenaGradingFeedbackEnabled?: boolean;
+    athenaFormativeFeedbackEnabled?: boolean;
 }
 
 export type CourseForQuizExerciseLanguageEnum = 'ENGLISH' | 'GERMAN';

@@ -39,6 +39,8 @@ api/quiz-submission-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
 api/quiz-exercise-evaluation-resources.ts
+api/quiz-statistics-resources.ts
+api/hyperion-exercise-variant-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/legacy-calendar-resources.ts
 api/global-search-resources.ts
