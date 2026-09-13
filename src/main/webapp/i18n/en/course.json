@@ -256,7 +256,7 @@
                 },
                 "settingsPage": {
                     "title": "Athena Settings",
-                    "sidebarTitle": "Athena Settings",
+                    "sidebarTitle": "Athena",
                     "generalTab": "General",
                     "adminTab": "Admin",
                     "adminOnly": "These settings are visible to administrators only.",
