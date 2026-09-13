@@ -222,6 +222,18 @@ class StageCheckServiceTest {
     }
 
     @Test
+    void specGateRejectsAnOwnershipMarkerThatThePublicApiParserCannotAttach() {
+        sandbox.spec = specWithDesign("| Calculator | calculate a result | stubbed |\n").replace("public int calculate(int input);",
+                "public int calculate(int input); // /** @studentCreates */ learner adds the declaration");
+
+        StageCheckResult result = check(GenerationStage.SPEC);
+
+        assertThat(result.passed()).isFalse();
+        assertThat(result.observation()).contains("@studentCreates", "constructor or method", "complete final signature");
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+    }
+
+    @Test
     void validateArtifactWrite_rejectsAStudentCreatedTypeDeclarationInTheTemplate() {
         approvedSpecs.approve("s", specWithDesign("| FuelStrategy | designed by students | student-creates |\n"));
 

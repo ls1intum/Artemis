@@ -32,6 +32,8 @@ final class ApprovedStructuralContract {
 
     private static final Pattern JAVA_BLOCK = Pattern.compile("```java\\s*([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern STUDENT_CREATES_MARKER = Pattern.compile("@studentCreates\\b");
+
     private final Map<String, JavaClass> types;
 
     private ApprovedStructuralContract(Map<String, JavaClass> types) {
@@ -47,8 +49,10 @@ final class ApprovedStructuralContract {
         List<String> errors = new ArrayList<>();
         Matcher blocks = JAVA_BLOCK.matcher(section(specification, "## Public API"));
         int blockCount = 0;
+        long ownershipMarkers = 0;
         while (blocks.find()) {
             blockCount++;
+            ownershipMarkers += STUDENT_CREATES_MARKER.matcher(blocks.group(1)).results().count();
             try {
                 builder.addSource(new StringReader(normalizeSkeleton(blocks.group(1))));
             }
@@ -58,6 +62,13 @@ final class ApprovedStructuralContract {
         }
         if (blockCount == 0) {
             errors.add("## Public API needs fenced ```java blocks containing exact type and member signatures");
+        }
+        long ownedMembers = builder.getClasses().stream().mapToLong(type -> type.getMethods().stream().filter(ApprovedStructuralContract::studentCreates).count()
+                + type.getConstructors().stream().filter(ApprovedStructuralContract::studentCreates).count()).sum();
+        if (ownershipMarkers != ownedMembers) {
+            errors.add("Each @studentCreates marker must be a Javadoc block tag immediately before one constructor or method declaration. "
+                    + "Line comments, ordinary comments, fields, and type declarations do not assign member ownership. Keep the complete final signature, including throws "
+                    + "clauses: the tag omits the whole member from the template, not part of its signature.");
         }
 
         Map<String, JavaClass> parsed = new LinkedHashMap<>();

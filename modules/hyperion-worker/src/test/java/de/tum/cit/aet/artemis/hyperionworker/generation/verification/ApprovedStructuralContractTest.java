@@ -16,6 +16,51 @@ class ApprovedStructuralContractTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @ParameterizedTest
+    @ValueSource(strings = { "public void update(); // /** @studentCreates */ add the throws clause later", "/* @studentCreates */ public void update() throws ChangeException;",
+            "public void update() throws ChangeException; // @studentCreates", "/** @studentCreates */ public int count;", "/** @studentCreates */ public class Nested {}" })
+    void misplacedOwnershipMarkersCannotSilentlyChangeTheApprovedContract(String member) {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Document {
+                    %s
+                }
+                ```
+                """.formatted(member), Set.of("Document"), Set.of());
+
+        assertThat(parsed.errors()).anyMatch(reason -> reason.contains("@studentCreates") && reason.contains("constructor or method"));
+    }
+
+    @Test
+    void studentCreatedMethodRetainsItsCheckedExceptionInTheSolutionContract() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Document {
+                    public Document();
+                    /** @studentCreates */
+                    public void update() throws ChangeException;
+                }
+                ```
+                ```java
+                public class ChangeException extends Exception {}
+                ```
+                """, Set.of("Document", "ChangeException"), Set.of("ChangeException"));
+
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().templateDependencies(Set.of("Document"), Set.of("ChangeException"))).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Document.java", "public class Document { public Document() {} }"), Set.of("Document"))).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", """
+                public class Document {
+                    public Document() {}
+                    public void update() throws ChangeException {}
+                }
+                """, "ChangeException.java", "public class ChangeException extends Exception {}"))).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Document.java", "public class Document { public Document() {} public void update() {} }",
+                "ChangeException.java", "public class ChangeException extends Exception {}"))).anyMatch(reason -> reason.contains("throws=[ChangeException]"));
+    }
+
     @Test
     void unboundedGenericClassSeedsErasedAresSignaturesAndAnIndependentGenericContract() throws Exception {
         var parsed = ApprovedStructuralContract.parse("""
