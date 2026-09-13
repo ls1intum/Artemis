@@ -135,10 +135,11 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
 
     /**
      * Creates the record written into the exercise details file of an export or an archive. It is the response record
-     * without the ids of the plagiarism detection and the team assignment configuration: the file is read back by
-     * another instance, which creates a new exercise from it. An importer that copies those ids onto its new exercise,
-     * as every released version does for the plagiarism configuration, would otherwise reach persistence with the
-     * identity of the exported exercise's configuration row.
+     * without the ids of the plagiarism detection configuration, the team assignment configuration and the auxiliary
+     * repositories: the file is read back by another instance, which creates a new exercise from it. An importer that
+     * copies those ids onto its new exercise, as every released version does for the plagiarism configuration, would
+     * otherwise reach persistence with the identity of the exported exercise's rows - and the creation rejects an
+     * auxiliary repository that already has an id outright.
      *
      * @param exercise the exercise to export (may be {@code null})
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -188,7 +189,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
 
         List<AuxiliaryRepositoryDTO> auxiliaryRepositories = null;
         if (exercise.getAuxiliaryRepositories() != null && Hibernate.isInitialized(exercise.getAuxiliaryRepositories())) {
-            auxiliaryRepositories = exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();
+            auxiliaryRepositories = exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).map(repository -> forExport ? repository.withoutId() : repository)
+                    .toList();
         }
 
         List<ProgrammingExerciseStudentParticipationDTO> studentParticipations = null;

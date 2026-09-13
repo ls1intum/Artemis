@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -99,6 +101,9 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -721,6 +726,40 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(saved.getPlagiarismDetectionConfig().getId()).as("the import created its own configuration row").isNotNull().isNotEqualTo(sourceConfigId);
         var source = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
         assertThat(source.getPlagiarismDetectionConfig().getId()).as("the exported exercise keeps its own configuration row").isEqualTo(sourceConfigId);
+    }
+
+    /**
+     * The sharing import posts the details file back as the create form and drops nothing but the top-level id on the
+     * way (see {@code ExerciseSharingService#getExerciseDetailsFromBasket}). An auxiliary repository that still carried
+     * its id would therefore reach the creation, which rejects it with {@code INVALID_AUXILIARY_REPOSITORY_ID}: a
+     * shared exercise with an auxiliary repository could not be imported at all.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_detailsWithAuxiliaryRepositoriesImportIntoTheSharingCreation() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        var exerciseToExport = programmingExerciseRepository
+                .findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        // what the sharing import does to the file before it binds it: the exercise id goes, the nested ones stay
+        ObjectNode written = (ObjectNode) JsonObjectMapper.get().readTree(details);
+        written.remove("id");
+        assertThat(written.get("auxiliaryRepositories")).as("the auxiliary repository is part of the create form").hasSize(1);
+        assertThat(written.get("auxiliaryRepositories").get(0).get("id")).as("the exported auxiliary repository carries no id").isNull();
+
+        var importRequest = JsonObjectMapper.get().treeToValue(written, ImportProgrammingExerciseRequestDTO.class);
+        ProgrammingExercise imported = importRequest.toEntity();
+        assertThatCode(() -> auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(imported, imported.getAuxiliaryRepositories()))
+                .as("the shared exercise passes the validation the creation runs").doesNotThrowAnyException();
+        // the repository itself survives, only the identity is gone
+        assertThat(imported.getAuxiliaryRepositories()).hasSize(1);
+        assertThat(imported.getAuxiliaryRepositories().getFirst().getName()).isEqualTo("solutionhints");
+        assertThat(imported.getAuxiliaryRepositories().getFirst().getCheckoutDirectory()).isEqualTo("solutionhints");
     }
 
     private static TeamAssignmentConfig teamAssignmentConfig() {
