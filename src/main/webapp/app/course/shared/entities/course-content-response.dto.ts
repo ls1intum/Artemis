@@ -1,18 +1,15 @@
-import { Competency, CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { Course, CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
-import { CourseManagementDTO, CoursePrerequisiteDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
-import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLDiagramType } from '@tumaet/apollon';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import type { Competency, CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import type { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import type { CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
+import { courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
+import type { CourseManagementDTO, CoursePrerequisiteDTO } from 'app/course/shared/entities/course-management-response.dto';
+import type { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import type { Exam } from 'app/exam/shared/entities/exam.model';
+import type { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import type { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import type { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
@@ -83,7 +80,7 @@ export interface AssessmentDashboardExerciseDTO extends CourseManagementExercise
 }
 
 export interface CourseTutorParticipationDTO {
-    id: number;
+    id?: number;
     tutorId?: number;
     status: TutorParticipationStatus;
 }
@@ -168,8 +165,7 @@ export interface CourseDashboardExamDTO {
 }
 
 export function exerciseFromCourseManagementDTO(dto: CourseManagementExerciseDTO): Exercise {
-    const exercise = createExercise(dto.type);
-    return hydrate(exercise, dto);
+    return hydrate({} as Exercise, dto);
 }
 
 export function courseFromWithExercisesDTO(dto: CourseWithExercisesDTO): Course {
@@ -206,7 +202,7 @@ export function courseFromDashboardDTO(dto: CourseDashboardDTO): Course {
     course.competencies = (competencies ?? []).map(competencyFromDTO);
     course.prerequisites = (prerequisites ?? []).map(prerequisiteFromDTO);
     course.exams = (exams ?? []).map((examDTO) =>
-        hydrate(new Exam(), examDTO, {
+        hydrate({} as Exam, examDTO, {
             startDate: convertDateStringFromServer(examDTO.startDate),
             endDate: convertDateStringFromServer(examDTO.endDate),
             visibleDate: convertDateStringFromServer(examDTO.visibleDate),
@@ -221,31 +217,16 @@ export function courseFromDashboardDTO(dto: CourseDashboardDTO): Course {
 }
 
 function competencyFromDTO(dto: CourseCompetencyDashboardDTO): Competency {
-    return hydrate(new Competency(), dto, { softDueDate: convertDateStringFromServer(dto.softDueDate) });
+    return hydrate({} as Competency, dto, { softDueDate: convertDateStringFromServer(dto.softDueDate) });
 }
 
 function lectureFromCourseManagementDTO(dto: LectureForCourseManagementDTO): Lecture {
-    return hydrate(new Lecture(), dto, {
+    return hydrate({} as Lecture, dto, {
         startDate: convertDateStringFromServer(dto.startDate),
         endDate: convertDateStringFromServer(dto.endDate),
     });
 }
 
 function prerequisiteFromDTO(dto: CoursePrerequisiteDTO): Prerequisite {
-    return hydrate(new Prerequisite(), dto, { softDueDate: convertDateStringFromServer(dto.softDueDate) });
-}
-
-export function createExercise(type: ExerciseType): Exercise {
-    switch (type) {
-        case ExerciseType.PROGRAMMING:
-            return new ProgrammingExercise(undefined, undefined);
-        case ExerciseType.MODELING:
-            return new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        case ExerciseType.QUIZ:
-            return new QuizExercise(undefined, undefined);
-        case ExerciseType.TEXT:
-            return new TextExercise(undefined, undefined);
-        case ExerciseType.FILE_UPLOAD:
-            return new FileUploadExercise(undefined, undefined);
-    }
+    return hydrate({} as Prerequisite, dto, { softDueDate: convertDateStringFromServer(dto.softDueDate) });
 }

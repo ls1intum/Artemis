@@ -1,5 +1,5 @@
 import { CourseForDashboardDTO, CourseForDashboardResponseDTO, courseForDashboardFromDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import type { Exam } from 'app/exam/shared/entities/exam.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
@@ -31,7 +31,7 @@ export function coursesForDashboardFromDTO(dto: CoursesForDashboardResponseDTO):
     return {
         courses: (dto.courses ?? []).map(courseForDashboardFromDTO),
         activeExams: (dto.activeExams ?? []).map((examDTO) =>
-            hydrate(new Exam(), examDTO, {
+            hydrate({} as Exam, examDTO, {
                 startDate: convertDateStringFromServer(examDTO.startDate),
                 endDate: convertDateStringFromServer(examDTO.endDate),
             }),

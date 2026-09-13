@@ -1,12 +1,12 @@
 import { User } from 'app/account/user/user.model';
-import { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import type { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import type { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { Course, CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import type { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 export interface CoursePrerequisiteDTO {
     id: number;
@@ -185,7 +185,7 @@ export function courseFromManagementDTO(dto: CourseManagementDTO): Course {
 export function courseFromEnrollmentDTO(dto: CourseForEnrollmentDTO): Course {
     const course: Course = hydrate(new Course(), dto);
     course.prerequisites = (dto.prerequisites ?? []).map((prerequisiteDTO) => {
-        const prerequisite: Prerequisite = hydrate(new Prerequisite(), prerequisiteDTO);
+        const prerequisite: Prerequisite = hydrate({} as Prerequisite, prerequisiteDTO);
         prerequisite.softDueDate = convertDateStringFromServer(prerequisiteDTO.softDueDate);
         return prerequisite;
     });
@@ -194,7 +194,7 @@ export function courseFromEnrollmentDTO(dto: CourseForEnrollmentDTO): Course {
 
 export function courseFromQuizSelectionDTO(dto: CourseForQuizSelectionDTO): Course {
     const course: Course = hydrate(new Course(), dto);
-    course.exercises = (dto.exercises ?? []).map((exerciseDTO) => hydrate(new QuizExercise(undefined, undefined), exerciseDTO));
+    course.exercises = (dto.exercises ?? []).map((exerciseDTO) => hydrate({} as QuizExercise, exerciseDTO));
     return course;
 }
 

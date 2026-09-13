@@ -1,6 +1,7 @@
-import { Course } from 'app/course/shared/entities/course.model';
-import { CourseScores } from 'app/course/manage/course-scores/course-scores';
-import { CourseDashboardDTO, courseFromDashboardDTO } from 'app/course/shared/entities/course-content-response.dto';
+import type { Course } from 'app/course/shared/entities/course.model';
+import type { CourseScores } from 'app/course/manage/course-scores/course-scores';
+import { courseFromDashboardDTO } from 'app/course/shared/entities/course-content-response.dto';
+import type { CourseDashboardDTO } from 'app/course/shared/entities/course-content-response.dto';
 
 export interface CourseForDashboardResponseDTO extends Omit<CourseForDashboardDTO, 'course'> {
     course: CourseDashboardDTO;

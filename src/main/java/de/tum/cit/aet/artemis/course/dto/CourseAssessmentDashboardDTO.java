@@ -47,7 +47,7 @@ public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO co
 
     /** Tutor participation state attached to one assessed exercise. */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorParticipationDTO(long id, @Nullable Long tutorId, TutorParticipationStatus status) {
+    public record TutorParticipationDTO(@Nullable Long id, @Nullable Long tutorId, TutorParticipationStatus status) {
 
         private static TutorParticipationDTO of(TutorParticipation participation) {
             return new TutorParticipationDTO(participation.getId(), participation.getTutor() == null ? null : participation.getTutor().getId(), participation.getStatus());
