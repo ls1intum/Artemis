@@ -5,8 +5,6 @@ import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsa
 /**
  * Architecture test to verify that REST controllers in the LocalCI module
  * do not use @Entity types directly. Controllers should use DTOs instead.
- * <p>
- * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class LocalCIEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -15,10 +13,9 @@ class LocalCIEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
         return ARTEMIS_PACKAGE + ".localci";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 2;
+        return 0;
     }
 
     @Override
