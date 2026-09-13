@@ -19,18 +19,18 @@ import com.openai.errors.RateLimitException;
 class ProviderFailureClassTest {
 
     @Test
-    void providerErrorStatusesProveNoUsageAndOnlyTransientOnesRetry() {
+    void onlyRejectionsProveNoUsageNotServerErrors() {
         var internal = InternalServerException.builder().statusCode(500).headers(Headers.builder().build()).build();
         var rateLimited = RateLimitException.builder().headers(Headers.builder().build()).build();
         var badRequest = BadRequestException.builder().headers(Headers.builder().build()).build();
 
-        assertThat(ProviderFailureClass.of(internal)).isEqualTo(ProviderFailureClass.REJECTED_TRANSIENT);
+        assertThat(ProviderFailureClass.of(internal)).isEqualTo(ProviderFailureClass.INDETERMINATE);
         assertThat(ProviderFailureClass.of(rateLimited)).isEqualTo(ProviderFailureClass.REJECTED_TRANSIENT);
         assertThat(ProviderFailureClass.of(badRequest)).isEqualTo(ProviderFailureClass.REJECTED);
         assertThat(ProviderFailureClass.REJECTED.provesNoUsage()).isTrue();
         assertThat(ProviderFailureClass.REJECTED.retryable()).isFalse();
         // Wrapped by a client layer: the status still decides.
-        assertThat(ProviderFailureClass.of(new IllegalStateException("wrapped", internal))).isEqualTo(ProviderFailureClass.REJECTED_TRANSIENT);
+        assertThat(ProviderFailureClass.of(new IllegalStateException("wrapped", internal))).isEqualTo(ProviderFailureClass.INDETERMINATE);
         assertThat(ProviderFailureClass.describe(new IllegalStateException("wrapped", internal))).isEqualTo("IllegalStateException <- InternalServerException HTTP 500");
     }
 
