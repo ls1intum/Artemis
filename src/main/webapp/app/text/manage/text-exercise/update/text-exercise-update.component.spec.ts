@@ -321,6 +321,28 @@ describe('TextExercise Management Update Component', () => {
                 expect(savingDuringFlush).toBe(false);
             });
 
+            it('should abort the save when the grading instructions could not be parsed', async () => {
+                const exercise = createExistingExercise();
+                routeData$.next({ textExercise: exercise });
+                routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+
+                fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                Object.defineProperty(component, 'gradingInstructionsDetails', { value: () => ({ prepareForSave: () => false }) });
+                const update = vi.spyOn(textExerciseService, 'update');
+
+                component.save();
+                await fixture.whenStable();
+
+                // The exercise still holds the previous grading criteria, so sending it would persist
+                // criteria the user no longer sees and discard the text they typed.
+                expect(update).not.toHaveBeenCalled();
+                expect(component.isSaving()).toBe(false);
+            });
+
             it('should error during save', async () => {
                 const exercise = createExistingExercise();
                 routeData$.next({ textExercise: exercise });

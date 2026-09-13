@@ -607,6 +607,56 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.showEditMode()).toBe(true);
         });
 
+        /** Two criteria carrying the same {@id:1} marker, neither still matching the persisted content. */
+        const rejectedDomainActions = () => {
+            const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+            return [
+                { text: '{@id:1} renamed copy', action: domainActions[0].action },
+                ...domainActions.slice(1, 5),
+                { text: 'copy feedback', action: domainActions[5].action },
+                domainActions[6],
+                { text: '{@id:1} renamed original', action: domainActions[0].action },
+                ...domainActions.slice(1),
+            ] as TextWithDomainAction[];
+        };
+
+        it('should report failure from prepareForSave when the flushed text is rejected', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            vi.spyOn(alertService, 'error');
+            const rejected = rejectedDomainActions();
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => 'markdown with a duplicated marker',
+                    flushLiveMarkdownAndParse: vi.fn(() => component.onDomainActionsFound(rejected)),
+                }),
+            });
+
+            expect(component.prepareForSave()).toBe(false);
+            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+        });
+
+        it('should stay in text mode when switching to structured mode is rejected', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            vi.spyOn(alertService, 'error');
+            const rejected = rejectedDomainActions();
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => 'markdown with a duplicated marker',
+                    flushLiveMarkdownAndParse: vi.fn(() => component.onDomainActionsFound(rejected)),
+                }),
+            });
+
+            component.setEditMode('structured');
+
+            // Switching would regenerate the markdown from the previous criteria and discard the text.
+            expect(component.showEditMode()).toBe(false);
+            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+        });
+
         it('should flush the live monaco buffer before switching to structured mode', () => {
             component.showEditMode.set(false);
             const markdownEditor = { flushLiveMarkdownAndParse: vi.fn() };
@@ -1026,7 +1076,8 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('brand new feedback');
     });
 
-    it('should keep instruction id when a marked instruction moves to another criterion', () => {
+    it('should reject the parse when a marked instruction moves to another criterion', () => {
+        vi.spyOn(alertService, 'error');
         const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
         const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
         const criterionA = { id: 1, title: 'Criterion A', structuredGradingInstructions: [instructionA] } as GradingCriterion;
@@ -1060,14 +1111,12 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(domainActions);
 
-        expect(exercise.gradingCriteria![0]).toBe(criterionA);
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toHaveLength(0);
-        expect(exercise.gradingCriteria![1]).toBe(criterionB);
-        const moved = exercise.gradingCriteria![1].structuredGradingInstructions;
-        expect(moved).toHaveLength(2);
-        expect(moved[0]).toBe(instructionB);
-        expect(moved[1]).toBe(instructionA);
-        expect(moved[1].id).toBe(10);
+        // The server maps a criterion's instructions with orphan removal, so instruction 10 leaving
+        // criterion A is a delete there rather than a move, which would detach its feedback.
+        expect(exercise.gradingCriteria).toEqual([criterionA, criterionB]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instructionA);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(instructionB);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
     });
 
     it('should reject the parse and keep the previous model when both duplicate instruction copies are edited', () => {

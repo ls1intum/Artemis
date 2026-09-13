@@ -100,6 +100,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
+    /** Whether the last parse was rejected, so the model still holds the previous criteria. */
+    private parseRejected = false;
 
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
@@ -314,13 +316,20 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * Flushes the live Monaco buffer into the exercise model. Hosts must call this synchronously
      * before setting isSaving (which sets editable=false and would no-op this method) or sending
      * the update DTO, otherwise a save inside the markdownChange debounce window keeps stale text.
+     *
+     * @returns false when the flushed text was rejected, so the previous criteria are still in the
+     * model. The caller must abort: saving would persist criteria the user no longer sees and
+     * discard the text they typed.
      */
-    prepareForSave(): void {
+    prepareForSave(): boolean {
         if (!this.editable() || this.showEditMode()) {
-            return;
+            return true;
         }
         this.cleanupExerciseGradingInstructions();
         const editor = this.markdownEditor();
+        // A rejection from an earlier debounced parse must not block this save: only what the flush
+        // below reports counts.
+        this.parseRejected = false;
         editor?.flushLiveMarkdownAndParse();
         // parseMarkdown emits textWithDomainActionsFound only for non-empty markdown, so an emptied
         // buffer never reaches onDomainActionsFound and would otherwise keep the previous criteria.
@@ -330,6 +339,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (liveMarkdown !== undefined && !liveMarkdown.trim()) {
             this.clearGradingCriteria();
         }
+        return !this.parseRejected;
     }
 
     private clearGradingCriteria(): void {
@@ -491,6 +501,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.editable()) {
             return;
         }
+        this.parseRejected = false;
         const previousCriteria = this.exercise().gradingCriteria ?? [];
         this.instructions = [];
         this.criteria.set([]);
@@ -513,6 +524,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         const plan = this.planReconciliation(previousCriteria, previousInstructions, parsedCriteria);
         if (!plan) {
             // Nothing has been mutated yet at this point, so the previous objects are still intact.
+            this.parseRejected = true;
             this.exercise().gradingCriteria = previousCriteria;
             this.criteria.set(previousCriteria);
             this.instructions = previousInstructions;
@@ -551,31 +563,50 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         const ambiguousCriterionIds = this.duplicateParsedIds(parsedCriteria);
         const ambiguousInstructionIds = this.duplicateParsedIds(parsedInstructions);
         const unusedCriteria = [...previousCriteria];
-        // Shared pool so an instruction moved between criteria can still reclaim by marker id.
-        const unusedInstructions = [...previousInstructions];
+        const previousOwners = new Map<number, GradingCriterion>();
+        for (const criterion of previousCriteria) {
+            for (const instruction of criterion.structuredGradingInstructions ?? []) {
+                if (instruction.id != undefined) {
+                    previousOwners.set(instruction.id, criterion);
+                }
+            }
+        }
 
-        const plan: ReconciliationPlan = parsedCriteria.map((parsedCriterion) => ({
-            parsedCriterion,
-            previousCriterion: this.takeMatch(
+        let movedInstruction = false;
+        const plan: ReconciliationPlan = parsedCriteria.map((parsedCriterion) => {
+            const previousCriterion = this.takeMatch(
                 unusedCriteria,
                 parsedCriterion,
                 ambiguousCriterionIds,
                 (criterion) => this.criterionSignature(criterion),
                 (criterion) => criterion.title || undefined,
-            ),
-            instructions: (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => ({
-                parsedInstruction,
-                previousInstruction: this.takeMatch(unusedInstructions, parsedInstruction, ambiguousInstructionIds, (instruction) => this.instructionFingerprint(instruction)),
-            })),
-        }));
+            );
+            // An instruction identity only exists within its criterion: the server maps the criterion's
+            // instructions with orphan removal, so one that leaves its criterion is deleted rather than
+            // re-parented, and `GradingInstruction.preRemove()` detaches its existing feedback.
+            const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
+            const instructions = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => {
+                // An ambiguous id is governed by the duplicate rules below, not read as a move.
+                if (parsedInstruction.id != undefined && !ambiguousInstructionIds.has(parsedInstruction.id)) {
+                    const owner = previousOwners.get(parsedInstruction.id);
+                    movedInstruction ||= owner != undefined && owner !== previousCriterion;
+                }
+                return {
+                    parsedInstruction,
+                    previousInstruction: this.takeMatch(unusedInstructions, parsedInstruction, ambiguousInstructionIds, (instruction) => this.instructionFingerprint(instruction)),
+                };
+            });
+            return { parsedCriterion, previousCriterion, instructions };
+        });
 
-        // A persisted instruction inside a criterion that is sent as new would reach the server as a
-        // detached entity and re-parent its feedback, so that plan is not applied.
-        const misplacedInstruction = plan.some((entry) => !entry.previousCriterion && entry.instructions.some(({ previousInstruction }) => previousInstruction));
         // Deleting a row is legitimate, but a persisted entity whose marker was copied is never meant
         // to be deleted: no copy could reclaim it, so applying the parse would drop it silently.
-        const isLost = <T extends { id?: number }>(unused: T[], ambiguousIds: Set<number>) => unused.some((entity) => entity.id != undefined && ambiguousIds.has(entity.id));
-        if (misplacedInstruction || isLost(unusedCriteria, ambiguousCriterionIds) || isLost(unusedInstructions, ambiguousInstructionIds)) {
+        const claimedInstructions = new Set(plan.flatMap((entry) => entry.instructions.map(({ previousInstruction }) => previousInstruction)));
+        const lostCriterion = unusedCriteria.some((criterion) => criterion.id != undefined && ambiguousCriterionIds.has(criterion.id));
+        const lostInstruction = previousInstructions.some(
+            (instruction) => instruction.id != undefined && ambiguousInstructionIds.has(instruction.id) && !claimedInstructions.has(instruction),
+        );
+        if (movedInstruction || lostCriterion || lostInstruction) {
             return undefined;
         }
         return plan;
@@ -631,13 +662,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             seenIds.add(id);
         }
         return duplicateIds;
-    }
-
-    private findUnusedById<T extends { id?: number }>(unused: T[], id: number | undefined, ambiguousIds: Set<number>): number {
-        if (id == undefined || ambiguousIds.has(id)) {
-            return -1;
-        }
-        return unused.findIndex((entity) => entity.id === id);
     }
 
     private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {
@@ -816,8 +840,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         // Flush Monaco before destroying it when leaving text mode — textChanged is debounced (~200ms).
-        if (next) {
-            this.prepareForSave();
+        // A rejected parse keeps the user in text mode: the structured view would show the previous
+        // criteria and regenerating the markdown from them would discard what they typed.
+        if (next && !this.prepareForSave()) {
+            return;
         }
         this.showEditMode.set(next);
         this.markdownEditorText.set(this.generateMarkdown());
@@ -833,7 +859,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         }
 
         if (!this.showEditMode()) {
-            this.prepareForSave();
+            if (!this.prepareForSave()) {
+                return;
+            }
             if (!this.hasValidParsedCriteria()) {
                 this.alertService.error('artemisApp.exercise.assessmentCriteriaGeneration.invalidSyntax');
                 return;
