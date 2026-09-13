@@ -14,7 +14,7 @@
  */
 export interface GeneratedAssessmentInstruction {
     /** Nonnegative credits awarded */
-    credits?: number;
+    credits: number;
     /** Grading scale label */
     gradingScale: string;
     /** Assessment instruction */
@@ -22,5 +22,5 @@ export interface GeneratedAssessmentInstruction {
     /** Suggested feedback */
     feedback: string;
     /** Maximum number of uses */
-    usageCount?: number;
+    usageCount: number;
 }

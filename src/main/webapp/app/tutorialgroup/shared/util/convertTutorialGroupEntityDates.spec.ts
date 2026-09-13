@@ -6,6 +6,7 @@ import {
     convertTutorialGroupDatesFromServer,
     convertTutorialGroupFreePeriodDatesFromServer,
     convertTutorialGroupSessionDatesFromServer,
+    convertTutorialGroupSummaryArrayDatesFromServer,
     convertTutorialGroupsConfigurationDatesFromServer,
 } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -14,6 +15,7 @@ import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutoria
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Dayjs } from 'dayjs/esm';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 
 const START = '2026-03-26T10:00:00.000Z';
 const END = '2026-03-26T12:00:00.000Z';
@@ -137,5 +139,51 @@ describe('convertTutorialGroupEntityDates', () => {
 
         expect(dayjs.isDayjs(result[0].nextSession?.start)).toBe(true);
         expect(dayjs.isDayjs(result[0].nextSession?.end)).toBe(true);
+    });
+
+    it('should convert generated tutorial group summaries to entity date types', () => {
+        const tutorialGroup: TutorialGroupSummary = {
+            tutorialGroupSchedule: {
+                validFromInclusive: VALID_FROM,
+                validToInclusive: VALID_TO,
+            },
+            tutorialGroupSessions: [
+                {
+                    start: START,
+                    end: END,
+                    tutorialGroupFreePeriod: {
+                        start: NEXT_START,
+                        end: NEXT_END,
+                    },
+                },
+            ],
+            nextSession: {
+                start: NEXT_START,
+                end: NEXT_END,
+            },
+            channel: {
+                creationDate: START,
+                lastMessageDate: END,
+                lastReadDate: NEXT_START,
+                subTypeReferenceStartDate: VALID_FROM,
+                subTypeReferenceEndDate: VALID_TO,
+            },
+        };
+
+        const [result] = convertTutorialGroupSummaryArrayDatesFromServer([tutorialGroup]);
+
+        expect(dayjs.isDayjs(result.tutorialGroupSchedule?.validFromInclusive)).toBe(true);
+        expect(dayjs.isDayjs(result.tutorialGroupSchedule?.validToInclusive)).toBe(true);
+        expect(dayjs.isDayjs(result.tutorialGroupSessions?.[0].start)).toBe(true);
+        expect(dayjs.isDayjs(result.tutorialGroupSessions?.[0].end)).toBe(true);
+        expect(dayjs.isDayjs(result.tutorialGroupSessions?.[0].tutorialGroupFreePeriod?.start)).toBe(true);
+        expect(dayjs.isDayjs(result.tutorialGroupSessions?.[0].tutorialGroupFreePeriod?.end)).toBe(true);
+        expect(dayjs.isDayjs(result.nextSession?.start)).toBe(true);
+        expect(dayjs.isDayjs(result.nextSession?.end)).toBe(true);
+        expect(dayjs.isDayjs(result.channel?.creationDate)).toBe(true);
+        expect(dayjs.isDayjs(result.channel?.lastMessageDate)).toBe(true);
+        expect(dayjs.isDayjs(result.channel?.lastReadDate)).toBe(true);
+        expect(dayjs.isDayjs(result.channel?.subTypeReferenceStartDate)).toBe(true);
+        expect(dayjs.isDayjs(result.channel?.subTypeReferenceEndDate)).toBe(true);
     });
 });
