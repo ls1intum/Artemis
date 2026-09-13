@@ -144,27 +144,30 @@ jhi-modeling-assessment {
     margin: 0;
     padding: 0;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.75rem;
     list-style: none;
 }
 
+// Wraps a <jhi-unified-feedback> card, which supplies its own border/background/radius —
+// this stays a plain interactive shell (click/hover/keyboard/selected affordances only) so
+// referenced feedback doesn't end up double-boxed.
 .feedback-row {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    column-gap: 0.5rem;
-    row-gap: 0.125rem;
-    padding: 0.4375rem 0.5rem;
-    border: 1px solid var(--apollon-border, var(--bs-border-color));
+    display: block;
     border-radius: var(--apollon-radius-md, 6px);
-    background-color: var(--apollon-surface, var(--bs-body-bg));
-    transition: border-color 120ms ease;
+    transition: box-shadow 120ms ease;
+
+    // The card's own margin-bottom (spacing meant for a plain vertical stack) would otherwise sit
+    // inside this flex item's box, pushing the box-shadow ring below past the card's visible edge.
+    // .feedback-list's own `gap` already spaces rows, so drop the card's redundant margin here.
+    ::ng-deep .unified-feedback {
+        margin-bottom: 0;
+    }
 
     &[role='button'] {
         cursor: pointer;
 
         &:hover {
-            border-color: var(--apollon-interactive-selection, #f39c12);
+            box-shadow: 0 0 0 2px var(--apollon-interactive-selection, #f39c12);
         }
     }
 
@@ -175,50 +178,7 @@ jhi-modeling-assessment {
 }
 
 .feedback-row--selected {
-    border-color: var(--apollon-interactive-selection, #f39c12);
-    box-shadow: 0 0 0 1px var(--apollon-interactive-selection, #f39c12);
-}
-
-.feedback-row__score {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.0625rem 0.375rem;
-    border-radius: var(--apollon-radius-sm, 4px);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.4;
-    white-space: nowrap;
-
-    &[data-tone='positive'] {
-        color: var(--apollon-assessment-positive-text);
-        background-color: var(--apollon-assessment-positive-bg);
-    }
-
-    &[data-tone='negative'] {
-        color: var(--apollon-assessment-negative-text);
-        background-color: var(--apollon-assessment-negative-bg);
-    }
-
-    &[data-tone='zero'] {
-        color: var(--apollon-assessment-zero-text);
-        background-color: var(--apollon-assessment-zero-bg);
-    }
-}
-
-.feedback-row__name {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--apollon-secondary, var(--bs-secondary-color));
-    font-size: 0.8125rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.feedback-row__text {
-    grid-column: 1 / -1;
-    margin: 0;
+    box-shadow: 0 0 0 2px var(--apollon-interactive-selection, #f39c12);
 }
 
 .modeling-submission-feedback__complaint {

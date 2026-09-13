@@ -35,16 +35,12 @@ export class ExamResultsPage {
         await expect(textExercise.locator('span', { hasText: submissionText })).toBeVisible();
     }
 
-    /**
-     * Two feedback markups live behind `#additional-feedback`: text and programming still render
-     * `jhi-unified-feedback`, while modeling renders the feedback list of its own assessment view. Both are matched so
-     * the same assertion serves every exercise type on the exam results page.
-     */
+    /** Every exercise type renders its `#additional-feedback` list through the same `jhi-unified-feedback` card. */
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
         const feedbackElement = exercise.locator(`#additional-feedback`);
-        await expect(feedbackElement.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() })).toBeVisible();
-        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 
     async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
@@ -102,11 +98,11 @@ export class ExamResultsPage {
         const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('[data-testid="component-feedback-table"]');
         const feedbackElement = componentFeedbacks
-            .locator('.unified-feedback, .feedback-row')
-            .filter({ has: this.page.locator('.unified-feedback-reference-text, .feedback-row__name', { hasText: element }) })
-            .filter({ has: this.page.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() }) });
+            .locator('.unified-feedback')
+            .filter({ has: this.page.locator('.unified-feedback-reference-text', { hasText: element }) })
+            .filter({ has: this.page.locator('.unified-feedback-points', { hasText: points.toString() }) });
         await expect(feedbackElement).toBeVisible({ timeout: 30000 });
-        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 }
 
