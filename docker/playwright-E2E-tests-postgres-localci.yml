@@ -57,14 +57,21 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'Postgres'
+            # Build-result budgets are sized from measured build durations of two full CI runs (416 builds):
+            # median 17-23 s, p99 124-133 s, max 138 s, with 55-78 "more processing jobs than the build agents'
+            # capacity" warnings per run. At the previous 90 s, 5-8 % of builds finished too late and roughly one
+            # test per run failed on it; the tests are impatient, not the builds broken. MAX_RETRIES in
+            # ExerciseAPIRequests is derived from BUILD_FINISH_TIMEOUT_MS, so this also covers the setup path that
+            # waits for the solution build to produce test cases. Raising these costs nothing on a green run: a
+            # timeout is only ever paid when it fires.
             # Pass through configurable timeouts from host (defaults are CI values)
-            BUILD_RESULT_TIMEOUT_MS: ${BUILD_RESULT_TIMEOUT_MS:-120000}
-            BUILD_FINISH_TIMEOUT_MS: ${BUILD_FINISH_TIMEOUT_MS:-90000}
+            BUILD_RESULT_TIMEOUT_MS: ${BUILD_RESULT_TIMEOUT_MS:-180000}
+            BUILD_FINISH_TIMEOUT_MS: ${BUILD_FINISH_TIMEOUT_MS:-180000}
             EXAM_DASHBOARD_TIMEOUT_MS: ${EXAM_DASHBOARD_TIMEOUT_MS:-60000}
             # Pass through Playwright test timeouts
             TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-300}
             FAST_TEST_TIMEOUT_SECONDS: ${FAST_TEST_TIMEOUT_SECONDS:-60}
-            SLOW_TEST_TIMEOUT_SECONDS: ${SLOW_TEST_TIMEOUT_SECONDS:-300}
+            SLOW_TEST_TIMEOUT_SECONDS: ${SLOW_TEST_TIMEOUT_SECONDS:-360}
         network_mode: service:artemis-app
 
 networks:
