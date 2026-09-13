@@ -19,6 +19,7 @@
             [exercise]="modelingExercise"
             [course]="modelingExercise.course"
             [courseId]="modelingExercise.course?.id"
+            [minTitleLength]="3"
             [isExamMode]="isExamMode()"
             [isImport]="isImport()"
             (onTitleChange)="calculateFormSectionStatus()"
@@ -139,7 +140,8 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col">
-                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
                         <input
                             type="number"
                             required
@@ -158,6 +160,9 @@
                     @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <div class="col">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                            @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                <span class="text-state-danger" aria-hidden="true">*</span>
+                            }
                             <input
                                 type="number"
                                 [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -199,6 +204,7 @@
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving()"
         [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"

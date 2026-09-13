@@ -607,10 +607,30 @@ describe('DragAndDropQuestionEditComponent', () => {
             scoringType: ScoringType.ALL_OR_NOTHING,
         } as DragAndDropQuestion;
         component.backupQuestion = backupQuestion;
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
 
         component.resetQuestion();
 
         expect(component.question()).toEqual(backupQuestion);
+        // without this the parent keeps the pre-reset validity and calls a restored question invalid
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the parent after resetting the question text', () => {
+        const currentQuestion = new DragAndDropQuestion();
+        currentQuestion.text = 'edited text';
+        fixture.componentRef.setInput('question', currentQuestion);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.text = 'backupText';
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
+
+        component.resetQuestionText();
+
+        expect(component.question().text).toBe('backupText');
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset drag item', () => {

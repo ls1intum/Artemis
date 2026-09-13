@@ -91,7 +91,8 @@
         }
         @if (programmingExercise().programmingLanguage && programmingExerciseCreationConfig().packageNameRequired && programmingExercise().projectType !== ProjectType.XCODE) {
             <div class="form-group">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label>
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label
+                ><span class="text-state-danger" aria-hidden="true">*</span>
                 <input
                     required
                     type="text"

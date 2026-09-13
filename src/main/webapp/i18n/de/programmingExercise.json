@@ -180,7 +180,7 @@
                 "assignment": "Checkout-Pfad für das Aufgaben-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
                 "solution": "Checkout-Pfad für das Lösungs-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
                 "tests": "Checkout-Pfad für das Tests-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
-                "invalid": "Ungültige Checkout-Pfade",
+                "invalid": "Ungültige Checkout-Pfade.",
                 "warning": "Das Ändern der Checkout-Pfade kann zu Build-Fehlern führen. Einige Programmiersprachen verlassen sich auf Docker-Images, die bestimmte Verzeichnisstrukturen für den Code voraussetzen.",
                 "warningBuildScript": "Stellen Sie sicher, dass Sie das Build-Skript und die Repositories entsprechend anpassen."
             },
@@ -193,8 +193,8 @@
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
                 "description": "Ein Online-Texteditor mit Datei-Explorer und Code-Hervorhebungsfunktionen, jedoch ohne die Möglichkeit, Code zu kompilieren oder auszuführen.",
-                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
-                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein."
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
@@ -712,7 +712,7 @@
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
             },
             "auxiliaryRepository": {
-                "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
+                "error": "Es gibt ein Problem mit den Hilfs-Repositories.",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
                 "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Die eingefügten Dateien überschreiben alle Dateien im Checkout-Verzeichnis, die den gleichen Namen haben. Dateien, die nicht überschrieben werden, bleiben erhalten.",
                 "repositoryName": "Name des Repositorys",
@@ -787,8 +787,8 @@
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
                 "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
                 "submissionLimitWarning": {
-                    "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
-                    "required": "Das Abgabelimit muss gesetzt sein!"
+                    "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein.",
+                    "required": "Das Abgabelimit muss gesetzt sein."
                 }
             },
             "diffReport": {

@@ -199,10 +199,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         expect(calculateFormStatusSpy).toHaveBeenCalledOnce();
 
-        comp.onTimelineStatusChange({ valid: false, empty: true });
+        comp.onTimelineStatusChange({ valid: false, empty: true, invalidItems: [] });
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
-        expect(comp.timelineStatus()).toEqual({ valid: false, empty: true });
+        expect(comp.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
     });
 
     it('should not require points when exercise is not included in the course score', () => {
@@ -221,7 +221,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
-        comp.timelineStatus.set({ valid: true, empty: false });
+        comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
         comp.calculateFormStatus();
 
@@ -237,7 +237,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
-        comp.timelineStatus.set({ valid: true, empty: false });
+        comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
         comp.calculateFormStatus();
 

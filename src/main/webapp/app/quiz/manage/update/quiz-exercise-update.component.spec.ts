@@ -1549,6 +1549,60 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
             });
 
+            // isSaveDisabled() reads the clock, so an editor left open past a saved batch's start time would
+            // otherwise block saving with nothing to explain why.
+            describe('explanation when a saved batch starts under an open editor', () => {
+                beforeEach(() => {
+                    vi.useFakeTimers();
+                    comp.isSaving.set(false);
+                    comp.pendingChangesCache.set(true);
+                    comp.quizIsValid.set(true);
+                    comp.invalidReasons.set([]);
+                    comp.quizExercise.set(quizExercise);
+                    comp.quizExercise().dueDateError = false;
+                    comp.quizExercise().isEditable = true;
+                    comp.quizExercise().quizEnded = false;
+                    vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(false);
+
+                    const batch = new QuizBatch();
+                    batch.startTime = dayjs().add(1, 'minute');
+                    comp.savedEntity = new QuizExercise(undefined, undefined);
+                    comp.savedEntity.quizBatches = [batch];
+                    comp['watchSavedQuizStart']();
+                });
+
+                afterEach(() => {
+                    vi.runOnlyPendingTimers();
+                    vi.useRealTimers();
+                });
+
+                it('should stay silent while the batch is still ahead', () => {
+                    expect(comp.isSaveDisabled()).toBeFalsy();
+                    expect(comp.saveBlockedReasons()).toEqual([]);
+                    expect(comp.isSaveTooltipDisabled()).toBeTruthy();
+                });
+
+                it('should explain the block as soon as the start time passes', () => {
+                    vi.advanceTimersByTime(60_001);
+
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                    expect(comp.saveBlockedReasons()).toEqual(['artemisApp.quizExercise.edit.editNotPossibleDuringQuiz']);
+                    expect(comp.isSaveTooltipDisabled()).toBeFalsy();
+                });
+
+                // setTimeout truncates its delay to a signed 32-bit int, so a far-future batch must not fire early.
+                it('should not declare a batch more than 24.8 days out as started', () => {
+                    comp.savedEntity.quizBatches![0].startTime = dayjs().add(60, 'days');
+                    comp['watchSavedQuizStart']();
+
+                    vi.advanceTimersByTime(30 * 24 * 60 * 60 * 1000);
+                    expect(comp.saveBlockedReasons()).toEqual([]);
+
+                    vi.advanceTimersByTime(31 * 24 * 60 * 60 * 1000);
+                    expect(comp.saveBlockedReasons()).toEqual(['artemisApp.quizExercise.edit.editNotPossibleDuringQuiz']);
+                });
+            });
+
             describe('resetQuizQuestionForImport (via init)', () => {
                 beforeEach(() => {
                     comp.isImport.set(true);
@@ -2333,6 +2387,76 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
             expect((comp.quizExercise().quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
+        });
+    });
+    describe('save tooltip', () => {
+        beforeEach(() => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.isEditable = true;
+            comp.quizExercise.set(exercise);
+        });
+
+        it('should be disabled for a valid, editable quiz', () => {
+            comp.quizIsValid.set(true);
+            comp.invalidReasons.set([]);
+
+            expect(comp.isSaveTooltipDisabled()).toBe(true);
+            expect(comp.uneditableReason()).toBe('');
+        });
+
+        // isSaveDisabled() honours dueDateError and hasErrorInQuizBatches(), which isValidQuiz() ignores, so
+        // gating the tooltip on quizIsValid() alone left the button disabled with nothing to explain it.
+        it('should be enabled for a quiz that is valid but has a date error, so its reason shows', () => {
+            comp.quizIsValid.set(true);
+            comp.invalidReasons.set([{ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} }]);
+
+            expect(comp.isSaveTooltipDisabled()).toBe(false);
+        });
+
+        it('should report a due date error as an invalid reason', () => {
+            const exercise = comp.quizExercise();
+            exercise.title = 'Valid title';
+            exercise.duration = 60;
+            exercise.quizQuestions = [];
+            exercise.dueDateError = true;
+            comp.quizExercise.set(exercise);
+
+            expect(comp.computeInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} });
+        });
+
+        it('should report a batch start time error as an invalid reason', () => {
+            const exercise = comp.quizExercise();
+            exercise.title = 'Valid title';
+            exercise.duration = 60;
+            exercise.quizQuestions = [];
+            exercise.quizMode = QuizMode.BATCHED;
+            exercise.quizBatches = [{ startTimeError: true } as QuizBatch];
+            comp.quizExercise.set(exercise);
+
+            expect(comp.computeInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.quizExercise.startTimeError', translateValues: {} });
+        });
+
+        it('should be enabled with no uneditable reason for an invalid quiz, so the reason list shows', () => {
+            comp.quizIsValid.set(false);
+            comp.invalidReasons.set([
+                { translateKey: 'first.reason', translateValues: {} },
+                { translateKey: 'second.reason', translateValues: {} },
+            ]);
+
+            expect(comp.isSaveTooltipDisabled()).toBe(false);
+            expect(comp.uneditableReason()).toBe('');
+        });
+
+        it('should explain an uneditable quiz in preference to the validation reasons', () => {
+            const exercise = comp.quizExercise();
+            exercise.isEditable = false;
+            exercise.quizEnded = true;
+            comp.quizExercise.set(exercise);
+            comp.quizIsValid.set(false);
+            comp.invalidReasons.set([{ translateKey: 'first.reason', translateValues: {} }]);
+
+            expect(comp.uneditableReason()).toBe('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+            expect(comp.isSaveTooltipDisabled()).toBe(false);
         });
     });
 });

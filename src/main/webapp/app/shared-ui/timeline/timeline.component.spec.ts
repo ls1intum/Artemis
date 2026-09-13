@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { DatePicker } from 'primeng/datepicker';
 import { vi } from 'vitest';
 
-import { TimelineComponent, TimelineItem } from './timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -78,20 +78,21 @@ describe('ExerciseTimeline', () => {
             { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T10:00:00Z')) },
             { kind: 'required', labelStringKey: 'due', date: signal(dayjs('2026-01-10T10:00:00Z')) },
         ];
-        const emittedStatuses: Array<{ valid: boolean; empty: boolean }> = [];
+        const emittedStatuses: TimelineStatus[] = [];
         component.timelineStatusChange.subscribe((status) => emittedStatuses.push(status));
 
         fixture.componentRef.setInput('timelineItems', timelineItems);
         fixture.detectChanges();
 
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
-        expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false, invalidItems: [] });
+        expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false, invalidItems: [] });
 
         timelineItems[1].date.set(undefined);
         fixture.detectChanges();
 
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
-        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
+        const dueRequired = [{ labelStringKey: 'due', reasonKey: 'artemisApp.exercise.form.timeline.required', dateName: 'due' }];
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: dueRequired });
+        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true, invalidItems: dueRequired });
     });
 
     it('should reject equal dates', () => {
@@ -253,7 +254,7 @@ describe('ExerciseTimeline', () => {
             hasWarning: true,
             tooltip: 'timeline.warning',
         });
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false, invalidItems: [] });
 
         const datePicker = fixture.debugElement.query(By.directive(DatePicker)).componentInstance as DatePicker;
         expect(datePicker.inputStyle?.['border-color']).toBe('var(--warning)');
@@ -312,7 +313,11 @@ describe('ExerciseTimeline', () => {
             hasExternalError: true,
             tooltip: 'timeline.externalError',
         });
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
+        expect(component.timelineStatus()).toEqual({
+            valid: false,
+            empty: false,
+            invalidItems: [{ labelStringKey: 'release', reasonKey: 'timeline.externalError', dateName: 'release' }],
+        });
         expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).not.toBeNull();
 
         errorStringKey.set(undefined);
@@ -322,7 +327,7 @@ describe('ExerciseTimeline', () => {
             hasExternalError: false,
             tooltip: undefined,
         });
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false, invalidItems: [] });
     });
 
     it('should let an internal validation error supersede an external error', () => {
@@ -342,5 +347,79 @@ describe('ExerciseTimeline', () => {
             hasExternalError: true,
             tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
         });
+    });
+
+    it('should report which timeline items are invalid and why', () => {
+        const timelineItems: TimelineItem[] = [
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            { kind: 'required', labelStringKey: 'artemisApp.exercise.startDate', date: signal(undefined) },
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: signal(dayjs('2026-01-05T10:00:00Z')) },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+
+        const status = component.timelineStatus();
+
+        expect(status.valid).toBe(false);
+        expect(status.invalidItems).toEqual([
+            {
+                labelStringKey: 'artemisApp.exercise.startDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.required',
+                dateName: 'artemisApp.exercise.startDate',
+            },
+            {
+                labelStringKey: 'artemisApp.exercise.dueDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.strictOrder',
+                dateName: 'artemisApp.exercise.dueDate',
+            },
+        ]);
+    });
+
+    it('should report a malformed manual date entry as an invalid item', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: signal(dayjs('2026-06-06T16:23:00')) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleBlur(item, { target: { value: '00.06.2026 16:23' } } as unknown as Event);
+
+        expect(component.timelineStatus().invalidItems).toEqual([
+            {
+                labelStringKey: 'artemisApp.exercise.releaseDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.invalidInput',
+                dateName: 'artemisApp.exercise.releaseDate',
+            },
+        ]);
+    });
+
+    it('should keep an item invalid when its external error key is an empty string', () => {
+        // hasExternalError is `errorStringKey !== undefined`, so an empty key still paints the field as an error.
+        // The status has to agree with that, or the form reports valid while showing red.
+        const item: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.releaseDate',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            errorStringKey: signal(''),
+        };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        expect(component.internalTimelineItems()[0].hasExternalError).toBe(true);
+        expect(component.timelineStatus().valid).toBe(false);
+        expect(component.timelineStatus().invalidItems).toHaveLength(1);
+    });
+
+    it('should report an external error as an invalid item, using the key the item supplies', () => {
+        const item: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.releaseDate',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            errorStringKey: signal('timeline.externalError'),
+        };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        expect(component.timelineStatus().invalidItems).toEqual([
+            {
+                labelStringKey: 'artemisApp.exercise.releaseDate',
+                reasonKey: 'timeline.externalError',
+                dateName: 'artemisApp.exercise.releaseDate',
+            },
+        ]);
     });
 });

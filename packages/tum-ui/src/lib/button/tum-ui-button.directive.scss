@@ -15,7 +15,8 @@
         transition: background-color 0.15s ease;
     }
 
-    &:hover:not(:disabled)::after {
+    // aria-disabled buttons stay hoverable so they can show their tooltip; they must not look interactive.
+    &:hover:not(:disabled):not([aria-disabled='true'])::after {
         background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     }
 
@@ -26,5 +27,11 @@
 
     &:disabled {
         cursor: default;
+    }
+
+    // Stated here rather than left to a utility class: an application's unlayered rules can set cursor:pointer on
+    // enabled buttons, and unlayered always beats a cascade layer, whatever the specificity of the utility.
+    &[aria-disabled='true'] {
+        cursor: not-allowed;
     }
 }

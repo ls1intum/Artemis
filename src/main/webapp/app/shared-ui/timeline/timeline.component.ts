@@ -16,9 +16,16 @@ export interface TimelineItem {
     disabled?: boolean;
 }
 
+export interface InvalidTimelineItem {
+    labelStringKey: string;
+    reasonKey: string;
+    dateName: string;
+}
+
 export interface TimelineStatus {
     valid: boolean;
     empty: boolean;
+    invalidItems: InvalidTimelineItem[];
 }
 
 type InternalTimelineItem = TimelineItem & {
@@ -159,6 +166,8 @@ export class TimelineComponent {
                 isInvalidInput,
                 isDisabled,
                 hasExternalError,
+                // Carried through so the invalid-item reason can reuse the key the tooltip already shows.
+                errorStringKey: item.errorStringKey,
                 hasWarning,
                 tooltip,
             };
@@ -167,9 +176,37 @@ export class TimelineComponent {
 
     private computeExerciseTimelineStatus(): TimelineStatus {
         const items = this.internalTimelineItems();
+        const invalidItems = items.flatMap((item) => {
+            const reasonKey = this.determineInvalidReasonKey(item);
+            // Explicitly undefined, not falsy: an item whose errorStringKey resolves to an empty string still counts
+            // as an external error and is still painted as one, so dropping it here would report the timeline valid
+            // while the field shows red.
+            if (reasonKey === undefined) {
+                return [];
+            }
+            return [{ labelStringKey: item.labelStringKey, reasonKey, dateName: this.translateService.instant(item.labelStringKey) }];
+        });
         return {
-            valid: items.every((item) => !item.hasInvalidDateOrder && !item.isInputRequiredButUndefined && !item.isInvalidInput && !item.hasExternalError),
+            // Derived from the reasons rather than enumerated separately, so validity and the explanation of it cannot
+            // drift apart. determineInvalidReasonKey covers exactly the flags develop gates validity on.
+            valid: invalidItems.length === 0,
             empty: items.some((item) => item.date() === undefined),
+            invalidItems,
         };
+    }
+
+    /** Mirrors the tooltip precedence in {@link computeInternalTimelineItems}. */
+    private determineInvalidReasonKey(item: InternalTimelineItem): string | undefined {
+        if (item.isInvalidInput) {
+            return 'artemisApp.exercise.form.timeline.invalidInput';
+        }
+        if (item.hasInvalidDateOrder) {
+            return 'artemisApp.exercise.form.timeline.strictOrder';
+        }
+        if (item.isInputRequiredButUndefined) {
+            return 'artemisApp.exercise.form.timeline.required';
+        }
+        // The item supplies its own key here, which is already what the tooltip shows for an external error.
+        return item.errorStringKey?.();
     }
 }

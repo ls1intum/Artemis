@@ -3,6 +3,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -16,7 +17,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -39,6 +40,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         FormsModule,
         NgbTooltip,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         ReEvaluateDragAndDropQuestionComponent,
@@ -65,7 +68,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     // Icons
     faUndo = faUndo;
-    faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {
@@ -103,6 +105,21 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     onQuestionUpdated(): void {
         this.cacheValidation();
         this.quizExercise().quizQuestions = Array.from(this.quizExercise().quizQuestions!);
+    }
+
+    /** Target of the save button's aria-describedby; the reason list is rendered under this id. */
+    protected readonly saveReasonsId = 'quiz-re-evaluate-invalid-reasons';
+
+    isSaveDisabled(): boolean {
+        return !this.pendingChanges() || !this.isValidQuiz() || this.isSaving();
+    }
+
+    // The save button is aria-disabled rather than disabled so it stays focusable and can explain itself,
+    // which leaves it clickable — hence the guard.
+    onSaveClick(): void {
+        if (!this.isSaveDisabled()) {
+            this.save();
+        }
     }
 
     /**
@@ -163,6 +180,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     resetQuizTitle() {
         this.quizExercise().title = this.savedEntity.title;
+        this.cacheValidation();
     }
 
     /**

@@ -103,7 +103,8 @@
                 </div>
                 <div class="score-fields">
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
                         <input
                             required
                             type="number"
@@ -119,27 +120,32 @@
                             <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                         }
                     </div>
-                    <div class="form-group" [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
-                        <input
-                            type="number"
-                            [required]="textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            class="form-control"
-                            min="0"
-                            max="9999"
-                            name="bonusPoints"
-                            id="field_bonusPoints"
-                            [(ngModel)]="textExercise.bonusPoints"
-                            #bonusPoints="ngModel"
-                        />
-                        @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                            <div
-                                class="alert alert-danger"
-                                [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                                jhiTranslate="artemisApp.exercise.bonusPointsError"
-                            ></div>
-                        }
-                    </div>
+                    <!--
+                        Removed rather than hidden. A hidden control stays registered, and `min`/`max` are plain
+                        attributes, so an out of range value kept the form invalid after the score mode moved away
+                        from it - with Save refusing to submit, the reason for it suppressed because bonus points no
+                        longer apply, and the field itself out of reach to correct.
+                    -->
+                    @if (textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label
+                            ><span class="text-state-danger" aria-hidden="true">*</span>
+                            <input
+                                type="number"
+                                required
+                                class="form-control"
+                                min="0"
+                                max="9999"
+                                name="bonusPoints"
+                                id="field_bonusPoints"
+                                [(ngModel)]="textExercise.bonusPoints"
+                                #bonusPoints="ngModel"
+                            />
+                            @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
+                                <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.bonusPointsError"></div>
+                            }
+                        </div>
+                    }
                 </div>
                 @if (!isExamMode()) {
                     <jhi-feature-overlay [enabled]="isPlagiarismEnabled()" placement="right">
@@ -165,6 +171,7 @@
         [isImport]="isImport()"
         [isSaving]="isSaving()"
         [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"

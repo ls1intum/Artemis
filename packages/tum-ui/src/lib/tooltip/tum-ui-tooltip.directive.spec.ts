@@ -9,7 +9,7 @@ import { TumUiTooltipDirective } from './tum-ui-tooltip.directive';
     imports: [TumUiTooltipDirective],
 })
 class TooltipHostComponent {
-    text = signal('Help text');
+    text = signal<string | readonly string[]>('Help text');
 }
 
 describe('TumUiTooltipDirective', () => {
@@ -33,6 +33,51 @@ describe('TumUiTooltipDirective', () => {
     function bubble(): HTMLElement | null {
         return document.querySelector('.tum-ui-tooltip-bubble');
     }
+
+    function arrow(): HTMLElement | null {
+        return bubble()?.querySelector('span[aria-hidden="true"]') ?? null;
+    }
+
+    describe('arrow placement', () => {
+        // The overlay is created with withPush, so a bubble near the viewport edge is shoved sideways. An arrow
+        // centred on the bubble then points beside the host instead of at it.
+        //
+        // The geometry goes on the prototype rather than on the two elements: the bubble does not exist until the
+        // tooltip is shown, so spying on it afterwards would leave the measurement inside `show()` reading jsdom's
+        // zero-sized rectangle, and the assertion would depend on a later reposition happening to run.
+        function showWithGeometry(host: DOMRect, bubbleRect: DOMRect): void {
+            const measure = Element.prototype.getBoundingClientRect;
+            vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+                if (this === button) {
+                    return host;
+                }
+                if (this.classList.contains('tum-ui-tooltip-bubble')) {
+                    return bubbleRect;
+                }
+                return measure.call(this);
+            });
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+            // The bubble is an overlay, outside the fixture's own view, so the offset reaches its style only once the
+            // application is ticked. Without this the assertion reads an empty style and passes for the wrong reason.
+            TestBed.inject(ApplicationRef).tick();
+        }
+
+        it('points the arrow at the host when the bubble has been pushed sideways', () => {
+            // Host centred on 520; the bubble was pushed left so it spans 110..670, whose middle is 390.
+            showWithGeometry(new DOMRect(490, 100, 60, 30), new DOMRect(110, 40, 560, 60));
+
+            // 520 - 110 = 410 from the bubble's left edge, not the 280 a centred arrow would use.
+            expect(arrow()!.style.left).toBe('410px');
+        });
+
+        it('keeps the arrow clear of the corner when the host sits beyond the bubble', () => {
+            // Host far to the right of a bubble that could not follow it.
+            showWithGeometry(new DOMRect(900, 100, 60, 30), new DOMRect(110, 40, 200, 60));
+
+            expect(arrow()!.style.left).toBe('188px');
+        });
+    });
 
     it('attaches the tooltip overlay and wires aria-describedby on mouseenter', () => {
         button.dispatchEvent(new MouseEvent('mouseenter'));
@@ -141,6 +186,29 @@ describe('TumUiTooltipDirective', () => {
         expect(button.getAttribute('aria-describedby')).toBeNull();
     });
 
+    it('renders several reasons as a list and clamps wider than the one-line form', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        fixture.componentInstance.text.set(['First reason', 'Second reason']);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+
+        const items = Array.from(bubble()!.querySelectorAll('li')).map((item) => item.textContent?.trim());
+        expect(items).toEqual(['First reason', 'Second reason']);
+        expect(bubble()!.className).toContain('max-w-100');
+    });
+
+    it('stays hidden when the content is an empty list', () => {
+        fixture.componentInstance.text.set([]);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+
+        expect(bubble()).toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+
     it('preserves a pre-existing aria-describedby token and restores it on hide', () => {
         button.setAttribute('aria-describedby', 'external-desc');
         button.dispatchEvent(new MouseEvent('mouseenter'));
@@ -150,5 +218,91 @@ describe('TumUiTooltipDirective', () => {
         button.dispatchEvent(new MouseEvent('mouseleave'));
         vi.advanceTimersByTime(1);
         expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+});
+
+@Component({
+    template: `<button aria-describedby="external-desc" [tumUiTooltip]="text()" [tumUiTooltipDescribesHost]="false" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
+    imports: [TumUiTooltipDirective],
+})
+class NonDescribingTooltipHostComponent {
+    text = signal<string | readonly string[]>(['First reason', 'Second reason']);
+}
+
+describe('TumUiTooltipDirective with tumUiTooltipDescribesHost false', () => {
+    let fixture: ComponentFixture<NonDescribingTooltipHostComponent>;
+    let button: HTMLButtonElement;
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [NonDescribingTooltipHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(NonDescribingTooltipHostComponent);
+        fixture.detectChanges();
+        button = fixture.debugElement.query(By.css('button')).nativeElement;
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('shows the tooltip without adding itself to aria-describedby', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+
+        expect(document.querySelector('.tum-ui-tooltip-bubble')).not.toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+
+    it('leaves the external aria-describedby in place when it hides', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+
+        expect(button.getAttribute('aria-describedby')).toBe('external-desc');
+    });
+});
+
+@Component({
+    template: `<button [tumUiTooltip]="text()" [tumUiTooltipDescribesHost]="describes()" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
+    imports: [TumUiTooltipDirective],
+})
+class TogglingTooltipHostComponent {
+    text = signal<string | readonly string[]>('Help text');
+    describes = signal(true);
+}
+
+describe('TumUiTooltipDirective when tumUiTooltipDescribesHost changes while open', () => {
+    let fixture: ComponentFixture<TogglingTooltipHostComponent>;
+    let button: HTMLButtonElement;
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [TogglingTooltipHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(TogglingTooltipHostComponent);
+        fixture.detectChanges();
+        button = fixture.debugElement.query(By.css('button')).nativeElement;
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('takes its own id back off the host when it hides', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(button.getAttribute('aria-describedby')).toBeTruthy();
+
+        fixture.componentInstance.describes.set(false);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+
+        // The bubble is disposed, so a surviving token would point at nothing.
+        expect(button.getAttribute('aria-describedby')).toBeNull();
     });
 });

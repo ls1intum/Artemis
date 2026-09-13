@@ -191,7 +191,7 @@
                 "assignment": "Assignment Repository Checkout Path. This can't be edited after creation.",
                 "solution": "Solution Repository Checkout Path. This can't be edited after creation.",
                 "tests": "Tests Repository Checkout Path. This can't be edited after creation.",
-                "invalid": "Invalid checkout paths",
+                "invalid": "Invalid checkout paths.",
                 "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code.",
                 "warningBuildScript": "Make sure to adjust the build script and repositories accordingly."
             },
@@ -203,8 +203,8 @@
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
-                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
-                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected."
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
@@ -787,8 +787,8 @@
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
                 "submissionLimitWarning": {
-                    "pattern": "The submission limit must be and integer between 1 and 500!",
-                    "required": "The submission limit must be set!"
+                    "pattern": "The submission limit must be an integer between 1 and 500.",
+                    "required": "The submission limit must be set."
                 }
             },
             "diffReport": {

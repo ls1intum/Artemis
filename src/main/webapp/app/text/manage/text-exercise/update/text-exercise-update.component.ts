@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -9,7 +9,7 @@ import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
@@ -46,6 +46,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'app/exercise/util/exercise-validation.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -118,7 +119,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
-    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
@@ -129,7 +130,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     readonly formSectionStatus = signal<FormSectionStatus[]>(undefined!);
 
     pointsSubscription?: Subscription;
-    bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
 
     constructor() {
@@ -166,9 +166,25 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.calculateFormSectionStatus();
     }
 
+    /**
+     * Follows the bonus field as the score mode creates and destroys it.
+     *
+     * The wiring used to run once, when the view was first built, which was enough while the field merely hid itself.
+     * Now that it is removed and rebuilt, a subscription to the control that happened to exist then would stop
+     * reporting the moment the reader switched modes - and the section status would sit on whatever it last heard.
+     * Recalculated on every appearance and disappearance too, since both change what the section is worth.
+     */
+    protected readonly followBonusPointsControl = effect((onCleanup) => {
+        const control = this.bonusPoints();
+        // Untracked: the calculation reads half the form, and tracking all of it here would re-run this on every
+        // keystroke rather than when the control itself comes or goes.
+        untracked(() => this.calculateFormSectionStatus());
+        const subscription = control?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        onCleanup(() => subscription?.unsubscribe());
+    });
+
     ngAfterViewInit() {
         this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent().formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -242,7 +258,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
-        this.bonusPointsSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
     }
 
@@ -267,7 +282,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
                         this.points()?.valid &&
-                        this.bonusPoints()?.valid &&
+                        // Absent when the score does not include bonus points, which is not a reason to call the section invalid.
+                        (this.bonusPoints()?.valid ?? true) &&
                         (this.isExamMode() ||
                             (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid && !this.textExercise.exampleSolutionPublicationDateError)),
                     ),
@@ -275,6 +291,24 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 },
             ]);
         }
+    }
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    getInvalidReasons(): ValidationReason[] {
+        if (!this.textExercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return [
+            ...getCommonExerciseInvalidReasons(this.textExercise, {
+                isExamMode: this.isExamMode(),
+                minTitleLength: 3,
+                isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+                isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+                timelineStatus: this.timelineStatus(),
+            }),
+            ...getPlagiarismInvalidReasons(this.exerciseUpdatePlagiarismComponent()),
+        ];
     }
 
     /**

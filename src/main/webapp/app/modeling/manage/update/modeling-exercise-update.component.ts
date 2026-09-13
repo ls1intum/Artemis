@@ -17,7 +17,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
@@ -47,6 +47,7 @@ import { switchMap, take, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
@@ -108,7 +109,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly translateService = inject(TranslateService);
     private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
-    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
@@ -300,6 +301,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
+    }
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    getInvalidReasons(): ValidationReason[] {
+        if (!this.modelingExercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return getCommonExerciseInvalidReasons(this.modelingExercise, {
+            isExamMode: this.isExamMode(),
+            minTitleLength: 3,
+            isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+            isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+            timelineStatus: this.timelineStatus(),
+        });
     }
 
     updateCategories(categories: ExerciseCategory[]): void {

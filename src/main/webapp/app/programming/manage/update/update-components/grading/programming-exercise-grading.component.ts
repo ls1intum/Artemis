@@ -66,7 +66,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     maxPenaltyField = viewChild<NgModel>('maxPenalty');
 
     formValidSignal = signal<boolean>(false);
-    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     formValid!: boolean; // assigned in calculateFormStatus(); left unset so parent's `?? false` / `=== false` reads can distinguish "not yet computed"
     formEmpty!: boolean; // assigned in calculateFormStatus() (see formValid)
