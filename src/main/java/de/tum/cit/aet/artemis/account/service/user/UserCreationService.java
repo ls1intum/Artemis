@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -333,7 +332,7 @@ public class UserCreationService {
             if (organizations.size() != organizationIds.size()) {
                 Set<Long> resolvedOrganizationIds = organizations.stream().map(Organization::getId).collect(Collectors.toSet());
                 Long missingOrganizationId = organizationIds.stream().filter(id -> !resolvedOrganizationIds.contains(id)).findFirst().orElseThrow();
-                throw new EntityNotFoundException("Organization", missingOrganizationId);
+                throw new BadRequestAlertException("Organization with ID " + missingOrganizationId + " does not exist", "userManagement", "invalidOrganizationReference");
             }
             user.setOrganizations(new HashSet<>(organizations));
         }

@@ -70,11 +70,14 @@
         "internalServerError": "Internal server error",
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
+        "NotBlank": "Field {{ fieldName }} cannot be blank!",
         "NotNull": "Field {{ fieldName }} cannot be empty!",
+        "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "userExists": "Login name already in use!",
         "emailExists": "Email is already in use!",
         "idExists": "A new {{ entityName }} cannot already have an ID",
+        "invalidOrganizationReference": "One or more selected organizations are invalid or no longer exist.",
         "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
         "invalid": {
             "template": {

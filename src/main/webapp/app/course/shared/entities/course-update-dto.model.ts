@@ -202,6 +202,12 @@ export function courseFromUpdateDTO(dto: CourseUpdateDTO): Course {
     delete courseData.debounceWindowSecondsOverride;
     delete courseData.maxDailyOrchestrationOverride;
     const course: Course = hydrate(new Course(), courseData);
+    course.complaintsEnabled =
+        ((dto.maxComplaints ?? 0) > 0 || (dto.maxTeamComplaints ?? 0) > 0) &&
+        dto.maxComplaintTimeDays > 0 &&
+        dto.maxComplaintTextLimit > 0 &&
+        dto.maxComplaintResponseTextLimit > 0;
+    course.requestMoreFeedbackEnabled = dto.maxRequestMoreFeedbackTimeDays > 0;
     course.startDate = convertDateStringFromServer(dto.startDate);
     course.endDate = convertDateStringFromServer(dto.endDate);
     course.enrollmentStartDate = convertDateStringFromServer(dto.enrollmentStartDate);

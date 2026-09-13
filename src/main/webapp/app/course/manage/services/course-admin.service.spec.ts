@@ -69,6 +69,39 @@ describe('Course Admin Service', () => {
         req.flush(returnedFromService);
     });
 
+    it('should create a course from a response with omitted optional fields', () => {
+        delete course.id;
+        const partialResponse: Partial<CourseUpdateDTO> = {
+            id: 1234,
+            title: 'Course with minimal response',
+            shortName: 'minimal',
+            maxComplaintTimeDays: 0,
+            maxRequestMoreFeedbackTimeDays: 0,
+            maxComplaintTextLimit: 0,
+            maxComplaintResponseTextLimit: 0,
+        };
+
+        courseAdminService
+            .create(deepClone(course))
+            .pipe(take(1))
+            .subscribe((res) => {
+                expect(res.body).toBeInstanceOf(Course);
+                expect(res.body?.description).toBeUndefined();
+                expect(res.body?.semester).toBeUndefined();
+                expect(res.body?.color).toBeUndefined();
+                expect(res.body?.courseIcon).toBeUndefined();
+                expect(res.body?.enrollmentConfirmationMessage).toBeUndefined();
+                expect(res.body?.timeZone).toBeUndefined();
+                expect(res.body?.complaintsEnabled).toBe(false);
+                expect(res.body?.requestMoreFeedbackEnabled).toBe(false);
+                expect(res.body?.courseConfiguration?.debounceWindowSecondsOverride).toBeUndefined();
+                expect(res.body?.courseConfiguration?.maxDailyOrchestrationOverride).toBeUndefined();
+            });
+
+        const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
+        req.flush(partialResponse);
+    });
+
     it('should delete a course', () => {
         courseAdminService
             .delete(course.id!)

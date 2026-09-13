@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.account.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,6 @@ public class OrganizationResource {
     public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);
-        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(java.util.stream.Collectors.toSet()), HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet()), HttpStatus.OK);
     }
 }

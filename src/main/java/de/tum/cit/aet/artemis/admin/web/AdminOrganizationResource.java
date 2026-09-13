@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -201,7 +202,6 @@ public class AdminOrganizationResource {
         if (!organizationDTO.id().equals(organizationId)) {
             throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
-        organizationRepository.findByIdElseThrow(organizationDTO.id());
         Organization updated = organizationService.update(organizationId, organizationDTO);
         return ResponseEntity.ok(OrganizationDTO.of(updated));
     }
@@ -311,7 +311,7 @@ public class AdminOrganizationResource {
     public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
-        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(java.util.stream.Collectors.toSet()), HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet()), HttpStatus.OK);
     }
 
     /**
