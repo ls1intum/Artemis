@@ -64,10 +64,14 @@ export class AthenaCourseConfigState {
     readonly isLoaded = signal(false);
 
     /**
-     * Whether {@link load} is in flight or has already succeeded, so {@link ensureLoaded} does not start a second
-     * request while one is outstanding. A failed load resets this to false rather than leaving it set: unlike a
-     * success, a failure has answered nothing, so the next caller that mounts and asks {@link ensureLoaded} for this
-     * course retries instead of the failure being cached here for the rest of the session.
+     * Whether {@link load} is in flight, so {@link ensureLoaded} does not start a second request while one is
+     * outstanding — the two features and their confirmed state stay per-instance, but this flag alone must not let
+     * every caller sharing this instance fire its own request. Reset once the request settles, successfully or not,
+     * so the next caller that mounts and asks {@link ensureLoaded} — typically the next page the instructor opens
+     * for this course, possibly long after the first page closed — starts a fresh request rather than trusting an
+     * answer that another instructor may have changed since. {@link load} folds that fresh answer into whatever is
+     * already on screen instead of replacing it outright, so this revalidation never causes the flash a cached
+     * instance exists to avoid.
      */
     private loadStarted = false;
 
@@ -91,35 +95,35 @@ export class AthenaCourseConfigState {
     ) {}
 
     /**
-     * Load the stored configuration of a course.
+     * Load the stored configuration of a course. Also how a cached instance revalidates itself on a later mount
+     * (see {@link loadStarted}): each answer is merged into whatever is on screen rather than assumed to be the
+     * first one, so an instructor who has had the page open for a while still picks up a change another instructor
+     * made in the meantime.
      *
-     * The answer describes the course as it was before anything was switched, so it counts per feature and only for a
-     * feature no save has answered for: a save knows the newer state. Where it counts it is shown, unless a switch of
-     * that feature is still in flight, because what that switch put on screen is what the instructor last asked for.
-     * It is recorded as the confirmed state either way, so a switch that then fails rolls back to what is stored
-     * rather than to "disabled".
+     * The answer describes the course as it is now, so it is recorded as the confirmed state for every feature
+     * unconditionally — including one this instance already had an older confirmed value for. Where it counts it is
+     * shown, unless a switch of that feature is still in flight, because what that switch put on screen is what the
+     * instructor last asked for and is newer than an answer describing the course from before that switch was made.
      */
     load(): void {
         this.athenaCourseConfigService.getCourseConfig(this.courseId).subscribe({
             next: (loaded) => {
                 this.allowedFeedbackRequests.set(loaded.allowedFeedbackRequests);
                 for (const feature of ATHENA_FEATURES) {
-                    if (this.confirmed[feature] !== undefined) {
-                        continue;
-                    }
                     this.confirmed[feature] = loaded[feature];
                     if (this.settled[feature] === this.revisions[feature]) {
                         this.apply(feature, loaded[feature]);
                     }
                 }
                 this.isLoaded.set(true);
+                this.loadStarted = false;
             },
             error: (error: HttpErrorResponse) => {
                 // The toggles still need to stop showing a loading placeholder, with "both off" per the fallback
                 // documented on setEnabled — a caller waiting on isLoaded must not wait forever just because this
-                // attempt failed. But nothing here is confirmed, so unlike the success path this must not be the
-                // last word: clearing loadStarted lets a later mount for this course retry instead of every future
-                // caller being stuck with an unconfirmed "both off" for the rest of the session.
+                // attempt failed. But nothing here is confirmed, so this must not be the last word either: clearing
+                // loadStarted lets a later mount for this course retry instead of every future caller being stuck
+                // with an unconfirmed "both off" for the rest of the session.
                 this.isLoaded.set(true);
                 this.loadStarted = false;
                 onError(this.alertService, error);
@@ -128,10 +132,11 @@ export class AthenaCourseConfigState {
     }
 
     /**
-     * Starts {@link load} unless one is already in flight or has already succeeded, so a state shared by several
-     * callers (see {@link AthenaCourseConfigStore}) is fetched at most once concurrently no matter how many of them
-     * ask for it. A failed load does not count as having succeeded (see {@link loadStarted}), so a later caller for
-     * the same course — typically the next page the instructor opens for it — starts a fresh attempt.
+     * Starts {@link load} unless one is already in flight, so a state shared by several callers (see
+     * {@link AthenaCourseConfigStore}) is fetched at most once concurrently no matter how many of them ask for it at
+     * the same time. {@link loadStarted} is cleared once that request settles, whether it succeeded or failed, so a
+     * later caller for the same course — typically the next page the instructor opens for it — starts a fresh
+     * request rather than trusting however old the cached instance's last answer is.
      */
     ensureLoaded(): void {
         if (this.loadStarted) {
@@ -260,7 +265,9 @@ export class AthenaCourseConfigState {
  *
  * A course is never evicted once loaded: the entries are small, and the alternative — a course whose toggles were
  * open a minute ago quietly re-fetching and flashing disabled again the next time it is opened — is worse than
- * holding a few extra booleans for the rest of the session.
+ * holding a few extra booleans for the rest of the session. Reusing the instance does not mean trusting its last
+ * answer forever, though: {@link AthenaCourseConfigState#ensureLoaded} revalidates against the server on every mount,
+ * it just shows the cached values while that request is on its way instead of a loading placeholder.
  */
 @Injectable({ providedIn: 'root' })
 export class AthenaCourseConfigStore {

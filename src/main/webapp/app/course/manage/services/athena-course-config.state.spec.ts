@@ -86,10 +86,11 @@ describe('AthenaCourseConfigState', () => {
             expect(state.isLoaded()).toBe(true);
         });
 
-        it('should only fetch once no matter how many callers call ensureLoaded', () => {
+        it('should not start a second request while the first one is still in flight', () => {
             const { state, athenaCourseConfigService } = createState();
-            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(new Subject<AthenaCourseConfigDTO>().asObservable());
 
+            // All three calls land before the first request has answered, as concurrent callers mounting together do.
             state.ensureLoaded();
             state.ensureLoaded();
             state.ensureLoaded();
@@ -108,6 +109,36 @@ describe('AthenaCourseConfigState', () => {
             state.ensureLoaded();
 
             expect(getSpy).toHaveBeenCalledTimes(2);
+            expect(state.gradingFeedbackEnabled()).toBe(true);
+        });
+
+        it('should revalidate against the server on a later mount instead of trusting a cached success forever', () => {
+            const { state, athenaCourseConfigService } = createState();
+            const getSpy = vi
+                .spyOn(athenaCourseConfigService, 'getCourseConfig')
+                .mockReturnValueOnce(of(bothDisabled))
+                .mockReturnValueOnce(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+
+            // The first mount loads "both off"; a later mount - after another instructor has enabled grading - must
+            // pick that change up instead of continuing to show the first mount's answer for the rest of the session.
+            state.ensureLoaded();
+            state.ensureLoaded();
+
+            expect(getSpy).toHaveBeenCalledTimes(2);
+            expect(state.gradingFeedbackEnabled()).toBe(true);
+        });
+
+        it('should not let a revalidation overwrite a switch that is still in flight', () => {
+            const { state, athenaCourseConfigService } = createState();
+            vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValueOnce(of(bothDisabled)).mockReturnValueOnce(of(bothDisabled));
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(new Subject<HttpResponse<AthenaCourseConfigDTO>>().asObservable());
+
+            state.ensureLoaded();
+            state.setEnabled('gradingFeedbackEnabled', true);
+            // A second mount revalidates while the switch above has not answered yet; its stale "still off" must not
+            // clobber what the instructor just asked for.
+            state.ensureLoaded();
+
             expect(state.gradingFeedbackEnabled()).toBe(true);
         });
     });

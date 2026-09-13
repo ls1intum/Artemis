@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AthenaCourseConfigStore } from 'app/course/manage/services/athena-course-config.state';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -54,7 +54,9 @@ describe('AthenaCourseConfigStore', () => {
     });
 
     it('should only fetch once when the same course is asked for by more than one caller', () => {
-        const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+        // Both callers ask for the state before the request either of them triggers has answered, as two components
+        // mounting for the same course at roughly the same time do.
+        const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(new Subject<AthenaCourseConfigDTO>().asObservable());
 
         const first = store.getOrCreate(5);
         first.ensureLoaded();
