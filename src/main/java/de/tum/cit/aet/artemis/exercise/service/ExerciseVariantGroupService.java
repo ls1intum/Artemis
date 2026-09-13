@@ -15,12 +15,15 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -35,21 +38,27 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
- * Keeps an {@link ExerciseVariantGroup} and its members on one shared timeline: joining adopts the group's dates, editing
- * the group pushes them onto every member. Programming members use a dedicated flow that also recomputes the build-and-test
- * date and reschedules build/test jobs. Group edits run the same post-save work a member's own update endpoint would, so a
- * group edit is never a weaker operation — see {@link #runPostTimelineUpdateSideEffects}.
+ * Creates and keeps an {@link ExerciseVariantGroup} and its members on one shared timeline. Group creation is shared by
+ * the {@link de.tum.cit.aet.artemis.exercise.web.ExerciseVariantGroupResource} and the AI variant-generation finalizer, so
+ * both place exercises into groups without duplicating the logic. Joining a group adopts its dates, and editing the
+ * group's dates pushes them onto every member. Programming members use a dedicated flow that also recomputes the
+ * build-and-test date and reschedules build/test jobs. Group edits run the same post-save work a member's own update
+ * endpoint would, so a group edit is never a weaker operation — see {@link #runPostTimelineUpdateSideEffects}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ExerciseVariantGroupService {
 
+    private static final Logger log = LoggerFactory.getLogger(ExerciseVariantGroupService.class);
+
     private static final String ENTITY_NAME = "exerciseVariantGroup";
 
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final CourseRepository courseRepository;
 
     private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
@@ -65,12 +74,13 @@ public class ExerciseVariantGroupService {
 
     private final Optional<SlideApi> slideApi;
 
-    public ExerciseVariantGroupService(ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
+    public ExerciseVariantGroupService(ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             ExerciseVersionService exerciseVersionService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
             Optional<SlideApi> slideApi) {
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
+        this.courseRepository = courseRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.participationRepository = participationRepository;
         this.exerciseService = exerciseService;
@@ -78,6 +88,45 @@ public class ExerciseVariantGroupService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizExerciseService = quizExerciseService;
         this.slideApi = slideApi;
+    }
+
+    /**
+     * Creates a new variant group and attaches it to the given course.
+     *
+     * @param courseId the id of the course that will own the group
+     * @param group    the new, unsaved group entity
+     * @return the persisted group
+     */
+    public ExerciseVariantGroup createGroup(Long courseId, ExerciseVariantGroup group) {
+        group.validateDates();
+        // The course_id FK lives on this table but the Course side owns the mapping, so the group has to exist before
+        // it can be attached. Not wrapped in a transaction (this codebase avoids service-level @Transactional), so the
+        // two writes are made safe by hand: the course is resolved BEFORE the first save, which leaves an unknown id
+        // persisting nothing, and a failed attachment takes the row with it — a course-less group is invisible to
+        // every course query and would linger forever. The attachment writes the new row's FK directly instead of
+        // saving the course: that collection is orphanRemoval, so merging a snapshot taken before a concurrent
+        // creation would delete the group that creation had just attached.
+        courseRepository.findByIdElseThrow(courseId);
+        ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);
+        try {
+            if (exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), courseId) != 1) {
+                // The row is gone (a concurrent deletion between the save and this update), so nothing was attached.
+                throw new IllegalStateException("Could not attach variant group " + savedGroup.getId() + " to course " + courseId);
+            }
+        }
+        catch (RuntimeException attachmentFailed) {
+            try {
+                exerciseVariantGroupRepository.delete(savedGroup);
+            }
+            catch (RuntimeException cleanupFailed) {
+                // Never let the cleanup hide why the attachment failed; log the row that has to go manually and
+                // carry the cleanup error along as a suppressed exception.
+                log.error("Could not delete variant group {} after it could not be attached to course {}", savedGroup.getId(), courseId, cleanupFailed);
+                attachmentFailed.addSuppressed(cleanupFailed);
+            }
+            throw attachmentFailed;
+        }
+        return savedGroup;
     }
 
     /**
@@ -280,6 +329,21 @@ public class ExerciseVariantGroupService {
     }
 
     /**
+     * Seeds a still-empty group's timeline from an exercise that is not the one joining, and persists the result. Needed by
+     * {@code VariantPlacementService}: the generated variant is placed first, but its source is the exercise whose dates the
+     * group should take. Unlike {@link #assignToGroup}, there is no member timeline to validate against yet, so the adopted
+     * dates are saved right away.
+     *
+     * @param group    the still-empty group to seed (its current members must already be loaded)
+     * @param exercise the exercise whose dates are the source to adopt from
+     */
+    public void seedGroupDatesFromExercise(ExerciseVariantGroup group, Exercise exercise) {
+        if (adoptMissingDatesFromExercise(group, exercise)) {
+            exerciseVariantGroupRepository.save(group);
+        }
+    }
+
+    /**
      * For a still-empty group, adopts the joining exercise's dates for any shared field the group doesn't define yet.
      * Groups that already have members keep their existing timeline. The caller persists adopted dates only after validating
      * the resulting member timeline.
@@ -335,10 +399,21 @@ public class ExerciseVariantGroupService {
      * @param exercise the member exercise about to receive the group's timeline
      */
     private void rejectIfQuizMemberNotEditable(Exercise exercise) {
-        if (exercise instanceof QuizExercise quizExercise && !quizExerciseService.isEditable(quizExercise)) {
+        if (!canJoinGroup(exercise)) {
             throw new BadRequestAlertException("The timeline of a variant group cannot be changed while a member quiz has started or has ended", ENTITY_NAME,
                     "quizMemberNotEditable");
         }
+    }
+
+    /**
+     * Whether the exercise may join a variant group at all, so a caller that would have to undo persisted work after a
+     * rejected {@link #assignToGroup} can ask first. Same condition as {@link #rejectIfQuizMemberNotEditable}.
+     *
+     * @param exercise the candidate member
+     * @return false only for a quiz that has started or ended — every other exercise can join
+     */
+    public boolean canJoinGroup(Exercise exercise) {
+        return !(exercise instanceof QuizExercise quizExercise) || quizExerciseService.isEditable(quizExercise);
     }
 
     /**
