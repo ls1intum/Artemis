@@ -103,7 +103,7 @@ class CourseNotificationServiceTest {
     void shouldRecordAFailedAsynchronousDeliveryAsAFailure() {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
-        when(courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP)).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(recipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
         when(webappService.sendCourseNotification(any(CourseNotificationDTO.class), anyList()))
@@ -118,7 +118,7 @@ class CourseNotificationServiceTest {
     void shouldRecordASuccessfulDeliveryAsASuccess() {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
-        when(courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP)).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(recipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -134,8 +134,8 @@ class CourseNotificationServiceTest {
         List<User> webappRecipients = List.of(createTestUser(1L));
         List<User> pushRecipients = List.of(createTestUser(2L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationChannelOption.WEBAPP)).thenReturn(webappRecipients);
-        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationChannelOption.PUSH)).thenReturn(pushRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(allRecipients), eq(NotificationChannelOption.WEBAPP), any())).thenReturn(webappRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(eq(notification), eq(allRecipients), eq(NotificationChannelOption.PUSH), any())).thenReturn(pushRecipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -155,7 +155,7 @@ class CourseNotificationServiceTest {
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any())).thenReturn(recipients);
+        when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any(), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
