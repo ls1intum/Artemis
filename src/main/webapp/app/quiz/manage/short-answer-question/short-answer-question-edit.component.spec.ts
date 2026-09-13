@@ -307,6 +307,57 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    describe('telling the parent when validity changes', () => {
+        // The quiz reads whether it is valid live but keeps the reasons it explains a blocked save with cached, so a
+        // change that is not announced leaves Save refusing to submit under an empty tooltip.
+        function spotWithSolutionAndMapping() {
+            const spot = new ShortAnswerSpot();
+            spot.id = 1;
+            spot.spotNr = 1;
+            const solution = new ShortAnswerSolution();
+            solution.id = 10;
+            solution.text = 'solution';
+            component.shortAnswerQuestion.spots = [spot];
+            component.shortAnswerQuestion.solutions = [solution];
+            component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot, solution)];
+            component.shortAnswerQuestion.text = 'Some text [-spot 1]';
+            fixture.detectChanges();
+            return { spot, solution, mapping: component.shortAnswerQuestion.correctMappings[0] };
+        }
+
+        it('should announce a deleted spot, which takes its mappings with it', () => {
+            const { spot } = spotWithSolutionAndMapping();
+            const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
+
+            component.deleteSpot(spot);
+
+            expect(component.shortAnswerQuestion.spots).toHaveLength(0);
+            expect(component.shortAnswerQuestion.correctMappings).toHaveLength(0);
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should announce a deleted solution, which takes its mappings with it', () => {
+            const { solution } = spotWithSolutionAndMapping();
+            const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
+
+            component.deleteSolution(solution);
+
+            expect(component.shortAnswerQuestion.solutions).toHaveLength(0);
+            expect(component.shortAnswerQuestion.correctMappings).toHaveLength(0);
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should announce an unlinked mapping, which can leave a spot without a solution', () => {
+            const { mapping } = spotWithSolutionAndMapping();
+            const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
+
+            component.deleteMapping(mapping);
+
+            expect(component.shortAnswerQuestion.correctMappings).toHaveLength(0);
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should react to a solution being dropped on a spot', () => {
         const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Create fresh test data to avoid issues with parseMarkdown modifying objects

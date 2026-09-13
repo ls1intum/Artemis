@@ -512,6 +512,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.solutions = this.shortAnswerQuestion.solutions?.filter((solution) => solution !== solutionToDelete);
         this.deleteMappingsForSolution(solutionToDelete);
         this.questionEditorText.set(this.generateMarkdown());
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
     }
 
     /**
@@ -543,7 +546,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
                     this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) && this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem),
             )
         ) {
-            this.deleteMapping(this.getMappingsForSolution(dragItem).filter((mapping) => mapping.spot === undefined)[0]);
+            this.removeMapping(this.getMappingsForSolution(dragItem).filter((mapping) => mapping.spot === undefined)[0]);
             // Mapping doesn't exit yet => add this mapping
             const saMapping = new ShortAnswerMapping(spot, dragItem);
             this.shortAnswerQuestion.correctMappings.push(saMapping);
@@ -619,6 +622,19 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: ShortAnswerMapping): void {
+        this.removeMapping(mappingToDelete);
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
+    }
+
+    /**
+     * Removes the mapping without announcing it, for callers that go on to change more before they do.
+     *
+     * A drop deletes the old mapping and adds the new one; announcing between the two would have the parent judge a
+     * question that is briefly missing both.
+     */
+    private removeMapping(mappingToDelete: ShortAnswerMapping): void {
         if (!this.shortAnswerQuestion.correctMappings) {
             this.shortAnswerQuestion.correctMappings = [];
         }
@@ -748,6 +764,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.text = this.textParts()
             .map((textPart) => textPart.join(' '))
             .join('\n');
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
     }
 
     /**
@@ -775,6 +794,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             .join('\n');
 
         this.refillTextParts(this.shortAnswerQuestion.text);
+        // The parent caches the reasons a blocked save explains itself with, but reads the validity itself live.
+        // Changing one without telling it leaves Save refusing to submit under an empty tooltip.
+        this.questionUpdated.emit();
     }
 
     /**
