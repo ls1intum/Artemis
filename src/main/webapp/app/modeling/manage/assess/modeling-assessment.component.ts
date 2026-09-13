@@ -577,7 +577,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         // else: auto-emit or unchanged content, keep the original accepted prefix
                     }
                 } else {
-                    feedback.text = assessment.feedback;
+                    // title/feedback mirror the host's unified feedback split: a short headline in `text`,
+                    // the longer explanation in `detailText` (see updateApollonAssessments for the reverse map,
+                    // including the legacy fallback for feedback saved before Apollon had a title field).
+                    feedback.text = assessment.title;
+                    feedback.detailText = assessment.feedback;
                 }
                 if (instruction?.id) {
                     feedback.gradingInstruction = instruction;
@@ -586,13 +590,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     feedback.gradingInstruction = undefined;
                 }
             } else {
-                feedback = Feedback.forModeling(
-                    assessment.score,
-                    assessment.feedback,
-                    assessment.modelElementId,
-                    this.referenceTypeFor(assessment),
-                    assessment.dropInfo as DropInfo,
-                );
+                feedback = Feedback.forModeling(assessment.score, assessment.title, assessment.modelElementId, this.referenceTypeFor(assessment), assessment.dropInfo as DropInfo);
+                feedback.detailText = assessment.feedback;
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
@@ -666,12 +665,19 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         try {
             const assessments = feedbacks.map((feedback): Assessment => {
-                const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
+                const isSuggestion = Feedback.isFeedbackSuggestion(feedback);
+                // A genuine title/detail split only exists once detailText is populated. Older modeling
+                // feedback (saved before Apollon had a title field) has its whole comment in `text` alone —
+                // same convention unified-feedback's getReferencedFeedbackTitle uses to avoid treating that
+                // legacy comment as a headline.
+                const hasSeparateTitle = !isSuggestion && !!feedback.detailText;
+                const feedbackContent = isSuggestion ? (feedback.detailText ?? '') : hasSeparateTitle ? (feedback.detailText ?? '') : (feedback.text ?? '');
                 this.shownInApollon.set(feedback.referenceId!, feedbackContent);
                 return {
                     modelElementId: feedback.referenceId!,
                     elementType: feedback.referenceType!,
                     score: feedback.credits ?? 0,
+                    title: hasSeparateTitle ? feedback.text : undefined,
                     feedback: feedbackContent,
                     label: this.calculateLabel(feedback),
                     labelColor: this.calculateLabelColor(feedback),
