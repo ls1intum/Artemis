@@ -64,6 +64,32 @@ tasks.register('verifyRuntimeBoundary') {
     }
 }
 
+// Apply the same source-size boundary to every extracted module, not only the root server.
+tasks.register('verifySourceSize') {
+    group = 'verification'
+    inputs.files(sourceSets.main.allJava)
+    doLast {
+        def oversized = sourceSets.main.allJava.files.findAll { it.readLines('UTF-8').size() > 1000 }
+        if (!oversized.empty) {
+            throw new GradleException("Hyperion classes exceed 1000 lines: ${oversized.collect { project.relativePath(it) }.sort()}")
+        }
+    }
+}
+
+// Jackson 2 annotations remain supported; production tree/mapper APIs must use Jackson 3.
+tasks.register('verifyJacksonBoundary') {
+    group = 'verification'
+    inputs.files(sourceSets.main.allJava)
+    doLast {
+        def legacy = sourceSets.main.allJava.files.findAll {
+            it.getText('UTF-8') =~ /(?m)^import (?:static )?com\.fasterxml\.jackson\.(?:databind|core|dataformat|datatype|module|jr|jaxrs)\./
+        }
+        if (!legacy.empty) {
+            throw new GradleException("Use Jackson 3 in Hyperion production code: ${legacy.collect { project.relativePath(it) }.sort()}")
+        }
+    }
+}
+
 tasks.named('check') {
-    dependsOn 'verifyRuntimeBoundary'
+    dependsOn 'verifyRuntimeBoundary', 'verifySourceSize', 'verifyJacksonBoundary'
 }

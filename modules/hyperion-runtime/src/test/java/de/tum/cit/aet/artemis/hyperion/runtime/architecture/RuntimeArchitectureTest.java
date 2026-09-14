@@ -1,11 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.architecture;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
@@ -39,14 +34,4 @@ class RuntimeArchitectureTest {
                 .check(classes);
     }
 
-    @Test
-    void extractedClassesStillHaveTheRepositorySizeLimit() throws IOException {
-        try (var files = Files.walk(Path.of("src/main/java"))) {
-            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
-                try (var lines = Files.lines(file)) {
-                    assertThat(lines.count()).as("line count of %s", file).isLessThanOrEqualTo(1_000);
-                }
-            }
-        }
-    }
 }
