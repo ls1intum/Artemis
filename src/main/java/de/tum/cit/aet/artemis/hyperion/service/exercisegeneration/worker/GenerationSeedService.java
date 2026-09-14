@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -74,7 +75,8 @@ public class GenerationSeedService {
         ProgrammingExercise readable = withTestIdsRenderedAsNames(exercise);
         String statement = requests.isAuthoritativeProblemStatement(readable) ? readable.getProblemStatement() : "";
         files.add(new WorkspaceFile("problem-statement.md", statement.getBytes(StandardCharsets.UTF_8), false));
-        var baseline = testCases.findByExerciseId(exercise.getId()).stream().map(test -> test.getTestName()).filter(name -> name != null && !name.isBlank())
+        var baseline = testCases.findByExerciseId(exercise.getId()).stream().filter(test -> Boolean.TRUE.equals(test.isActive()))
+                .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL).map(test -> test.getTestName()).filter(name -> name != null && !name.isBlank())
                 .collect(Collectors.toSet());
         return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline));
     }

@@ -51,7 +51,7 @@ class WorkerSupervisorTest {
             var id = new ExecutionIdentity("rejected", 2, UUID.randomUUID(), valid.identity().workerId(), valid.identity().workerIncarnation(), 1);
             var a = valid.assignment();
             var rejected = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, id,
-                    new GenerationAssignment(id, a.brief(), a.parameters(), a.seed(), a.authoringDeadline(), IMAGE));
+                    new GenerationAssignment(id, a.brief(), a.parameters(), a.seed(), a.authoringDeadline(), IMAGE, a.gradingContext()));
             worker.accept(rejected);
             worker.heartbeat();
             assertThat(take(events, WorkerEvent.Type.ERROR).identity()).isEqualTo(id);

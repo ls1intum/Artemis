@@ -599,6 +599,11 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void adaptWipe_structuralSurvivorsCannotReplaceTheActiveBehavioralSuite() {
+        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testPush", "testPop"), List.of("testClass[Stack]", "testNewBehavior"))).isNotEmpty();
+    }
+
+    @Test
     void adaptWipe_acceptsWhenAtLeastOneBaselineGradedTestSurvives() {
         var reasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru", "testCapacity"), List.of("testEvictsLru", "testCapacityAndResize"));
         assertThat(reasons).isEmpty();

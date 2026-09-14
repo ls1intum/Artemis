@@ -112,10 +112,14 @@ class GenerationSeedServiceTest {
     }
 
     @Test
-    void capturesDueDateAndAllPersistedTestNamesForWorkerValidation() {
+    void capturesOnlyActiveNonStructuralTestsForTheAdaptationBaseline() {
         var testCase = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase();
         testCase.setTestName("testPush");
-        when(testCases.findByExerciseId(42L)).thenReturn(java.util.Set.of(testCase));
+        testCase.setActive(true);
+        var inactive = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("oldTest").active(false);
+        var structural = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("testClass[Stack]").active(true);
+        structural.setType(de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType.STRUCTURAL);
+        when(testCases.findByExerciseId(42L)).thenReturn(java.util.Set.of(testCase, inactive, structural));
         when(exercise.getDueDate()).thenReturn(java.time.ZonedDateTime.parse("2026-10-01T12:00:00Z"));
         var grading = service.capture(exercise).gradingContext();
         assertThat(grading.hasDueDate()).isTrue();
