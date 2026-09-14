@@ -5,83 +5,33 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.apache.sshd.server.SshServer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerClientService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
-import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
  * Spring MVC authorization matrix for {@link HyperionExerciseGenerationResource}: {@link HyperionExerciseGenerationResourceTest} only reflects on the {@code @EnforceAtLeast...}
  * annotations, so the security filters, route mapping and enforcement aspects never run there; they do here.
  * <p>
- * Only the external worker transport is mocked. Every "role passed" row hits a real, side-effect-free validation branch: the fixture exercise uses
+ * Runs in the common LocalCI + LocalVC context, where generation is enabled and only the external worker transport is mocked. Every "role passed" row hits a real, side-effect-free
+ * validation branch: the fixture exercise uses
  * {@link ProjectType#MAVEN_BLACKBOX}, which the real {@code LanguageGenerationProfile} rejects with a 400, and status/cancel/revert resolve to their "nothing retained yet"
  * branch. A 400/204/404 row is therefore the expected response for an authorized caller, distinct from the 401/403 rows — which is what proves the boundary.
  */
-// This opt-in context shares the LocalCI fixtures, not the ordinary suite's TCP listeners or named grid instance.
-@Tag("BucketLocalCILocalVC")
-@ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@ActiveProfiles({ "test", "artemis", "buildagent", "core", "scheduling", "localci", "localvc" })
-@ContextConfiguration(classes = TestBuildAgentConfiguration.class)
-@TestPropertySource(properties = { "artemis.user-management.ldap.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=false",
-        "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
-        "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
-        "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.continuous-integration.build.images.c.default=ls1tum/artemis-c-minimal-docker:1.0.0",
-        "artemis.continuous-integration.build.images.c.fact=ls1tum/artemis-fact-minimal-docker:1.1.0", "artemis.continuous-integration.image-cleanup.enabled=true",
-        "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
-        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Hyperion_resource_authorization",
-        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/hyperion-resource-authorization/ssh-keys",
-        "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true",
-        // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
-        "artemis.repo-clone-path=./local/hyperion-resource-authorization/repos",
-        "artemis.version-control.local-vcs-repo-path=./local/hyperion-resource-authorization/local-vcs-repos", "artemis.lti.enabled=true",
-        "artemis.hyperion.exercise-generation.enabled=true", "artemis.hyperion.workers.broker-url=tcp://unused:61617?sslEnabled=true&verifyHost=true",
-        "artemis.hyperion.workers.user=test-core", "artemis.hyperion.workers.password=test-password", "artemis.hyperion.workers.ids=worker-1" })
-class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTestBase {
-
-    @MockitoBean
-    private SshServer sshServer;
-
-    @DynamicPropertySource
-    static void weaviateProperties(DynamicPropertyRegistry registry) {
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "HyperionResourceAuthorization_");
-    }
-
-    @MockitoBean
-    private GenerationWorkerRegistryService workerRegistry;
-
-    @MockitoBean
-    private GenerationWorkerClientService workerClient;
+class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "hypgenresource";
 
@@ -95,11 +45,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     private JsonMapper objectMapper;
 
     private long exerciseId;
-
-    @AfterEach
-    void resetMocks() {
-        Mockito.reset(sshServer, workerClient, workerRegistry);
-    }
 
     @BeforeEach
     void setup() {

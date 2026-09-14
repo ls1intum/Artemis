@@ -3,16 +3,18 @@ package de.tum.cit.aet.artemis.hyperion.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerClientService;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
-/** Uses the same standalone server context as the LocalCI build-agent integration tests. */
-@TestPropertySource(properties = { "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true" })
+/**
+ * Uses the shared standalone build-agent context, whose properties enable both Hyperion flags on purpose: an agent that inherits the core node's configuration must
+ * ignore them, because every Hyperion server service needs the {@code core} profile.
+ */
 class HyperionBuildAgentIsolationTest extends AbstractArtemisBuildAgentTest {
 
     @Autowired
@@ -28,5 +30,6 @@ class HyperionBuildAgentIsolationTest extends AbstractArtemisBuildAgentTest {
         assertThat(context.containsBean("dataSource")).isFalse();
         assertThat(context.containsBean("hyperionWebsocketService")).isFalse();
         assertThat(context.containsBean("exerciseVariantJobService")).isFalse();
+        assertThat(context.getBeanNamesForType(ChatModel.class)).isEmpty();
     }
 }
