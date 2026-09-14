@@ -34,10 +34,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * placeholders.
  *
  * <p>
- * What is escaped is line breaks, and nothing else. That is the whole of the problem for a line-oriented log, but it
- * is not the whole of the problem for the optional JSON console appender in {@code LoggingUtils}, which assembles its
- * record by hand: there a quote or a backslash in a value still breaks out of the JSON string. See the note on that
- * layout.
+ * What is escaped is line breaks, and nothing else, which is the whole of the problem for a line-oriented log. A
+ * structured format has to encode its values instead, and Spring Boot does that itself through
+ * {@code logging.structured.format.console} - no converter is involved on that path.
  *
  * <p>
  * The throwable is rendered by a separate conversion word ({@code %wEx}), so stack traces keep their line structure
