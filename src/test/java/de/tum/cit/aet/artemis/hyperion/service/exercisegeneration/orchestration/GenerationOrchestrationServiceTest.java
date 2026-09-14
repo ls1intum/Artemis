@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationUsage;
+import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
@@ -95,7 +97,7 @@ class GenerationOrchestrationServiceTest {
         exercise.setShortName("stack");
         exercise.setPackageName("de.example.stack");
         user.setLogin("editor");
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of()));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of())));
         when(workers.claim("job", 42)).thenReturn(claim);
         when(workers.renew(claim)).thenReturn(true);
         when(jobs.isOwnedActiveJob(42, "job")).thenReturn(true);
@@ -254,7 +256,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void earlySpecificationFailurePreservesCompleteAccountingWithoutRepositoryCapture() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of()));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of())));
         var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));

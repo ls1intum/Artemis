@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.Constants;
@@ -21,13 +22,17 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 /** Captures exact Git trees on core; the worker receives bytes and expected heads never leave core. */
 @Lazy
@@ -43,11 +48,17 @@ public class GenerationSeedService {
 
     private final String branch;
 
-    public GenerationSeedService(GitService gitService, TempFileUtilService temporaryFiles, GenerationRequestService requests,
-            @Value("${artemis.version-control.default-branch:main}") String branch) {
+    private final ProgrammingExerciseTestCaseRepository testCases;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
+    public GenerationSeedService(GitService gitService, TempFileUtilService temporaryFiles, GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, @Value("${artemis.version-control.default-branch:main}") String branch) {
         this.gitService = gitService;
         this.temporaryFiles = temporaryFiles;
         this.requests = requests;
+        this.testCases = testCases;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.branch = branch;
     }
 
@@ -61,9 +72,29 @@ public class GenerationSeedService {
         for (RepositoryType role : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS)) {
             captureRepository(exercise, role, files, heads);
         }
-        String statement = requests.isAuthoritativeProblemStatement(exercise) ? exercise.getProblemStatement() : "";
+        ProgrammingExercise readable = withTestIdsRenderedAsNames(exercise);
+        String statement = requests.isAuthoritativeProblemStatement(readable) ? readable.getProblemStatement() : "";
         files.add(new WorkspaceFile("problem-statement.md", statement.getBytes(StandardCharsets.UTF_8), false));
-        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads));
+        var baseline = testCases.findByExerciseId(exercise.getId()).stream().filter(test -> Boolean.TRUE.equals(test.isActive()))
+                .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL).map(test -> test.getTestName()).filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.toSet());
+        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline));
+    }
+
+    /**
+     * A saved problem statement binds tasks and diagrams to {@code <testid>} references, which the worker cannot resolve: its verifier reports each as an unbound task and the
+     * agent spends turns repairing them. The seed therefore carries test names, as an editor would show them. The rendering happens on a detached copy because the loaded
+     * entity's statement is the compare-and-set expectation for the later save and must keep its ids. The copy carries language and project type so the default-readme
+     * comparison in {@link GenerationRequestService#isAuthoritativeProblemStatement(ProgrammingExercise)} sees the same shape (names) the shipped template uses.
+     */
+    private ProgrammingExercise withTestIdsRenderedAsNames(ProgrammingExercise exercise) {
+        ProgrammingExercise copy = new ProgrammingExercise();
+        copy.setId(exercise.getId());
+        copy.setProblemStatement(exercise.getProblemStatement());
+        copy.setProgrammingLanguage(exercise.getProgrammingLanguage());
+        copy.setProjectType(exercise.getProjectType());
+        programmingExerciseTaskService.replaceTestIdsWithNames(copy);
+        return copy;
     }
 
     private void captureRepository(ProgrammingExercise exercise, RepositoryType role, List<WorkspaceFile> files, Map<RepositoryType, String> heads) {
@@ -118,6 +149,6 @@ public class GenerationSeedService {
     }
 
     /** File transport and optimistic concurrency evidence are deliberately kept separate. */
-    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads) {
+    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads, GradingContext gradingContext) {
     }
 }
