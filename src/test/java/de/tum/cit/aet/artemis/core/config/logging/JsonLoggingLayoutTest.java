@@ -40,6 +40,25 @@ class JsonLoggingLayoutTest {
         return JsonObjectMapper.get().readTree(rendered);
     }
 
+    /**
+     * The shared mapper keeps Jackson's {@code SORT_PROPERTIES_ALPHABETICALLY}, so without the explicit
+     * {@code @JsonPropertyOrder} on the record the fields would come out alphabetically and a log file would start
+     * every line with the level instead of the timestamp.
+     */
+    @Test
+    void shouldKeepTheFieldOrderTheReplacedPatternEmitted() {
+        var layout = new JsonLoggingLayout();
+        layout.setContext(new LoggerContext());
+        layout.start();
+
+        String rendered = layout.doLayout(event("hello {}", "world")).strip();
+
+        assertThat(rendered).startsWith("{\"timestamp\":");
+        assertThat(rendered.indexOf("\"level\"")).isLessThan(rendered.indexOf("\"logger\""));
+        assertThat(rendered.indexOf("\"logger\"")).isLessThan(rendered.indexOf("\"thread\""));
+        assertThat(rendered.indexOf("\"thread\"")).isLessThan(rendered.indexOf("\"message\""));
+    }
+
     @Test
     void shouldRenderTheFieldsTheReplacedPatternProduced() {
         JsonNode record = layout("hello {}", "world");

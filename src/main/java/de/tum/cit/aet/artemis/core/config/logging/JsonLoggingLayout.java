@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.config.logging;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.LayoutBase;
@@ -37,14 +37,24 @@ public class JsonLoggingLayout extends LayoutBase<ILoggingEvent> {
      */
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZone(ZoneId.systemDefault());
 
+    /**
+     * One rendered log line.
+     *
+     * <p>
+     * The explicit {@code @JsonPropertyOrder} is load-bearing rather than decorative: the shared mapper keeps
+     * Jackson's {@code SORT_PROPERTIES_ALPHABETICALLY}, which Artemis relies on elsewhere for deterministic
+     * responses, and without this the fields would come out as level, logger, message, thread, timestamp. Reading a
+     * log file is much easier when the timestamp and level come first, and it is the order the replaced pattern
+     * emitted.
+     */
+    @JsonPropertyOrder({ "timestamp", "level", "logger", "thread", "message" })
+    record LogLine(String timestamp, String level, String logger, String thread, String message) {
+    }
+
     @Override
     public String doLayout(ILoggingEvent event) {
-        Map<String, String> record = new LinkedHashMap<>();
-        record.put("timestamp", TIMESTAMP_FORMAT.format(Instant.ofEpochMilli(event.getTimeStamp())));
-        record.put("level", event.getLevel().toString());
-        record.put("logger", event.getLoggerName());
-        record.put("thread", event.getThreadName());
-        record.put("message", event.getFormattedMessage());
-        return JsonObjectMapper.get().writeValueAsString(record) + System.lineSeparator();
+        var logLine = new LogLine(TIMESTAMP_FORMAT.format(Instant.ofEpochMilli(event.getTimeStamp())), event.getLevel().toString(), event.getLoggerName(), event.getThreadName(),
+                event.getFormattedMessage());
+        return JsonObjectMapper.get().writeValueAsString(logLine) + System.lineSeparator();
     }
 }
