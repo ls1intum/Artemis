@@ -177,8 +177,8 @@
                                 <jhi-course-ingestion-stored-fields [properties]="labelledContent()[0].object.properties" />
                             </div>
                         } @else {
-                            @for (entry of pagedContent(); track entry.label) {
-                                @let rowKey = 'content:' + entry.label;
+                            @for (entry of pagedContent(); track entry.key) {
+                                @let rowKey = 'content:' + entry.key;
                                 <div class="mb-2 border border-solid rounded">
                                     <button
                                         type="button"
