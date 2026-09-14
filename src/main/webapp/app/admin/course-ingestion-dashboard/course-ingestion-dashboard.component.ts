@@ -4,6 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseIngestionOverviewComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-overview/course-ingestion-overview.component';
 import { CourseIngestionCoverageTableComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-coverage-table/course-ingestion-coverage-table.component';
+import { CourseIngestionQueueComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-queue/course-ingestion-queue.component';
 import { CourseIngestionBrowserComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser/course-ingestion-browser.component';
 import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
@@ -15,7 +16,14 @@ import { IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-i
 @Component({
     selector: 'jhi-course-ingestion-dashboard',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, CourseIngestionOverviewComponent, CourseIngestionCoverageTableComponent, CourseIngestionBrowserComponent],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        CourseIngestionOverviewComponent,
+        CourseIngestionCoverageTableComponent,
+        CourseIngestionBrowserComponent,
+        CourseIngestionQueueComponent,
+    ],
     templateUrl: './course-ingestion-dashboard.component.html',
 })
 export class CourseIngestionDashboardComponent {

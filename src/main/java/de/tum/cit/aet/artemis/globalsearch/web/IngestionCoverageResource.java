@@ -36,6 +36,9 @@ import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedCollectionCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.OutboxQueueDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.OutboxQueueEntryDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
 import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
@@ -59,6 +62,9 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 public class IngestionCoverageResource {
 
     /** The Iris content collections shown in the overview, addressed by their exact (unprefixed) names. */
+    /** Rows returned by the queue view. A reconcile pass can enqueue the whole corpus, and the view only shows the head. */
+    private static final int QUEUE_PAGE_SIZE = 50;
+
     private static final List<String> IRIS_CONTENT_COLLECTIONS = List.of(IngestionCoverageWeaviateReadService.LECTURES_COLLECTION,
             IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION,
             IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION);
@@ -69,6 +75,8 @@ public class IngestionCoverageResource {
 
     private final CoverageRecomputeService coverageRecomputeService;
 
+    private final WeaviateOutboxRepository weaviateOutboxRepository;
+
     private final ArtemisConfigHelper artemisConfigHelper = new ArtemisConfigHelper();
 
     private final Environment environment;
@@ -76,10 +84,11 @@ public class IngestionCoverageResource {
     private final Optional<IrisHealthApi> irisHealthApi;
 
     public IngestionCoverageResource(WeaviateHealthIndicator weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
-            CoverageRecomputeService coverageRecomputeService, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
+            CoverageRecomputeService coverageRecomputeService, WeaviateOutboxRepository weaviateOutboxRepository, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
         this.weaviateHealthIndicator = weaviateHealthIndicator;
         this.weaviateReadService = weaviateReadService;
         this.coverageRecomputeService = coverageRecomputeService;
+        this.weaviateOutboxRepository = weaviateOutboxRepository;
         this.environment = environment;
         this.irisHealthApi = irisHealthApi;
     }
@@ -160,6 +169,21 @@ public class IngestionCoverageResource {
     public ResponseEntity<Void> refreshCoverage() {
         coverageRecomputeService.forceRecompute();
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET .../queue : the head of the Weaviate outbox in dispatch order, plus its true total depth.
+     * <p>
+     * Rows are deleted once their write is confirmed, so everything returned here is still outstanding. The page
+     * is capped because a reconcile pass can enqueue the whole corpus at once and the view only needs the head.
+     *
+     * @return the queue head and the total number of queued rows
+     */
+    @EnforceAtLeastInstructor
+    @GetMapping("queue")
+    public ResponseEntity<OutboxQueueDTO> getOutboxQueue() {
+        var entries = weaviateOutboxRepository.findQueueHead(QUEUE_PAGE_SIZE).stream().map(OutboxQueueEntryDTO::of).toList();
+        return ResponseEntity.ok(new OutboxQueueDTO(weaviateOutboxRepository.count(), entries));
     }
 
     private static IndexedCollectionCountDTO toCountDto(String collection, OptionalLong count) {

@@ -10,6 +10,7 @@ import {
     IndexedEntityRecord,
     IngestionCoverage,
     IngestionCoverageStatus,
+    OutboxQueue,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /** Zero-based page request against a Spring `Pageable` endpoint. `sort` follows Spring's `property,direction` form. */
@@ -106,6 +107,14 @@ export class CourseIngestionDashboardService {
     getUnitContent(courseId: number, unitId: number, key: string): Observable<IndexedContentObject[]> {
         const params = new HttpParams().set('key', key);
         return this.http.get<IndexedContentObject[]>(`${this.baseUrl}/courses/${courseId}/units/${unitId}/content`, { params });
+    }
+
+    /**
+     * GET the head of the Weaviate outbox in dispatch order. Everything returned is still outstanding: a row is
+     * deleted once its write is confirmed, which is how the view knows a row finished.
+     */
+    getOutboxQueue(): Observable<OutboxQueue> {
+        return this.http.get<OutboxQueue>(`${this.baseUrl}/queue`);
     }
 
     /** POST to force a background recompute of the whole projection (no-op if one is already running). */

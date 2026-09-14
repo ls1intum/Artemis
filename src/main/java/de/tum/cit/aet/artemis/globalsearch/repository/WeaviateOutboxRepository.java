@@ -46,6 +46,20 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
     List<WeaviateOutboxEntry> findDueForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
+     * Reads the head of the queue in dispatch order for the ingestion dashboard, regardless of whether a row is
+     * due yet: a row backing off after a failure is exactly what an operator wants to see.
+     *
+     * @param limit the maximum number of rows to return
+     * @return the oldest rows in dispatch order
+     */
+    @Query(value = """
+            SELECT * FROM weaviate_outbox
+            ORDER BY id ASC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<WeaviateOutboxEntry> findQueueHead(@Param("limit") int limit);
+
+    /**
      * Whether a row is already queued for {@code (entityType, entityId)}. Rows are deleted once their write is
      * confirmed, so any row that exists is still pending.
      * <p>

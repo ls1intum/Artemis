@@ -126,6 +126,19 @@
                 "COMPLETE": "Complete",
                 "INCOMPLETE": "Incomplete",
                 "EMPTY": "Empty"
+            },
+            "queue": {
+                "title": "Sync queue",
+                "subtitle": "Writes waiting to reach the search index. Rows disappear once the write is confirmed.",
+                "empty": "Nothing queued: the index is up to date with everything written so far.",
+                "loadFailed": "The sync queue could not be loaded.",
+                "attempts": "{{ count }} failed attempt(s)",
+                "more": "Showing the head of the queue; {{ count }} rows are waiting in total.",
+                "status": {
+                    "queued": "Queued",
+                    "retrying": "Retrying",
+                    "done": "Done"
+                }
             }
         }
     }

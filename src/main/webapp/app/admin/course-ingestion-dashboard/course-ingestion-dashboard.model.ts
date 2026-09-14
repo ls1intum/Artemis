@@ -182,3 +182,24 @@ export function selectionKey(selection: BrowserSelection): string {
             return `coll:${selection.unitId}:${selection.key}`;
     }
 }
+
+/** How the dashboard classifies a queue row. `done` is not a server state: it is inferred when a row disappears. */
+export type OutboxQueueStatus = 'queued' | 'retrying' | 'done';
+
+/** One outstanding Weaviate outbox row. */
+export interface OutboxQueueEntry {
+    id: number;
+    operation: string;
+    entityType?: string;
+    entityId?: number;
+    origin: string;
+    attempts: number;
+    nextAttemptAt?: string;
+    createdAt?: string;
+}
+
+/** The head of the outbox queue plus its true depth, which may exceed the returned page. */
+export interface OutboxQueue {
+    totalDepth: number;
+    entries: OutboxQueueEntry[];
+}

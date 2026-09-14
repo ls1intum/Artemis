@@ -17,10 +17,14 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexOverviewDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.OutboxQueueDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 
 /**
@@ -39,6 +43,9 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     @Autowired
     private IngestionCoverageRepository ingestionCoverageRepository;
+
+    @Autowired
+    private WeaviateOutboxRepository weaviateOutboxRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -68,6 +75,7 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         request.getList(BASE + "coverage", HttpStatus.FORBIDDEN, IngestionCoverageDTO.class);
         request.getList(BASE + "coverage/page", HttpStatus.FORBIDDEN, IngestionCoverageDTO.class);
         request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.FORBIDDEN);
+        request.get(BASE + "queue", HttpStatus.FORBIDDEN, OutboxQueueDTO.class);
     }
 
     @Test
@@ -127,6 +135,28 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
             // Live coverage always includes the per-type breakdown, even when nothing is indexed yet.
             assertThat(dto.typeCounts()).isNotEmpty();
         });
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void queueReportsOutstandingRowsInDispatchOrder() throws Exception {
+        // Built through the factories, which stamp the timestamps the table requires.
+        var first = WeaviateOutboxEntry.forUpsert("lecture", 4321L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        var second = WeaviateOutboxEntry.forUpsert("course", 8765L, WeaviateOutboxOrigin.LIVE);
+        weaviateOutboxRepository.saveAll(List.of(first, second));
+
+        var queue = request.get(BASE + "queue", HttpStatus.OK, OutboxQueueDTO.class);
+
+        assertThat(queue.totalDepth()).isGreaterThanOrEqualTo(2);
+        // Dispatch order is outbox id order, so the row enqueued first is reported first.
+        var ids = queue.entries().stream().map(entry -> entry.id()).toList();
+        assertThat(ids).containsSubsequence(first.getId(), second.getId());
+        var reconcileRow = queue.entries().stream().filter(entry -> entry.id() == first.getId()).findFirst().orElseThrow();
+        assertThat(reconcileRow.origin()).isEqualTo(WeaviateOutboxOrigin.RECONCILE_MISSING.name());
+        assertThat(reconcileRow.entityType()).isEqualTo("lecture");
+        assertThat(reconcileRow.entityId()).isEqualTo(4321L);
+        // A row that has never been attempted carries no failure count, which is what the view renders as queued.
+        assertThat(reconcileRow.attempts()).isZero();
     }
 
     @Test

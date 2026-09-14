@@ -126,6 +126,19 @@
                 "COMPLETE": "Vollständig",
                 "INCOMPLETE": "Unvollständig",
                 "EMPTY": "Leer"
+            },
+            "queue": {
+                "title": "Synchronisierungswarteschlange",
+                "subtitle": "Schreibvorgänge, die noch in den Suchindex müssen. Zeilen verschwinden, sobald der Schreibvorgang bestätigt ist.",
+                "empty": "Nichts in der Warteschlange: Der Index ist auf dem Stand aller bisherigen Schreibvorgänge.",
+                "loadFailed": "Die Synchronisierungswarteschlange konnte nicht geladen werden.",
+                "attempts": "{{ count }} fehlgeschlagene Versuche",
+                "more": "Es wird der Anfang der Warteschlange angezeigt; insgesamt warten {{ count }} Zeilen.",
+                "status": {
+                    "queued": "In Warteschlange",
+                    "retrying": "Erneuter Versuch",
+                    "done": "Fertig"
+                }
             }
         }
     }
