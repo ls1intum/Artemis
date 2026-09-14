@@ -52,14 +52,9 @@ name, write a `@Query` with `nativeQuery = true`.
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`. The raw JDBC rule
 permits `core.config` only.
 
-**The exception list is grandfathering, not permission.** `shouldNotUseEntityManagerDirectly`
-excludes three classes and carries a TODO to refactor them away: `RepositoryImpl`,
-`CustomPostRepositoryImpl`, and `TitleCacheEvictionService`. The last is the one you are most
-likely to read, because it is also the canonical cache-eviction pattern below; it holds an
-`EntityManagerFactory` only to reach the Hibernate `EventListenerRegistry` and register itself as a
-`PostUpdateEventListener` / `PostDeleteEventListener`. Copy its eviction logic, not its
-constructor. A new class taking an `EntityManagerFactory` fails the rule, and adding yourself to
-the list is the wrong fix.
+**The exception list is grandfathering, not permission.** Inspect the current exceptions in
+`shouldNotUseEntityManagerDirectly` rather than copying their dependencies. A new class taking an
+`EntityManagerFactory` fails the rule; adding it to the exception list is not the solution.
 
 ## Fetching
 
@@ -133,8 +128,7 @@ each cache to one of two managers:
 
 - **Per-node Caffeine**, for the blob caches named in `BLOB_CACHE_NAMES`
   (`src/main/java/de/tum/cit/aet/artemis/core/config/cache/BlobCacheConfiguration.java`: `files`,
-  `plantUmlPng`, `plantUmlSvg`) and the title caches named in `TITLE_CACHE_NAMES`
-  (`src/main/java/de/tum/cit/aet/artemis/core/config/cache/TitleCacheConfiguration.java`).
+  `plantUmlPng`, `plantUmlSvg`).
 - **The distributed data provider**, for everything else.
 
 Every per-node cache also expires entries after a time-to-live. That TTL is the price of moving a
@@ -144,17 +138,10 @@ visible for long, the cache belongs in the distributed manager instead.
 **Cache records, not entities.** A cached Hibernate entity carries its proxies and its association
 graph with it. Cache a DTO or a projection.
 
-**Always pair it with explicit eviction.** Either `@CacheEvict` on the writing service, or a
-Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. The canonical patterns are
-`src/main/java/de/tum/cit/aet/artemis/core/service/TitleCacheEvictionService.java` and, for
-propagating the eviction of a per-node entry to every node,
-`src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. The
-latter broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL,
-so the retention cost of a reliable topic buys nothing.
-
-Read `TitleCacheEvictionService` for the eviction logic, not for how it obtains its listener
-registration: its `EntityManagerFactory` is a grandfathered exception, as described under
-persistence access above.
+**Always pair it with explicit eviction.** Use `@CacheEvict` on the writing service. For
+propagating eviction of a per-node entry to every node, see
+`src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`.
+It broadcasts over a plain topic: a dropped broadcast self-corrects within the TTL.
 
 **The bar.** A measured performance gain that justifies the eviction-correctness work. The default
 answer is: do not cache. Full rationale and history:

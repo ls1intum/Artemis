@@ -1,0 +1,107 @@
+apply plugin: 'java-library'
+apply plugin: 'jacoco'
+apply plugin: 'checkstyle'
+
+group = rootProject.group
+version = rootProject.version
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+repositories {
+    maven { url = 'https://reposilite.aet.cit.tum.de/releases' }
+    mavenCentral()
+}
+
+dependencies {
+    api platform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
+    api platform('org.springframework.ai:spring-ai-bom:2.0.1')
+    api platform('com.fasterxml.jackson:jackson-bom:2.22.2')
+    api 'org.jspecify:jspecify:1.0.0'
+    api 'com.fasterxml.jackson.core:jackson-annotations'
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
+    testImplementation 'org.assertj:assertj-core:3.27.7'
+    testImplementation "org.mockito:mockito-core:${mockito_version}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_version}"
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = rootProject.jacoco.toolVersion
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+checkstyle {
+    toolVersion = rootProject.checkstyle.toolVersion
+    configFile = rootProject.file('checkstyle.xml')
+}
+
+// Catch forbidden transitive runtime dependencies too, even if no source imports them yet.
+tasks.register('verifyRuntimeBoundary') {
+    group = 'verification'
+    doLast {
+        def forbiddenGroups = ['org.hibernate.orm', 'org.postgresql', 'com.mysql', 'com.hazelcast',
+                               'org.redisson', 'org.springframework.data', 'org.apache.tomcat.embed', 'org.eclipse.jetty',
+                               'org.liquibase', 'org.flywaydb', 'com.h2database', 'org.mariadb.jdbc', 'org.springframework.cloud', 'io.undertow']
+        def forbiddenSpringModules = ['spring-jdbc', 'spring-orm', 'spring-webmvc', 'spring-websocket', 'spring-webflux']
+        def violations = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll { artifact ->
+            forbiddenGroups.any { group -> artifact.moduleVersion.id.group == group || artifact.moduleVersion.id.group.startsWith(group + '.') } ||
+                (artifact.moduleVersion.id.group == 'org.springframework' && forbiddenSpringModules.contains(artifact.name))
+        }
+        if (!violations.empty) {
+            throw new GradleException("Forbidden Hyperion runtime dependencies: ${violations*.moduleVersion*.id}")
+        }
+    }
+}
+
+// Apply the same source-size boundary to every extracted module, not only the root server.
+tasks.register('verifySourceSize') {
+    group = 'verification'
+    inputs.files(sourceSets.main.allJava)
+    doLast {
+        def oversized = sourceSets.main.allJava.files.findAll { it.readLines('UTF-8').size() > 1000 }
+        if (!oversized.empty) {
+            throw new GradleException("Hyperion classes exceed 1000 lines: ${oversized.collect { project.relativePath(it) }.sort()}")
+        }
+    }
+}
+
+// Jackson 2 annotations remain supported; production tree/mapper APIs must use Jackson 3.
+tasks.register('verifyJacksonBoundary') {
+    group = 'verification'
+    inputs.files(sourceSets.main.allJava)
+    doLast {
+        def legacy = sourceSets.main.allJava.files.findAll {
+            it.getText('UTF-8') =~ /(?m)^import (?:static )?com\.fasterxml\.jackson\.(?:databind|core|dataformat|datatype|module|jr|jaxrs)\./
+        }
+        if (!legacy.empty) {
+            throw new GradleException("Use Jackson 3 in Hyperion production code: ${legacy.collect { project.relativePath(it) }.sort()}")
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'verifyRuntimeBoundary', 'verifySourceSize', 'verifyJacksonBoundary'
+}
+
+// An unqualified root `test --tests ServerTest` also selects subproject test tasks. Keep the
+// root's strict filter check, but do not fail unrelated modules that contain no matching test.
+// Explicit `:hyperion-worker:test --tests Typo` remains strict when no root test task is selected.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(':test')) {
+        tasks.named('test') {
+            filter.failOnNoMatchingTests = false
+        }
+    }
+}
