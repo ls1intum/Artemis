@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -133,13 +134,16 @@ public class StudentExamService {
 
     private final StudentExamSubmitMapper studentExamSubmitMapper;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager,
             WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
-            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -161,6 +165,7 @@ public class StudentExamService {
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     /**
@@ -422,6 +427,9 @@ public class StudentExamService {
         }
 
         studentExam.getUser().setVisibleRegistrationNumber();
+        // This response feeds the exam result summary, which offers the AI feedback request on a test run. The course's Athena
+        // configuration is lazy, so without reading it here the DTO reports the formative switch as off and the button stays hidden.
+        courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
         Set<ExamGradeScoreDTO> examGrades;
         if (studentExam.isTestRun()) {
             examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
