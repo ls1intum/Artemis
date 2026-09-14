@@ -111,6 +111,16 @@ export class ExerciseHeadersInformationComponent {
      * the variant cards), keeping the tooltip and results popover inert without an outside style override.
      */
     readonly interactive = input<boolean>(true);
+    /**
+     * Whether the dates an enclosing timeline governs are shown: the start date, the submission due date (with the
+     * live-quiz countdown that stands in for it) and the assessment due date. False on the variant cards of an
+     * exercise group, whose server-side timeline overwrites those three on every member
+     * ({@code ExerciseVariantGroupService#applyGroupTimeline}), so the group header states them once instead of once
+     * per card. Two dates are not covered, because neither is the group's to state: the complaint due date, derived
+     * per student from that student's last result, and a participation's individual due date (see
+     * {@link hasIndividualDueDate}).
+     */
+    readonly showSharedTimelineDates = input<boolean>(true);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
@@ -122,6 +132,13 @@ export class ExerciseHeadersInformationComponent {
     readonly resolvedCourse = computed<Course | undefined>(() => this.course() ?? getCourseFromExercise(this.exercise()));
 
     readonly dueDate = computed<dayjs.Dayjs | undefined>(() => getExerciseDueDate(this.exercise(), this.studentParticipation()));
+
+    /**
+     * Whether the shown due date comes from the participation's individual due date rather than from the exercise.
+     * Such an extension is granted per student, so no enclosing group timeline governs it and it stays visible even
+     * when {@link showSharedTimelineDates} suppresses the group-governed dates.
+     */
+    private readonly hasIndividualDueDate = computed<boolean>(() => this.studentParticipation()?.individualDueDate !== undefined && this.exercise().dueDate !== undefined);
 
     private readonly allResults = computed<Result[]>(() => getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
 
@@ -160,7 +177,7 @@ export class ExerciseHeadersInformationComponent {
     /** All header information boxes, in display order: the generic exercise boxes first, then the live quiz boxes last. */
     readonly informationBoxItems = computed<InformationBox[]>(() => {
         const items: InformationBox[] = [...this.getPointsItems(), ...this.getDueDateItems()];
-        const startDateItem = this.getStartDateItem();
+        const startDateItem = this.showSharedTimelineDates() ? this.getStartDateItem() : undefined;
         if (startDateItem) {
             items.push(startDateItem);
         }
@@ -212,10 +229,18 @@ export class ExerciseHeadersInformationComponent {
         // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
         // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
         // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
-        const quizTimeItem = this.getQuizTimeItem();
-        if (quizTimeItem) {
-            items.push(quizTimeItem);
-        } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
+        if (this.showSharedTimelineDates()) {
+            const quizTimeItem = this.getQuizTimeItem();
+            if (quizTimeItem) {
+                items.push(quizTimeItem);
+            } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
+                const dueDateItem = this.getDueDateItem();
+                if (dueDateItem) {
+                    items.push(dueDateItem);
+                }
+            }
+        } else if (this.hasIndividualDueDate()) {
+            // The group header can only state the shared deadline, so an individual extension has to be shown here.
             const dueDateItem = this.getDueDateItem();
             if (dueDateItem) {
                 items.push(dueDateItem);
@@ -223,7 +248,7 @@ export class ExerciseHeadersInformationComponent {
         }
         const exercise = this.exercise();
         // If the due date is in the past and the assessment due date is in the future, show the assessment due date
-        if (this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
+        if (this.showSharedTimelineDates() && this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
             items.push({
                 title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
                 content: {
