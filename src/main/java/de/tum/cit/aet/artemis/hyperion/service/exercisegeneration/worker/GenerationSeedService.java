@@ -75,7 +75,9 @@ public class GenerationSeedService {
             if (uri == null) {
                 throw new IllegalStateException("Missing generation repository: " + role);
             }
-            repository = gitService.getOrCheckoutRepository(uri, uri, temporary.resolve("repository"), true, branch, false);
+            String exerciseBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
+            String repositoryBranch = exerciseBranch == null || exerciseBranch.isBlank() ? branch : exerciseBranch;
+            repository = gitService.getOrCheckoutRepository(uri, uri, temporary.resolve("repository"), true, repositoryBranch, false);
             try (RevWalk commits = new RevWalk(repository); TreeWalk tree = new TreeWalk(repository)) {
                 var commit = commits.parseCommit(repository.resolve(Constants.HEAD));
                 heads.put(role, commit.name());

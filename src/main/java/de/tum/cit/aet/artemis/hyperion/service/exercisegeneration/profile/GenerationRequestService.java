@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,16 @@ public class GenerationRequestService {
             return false;
         }
         return !normalizeStatement(statement).equals(defaultTemplateReadme(exercise).orElse(null));
+    }
+
+    /**
+     * Dateless drafts remain authorable; a release date at or before now closes authoring.
+     *
+     * @param exercise the draft to check
+     * @return whether its configured release date has arrived
+     */
+    public static boolean hasReleaseDateInThePast(ProgrammingExercise exercise) {
+        return exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now());
     }
 
     private Optional<String> defaultTemplateReadme(ProgrammingExercise exercise) {

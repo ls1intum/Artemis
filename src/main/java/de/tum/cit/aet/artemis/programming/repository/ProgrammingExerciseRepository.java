@@ -101,7 +101,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN exerciseGroup.exam exam
             WHERE pe.id = :exerciseId
                 AND (
-                    (pe.course IS NOT NULL AND COALESCE(pe.startDate, pe.releaseDate) > CURRENT_TIMESTAMP)
+                    (pe.course IS NOT NULL AND (pe.releaseDate IS NULL OR pe.releaseDate > CURRENT_TIMESTAMP))
                     OR (exerciseGroup IS NOT NULL AND exam.startDate > CURRENT_TIMESTAMP)
                 )
                 AND NOT EXISTS (

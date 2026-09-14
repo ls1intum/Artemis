@@ -83,6 +83,21 @@ class GenerationSeedServiceTest {
         assertThat(temporary.toFile().list()).isEmpty();
     }
 
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "exercise-branch", "", " " })
+    @org.junit.jupiter.params.provider.NullSource
+    void capturesConfiguredBranchWithDefaultFallback(String configuredBranch) throws Exception {
+        var buildConfig = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig();
+        buildConfig.setBranch(configuredBranch);
+        when(exercise.getBuildConfig()).thenReturn(buildConfig);
+        String expectedBranch = configuredBranch == null || configuredBranch.isBlank() ? "main" : configuredBranch;
+        when(git.getOrCheckoutRepository(eq(uri), eq(uri), any(Path.class), eq(true), eq(expectedBranch), eq(false)))
+                .thenAnswer(invocation -> createRepository(invocation.getArgument(2)));
+        var seed = service.capture(exercise);
+        org.mockito.Mockito.verify(git, org.mockito.Mockito.times(3)).getOrCheckoutRepository(eq(uri), eq(uri), any(Path.class), eq(true), eq(expectedBranch), eq(false));
+        assertThat(seed.heads().values()).containsAll(commits);
+    }
+
     @Test
     void seededSampleStatementIsNotSentAsAnAuthoritativeContract() {
         when(requests.isAuthoritativeProblemStatement(exercise)).thenReturn(false);

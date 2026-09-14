@@ -151,6 +151,18 @@ class GenerationTaskServiceTest {
         when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString(), any(), any())).thenReturn(true);
     }
 
+    @ParameterizedTest
+    @EnumSource(GenerationMode.class)
+    void datelessDraftCanReachPersistence(GenerationMode mode) {
+        exercise.setReleaseDate(null);
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", mode));
+        verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+    }
+
     @Test
     void reloadedExerciseWithAuxiliaryRepositoryStopsBeforeOrchestration() {
         // Auxiliary repositories are queried explicitly rather than through the reloaded entity's lazy collection, which cannot be initialized on a detached instance.

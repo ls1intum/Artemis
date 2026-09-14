@@ -118,6 +118,22 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
+    void mutationGuardAcceptsDatelessAndFutureDraftsButRejectsReleasedExercises() {
+        var exercise = programmingExerciseRepository.findById(exerciseId).orElseThrow();
+        exercise.setReleaseDate(null);
+        exercise.setStartDate(null);
+        programmingExerciseRepository.saveAndFlush(exercise);
+        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isTrue();
+        exercise.setReleaseDate(java.time.ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isTrue();
+        exercise.setReleaseDate(java.time.ZonedDateTime.now().minusDays(1));
+        exercise.setStartDate(java.time.ZonedDateTime.now().plusDays(2));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
+    }
+
+    @Test
     @WithAnonymousUser
     void recoveryRequiresAuthentication() throws Exception {
         request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot", exerciseId)).andExpect(status().isUnauthorized());

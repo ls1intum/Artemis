@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -370,7 +369,7 @@ public class HyperionExerciseGenerationResource {
      * student cannot copy a template that is about to change.
      */
     private void validateDraftExercise(ProgrammingExercise exercise) {
-        if (hasReleaseDateInThePast(exercise)) {
+        if (GenerationRequestService.hasReleaseDateInThePast(exercise)) {
             throw new BadRequestAlertException("Hyperion generation can only modify unreleased draft exercises.", ENTITY_NAME, "exerciseAlreadyReleased");
         }
         if (hasStudentParticipations(exercise)) {
@@ -379,11 +378,7 @@ public class HyperionExerciseGenerationResource {
     }
 
     private boolean canOfferRevert(ProgrammingExercise exercise) {
-        return !hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise) && !jobService.hasActiveJob(exercise.getId());
-    }
-
-    private static boolean hasReleaseDateInThePast(ProgrammingExercise exercise) {
-        return exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now());
+        return !GenerationRequestService.hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise) && !jobService.hasActiveJob(exercise.getId());
     }
 
     private static boolean hasStudentParticipations(ProgrammingExercise exercise) {

@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ex
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -698,7 +699,7 @@ public class GenerationTaskService {
     private ProgrammingExercise reloadDraftExerciseBeforeLiveMutation(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId)
                 .orElseThrow(() -> new IllegalStateException("Generation cannot be saved because the exercise no longer exists."));
-        if (exercise.isReleased()) {
+        if (GenerationRequestService.hasReleaseDateInThePast(exercise)) {
             throw new IllegalStateException("Hyperion generation can only modify unreleased draft exercises.");
         }
         Set<StudentParticipation> studentParticipations = exercise.getStudentParticipations();
