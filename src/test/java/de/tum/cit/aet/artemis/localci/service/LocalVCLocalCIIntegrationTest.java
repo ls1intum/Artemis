@@ -525,10 +525,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             // A build plan with two containers, each with its own Docker image and build phase.
             BuildPhaseDTO phaseA = new BuildPhaseDTO("phase_a", "echo container-a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"));
             BuildPhaseDTO phaseB = new BuildPhaseDTO("phase_b", "echo container-b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"));
-            BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1", List.of(phaseA));
+            // container_a bounds its own job more tightly than the exercise timeout, container_b uses the exercise timeout
+            BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1", null, List.of(phaseA), 90);
             BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2", List.of(phaseB));
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(containerA, containerB)).toBuildPlanConfiguration());
+            buildConfig.setTimeoutSeconds(200);
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -550,6 +552,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(jobA.buildConfig().dockerImage()).isEqualTo("image-a:1");
             assertThat(jobB.buildConfig().dockerImage()).isEqualTo("image-b:2");
             assertThat(jobA.buildConfig().buildScript()).isNotEqualTo(jobB.buildConfig().buildScript());
+            // a container's own timeout bounds its job; a container without one gets the exercise timeout
+            assertThat(jobA.buildConfig().timeoutSeconds()).isEqualTo(90);
+            assertThat(jobB.buildConfig().timeoutSeconds()).isEqualTo(200);
         }
 
         @Test

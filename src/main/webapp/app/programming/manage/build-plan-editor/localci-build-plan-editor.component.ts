@@ -125,6 +125,16 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     // the Docker flags are assembled by the build configuration child, so the size check lives there and is delegated here
     readonly areDockerFlagsWithinSizeLimit = computed(() => this.buildConfigurationComponent()?.areDockerFlagsWithinSizeLimit() ?? true);
 
+    /** a container timeout is optional; a set one has to lie within the same bounds as the exercise timeout */
+    readonly areContainerTimeoutsValid = computed(() => {
+        const min = this.timeoutMinValue();
+        const max = this.timeoutMaxValue();
+        return this.containers().every((container) => {
+            const timeout = container.timeoutSeconds;
+            return timeout === undefined || (Number.isInteger(timeout) && timeout > 0 && (min === undefined || timeout >= min) && (max === undefined || timeout <= max));
+        });
+    });
+
     readonly isBuildPlanConfigurationWithinSizeLimit = computed(() => JSON.stringify({ containers: this.containers() }).length <= BUILD_PLAN_CONFIGURATION_MAX_LENGTH);
 
     // An empty container image is allowed: submit() sends no image for it and the build falls back to the exercise's
@@ -136,6 +146,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             this.areContainerNamesValid() &&
             this.arePhaseNamesValid() &&
             this.isTimeoutValid() &&
+            this.areContainerTimeoutsValid() &&
             this.areDockerResourcesValid() &&
             this.isBuildPlanConfigurationWithinSizeLimit() &&
             this.areDockerFlagsWithinSizeLimit(),
@@ -300,7 +311,11 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             .updateBuildPlanConfiguration(exercise.id, {
                 // a blank image is trimmed to undefined, so the container inherits the language default instead of
                 // persisting an unusable empty image (mirrors the plan-level behaviour the reviewed editor had)
-                buildPlan: { containers: this.containers().map((container) => cloneWith(container, { dockerImage: container.dockerImage?.trim() || undefined })) },
+                buildPlan: {
+                    containers: this.containers().map((container) =>
+                        cloneWith(container, { dockerImage: container.dockerImage?.trim() || undefined, timeoutSeconds: container.timeoutSeconds || undefined }),
+                    ),
+                },
                 timeoutSeconds: this.timeout(),
                 dockerFlags: exercise.buildConfig?.dockerFlags,
             })

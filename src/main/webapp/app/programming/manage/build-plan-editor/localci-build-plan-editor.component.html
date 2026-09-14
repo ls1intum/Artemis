@@ -51,6 +51,9 @@
             [otherContainerNames]="otherContainerNames($index)"
             [isExamMode]="isExamMode()"
             [dockerImagePlaceholder]="defaultDockerImage()"
+            [timeoutPlaceholder]="timeout()"
+            [timeoutMinValue]="timeoutMinValue()"
+            [timeoutMaxValue]="timeoutMaxValue()"
         />
     }
     <tum-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">

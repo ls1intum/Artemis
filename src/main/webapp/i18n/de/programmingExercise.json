@@ -155,6 +155,9 @@
                 "containerNameHelp": "Verwende nur Buchstaben, Ziffern und Unterstriche und beginne nicht mit einer Ziffer. Der Name muss innerhalb des Build-Plans eindeutig sein.",
                 "containerNameInvalid": "Verwende nur Buchstaben, Ziffern und Unterstriche und beginne nicht mit einer Ziffer.",
                 "containerNameDuplicate": "Ein anderer Container verwendet diesen Namen bereits.",
+                "timeout": "Timeout (Sekunden)",
+                "timeoutHelp": "Leer lassen, um den Timeout der Aufgabe zu verwenden. Der Timeout der Aufgabe muss den langsamsten Container abdecken; ein Container mit kurzen Phasen kann hier enger begrenzt werden, damit eine hängende Abgabe ihren Build-Agent-Slot früher freigibt und das zusammengeführte Ergebnis die Studierenden früher erreicht.",
+                "timeoutInvalid": "Der Timeout muss eine ganze Zahl von Sekunden zwischen {{ min }} und {{ max }} sein.",
                 "scopeRepositories": "Nur ausgewählte Repositories auschecken",
                 "scopeRepositoriesHelp": "Standardmäßig checkt ein Container die auf der Aufgabe konfigurierten Repositories aus. Wähle die Repositories explizit aus, um diesem Container nur auf eine Teilmenge Zugriff zu geben, zum Beispiel um von Studierenden geschriebene Tests ohne das Test-Repository der Lehrenden auszuführen.",
                 "repositoryTypes": {

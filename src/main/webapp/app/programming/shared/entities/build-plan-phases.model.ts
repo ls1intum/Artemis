@@ -59,6 +59,8 @@ export interface BuildContainer {
     dockerImage?: string;
     repositories?: BuildContainerRepository[];
     phases: BuildPhase[];
+    /** the timeout of this container's build job in seconds; undefined means the timeout configured on the exercise */
+    timeoutSeconds?: number;
 }
 
 /**

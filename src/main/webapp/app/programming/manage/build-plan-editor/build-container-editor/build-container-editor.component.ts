@@ -36,6 +36,10 @@ export class BuildContainerEditorComponent {
     // the language default image, shown as a placeholder while the field is empty instead of being written into it: an
     // empty image means the container follows the exercise's language default at build time (see buildConfigForContainer)
     readonly dockerImagePlaceholder = input<string>('');
+    // the exercise timeout, shown as the placeholder of the container timeout: an empty field means the container uses it
+    readonly timeoutPlaceholder = input<number | undefined>(undefined);
+    readonly timeoutMinValue = input<number | undefined>(undefined);
+    readonly timeoutMaxValue = input<number | undefined>(undefined);
 
     readonly remove = model<void>();
 
@@ -50,6 +54,17 @@ export class BuildContainerEditorComponent {
     });
 
     readonly isNameValid = computed(() => this.isNamePatternValid() && this.isNameUnique());
+
+    /** an unset timeout is valid (the exercise timeout applies); a set one has to lie within the bounds of the instance */
+    readonly isTimeoutValid = computed(() => {
+        const timeout = this.container().timeoutSeconds;
+        if (timeout === undefined) {
+            return true;
+        }
+        const min = this.timeoutMinValue();
+        const max = this.timeoutMaxValue();
+        return Number.isInteger(timeout) && timeout > 0 && (min === undefined || timeout >= min) && (max === undefined || timeout <= max);
+    });
 
     readonly nameValidationMessageKey = computed(() => {
         if (!this.isNamePatternValid()) {
@@ -70,6 +85,12 @@ export class BuildContainerEditorComponent {
 
     setDockerImage(dockerImage: string): void {
         this.container.update((container) => cloneWith(container, { dockerImage }));
+    }
+
+    /** an emptied field removes the override, so the container follows the exercise timeout again */
+    setTimeoutSeconds(value: number | string | null): void {
+        const timeoutSeconds = value === null || value === '' ? undefined : Number(value);
+        this.container.update((container) => cloneWith(container, { timeoutSeconds }));
     }
 
     setPhases(phases: BuildPhase[]): void {

@@ -168,6 +168,9 @@
                 "containerNameHelp": "Use only letters, digits and underscores, and do not start with a digit. The name must be unique within the build plan.",
                 "containerNameInvalid": "Use only letters, digits and underscores, and do not start with a digit.",
                 "containerNameDuplicate": "Another container already uses this name.",
+                "timeout": "Timeout (seconds)",
+                "timeoutHelp": "Leave empty to use the timeout of the exercise. The exercise timeout has to cover the slowest container; a container whose phases are short can be bounded more tightly, so that a hung submission frees its build agent slot, and the merged result reaches the student, sooner.",
+                "timeoutInvalid": "The timeout must be a whole number of seconds between {{ min }} and {{ max }}.",
                 "scopeRepositories": "Check out only selected repositories",
                 "scopeRepositoriesHelp": "By default a container checks out the repositories configured on the exercise. Select the repositories explicitly to give this container access to a subset only, for example to run student-authored tests without the instructor's test repository.",
                 "repositoryTypes": {

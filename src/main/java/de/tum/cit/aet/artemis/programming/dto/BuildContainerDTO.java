@@ -6,6 +6,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,29 +21,46 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * that runs student-authored tests can be provisioned with the assignment repository only, so that the instructor's
  * test files are never copied into it.
  *
- * @param name         the name of the container, unique within the build plan
- * @param dockerImage  the Docker image the container runs, or null to use the default image of the exercise
- * @param repositories the repositories checked out into the container. Null means the container is not scoped and checks
- *                         out the repositories configured on the exercise, as a build plan without containers does; an
- *                         empty list means the container is scoped and receives only the assignment repository. The
- *                         empty list is kept during serialization (unlike the record default) so that this "scoped to
- *                         nothing" state is not silently turned back into the unscoped state.
- * @param phases       the build phases executed inside the container, in order
+ * @param name           the name of the container, unique within the build plan
+ * @param dockerImage    the Docker image the container runs, or null to use the default image of the exercise
+ * @param repositories   the repositories checked out into the container. Null means the container is not scoped and checks
+ *                           out the repositories configured on the exercise, as a build plan without containers does; an
+ *                           empty list means the container is scoped and receives only the assignment repository. The
+ *                           empty list is kept during serialization (unlike the record default) so that this "scoped to
+ *                           nothing" state is not silently turned back into the unscoped state.
+ * @param phases         the build phases executed inside the container, in order
+ * @param timeoutSeconds the timeout of this container's build job in seconds, or null to use the timeout configured on
+ *                           the exercise. The exercise timeout has to cover the slowest container; a container whose
+ *                           phases are short can be bounded more tightly here, so that a hung or looping submission
+ *                           frees its build agent slot, and the merged result reaches the student, sooner.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildContainerDTO(@NotBlank @Pattern(regexp = BuildContainerDTO.BUILD_CONTAINER_NAME_REGEX) String name, String dockerImage,
-        @JsonInclude(JsonInclude.Include.NON_NULL) List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases,
+        @Nullable @Positive Integer timeoutSeconds) {
 
     /**
      * Creates a container that checks out the repositories configured on the exercise, i.e. one that does not scope its
-     * repositories.
+     * repositories, and uses the exercise's timeout.
      *
      * @param name        the name of the container
      * @param dockerImage the Docker image the container runs
      * @param phases      the build phases executed inside the container
      */
     public BuildContainerDTO(String name, String dockerImage, List<BuildPhaseDTO> phases) {
-        this(name, dockerImage, null, phases);
+        this(name, dockerImage, null, phases, null);
+    }
+
+    /**
+     * Creates a container that uses the exercise's timeout.
+     *
+     * @param name         the name of the container
+     * @param dockerImage  the Docker image the container runs
+     * @param repositories the repositories checked out into the container, see the record documentation
+     * @param phases       the build phases executed inside the container
+     */
+    public BuildContainerDTO(String name, String dockerImage, List<BuildContainerRepositoryDTO> repositories, List<BuildPhaseDTO> phases) {
+        this(name, dockerImage, repositories, phases, null);
     }
 
     public static final String BUILD_CONTAINER_NAME_REGEX = "^[A-Za-z_][A-Za-z0-9_]*$";

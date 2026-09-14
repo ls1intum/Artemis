@@ -29,6 +29,31 @@
                 [name]="'containerImage_' + container().name"
             />
         </div>
+        <div>
+            <label [for]="'field_container_timeout_' + container().name">
+                <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeout"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.timeoutHelp" />
+            <input
+                type="number"
+                class="form-control"
+                [id]="'field_container_timeout_' + container().name"
+                [ngModel]="container().timeoutSeconds ?? ''"
+                [placeholder]="timeoutPlaceholder() ?? ''"
+                [min]="timeoutMinValue() ?? 1"
+                [max]="timeoutMaxValue() ?? null"
+                (ngModelChange)="setTimeoutSeconds($event)"
+                [name]="'containerTimeout_' + container().name"
+                [class.is-invalid]="!isTimeoutValid()"
+            />
+            @if (!isTimeoutValid()) {
+                <div
+                    class="text-state-danger small"
+                    jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeoutInvalid"
+                    [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
+                ></div>
+            }
+        </div>
         @if (canRemove()) {
             <tum-ui-button
                 severity="danger"

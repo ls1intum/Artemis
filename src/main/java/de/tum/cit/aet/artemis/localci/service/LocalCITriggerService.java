@@ -508,9 +508,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
+        // the exercise timeout has to cover the slowest container; a container can bound its own job more tightly
+        final int timeoutSeconds = container != null && container.timeoutSeconds() != null ? container.timeoutSeconds() : buildConfig.getTimeoutSeconds();
+
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, timeoutSeconds, buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(),
+                buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {

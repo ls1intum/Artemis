@@ -385,6 +385,37 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(updateStub).toHaveBeenCalledWith(7, expect.objectContaining({ timeoutSeconds: 0 }));
     });
 
+    it('should bound a container by its own timeout within the exercise bounds and leave the others on the exercise timeout', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        fixture.detectChanges();
+        const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
+        buildConfiguration.timeoutMinValue.set(10);
+        buildConfiguration.timeoutMaxValue.set(240);
+        comp.containers.set([{ ...container('tests'), timeoutSeconds: 5 }, container('checks')]);
+
+        // a container timeout below the instance minimum blocks saving, like an exercise timeout would
+        expect(comp.areContainerTimeoutsValid()).toBe(false);
+        expect(comp.canSubmit()).toBe(false);
+
+        comp.containers.update((containers) => [{ ...containers[0], timeoutSeconds: 90 }, containers[1]]);
+        expect(comp.areContainerTimeoutsValid()).toBe(true);
+        expect(comp.canSubmit()).toBe(true);
+
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+        comp.submit();
+
+        // the bounded container carries its timeout; the other one carries none and follows the exercise timeout
+        const sent = updateStub.mock.calls[0][1] as { buildPlan: { containers: { name: string; timeoutSeconds?: number }[] } };
+        expect(sent.buildPlan.containers.map((sentContainer) => [sentContainer.name, sentContainer.timeoutSeconds])).toEqual([
+            ['tests', 90],
+            ['checks', undefined],
+        ]);
+    });
+
     it('should submit the build plan configuration and show a success alert', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: { dockerFlags: '{"network":"none"}' } } as unknown as ProgrammingExercise);
         comp.containers.set([container('student_tests')]);
