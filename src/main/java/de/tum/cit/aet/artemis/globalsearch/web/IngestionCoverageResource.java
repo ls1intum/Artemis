@@ -38,6 +38,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IndexedCollectionCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.OutboxQueueDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.OutboxQueueEntryDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.ReconcileStatusDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
@@ -77,6 +80,10 @@ public class IngestionCoverageResource {
 
     private final WeaviateOutboxRepository weaviateOutboxRepository;
 
+    private final SearchableEntityReconcileStateRepository reconcileStateRepository;
+
+    private final SearchableEntitySyncStateRepository syncStateRepository;
+
     private final ArtemisConfigHelper artemisConfigHelper = new ArtemisConfigHelper();
 
     private final Environment environment;
@@ -84,11 +91,14 @@ public class IngestionCoverageResource {
     private final Optional<IrisHealthApi> irisHealthApi;
 
     public IngestionCoverageResource(WeaviateHealthIndicator weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
-            CoverageRecomputeService coverageRecomputeService, WeaviateOutboxRepository weaviateOutboxRepository, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
+            CoverageRecomputeService coverageRecomputeService, WeaviateOutboxRepository weaviateOutboxRepository, SearchableEntityReconcileStateRepository reconcileStateRepository,
+            SearchableEntitySyncStateRepository syncStateRepository, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
         this.weaviateHealthIndicator = weaviateHealthIndicator;
         this.weaviateReadService = weaviateReadService;
         this.coverageRecomputeService = coverageRecomputeService;
         this.weaviateOutboxRepository = weaviateOutboxRepository;
+        this.reconcileStateRepository = reconcileStateRepository;
+        this.syncStateRepository = syncStateRepository;
         this.environment = environment;
         this.irisHealthApi = irisHealthApi;
     }
@@ -184,6 +194,23 @@ public class IngestionCoverageResource {
     public ResponseEntity<OutboxQueueDTO> getOutboxQueue() {
         var entries = weaviateOutboxRepository.findQueueHead(QUEUE_PAGE_SIZE).stream().map(OutboxQueueEntryDTO::of).toList();
         return ResponseEntity.ok(new OutboxQueueDTO(weaviateOutboxRepository.count(), entries));
+    }
+
+    /**
+     * GET .../reconcile : where each reconcile pass has got to, and how much the sync ledger holds per type.
+     * <p>
+     * A pass that runs and finds nothing logs at debug, so from the outside it is indistinguishable from a pass
+     * that never runs. This reports both the liveness (when it last ticked) and the reason a quiet pass might be
+     * quiet (how much the ledger it reasons about actually contains).
+     *
+     * @return the per-pass state and the ledger sizes
+     */
+    @EnforceAtLeastInstructor
+    @GetMapping("reconcile")
+    public ResponseEntity<ReconcileStatusDTO> getReconcileStatus() {
+        var passes = reconcileStateRepository.findAll().stream().map(ReconcileStatusDTO.ReconcilePassStateDTO::of).toList();
+        var ledger = syncStateRepository.countByEntityType().stream().map(row -> new ReconcileStatusDTO.LedgerCountDTO((String) row[0], (Long) row[1])).toList();
+        return ResponseEntity.ok(new ReconcileStatusDTO(passes, ledger));
     }
 
     private static IndexedCollectionCountDTO toCountDto(String collection, OptionalLong count) {

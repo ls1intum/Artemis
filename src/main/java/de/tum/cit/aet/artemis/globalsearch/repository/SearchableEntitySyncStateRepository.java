@@ -44,6 +44,21 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
      * @param entityIds  the ids to look up
      * @return the subset of ids that are present in the ledger
      */
+    /**
+     * Counts the ledger rows per entity type. The ledger is what the missing and drift passes reason about, so its
+     * size per type is the difference between "the reconciler has nothing to do" and "the reconciler cannot see
+     * that there is anything to do".
+     *
+     * @return one row per entity type that has at least one ledger entry, as {@code [entityType, count]}
+     */
+    @Query("""
+            SELECT state.entityType, COUNT(state)
+            FROM SearchableEntitySyncState state
+            GROUP BY state.entityType
+            ORDER BY state.entityType
+            """)
+    List<Object[]> countByEntityType();
+
     @Query("""
             SELECT state.entityId
             FROM SearchableEntitySyncState state

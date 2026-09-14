@@ -138,6 +138,11 @@
                     "queued": "Queued",
                     "retrying": "Retrying",
                     "done": "Done"
+                },
+                "reconcile": {
+                    "neverRan": "No reconcile pass has run yet: the index is only updated by live changes.",
+                    "progress": "{{ checked }} checked, {{ queued }} queued, {{ removed }} removed",
+                    "ledger": "The sync ledger holds {{ count }} entities. The missing and drift passes only examine what is in it."
                 }
             }
         }

@@ -8,6 +8,37 @@
     </div>
     <p class="text-muted-color mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.queue.subtitle"></p>
 
+    <!-- Reconcile liveness: a pass that finds nothing logs at debug, so this is the only outside evidence it runs. -->
+    @if (reconcile(); as status) {
+        <div class="reconcile-state mb-3" data-testid="reconcile-state">
+            @if (reconcileNeverRan()) {
+                <p class="text-state-warning mb-1" data-testid="reconcile-never-ran" jhiTranslate="artemisApp.courseIngestionDashboard.queue.reconcile.neverRan"></p>
+            }
+            <ul class="reconcile-passes">
+                @for (pass of status.passes; track pass.pass) {
+                    <li class="reconcile-pass" [attr.data-testid]="'reconcile-pass-' + pass.pass">
+                        <span class="reconcile-pass-name">{{ pass.pass }}</span>
+                        <span class="text-muted-color">
+                            {{
+                                'artemisApp.courseIngestionDashboard.queue.reconcile.progress'
+                                    | artemisTranslate: { checked: pass.entitiesChecked, queued: pass.repairsEnqueued, removed: pass.rowsRemoved }
+                            }}
+                        </span>
+                        @if (pass.positionEntityType) {
+                            <span class="text-muted-color">· {{ pass.positionEntityType }}</span>
+                        }
+                        @if (pass.lastRunAt) {
+                            <span class="text-muted-color">· {{ pass.lastRunAt | artemisDate }}</span>
+                        }
+                    </li>
+                }
+            </ul>
+            <p class="text-muted-color mb-0" data-testid="reconcile-ledger">
+                {{ 'artemisApp.courseIngestionDashboard.queue.reconcile.ledger' | artemisTranslate: { count: ledgerTotal() } }}
+            </p>
+        </div>
+    }
+
     @if (loadFailed()) {
         <p class="text-state-danger mb-0" data-testid="queue-error" jhiTranslate="artemisApp.courseIngestionDashboard.queue.loadFailed"></p>
     } @else if (isEmpty()) {

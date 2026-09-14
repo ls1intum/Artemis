@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription, interval, startWith, switchMap } from 'rxjs';
+import { Subscription, combineLatest, interval, startWith, switchMap } from 'rxjs';
 import { catchError, of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { OutboxQueueEntry, OutboxQueueStatus } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { OutboxQueueEntry, OutboxQueueStatus, ReconcileStatus } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** How often the queue is re-read. Short enough to watch a drain, long enough not to hammer the endpoint. */
@@ -33,7 +34,7 @@ export interface QueueRow extends OutboxQueueEntry {
     selector: 'jhi-course-ingestion-queue',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe],
     templateUrl: './course-ingestion-queue.component.html',
     styleUrls: ['./course-ingestion-queue.component.scss'],
 })
@@ -47,6 +48,8 @@ export class CourseIngestionQueueComponent implements OnDestroy {
     /** Rows that vanished from the queue, kept briefly so the reader sees them complete. */
     private readonly finished = signal<OutboxQueueEntry[]>([]);
     protected readonly totalDepth = signal(0);
+    /** What the reconcile passes have been doing, so a silent reconciler is distinguishable from a dead one. */
+    protected readonly reconcile = signal<ReconcileStatus | undefined>(undefined);
     protected readonly loadFailed = signal(false);
     /** True until the first poll answers, so an empty queue is not announced before it is known. */
     protected readonly loading = signal(true);
@@ -69,17 +72,22 @@ export class CourseIngestionQueueComponent implements OnDestroy {
             .pipe(
                 startWith(0),
                 switchMap(() =>
-                    this.service.getOutboxQueue().pipe(
-                        catchError(() => {
-                            this.loadFailed.set(true);
-                            return of(undefined);
-                        }),
-                    ),
+                    combineLatest([
+                        this.service.getOutboxQueue().pipe(
+                            catchError(() => {
+                                this.loadFailed.set(true);
+                                return of(undefined);
+                            }),
+                        ),
+                        // Reconcile state is supporting detail; a failure there must not blank the queue.
+                        this.service.getReconcileStatus().pipe(catchError(() => of(undefined))),
+                    ]),
                 ),
                 takeUntilDestroyed(),
             )
-            .subscribe((queue) => {
+            .subscribe(([queue, reconcile]) => {
                 this.loading.set(false);
+                this.reconcile.set(reconcile);
                 if (!queue) {
                     return;
                 }
@@ -140,6 +148,12 @@ export class CourseIngestionQueueComponent implements OnDestroy {
     protected subjectOf(row: QueueRow): string {
         return row.entityType ? `${row.entityType}${row.entityId !== undefined ? ' ' + row.entityId : ''}` : row.operation;
     }
+
+    /** Total ledger rows across all types: the universe the missing and drift passes reason about. */
+    protected readonly ledgerTotal = computed(() => (this.reconcile()?.ledger ?? []).reduce((sum, entry) => sum + entry.count, 0));
+
+    /** True when reconcile has never recorded a run, which is what a switched-off reconciler looks like. */
+    protected readonly reconcileNeverRan = computed(() => (this.reconcile()?.passes ?? []).every((pass) => !pass.lastRunAt));
 
     /** True when the queue holds more rows than the page the server returned. */
     protected readonly hasMore = computed(() => this.totalDepth() > this.pending().length);

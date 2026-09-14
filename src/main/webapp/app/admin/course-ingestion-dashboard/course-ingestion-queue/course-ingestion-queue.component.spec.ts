@@ -10,6 +10,7 @@ describe('CourseIngestionQueueComponent', () => {
     let fixture: ComponentFixture<CourseIngestionQueueComponent>;
     let component: CourseIngestionQueueComponent;
     let getOutboxQueue: Mock<() => ReturnType<CourseIngestionDashboardService['getOutboxQueue']>>;
+    let getReconcileStatus: Mock<() => ReturnType<CourseIngestionDashboardService['getReconcileStatus']>>;
 
     const entry = (id: number, overrides: Partial<OutboxQueueEntry> = {}): OutboxQueueEntry => ({
         id,
@@ -32,9 +33,10 @@ describe('CourseIngestionQueueComponent', () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         getOutboxQueue = vi.fn().mockReturnValue(of(queue([entry(1), entry(2)])));
+        getReconcileStatus = vi.fn().mockReturnValue(of({ passes: [], ledger: [] }));
         await TestBed.configureTestingModule({
             imports: [CourseIngestionQueueComponent],
-            providers: [provideTranslateService(), { provide: CourseIngestionDashboardService, useValue: { getOutboxQueue } }],
+            providers: [provideTranslateService(), { provide: CourseIngestionDashboardService, useValue: { getOutboxQueue, getReconcileStatus } }],
         }).compileComponents();
         await createComponent();
     });
@@ -82,6 +84,37 @@ describe('CourseIngestionQueueComponent', () => {
         getOutboxQueue.mockReturnValue(of(queue([entry(1), entry(2)])));
         vi.advanceTimersByTime(2_000);
         expect(component['rows']().every((row) => row.status === 'done')).toBe(true);
+    });
+
+    it('reports what the reconcile passes have done and how big the ledger is', () => {
+        getReconcileStatus.mockReturnValue(
+            of({
+                passes: [{ pass: 'MISSING', positionEntityType: 'lecture', entitiesChecked: 66, repairsEnqueued: 66, rowsRemoved: 0, lastRunAt: new Date().toISOString() }],
+                ledger: [
+                    { entityType: 'course', count: 66 },
+                    { entityType: 'lecture', count: 21 },
+                ],
+            }),
+        );
+        vi.advanceTimersByTime(2_000);
+
+        expect(component['ledgerTotal']()).toBe(87);
+        expect(component['reconcileNeverRan']()).toBe(false);
+    });
+
+    it('says so when no pass has ever run, which is what a dead reconciler looks like', () => {
+        getReconcileStatus.mockReturnValue(of({ passes: [{ pass: 'MISSING', entitiesChecked: 0, repairsEnqueued: 0, rowsRemoved: 0 }], ledger: [] }));
+        vi.advanceTimersByTime(2_000);
+
+        expect(component['reconcileNeverRan']()).toBe(true);
+    });
+
+    it('keeps the queue readable when only the reconcile call fails', () => {
+        getReconcileStatus.mockReturnValue(throwError(() => new Error('boom')));
+        vi.advanceTimersByTime(2_000);
+
+        expect(component['loadFailed']()).toBe(false);
+        expect(component['rows']().map((row) => row.id)).toEqual([1, 2]);
     });
 
     it('reports a backlog larger than the returned page', () => {

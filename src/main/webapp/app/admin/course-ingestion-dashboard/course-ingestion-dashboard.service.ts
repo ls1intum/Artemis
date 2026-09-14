@@ -11,6 +11,7 @@ import {
     IngestionCoverage,
     IngestionCoverageStatus,
     OutboxQueue,
+    ReconcileStatus,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /** Zero-based page request against a Spring `Pageable` endpoint. `sort` follows Spring's `property,direction` form. */
@@ -115,6 +116,14 @@ export class CourseIngestionDashboardService {
      */
     getOutboxQueue(): Observable<OutboxQueue> {
         return this.http.get<OutboxQueue>(`${this.baseUrl}/queue`);
+    }
+
+    /**
+     * GET what the reconcile passes have been doing. A pass that finds nothing logs at debug, so without this a
+     * working reconciler and a dead one look identical from outside.
+     */
+    getReconcileStatus(): Observable<ReconcileStatus> {
+        return this.http.get<ReconcileStatus>(`${this.baseUrl}/reconcile`);
     }
 
     /** POST to force a background recompute of the whole projection (no-op if one is already running). */

@@ -203,3 +203,27 @@ export interface OutboxQueue {
     totalDepth: number;
     entries: OutboxQueueEntry[];
 }
+
+/** Where one reconcile pass has got to, and what it has done in the current cycle. */
+export interface ReconcilePassState {
+    pass: string;
+    positionEntityType?: string;
+    positionEntityId?: number;
+    cycleStartedAt?: string;
+    lastRunAt?: string;
+    entitiesChecked: number;
+    repairsEnqueued: number;
+    rowsRemoved: number;
+}
+
+/** How many entities of one type the sync ledger records as written. */
+export interface LedgerCount {
+    entityType: string;
+    count: number;
+}
+
+/** Reconcile liveness: what each pass is doing, and how much the ledger those passes reason about holds. */
+export interface ReconcileStatus {
+    passes: ReconcilePassState[];
+    ledger: LedgerCount[];
+}
