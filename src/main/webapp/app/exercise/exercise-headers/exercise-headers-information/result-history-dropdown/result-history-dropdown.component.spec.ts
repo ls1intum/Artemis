@@ -537,6 +537,60 @@ describe('ResultHistoryDropdownComponent', () => {
         });
     });
 
+    describe('displayedResultChange', () => {
+        const participation: StudentParticipation = { id: 3, testRun: true } as StudentParticipation;
+        const olderResult = { id: 1, score: 40, submission: { id: 7, participation } } as unknown as Result;
+        const latestResult = { id: 2, score: 90, submission: { id: 8, participation } } as unknown as Result;
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.QUIZ, course: { id: 5 } } as Exercise);
+            fixture.componentRef.setInput('sortedHistoryResults', [latestResult, olderResult]);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+        });
+
+        it('should emit the result picked from the history', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            component.navigateToSubmission(olderResult, new Event('click'));
+
+            expect(emitSpy).toHaveBeenCalledWith(olderResult);
+        });
+
+        it('should emit the result matching the result id in the route', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            mockRouter.setUrl('/courses/5/exercises/text-exercises/10/participate/3/submission/8/result/1');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(olderResult);
+        });
+
+        it('should emit the result matching the submission id in the route', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            mockRouter.setUrl('/courses/5/exercises/quiz-exercises/10/practice/3/submission/8');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(latestResult);
+        });
+
+        it('should emit undefined when the route does not point at a result', () => {
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            mockRouter.setUrl('/courses/5/exercises/quiz-exercises/10/practice');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(undefined);
+        });
+
+        it('should emit undefined when continuing to the latest submission', () => {
+            component.navigateToSubmission(olderResult, new Event('click'));
+            const emitSpy = vi.spyOn(component.displayedResultChange, 'emit');
+
+            component.continueToLatest();
+
+            expect(emitSpy).toHaveBeenCalledWith(undefined);
+        });
+    });
+
     describe('showFeedback', () => {
         it('should not open modal when result has no participation', () => {
             const dialogService = TestBed.inject(DialogService);

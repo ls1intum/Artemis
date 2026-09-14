@@ -6,6 +6,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { LiveQuizParticipationStatus, QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -23,8 +25,15 @@ describe('SubmissionResultStatusComponent', () => {
             imports: [SubmissionResultStatusComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).overrideComponent(SubmissionResultStatusComponent, {
-            remove: { imports: [UpdatingResultComponent, ProgrammingExerciseStudentTriggerBuildButtonComponent] },
-            add: { imports: [MockComponent(UpdatingResultComponent), MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent), MockPipe(ArtemisTranslatePipe)] },
+            remove: { imports: [UpdatingResultComponent, ResultComponent, ProgrammingExerciseStudentTriggerBuildButtonComponent] },
+            add: {
+                imports: [
+                    MockComponent(UpdatingResultComponent),
+                    MockComponent(ResultComponent),
+                    MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                ],
+            },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(SubmissionResultStatusComponent);
@@ -261,6 +270,71 @@ describe('SubmissionResultStatusComponent', () => {
             await fixture.whenStable();
 
             expect(fixture.debugElement.query(By.css('#submission-result-graded'))).not.toBeNull();
+        });
+
+        it('should show the participating status instead of the previous result while a fresh practice attempt is in progress', async () => {
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.QUIZ,
+                quizEnded: true,
+                dueDate: dayjs().subtract(1, 'hours'),
+                quizBatches: [] as QuizBatch[],
+            } as QuizExercise);
+            fixture.componentRef.setInput('isPractice', true);
+            fixture.componentRef.setInput('quizPracticeInProgress', true);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ submitted: true, results: [{ id: 1 }] }],
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.shouldShowResult()).toBe(false);
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).toBeNull();
+            const span = fixture.debugElement.query(By.css('span[jhiTranslate]'));
+            expect(span?.attributes['jhiTranslate']).toBe('artemisApp.courseOverview.exerciseList.userParticipatingShort');
+        });
+    });
+
+    describe('selected result', () => {
+        const quizExercise = { type: ExerciseType.QUIZ, quizEnded: true, dueDate: dayjs().subtract(1, 'hours'), quizBatches: [] as QuizBatch[] } as QuizExercise;
+        const selectedResult = { id: 1 } as Result;
+        const participationWithResults = {
+            initializationState: InitializationState.FINISHED,
+            submissions: [{ submitted: true, results: [selectedResult, { id: 2 }] }],
+        } as StudentParticipation;
+
+        const render = async (inputs: { result?: Result; quizPracticeInProgress?: boolean }) => {
+            fixture.componentRef.setInput('exercise', quizExercise);
+            fixture.componentRef.setInput('studentParticipation', participationWithResults);
+            fixture.componentRef.setInput('result', inputs.result);
+            fixture.componentRef.setInput('quizPracticeInProgress', inputs.quizPracticeInProgress ?? false);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+        };
+
+        it('should render the selected result statically instead of the updating result', async () => {
+            await render({ result: selectedResult });
+
+            const staticResult = fixture.debugElement.query(By.css('#submission-result-selected'));
+            expect(staticResult).not.toBeNull();
+            expect(staticResult.componentInstance.result()).toBe(selectedResult);
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).toBeNull();
+        });
+
+        it('should render the updating result when no result is selected', async () => {
+            await render({});
+
+            expect(fixture.debugElement.query(By.css('#submission-result-selected'))).toBeNull();
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).not.toBeNull();
+        });
+
+        it('should not render a selected result when the result guards do not allow showing one', async () => {
+            await render({ result: selectedResult, quizPracticeInProgress: true });
+
+            expect(fixture.debugElement.query(By.css('#submission-result-selected'))).toBeNull();
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).toBeNull();
         });
     });
 });

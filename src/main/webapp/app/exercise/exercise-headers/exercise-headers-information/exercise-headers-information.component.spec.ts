@@ -204,6 +204,43 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.achievedPoints()).toBe(8);
     });
 
+    describe('selected history result', () => {
+        const latestResult = { id: 2, score: 80, rated: true } as Result;
+        const previousResult = { id: 1, score: 30, rated: true } as Result;
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [previousResult, latestResult] }] } as StudentParticipation);
+            fixture.detectChanges();
+        });
+
+        it('should reflect the latest result when no result is selected', () => {
+            expect(component.relevantResult()).toEqual(latestResult);
+            expect(component.achievedPoints()).toBe(8);
+        });
+
+        it('should reflect the result selected in the history dropdown', () => {
+            component.displayedResult.set(previousResult);
+
+            expect(component.relevantResult()).toEqual(previousResult);
+            expect(component.achievedPoints()).toBe(3);
+        });
+
+        it('should show no achieved points for a selected result without a score', () => {
+            component.displayedResult.set({ id: 3, rated: true } as Result);
+
+            expect(component.achievedPoints()).toBe(0);
+        });
+
+        it('should show no achieved points while a fresh quiz practice attempt is in progress', () => {
+            fixture.componentRef.setInput('isPractice', true);
+            fixture.componentRef.setInput('quizPracticeInProgress', true);
+            fixture.detectChanges();
+
+            expect(component.achievedPoints()).toBe(0);
+        });
+    });
+
     it('should not make the status clickable when there are no history results', () => {
         const compiled = fixture.nativeElement as HTMLElement;
         expect(compiled.querySelector('[role="button"]')).toBeNull();

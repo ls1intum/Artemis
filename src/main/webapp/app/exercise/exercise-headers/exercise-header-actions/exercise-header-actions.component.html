@@ -73,7 +73,7 @@
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
             <div class="btn-group">
-                @if (isStartPracticeAvailable() && !(participationMode() === 'practice' && !submitDisabled())) {
+                @if (showQuizStartPracticeButton()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{

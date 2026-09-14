@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -121,6 +121,8 @@ export class ExerciseHeadersInformationComponent {
      * {@link hasIndividualDueDate}).
      */
     readonly showSharedTimelineDates = input<boolean>(true);
+    /** True while a fresh practice quiz attempt is in progress, so result-derived boxes show the in-progress state instead of the previous attempt's result. */
+    readonly quizPracticeInProgress = input<boolean>(false);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
@@ -152,14 +154,25 @@ export class ExerciseHeadersInformationComponent {
 
     readonly numberOfSubmissions = computed<number>(() => countSubmissions(this.studentParticipation()));
 
-    readonly achievedPoints = computed<number>(() => {
+    /** The previous result currently selected in the result-history dropdown, or undefined when the latest result is shown. */
+    readonly displayedResult = signal<Result | undefined>(undefined);
+
+    /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
+    private readonly latestResult = computed<Result | undefined>(() => {
         const results = this.sortedHistoryResults();
         // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
-        const latestResult = this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
-        if (!latestResult) {
+        return this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
+    });
+
+    /** The result the header reflects: the one selected in the history dropdown, falling back to the latest. */
+    readonly relevantResult = computed<Result | undefined>(() => this.displayedResult() ?? this.latestResult());
+
+    readonly achievedPoints = computed<number>(() => {
+        const relevantResult = this.quizPracticeInProgress() ? undefined : this.relevantResult();
+        if (relevantResult?.score === undefined) {
             return 0;
         }
-        return roundValueSpecifiedByCourseSettings((latestResult.score! * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
+        return roundValueSpecifiedByCourseSettings((relevantResult.score * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
     });
 
     readonly currentFeedbackRequestCount = computed<number>(
@@ -417,7 +430,9 @@ export class ExerciseHeadersInformationComponent {
     }
 
     getStaticCodeAnalysisItem(): InformationBox {
-        const issueCount = this.sortedHistoryResults().first()?.codeIssueCount ?? 0;
+        // Unlike the achieved points, which only count rated results, the code issues reflect the latest build whether
+        // it is rated or not, so this falls back to the latest result rather than to relevantResult().
+        const issueCount = (this.displayedResult() ?? this.sortedHistoryResults().first())?.codeIssueCount ?? 0;
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',
             content: {

@@ -536,6 +536,48 @@ describe('ExerciseHeaderComponent', () => {
         });
     });
 
+    describe('quiz practice attempt state', () => {
+        const configureQuizPractice = (exercise: QuizExercise | ModelingExercise, participationMode: 'graded' | 'practice', quizPracticeAttemptFinished: boolean) => {
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('participationMode', participationMode);
+            fixture.componentRef.setInput('quizPracticeAttemptFinished', quizPracticeAttemptFinished);
+            fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            fixture.detectChanges();
+        };
+
+        it('should mark a quiz practice attempt as in progress until it is finished', () => {
+            configureQuizPractice(new QuizExercise(undefined, undefined), 'practice', false);
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(true);
+
+            fixture.componentRef.setInput('quizPracticeAttemptFinished', true);
+            fixture.detectChanges();
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(false);
+        });
+
+        it('should not mark a quiz practice attempt as in progress in graded mode', () => {
+            configureQuizPractice(new QuizExercise(undefined, undefined), 'graded', false);
+
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(false);
+        });
+
+        it('should not mark a practice attempt as in progress for other exercise types', () => {
+            configureQuizPractice(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined), 'practice', false);
+
+            expect(fixture.componentInstance.quizPracticeInProgress()).toBe(false);
+        });
+
+        it('should offer submit during a quiz practice attempt and hide it once the attempt is finished', () => {
+            configureQuizPractice(new QuizExercise(undefined, undefined), 'practice', false);
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBe(submitCallback);
+
+            fixture.componentRef.setInput('quizPracticeAttemptFinished', true);
+            fixture.detectChanges();
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
+        });
+    });
+
     describe('activeParticipation', () => {
         it('should not fall back to the graded participation in practice mode (so the badge does not show the graded score)', () => {
             const exercise = new QuizExercise(undefined, undefined);
