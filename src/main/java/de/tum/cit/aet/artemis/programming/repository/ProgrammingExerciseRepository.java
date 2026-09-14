@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
@@ -255,6 +256,38 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.projectKey = :projectKey
             """)
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(@Param("projectKey") String projectKey);
+
+    /**
+     * The values the git request path needs to authorize a repository access, for one project key.
+     * <p>
+     * A projection rather than the exercise: this runs on every clone, fetch and push, twice per git operation, and
+     * the entity brought its course with it - for an exam exercise the course twice, since it is reachable both
+     * directly and through the exercise group's exam. The course is reduced to its id because the role checks read
+     * nothing else from it.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the matching projections, which the caller expects to be exactly one
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO(
+                pe.id,
+                COALESCE(c.id, ec.id),
+                pe.mode,
+                pe.allowOfflineIde,
+                pe.startDate,
+                pe.releaseDate,
+                pe.dueDate,
+                e.id,
+                e.startDate,
+                e.testExam)
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam e
+                LEFT JOIN e.course ec
+            WHERE pe.projectKey = :projectKey
+            """)
+    List<GitRepositoryAccessDTO> findAccessProjectionByProjectKey(@Param("projectKey") String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = "buildConfig")
     List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);

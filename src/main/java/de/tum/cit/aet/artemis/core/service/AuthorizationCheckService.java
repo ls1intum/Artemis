@@ -155,6 +155,19 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Whether the user is a student in the course and nothing more, identified by id.
+     *
+     * @param courseId the course to check in
+     * @param user     the user to check
+     * @return true if the user is only a student in the course
+     */
+    @CheckReturnValue
+    public boolean isOnlyStudentInCourse(long courseId, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        return hasCourseRole(user, courseId, CourseRole.STUDENT) && !isAtLeastTeachingAssistantInCourse(courseId, user);
+    }
+
+    /**
      * The course role check needs nothing from the course but its id: it answers from the user's course roles, and
      * falls back to a membership query keyed by the same id. Callers that already know the id can therefore skip
      * loading the course entity, which is what the git request path does - it used to fetch all of it, twice for an
