@@ -145,7 +145,7 @@ public class ParticipationDeletionService {
 
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), false);
+            deleteIfExists(participation.getId());
         }
     }
 
