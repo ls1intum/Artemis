@@ -307,6 +307,13 @@ and requires a majority of the expected data members. A two-member deployment
 cannot recover after losing one member. A stale token never releases a replacement
 slot. Releasing a slot does not repair an interrupted save.
 
+The diagnostic reports the slot `kind`. `GENERATION`, `REVERT`, and `EXTERNAL_MUTATION`
+are in-flight writers and follow the steps above. `REVERT_RECOVERY` is the guard an
+interrupted undo leaves behind after it has already stopped: no process is writing,
+so recovery does not require the owner to be absent. Reconcile the repositories
+first, or let the instructor retry **Undo**, and release the guard only once the
+exercise is consistent again.
+
 The LocalCI build that synchronizes saved tests is restricted to network `none`
 and receives no exercise-configured environment variables. Its persisted build
 job ID carries the `hyperion-sync-` prefix so retries retain the same restrictions.
@@ -373,5 +380,5 @@ recovery endpoint also requires all those owners to be absent and a data-member 
 An undo that restores only some repositories keeps the exercise guarded. The instructor can
 retry **Undo** against the retained baseline; another undo, generation, or ordinary edit cannot
 run concurrently. A missing or expired baseline during this recovery does not unlock an
-inconsistent exercise. If a retry cannot finish, reconcile the repositories before using the
-audited operator recovery path.
+inconsistent exercise. If a retry cannot finish, reconcile the repositories and release the
+`REVERT_RECOVERY` slot through the audited operator recovery path described above.

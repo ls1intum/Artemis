@@ -651,6 +651,34 @@ class GenerationJobServiceTest {
         assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
     }
 
+    /** A retained partial undo is quiescent, so an operator who reconciled the repositories can release it while the node that ran the undo is still a member. */
+    @Test
+    void recoverWedgedSlot_releasesARetainedPartialUndoWhileItsOwnerIsStillAClusterMember() {
+        long exerciseId = 468L;
+        String token = jobService.claimRevertSlot(user("owner"), exerciseId);
+        jobService.retainRevertRecoverySlot(exerciseId, token);
+
+        var info = jobService.getWedgedSlotInfo(exerciseId).orElseThrow();
+        assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT_RECOVERY);
+        assertThat(info.ownerLeftCluster()).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, token)).isFalse();
+
+        assertThat(jobService.recoverWedgedSlot(exerciseId, info.token())).isTrue();
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    /** The in-flight undo that precedes the retained state is still a writer, so it keeps the owner-absence fence. */
+    @Test
+    void recoverWedgedSlot_refusesAnInFlightRevertWhoseOwnerIsStillAClusterMember() {
+        long exerciseId = 469L;
+        String token = jobService.claimRevertSlot(user("owner"), exerciseId);
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT));
+        assertThat(jobService.recoverWedgedSlot(exerciseId, token)).isFalse();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+    }
+
     /** Diagnosis must not offer a healthy, still-cancellable run to an operator as something to yank. */
     @Test
     void getWedgedSlotInfo_isEmptyForARunningCancellableGeneration() {
