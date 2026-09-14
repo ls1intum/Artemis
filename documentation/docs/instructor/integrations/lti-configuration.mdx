@@ -4,6 +4,8 @@ title: LTI Configuration
 sidebar_label: LTI Configuration
 ---
 
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
@@ -136,6 +138,15 @@ There are a few different ways to register:
 
 Dynamic registration makes it much easier for administrators to set up, so administrators should use it whenever possible, as long as the platform supports it.
 It is best to use manual registration when the platform doesn't yet support dynamic registration because it will work on all LTI Advantage-compliant platforms.
+
+<Callout variant={CalloutVariant.info}>
+
+    The recordings in this section were made in March 2024 and mostly show Moodle and edX, which have not changed in
+    the parts they walk through. Artemis has been restyled since, so the Artemis screens in them look different from
+    what you will see; the values they exchange are the same ones. The written steps beside each recording are
+    current.
+
+</Callout>
 
 ### Dynamic Registration
 
@@ -424,12 +435,6 @@ Below, we explain both methods to assist instructors in choosing the best approa
 <Image src={moodleSelectContentLinkGroupedImg} alt={"Moodle Deep Linking Select Grouped Content"} size={ImageSize.medium} />
 
 12. Save and return the course.
-
-This video describes how you can use the LTI Deep Linking Service to integrate content from an Artemis course into a Moodle course using the example of an exercise:
-
-<div style={{ textAlign: "center" }}>
-    <TumLiveVideo src="42795" title="Artemis and Moodle Deep Linking" height={300} />
-</div>
 
 #### Deep Linking for edX
 
