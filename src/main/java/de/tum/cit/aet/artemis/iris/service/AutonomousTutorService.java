@@ -67,12 +67,6 @@ public class AutonomousTutorService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
-
     /** Iris replies at or above this confidence are auto-verified and visible to students. */
     public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.85;
 
@@ -264,7 +258,6 @@ public class AutonomousTutorService {
         }).collect(Collectors.toSet());
     }
 
-    @SuppressWarnings("deprecation")
     private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId,
             Set<ConversationNotificationRecipientSummary> recipientSummaries, boolean broadcastToStudents) {
         // Assemble the parent post with the new answer
@@ -285,8 +278,6 @@ public class AutonomousTutorService {
 
         if (broadcastToStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
             websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
-            // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
             return;
         }
 

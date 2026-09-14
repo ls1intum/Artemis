@@ -2,23 +2,23 @@ package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.LockModeType;
-
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -77,31 +77,81 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null), answerPostId);
     }
 
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE AnswerPost answerPost
+            SET answerPost.verified = TRUE,
+                answerPost.verifiedBy = :verifier,
+                answerPost.verifiedAt = :verifiedAt
+            WHERE answerPost.id = :answerPostId
+                  AND answerPost.verified = FALSE
+            """)
+    int updateVerificationIfUnverified(@Param("answerPostId") long answerPostId, @Param("verifier") User verifier, @Param("verifiedAt") ZonedDateTime verifiedAt);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE AnswerPost answerPost
+            SET answerPost.verified = TRUE,
+                answerPost.verifiedBy = :verifier,
+                answerPost.verifiedAt = :verifiedAt,
+                answerPost.content = :content,
+                answerPost.updatedDate = :verifiedAt
+            WHERE answerPost.id = :answerPostId
+                  AND answerPost.verified = FALSE
+            """)
+    int updateVerificationAndContentIfUnverified(@Param("answerPostId") long answerPostId, @Param("verifier") User verifier, @Param("verifiedAt") ZonedDateTime verifiedAt,
+            @Param("content") String content);
+
     /**
-     * Retrieves an {@link AnswerPost} by ID that is part of a conversation while acquiring a pessimistic write lock.
+     * Marks an unverified answer message as verified, optionally replacing its content in the same statement.
+     * <p>
+     * Two tutors may press approve at the same time; only one may win, because verifying makes the answer visible to
+     * students and broadcasts it. The {@code verified = FALSE} guard sits inside the update, so the check and the write
+     * are one statement and the loser is told the answer is already verified. Replacing the content in that same
+     * statement is what keeps edit-and-approve safe: the edited content is committed no later than the visibility, so
+     * there is no instant in which students can read the unedited reply.
+     * <p>
+     * Being a bulk update, it bypasses the persistence context; callers that need the verified state must re-read.
      *
-     * @param answerPostId the ID of the answer message
-     * @return the answer message if found and linked to a conversation
+     * @param answerPostId the id of the answer message to verify
+     * @param verifier     the user verifying the answer message
+     * @param verifiedAt   the timestamp to record as the verification time
+     * @param content      the updated content, or null to keep the existing content
+     * @return whether this call verified the answer message; false when it was already verified
      */
-    @NonNull
-    default AnswerPost findAnswerMessageByIdWithPessimisticWriteLockElseThrow(long answerPostId) {
-        return getValueElseThrow(findAnswerMessageByIdWithPessimisticWriteLock(answerPostId), answerPostId);
+    default boolean verifyIfUnverified(long answerPostId, User verifier, ZonedDateTime verifiedAt, @Nullable String content) {
+        int updated = content == null ? updateVerificationIfUnverified(answerPostId, verifier, verifiedAt)
+                : updateVerificationAndContentIfUnverified(answerPostId, verifier, verifiedAt, content);
+        return updated > 0;
     }
 
-    // The pessimistic write lock intentionally covers only this AnswerPost row (preventing double-verification of this one answer).
-    // Loading post triggers a separate eager fetch of Post.answers (the sibling answers), which are NOT locked. This is fine:
-    // siblings are only read (e.g. for broadcasting), never written under this lock, so no correctness issue arises.
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    /**
+     * Retrieves an {@link AnswerPost} by id together with the context needed to authorise and broadcast a
+     * verification: its author, its post with that post's author, the conversation the post belongs to, and the
+     * verifier the response DTO reports. Used both before and after verifying, so the verifier is fetched with a left
+     * join: it is still null on the read that precedes the verification.
+     *
+     * @param answerPostId the id of the answer message
+     * @return the answer message if found and linked to a conversation
+     */
     @Query("""
             SELECT answerPost
             FROM AnswerPost answerPost
                 JOIN FETCH answerPost.author
+                LEFT JOIN FETCH answerPost.verifiedBy
                 JOIN FETCH answerPost.post post
                 LEFT JOIN FETCH post.author
                 JOIN FETCH post.conversation
             WHERE answerPost.id = :answerPostId
             """)
-    Optional<AnswerPost> findAnswerMessageByIdWithPessimisticWriteLock(@Param("answerPostId") long answerPostId);
+    Optional<AnswerPost> findAnswerMessageWithPostConversationAndVerifierById(@Param("answerPostId") long answerPostId);
+
+    @NonNull
+    default AnswerPost findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(long answerPostId) {
+        return getValueElseThrow(findAnswerMessageWithPostConversationAndVerifierById(answerPostId), answerPostId);
+    }
 
     /**
      * Retrieves an {@link AnswerPost} by ID, regardless of whether it is linked to a conversation.

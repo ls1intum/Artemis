@@ -101,7 +101,7 @@ public class AutonomousCompetencyExerciseEventListener {
         // Filter on the changed-field set: only record when the version touched a content-bearing
         // field that could affect competency mapping. An empty set (e.g. legacy events) is treated
         // as not relevant.
-        Set<String> changedFields = event.changedFields() == null ? Collections.emptySet() : event.changedFields();
+        Set<String> changedFields = event.changedFields() == null ? Set.of() : event.changedFields();
         if (Collections.disjoint(changedFields, ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS)) {
             log.debug("atlas.automatic skipping exercise change courseId={} exerciseId={}: no competency-relevant field changed (changed={})", courseId, exercise.getId(),
                     changedFields);

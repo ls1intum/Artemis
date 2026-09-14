@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -115,8 +114,7 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     /**
      * Mint a fresh, question-scoped id for any drop location or drag item added without one (e.g. via {@code getDropLocations().add(...)} / {@code getDragItems().add(...)}, which
-     * bypass {@link #addDropLocation} / {@link #addDragItem}). Called before persisting so the statistics counters (keyed by drop-location id) and the stored JSON content stay
-     * id-consistent.
+     * bypass {@link #addDropLocation} / {@link #addDragItem}). Called before persisting so stored question content and submitted-answer selections use stable ids.
      */
     public void assignMissingComponentIds() {
         assignMissingComponentIds(getDropLocations());
@@ -416,20 +414,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     @Override
-    @JsonIgnore
-    public void initializeStatistic() {
-        setQuizQuestionStatistic(new DragAndDropQuestionStatistic());
-    }
-
-    @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        dndContent().setCorrectMappings(new ArrayList<>());
-    }
-
-    @Override
-    public void filterForStatisticWebsocket() {
-        super.filterForStatisticWebsocket();
         dndContent().setCorrectMappings(new ArrayList<>());
     }
 

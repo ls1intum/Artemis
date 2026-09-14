@@ -97,7 +97,6 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
@@ -268,7 +267,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student1");
         Participation storedParticipation = participationRepo
-                .findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), TEST_PREFIX + "student1", false).orElseThrow();
+                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(modelingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), false)
+                .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -282,7 +282,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student2");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), TEST_PREFIX + "student2", false)
+        Participation storedParticipation = participationRepo
+                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(textExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId(), false)
                 .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
@@ -1722,23 +1723,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipationByExerciseAndStudentIdWithEagerSubmissionsForTeam() throws Exception {
-        var exercise = createTextExerciseForTeam();
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var team = createTeamForExercise(student, exercise);
-        exercise = addTeamToExercise(team, exercise);
-
-        var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
-        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
-
-        var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
-        assertThat(participations).hasSize(1);
-        assertThat(participations.getFirst().getId()).isEqualTo(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -1766,7 +1750,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
         assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
-        var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
+        var dbParticipation = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(exercise, student);
         assertThat(dbParticipation).isNotNull();
         assertThat(dbParticipation.getId()).isEqualTo(participation.getId());
     }
@@ -1783,7 +1767,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
         assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
-        var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
+        var participations = participationService.findOneByExerciseAndStudentAnyState(exercise, student);
         assertThat(participations).isPresent();
         assertThat(participations.get().getId()).isEqualTo(participation.getId());
     }
@@ -1850,7 +1834,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
-        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepository.save(quizExercise);
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -1869,7 +1852,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        var actualParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizExercise, TEST_PREFIX + "student1");
+        var actualParticipation = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(quizExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         actualParticipation = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(actualParticipation.getId());
         var actualResults = participationUtilService.getResultsForParticipation(actualParticipation);
 
@@ -2185,7 +2169,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class,
                     HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-            var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
+            var participationFromServer = participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(quizEx,
+                    userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
             assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
             assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
         }

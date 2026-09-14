@@ -21,10 +21,9 @@ public interface QuizConfiguration {
     /**
      * Recreate missing pointers from children to parents that were removed by {@code @JsonIgnore}.
      * <p>
-     * Since all three question types now store their components (answer options / drop locations / drag items / correct mappings, resp. spots / solutions / correct mappings) and
-     * their statistics counters id-based inside the {@code content} / {@code counters} JSON columns, there are no more {@code @JsonIgnore} child back-references to reconnect
-     * except
-     * the question's own statistic (a {@code @OneToOne} whose back-reference is {@code @JsonIgnore}d) and the question's parent exercise/pool.
+     * All three question types store their components (answer options; drop locations, drag items, and correct mappings; or spots, solutions, and correct mappings) by id inside
+     * {@code quiz_question.content}. Those JSON values no longer have child-to-question back-references to reconnect. The remaining ignored pointer is the question's parent
+     * exercise or pool, restored through {@link #setQuestionParent(QuizQuestion)}.
      */
     default void reconnectJSONIgnoreAttributes() {
         if (getQuizQuestions() == null) {
@@ -35,11 +34,6 @@ public interface QuizConfiguration {
                 continue;
             }
             setQuestionParent(quizQuestion);
-            // reconnect the question statistic's back-reference to its question (statistic is null on transient questions before initializeStatistic())
-            QuizQuestionStatistic quizQuestionStatistic = quizQuestion.getQuizQuestionStatistic();
-            if (quizQuestionStatistic != null) {
-                quizQuestionStatistic.setQuizQuestion(quizQuestion);
-            }
         }
     }
 }

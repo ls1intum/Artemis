@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -96,13 +94,11 @@ public class ProgrammingExerciseBuildConfigResource {
      * @param exerciseId the id of the programming exercise whose build config should be updated
      * @param dto        the new build plan configuration and build timeout
      * @return the ResponseEntity with status 200 (OK) and the updated build config in the body
-     * @throws JsonProcessingException if the build plan configuration cannot be serialized
      */
     @PutMapping("programming-exercises/{exerciseId}/build-config")
     @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<UpdateProgrammingExerciseBuildConfigDTO> updateBuildConfig(@PathVariable long exerciseId, @Valid @RequestBody UpdateBuildPlanConfigurationDTO dto)
-            throws JsonProcessingException {
+    public ResponseEntity<UpdateProgrammingExerciseBuildConfigDTO> updateBuildConfig(@PathVariable long exerciseId, @Valid @RequestBody UpdateBuildPlanConfigurationDTO dto) {
         log.debug("REST request to update the build plan configuration of programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(exerciseId);
         final var user = userRepository.getUserWithAuthorities();
@@ -131,7 +127,7 @@ public class ProgrammingExerciseBuildConfigResource {
      * @param programmingExercise        the programming exercise whose build plan was updated
      * @param originalBuildAndTestOffset the offset the build and test date had before the update, so that it is preserved
      */
-    private void updateBuildAndTestDate(ProgrammingExercise programmingExercise, @Nullable Duration originalBuildAndTestOffset) throws JsonProcessingException {
+    private void updateBuildAndTestDate(ProgrammingExercise programmingExercise, @Nullable Duration originalBuildAndTestOffset) {
         if (automaticAfterDueDateService.isEmpty()) {
             return;
         }

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -284,7 +284,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = JsonObjectMapper.get();
+                JsonMapper objectMapper = JsonObjectMapper.get();
 
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
@@ -312,7 +312,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = JsonObjectMapper.get();
+                JsonMapper objectMapper = JsonObjectMapper.get();
 
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
@@ -352,7 +352,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
 
             dataExportIrisService.createIrisExport(testUser.getId(), workingDirectory);
 
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
             });
             assertThat(sessions).extracting(IrisChatSessionExportDTO::sessionId).contains(tutorSuggestionSession.getId());

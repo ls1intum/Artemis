@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -98,9 +98,8 @@ public class ProgrammingExerciseBuildPlanService {
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
      * @param programmingExercise the programming exercise whose build config should be normalized
-     * @throws JsonProcessingException when the build config cannot be serialized as JSON
      */
-    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
+    public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) {
         if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             return;
         }
@@ -119,7 +118,6 @@ public class ProgrammingExerciseBuildPlanService {
 
             final BuildPlanPhasesDTO completePlan = new BuildPlanPhasesDTO(phases, dockerImage);
             buildConfig.setBuildPlanConfiguration(completePlan.toBuildPlanConfiguration());
-            programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         }
         else {
             log.warn("No build plan phases for the settings of exercise {}", programmingExercise.getId());
@@ -133,7 +131,7 @@ public class ProgrammingExerciseBuildPlanService {
      * @param originalBuildPlanConfiguration the build plan configuration before the update
      * @param updatedProgrammingExercise     the changed programming exercise with its new values
      */
-    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
+    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) {
         if (continuousIntegrationService.isEmpty() || Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }
@@ -165,10 +163,8 @@ public class ProgrammingExerciseBuildPlanService {
      * @param programmingExercise    the programming exercise whose build config should be updated (with its build config loaded)
      * @param buildPlanConfiguration the new build plan configuration (build phases, Docker image, timeout, and Docker flags)
      * @return the persisted build config
-     * @throws JsonProcessingException if the build plan configuration cannot be serialized
      */
-    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration)
-            throws JsonProcessingException {
+    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration) {
         BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan());
         // a blank top-level image would be persisted verbatim and leave a legacy configuration with an unusable image
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
@@ -180,7 +176,7 @@ public class ProgrammingExerciseBuildPlanService {
         try {
             BuildPlanPhasesDTO.fromBuildPlanConfiguration(serializedBuildPlanConfiguration);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is too large to be processed", "buildConfig", "buildPlanConfigurationTooLarge");
         }
         buildConfig.setBuildPlanConfiguration(serializedBuildPlanConfiguration);

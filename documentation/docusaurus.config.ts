@@ -104,6 +104,21 @@ const config: Config = {
 
     plugins: [
         [
+            // The site is served from GitHub Pages, which cannot redirect, so a page
+            // that moves needs a generated stub at its old path. Add an entry here
+            // whenever a URL that has been public changes, and never remove one.
+            '@docusaurus/plugin-client-redirects',
+            {
+                redirects: [
+                    {
+                        // The single exam guide became a category of focused pages.
+                        from: '/instructor/exams/exam-timeline',
+                        to: '/instructor/exams/intro',
+                    },
+                ],
+            },
+        ],
+        [
             '@docusaurus/plugin-content-docs',
             {
                 path: 'docs/student',

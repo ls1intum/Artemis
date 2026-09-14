@@ -101,6 +101,9 @@ public class FileResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
 
+    /** The shape of a slide image path, whose last segment is the file name. */
+    private static final Pattern SLIDE_IMAGE_PATH = Pattern.compile(".*/([^/]+\\.png)$");
+
     private static final int DAYS_TO_CACHE = 1;
 
     private enum AttachmentCachePolicy {
@@ -648,9 +651,7 @@ public class FileResource {
 
         String directoryPath = slide.getSlideImagePath();
 
-        // Use regular expression to match and extract the file name with ".png" format
-        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
-        Matcher matcher = pattern.matcher(directoryPath);
+        Matcher matcher = SLIDE_IMAGE_PATH.matcher(directoryPath);
 
         if (matcher.matches()) {
             return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);

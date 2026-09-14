@@ -55,7 +55,7 @@ export class MemirisMemoriesListComponent implements OnInit {
             const ids = (c.memories ?? []).filter((id) => validIds.has(id));
             if (ids.length >= 2 && !seen.has(c.id)) {
                 seen.add(c.id);
-                groups.push(Array.from(new Set(ids)).sort());
+                groups.push(Array.from(new Set(ids)).sort((a, b) => a.localeCompare(b)));
             }
         }
         return groups;

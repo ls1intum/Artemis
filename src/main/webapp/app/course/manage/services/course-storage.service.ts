@@ -6,7 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * This service is used to store {@link Course} objects for the currently logged-in user.
- * The methods {@link CourseManagementService#findAllForDashboard} and {@link CourseManagementService#findOneForDashboard} retrieve one or multiple {@link Course} objects and save them in this service.
+ * The method {@link CourseManagementService#findAllForDashboard} retrieves the {@link Course} objects and saves them in this service.
  * This way, multiple components that need a course can access it without having to retrieve it again from the server.
  * Some components update the course object and can use the {@link updateCourse} method to make the changes available to the entire application.
  * Components that need to be notified about these changes can use the {@link subscribeToCourseUpdates} method.
