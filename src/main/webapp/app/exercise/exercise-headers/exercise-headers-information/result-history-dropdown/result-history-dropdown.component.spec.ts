@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
+import { ResultHistoryDropdownComponent, latestSubmissionRoute } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -19,6 +19,39 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
+
+describe('latestSubmissionRoute', () => {
+    const participation = { id: 7 } as StudentParticipation;
+    const exerciseOfType = (type: ExerciseType, extra: object = {}): Exercise => ({ id: 3, type, course: { id: 1 }, ...extra }) as Exercise;
+
+    it('routes to the participation the exercise type actually uses', () => {
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.TEXT), participation)).toEqual(['/courses', 1, 'exercises', 'text-exercises', 3, 'participate', 7]);
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.MODELING), participation)).toEqual(['/courses', 1, 'exercises', 'modeling-exercises', 3, 'participate', 7]);
+        // Both of these used to fall through to the modeling route, because the mapping was a two-way guess rather
+        // than the shared one every other caller uses.
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.FILE_UPLOAD), participation)).toEqual(['/courses', 1, 'exercises', 'file-upload-exercises', 3, 'participate', 7]);
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.PROGRAMMING, { allowOnlineEditor: true }), participation)).toEqual([
+            '/courses',
+            1,
+            'exercises',
+            'programming-exercises',
+            3,
+            'code-editor',
+            7,
+        ]);
+    });
+
+    it('has nowhere to send a programming exercise without the online editor', () => {
+        expect(latestSubmissionRoute(exerciseOfType(ExerciseType.PROGRAMMING, { allowOnlineEditor: false }), participation)).toBeUndefined();
+    });
+
+    it('routes a quiz by mode rather than by participation id', () => {
+        const quiz = exerciseOfType(ExerciseType.QUIZ);
+
+        expect(latestSubmissionRoute(quiz, participation)).toEqual(['/courses', 1, 'exercises', 'quiz-exercises', 3, 'live']);
+        expect(latestSubmissionRoute(quiz, { id: 7, testRun: true } as StudentParticipation)).toEqual(['/courses', 1, 'exercises', 'quiz-exercises', 3, 'practice', 7]);
+    });
+});
 
 describe('ResultHistoryDropdownComponent', () => {
     let component: ResultHistoryDropdownComponent;

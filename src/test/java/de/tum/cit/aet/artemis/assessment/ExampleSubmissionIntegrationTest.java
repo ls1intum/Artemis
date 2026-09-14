@@ -24,6 +24,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
 import de.tum.cit.aet.artemis.text.dto.TextBlockDTO;
 import de.tum.cit.aet.artemis.text.dto.TextExampleResultDTO;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -82,6 +85,12 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private TextSubmissionTestRepository textSubmissionRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -782,6 +791,169 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         importExampleSubmission(exercise.getId(), submission.getId(), HttpStatus.BAD_REQUEST);
 
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void saveExampleSubmission_inputValidationUsesStoredSubmission(boolean throughExistingExampleSubmission) throws Exception {
+        TextExercise otherExercise = otherTextExercise();
+        TextSubmission stored = textExerciseUtilService.saveTextSubmission(otherExercise, ParticipationFactory.generateTextSubmission("stored text", Language.ENGLISH, true),
+                TEST_PREFIX + "student1");
+        long storedParticipationId = stored.getParticipation().getId();
+
+        ExampleSubmission body = new ExampleSubmission();
+        if (throughExistingExampleSubmission) {
+            ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions",
+                    newTextExampleSubmission("own text"), ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+            body.setId(created.id());
+        }
+        TextSubmission payload = new TextSubmission();
+        payload.setId(stored.getId());
+        payload.setText("updated text");
+        body.setSubmission(payload);
+        body.setExercise(textExercise);
+        ExampleSubmissionDetailDTO saved = request.putWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body,
+                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+        assertThat(saved.submission().id()).isNotEqualTo(stored.getId());
+        assertThat(saved.submission().text()).isEqualTo("updated text");
+
+        TextSubmission reloaded = textSubmissionRepository.findById(stored.getId()).orElseThrow();
+        assertThat(reloaded.getText()).isEqualTo("stored text");
+        assertThat(reloaded.getParticipation().getId()).isEqualTo(storedParticipationId);
+        assertThat(reloaded.isExampleSubmission()).isNotEqualTo(Boolean.TRUE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleSubmission_inputValidationChecksExercise() throws Exception {
+        TextExercise otherExercise = otherTextExercise();
+        ExampleSubmission other = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("other text", otherExercise, true));
+
+        TextSubmission payload = new TextSubmission();
+        payload.setId(other.getSubmission().getId());
+        payload.setText("updated text");
+        ExampleSubmission body = new ExampleSubmission();
+        body.setId(other.getId());
+        body.setSubmission(payload);
+        body.setExercise(textExercise);
+        request.put("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body, HttpStatus.BAD_REQUEST);
+
+        assertThat(exampleSubmissionRepository.findBySubmissionId(other.getSubmission().getId()).orElseThrow().getExercise().getId()).isEqualTo(otherExercise.getId());
+        assertThat(textSubmissionRepository.findById(other.getSubmission().getId()).orElseThrow().getText()).isEqualTo("other text");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleSubmission_inputValidationUsesStoredExercise() throws Exception {
+        TextExercise otherExercise = otherTextExercise();
+        ExampleSubmission other = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("other text", otherExercise, true));
+
+        TextSubmission payload = new TextSubmission();
+        payload.setId(other.getSubmission().getId());
+        payload.setText("updated text");
+        otherExercise.setCourse(course);
+        ExampleSubmission body = new ExampleSubmission();
+        body.setId(other.getId());
+        body.setSubmission(payload);
+        body.setExercise(otherExercise);
+        request.put("/api/assessment/exercises/" + otherExercise.getId() + "/example-submissions", body, HttpStatus.FORBIDDEN);
+
+        assertThat(textSubmissionRepository.findById(other.getSubmission().getId()).orElseThrow().getText()).isEqualTo("other text");
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "result", "feedback", "assessmentNote" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleSubmission_inputValidationPreservesAssessment(String otherEntity) throws Exception {
+        TextExercise otherExercise = otherTextExercise();
+        TextSubmission stored = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(otherExercise,
+                ParticipationFactory.generateTextSubmission("stored text", Language.ENGLISH, true), TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result storedResult = participationUtilService.addFeedbackToResult(new Feedback().detailText("stored feedback").credits(1.0), stored.getLatestResult());
+        AssessmentNote storedNote = new AssessmentNote();
+        storedNote.setNote("stored note");
+        storedResult.setAssessmentNote(storedNote);
+        storedResult = resultRepository.save(storedResult);
+        storedResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(storedResult.getId()).orElseThrow();
+
+        ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions",
+                newTextExampleSubmission("own text"), ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+        JsonMapper mapper = request.getObjectMapper();
+        ObjectNode resultNode = mapper.createObjectNode();
+        resultNode.put("score", 0.0);
+        resultNode.put("exampleResult", true);
+        switch (otherEntity) {
+            case "result" -> resultNode.put("id", storedResult.getId());
+            case "feedback" -> resultNode.set("feedbacks", mapper.createArrayNode()
+                    .add(mapper.createObjectNode().put("id", storedResult.getFeedbacks().iterator().next().getId()).put("detailText", "updated").put("credits", 0.0)));
+            default -> resultNode.set("assessmentNote", mapper.createObjectNode().put("id", storedResult.getAssessmentNote().getId()).put("note", "updated"));
+        }
+        ObjectNode submissionNode = (ObjectNode) mapper.valueToTree(created.submission());
+        submissionNode.set("results", mapper.createArrayNode().add(resultNode));
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.id());
+        body.set("exercise", mapper.valueToTree(textExercise));
+        body.set("submission", submissionNode);
+        request.put("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body, HttpStatus.OK);
+
+        Result reloaded = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(storedResult.getId()).orElseThrow();
+        assertThat(reloaded.getScore()).isEqualTo(100.0);
+        assertThat(reloaded.getSubmission().getId()).isEqualTo(stored.getId());
+        assertThat(reloaded.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("stored feedback");
+        assertThat(reloaded.getAssessmentNote()).extracting(AssessmentNote::getNote).isEqualTo("stored note");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createExampleSubmission_inputValidationUsesExampleParticipation() throws Exception {
+        TextExercise otherExercise = otherTextExercise();
+        TextSubmission stored = textExerciseUtilService.saveTextSubmission(otherExercise, ParticipationFactory.generateTextSubmission("stored text", Language.ENGLISH, true),
+                TEST_PREFIX + "student1");
+        long storedParticipationId = stored.getParticipation().getId();
+
+        JsonMapper mapper = request.getObjectMapper();
+        ObjectNode submissionNode = mapper.createObjectNode().put("submissionExerciseType", "text").put("text", "updated text");
+        submissionNode.set("participation", mapper.createObjectNode().put("type", "student").put("id", storedParticipationId));
+        ObjectNode body = mapper.createObjectNode();
+        body.set("exercise", mapper.valueToTree(textExercise));
+        body.set("submission", submissionNode);
+        ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body,
+                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+        assertThat(submissionOf(created).getParticipation()).isNull();
+
+        assertThat(submissionRepository.countByParticipationId(storedParticipationId)).isEqualTo(1L);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createExampleSubmission_inputValidationUsesExerciseType() throws Exception {
+        long exampleSubmissionsBefore = exampleSubmissionRepository.countAllByExerciseId(textExercise.getId());
+
+        JsonMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.set("exercise", mapper.valueToTree(textExercise));
+        body.set("submission", mapper.createObjectNode().put("submissionExerciseType", "quiz"));
+        ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", body,
+                ExampleSubmissionDetailDTO.class, HttpStatus.OK);
+
+        assertThat(created.submission().submissionExerciseType()).isEqualTo("text");
+        assertThat(exampleSubmissionRepository.countAllByExerciseId(textExercise.getId())).isEqualTo(exampleSubmissionsBefore + 1);
+    }
+
+    /**
+     * The generator stores the text submission, but a create request carries a new one, as the editor page sends it.
+     */
+    private ExampleSubmission newTextExampleSubmission(String text) {
+        ExampleSubmission generated = participationUtilService.generateExampleSubmission(text, textExercise, true);
+        generated.getSubmission().setId(null);
+        return generated;
+    }
+
+    private TextExercise otherTextExercise() throws Exception {
+        Course otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Other");
+        TextExercise otherExercise = ExerciseUtilService.findTextExerciseWithTitle(otherCourse.getExercises(), "Other");
+        request.get("/api/text/text-exercises/" + otherExercise.getId(), HttpStatus.FORBIDDEN, String.class);
+        return otherExercise;
     }
 
 }
