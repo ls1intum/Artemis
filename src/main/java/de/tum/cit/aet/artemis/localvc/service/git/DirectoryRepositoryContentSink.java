@@ -129,6 +129,13 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
      * What is deliberately not derived from the mode is the group and world <em>write</em> bit. Git stores only
      * {@code 100644} and {@code 100755}, so no input can ask for it, and writing it out is what the finding was really
      * about. The exposure while the file is being written is handled separately, by {@link #openOwnerOnly}.
+     *
+     * <p>
+     * The tempting alternative - keep the disk owner-only and let the archiver widen the mode on the entry - would have
+     * to change {@code FileModeUtil.applyUnixMode}, which copies the mode off disk for <em>every</em> Artemis export
+     * (course archives, exam exports, repository exports). Teaching that shared helper to reinterpret owner-only as
+     * {@code 0755} would widen the permissions of every other export that narrows a file on purpose, to buy nothing
+     * here: what is left on disk in the meantime is a plain {@code git checkout} of the student's own repository.
      */
     private static void applyPermissions(Path path, int unixMode) {
         Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ,
