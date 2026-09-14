@@ -52,10 +52,11 @@ tasks.register('verifyRuntimeBoundary') {
     group = 'verification'
     doLast {
         def forbiddenGroups = ['org.hibernate.orm', 'org.postgresql', 'com.mysql', 'com.hazelcast',
-                               'org.redisson', 'org.springframework.data', 'org.apache.tomcat.embed', 'org.eclipse.jetty']
+                               'org.redisson', 'org.springframework.data', 'org.apache.tomcat.embed', 'org.eclipse.jetty',
+                               'org.liquibase', 'org.flywaydb', 'com.h2database', 'org.mariadb.jdbc', 'org.springframework.cloud', 'io.undertow']
         def forbiddenSpringModules = ['spring-jdbc', 'spring-orm', 'spring-webmvc', 'spring-websocket', 'spring-webflux']
         def violations = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll { artifact ->
-            forbiddenGroups.contains(artifact.moduleVersion.id.group) ||
+            forbiddenGroups.any { group -> artifact.moduleVersion.id.group == group || artifact.moduleVersion.id.group.startsWith(group + '.') } ||
                 (artifact.moduleVersion.id.group == 'org.springframework' && forbiddenSpringModules.contains(artifact.name))
         }
         if (!violations.empty) {
@@ -92,4 +93,15 @@ tasks.register('verifyJacksonBoundary') {
 
 tasks.named('check') {
     dependsOn 'verifyRuntimeBoundary', 'verifySourceSize', 'verifyJacksonBoundary'
+}
+
+// An unqualified root `test --tests ServerTest` also selects subproject test tasks. Keep the
+// root's strict filter check, but do not fail unrelated modules that contain no matching test.
+// Explicit `:hyperion-worker:test --tests Typo` remains strict when no root test task is selected.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(':test')) {
+        tasks.named('test') {
+            filter.failOnNoMatchingTests = false
+        }
+    }
 }
